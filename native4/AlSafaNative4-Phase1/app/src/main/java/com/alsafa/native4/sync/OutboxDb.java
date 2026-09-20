@@ -14,12 +14,13 @@ public final class OutboxDb extends SQLiteOpenHelper {
   public final String id, kind, recordId, payload; public final int attempts;
   Item(String id,String kind,String recordId,String payload,int attempts){this.id=id;this.kind=kind;this.recordId=recordId;this.payload=payload;this.attempts=attempts;}
  }
- public OutboxDb(Context context){super(context,"alsafa_native4.db",null,3);}
+ public OutboxDb(Context context){super(context,"alsafa_native4.db",null,4);}
  @Override public void onCreate(SQLiteDatabase db){
   db.execSQL("CREATE TABLE outbox(operation_id TEXT PRIMARY KEY, operation_kind TEXT NOT NULL, record_id TEXT NOT NULL, payload TEXT NOT NULL, created_at INTEGER NOT NULL, state TEXT NOT NULL DEFAULT 'PENDING', attempts INTEGER NOT NULL DEFAULT 0, last_attempt_at INTEGER, last_error TEXT)");
   db.execSQL("CREATE TABLE applied(operation_id TEXT PRIMARY KEY, applied_at INTEGER NOT NULL)");
   db.execSQL("CREATE TABLE sync_checkpoint(checkpoint_key TEXT PRIMARY KEY, checkpoint_value TEXT NOT NULL, updated_at INTEGER NOT NULL)");
   db.execSQL("CREATE TABLE audit_log(id INTEGER PRIMARY KEY AUTOINCREMENT, happened_at INTEGER NOT NULL, direction TEXT NOT NULL, operation_id TEXT NOT NULL, operation_kind TEXT NOT NULL, record_id TEXT NOT NULL, detail TEXT NOT NULL)");
+  db.execSQL("CREATE TABLE test_products(product_id TEXT PRIMARY KEY, name TEXT NOT NULL, quantity INTEGER NOT NULL, price REAL NOT NULL, created_at INTEGER NOT NULL)");
  }
  @Override public void onUpgrade(SQLiteDatabase db,int oldVersion,int newVersion){
   if(oldVersion<2){
@@ -33,6 +34,7 @@ public final class OutboxDb extends SQLiteOpenHelper {
    db.execSQL("CREATE TABLE IF NOT EXISTS sync_checkpoint(checkpoint_key TEXT PRIMARY KEY, checkpoint_value TEXT NOT NULL, updated_at INTEGER NOT NULL)");
   }
   if(oldVersion<3) db.execSQL("CREATE TABLE IF NOT EXISTS audit_log(id INTEGER PRIMARY KEY AUTOINCREMENT, happened_at INTEGER NOT NULL, direction TEXT NOT NULL, operation_id TEXT NOT NULL, operation_kind TEXT NOT NULL, record_id TEXT NOT NULL, detail TEXT NOT NULL)");
+  if(oldVersion<4) db.execSQL("CREATE TABLE IF NOT EXISTS test_products(product_id TEXT PRIMARY KEY, name TEXT NOT NULL, quantity INTEGER NOT NULL, price REAL NOT NULL, created_at INTEGER NOT NULL)");
  }
  public synchronized void enqueue(SyncOperation operation){
   operation.validate(); ContentValues values=new ContentValues();
@@ -57,6 +59,8 @@ public final class OutboxDb extends SQLiteOpenHelper {
  public synchronized String checkpoint(String key){try(Cursor c=writable().rawQuery("SELECT checkpoint_value FROM sync_checkpoint WHERE checkpoint_key=?",new String[]{key})){return c.moveToFirst()?c.getString(0):"0";}}
  public synchronized int pendingCount(){try(Cursor c=writable().rawQuery("SELECT COUNT(*) FROM outbox WHERE state='PENDING'",null)){return c.moveToFirst()?c.getInt(0):0;}}
  public synchronized int confirmedCount(){try(Cursor c=writable().rawQuery("SELECT COUNT(*) FROM outbox WHERE state='CONFIRMED'",null)){return c.moveToFirst()?c.getInt(0):0;}}
+ public synchronized String addTestProduct(String name,int quantity,double price,String sourceDeviceId){String safeName=String.valueOf(name).trim();if(safeName.isEmpty()||safeName.length()>140)throw new IllegalArgumentException("اسم المنتج غير صالح");if(quantity<0)throw new IllegalArgumentException("الكمية لا يمكن أن تكون سالبة");if(!Double.isFinite(price)||price<0)throw new IllegalArgumentException("السعر غير صالح");String id="product-"+java.util.UUID.randomUUID();ContentValues v=new ContentValues();v.put("product_id",id);v.put("name",safeName);v.put("quantity",quantity);v.put("price",price);v.put("created_at",System.currentTimeMillis());writable().insertOrThrow("test_products",null,v);audit("LOCAL_ONLY",id,"PRODUCT_CREATE",id,"منتج تجريبي محفوظ محلياً — لا يُرسل قبل ربط الخادم الآمن");return id;}
+ public synchronized String testProductsSummary(){StringBuilder out=new StringBuilder();try(Cursor c=writable().rawQuery("SELECT name,quantity,price FROM test_products ORDER BY created_at DESC LIMIT 5",null)){int count=0;while(c.moveToNext()){count++;out.append(c.getString(0)).append(" · الكمية ").append(c.getInt(1)).append(" · السعر ").append(c.getDouble(2)).append("\n");}return count==0?"لا توجد منتجات تجريبية محفوظة":out.toString();}}
  public synchronized String recentAudit(){StringBuilder out=new StringBuilder();try(Cursor c=writable().rawQuery("SELECT direction,operation_kind,record_id,detail,happened_at FROM audit_log ORDER BY id DESC LIMIT 8",null)){while(c.moveToNext()){out.append(c.getString(0)).append(" · ").append(c.getString(1)).append(" / ").append(c.getString(2)).append("\n").append(c.getString(3)).append("\n\n");}}return out.length()==0?"لا يوجد سجل اختبار بعد":out.toString();}
  private void audit(String direction,String operationId,String kind,String recordId,String detail){ContentValues v=new ContentValues();v.put("happened_at",System.currentTimeMillis());v.put("direction",direction);v.put("operation_id",operationId);v.put("operation_kind",kind);v.put("record_id",recordId);v.put("detail",detail);writable().insert("audit_log",null,v);}
  private SQLiteDatabase writable(){return getWritableDatabase();}
