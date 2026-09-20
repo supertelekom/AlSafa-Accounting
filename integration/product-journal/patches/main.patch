@@ -1,0 +1,88 @@
+--- a/assets/main.js
++++ b/assets/main.js
+@@ -314,6 +314,7 @@
+   return message;
+ }
+ async function firebaseAuthToken() {
++  if (globalThis.ALSAFA_PRODUCT_JOURNAL_TEST === true) throw Error('LOCAL_ONLY_INTEGRATION');
+   if (!hasNetwork()) { cloudLastDiagnostic = 'NETWORK_STATE_OFFLINE'; return ''; }
+   let auth = cloudAuthLoad();
+   if (auth.idToken && number(auth.expiresAt) > Date.now() + 60000) return auth.idToken;
+@@ -336,6 +337,7 @@
+ function firestoreBase() { return `https://firestore.googleapis.com/v1/projects/${encodeURIComponent(FIREBASE_CONFIG.projectId)}/databases/(default)/documents`; }
+ function firestoreDocPath(collection, id) { return `${firestoreBase()}/stores/${encodeURIComponent(FIREBASE_CONFIG.storeId)}/${encodeURIComponent(collection)}/${encodeURIComponent(id)}`; }
+ async function firestoreRequest(url, options = {}) {
++  if (globalThis.ALSAFA_PRODUCT_JOURNAL_TEST === true) throw Error('LOCAL_ONLY_INTEGRATION');
+   const countKind = options._countKind === 'probe' ? 'probe' : 'data';
+   const cleanOptions = { ...options }; delete cleanOptions._countKind;
+   const timeoutMs = Math.max(3000, number(cleanOptions._timeoutMs) || 12000); delete cleanOptions._timeoutMs;
+@@ -1053,6 +1055,7 @@
+   return persistPayload(payload);
+ }
+ async function cloudSyncNow({ quiet = true, force = false } = {}) {
++  if (globalThis.ALSAFA_PRODUCT_JOURNAL_TEST === true) return false;
+   if (cloudSyncRunning) return false;
+   const preState = cloudStateLoad();
+   const now = Date.now();
+@@ -1531,6 +1534,7 @@
+   try { return fn(); } finally { destructivePersistAllowance = Math.max(0, destructivePersistAllowance - 1); }
+ }
+ function persistPayload(payload) {
++  const priorMemoryPayload = memoryPayload;
+   if (!destructivePersistAllowance) {
+     try {
+       const incoming = parsePayload(payload);
+@@ -1556,7 +1560,6 @@
+   let nativeStored = false;
+   let sessionStored = false;
+   let windowStored = false;
+-  memoryPayload = payload;
+   try { localStorage.setItem(STORE_KEY, payload); localStored = localStorage.getItem(STORE_KEY) === payload; } catch (_) {}
+   try { sessionStorage.setItem(SESSION_KEY, payload); sessionStored = sessionStorage.getItem(SESSION_KEY) === payload; } catch (_) {}
+   // Keep the page-name fallback small; photos are still kept in the native and
+@@ -1568,7 +1571,14 @@
+   // still written on every operation and the freshest copy wins on reload.
+   // A memory/session copy disappears when Android closes the process. Report
+   // success only when at least one durable backend confirmed the complete payload.
+-  return localStored || nativeStored;
++  const durable = localStored || nativeStored;
++  memoryPayload = durable ? payload : priorMemoryPayload;
++  if (!durable) {
++    // Failed writes must not outrank the last durable snapshot on reload.
++    try { sessionStorage.removeItem(SESSION_KEY); } catch (_) {}
++    try { if (String(window.name || '').startsWith(WINDOW_PAYLOAD_PREFIX)) window.name = ''; } catch (_) {}
++  }
++  return durable;
+ }
+ function hydrateData(saved) {
+   if (!saved) return deepCopy(emptyData);
+@@ -1724,10 +1734,28 @@
+       return false;
+     }
+   }
+-  cloudStampLocalChanges(previousStored);
++  const journalMode = globalThis.ALSAFA_PRODUCT_JOURNAL_TEST === true;
++  if (journalMode) {
++    try {
++      data.productJournal = AlSafaProductJournal.stage(previousStored || {products:[]}, data,
++        securityLoad().deviceId, () => {
++          if (!globalThis.crypto?.getRandomValues) throw Error('SECURE_RANDOM_REQUIRED');
++          const bytes = new Uint8Array(16); crypto.getRandomValues(bytes);
++          return Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('');
++        }, Date.now());
++    } catch (error) {
++      if (previousStored) data = previousStored;
++      toast('تعذر حفظ سجل المنتج؛ لم تُعتمد العملية.');
++      return false;
++    }
++  } else cloudStampLocalChanges(previousStored);
+   data.version = emptyData.version;
+   data.sync = { ...(data.sync || {}), revision: number(data.sync?.revision) + 1, updatedAt: Date.now(), appVersion: APP_VERSION };
+   const stored = persistPayload(JSON.stringify(data));
++  if (journalMode) {
++    if (!stored && previousStored) data = previousStored;
++    return stored;
++  }
+   if (stored) {
+     cloudNoChangeProbeStreak = 0;
+     cloudMarkDirty();
