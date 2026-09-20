@@ -1,0 +1,31 @@
+name: Verify Native 4 command server
+
+on:
+  push:
+    branches: [native4-sync-core]
+    paths:
+      - "native4/AlSafaNative4-Phase1/server/**"
+      - ".github/workflows/native4-server-test.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "native4/AlSafaNative4-Phase1/server/**"
+      - ".github/workflows/native4-server-test.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  protocol:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: native4/AlSafaNative4-Phase1/server
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - run: npm install --ignore-scripts
+      - run: npm test
