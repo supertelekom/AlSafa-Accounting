@@ -1,0 +1,38 @@
+AlSafa Native 4.0 — Command Core Audit
+=======================================
+
+Scope
+-----
+This is a separate Android test package: com.alsafa.native4.test.
+It does not read, import, overwrite, or delete data from com.alsafa.watch.
+
+Implemented in this milestone
+------------------------------
+1. SyncOperation: every outgoing item has a UUID operationId, operation kind,
+   record reference, source device ID, payload, and creation time.
+2. SQLite outbox v2: PENDING/CONFIRMED state, retry count, last attempt,
+   last error, applied-operation deduplication, and a sync checkpoint table.
+3. A command is only marked CONFIRMED after the test transport acknowledges its
+   exact operationId. A transport failure leaves it PENDING.
+4. The test event payload now has operationKind rather than an ambiguous
+   collection name.
+
+Safety boundary
+---------------
+The existing FirebaseSync class remains a test-only event transport. It is NOT
+the production accounting sync path and must never receive production sales,
+products, stock, repairs, payments, purchases, or settings.
+
+Production next step
+--------------------
+Create a server-side command endpoint. It must deduplicate operationId and use
+one atomic transaction to create the business record, inventory movements,
+cash movements, audit record, and next store revision. Only after that endpoint
+exists may the mobile app submit real accounting commands.
+
+Validation performed
+--------------------
+- Static brace-balance check passed for SyncOperation, OutboxDb, FirebaseSync.
+- Legacy db.ack / Item.collection references were removed from the test sender.
+- Full Android build was not run in this workspace: Gradle and javac are not
+  installed here. The project has not been delivered as an APK.
