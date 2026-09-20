@@ -7,6 +7,11 @@ on:
     paths:
       - "native4/AlSafaNative4-Phase1/app/build.gradle"
       - ".github/workflows/native4-debug.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "native4/AlSafaNative4-Phase1/**"
+      - ".github/workflows/native4-debug.yml"
 
 permissions:
   contents: read
