@@ -1,0 +1,11 @@
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent" android:layout_height="match_parent" android:fillViewport="true">
+<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="24dp" android:gravity="end">
+<TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="الصفا Native 4" android:textSize="28sp" android:textStyle="bold" android:gravity="end"/>
+<TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="مختبر المزامنة الآمنة – Phase 1" android:textSize="16sp" android:gravity="end" android:layout_marginTop="6dp"/>
+<TextView android:id="@+id/status" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="تهيئة..." android:textSize="18sp" android:gravity="end" android:layout_marginTop="28dp"/>
+<TextView android:id="@+id/device" android:layout_width="match_parent" android:layout_height="wrap_content" android:textSize="13sp" android:gravity="end" android:layout_marginTop="12dp"/>
+<TextView android:id="@+id/pending" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="العمليات المعلقة: 0" android:textSize="17sp" android:gravity="end" android:layout_marginTop="20dp"/>
+<Button android:id="@+id/testEvent" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="إنشاء عملية اختبار محلية" android:layout_marginTop="28dp"/>
+<Button android:id="@+id/retry" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="إعادة محاولة العمليات المعلقة" android:layout_marginTop="10dp"/>
+<TextView android:id="@+id/log" android:layout_width="match_parent" android:layout_height="wrap_content" android:textSize="14sp" android:gravity="end" android:layout_marginTop="24dp"/>
+</LinearLayout></ScrollView>
