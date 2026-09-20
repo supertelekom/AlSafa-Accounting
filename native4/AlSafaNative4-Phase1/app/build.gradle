@@ -2,7 +2,7 @@ plugins { id 'com.android.application' }
 
 android {
     namespace 'com.alsafa.native4'
-    compileSdk 33
+    compileSdk 34
     defaultConfig {
         applicationId 'com.alsafa.native4.test'
         minSdk 26
