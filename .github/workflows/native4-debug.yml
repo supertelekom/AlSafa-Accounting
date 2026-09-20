@@ -5,7 +5,7 @@ on:
   push:
     branches: [native4-sync-core]
     paths:
-      - "native4/**"
+      - "native4/AlSafaNative4-Phase1/app/build.gradle"
       - ".github/workflows/native4-debug.yml"
 
 permissions:
