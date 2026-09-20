@@ -1,0 +1,21 @@
+--- a/app/src/main/assets/main.js
++++ b/app/src/main/assets/main.js
+@@ -1996,6 +1996,7 @@
+ function rateCard(currency) { const value = rateFor(currency); const updated = data.rates.updatedAt ? dateText(data.rates.updatedAt.slice(0,10)) : 'غير محدث'; return `<div class="rate-card"><small>1 دولار =</small><b>${value ? `${localeNumber(value)} ${CURRENCIES[currency].short}` : '—'}</b><span>${currency === 'SYP' && data.rates.manual.SYP ? 'سعر سوق يدوي' : `آخر تحديث: ${updated}`}</span></div>`; }
+ 
+ function syncStatusMeta() {
++  if (globalThis.ALSAFA_PRODUCT_JOURNAL_TEST === true) return {cls:'offline',icon:'🔒',text:'اختبار محلي فقط',detail:'المنتجات محفوظة على هذا الجهاز؛ لا تُرسل إلى التابلت'};
+   const state = cloudStateLoad();
+   const last = number(state.lastSuccessAt);
+   const time = last ? new Date(last).toLocaleTimeString('ar', { hour: '2-digit', minute: '2-digit' }) : '';
+--- a/app/src/androidTest/java/com/alsafa/integrationtest/PersistenceInstrumentation.java
++++ b/app/src/androidTest/java/com/alsafa/integrationtest/PersistenceInstrumentation.java
+@@ -15,7 +15,7 @@
+   Intent i=new Intent(getTargetContext(),MainActivity.class);i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);Activity a=startActivitySync(i);WebView[] holder={null};runOnMainSync(()->holder[0]=find(a.getWindow().getDecorView()));WebView web=holder[0];if(web==null)throw new Exception("No WebView");
+   boolean ready=false;for(int n=0;n<60;n++){if("true".equals(js(web,"(()=>{try{return typeof data==='object' && document.querySelector('#app').children.length>0}catch(e){return false}})()"))){ready=true;break;}Thread.sleep(500);}if(!ready)throw new Exception("App did not render");
+   boolean seed="seed".equals(args.getString("phase"));
+-  String script=seed?"(()=>{try{data.products.push({id:'instrumented-product',name:'ساعة اختبار آلي',stock:0,salePrice:25,cost:0,currency:'USD'});if(!saveData())return 'SAVE_FAILED';navigateTo('products');return data.productJournal.entries.length===1?'PASS':'BAD_COUNT';}catch(e){return String(e.stack)}})()":"(()=>{try{const p=data.products.find(x=>x.id==='instrumented-product');if(!p)return 'MISSING_PRODUCT';if(!data.productJournal||data.productJournal.entries.length!==1)return 'MISSING_OR_DUPLICATE_EVENT';if(!saveData())return 'RESAVE_FAILED';navigateTo('products');return data.productJournal.entries.length===1?'PASS':'DUPLICATED_AFTER_REOPEN';}catch(e){return String(e.stack)}})()";
++  String script=seed?"(()=>{try{openModal(productForm(null,true));const form=document.getElementById('product-form');for(const [key,value] of Object.entries({name:'ساعة اختبار آلي',stock:'2',salePrice:'25',cost:'10'})){form.elements.namedItem(key).value=value;}saveProduct(form);if(!data.products.some(p=>p.name==='ساعة اختبار آلي'))return 'FORM_SAVE_FAILED';navigateTo('products');return data.productJournal.entries.length===1?'PASS':'BAD_COUNT';}catch(e){return String(e.stack)}})()":"(()=>{try{const p=data.products.find(x=>x.name==='ساعة اختبار آلي');if(!p)return 'MISSING_PRODUCT';if(!data.productJournal||data.productJournal.entries.length!==1)return 'MISSING_OR_DUPLICATE_EVENT';if(!saveData())return 'RESAVE_FAILED';navigateTo('products');return data.productJournal.entries.length===1?'PASS':'DUPLICATED_AFTER_REOPEN';}catch(e){return String(e.stack)}})()";
+   String result=js(web,script);if(!"\"PASS\"".equals(result))throw new Exception(result);
+   out.putString("stream","\nALSAFA_PERSISTENCE_"+(seed?"SEED":"REOPEN")+"_PASS\n");finish(Activity.RESULT_OK,out);
+  }catch(Exception e){out.putString("stream","\nALSAFA_TEST_FAILED: "+e.toString()+"\n");finish(Activity.RESULT_CANCELED,out);}}

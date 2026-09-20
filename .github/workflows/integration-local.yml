@@ -27,8 +27,13 @@ jobs:
           assert hashlib.sha256(payload).hexdigest()==(root/'source.sha256').read_text().strip()
           zipfile.ZipFile(io.BytesIO(payload)).extractall('android-test')
           PY
+          (cd android-test && git apply ../integration/android-test/refinement.patch)
           node --check android-test/app/src/main/assets/main.js
           node --test android-test/tests/product-journal.test.cjs
+      - uses: actions/cache@v4
+        with:
+          path: ~/.android/debug.keystore
+          key: alsafa-integration-debug-key-v1
       - name: Build test app and instrumentation
         run: gradle -p android-test :app:assembleDebug :app:assembleDebugAndroidTest
       - name: Enable KVM
