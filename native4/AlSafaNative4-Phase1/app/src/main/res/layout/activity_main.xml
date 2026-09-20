@@ -5,7 +5,9 @@
 <TextView android:id="@+id/status" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="تهيئة..." android:textSize="18sp" android:gravity="end" android:layout_marginTop="28dp"/>
 <TextView android:id="@+id/device" android:layout_width="match_parent" android:layout_height="wrap_content" android:textSize="13sp" android:gravity="end" android:layout_marginTop="12dp"/>
 <TextView android:id="@+id/pending" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="العمليات المعلقة: 0" android:textSize="17sp" android:gravity="end" android:layout_marginTop="20dp"/>
+<TextView android:id="@+id/confirmed" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="عمليات مؤكدة على هذا الجهاز: 0" android:textSize="16sp" android:gravity="end" android:layout_marginTop="8dp"/>
 <Button android:id="@+id/testEvent" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="إنشاء عملية اختبار محلية" android:layout_marginTop="28dp"/>
 <Button android:id="@+id/retry" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="إعادة محاولة العمليات المعلقة" android:layout_marginTop="10dp"/>
-<TextView android:id="@+id/log" android:layout_width="match_parent" android:layout_height="wrap_content" android:textSize="14sp" android:gravity="end" android:layout_marginTop="24dp"/>
+<TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="سجل الاختبار المحفوظ" android:textStyle="bold" android:textSize="16sp" android:gravity="end" android:layout_marginTop="24dp"/>
+<TextView android:id="@+id/log" android:layout_width="match_parent" android:layout_height="wrap_content" android:textSize="14sp" android:gravity="end" android:layout_marginTop="8dp"/>
 </LinearLayout></ScrollView>
