@@ -10,3 +10,8 @@ test('rejects unknown operation kinds', () => assert.throws(() => validateComman
 test('rejects lowercase kinds so clients cannot create a second command dialect', () => assert.throws(() => validateCommand({ ...valid, kind: 'test' }), { code: 'UNSUPPORTED_KIND' }));
 test('rejects a non-object payload', () => assert.throws(() => validateCommand({ ...valid, payload: [] }), { code: 'INVALID_PAYLOAD' }));
 test('rejects a command without a store boundary', () => assert.throws(() => validateCommand({ ...valid, storeId: ' ' }), { code: 'MISSING_REFERENCE' }));
+
+const product = { ...valid, kind: 'PRODUCT_CREATE', recordId: 'product-test-1', payload: { name: 'ساعة اختبار', barcode: 'TEST-001', initialQuantity: 1, price: 25 } };
+test('accepts a complete product-create command envelope before its handler is activated', () => assert.equal(validateCommand(product).payload.price, 25));
+test('rejects a product with negative opening quantity', () => assert.throws(() => validateCommand({ ...product, payload: { ...product.payload, initialQuantity: -1 } }), { code: 'INVALID_PRODUCT_PAYLOAD' }));
+test('rejects a product without a name', () => assert.throws(() => validateCommand({ ...product, payload: { ...product.payload, name: ' ' } }), { code: 'INVALID_PRODUCT_PAYLOAD' }));
