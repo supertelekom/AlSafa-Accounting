@@ -1,0 +1,11 @@
+{
+  "name": "alsafa-native4-command-server",
+  "private": true,
+  "engines": { "node": "20" },
+  "main": "index.js",
+  "scripts": { "test": "node --test test/protocol.test.js" },
+  "dependencies": {
+    "firebase-admin": "^13.0.1",
+    "firebase-functions": "^6.2.0"
+  }
+}
