@@ -1,0 +1,75 @@
+name: AlSafa isolated integration APK
+on:
+  push:
+    branches: [integration/product-journal-local]
+    paths: ['integration/android-test/**', '.github/workflows/integration-local.yml']
+permissions:
+  contents: read
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+      - name: Unpack verified source
+        run: |
+          python3 - <<'PY'
+          import pathlib,hashlib,zipfile,io
+          root=pathlib.Path('integration/android-test')
+          payload=b''.join(p.read_bytes() for p in sorted(root.glob('source.zip.part-*')))
+          assert hashlib.sha256(payload).hexdigest()==(root/'source.sha256').read_text().strip()
+          zipfile.ZipFile(io.BytesIO(payload)).extractall('android-test')
+          PY
+          node --check android-test/app/src/main/assets/main.js
+          node --test android-test/tests/product-journal.test.cjs
+      - name: Build test app and instrumentation
+        run: gradle -p android-test :app:assembleDebug :app:assembleDebugAndroidTest
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Android persistence test across force stop
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 29
+          arch: x86_64
+          disable-animations: true
+          script: |
+            adb install android-test/app/build/outputs/apk/debug/app-debug.apk
+            adb install android-test/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
+            adb shell am instrument -w -e phase seed com.alsafa.integrationtest.test/com.alsafa.integrationtest.PersistenceInstrumentation | tee seed.txt
+            grep -q ALSAFA_PERSISTENCE_SEED_PASS seed.txt
+            adb shell am force-stop com.alsafa.integrationtest
+            adb shell am instrument -w -e phase reopen com.alsafa.integrationtest.test/com.alsafa.integrationtest.PersistenceInstrumentation | tee reopen.txt
+            grep -q ALSAFA_PERSISTENCE_REOPEN_PASS reopen.txt
+            adb shell am start -n com.alsafa.integrationtest/.MainActivity
+            adb shell screencap -p /sdcard/integration.png
+            adb pull /sdcard/integration.png integration.png
+      - name: Verify package and signature
+        run: |
+          "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging android-test/app/build/outputs/apk/debug/app-debug.apk > package-info.txt
+          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose --print-certs android-test/app/build/outputs/apk/debug/app-debug.apk > signature.txt
+          grep -q "name='com.alsafa.integrationtest'" package-info.txt
+          if grep -q 'android.permission.INTERNET' package-info.txt; then exit 1; fi
+          sha256sum android-test/app/build/outputs/apk/debug/app-debug.apk > apk.sha256
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: AlSafa-4.1.0-local-integration
+          path: |
+            android-test/app/build/outputs/apk/debug/app-debug.apk
+            seed.txt
+            reopen.txt
+            integration.png
+            package-info.txt
+            signature.txt
+            apk.sha256
+          if-no-files-found: error
