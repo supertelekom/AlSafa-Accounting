@@ -3,7 +3,7 @@
   "private": true,
   "engines": { "node": "20" },
   "main": "index.js",
-  "scripts": { "test": "node --test test/protocol.test.js" },
+  "scripts": { "test": "node --test test/*.test.js" },
   "dependencies": {
     "firebase-admin": "^13.0.1",
     "firebase-functions": "^6.2.0"
