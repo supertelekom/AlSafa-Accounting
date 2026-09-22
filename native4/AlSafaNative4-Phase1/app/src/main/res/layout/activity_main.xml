@@ -1,6 +1,6 @@
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent" android:layout_height="match_parent" android:fillViewport="true"><LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="20dp" android:gravity="end">
 <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="الصفا Native 4 — اختبار البيع المحلي" android:textSize="24sp" android:textStyle="bold" android:gravity="end"/>
-<TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="لا Firebase ولا تحديث تلقائي. الفاتورة والمخزون والخزنة تحفظ كمعاملة SQLite واحدة." android:textSize="15sp" android:gravity="end" android:layout_marginTop="8dp"/>
+<TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="لا إنترنت ولا Firebase. البيع والصيانة تحفظان كمعاملات SQLite ذرية." android:textSize="15sp" android:gravity="end" android:layout_marginTop="8dp"/>
 <TextView android:id="@+id/status" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="جاهز" android:textSize="17sp" android:gravity="end" android:layout_marginTop="20dp"/>
 <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="إضافة منتج تجريبي" android:textSize="19sp" android:textStyle="bold" android:gravity="end" android:layout_marginTop="22dp"/>
 <EditText android:id="@+id/productName" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="اسم المنتج" android:gravity="end"/>
@@ -14,4 +14,11 @@
 <EditText android:id="@+id/salePayment" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="طريقة الدفع: نقدي" android:gravity="end"/>
 <Button android:id="@+id/saveSale" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="تثبيت الفاتورة محلياً"/>
 <TextView android:id="@+id/sales" android:layout_width="match_parent" android:layout_height="wrap_content" android:textSize="14sp" android:gravity="end" android:layout_marginTop="14dp"/>
+<TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="تسجيل صيانة تجريبية" android:textSize="19sp" android:textStyle="bold" android:gravity="end" android:layout_marginTop="22dp"/>
+<EditText android:id="@+id/repairCustomer" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="اسم العميل" android:gravity="end"/>
+<EditText android:id="@+id/repairWatch" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="وصف الساعة" android:gravity="end"/>
+<EditText android:id="@+id/repairTotal" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="قيمة الصيانة" android:inputType="numberDecimal" android:gravity="end"/>
+<EditText android:id="@+id/repairPayment" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="طريقة الدفع: نقدي" android:gravity="end"/>
+<Button android:id="@+id/saveRepair" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="تثبيت الصيانة محلياً"/>
+<TextView android:id="@+id/repairs" android:layout_width="match_parent" android:layout_height="wrap_content" android:textSize="14sp" android:gravity="end" android:layout_marginTop="14dp"/>
 </LinearLayout></ScrollView>
