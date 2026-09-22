@@ -1,16 +1,11 @@
 package com.alsafa.native4.sync;
 
-import android.content.*;import com.google.firebase.*;import com.google.firebase.auth.*;import com.google.firebase.firestore.*;import org.json.*;import java.util.*;import java.util.concurrent.atomic.AtomicBoolean;
+/**
+ * Deliberately inert compatibility boundary.
+ * Native 4 local-core builds must not contain Firebase imports, credentials,
+ * network code, background listeners, or automatic data transfer.
+ */
 public final class FirebaseSync {
- public interface Ui { void status(String s); void event(String s); void pending(int n); }
- private static final String API_KEY="AIzaSyB6o8Q2BKhXRoi0WtS9w7IGhB1__eNxoiA";
- private static final String PROJECT_ID="alsafa-watches";
- private final Context ctx; private final OutboxDb db; private final Ui ui; private final String deviceId; private FirebaseFirestore fs; private ListenerRegistration listener; private final AtomicBoolean flushing=new AtomicBoolean(false);
- public FirebaseSync(Context c,OutboxDb d,Ui u,String device){ctx=c;db=d;ui=u;deviceId=device;}
- public void start(){try{FirebaseApp app; try{app=FirebaseApp.getInstance("alsafa-native4");}catch(Exception e){FirebaseOptions o=new FirebaseOptions.Builder().setApiKey(API_KEY).setProjectId(PROJECT_ID).setApplicationId("1:000000000000:android:alsafa-native4-phase1").build();app=FirebaseApp.initializeApp(ctx,o,"alsafa-native4");} FirebaseAuth auth=FirebaseAuth.getInstance(app);fs=FirebaseFirestore.getInstance(app); auth.signInAnonymously().addOnSuccessListener(x->{ui.status("متصل – Listener لحظي فعال");listen();flush();}).addOnFailureListener(e->ui.status("فشل المصادقة: "+e.getMessage()));}catch(Exception e){ui.status("خطأ Firebase: "+e.getMessage());}}
- private void listen(){if(listener!=null)return;long saved;try{saved=Long.parseLong(db.checkpoint("received_after"));}catch(Exception e){saved=0;}long since=saved>0?saved-1000:System.currentTimeMillis()-300000;listener=fs.collection("nativeSyncEvents").whereGreaterThan("createdAt",new Date(Math.max(0,since))).orderBy("createdAt").limit(100).addSnapshotListener((snap,err)->{if(err!=null){ui.status("Listener: "+err.getMessage());return;}if(snap==null)return;for(DocumentChange dc:snap.getDocumentChanges()){if(dc.getType()!=DocumentChange.Type.ADDED)continue;Map<String,Object> m=dc.getDocument().getData();String src=String.valueOf(m.get("sourceDeviceId")),op=String.valueOf(m.get("operationId"));db.saveCheckpoint("received_after",String.valueOf(System.currentTimeMillis()));if(deviceId.equals(src)||op==null||"null".equals(op)||db.wasApplied(op))continue;String kind=String.valueOf(m.get("operationKind")),record=String.valueOf(m.get("recordId"));db.markReceived(op,kind,record);ui.event("تم الاستلام وحُفظ محلياً: "+kind+" / "+record);}});}
- public void enqueueTest(){String rid="test-"+System.currentTimeMillis();JSONObject p=new JSONObject();try{p.put("kind","test");p.put("createdAt",System.currentTimeMillis());p.put("note","اختبار فقط — ليس بيانات متجر");}catch(Exception ignored){}db.enqueue(SyncOperation.create(SyncOperation.Kind.TEST,rid,p.toString(),deviceId));ui.pending(db.pendingCount());flush();}
- public void flush(){if(fs==null||!flushing.compareAndSet(false,true))return;flushNext();}
- private void flushNext(){List<OutboxDb.Item> p=db.pending();ui.pending(p.size());if(p.isEmpty()){flushing.set(false);ui.status("تمت المزامنة – لا عمليات معلقة");return;}OutboxDb.Item it=p.get(0);db.markAttempt(it.id);Map<String,Object> ev=new HashMap<>();ev.put("operationId",it.id);ev.put("sourceDeviceId",deviceId);ev.put("operationKind",it.kind);ev.put("recordId",it.recordId);ev.put("payload",it.payload);ev.put("createdAt",FieldValue.serverTimestamp());fs.collection("nativeSyncEvents").document(it.id).set(ev).addOnSuccessListener(v->{db.confirm(it.id);ui.event("تم رفع اختبار "+it.kind+" / "+it.recordId);flushNext();}).addOnFailureListener(e->{db.retryLater(it.id,e.getMessage());flushing.set(false);ui.status("محفوظ محليًا وسيعاد لاحقًا: "+e.getMessage());ui.pending(db.pendingCount());});}
- public void stop(){if(listener!=null){listener.remove();listener=null;}}
+  private FirebaseSync() {}
+  public static boolean isAvailable() { return false; }
 }
