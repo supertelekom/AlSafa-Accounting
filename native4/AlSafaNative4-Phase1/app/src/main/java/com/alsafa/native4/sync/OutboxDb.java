@@ -13,18 +13,21 @@ import java.util.UUID;
 public final class OutboxDb extends SQLiteOpenHelper {
  public static final class Item { public final String id,kind,recordId,payload; public final int attempts; Item(String i,String k,String r,String p,int a){id=i;kind=k;recordId=r;payload=p;attempts=a;} }
  public static final class SaleResult { public final String saleId,invoiceNo,productName; public final int remainingQty; SaleResult(String s,String i,String p,int q){saleId=s;invoiceNo=i;productName=p;remainingQty=q;} }
- public OutboxDb(Context c){super(c,"alsafa_native4.db",null,5);}
+ public static final class RepairResult { public final String repairId,invoiceNo,watch; public final double total; RepairResult(String r,String i,String w,double t){repairId=r;invoiceNo=i;watch=w;total=t;} }
+ public OutboxDb(Context c){super(c,"alsafa_native4.db",null,6);}
  @Override public void onCreate(SQLiteDatabase db){
   db.execSQL("CREATE TABLE outbox(operation_id TEXT PRIMARY KEY,operation_kind TEXT NOT NULL,record_id TEXT NOT NULL,payload TEXT NOT NULL,created_at INTEGER NOT NULL,state TEXT NOT NULL DEFAULT 'PENDING',attempts INTEGER NOT NULL DEFAULT 0,last_attempt_at INTEGER,last_error TEXT)");
   db.execSQL("CREATE TABLE applied(operation_id TEXT PRIMARY KEY,applied_at INTEGER NOT NULL)");
   db.execSQL("CREATE TABLE sync_checkpoint(checkpoint_key TEXT PRIMARY KEY,checkpoint_value TEXT NOT NULL,updated_at INTEGER NOT NULL)"); createBusinessTables(db);
  }
- @Override public void onUpgrade(SQLiteDatabase db,int oldVersion,int newVersion){ if(oldVersion<5)createBusinessTables(db); }
+ @Override public void onUpgrade(SQLiteDatabase db,int oldVersion,int newVersion){ if(oldVersion<6)createBusinessTables(db); }
  private static void createBusinessTables(SQLiteDatabase db){
   db.execSQL("CREATE TABLE IF NOT EXISTS test_products(product_id TEXT PRIMARY KEY,name TEXT NOT NULL,quantity INTEGER NOT NULL CHECK(quantity>=0),price REAL NOT NULL CHECK(price>=0),created_at INTEGER NOT NULL)");
   db.execSQL("CREATE TABLE IF NOT EXISTS test_sales(sale_id TEXT PRIMARY KEY,invoice_no TEXT NOT NULL UNIQUE,product_id TEXT NOT NULL,product_name TEXT NOT NULL,quantity INTEGER NOT NULL CHECK(quantity>0),unit_price REAL NOT NULL CHECK(unit_price>=0),total REAL NOT NULL CHECK(total>=0),payment_method TEXT NOT NULL,created_at INTEGER NOT NULL)");
   db.execSQL("CREATE TABLE IF NOT EXISTS test_stock_moves(move_id TEXT PRIMARY KEY,sale_id TEXT NOT NULL,product_id TEXT NOT NULL,before_qty INTEGER NOT NULL,after_qty INTEGER NOT NULL,created_at INTEGER NOT NULL)");
   db.execSQL("CREATE TABLE IF NOT EXISTS test_cash_moves(move_id TEXT PRIMARY KEY,sale_id TEXT NOT NULL,amount REAL NOT NULL,payment_method TEXT NOT NULL,created_at INTEGER NOT NULL)");
+  db.execSQL("CREATE TABLE IF NOT EXISTS test_repairs(repair_id TEXT PRIMARY KEY,invoice_no TEXT NOT NULL UNIQUE,customer TEXT NOT NULL,watch TEXT NOT NULL,status TEXT NOT NULL,total REAL NOT NULL CHECK(total>=0),payment_method TEXT NOT NULL,created_at INTEGER NOT NULL)");
+  db.execSQL("CREATE TABLE IF NOT EXISTS test_repair_cash_moves(move_id TEXT PRIMARY KEY,repair_id TEXT NOT NULL,amount REAL NOT NULL,payment_method TEXT NOT NULL,created_at INTEGER NOT NULL)");
   db.execSQL("CREATE TABLE IF NOT EXISTS audit_log(id INTEGER PRIMARY KEY AUTOINCREMENT,happened_at INTEGER NOT NULL,direction TEXT NOT NULL,operation_id TEXT NOT NULL,operation_kind TEXT NOT NULL,record_id TEXT NOT NULL,detail TEXT NOT NULL)");
  }
  public synchronized String addTestProduct(String name,int quantity,double price){
@@ -44,8 +47,23 @@ public final class OutboxDb extends SQLiteOpenHelper {
    audit(db,"LOCAL_CONFIRMED",saleId,"SALE",saleId,"فاتورة "+invoice+" ثبتت محلياً مع المخزون والخزنة");db.setTransactionSuccessful();return new SaleResult(saleId,invoice,name,after);
   }finally{db.endTransaction();}
  }
+ /** Repair rule: repair invoice, payment and audit are committed together or all rolled back. */
+ public synchronized RepairResult recordTestRepair(String customer,String watch,double total,String paymentMethod){
+  String safeCustomer=String.valueOf(customer).trim(),safeWatch=String.valueOf(watch).trim();
+  if(safeCustomer.isEmpty()||safeCustomer.length()>140)throw new IllegalArgumentException("اسم العميل غير صالح");
+  if(safeWatch.isEmpty()||safeWatch.length()>140)throw new IllegalArgumentException("وصف الساعة غير صالح");
+  if(!Double.isFinite(total)||total<0)throw new IllegalArgumentException("قيمة الصيانة غير صالحة");
+  SQLiteDatabase db=writable();db.beginTransaction();
+  try{
+   long now=System.currentTimeMillis();String repairId="repair-"+UUID.randomUUID(),invoice="R-"+now,payment=safePayment(paymentMethod);
+   ContentValues repair=new ContentValues();repair.put("repair_id",repairId);repair.put("invoice_no",invoice);repair.put("customer",safeCustomer);repair.put("watch",safeWatch);repair.put("status","تم التسليم");repair.put("total",total);repair.put("payment_method",payment);repair.put("created_at",now);db.insertOrThrow("test_repairs",null,repair);
+   ContentValues cash=new ContentValues();cash.put("move_id","repair-cash-"+UUID.randomUUID());cash.put("repair_id",repairId);cash.put("amount",total);cash.put("payment_method",payment);cash.put("created_at",now);db.insertOrThrow("test_repair_cash_moves",null,cash);
+   audit(db,"LOCAL_CONFIRMED",repairId,"REPAIR",repairId,"فاتورة صيانة "+invoice+" ثبتت محلياً مع القبض");db.setTransactionSuccessful();return new RepairResult(repairId,invoice,safeWatch,total);
+  }finally{db.endTransaction();}
+ }
  public synchronized String testProductsSummary(){StringBuilder out=new StringBuilder();try(Cursor c=writable().rawQuery("SELECT product_id,name,quantity,price FROM test_products ORDER BY created_at DESC LIMIT 8",null)){while(c.moveToNext())out.append(c.getString(1)).append(" · ").append(c.getInt(2)).append(" قطعة · ").append(c.getDouble(3)).append("\n").append(c.getString(0)).append("\n\n");}return out.length()==0?"لا توجد منتجات تجريبية محفوظة":out.toString();}
  public synchronized String salesSummary(){StringBuilder out=new StringBuilder();try(Cursor c=writable().rawQuery("SELECT invoice_no,product_name,quantity,total,payment_method FROM test_sales ORDER BY created_at DESC LIMIT 8",null)){while(c.moveToNext())out.append("فاتورة ").append(c.getString(0)).append(" · ").append(c.getString(1)).append(" × ").append(c.getInt(2)).append(" · ").append(c.getDouble(3)).append(" · ").append(c.getString(4)).append("\n");}return out.length()==0?"لا توجد فواتير تجريبية محفوظة":out.toString();}
+ public synchronized String repairsSummary(){StringBuilder out=new StringBuilder();try(Cursor c=writable().rawQuery("SELECT invoice_no,customer,watch,total,payment_method FROM test_repairs ORDER BY created_at DESC LIMIT 8",null)){while(c.moveToNext())out.append("صيانة ").append(c.getString(0)).append(" · ").append(c.getString(1)).append(" · ").append(c.getString(2)).append(" · ").append(c.getDouble(3)).append(" · ").append(c.getString(4)).append("\n");}return out.length()==0?"لا توجد فواتير صيانة تجريبية محفوظة":out.toString();}
  public synchronized void enqueue(SyncOperation o){o.validate();ContentValues v=new ContentValues();v.put("operation_id",o.id);v.put("operation_kind",o.kind.name());v.put("record_id",o.recordId);v.put("payload",o.payload);v.put("created_at",o.createdAt);v.put("state","PENDING");writable().insertWithOnConflict("outbox",null,v,SQLiteDatabase.CONFLICT_IGNORE);}
  public synchronized List<Item> pending(){ArrayList<Item> a=new ArrayList<>();try(Cursor c=writable().rawQuery("SELECT operation_id,operation_kind,record_id,payload,attempts FROM outbox WHERE state='PENDING' ORDER BY created_at",null)){while(c.moveToNext())a.add(new Item(c.getString(0),c.getString(1),c.getString(2),c.getString(3),c.getInt(4)));}return a;}
  public synchronized void markAttempt(String id){writable().execSQL("UPDATE outbox SET attempts=attempts+1,last_attempt_at=? WHERE operation_id=?",new Object[]{System.currentTimeMillis(),id});}
