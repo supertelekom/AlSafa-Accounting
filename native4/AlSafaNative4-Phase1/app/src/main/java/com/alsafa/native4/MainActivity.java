@@ -1,11 +1,30 @@
 package com.alsafa.native4;
-import android.app.*;import android.os.*;import android.provider.Settings;import android.widget.*;import com.alsafa.native4.sync.*;import java.security.*;
-public class MainActivity extends Activity implements FirebaseSync.Ui {
- private TextView status,device,pending,confirmed,log,products;private EditText productName,productQuantity,productPrice;private OutboxDb db;private FirebaseSync sync;
- public void onCreate(Bundle b){super.onCreate(b);setContentView(com.alsafa.native4.R.layout.activity_main);status=findViewById(R.id.status);device=findViewById(R.id.device);pending=findViewById(R.id.pending);confirmed=findViewById(R.id.confirmed);log=findViewById(R.id.log);products=findViewById(R.id.products);productName=findViewById(R.id.productName);productQuantity=findViewById(R.id.productQuantity);productPrice=findViewById(R.id.productPrice);db=new OutboxDb(this);String did=deviceId();device.setText("معرّف الجهاز: "+did);sync=new FirebaseSync(this,db,this,did);findViewById(R.id.testEvent).setOnClickListener(v->sync.enqueueTest());findViewById(R.id.retry).setOnClickListener(v->sync.flush());findViewById(R.id.saveProduct).setOnClickListener(v->saveProduct(did));refreshAudit();sync.start();}
- private String deviceId(){String x=Settings.Secure.getString(getContentResolver(),Settings.Secure.ANDROID_ID);return "android-"+(x==null?"unknown":x);}
- private void saveProduct(String did){try{int q=Integer.parseInt(productQuantity.getText().toString().trim());double p=Double.parseDouble(productPrice.getText().toString().trim());db.addTestProduct(productName.getText().toString(),q,p,did);productName.setText("");productQuantity.setText("");productPrice.setText("");refreshAudit();status("تم حفظ المنتج التجريبي محلياً فقط");}catch(Exception e){status("لم يُحفظ المنتج: "+e.getMessage());}}
- private void refreshAudit(){pending.setText("العمليات المعلقة: "+db.pendingCount());confirmed.setText("عمليات مؤكدة على هذا الجهاز: "+db.confirmedCount());products.setText(db.testProductsSummary());log.setText(db.recentAudit());}
- public void status(String s){runOnUiThread(()->status.setText(s));}public void pending(int n){runOnUiThread(this::refreshAudit);}public void event(String s){runOnUiThread(this::refreshAudit);}
- protected void onDestroy(){if(sync!=null)sync.stop();super.onDestroy();}
+
+import android.app.Activity;
+import android.os.Bundle;
+import android.widget.EditText;
+import android.widget.TextView;
+import com.alsafa.native4.sync.OutboxDb;
+
+/** Isolated local-only sale test. Firebase is intentionally never started here. */
+public class MainActivity extends Activity {
+ private TextView status,products,sales;
+ private EditText productName,productQuantity,productPrice,saleProductId,saleQuantity,salePayment;
+ private OutboxDb db;
+ @Override public void onCreate(Bundle state){
+  super.onCreate(state);setContentView(R.layout.activity_main);db=new OutboxDb(this);
+  status=findViewById(R.id.status);products=findViewById(R.id.products);sales=findViewById(R.id.sales);
+  productName=findViewById(R.id.productName);productQuantity=findViewById(R.id.productQuantity);productPrice=findViewById(R.id.productPrice);
+  saleProductId=findViewById(R.id.saleProductId);saleQuantity=findViewById(R.id.saleQuantity);salePayment=findViewById(R.id.salePayment);
+  findViewById(R.id.saveProduct).setOnClickListener(v->saveProduct());findViewById(R.id.saveSale).setOnClickListener(v->saveSale());refresh();
+ }
+ private void saveProduct(){try{
+  String id=db.addTestProduct(productName.getText().toString(),Integer.parseInt(productQuantity.getText().toString().trim()),Double.parseDouble(productPrice.getText().toString().trim()));
+  productName.setText("");productQuantity.setText("");productPrice.setText("");saleProductId.setText(id);status.setText("✓ المنتج التجريبي حُفظ محلياً: "+id);refresh();
+ }catch(Exception e){status.setText("لم يُحفظ المنتج: "+e.getMessage());}}
+ private void saveSale(){try{
+  OutboxDb.SaleResult r=db.recordTestSale(saleProductId.getText().toString().trim(),Integer.parseInt(saleQuantity.getText().toString().trim()),salePayment.getText().toString());
+  status.setText("✓ ثبتت الفاتورة "+r.invoiceNo+" محلياً. المتبقي من "+r.productName+": "+r.remainingQty);saleQuantity.setText("");refresh();
+ }catch(Exception e){status.setText("لم تُنفذ الفاتورة: "+e.getMessage());}}
+ private void refresh(){products.setText(db.testProductsSummary());sales.setText(db.salesSummary());}
 }
