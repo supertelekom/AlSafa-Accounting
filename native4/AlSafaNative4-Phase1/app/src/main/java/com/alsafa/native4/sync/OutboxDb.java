@@ -53,6 +53,10 @@ public final class OutboxDb extends SQLiteOpenHelper {
  public synchronized void confirm(String id){ContentValues v=new ContentValues();v.put("state","CONFIRMED");v.putNull("last_error");writable().update("outbox",v,"operation_id=?",new String[]{id});}
  public synchronized boolean wasApplied(String id){try(Cursor c=writable().rawQuery("SELECT 1 FROM applied WHERE operation_id=? LIMIT 1",new String[]{id})){return c.moveToFirst();}}
  public synchronized void markApplied(String id){ContentValues v=new ContentValues();v.put("operation_id",id);v.put("applied_at",System.currentTimeMillis());writable().insertWithOnConflict("applied",null,v,SQLiteDatabase.CONFLICT_IGNORE);}
+ /** Compatibility only for the dormant legacy listener. MainActivity never starts it. */
+ public synchronized void markReceived(String operationId,String kind,String recordId){
+  markApplied(operationId);audit("DORMANT_LISTENER",operationId,kind,recordId,"استلام مسجل للتوافق فقط؛ لا توجد مزامنة قيد التشغيل");
+ }
  public synchronized void saveCheckpoint(String k,String value){ContentValues v=new ContentValues();v.put("checkpoint_key",k);v.put("checkpoint_value",value);v.put("updated_at",System.currentTimeMillis());writable().insertWithOnConflict("sync_checkpoint",null,v,SQLiteDatabase.CONFLICT_REPLACE);}
  public synchronized String checkpoint(String k){try(Cursor c=writable().rawQuery("SELECT checkpoint_value FROM sync_checkpoint WHERE checkpoint_key=?",new String[]{k})){return c.moveToFirst()?c.getString(0):"0";}}
  public synchronized int pendingCount(){try(Cursor c=writable().rawQuery("SELECT COUNT(*) FROM outbox WHERE state='PENDING'",null)){return c.moveToFirst()?c.getInt(0):0;}}
