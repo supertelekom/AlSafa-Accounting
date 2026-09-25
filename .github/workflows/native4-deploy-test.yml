@@ -1,0 +1,57 @@
+name: Native4 Deploy Isolated Firebase Test
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  FIREBASE_PROJECT_ID: alsafa-native
+  NATIVE4_DIR: native4/AlSafaNative4-Phase1
+
+jobs:
+  verify-and-deploy:
+    runs-on: ubuntu-latest
+    environment: native4-test
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Hard safety gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$FIREBASE_PROJECT_ID" = "alsafa-native"
+          grep -q '"default": "alsafa-native"' "$NATIVE4_DIR/.firebaserc"
+          grep -q '"codebase": "native4-command-server"' "$NATIVE4_DIR/firebase.json"
+          grep -q "testStoreOnly(command)" "$NATIVE4_DIR/server/index.js"
+          grep -q "if (!request.auth)" "$NATIVE4_DIR/server/index.js"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Server unit tests
+        working-directory: ${{ env.NATIVE4_DIR }}/server
+        run: |
+          npm install --ignore-scripts
+          npm test
+
+      - name: Authenticate to Google Cloud with OIDC
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WIF_PROVIDER }}
+          service_account: ${{ secrets.GCP_WIF_SERVICE_ACCOUNT }}
+
+      - name: Install Firebase CLI
+        run: npm install --global firebase-tools
+
+      - name: Verify authenticated project
+        run: |
+          firebase projects:list --json > /tmp/firebase-projects.json
+          grep -q '"projectId": "alsafa-native"' /tmp/firebase-projects.json
+
+      - name: Deploy only isolated Native4 command server
+        working-directory: ${{ env.NATIVE4_DIR }}
+        run: firebase deploy --only functions:native4-command-server --project alsafa-native --non-interactive
