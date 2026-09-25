@@ -12,6 +12,13 @@ test('rejects a non-object payload', () => assert.throws(() => validateCommand({
 test('rejects a command without a store boundary', () => assert.throws(() => validateCommand({ ...valid, storeId: ' ' }), { code: 'MISSING_REFERENCE' }));
 
 const product = { ...valid, kind: 'PRODUCT_CREATE', recordId: 'product-test-1', payload: { name: 'ساعة اختبار', barcode: 'TEST-001', initialQuantity: 1, price: 25 } };
-test('accepts a complete product-create command envelope before its handler is activated', () => assert.equal(validateCommand(product).payload.price, 25));
+test('accepts a complete product-create command envelope', () => assert.equal(validateCommand(product).payload.price, 25));
 test('rejects a product with negative opening quantity', () => assert.throws(() => validateCommand({ ...product, payload: { ...product.payload, initialQuantity: -1 } }), { code: 'INVALID_PRODUCT_PAYLOAD' }));
 test('rejects a product without a name', () => assert.throws(() => validateCommand({ ...product, payload: { ...product.payload, name: ' ' } }), { code: 'INVALID_PRODUCT_PAYLOAD' }));
+
+const sale = { ...valid, kind: 'SALE', recordId: 'sale-test-1', payload: { items: [{ productId: 'product-test-1', quantity: 2, unitPrice: 25 }], currency: 'USD', paymentMethod: 'CASH', total: 50 } };
+test('accepts a complete sale command envelope', () => assert.equal(validateCommand(sale).payload.total, 50));
+test('rejects sale total that differs from its items', () => assert.throws(() => validateCommand({ ...sale, payload: { ...sale.payload, total: 49 } }), { code: 'INVALID_SALE_PAYLOAD' }));
+test('rejects zero sale quantity', () => assert.throws(() => validateCommand({ ...sale, payload: { ...sale.payload, items: [{ productId: 'product-test-1', quantity: 0, unitPrice: 25 }], total: 0 } }), { code: 'INVALID_SALE_PAYLOAD' }));
+test('rejects unsupported sale currency', () => assert.throws(() => validateCommand({ ...sale, payload: { ...sale.payload, currency: 'EUR' } }), { code: 'INVALID_SALE_PAYLOAD' }));
+test('rejects duplicate product lines so stock cannot be decremented twice ambiguously', () => assert.throws(() => validateCommand({ ...sale, payload: { ...sale.payload, items: [{ productId: 'p1', quantity: 1, unitPrice: 25 }, { productId: 'p1', quantity: 1, unitPrice: 25 }] } }), { code: 'INVALID_SALE_PAYLOAD' }));
