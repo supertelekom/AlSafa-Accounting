@@ -1,8 +1,8 @@
 'use strict';
 
 function testStoreOnly(command) {
-  if (!command.storeId.startsWith('test-')) {
-    const error = new Error('معالج المنتج غير متاح إلا في مخزن الاختبار');
+  if (!command.storeId.startsWith('test-') && !command.storeId.endsWith('-test')) {
+    const error = new Error('معالجات Native 4 الحالية غير متاحة إلا في مخزن الاختبار');
     error.code = 'TEST_STORE_REQUIRED';
     throw error;
   }
@@ -22,4 +22,19 @@ function productDocument(command) {
   };
 }
 
-module.exports = { productDocument };
+function saleDocument(command) {
+  testStoreOnly(command);
+  const payload = command.payload;
+  return {
+    id: command.recordId,
+    items: payload.items.map(item => ({ productId: String(item.productId).trim(), quantity: item.quantity, unitPrice: item.unitPrice })),
+    currency: payload.currency,
+    paymentMethod: payload.paymentMethod,
+    total: payload.total,
+    customerId: payload.customerId == null ? null : String(payload.customerId).trim() || null,
+    createdFromOperationId: command.operationId,
+    sourceDeviceId: command.sourceDeviceId
+  };
+}
+
+module.exports = { productDocument, saleDocument, testStoreOnly };
