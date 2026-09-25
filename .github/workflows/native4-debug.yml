@@ -5,7 +5,7 @@ on:
   push:
     branches: [native4-sync-core]
     paths:
-      - "native4/AlSafaNative4-Phase1/app/build.gradle"
+      - "native4/AlSafaNative4-Phase1/**"
       - ".github/workflows/native4-debug.yml"
   pull_request:
     branches: [main]
