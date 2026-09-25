@@ -1,5 +1,6 @@
 plugins {
     id 'com.android.application'
+    id 'com.google.gms.google-services'
 }
 
 android {
@@ -9,8 +10,8 @@ android {
         applicationId 'com.alsafa.native4.test'
         minSdk 26
         targetSdk 33
-        versionCode 40009
-        versionName '4.0.7-callable-compile-test'
+        versionCode 40010
+        versionName '4.0.8-isolated-firebase-test'
     }
 }
 
