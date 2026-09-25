@@ -29,6 +29,8 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: "8.9"
+      - name: Run Native 4 JVM safety tests
+        run: gradle -p native4/AlSafaNative4-Phase1 :app:testDebugUnitTest
       - name: Build separate Native 4 test package
         run: gradle -p native4/AlSafaNative4-Phase1 :app:assembleDebug
       - uses: actions/upload-artifact@v4
