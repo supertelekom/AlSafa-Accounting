@@ -8,7 +8,8 @@ permissions:
   id-token: write
 
 env:
-  FIREBASE_PROJECT_ID: alsafa-native
+  FIREBASE_PROJECT_ID: alsafa-native-509721
+  FIREBASE_PROJECT_NUMBER: '952242463683'
   NATIVE4_DIR: native4/AlSafaNative4-Phase1
 
 jobs:
@@ -22,8 +23,9 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test "$FIREBASE_PROJECT_ID" = "alsafa-native"
-          grep -q '"default": "alsafa-native"' "$NATIVE4_DIR/.firebaserc"
+          test "$FIREBASE_PROJECT_ID" = "alsafa-native-509721"
+          test "$FIREBASE_PROJECT_NUMBER" = "952242463683"
+          grep -q '"default": "alsafa-native-509721"' "$NATIVE4_DIR/.firebaserc"
           grep -q '"codebase": "native4-command-server"' "$NATIVE4_DIR/firebase.json"
           grep -q "testStoreOnly(command)" "$NATIVE4_DIR/server/index.js"
           grep -q "if (!request.auth)" "$NATIVE4_DIR/server/index.js"
@@ -41,7 +43,7 @@ jobs:
       - name: Authenticate to Google Cloud with short-lived OIDC
         uses: google-github-actions/auth@v3
         with:
-          project_id: alsafa-native
+          project_id: alsafa-native-509721
           workload_identity_provider: ${{ secrets.GCP_WIF_PROVIDER }}
           service_account: ${{ secrets.GCP_WIF_SERVICE_ACCOUNT }}
 
@@ -51,8 +53,8 @@ jobs:
       - name: Verify authenticated project
         run: |
           firebase projects:list --json > /tmp/firebase-projects.json
-          grep -q '"projectId": "alsafa-native"' /tmp/firebase-projects.json
+          grep -q '"projectId": "alsafa-native-509721"' /tmp/firebase-projects.json
 
       - name: Deploy only isolated Native4 command server
         working-directory: ${{ env.NATIVE4_DIR }}
-        run: firebase deploy --only functions:native4-command-server --project alsafa-native --non-interactive
+        run: firebase deploy --only functions:native4-command-server --project alsafa-native-509721 --non-interactive
