@@ -21,47 +21,15 @@
 
 ### تغييرات البروتوكول
 
-تمت إضافة تحقق صارم لـ `SALE`:
-- عنصر واحد على الأقل وحد أقصى 100 عنصر.
-- `productId` إلزامي وغير مكرر داخل الفاتورة.
-- الكمية عدد صحيح أكبر من صفر.
-- السعر رقم غير سالب.
-- العملات الحالية: `USD`, `SYP`, `TRY`.
-- طرق الدفع الحالية: `CASH`, `SHAM_CASH`, `LATER`.
-- يجب أن يساوي `total` مجموع `quantity * unitPrice`.
+تمت إضافة تحقق صارم لـ `SALE`: عنصر واحد على الأقل وحد أقصى 100، productId إلزامي وغير مكرر، كمية صحيحة موجبة، سعر غير سالب، العملات USD/SYP/TRY، طرق الدفع CASH/SHAM_CASH/LATER، وتطابق total مع مجموع العناصر.
 
 ### تنفيذ البيع على الخادم
 
-داخل Firestore Transaction واحدة:
-1. فحص `commandReceipts` أولاً؛ إذا كان `operationId` منفذاً سابقاً يرجع CONFIRMED بدون إعادة البيع.
-2. منع إنشاء فاتورة فوق `saleId` موجود.
-3. قراءة كل منتج والتحقق من وجوده وكفاية المخزون.
-4. إنشاء سجل البيع.
-5. إنقاص كمية كل منتج.
-6. إنشاء `inventoryMovements` سالبة مرتبطة بنفس العملية.
-7. عند الدفع الفوري (`CASH` أو `SHAM_CASH`) إنشاء `cashMovements`; البيع `LATER` لا يضيف حركة صندوق.
-8. إنشاء `auditLog`.
-9. إنشاء `commandReceipt` و`changeLog` وزيادة Revision.
+داخل Firestore Transaction واحدة: فحص receipt لمنع التكرار، منع استبدال saleId، فحص المنتجات والمخزون، إنشاء البيع، إنقاص المخزون، inventoryMovements، cashMovements للدفع الفوري، auditLog، commandReceipt، changeLog وزيادة Revision. أي فشل يلغي Transaction كاملة.
 
-أي فشل داخل هذه الخطوات يلغي Transaction كاملة، فلا يجب أن توجد فاتورة بلا خصم مخزون أو خصم مخزون بلا فاتورة.
+### الاختبارات
 
-### أخطاء محمية
-
-- `PRODUCT_NOT_FOUND`
-- `INSUFFICIENT_STOCK`
-- `SALE_EXISTS`
-- `INVALID_SALE_PAYLOAD`
-- `TEST_STORE_REQUIRED`
-
-### الاختبارات المضافة
-
-- قبول SALE صحيح.
-- رفض إجمالي لا يطابق العناصر.
-- رفض كمية صفر.
-- رفض عملة غير مدعومة.
-- رفض تكرار المنتج داخل نفس الفاتورة.
-- اختبار بناء sale document وتطبيع المعرفات.
-- اختبار رفض SALE خارج test-store boundary.
+تم تشغيل GitHub Actions بعد هذه التغييرات ونجحت 20/20 اختبارات بدون فشل. كما نجح Build للـ APK التجريبي.
 
 ## Commits لهذه المرحلة
 
@@ -70,13 +38,24 @@
 - `d49bce2f` — process SALE atomically in test command endpoint
 - `11d2fd56` — test SALE command validation and safety rules
 - `57d7315f` — cover SALE handler and live-store boundary
+- `efd91a86` — add permanent Arabic implementation review log
+- `938267fb` — add isolated command processor for integration testing
+
+## 2026-09-25 — بدء اختبار التكامل
+
+تم إنشاء `command-processor.js` لفصل منطق Transaction عن Firebase Callable. الهدف هو أن يختبر Firestore Emulator نفس منطق البيع الفعلي مباشرة، وليس نسخة مبسطة منه. ما زال الملف محصوراً بحدود test-store ولم يتم ربطه ببيانات الإنتاج.
+
+الاختبارات المطلوبة لهذه المرحلة قبل Android Outbox:
+1. SALE ناجح يخفض المخزون مرة واحدة ويكتب البيع والحركات وreceipt وrevision.
+2. إعادة نفس operationId ترجع duplicate ولا تخفض المخزون مرة ثانية ولا تنشئ حركة صندوق ثانية.
+3. مخزون غير كافٍ: لا تُحفظ فاتورة ولا حركة صندوق ولا حركة مخزون ولا receipt ولا revision جديد.
+4. منتج مفقود: rollback كامل.
+5. دفع LATER: البيع والمخزون يسجلان بدون حركة صندوق.
+6. عمليتان متزامنتان على آخر قطعة: واحدة فقط يمكن أن تنجح.
 
 ## الخطوة التالية
 
-1. تشغيل/تأكيد مجموعة اختبارات الخادم في بيئة Node 20.
-2. إضافة اختبار تكامل للـ Command Endpoint مع Firestore Emulator للتحقق فعلياً من atomicity وidempotency ونقص المخزون.
-3. بعد نجاحه فقط: ربط Outbox في Android بالـ endpoint التجريبي.
-4. اختبار إعادة إرسال نفس `operationId` وانقطاع الاتصال والاستكمال دون تكرار البيع.
+إضافة Firestore Emulator إلى CI وكتابة integration test للحالات الست السابقة، ثم تشغيلها في GitHub Actions. بعد نجاحها فقط يتم ربط Android Outbox بالـ endpoint التجريبي.
 
 ## قاعدة العمل
 
