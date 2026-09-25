@@ -10,18 +10,18 @@
 - لا يوجد تفعيل لكتابة بيانات متجر الصفا الحقيقية.
 - وصول Android المباشر إلى `native4Stores` ممنوع بقواعد Firestore الحالية؛ الكتابة مصممة للمرور عبر Command Endpoint.
 
-## ما كان موجوداً قبل تفعيل SALE
+## SALE server safety gate
 
-- Command envelope موحد مع `operationId` UUID و`storeId` و`sourceDeviceId` و`kind` و`recordId` و`payload`.
-- `commandReceipts/{operationId}` لمنع تنفيذ الأمر نفسه مرتين.
-- Revision متزايد و`changeLog`.
-- `PRODUCT_CREATE` داخل Transaction مع منع استبدال منتج موجود.
+Command envelope موحد مع operationId UUID وstoreId وsourceDeviceId وkind وrecordId وpayload. يوجد commandReceipts لمنع التنفيذ مرتين وRevision متزايد وchangeLog. SALE ينفذ داخل Firestore Transaction واحدة: فحص receipt، منع استبدال saleId، فحص المنتج والمخزون، إنشاء البيع، إنقاص المخزون، inventoryMovements، cashMovements للدفع الفوري، auditLog، receipt، changeLog وRevision. أي فشل يلغي Transaction كاملة.
 
-## 2026-09-25 — تفعيل SALE التجريبي
+### نتائج الخادم المؤكدة
 
-تمت إضافة تحقق صارم لـ `SALE`: عنصر واحد على الأقل وحد أقصى 100، productId إلزامي وغير مكرر، كمية صحيحة موجبة، سعر غير سالب، العملات USD/SYP/TRY، طرق الدفع CASH/SHAM_CASH/LATER، وتطابق total مع مجموع العناصر.
-
-داخل Firestore Transaction واحدة: فحص receipt لمنع التكرار، منع استبدال saleId، فحص المنتجات والمخزون، إنشاء البيع، إنقاص المخزون، inventoryMovements، cashMovements للدفع الفوري، auditLog، commandReceipt، changeLog وزيادة Revision. أي فشل يلغي Transaction كاملة.
+- Unit tests: 20/20 ناجح، صفر فشل.
+- Firestore Emulator integration: 5/5 ناجح، صفر فشل.
+- إعادة operationId نفسها لا تخصم المخزون مرتين.
+- نقص المخزون والمنتج المفقود يؤديان إلى rollback كامل.
+- LATER لا ينشئ cashMovement.
+- بيعان متزامنان على آخر قطعة: ينجح واحد فقط.
 
 ## Commits الأساسية
 
@@ -35,41 +35,43 @@
 - `4052f764` — run SALE integration suite against Firestore emulator in CI
 - `6aaf3de3` — configure isolated Firestore emulator for integration CI
 
-## 2026-09-25 — نتيجة بوابة التكامل
+## 2026-09-25 — Android Outbox المحلي
 
-تم تشغيل GitHub Actions على commit `6aaf3de3` ونجح workflow `Verify Native 4 command server` بالكامل.
+تم تنفيذ بوابة Outbox المحلية قبل تشغيل الشبكة:
 
-### Unit tests
+1. ترقية SQLite إلى schema version 7 وإضافة `source_device_id` و`confirmed_revision` إلى outbox.
+2. عملية البيع المحلية وكتابة أمر SALE إلى outbox أصبحتا داخل SQLite Transaction نفسها. إذا فشل حفظ command فلا تعتمد الفاتورة ولا خصم المخزون.
+3. `operationId` UUID ينشأ مرة واحدة ويخزن دائماً مع payload وrecordId وsourceDeviceId؛ إعادة المحاولة لا تنشئ operationId جديداً.
+4. الحالات المدعومة: `PENDING`, `SENDING`, `FAILED_RETRYABLE`, `FAILED_PERMANENT`, `CONFIRMED`.
+5. عند فتح التطبيق، أي سجل بقي `SENDING` بسبب إغلاق/قتل التطبيق يتحول إلى `FAILED_RETRYABLE` ليعاد بنفس operationId.
+6. CONFIRMED لا يحذف من outbox؛ يحتفظ بـ confirmed revision للمراجعة.
+7. واجهة الاختبار تعرض عدد العمليات المنتظرة والحالة وعدد المحاولات وoperationId.
+8. لم يتم تشغيل أي اتصال شبكة أو Firebase من Android في هذه المرحلة.
 
-- 20 ناجح.
-- 0 فشل.
-- اختبار integration داخل التشغيل العادي كان Skip متعمداً لأنه يحتاج Emulator.
+### Commits Android Outbox
 
-### Firestore Emulator integration tests
+- `27093f8e` — make SALE outbox durable and retry-safe
+- `d9e93602` — allow exact persisted command reconstruction
+- `16e3e24f` — recover interrupted outbox and expose queue state
+- `ec972b90` — show durable outbox status in test UI
 
-نجحت 5/5 حالات فعلية، صفر فشل:
-1. SALE ناجح + إعادة نفس operationId: المخزون ينخفض مرة واحدة فقط، وتوجد فاتورة واحدة وحركة مخزون واحدة وحركة صندوق واحدة وaudit وreceipt وchangeLog واحد.
-2. نقص المخزون: rollback كامل ولا تبقى أي كتابة جانبية.
-3. منتج مفقود: rollback كامل.
-4. دفع LATER: البيع وخصم المخزون ينجحان بدون cashMovement.
-5. عمليتا بيع متزامنتان على آخر قطعة: تنجح واحدة فقط، الثانية تفشل، والمخزون النهائي صفر بدون بيع مزدوج.
+### تحقق البناء
 
-كما نجح workflow بناء APK التجريبي على نفس commit.
+GitHub Actions run `36175937164` على commit `ec972b90` اكتمل بنجاح. Job `debug-apk` نجح، بما فيه Build separate Native 4 test package ورفع artifact. هذا يثبت أن تغييرات schema/Java/UI الحالية تُبنى معاً بنجاح.
 
-### ملاحظات CI غير مانعة
+## البوابة التالية — إرسال Outbox إلى endpoint التجريبي
 
-ظهر تحذير بأن بعض أدوات GitHub Actions تنتقل من Node 20، وتحذيرات npm dependencies متوسطة. هذه لم تفشل الاختبارات ولا تغيّر نتيجة بوابة منطق البيع، لكنها يجب أن تعالج لاحقاً كصيانة dependencies/CI منفصلة حتى لا نخلطها مع منطق المزامنة.
+يسمح الآن بالبدء في Sender، لكن بالشروط التالية فقط:
 
-## البوابة التالية — Android Outbox التجريبي
-
-بعد نجاح Transaction وIdempotency في Emulator أصبح مسموحاً بدء ربط Android Outbox، لكن فقط مع test-store والـendpoint التجريبي. المطلوب قبل أي بيانات حقيقية:
-1. حفظ command محلياً قبل محاولة الإرسال.
-2. operationId ثابت لا يتغير عند Retry أو إعادة تشغيل التطبيق.
-3. حالات محلية واضحة: PENDING / SENDING / CONFIRMED / FAILED_RETRYABLE / FAILED_PERMANENT.
-4. عدم حذف command المؤكد مباشرة؛ الاحتفاظ بإيصال/مرجع للمراجعة.
-5. Retry بعد انقطاع الشبكة وإعادة تشغيل التطبيق دون إنشاء SALE جديد.
-6. اختبار جهازين على test-store قبل أي تفعيل إنتاجي.
+1. `storeId` ثابت وصريح من نوع test-store؛ ممنوع production store.
+2. Sender يقرأ command المخزن كما هو؛ ممنوع إعادة إنشاء SALE أو operationId أثناء الإرسال.
+3. قبل المحاولة: PENDING/FAILED_RETRYABLE -> SENDING.
+4. نجاح endpoint: SENDING -> CONFIRMED مع revision.
+5. خطأ شبكة/timeout/5xx: -> FAILED_RETRYABLE دون تغيير operationId.
+6. أخطاء validation الدائمة: -> FAILED_PERMANENT مع إبقاء السجل للمراجعة.
+7. إذا نجح الخادم ثم انقطع الرد، إعادة نفس command آمنة بسبب commandReceipts/idempotency.
+8. لا يتم تفعيل استقبال تغييرات جهاز آخر قبل نجاح اختبارات Sender والانقطاع وإعادة التشغيل.
 
 ## قاعدة العمل
 
-لا يتم توصيل هذه الطبقة ببيانات الصفا الحقيقية قبل اجتياز اختبارات Outbox والانقطاع والاستئناف من جهازين. كل مرحلة لاحقة يجب إضافتها إلى هذا السجل مع commits المرتبطة بها.
+لا يتم توصيل هذه الطبقة ببيانات الصفا الحقيقية قبل اجتياز اختبارات Outbox والانقطاع والاستئناف من جهازين. لا استبدال snapshots كاملة، ولا حذف تلقائي لبيانات محلية سليمة بسبب نسخة بعيدة أصغر. كل مرحلة لاحقة تضاف إلى هذا السجل مع commits والاختبارات المرتبطة بها.
