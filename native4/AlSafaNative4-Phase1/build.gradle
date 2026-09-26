@@ -1,3 +1,12 @@
 plugins {
     id 'com.android.application' version '8.7.3' apply false
 }
+
+// Keep optional module dependencies outside app/build.gradle so Firebase app configuration remains untouched.
+subprojects {
+    afterEvaluate { project ->
+        if (project.name == 'app') {
+            project.apply from: project.file('firestore-dependency.gradle')
+        }
+    }
+}
