@@ -2,15 +2,30 @@ package com.alsafa.native4.core;
 
 import android.content.ContentValues;
 import android.content.Context;
+import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import com.alsafa.native4.sync.SyncOperation;
 
 /** Production core DB for Native4. Local data is authoritative; upgrades are additive. */
 public final class CoreDb extends SQLiteOpenHelper implements CoreStore.DbProvider {
- public CoreDb(Context context){super(context,"alsafa_native4_core.db",null,9);}
+ public CoreDb(Context context){super(context,"alsafa_native4_core.db",null,10);}
  @Override public void onCreate(SQLiteDatabase db){createSyncTables(db);CoreSchemaV8.create(db);}
- @Override public void onUpgrade(SQLiteDatabase db,int oldVersion,int newVersion){createSyncTables(db);CoreSchemaV8.create(db);}
+ @Override public void onUpgrade(SQLiteDatabase db,int oldVersion,int newVersion){
+  createSyncTables(db);CoreSchemaV8.create(db);
+  if(oldVersion<10){
+   addColumnIfMissing(db,"daily_closings","carry_usd","REAL NOT NULL DEFAULT 0");
+   addColumnIfMissing(db,"daily_closings","drawer_out_usd","REAL NOT NULL DEFAULT 0");
+   addColumnIfMissing(db,"daily_closings","carry_try","REAL NOT NULL DEFAULT 0");
+   addColumnIfMissing(db,"daily_closings","drawer_out_try","REAL NOT NULL DEFAULT 0");
+   addColumnIfMissing(db,"daily_closings","carry_syp","REAL NOT NULL DEFAULT 0");
+   addColumnIfMissing(db,"daily_closings","drawer_out_syp","REAL NOT NULL DEFAULT 0");
+  }
+ }
+ private static void addColumnIfMissing(SQLiteDatabase db,String table,String column,String definition){
+  try(Cursor c=db.rawQuery("PRAGMA table_info("+table+")",null)){while(c.moveToNext())if(column.equals(c.getString(c.getColumnIndexOrThrow("name"))))return;}
+  db.execSQL("ALTER TABLE "+table+" ADD COLUMN "+column+" "+definition);
+ }
  private static void createSyncTables(SQLiteDatabase db){
   db.execSQL("CREATE TABLE IF NOT EXISTS outbox(operation_id TEXT PRIMARY KEY,operation_kind TEXT NOT NULL,record_id TEXT NOT NULL,payload TEXT NOT NULL,source_device_id TEXT NOT NULL,created_at INTEGER NOT NULL,state TEXT NOT NULL DEFAULT 'PENDING',attempts INTEGER NOT NULL DEFAULT 0,last_attempt_at INTEGER,last_error TEXT,confirmed_revision INTEGER)");
   db.execSQL("CREATE TABLE IF NOT EXISTS applied(operation_id TEXT PRIMARY KEY,applied_at INTEGER NOT NULL)");
