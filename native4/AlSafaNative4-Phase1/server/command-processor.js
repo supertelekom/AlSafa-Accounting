@@ -15,54 +15,55 @@ async function processCommand(db, rawCommand, actorUid) {
     const previous = await tx.get(receipt);
     if (previous.exists) return { status: 'CONFIRMED', duplicate: true, revision: previous.data().revision };
     testStoreOnly(command);
-    let primaryRef = null;
-    let primaryData = null;
-    let primaryMerge = false;
-    const writes = [];
+    let primaryRef = null; let primaryData = null; let primaryMerge = false; const writes = [];
 
     if (command.kind === 'PRODUCT_CREATE') {
-      primaryData = productDocument(command);
-      primaryRef = store.collection('products').doc(command.recordId);
+      primaryData = productDocument(command); primaryRef = store.collection('products').doc(command.recordId);
       if ((await tx.get(primaryRef)).exists) { const error = new Error('معرف المنتج مستخدم بالفعل'); error.code = 'PRODUCT_EXISTS'; throw error; }
     } else if (command.kind === 'PRODUCT_UPDATE') {
       primaryRef = store.collection('products').doc(command.recordId);
       if (!(await tx.get(primaryRef)).exists) { const error = new Error('المنتج غير موجود'); error.code = 'PRODUCT_NOT_FOUND'; throw error; }
-      primaryData = { ...command.payload, updatedAt: FieldValue.serverTimestamp() };
-      primaryMerge = true;
-      writes.push([store.collection('auditLog').doc(command.operationId), { operationId: command.operationId, kind: 'PRODUCT_UPDATE', recordId: command.recordId, sourceDeviceId: command.sourceDeviceId, actorUid, at: FieldValue.serverTimestamp() }, false]);
+      primaryData = { ...command.payload, updatedAt: FieldValue.serverTimestamp() }; primaryMerge = true;
+      writes.push([store.collection('auditLog').doc(command.operationId), { operationId: command.operationId, kind: command.kind, recordId: command.recordId, sourceDeviceId: command.sourceDeviceId, actorUid, at: FieldValue.serverTimestamp() }, false]);
     } else if (command.kind === 'INVENTORY_ADJUSTMENT') {
-      primaryRef = store.collection('products').doc(command.recordId);
-      const productSnap = await tx.get(primaryRef);
+      primaryRef = store.collection('products').doc(command.recordId); const productSnap = await tx.get(primaryRef);
       if (!productSnap.exists) { const error = new Error('المنتج غير موجود'); error.code = 'PRODUCT_NOT_FOUND'; throw error; }
       const currentQuantity = Number(productSnap.data().quantity);
       if (!Number.isInteger(currentQuantity) || currentQuantity < 0) { const error = new Error('قيمة المخزون الحالية غير صالحة'); error.code = 'INVALID_STOCK_STATE'; throw error; }
       const nextQuantity = currentQuantity + command.payload.quantityDelta;
       if (nextQuantity < 0) { const error = new Error('لا يمكن أن يصبح المخزون سالباً'); error.code = 'INSUFFICIENT_STOCK'; throw error; }
-      primaryData = { quantity: nextQuantity, updatedAt: FieldValue.serverTimestamp() };
-      primaryMerge = true;
+      primaryData = { quantity: nextQuantity, updatedAt: FieldValue.serverTimestamp() }; primaryMerge = true;
       writes.push([store.collection('inventoryMovements').doc(command.operationId), { operationId: command.operationId, productId: command.recordId, quantityDelta: command.payload.quantityDelta, quantityBefore: currentQuantity, quantityAfter: nextQuantity, reason: command.payload.reason.trim(), sourceDeviceId: command.sourceDeviceId, actorUid, at: FieldValue.serverTimestamp() }, false]);
-      writes.push([store.collection('auditLog').doc(command.operationId), { operationId: command.operationId, kind: 'INVENTORY_ADJUSTMENT', recordId: command.recordId, sourceDeviceId: command.sourceDeviceId, actorUid, at: FieldValue.serverTimestamp() }, false]);
+      writes.push([store.collection('auditLog').doc(command.operationId), { operationId: command.operationId, kind: command.kind, recordId: command.recordId, sourceDeviceId: command.sourceDeviceId, actorUid, at: FieldValue.serverTimestamp() }, false]);
+    } else if (command.kind === 'CASH_MOVEMENT') {
+      primaryRef = store.collection('cashTransfers').doc(command.recordId);
+      if ((await tx.get(primaryRef)).exists) { const error = new Error('معرف نقل النقد مستخدم بالفعل'); error.code = 'CASH_MOVEMENT_EXISTS'; throw error; }
+      primaryData = { ...command.payload, reason: command.payload.reason.trim(), sourceDeviceId: command.sourceDeviceId, actorUid };
+      writes.push([store.collection('cashMovements').doc(`${command.operationId}-out`), { operationId: command.operationId, account: command.payload.fromAccount, direction: 'OUT', amount: command.payload.amount, currency: command.payload.currency, reason: command.payload.reason.trim(), sourceDeviceId: command.sourceDeviceId, at: FieldValue.serverTimestamp() }, false]);
+      writes.push([store.collection('cashMovements').doc(`${command.operationId}-in`), { operationId: command.operationId, account: command.payload.toAccount, direction: 'IN', amount: command.payload.amount, currency: command.payload.currency, reason: command.payload.reason.trim(), sourceDeviceId: command.sourceDeviceId, at: FieldValue.serverTimestamp() }, false]);
+      writes.push([store.collection('auditLog').doc(command.operationId), { operationId: command.operationId, kind: command.kind, recordId: command.recordId, sourceDeviceId: command.sourceDeviceId, actorUid, at: FieldValue.serverTimestamp() }, false]);
+    } else if (command.kind === 'EXPENSE') {
+      primaryRef = store.collection('expenses').doc(command.recordId);
+      if ((await tx.get(primaryRef)).exists) { const error = new Error('معرف المصروف مستخدم بالفعل'); error.code = 'EXPENSE_EXISTS'; throw error; }
+      primaryData = { ...command.payload, reason: command.payload.reason.trim(), sourceDeviceId: command.sourceDeviceId, actorUid };
+      writes.push([store.collection('cashMovements').doc(command.operationId), { operationId: command.operationId, expenseId: command.recordId, account: command.payload.account, direction: 'OUT', amount: command.payload.amount, currency: command.payload.currency, reason: command.payload.reason.trim(), sourceDeviceId: command.sourceDeviceId, at: FieldValue.serverTimestamp() }, false]);
+      writes.push([store.collection('auditLog').doc(command.operationId), { operationId: command.operationId, kind: command.kind, recordId: command.recordId, sourceDeviceId: command.sourceDeviceId, actorUid, at: FieldValue.serverTimestamp() }, false]);
     } else if (command.kind === 'SALE') {
-      primaryData = saleDocument(command);
-      primaryRef = store.collection('sales').doc(command.recordId);
+      primaryData = saleDocument(command); primaryRef = store.collection('sales').doc(command.recordId);
       if ((await tx.get(primaryRef)).exists) { const error = new Error('معرف فاتورة البيع مستخدم بالفعل'); error.code = 'SALE_EXISTS'; throw error; }
       for (const item of primaryData.items) {
-        const productRef = store.collection('products').doc(item.productId);
-        const snap = await tx.get(productRef);
+        const productRef = store.collection('products').doc(item.productId); const snap = await tx.get(productRef);
         if (!snap.exists) { const error = new Error('المنتج غير موجود'); error.code = 'PRODUCT_NOT_FOUND'; throw error; }
         const quantity = Number(snap.data().quantity || 0);
         if (!Number.isFinite(quantity) || quantity < item.quantity) { const error = new Error('المخزون غير كافٍ'); error.code = 'INSUFFICIENT_STOCK'; throw error; }
         writes.push([productRef, { quantity: quantity - item.quantity, updatedAt: FieldValue.serverTimestamp() }, true]);
         writes.push([store.collection('inventoryMovements').doc(`${command.operationId}-${item.productId}`), { operationId: command.operationId, saleId: command.recordId, productId: item.productId, quantityDelta: -item.quantity, sourceDeviceId: command.sourceDeviceId, at: FieldValue.serverTimestamp() }, false]);
       }
-      if (primaryData.paymentMethod !== 'LATER') writes.push([store.collection('cashMovements').doc(command.operationId), { operationId: command.operationId, saleId: command.recordId, direction: 'IN', amount: primaryData.total, currency: primaryData.currency, paymentMethod: primaryData.paymentMethod, sourceDeviceId: command.sourceDeviceId, at: FieldValue.serverTimestamp() }, false]);
-      writes.push([store.collection('auditLog').doc(command.operationId), { operationId: command.operationId, kind: 'SALE', recordId: command.recordId, sourceDeviceId: command.sourceDeviceId, actorUid, at: FieldValue.serverTimestamp() }, false]);
-    } else if (command.kind !== 'TEST') {
-      const error = new Error('هذه العملية لم تُفعّل بعد'); error.code = 'NOT_ENABLED'; throw error;
-    }
+      if (primaryData.paymentMethod !== 'LATER') writes.push([store.collection('cashMovements').doc(command.operationId), { operationId: command.operationId, saleId: command.recordId, account: primaryData.paymentMethod === 'SHAM_CASH' ? 'SHAM_CASH' : 'DRAWER', direction: 'IN', amount: primaryData.total, currency: primaryData.currency, paymentMethod: primaryData.paymentMethod, sourceDeviceId: command.sourceDeviceId, at: FieldValue.serverTimestamp() }, false]);
+      writes.push([store.collection('auditLog').doc(command.operationId), { operationId: command.operationId, kind: command.kind, recordId: command.recordId, sourceDeviceId: command.sourceDeviceId, actorUid, at: FieldValue.serverTimestamp() }, false]);
+    } else if (command.kind !== 'TEST') { const error = new Error('هذه العملية لم تُفعّل بعد'); error.code = 'NOT_ENABLED'; throw error; }
 
-    const metaSnap = await tx.get(meta);
-    const revision = Number(metaSnap.exists ? metaSnap.data().revision || 0 : 0) + 1;
+    const metaSnap = await tx.get(meta); const revision = Number(metaSnap.exists ? metaSnap.data().revision || 0 : 0) + 1;
     if (primaryRef) tx.set(primaryRef, primaryMerge ? primaryData : { ...primaryData, createdAt: FieldValue.serverTimestamp() }, primaryMerge ? { merge: true } : undefined);
     for (const [ref, data, merge] of writes) tx.set(ref, data, merge ? { merge: true } : undefined);
     tx.set(receipt, { ...command, revision, acceptedAt: FieldValue.serverTimestamp(), acceptedByUid: actorUid });
