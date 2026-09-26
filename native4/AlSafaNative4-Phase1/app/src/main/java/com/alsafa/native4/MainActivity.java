@@ -9,11 +9,11 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import com.alsafa.native4.sync.OutboxDb;
 import com.alsafa.native4.sync.OutboxSender;
-import com.alsafa.native4.sync.FirebaseCallableTransport;
+import com.alsafa.native4.sync.FirestoreDirectTransport;
 import com.google.firebase.auth.FirebaseAuth;
 import java.util.List;
 
-/** Native 4 isolated Android shell. All remote writes remain restricted to the test store. */
+/** Native 4 isolated Android shell. Remote writes are restricted to the isolated test store. */
 public class MainActivity extends Activity {
  private static final String TEST_STORE="test-native4-android-alpha";
  private TextView status,authStatus,products,sales,repairs,outbox,sectionTitle,sectionSubtitle,saleSelectedProduct;
@@ -30,7 +30,7 @@ public class MainActivity extends Activity {
  private void bindSection(int id,HomeSection section){findViewById(id).setOnClickListener(v->showSection(section));}
  private void showSection(HomeSection section){sectionTitle.setText(section.title);sectionSubtitle.setText(section.subtitle);boolean alpha=section==HomeSection.SALES||section==HomeSection.REPAIRS||section==HomeSection.PRODUCTS;testPanel.setVisibility(alpha?View.VISIBLE:View.GONE);status.setText(alpha?"وضع Alpha معزول — الحفظ محلي أولاً ثم Outbox":"هذه الوحدة ضمن بناء v4.1 ولم تُفعّل للكتابة بعد");}
  private void signIn(){String email=authEmail.getText().toString().trim();String password=authPassword.getText().toString();if(email.isEmpty()||password.isEmpty()){status.setText("أدخل بريد وكلمة مرور مستخدم الاختبار");return;}status.setText("جاري تسجيل الدخول...");auth.signInWithEmailAndPassword(email,password).addOnCompleteListener(this,t->{authPassword.setText("");status.setText(t.isSuccessful()?"✓ تم تسجيل الدخول إلى Firebase التجريبي":"فشل تسجيل الدخول: "+(t.getException()==null?"خطأ غير معروف":t.getException().getClass().getSimpleName()));refresh();});}
- private void sendOutbox(){Native4Safety.requireIsolatedStore(TEST_STORE);if(auth.getCurrentUser()==null){status.setText("سجل الدخول أولاً؛ لم يتم إرسال شيء");return;}status.setText("جاري إرسال Outbox المعزول...");new Thread(()->{try{OutboxSender sender=new OutboxSender(db,new FirebaseCallableTransport(),TEST_STORE);int confirmed=sender.drainOnce();runOnUiThread(()->{status.setText("انتهت محاولة الإرسال. المؤكد: "+confirmed);refresh();});}catch(Exception e){runOnUiThread(()->{status.setText("تعذر الإرسال: "+e.getClass().getSimpleName());refresh();});}}).start();}
+ private void sendOutbox(){Native4Safety.requireIsolatedStore(TEST_STORE);if(auth.getCurrentUser()==null){status.setText("سجل الدخول أولاً؛ لم يتم إرسال شيء");return;}status.setText("جاري إرسال Outbox مباشرة إلى Firebase...");new Thread(()->{try{OutboxSender sender=new OutboxSender(db,new FirestoreDirectTransport(),TEST_STORE);int confirmed=sender.drainOnce();runOnUiThread(()->{status.setText("انتهت محاولة Firebase المباشرة. المؤكد: "+confirmed);refresh();});}catch(Exception e){runOnUiThread(()->{status.setText("تعذر الإرسال: "+e.getClass().getSimpleName());refresh();});}}).start();}
  private void saveProduct(){try{String enteredName=productName.getText().toString().trim();String id=db.addTestProduct(enteredName,Integer.parseInt(productQuantity.getText().toString().trim()),Double.parseDouble(productPrice.getText().toString().trim()));productName.setText("");productQuantity.setText("");productPrice.setText("");List<OutboxDb.ProductHit> hits=db.searchProducts(enteredName,12);for(OutboxDb.ProductHit hit:hits){if(id.equals(hit.id)){selectProduct(hit);break;}}status.setText("✓ المنتج حُفظ محلياً ويمكن استخدامه في المبيع");refresh();}catch(Exception e){status.setText("لم يُحفظ المنتج: "+e.getMessage());}}
  private void searchSaleProducts(){saleSearchResults.removeAllViews();List<OutboxDb.ProductHit> hits=db.searchProducts(saleSearch.getText().toString(),12);if(hits.isEmpty()){TextView empty=new TextView(this);empty.setText("لا توجد نتائج مطابقة");empty.setGravity(View.TEXT_ALIGNMENT_TEXT_END);saleSearchResults.addView(empty);return;}for(OutboxDb.ProductHit hit:hits){Button b=new Button(this);b.setAllCaps(false);b.setText(hit.label());b.setOnClickListener(v->selectProduct(hit));saleSearchResults.addView(b);}}
  private void selectProduct(OutboxDb.ProductHit hit){saleProductId.setText(hit.id);saleSelectedProduct.setText("المحدد: "+hit.label());saleSearch.setText(hit.name);saleSearchResults.removeAllViews();status.setText("✓ تم اختيار المنتج");}
