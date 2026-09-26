@@ -3,7 +3,6 @@ package com.alsafa.native4;
 import android.app.Activity;
 import android.os.Bundle;
 import android.view.View;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -14,7 +13,7 @@ import com.google.firebase.auth.FirebaseAuth;
 
 /** Native 4 isolated Android shell. All remote writes remain restricted to the test store. */
 public class MainActivity extends Activity {
- private static final String TEST_STORE="test-native4";
+ private static final String TEST_STORE="test-native4-android-alpha";
  private TextView status,authStatus,products,sales,repairs,outbox,sectionTitle,sectionSubtitle;
  private EditText authEmail,authPassword,productName,productQuantity,productPrice,saleProductId,saleQuantity,salePayment,repairCustomer,repairWatch,repairTotal,repairPayment;
  private LinearLayout testPanel;
