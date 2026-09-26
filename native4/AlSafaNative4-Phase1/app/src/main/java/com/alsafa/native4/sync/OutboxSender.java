@@ -1,5 +1,6 @@
 package com.alsafa.native4.sync;
 
+import com.alsafa.native4.Native4Safety;
 import java.util.List;
 
 /**
@@ -19,7 +20,7 @@ public final class OutboxSender {
  public static final class RetryableException extends Exception { public RetryableException(String m){super(m);} }
  public static final class PermanentException extends Exception { public PermanentException(String m){super(m);} }
  private final OutboxDb db; private final Transport transport; private final String storeId;
- public OutboxSender(OutboxDb db,Transport transport,String storeId){if(db==null||transport==null)throw new IllegalArgumentException("Sender dependencies مطلوبة");if(!isTestStore(storeId))throw new IllegalArgumentException("OutboxSender محصور بمتجر اختبار");this.db=db;this.transport=transport;this.storeId=storeId;}
+ public OutboxSender(OutboxDb db,Transport transport,String storeId){if(db==null||transport==null)throw new IllegalArgumentException("Sender dependencies مطلوبة");if(!isTestStore(storeId))throw new IllegalArgumentException("OutboxSender محصور بمتجر اختبار Native4 معزول");this.db=db;this.transport=transport;this.storeId=storeId;}
  public int drainOnce(){int confirmed=0;List<OutboxDb.Item> items=db.pending();for(OutboxDb.Item item:items){db.markSending(item.id);Command command=new Command(item.id,storeId,item.sourceDeviceId,item.kind,item.recordId,item.payload);try{Result result=transport.submit(command);db.confirm(item.id,result.revision);confirmed++;}catch(RetryableException e){db.retryLater(item.id,e.getMessage());}catch(PermanentException e){db.failPermanent(item.id,e.getMessage());}catch(RuntimeException e){db.retryLater(item.id,"تعذر الإرسال: "+e.getClass().getSimpleName());}}return confirmed;}
- static boolean isTestStore(String value){return value!=null&&(value.startsWith("test-")||value.endsWith("-test"));}
+ public static boolean isTestStore(String value){return Native4Safety.isIsolatedStore(value);}
 }
