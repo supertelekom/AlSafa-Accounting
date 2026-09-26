@@ -1,0 +1,21 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /native4Stores/test-native4-android-alpha/operations/{operationId} {
+      allow get: if request.auth != null && resource.data.uid == request.auth.uid;
+      allow list, delete: if false;
+      allow create: if request.auth != null
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.operationId == operationId
+        && request.resource.data.storeId == 'test-native4-android-alpha';
+      allow update: if request.auth != null
+        && resource.data.uid == request.auth.uid
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.operationId == operationId
+        && request.resource.data.storeId == 'test-native4-android-alpha';
+    }
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
