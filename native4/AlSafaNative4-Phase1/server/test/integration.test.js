@@ -15,6 +15,7 @@ if (!process.env.FIRESTORE_EMULATOR_HOST) {
   const store = db.collection('native4Stores').doc(storeId);
   const uuid = n => `00000000-0000-4000-8000-${String(n).padStart(12, '0')}`;
   const sale = (n, recordId, productId, quantity, paymentMethod = 'CASH') => ({ operationId: uuid(n), storeId, sourceDeviceId: 'phone-test', kind: 'SALE', recordId, payload: { items: [{ productId, quantity, unitPrice: 10 }], currency: 'USD', paymentMethod, total: quantity * 10 } });
+  const productUpdate = (n, recordId, payload) => ({ operationId: uuid(n), storeId, sourceDeviceId: 'phone-test', kind: 'PRODUCT_UPDATE', recordId, payload });
 
   async function clearStore() {
     for (const name of ['products','sales','inventoryMovements','cashMovements','auditLog','commandReceipts','changeLog','_meta']) {
@@ -39,6 +40,33 @@ if (!process.env.FIRESTORE_EMULATOR_HOST) {
     assert.equal((await store.collection('auditLog').get()).size, 1);
     assert.equal((await store.collection('commandReceipts').get()).size, 1);
     assert.equal((await store.collection('changeLog').get()).size, 1);
+  });
+
+  test('PRODUCT_UPDATE changes metadata but preserves stock and is idempotent', async () => {
+    await seed('p1', 7);
+    const cmd = productUpdate(20, 'p1', { name: 'updated', price: 12 });
+    const first = await processCommand(db, cmd, 'tester');
+    const second = await processCommand(db, cmd, 'tester');
+    const data = (await store.collection('products').doc('p1').get()).data();
+    assert.equal(first.duplicate, false); assert.equal(second.duplicate, true);
+    assert.equal(data.quantity, 7); assert.equal(data.name, 'updated'); assert.equal(data.price, 12);
+    assert.equal((await store.collection('auditLog').get()).size, 1);
+    assert.equal((await store.collection('changeLog').get()).size, 1);
+  });
+
+  test('PRODUCT_UPDATE cannot smuggle a stock overwrite', async () => {
+    await seed('p1', 7);
+    await assert.rejects(() => processCommand(db, productUpdate(21, 'p1', { quantity: 999 }), 'tester'), e => e.code === 'INVALID_PRODUCT_UPDATE');
+    assert.equal((await store.collection('products').doc('p1').get()).data().quantity, 7);
+    assert.equal((await store.collection('commandReceipts').get()).size, 0);
+    assert.equal((await store.collection('changeLog').get()).size, 0);
+  });
+
+  test('PRODUCT_UPDATE missing product rolls back completely', async () => {
+    await assert.rejects(() => processCommand(db, productUpdate(22, 'missing', { price: 12 }), 'tester'), e => e.code === 'PRODUCT_NOT_FOUND');
+    assert.equal((await store.collection('auditLog').get()).size, 0);
+    assert.equal((await store.collection('commandReceipts').get()).size, 0);
+    assert.equal((await store.collection('changeLog').get()).size, 0);
   });
 
   test('insufficient stock rolls back every sale-side write', async () => {
