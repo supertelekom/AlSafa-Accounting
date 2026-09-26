@@ -11,7 +11,7 @@ if (!process.env.FIRESTORE_EMULATOR_HOST) {
 } else {
   if (!getApps().length) initializeApp({ projectId: 'alsafa-native4-test' });
   const db = getFirestore();
-  const storeId = 'test-lost-response';
+  const storeId = 'test-native4-lost-response';
   const store = db.collection('native4Stores').doc(storeId);
   const operationId = '10000000-0000-4000-8000-000000000001';
   const command = { operationId, storeId, sourceDeviceId: 'phone-test', kind: 'SALE', recordId: 'sale-lost-response', payload: { items: [{ productId: 'p1', quantity: 1, unitPrice: 25 }], currency: 'USD', paymentMethod: 'CASH', total: 25 } };
@@ -27,17 +27,14 @@ if (!process.env.FIRESTORE_EMULATOR_HOST) {
     await clear();
     await store.collection('products').doc('p1').set({ id: 'p1', name: 'watch', quantity: 2, price: 25 });
 
-    // First call reaches the server and commits. The client is assumed to lose this response.
     const committedButLost = await processCommand(db, command, 'tester');
     assert.equal(committedButLost.duplicate, false);
     assert.equal((await store.collection('products').doc('p1').get()).data().quantity, 1);
 
-    // After timeout/restart the client resends the exact persisted command.
     const retry = await processCommand(db, command, 'tester');
     assert.equal(retry.duplicate, true);
     assert.equal(retry.revision, committedButLost.revision);
 
-    // No accounting side effect may occur twice.
     assert.equal((await store.collection('products').doc('p1').get()).data().quantity, 1);
     assert.equal((await store.collection('sales').get()).size, 1);
     assert.equal((await store.collection('inventoryMovements').get()).size, 1);
