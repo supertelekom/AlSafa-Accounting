@@ -1,0 +1,11 @@
+rules_version = '2';
+
+// Native 4 command data is never written by an Android client directly.
+// Cloud Functions use Admin SDK and are not constrained by these rules.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /native4Stores/{storeId}/{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

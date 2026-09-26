@@ -1,0 +1,41 @@
+name: Verify Native 4 command server
+
+on:
+  push:
+    branches: [native4-sync-core]
+    paths:
+      - "native4/AlSafaNative4-Phase1/server/**"
+      - "native4/AlSafaNative4-Phase1/firebase.json"
+      - ".github/workflows/native4-server-test.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "native4/AlSafaNative4-Phase1/server/**"
+      - "native4/AlSafaNative4-Phase1/firebase.json"
+      - ".github/workflows/native4-server-test.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  protocol:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: native4/AlSafaNative4-Phase1/server
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - run: npm install --ignore-scripts
+      - name: Unit tests
+        run: npm test
+      - name: Firestore emulator integration tests
+        working-directory: native4/AlSafaNative4-Phase1
+        run: npx --yes firebase-tools@latest emulators:exec --only firestore --project alsafa-native4-test "cd server && node --test test/integration.test.js"

@@ -1,0 +1,27 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'com.alsafa.native4'
+    compileSdk 34
+    defaultConfig {
+        applicationId 'com.alsafa.native4.test'
+        minSdk 26
+        targetSdk 33
+        versionCode 40012
+        versionName '4.0.10-auth-manual-outbox-test'
+        resValue 'string', 'google_app_id', '1:582284367575:android:be1fe4711e829cc714c292'
+        resValue 'string', 'google_api_key', 'AIzaSyA33Yww6fIpYs4SKH96nF-E_pn9DG_A_WQ'
+        resValue 'string', 'gcm_defaultSenderId', '582284367575'
+        resValue 'string', 'project_id', 'alsafa-native'
+        resValue 'string', 'google_storage_bucket', 'alsafa-native.firebasestorage.app'
+    }
+}
+
+dependencies {
+    implementation platform('com.google.firebase:firebase-bom:34.3.0')
+    implementation 'com.google.firebase:firebase-auth'
+    implementation 'com.google.firebase:firebase-functions'
+    testImplementation 'junit:junit:4.13.2'
+}
