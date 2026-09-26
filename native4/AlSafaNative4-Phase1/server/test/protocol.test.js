@@ -22,6 +22,20 @@ test('rejects quantity inside product update so stock cannot be overwritten', ()
 test('rejects initialQuantity inside product update', () => assert.throws(() => validateCommand({ ...productUpdate, payload: { initialQuantity: 999 } }), { code: 'INVALID_PRODUCT_UPDATE' }));
 test('rejects empty product update', () => assert.throws(() => validateCommand({ ...productUpdate, payload: {} }), { code: 'INVALID_PRODUCT_UPDATE' }));
 
+const inventory = { ...valid, kind: 'INVENTORY_ADJUSTMENT', recordId: 'product-test-1', payload: { quantityDelta: -1, reason: 'count correction' } };
+test('accepts explicit inventory adjustment', () => assert.equal(validateCommand(inventory).payload.quantityDelta, -1));
+test('rejects zero inventory adjustment', () => assert.throws(() => validateCommand({ ...inventory, payload: { quantityDelta: 0, reason: 'none' } }), { code: 'INVALID_INVENTORY_ADJUSTMENT' }));
+
+const cash = { ...valid, kind: 'CASH_MOVEMENT', recordId: 'transfer-1', payload: { fromAccount: 'DRAWER', toAccount: 'EXTERNAL', amount: 20, currency: 'USD', reason: 'safe transfer' } };
+test('accepts a balanced cash transfer envelope', () => assert.equal(validateCommand(cash).payload.amount, 20));
+test('rejects transfer to same account', () => assert.throws(() => validateCommand({ ...cash, payload: { ...cash.payload, toAccount: 'DRAWER' } }), { code: 'INVALID_CASH_MOVEMENT' }));
+test('rejects unsupported transfer currency', () => assert.throws(() => validateCommand({ ...cash, payload: { ...cash.payload, currency: 'EUR' } }), { code: 'INVALID_CASH_MOVEMENT' }));
+test('rejects zero cash transfer', () => assert.throws(() => validateCommand({ ...cash, payload: { ...cash.payload, amount: 0 } }), { code: 'INVALID_CASH_MOVEMENT' }));
+
+const expense = { ...valid, kind: 'EXPENSE', recordId: 'expense-1', payload: { account: 'DRAWER', amount: 10, currency: 'USD', reason: 'rent' } };
+test('accepts expense from explicit account', () => assert.equal(validateCommand(expense).payload.account, 'DRAWER'));
+test('rejects expense without positive amount', () => assert.throws(() => validateCommand({ ...expense, payload: { ...expense.payload, amount: -1 } }), { code: 'INVALID_EXPENSE' }));
+
 const sale = { ...valid, kind: 'SALE', recordId: 'sale-test-1', payload: { items: [{ productId: 'product-test-1', quantity: 2, unitPrice: 25 }], currency: 'USD', paymentMethod: 'CASH', total: 50 } };
 test('accepts a complete sale command envelope', () => assert.equal(validateCommand(sale).payload.total, 50));
 test('rejects sale total that differs from its items', () => assert.throws(() => validateCommand({ ...sale, payload: { ...sale.payload, total: 49 } }), { code: 'INVALID_SALE_PAYLOAD' }));
