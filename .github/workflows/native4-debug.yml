@@ -3,7 +3,7 @@ name: Build Native 4 test APK
 on:
   workflow_dispatch:
   push:
-    branches: [native4-sync-core, native4-android-v4.1, native4-firestore-direct]
+    branches: [native4-sync-core, native4-android-v4.1, native4-firestore-direct, native4-core-migration]
     paths:
       - "native4/AlSafaNative4-Phase1/**"
       - ".github/workflows/native4-debug.yml"
@@ -35,6 +35,6 @@ jobs:
         run: gradle -p native4/AlSafaNative4-Phase1 :app:assembleDebug
       - uses: actions/upload-artifact@v4
         with:
-          name: AlSafaNative4-v4.1-firestore-direct-debug
+          name: AlSafaNative4-core-migration-debug
           path: native4/AlSafaNative4-Phase1/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
