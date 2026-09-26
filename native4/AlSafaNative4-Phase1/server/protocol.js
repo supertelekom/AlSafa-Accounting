@@ -31,6 +31,14 @@ function validatePayload(kind, payload) {
     if (Object.prototype.hasOwnProperty.call(payload, 'barcode') && payload.barcode != null && String(payload.barcode).trim().length > 80) fail('INVALID_PRODUCT_UPDATE', 'باركود المنتج طويل جداً');
     if (Object.prototype.hasOwnProperty.call(payload, 'price')) finiteNonNegative(payload.price, 'INVALID_PRODUCT_UPDATE', 'سعر المنتج غير صالح');
   }
+  if (kind === 'INVENTORY_ADJUSTMENT') {
+    const allowed = new Set(['quantityDelta', 'reason']);
+    const keys = Object.keys(payload);
+    if (!keys.length || keys.some(key => !allowed.has(key))) fail('INVALID_INVENTORY_ADJUSTMENT', 'تعديل المخزون يحتوي حقلاً غير مسموح');
+    if (!Number.isInteger(payload.quantityDelta) || payload.quantityDelta === 0) fail('INVALID_INVENTORY_ADJUSTMENT', 'فرق المخزون يجب أن يكون عدداً صحيحاً غير صفري');
+    const reason = String(payload.reason || '').trim();
+    if (!reason || reason.length > 240) fail('INVALID_INVENTORY_ADJUSTMENT', 'سبب تعديل المخزون مطلوب');
+  }
   if (kind === 'SALE') {
     if (!Array.isArray(payload.items) || payload.items.length < 1 || payload.items.length > 100) fail('INVALID_SALE_PAYLOAD', 'يجب أن يحتوي البيع على عنصر واحد على الأقل');
     const ids = new Set();
