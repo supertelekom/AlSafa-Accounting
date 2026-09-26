@@ -1,0 +1,71 @@
+name: Native4 No-Billing Isolated Tests
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - native4-no-billing-tests
+    paths:
+      - 'native4/AlSafaNative4-Phase1/server/**'
+      - '.github/workflows/native4-no-billing-tests.yml'
+
+permissions:
+  contents: read
+
+env:
+  NATIVE4_DIR: native4/AlSafaNative4-Phase1
+  TEST_PROJECT_ID: alsafa-native4-test
+
+jobs:
+  isolated-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Hard isolation gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$TEST_PROJECT_ID" = "alsafa-native4-test"
+          test "$TEST_PROJECT_ID" != "alsafa-native"
+          test "$TEST_PROJECT_ID" != "alsafa-accounting"
+          grep -q "test-native4-integration" "$NATIVE4_DIR/server/test/integration.test.js"
+          grep -q "FIRESTORE_EMULATOR_HOST" "$NATIVE4_DIR/server/test/integration.test.js"
+          ! grep -R -E "firebase deploy|gcloud .*deploy" "$NATIVE4_DIR/server/test" .github/workflows/native4-no-billing-tests.yml
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install server dependencies
+        working-directory: ${{ env.NATIVE4_DIR }}/server
+        run: npm install --ignore-scripts
+
+      - name: Unit tests
+        working-directory: ${{ env.NATIVE4_DIR }}/server
+        run: npm test
+
+      - name: Install Java for Firestore Emulator
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Install Firebase CLI
+        run: npm install --global firebase-tools
+
+      - name: Integration tests against local Firestore Emulator only
+        working-directory: ${{ env.NATIVE4_DIR }}/server
+        env:
+          FIRESTORE_EMULATOR_HOST: 127.0.0.1:8080
+          GCLOUD_PROJECT: alsafa-native4-test
+          GOOGLE_CLOUD_PROJECT: alsafa-native4-test
+        run: |
+          set -euo pipefail
+          firebase emulators:exec --only firestore --project "$TEST_PROJECT_ID" "npm test"
+
+      - name: Confirm no production deployment occurred
+        shell: bash
+        run: |
+          echo "PASS: tests ran locally; no Firebase/Google Cloud deployment step exists in this workflow."
