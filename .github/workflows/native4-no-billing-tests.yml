@@ -32,7 +32,11 @@ jobs:
           test "$TEST_PROJECT_ID" != "alsafa-accounting"
           grep -q "test-native4-integration" "$NATIVE4_DIR/server/test/integration.test.js"
           grep -q "FIRESTORE_EMULATOR_HOST" "$NATIVE4_DIR/server/test/integration.test.js"
-          ! grep -R -E "firebase deploy|gcloud .*deploy" "$NATIVE4_DIR/server/test" .github/workflows/native4-no-billing-tests.yml
+          if grep -R -E "firebase[[:space:]]+deploy|gcloud[[:space:]].*deploy" "$NATIVE4_DIR/server/test"; then
+            echo "Deployment command found inside isolated test code; refusing to continue."
+            exit 1
+          fi
+          echo "PASS: isolated test sources contain no deployment command."
 
       - uses: actions/setup-node@v4
         with:
