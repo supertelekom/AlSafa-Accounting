@@ -1,6 +1,7 @@
 package com.alsafa.native4;
 
 import android.app.Activity;
+import android.content.ContentValues;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
@@ -21,12 +22,13 @@ public class MainActivity extends Activity {
  private LinearLayout testPanel,saleSearchResults;
  private OutboxDb db; private FirebaseAuth auth;
  @Override public void onCreate(Bundle state){
-  super.onCreate(state);Native4Safety.requireIsolatedStore(TEST_STORE);setContentView(R.layout.activity_main);db=new OutboxDb(this);db.recoverInterrupted();auth=FirebaseAuth.getInstance();
+  super.onCreate(state);Native4Safety.requireIsolatedStore(TEST_STORE);setContentView(R.layout.activity_main);db=new OutboxDb(this);recoverMissingDefaultDatabaseFailures();db.recoverInterrupted();auth=FirebaseAuth.getInstance();
   status=findViewById(R.id.status);authStatus=findViewById(R.id.authStatus);products=findViewById(R.id.products);sales=findViewById(R.id.sales);repairs=findViewById(R.id.repairs);outbox=findViewById(R.id.outbox);sectionTitle=findViewById(R.id.sectionTitle);sectionSubtitle=findViewById(R.id.sectionSubtitle);testPanel=findViewById(R.id.testPanel);saleSearchResults=findViewById(R.id.saleSearchResults);saleSelectedProduct=findViewById(R.id.saleSelectedProduct);
   authEmail=findViewById(R.id.authEmail);authPassword=findViewById(R.id.authPassword);productName=findViewById(R.id.productName);productQuantity=findViewById(R.id.productQuantity);productPrice=findViewById(R.id.productPrice);saleSearch=findViewById(R.id.saleSearch);saleProductId=findViewById(R.id.saleProductId);saleQuantity=findViewById(R.id.saleQuantity);salePayment=findViewById(R.id.salePayment);repairCustomer=findViewById(R.id.repairCustomer);repairWatch=findViewById(R.id.repairWatch);repairTotal=findViewById(R.id.repairTotal);repairPayment=findViewById(R.id.repairPayment);
   bindSection(R.id.navSales,HomeSection.SALES);bindSection(R.id.navRepairs,HomeSection.REPAIRS);bindSection(R.id.navProducts,HomeSection.PRODUCTS);bindSection(R.id.navPurchases,HomeSection.PURCHASES);bindSection(R.id.navCash,HomeSection.CASH);bindSection(R.id.navClosing,HomeSection.CLOSING);bindSection(R.id.navReports,HomeSection.REPORTS);bindSection(R.id.navSettings,HomeSection.SETTINGS);
   findViewById(R.id.signIn).setOnClickListener(v->signIn());findViewById(R.id.signOut).setOnClickListener(v->{auth.signOut();authPassword.setText("");status.setText("تم تسجيل الخروج");refresh();});findViewById(R.id.sendOutbox).setOnClickListener(v->sendOutbox());findViewById(R.id.saveProduct).setOnClickListener(v->saveProduct());findViewById(R.id.searchSaleProduct).setOnClickListener(v->searchSaleProducts());findViewById(R.id.saveSale).setOnClickListener(v->saveSale());findViewById(R.id.saveRepair).setOnClickListener(v->saveRepair());showSection(HomeSection.SALES);refresh();
  }
+ private void recoverMissingDefaultDatabaseFailures(){ContentValues v=new ContentValues();v.put("state","FAILED_RETRYABLE");v.put("last_error","تم إنشاء Firestore (default) ونشر القواعد؛ أعيدت العملية القديمة للمحاولة بنفس operationId");db.getWritableDatabase().update("outbox",v,"state='FAILED_PERMANENT' AND last_error LIKE ?",new String[]{"%database (default) does not exist for project alsafa-native%"});}
  private void bindSection(int id,HomeSection section){findViewById(id).setOnClickListener(v->showSection(section));}
  private void showSection(HomeSection section){sectionTitle.setText(section.title);sectionSubtitle.setText(section.subtitle);boolean alpha=section==HomeSection.SALES||section==HomeSection.REPAIRS||section==HomeSection.PRODUCTS;testPanel.setVisibility(alpha?View.VISIBLE:View.GONE);status.setText(alpha?"وضع Alpha معزول — الحفظ محلي أولاً ثم Outbox":"هذه الوحدة ضمن بناء v4.1 ولم تُفعّل للكتابة بعد");}
  private void signIn(){String email=authEmail.getText().toString().trim();String password=authPassword.getText().toString();if(email.isEmpty()||password.isEmpty()){status.setText("أدخل بريد وكلمة مرور مستخدم الاختبار");return;}status.setText("جاري تسجيل الدخول...");auth.signInWithEmailAndPassword(email,password).addOnCompleteListener(this,t->{authPassword.setText("");status.setText(t.isSuccessful()?"✓ تم تسجيل الدخول إلى Firebase التجريبي":"فشل تسجيل الدخول: "+(t.getException()==null?"خطأ غير معروف":t.getException().getClass().getSimpleName()));refresh();});}
