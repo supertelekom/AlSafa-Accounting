@@ -1,8 +1,11 @@
 'use strict';
 
+const TEST_STORE_PREFIX = 'test-native4-';
+
 function testStoreOnly(command) {
-  if (!command.storeId.startsWith('test-') && !command.storeId.endsWith('-test')) {
-    const error = new Error('معالجات Native 4 الحالية غير متاحة إلا في مخزن الاختبار');
+  const storeId = String(command && command.storeId || '');
+  if (!storeId.startsWith(TEST_STORE_PREFIX)) {
+    const error = new Error('معالجات Native 4 الحالية غير متاحة إلا في مخزن Native4 التجريبي المعزول');
     error.code = 'TEST_STORE_REQUIRED';
     throw error;
   }
@@ -37,4 +40,4 @@ function saleDocument(command) {
   };
 }
 
-module.exports = { productDocument, saleDocument, testStoreOnly };
+module.exports = { TEST_STORE_PREFIX, productDocument, saleDocument, testStoreOnly };
