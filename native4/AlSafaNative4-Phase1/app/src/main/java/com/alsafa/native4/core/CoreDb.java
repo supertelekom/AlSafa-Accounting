@@ -8,7 +8,7 @@ import com.alsafa.native4.sync.SyncOperation;
 
 /** Production core DB for Native4. Local data is authoritative; upgrades are additive. */
 public final class CoreDb extends SQLiteOpenHelper implements CoreStore.DbProvider {
- public CoreDb(Context context){super(context,"alsafa_native4_core.db",null,8);}
+ public CoreDb(Context context){super(context,"alsafa_native4_core.db",null,9);}
  @Override public void onCreate(SQLiteDatabase db){createSyncTables(db);CoreSchemaV8.create(db);}
  @Override public void onUpgrade(SQLiteDatabase db,int oldVersion,int newVersion){createSyncTables(db);CoreSchemaV8.create(db);}
  private static void createSyncTables(SQLiteDatabase db){
