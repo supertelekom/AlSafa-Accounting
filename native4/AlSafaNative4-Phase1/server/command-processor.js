@@ -17,12 +17,19 @@ async function processCommand(db, rawCommand, actorUid) {
     testStoreOnly(command);
     let primaryRef = null;
     let primaryData = null;
+    let primaryMerge = false;
     const writes = [];
 
     if (command.kind === 'PRODUCT_CREATE') {
       primaryData = productDocument(command);
       primaryRef = store.collection('products').doc(command.recordId);
       if ((await tx.get(primaryRef)).exists) { const error = new Error('معرف المنتج مستخدم بالفعل'); error.code = 'PRODUCT_EXISTS'; throw error; }
+    } else if (command.kind === 'PRODUCT_UPDATE') {
+      primaryRef = store.collection('products').doc(command.recordId);
+      if (!(await tx.get(primaryRef)).exists) { const error = new Error('المنتج غير موجود'); error.code = 'PRODUCT_NOT_FOUND'; throw error; }
+      primaryData = { ...command.payload, updatedAt: FieldValue.serverTimestamp() };
+      primaryMerge = true;
+      writes.push([store.collection('auditLog').doc(command.operationId), { operationId: command.operationId, kind: 'PRODUCT_UPDATE', recordId: command.recordId, sourceDeviceId: command.sourceDeviceId, actorUid, at: FieldValue.serverTimestamp() }, false]);
     } else if (command.kind === 'SALE') {
       primaryData = saleDocument(command);
       primaryRef = store.collection('sales').doc(command.recordId);
@@ -44,7 +51,7 @@ async function processCommand(db, rawCommand, actorUid) {
 
     const metaSnap = await tx.get(meta);
     const revision = Number(metaSnap.exists ? metaSnap.data().revision || 0 : 0) + 1;
-    if (primaryRef) tx.set(primaryRef, { ...primaryData, createdAt: FieldValue.serverTimestamp() });
+    if (primaryRef) tx.set(primaryRef, primaryMerge ? primaryData : { ...primaryData, createdAt: FieldValue.serverTimestamp() }, primaryMerge ? { merge: true } : undefined);
     for (const [ref, data, merge] of writes) tx.set(ref, data, merge ? { merge: true } : undefined);
     tx.set(receipt, { ...command, revision, acceptedAt: FieldValue.serverTimestamp(), acceptedByUid: actorUid });
     tx.set(store.collection('changeLog').doc(String(revision).padStart(12, '0')), { operationId: command.operationId, kind: command.kind, recordId: command.recordId, sourceDeviceId: command.sourceDeviceId, revision, at: FieldValue.serverTimestamp() });
