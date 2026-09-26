@@ -3,18 +3,12 @@ package com.alsafa.native4.sync;
 import com.alsafa.native4.Native4Safety;
 import java.util.List;
 
-/**
- * Retry-safe sender orchestration. The transport is injected deliberately so the
- * local-core APK cannot accidentally talk to production. It always sends the
- * exact persisted operationId/payload; it never rebuilds a SALE.
- */
+/** Retry-safe sender orchestration. Always sends the exact persisted operationId/payload. */
 public final class OutboxSender {
- public interface Transport {
-  Result submit(Command command) throws RetryableException, PermanentException;
- }
+ public interface Transport { Result submit(Command command) throws RetryableException, PermanentException; }
  public static final class Command {
   public final String operationId,storeId,sourceDeviceId,kind,recordId,payload;
-  Command(String operationId,String storeId,String sourceDeviceId,String kind,String recordId,String payload){this.operationId=operationId;this.storeId=storeId;this.sourceDeviceId=sourceDeviceId;this.kind=kind;this.recordId=recordId;this.payload=payload;}
+  public Command(String operationId,String storeId,String sourceDeviceId,String kind,String recordId,String payload){this.operationId=operationId;this.storeId=storeId;this.sourceDeviceId=sourceDeviceId;this.kind=kind;this.recordId=recordId;this.payload=payload;}
  }
  public static final class Result { public final long revision; public final boolean duplicate; public Result(long revision,boolean duplicate){if(revision<1)throw new IllegalArgumentException("revision غير صالح");this.revision=revision;this.duplicate=duplicate;} }
  public static final class RetryableException extends Exception { public RetryableException(String m){super(m);} }
