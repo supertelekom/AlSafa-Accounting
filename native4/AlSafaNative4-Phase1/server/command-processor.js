@@ -30,6 +30,18 @@ async function processCommand(db, rawCommand, actorUid) {
       primaryData = { ...command.payload, updatedAt: FieldValue.serverTimestamp() };
       primaryMerge = true;
       writes.push([store.collection('auditLog').doc(command.operationId), { operationId: command.operationId, kind: 'PRODUCT_UPDATE', recordId: command.recordId, sourceDeviceId: command.sourceDeviceId, actorUid, at: FieldValue.serverTimestamp() }, false]);
+    } else if (command.kind === 'INVENTORY_ADJUSTMENT') {
+      primaryRef = store.collection('products').doc(command.recordId);
+      const productSnap = await tx.get(primaryRef);
+      if (!productSnap.exists) { const error = new Error('المنتج غير موجود'); error.code = 'PRODUCT_NOT_FOUND'; throw error; }
+      const currentQuantity = Number(productSnap.data().quantity);
+      if (!Number.isInteger(currentQuantity) || currentQuantity < 0) { const error = new Error('قيمة المخزون الحالية غير صالحة'); error.code = 'INVALID_STOCK_STATE'; throw error; }
+      const nextQuantity = currentQuantity + command.payload.quantityDelta;
+      if (nextQuantity < 0) { const error = new Error('لا يمكن أن يصبح المخزون سالباً'); error.code = 'INSUFFICIENT_STOCK'; throw error; }
+      primaryData = { quantity: nextQuantity, updatedAt: FieldValue.serverTimestamp() };
+      primaryMerge = true;
+      writes.push([store.collection('inventoryMovements').doc(command.operationId), { operationId: command.operationId, productId: command.recordId, quantityDelta: command.payload.quantityDelta, quantityBefore: currentQuantity, quantityAfter: nextQuantity, reason: command.payload.reason.trim(), sourceDeviceId: command.sourceDeviceId, actorUid, at: FieldValue.serverTimestamp() }, false]);
+      writes.push([store.collection('auditLog').doc(command.operationId), { operationId: command.operationId, kind: 'INVENTORY_ADJUSTMENT', recordId: command.recordId, sourceDeviceId: command.sourceDeviceId, actorUid, at: FieldValue.serverTimestamp() }, false]);
     } else if (command.kind === 'SALE') {
       primaryData = saleDocument(command);
       primaryRef = store.collection('sales').doc(command.recordId);
