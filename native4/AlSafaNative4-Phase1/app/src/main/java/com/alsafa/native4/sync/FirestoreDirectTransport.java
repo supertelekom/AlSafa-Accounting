@@ -2,6 +2,7 @@ package com.alsafa.native4.sync;
 
 import com.google.android.gms.tasks.Tasks;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.FirebaseFirestoreException;
@@ -11,6 +12,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /** Direct Firebase/Firestore transport. The persisted operationId is the document id, so retries cannot create duplicates. */
 public final class FirestoreDirectTransport implements OutboxSender.Transport {
@@ -19,23 +21,26 @@ public final class FirestoreDirectTransport implements OutboxSender.Transport {
  public FirestoreDirectTransport(){auth=FirebaseAuth.getInstance();firestore=FirebaseFirestore.getInstance();}
  @Override public OutboxSender.Result submit(OutboxSender.Command c) throws OutboxSender.RetryableException,OutboxSender.PermanentException {
   if(!OutboxSender.isTestStore(c.storeId))throw new OutboxSender.PermanentException("رفض storeId غير تجريبي");
-  if(auth.getCurrentUser()==null)throw new OutboxSender.PermanentException("يجب تسجيل الدخول قبل إرسال عملية");
+  FirebaseUser user=auth.getCurrentUser();
+  if(user==null)throw new OutboxSender.PermanentException("يجب تسجيل الدخول قبل إرسال عملية");
+  // Preflight deliberately separates Auth/network failures from a Firestore write timeout.
+  try{Tasks.await(user.getIdToken(true),15,TimeUnit.SECONDS);}catch(Exception e){throw retryable("AUTH_TOKEN",e);}
+  try{Tasks.await(firestore.enableNetwork(),10,TimeUnit.SECONDS);}catch(Exception e){throw retryable("FIRESTORE_NETWORK",e);}
   try{
    DocumentReference ref=firestore.collection("native4Stores").document(c.storeId).collection("operations").document(c.operationId);
    long revision=System.currentTimeMillis();
    Map<String,Object> data=new HashMap<>();
-   data.put("operationId",c.operationId);data.put("storeId",c.storeId);data.put("sourceDeviceId",c.sourceDeviceId);data.put("kind",c.kind);data.put("recordId",c.recordId);data.put("payload",jsonToMap(new JSONObject(c.payload)));data.put("revision",revision);data.put("lastSubmittedAt",com.google.firebase.firestore.FieldValue.serverTimestamp());data.put("uid",auth.getCurrentUser().getUid());
-   // No read-before-write: deterministic operationId already makes this idempotent and avoids requiring Firestore read permission.
-   Tasks.await(ref.set(data,SetOptions.merge()),20,TimeUnit.SECONDS);
+   data.put("operationId",c.operationId);data.put("storeId",c.storeId);data.put("sourceDeviceId",c.sourceDeviceId);data.put("kind",c.kind);data.put("recordId",c.recordId);data.put("payload",jsonToMap(new JSONObject(c.payload)));data.put("revision",revision);data.put("lastSubmittedAt",com.google.firebase.firestore.FieldValue.serverTimestamp());data.put("uid",user.getUid());
+   // No read-before-write: deterministic operationId makes retries idempotent.
+   Tasks.await(ref.set(data,SetOptions.merge()),30,TimeUnit.SECONDS);
    return new OutboxSender.Result(revision,false);
-  }catch(OutboxSender.PermanentException e){throw e;}catch(Exception e){
-   Throwable root=rootCause(e);
-   if(root instanceof FirebaseFirestoreException){
-    FirebaseFirestoreException f=(FirebaseFirestoreException)root;
-    throw new OutboxSender.RetryableException("Firestore "+f.getCode().name()+": "+safe(f.getMessage()));
-   }
-   throw new OutboxSender.RetryableException("تعذر الكتابة إلى Firestore: "+root.getClass().getSimpleName()+": "+safe(root.getMessage()));
-  }
+  }catch(Exception e){throw retryable("FIRESTORE_WRITE",e);}
+ }
+ private static OutboxSender.RetryableException retryable(String stage,Exception error){
+  Throwable root=rootCause(error);
+  if(root instanceof FirebaseFirestoreException){FirebaseFirestoreException f=(FirebaseFirestoreException)root;return new OutboxSender.RetryableException(stage+" Firestore "+f.getCode().name()+": "+safe(f.getMessage()));}
+  if(root instanceof TimeoutException)return new OutboxSender.RetryableException(stage+" TIMEOUT: "+safe(root.getMessage()));
+  return new OutboxSender.RetryableException(stage+" "+root.getClass().getSimpleName()+": "+safe(root.getMessage()));
  }
  private static Throwable rootCause(Throwable error){Throwable current=error;if(current instanceof ExecutionException&&current.getCause()!=null)current=current.getCause();while(current.getCause()!=null&&current.getCause()!=current)current=current.getCause();return current;}
  private static String safe(String value){return value==null||value.trim().isEmpty()?"بلا تفاصيل":value.trim();}
