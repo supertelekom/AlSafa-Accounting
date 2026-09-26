@@ -23,6 +23,14 @@ function validatePayload(kind, payload) {
     if (!Number.isInteger(payload.initialQuantity) || payload.initialQuantity < 0) fail('INVALID_PRODUCT_PAYLOAD', 'كمية المنتج الافتتاحية غير صالحة');
     finiteNonNegative(payload.price, 'INVALID_PRODUCT_PAYLOAD', 'سعر المنتج غير صالح');
   }
+  if (kind === 'PRODUCT_UPDATE') {
+    const allowed = new Set(['name', 'barcode', 'price']);
+    const keys = Object.keys(payload);
+    if (!keys.length || keys.some(key => !allowed.has(key))) fail('INVALID_PRODUCT_UPDATE', 'تعديل المنتج يحتوي حقلاً غير مسموح');
+    if (Object.prototype.hasOwnProperty.call(payload, 'name')) productText(payload.name, 'name', 140);
+    if (Object.prototype.hasOwnProperty.call(payload, 'barcode') && payload.barcode != null && String(payload.barcode).trim().length > 80) fail('INVALID_PRODUCT_UPDATE', 'باركود المنتج طويل جداً');
+    if (Object.prototype.hasOwnProperty.call(payload, 'price')) finiteNonNegative(payload.price, 'INVALID_PRODUCT_UPDATE', 'سعر المنتج غير صالح');
+  }
   if (kind === 'SALE') {
     if (!Array.isArray(payload.items) || payload.items.length < 1 || payload.items.length > 100) fail('INVALID_SALE_PAYLOAD', 'يجب أن يحتوي البيع على عنصر واحد على الأقل');
     const ids = new Set();
