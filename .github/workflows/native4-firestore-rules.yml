@@ -1,0 +1,38 @@
+name: Native4 Deploy Isolated Firestore Rules
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [native4-core-migration]
+    paths:
+      - "native4/AlSafaNative4-Phase1/firestore.rules"
+      - "native4/AlSafaNative4-Phase1/firebase.json"
+      - ".github/workflows/native4-firestore-rules.yml"
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  deploy-rules:
+    runs-on: ubuntu-latest
+    environment: native4-test
+    steps:
+      - uses: actions/checkout@v4
+      - name: Hard safety gate
+        run: |
+          test "$(jq -r '.projects.default' native4/AlSafaNative4-Phase1/.firebaserc)" = "alsafa-native"
+          grep -q "test-native4-android-alpha" native4/AlSafaNative4-Phase1/firestore.rules
+          grep -q "allow read, write: if false" native4/AlSafaNative4-Phase1/firestore.rules
+      - uses: google-github-actions/auth@v3
+        with:
+          project_id: alsafa-native
+          workload_identity_provider: ${{ secrets.GCP_WIF_PROVIDER }}
+          service_account: ${{ secrets.GCP_WIF_SERVICE_ACCOUNT }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - run: npm install --global firebase-tools
+      - name: Deploy only isolated Firestore rules
+        working-directory: native4/AlSafaNative4-Phase1
+        run: firebase deploy --only firestore:rules --project alsafa-native --non-interactive
