@@ -16,6 +16,7 @@ if (!process.env.FIRESTORE_EMULATOR_HOST) {
   const uuid = n => `00000000-0000-4000-8000-${String(n).padStart(12, '0')}`;
   const sale = (n, recordId, productId, quantity, paymentMethod = 'CASH') => ({ operationId: uuid(n), storeId, sourceDeviceId: 'phone-test', kind: 'SALE', recordId, payload: { items: [{ productId, quantity, unitPrice: 10 }], currency: 'USD', paymentMethod, total: quantity * 10 } });
   const productUpdate = (n, recordId, payload) => ({ operationId: uuid(n), storeId, sourceDeviceId: 'phone-test', kind: 'PRODUCT_UPDATE', recordId, payload });
+  const inventoryAdjustment = (n, recordId, quantityDelta, reason = 'manual count correction') => ({ operationId: uuid(n), storeId, sourceDeviceId: 'phone-test', kind: 'INVENTORY_ADJUSTMENT', recordId, payload: { quantityDelta, reason } });
 
   async function clearStore() {
     for (const name of ['products','sales','inventoryMovements','cashMovements','auditLog','commandReceipts','changeLog','_meta']) {
@@ -67,6 +68,42 @@ if (!process.env.FIRESTORE_EMULATOR_HOST) {
     assert.equal((await store.collection('auditLog').get()).size, 0);
     assert.equal((await store.collection('commandReceipts').get()).size, 0);
     assert.equal((await store.collection('changeLog').get()).size, 0);
+  });
+
+  test('INVENTORY_ADJUSTMENT changes stock exactly once and records before/after', async () => {
+    await seed('p1', 7);
+    const cmd = inventoryAdjustment(30, 'p1', 3, 'opening count correction');
+    const first = await processCommand(db, cmd, 'tester');
+    const second = await processCommand(db, cmd, 'tester');
+    assert.equal(first.duplicate, false); assert.equal(second.duplicate, true); assert.equal(second.revision, first.revision);
+    assert.equal((await store.collection('products').doc('p1').get()).data().quantity, 10);
+    const movement = (await store.collection('inventoryMovements').doc(cmd.operationId).get()).data();
+    assert.equal(movement.quantityBefore, 7); assert.equal(movement.quantityDelta, 3); assert.equal(movement.quantityAfter, 10);
+    assert.equal((await store.collection('inventoryMovements').get()).size, 1);
+    assert.equal((await store.collection('auditLog').get()).size, 1);
+    assert.equal((await store.collection('commandReceipts').get()).size, 1);
+    assert.equal((await store.collection('changeLog').get()).size, 1);
+  });
+
+  test('INVENTORY_ADJUSTMENT refuses negative resulting stock and rolls back', async () => {
+    await seed('p1', 2);
+    await assert.rejects(() => processCommand(db, inventoryAdjustment(31, 'p1', -3), 'tester'), e => e.code === 'INSUFFICIENT_STOCK');
+    assert.equal((await store.collection('products').doc('p1').get()).data().quantity, 2);
+    for (const name of ['inventoryMovements','auditLog','commandReceipts','changeLog']) assert.equal((await store.collection(name).get()).size, 0);
+  });
+
+  test('INVENTORY_ADJUSTMENT missing product rolls back completely', async () => {
+    await assert.rejects(() => processCommand(db, inventoryAdjustment(32, 'missing', 1), 'tester'), e => e.code === 'PRODUCT_NOT_FOUND');
+    for (const name of ['inventoryMovements','auditLog','commandReceipts','changeLog']) assert.equal((await store.collection(name).get()).size, 0);
+  });
+
+  test('concurrent inventory decrements cannot push stock below zero', async () => {
+    await seed('p1', 1);
+    const results = await Promise.allSettled([processCommand(db, inventoryAdjustment(33, 'p1', -1, 'count a'), 'tester-a'), processCommand(db, inventoryAdjustment(34, 'p1', -1, 'count b'), 'tester-b')]);
+    assert.equal(results.filter(r => r.status === 'fulfilled').length, 1);
+    assert.equal(results.filter(r => r.status === 'rejected').length, 1);
+    assert.equal((await store.collection('products').doc('p1').get()).data().quantity, 0);
+    assert.equal((await store.collection('inventoryMovements').get()).size, 1);
   });
 
   test('insufficient stock rolls back every sale-side write', async () => {
