@@ -1,0 +1,36 @@
+package com.alsafa.native4.core;
+
+import android.content.ContentValues;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
+import com.alsafa.native4.sync.SyncOperation;
+import org.json.JSONObject;
+import java.util.UUID;
+
+/** Atomic purchase: purchase row + stock increase + optional cash OUT + durable outbox in one SQLite transaction. */
+public final class PurchaseStore {
+ private final CoreStore.DbProvider provider; private final String deviceId;
+ public PurchaseStore(CoreStore.DbProvider provider,String deviceId){this.provider=provider;this.deviceId=deviceId;}
+
+ public Result record(String productId,int quantity,double unitCost,String currency,String supplierId,String invoiceRef,String paymentSource)throws Exception{
+  String pid=trim(productId),cur=currency(currency),source=drawer(paymentSource);if(pid.isEmpty())throw new IllegalArgumentException("المنتج مطلوب");if(quantity<=0)throw new IllegalArgumentException("الكمية يجب أن تكون أكبر من صفر");if(unitCost<0||!Double.isFinite(unitCost))throw new IllegalArgumentException("سعر الشراء غير صالح");
+  double total=quantity*unitCost;if(!Double.isFinite(total))throw new IllegalArgumentException("إجمالي الشراء غير صالح");SQLiteDatabase db=provider.db();db.beginTransaction();
+  try{
+   Product p=product(db,pid);if(p==null)throw new IllegalArgumentException("المنتج غير موجود");if(!source.equals("CREDIT")&&balance(db,source,cur)+1e-9<total)throw new IllegalArgumentException("رصيد مصدر الدفع غير كافٍ");
+   long now=System.currentTimeMillis();String purchaseId="purchase-"+UUID.randomUUID();int after=p.quantity+quantity;if(after<p.quantity)throw new IllegalArgumentException("الكمية الجديدة غير صالحة");
+   ContentValues pv=new ContentValues();pv.put("purchase_id",purchaseId);pv.put("supplier_id",trim(supplierId));pv.put("invoice_ref",trim(invoiceRef));pv.put("currency",cur);pv.put("total",total);pv.put("payment_source",source);pv.put("created_at",now);pv.put("updated_at",now);db.insertOrThrow("purchases",null,pv);
+   ContentValues productUpdate=new ContentValues();productUpdate.put("quantity",after);productUpdate.put("cost_price",unitCost);productUpdate.put("updated_at",now);if(db.update("products",productUpdate,"product_id=? AND deleted_at IS NULL",new String[]{pid})!=1)throw new IllegalStateException("تعذر تحديث المخزون");
+   ContentValues sm=new ContentValues();sm.put("move_id",purchaseId+"-stock");sm.put("product_id",pid);sm.put("source_type","PURCHASE");sm.put("source_id",purchaseId);sm.put("before_qty",p.quantity);sm.put("delta_qty",quantity);sm.put("after_qty",after);sm.put("created_at",now);db.insertOrThrow("stock_moves",null,sm);
+   if(!source.equals("CREDIT")&&total>0){ContentValues cm=new ContentValues();cm.put("move_id",purchaseId+"-cash");cm.put("source_type","PURCHASE");cm.put("source_id",purchaseId);cm.put("direction","OUT");cm.put("amount",total);cm.put("currency",cur);cm.put("payment_method","PURCHASE");cm.put("drawer",source);cm.put("created_at",now);db.insertOrThrow("cash_moves",null,cm);}
+   JSONObject payload=new JSONObject().put("purchaseId",purchaseId).put("productId",pid).put("quantity",quantity).put("beforeQty",p.quantity).put("afterQty",after).put("unitCost",unitCost).put("total",total).put("currency",cur).put("supplierId",trim(supplierId)).put("invoiceRef",trim(invoiceRef)).put("paymentSource",source).put("createdAt",now);
+   provider.enqueue(db,SyncOperation.create(SyncOperation.Kind.PURCHASE,purchaseId,payload.toString(),deviceId));db.setTransactionSuccessful();return new Result(purchaseId,p.quantity,after,total,cur,source);
+  }finally{db.endTransaction();}
+ }
+ private static Product product(SQLiteDatabase db,String id){try(Cursor c=db.rawQuery("SELECT quantity FROM products WHERE product_id=? AND deleted_at IS NULL LIMIT 1",new String[]{id})){return c.moveToFirst()?new Product(c.getInt(0)):null;}}
+ private static double balance(SQLiteDatabase db,String drawer,String currency){try(Cursor c=db.rawQuery("SELECT COALESCE(SUM(CASE WHEN direction='IN' THEN amount ELSE -amount END),0) FROM cash_moves WHERE drawer=? AND currency=?",new String[]{drawer,currency})){return c.moveToFirst()?c.getDouble(0):0;}}
+ private static String currency(String v){String x=trim(v).toUpperCase();return x.equals("TRY")||x.equals("SYP")?x:"USD";}
+ private static String drawer(String v){String x=trim(v).toUpperCase();if(x.equals("EXTERNAL")||x.equals("SHAM_CASH")||x.equals("BANK")||x.equals("CREDIT"))return x;return "MAIN";}
+ private static String trim(String v){return v==null?"":v.trim();}
+ private static final class Product{final int quantity;Product(int quantity){this.quantity=quantity;}}
+ public static final class Result{public final String purchaseId,currency,paymentSource;public final int beforeQty,afterQty;public final double total;Result(String id,int before,int after,double total,String currency,String source){this.purchaseId=id;this.beforeQty=before;this.afterQty=after;this.total=total;this.currency=currency;this.paymentSource=source;}}
+}
