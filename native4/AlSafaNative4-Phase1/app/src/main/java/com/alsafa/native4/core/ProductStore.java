@@ -1,0 +1,18 @@
+package com.alsafa.native4.core;
+
+import android.content.ContentValues;
+import android.database.sqlite.SQLiteDatabase;
+import com.alsafa.native4.sync.SyncOperation;
+import org.json.JSONObject;
+import java.util.UUID;
+
+/** Canonical Core product writer. Local row and durable Outbox are committed atomically. */
+public final class ProductStore {
+ private final CoreStore.DbProvider provider;private final String deviceId;
+ public ProductStore(CoreStore.DbProvider provider,String deviceId){this.provider=provider;this.deviceId=deviceId;}
+ public String create(String name,int quantity,double salePrice,String currency)throws Exception{return create(name,"","","",quantity,salePrice,0,currency);}
+ public String create(String name,String ref,String barcode,String brand,int quantity,double salePrice,double costPrice,String currency)throws Exception{
+  String n=req(name,"اسم المنتج"),cur=currency(currency);if(quantity<0)throw new IllegalArgumentException("الكمية غير صالحة");if(!Double.isFinite(salePrice)||salePrice<0||!Double.isFinite(costPrice)||costPrice<0)throw new IllegalArgumentException("السعر غير صالح");long now=System.currentTimeMillis();String id="product-"+UUID.randomUUID();SQLiteDatabase db=provider.db();db.beginTransaction();try{ContentValues v=new ContentValues();v.put("product_id",id);v.put("name",n);v.put("ref",trim(ref));v.put("barcode",trim(barcode));v.put("brand",trim(brand));v.put("variant_type","PRIMARY");v.put("quantity",quantity);v.put("sale_price",salePrice);v.put("cost_price",costPrice);v.put("currency",cur);v.put("created_at",now);v.put("updated_at",now);db.insertOrThrow("products",null,v);JSONObject j=new JSONObject().put("productId",id).put("name",n).put("ref",trim(ref)).put("barcode",trim(barcode)).put("brand",trim(brand)).put("variantType","PRIMARY").put("quantity",quantity).put("salePrice",salePrice).put("costPrice",costPrice).put("currency",cur).put("updatedAt",now);provider.enqueue(db,SyncOperation.create(SyncOperation.Kind.PRODUCT_CREATE,id,j.toString(),deviceId));db.setTransactionSuccessful();return id;}finally{db.endTransaction();}}
+ public void update(String id,String name,String ref,String barcode,String brand,int quantity,double salePrice,double costPrice,String currency)throws Exception{String pid=req(id,"المنتج"),n=req(name,"اسم المنتج"),cur=currency(currency);if(quantity<0||salePrice<0||costPrice<0)throw new IllegalArgumentException("الكمية أو السعر غير صالح");long now=System.currentTimeMillis();SQLiteDatabase db=provider.db();db.beginTransaction();try{ContentValues v=new ContentValues();v.put("name",n);v.put("ref",trim(ref));v.put("barcode",trim(barcode));v.put("brand",trim(brand));v.put("quantity",quantity);v.put("sale_price",salePrice);v.put("cost_price",costPrice);v.put("currency",cur);v.put("updated_at",now);if(db.update("products",v,"product_id=? AND deleted_at IS NULL",new String[]{pid})!=1)throw new IllegalArgumentException("المنتج غير موجود");JSONObject j=new JSONObject().put("productId",pid).put("name",n).put("ref",trim(ref)).put("barcode",trim(barcode)).put("brand",trim(brand)).put("quantity",quantity).put("salePrice",salePrice).put("costPrice",costPrice).put("currency",cur).put("updatedAt",now);provider.enqueue(db,SyncOperation.create(SyncOperation.Kind.PRODUCT_UPDATE,pid,j.toString(),deviceId));db.setTransactionSuccessful();}finally{db.endTransaction();}}
+ private static String currency(String v){String x=trim(v).toUpperCase();return x.equals("TRY")||x.equals("SYP")?x:"USD";}private static String req(String v,String l){String s=trim(v);if(s.isEmpty())throw new IllegalArgumentException(l+" مطلوب");return s;}private static String trim(String v){return v==null?"":v.trim();}
+}
