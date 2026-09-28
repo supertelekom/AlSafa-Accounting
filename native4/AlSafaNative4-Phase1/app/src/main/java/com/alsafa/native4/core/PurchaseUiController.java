@@ -2,15 +2,18 @@ package com.alsafa.native4.core;
 
 import java.util.List;
 
-/** UI-facing purchase coordinator. Keeps Activity free of accounting rules and manual stored codes. */
+/** UI-facing purchase coordinator. Keeps Activity free of accounting rules and uses the shared service store. */
 public final class PurchaseUiController {
  private final CoreProductCatalog catalog;
  private final PurchaseStore store;
  private CoreProductCatalog.ProductHit selected;
 
- public PurchaseUiController(CoreStore.DbProvider provider,String deviceId){
+ public PurchaseUiController(CoreStore.DbProvider provider,String deviceId){this(provider,new PurchaseStore(provider,deviceId));}
+ public PurchaseUiController(CoreStore.DbProvider provider,PurchaseStore store){
+  if(provider==null)throw new IllegalArgumentException("CoreDb مطلوب");
+  if(store==null)throw new IllegalArgumentException("PurchaseStore مطلوب");
   catalog=new CoreProductCatalog(provider);
-  store=new PurchaseStore(provider,deviceId);
+  this.store=store;
  }
 
  public List<CoreProductCatalog.ProductHit> search(String query){return catalog.search(query,20);}
