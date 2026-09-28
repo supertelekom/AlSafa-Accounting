@@ -9,8 +9,8 @@ import com.alsafa.native4.sync.SyncOperation;
 
 /** Production core DB for Native4. Local data is authoritative; upgrades are additive. */
 public final class CoreDb extends SQLiteOpenHelper implements CoreStore.DbProvider {
- public CoreDb(Context context){super(context,"alsafa_native4_core.db",null,10);}
- @Override public void onCreate(SQLiteDatabase db){createSyncTables(db);CoreSchemaV8.create(db);}
+ public CoreDb(Context context){super(context,"alsafa_native4_core.db",null,11);}
+ @Override public void onCreate(SQLiteDatabase db){createSyncTables(db);CoreSchemaV8.create(db);CoreSchemaV11.create(db);}
  @Override public void onUpgrade(SQLiteDatabase db,int oldVersion,int newVersion){
   createSyncTables(db);CoreSchemaV8.create(db);
   if(oldVersion<10){
@@ -21,6 +21,7 @@ public final class CoreDb extends SQLiteOpenHelper implements CoreStore.DbProvid
    addColumnIfMissing(db,"daily_closings","carry_syp","REAL NOT NULL DEFAULT 0");
    addColumnIfMissing(db,"daily_closings","drawer_out_syp","REAL NOT NULL DEFAULT 0");
   }
+  if(oldVersion<11)CoreSchemaV11.create(db);
  }
  private static void addColumnIfMissing(SQLiteDatabase db,String table,String column,String definition){
   try(Cursor c=db.rawQuery("PRAGMA table_info("+table+")",null)){while(c.moveToNext())if(column.equals(c.getString(c.getColumnIndexOrThrow("name"))))return;}
