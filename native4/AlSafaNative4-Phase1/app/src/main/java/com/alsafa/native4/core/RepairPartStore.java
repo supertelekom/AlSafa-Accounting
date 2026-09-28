@@ -1,0 +1,18 @@
+package com.alsafa.native4.core;
+
+import android.content.ContentValues;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
+import com.alsafa.native4.sync.SyncOperation;
+import org.json.JSONObject;
+import java.util.UUID;
+
+/** Repair-parts catalog/inventory. Barcode is first-class and stock changes are transactional. */
+public final class RepairPartStore {
+ private final CoreStore.DbProvider provider;private final String deviceId;
+ public RepairPartStore(CoreStore.DbProvider provider,String deviceId){this.provider=provider;this.deviceId=deviceId;}
+ public String save(String partId,String name,String barcode,int quantity,double cost)throws Exception{
+  String n=req(name,"اسم القطعة"),b=trim(barcode);if(quantity<0||cost<0)throw new IllegalArgumentException("الكمية أو التكلفة غير صالحة");long now=System.currentTimeMillis();String id=trim(partId);boolean create=id.isEmpty();if(create)id="part-"+UUID.randomUUID();SQLiteDatabase db=provider.db();db.beginTransaction();try{if(!b.isEmpty()){try(Cursor c=db.rawQuery("SELECT part_id FROM repair_part_catalog WHERE barcode=? AND deleted_at IS NULL AND part_id<>? LIMIT 1",new String[]{b,id})){if(c.moveToFirst())throw new IllegalArgumentException("يوجد جزء صيانة بنفس الباركود");}}ContentValues v=new ContentValues();v.put("name",n);v.put("barcode",b);v.put("quantity",quantity);v.put("cost",cost);v.put("updated_at",now);if(create){v.put("part_id",id);v.put("created_at",now);db.insertOrThrow("repair_part_catalog",null,v);}else if(db.update("repair_part_catalog",v,"part_id=? AND deleted_at IS NULL",new String[]{id})!=1)throw new IllegalArgumentException("قطعة الصيانة غير موجودة");JSONObject j=new JSONObject().put("partId",id).put("name",n).put("barcode",b).put("quantity",quantity).put("cost",cost).put("updatedAt",now);provider.enqueue(db,SyncOperation.create(SyncOperation.Kind.SETTING,id,j.toString(),deviceId));db.setTransactionSuccessful();return id;}finally{db.endTransaction();}}
+ public int adjust(String partId,int delta,String sourceType,String sourceId)throws Exception{if(delta==0)throw new IllegalArgumentException("التغيير يجب ألا يكون صفراً");SQLiteDatabase db=provider.db();db.beginTransaction();try{int before;try(Cursor c=db.rawQuery("SELECT quantity FROM repair_part_catalog WHERE part_id=? AND deleted_at IS NULL",new String[]{partId})){if(!c.moveToFirst())throw new IllegalArgumentException("قطعة الصيانة غير موجودة");before=c.getInt(0);}int after=before+delta;if(after<0)throw new IllegalArgumentException("رصيد قطعة الصيانة غير كافٍ");long now=System.currentTimeMillis();ContentValues v=new ContentValues();v.put("quantity",after);v.put("updated_at",now);db.update("repair_part_catalog",v,"part_id=?",new String[]{partId});String move="partmove-"+UUID.randomUUID();JSONObject j=new JSONObject().put("partId",partId).put("before",before).put("delta",delta).put("after",after).put("sourceType",trim(sourceType)).put("sourceId",trim(sourceId)).put("updatedAt",now);provider.enqueue(db,SyncOperation.create(SyncOperation.Kind.SETTING,move,j.toString(),deviceId));db.setTransactionSuccessful();return after;}finally{db.endTransaction();}}
+ private static String req(String v,String label){String s=trim(v);if(s.isEmpty())throw new IllegalArgumentException(label+" مطلوب");return s;}private static String trim(String v){return v==null?"":v.trim();}
+}
