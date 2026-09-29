@@ -4,7 +4,7 @@ import java.util.UUID;
 
 /** A durable, idempotent accounting command. It is never a complete database snapshot. */
 public final class SyncOperation {
- public enum Kind { SALE, REPAIR, REPAIR_UPDATE, PAYMENT, PURCHASE, EXPENSE, CASH_MOVEMENT, WORK_DAY_OPEN, DAILY_CLOSING, INVENTORY_ADJUSTMENT, PRODUCT_CREATE, PRODUCT_UPDATE, PRODUCT_DELETE, SUPPLIER_CREATE, SUPPLIER_UPDATE, SETTINGS_UPDATE, TEST }
+ public enum Kind { SALE, SALE_CREATE, SALE_UPDATE, REPAIR, REPAIR_UPDATE, PAYMENT, PURCHASE, EXPENSE, CASH_MOVEMENT, WORK_DAY_OPEN, DAILY_CLOSING, INVENTORY_ADJUSTMENT, PRODUCT_CREATE, PRODUCT_UPDATE, PRODUCT_DELETE, SUPPLIER_CREATE, SUPPLIER_UPDATE, SETTING, SETTINGS_UPDATE, TEST }
  public final String id, recordId, payload, sourceDeviceId; public final Kind kind; public final long createdAt;
  public SyncOperation(String id,Kind kind,String recordId,String payload,String sourceDeviceId,long createdAt){this.id=id;this.kind=kind;this.recordId=recordId;this.payload=payload;this.sourceDeviceId=sourceDeviceId;this.createdAt=createdAt;}
  public static SyncOperation create(Kind kind,String recordId,String payload,String deviceId){return new SyncOperation(UUID.randomUUID().toString(),kind,recordId,payload,deviceId,System.currentTimeMillis());}
