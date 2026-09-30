@@ -1,0 +1,16 @@
+package com.alsafa.native4.core;
+import android.content.ContentValues;import android.database.Cursor;import android.database.sqlite.SQLiteDatabase;import java.util.*;
+/** Receives ordered Native4 operations. Applied IDs make retries harmless; checkpoint advances only after commit. */
+public final class Native4SyncReceiver{
+ public interface Source{Batch fetchAfter(long revision,int limit)throws Exception;}public interface Applier{void apply(SQLiteDatabase db,RemoteOp op)throws Exception;}
+ public static final class RemoteOp{public final long revision;public final String id,kind,recordId,payload,sourceDeviceId;public RemoteOp(long r,String i,String k,String rid,String p,String d){revision=r;id=i;kind=k;recordId=rid;payload=p;sourceDeviceId=d;}}
+ public static final class Batch{public final List<RemoteOp> operations;public Batch(List<RemoteOp> x){operations=x==null?Collections.emptyList():x;}}
+ private static final String KEY="native4_remote_revision";private final CoreDb core;private final Source source;private final Applier applier;
+ public Native4SyncReceiver(CoreDb c,Source s,Applier a){if(c==null||s==null||a==null)throw new IllegalArgumentException("Sync receiver dependencies مطلوبة");core=c;source=s;applier=a;}
+ public Result pullOnce()throws Exception{long checkpoint=checkpoint();Batch b=source.fetchAfter(checkpoint,100);int applied=0,duplicates=0;long last=checkpoint;for(RemoteOp op:b.operations){if(op.revision<=last)continue;if(already(op.id)){advance(op.revision);last=op.revision;duplicates++;continue;}SQLiteDatabase db=core.db();db.beginTransaction();try{applier.apply(db,op);ContentValues a=new ContentValues();a.put("operation_id",op.id);a.put("applied_at",System.currentTimeMillis());db.insertOrThrow("applied",null,a);writeCheckpoint(db,op.revision);db.setTransactionSuccessful();applied++;last=op.revision;}finally{db.endTransaction();}}return new Result(applied,duplicates,last);}
+ private boolean already(String id){try(Cursor c=core.db().rawQuery("SELECT 1 FROM applied WHERE operation_id=? LIMIT 1",new String[]{id})){return c.moveToFirst();}}
+ private long checkpoint(){try(Cursor c=core.db().rawQuery("SELECT checkpoint_value FROM sync_checkpoint WHERE checkpoint_key=?",new String[]{KEY})){if(c.moveToFirst())try{return Long.parseLong(c.getString(0));}catch(Exception ignored){}}return 0;}
+ private void advance(long revision){SQLiteDatabase db=core.db();db.beginTransaction();try{writeCheckpoint(db,revision);db.setTransactionSuccessful();}finally{db.endTransaction();}}
+ private static void writeCheckpoint(SQLiteDatabase db,long revision){ContentValues v=new ContentValues();v.put("checkpoint_key",KEY);v.put("checkpoint_value",String.valueOf(revision));v.put("updated_at",System.currentTimeMillis());db.insertWithOnConflict("sync_checkpoint",null,v,SQLiteDatabase.CONFLICT_REPLACE);}
+ public static final class Result{public final int applied,duplicates;public final long checkpoint;Result(int a,int d,long c){applied=a;duplicates=d;checkpoint=c;}}
+}
