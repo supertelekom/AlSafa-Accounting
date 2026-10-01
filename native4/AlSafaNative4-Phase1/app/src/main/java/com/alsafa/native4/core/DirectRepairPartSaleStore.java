@@ -17,17 +17,20 @@ public final class DirectRepairPartSaleStore {
   if(!Double.isFinite(unitPrice)||unitPrice<0||!Double.isFinite(serviceFee)||serviceFee<0)throw new IllegalArgumentException("السعر أو أجرة الخدمة غير صالحة");
   SQLiteDatabase db=provider.db();db.beginTransaction();try{
    String name;int before;double cost;
-   try(Cursor c=db.rawQuery("SELECT name,quantity,cost FROM repair_part_catalog WHERE part_id=? AND deleted_at IS NULL",new String[]{pid})){
+   try(Cursor c=db.rawQuery("SELECT name,quantity,unit_cost FROM repair_inventory WHERE part_id=? AND deleted_at IS NULL",new String[]{pid})){
     if(!c.moveToFirst())throw new IllegalArgumentException("قطعة الصيانة غير موجودة");name=c.getString(0);before=c.getInt(1);cost=c.getDouble(2);
    }
    if(before<quantity)throw new IllegalArgumentException("رصيد قطعة الصيانة غير كافٍ");
    int after=before-quantity;double partsTotal=unitPrice*quantity,total=partsTotal+serviceFee;long now=System.currentTimeMillis();String saleId="partsale-"+UUID.randomUUID();
-   ContentValues p=new ContentValues();p.put("quantity",after);p.put("updated_at",now);db.update("repair_part_catalog",p,"part_id=?",new String[]{pid});
+   ContentValues p=new ContentValues();p.put("quantity",after);p.put("updated_at",now);if(db.update("repair_inventory",p,"part_id=? AND deleted_at IS NULL",new String[]{pid})!=1)throw new IllegalStateException("تعذر تحديث رصيد قطعة الصيانة");
+   ContentValues mv=new ContentValues();mv.put("move_id",saleId+"-stock");mv.put("part_id",pid);mv.put("source_type","DIRECT_SALE");mv.put("source_id",saleId);mv.put("before_qty",before);mv.put("delta_qty",-quantity);mv.put("after_qty",after);mv.put("created_at",now);db.insertOrThrow("repair_inventory_moves",null,mv);
+   if(total>0&&!"LATER".equals(pay)){ContentValues cash=new ContentValues();cash.put("move_id",saleId+"-cash");cash.put("source_type","REPAIR_PART_DIRECT");cash.put("source_id",saleId);cash.put("direction","IN");cash.put("amount",total);cash.put("currency",cur);cash.put("payment_method",pay);cash.put("drawer",drawer(pay));cash.put("created_at",now);db.insertOrThrow("cash_moves",null,cash);}
    JSONObject j=new JSONObject().put("saleId",saleId).put("saleType","REPAIR_PART_DIRECT").put("partId",pid).put("partName",name).put("quantity",quantity).put("beforeQty",before).put("afterQty",after).put("unitCost",cost).put("unitPrice",unitPrice).put("partsTotal",partsTotal).put("serviceFee",serviceFee).put("total",total).put("currency",cur).put("paymentMethod",pay).put("createdAt",now);
    provider.enqueue(db,SyncOperation.create(SyncOperation.Kind.SALE_CREATE,saleId,j.toString(),deviceId));
    db.setTransactionSuccessful();return new Result(saleId,name,before,after,total,cur,pay);
   }finally{db.endTransaction();}
  }
+ private static String drawer(String pay){if("SHAM_CASH".equals(pay))return "SHAM_CASH";if("BANK".equals(pay))return "BANK";if("EXTERNAL".equals(pay))return "EXTERNAL";return "MAIN";}
  private static String req(String v,String l){String s=trim(v);if(s.isEmpty())throw new IllegalArgumentException(l+" مطلوب");return s;}private static String trim(String v){return v==null?"":v.trim();}private static String currency(String v){String x=trim(v).toUpperCase();return x.equals("TRY")||x.equals("SYP")?x:"USD";}
  public static final class Result{public final String saleId,partName,currency,paymentMethod;public final int beforeQty,remainingQty;public final double total;Result(String saleId,String partName,int beforeQty,int remainingQty,double total,String currency,String paymentMethod){this.saleId=saleId;this.partName=partName;this.beforeQty=beforeQty;this.remainingQty=remainingQty;this.total=total;this.currency=currency;this.paymentMethod=paymentMethod;}}
 }
