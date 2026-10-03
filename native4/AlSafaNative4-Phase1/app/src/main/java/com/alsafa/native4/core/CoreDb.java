@@ -9,8 +9,8 @@ import com.alsafa.native4.sync.SyncOperation;
 
 /** Production core DB for Native4. Local data is authoritative; upgrades are additive. */
 public final class CoreDb extends SQLiteOpenHelper implements CoreStore.DbProvider {
- public CoreDb(Context context){super(context,"alsafa_native4_core.db",null,14);}
- @Override public void onCreate(SQLiteDatabase db){createSyncTables(db);CoreSchemaV8.create(db);CoreSchemaV11.create(db);CoreSchemaV12.create(db);CoreSchemaV13.create(db);CoreSchemaV14.create(db);}
+ public CoreDb(Context context){super(context,"alsafa_native4_core.db",null,15);}
+ @Override public void onCreate(SQLiteDatabase db){createSyncTables(db);CoreSchemaV8.create(db);CoreSchemaV11.create(db);CoreSchemaV12.create(db);CoreSchemaV13.create(db);CoreSchemaV14.create(db);CoreSchemaV15.create(db);}
  @Override public void onUpgrade(SQLiteDatabase db,int oldVersion,int newVersion){
   createSyncTables(db);CoreSchemaV8.create(db);
   if(oldVersion<10){
@@ -25,6 +25,7 @@ public final class CoreDb extends SQLiteOpenHelper implements CoreStore.DbProvid
   if(oldVersion<12)CoreSchemaV12.create(db);
   if(oldVersion<13)CoreSchemaV13.create(db);
   if(oldVersion<14)CoreSchemaV14.create(db);
+  if(oldVersion<15)CoreSchemaV15.create(db);
  }
  private static void addColumnIfMissing(SQLiteDatabase db,String table,String column,String definition){try(Cursor c=db.rawQuery("PRAGMA table_info("+table+")",null)){while(c.moveToNext())if(column.equals(c.getString(c.getColumnIndexOrThrow("name"))))return;}db.execSQL("ALTER TABLE "+table+" ADD COLUMN "+column+" "+definition);}
  private static void createSyncTables(SQLiteDatabase db){db.execSQL("CREATE TABLE IF NOT EXISTS outbox(operation_id TEXT PRIMARY KEY,operation_kind TEXT NOT NULL,record_id TEXT NOT NULL,payload TEXT NOT NULL,source_device_id TEXT NOT NULL,created_at INTEGER NOT NULL,state TEXT NOT NULL DEFAULT 'PENDING',attempts INTEGER NOT NULL DEFAULT 0,last_attempt_at INTEGER,last_error TEXT,confirmed_revision INTEGER)");db.execSQL("CREATE TABLE IF NOT EXISTS applied(operation_id TEXT PRIMARY KEY,applied_at INTEGER NOT NULL)");db.execSQL("CREATE TABLE IF NOT EXISTS sync_checkpoint(checkpoint_key TEXT PRIMARY KEY,checkpoint_value TEXT NOT NULL,updated_at INTEGER NOT NULL)");}
