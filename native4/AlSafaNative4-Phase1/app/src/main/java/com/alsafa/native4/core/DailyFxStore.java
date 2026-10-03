@@ -1,0 +1,18 @@
+package com.alsafa.native4.core;
+
+import android.content.ContentValues;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
+
+/** Manual work-day exchange rates. Historical days are immutable once transactions exist. */
+public final class DailyFxStore {
+ private final CoreStore.DbProvider provider;
+ public DailyFxStore(CoreStore.DbProvider provider){this.provider=provider;}
+ public Rates save(String businessDay,double tryPerUsd,double sypPerUsd,double sypPerTry){String day=day(businessDay);valid(tryPerUsd);valid(sypPerUsd);valid(sypPerTry);double implied=sypPerUsd/tryPerUsd;double deviation=Math.abs(sypPerTry-implied)/implied;if(deviation>0.05)throw new IllegalArgumentException("سعر TRY/SYP لا يتوافق مع أسعار USD بأكثر من 5%");SQLiteDatabase db=provider.db();if(hasTransactions(db,day))throw new IllegalStateException("بدأت عمليات يوم العمل؛ لا يمكن تغيير سعر الصرف بأثر رجعي");long now=System.currentTimeMillis();db.beginTransaction();try{put(db,day,"USD",1.0,now);put(db,day,"TRY",1.0/tryPerUsd,now);put(db,day,"SYP",1.0/sypPerUsd,now);ContentValues x=new ContentValues();x.put("business_day",day);x.put("try_per_usd",tryPerUsd);x.put("syp_per_usd",sypPerUsd);x.put("syp_per_try",sypPerTry);x.put("updated_at",now);db.insertWithOnConflict("daily_fx_rates",null,x,SQLiteDatabase.CONFLICT_REPLACE);db.setTransactionSuccessful();return new Rates(day,tryPerUsd,sypPerUsd,sypPerTry);}finally{db.endTransaction();}}
+ public Rates getOrPrevious(String businessDay){String day=day(businessDay);SQLiteDatabase db=provider.db();try(Cursor c=db.rawQuery("SELECT business_day,try_per_usd,syp_per_usd,syp_per_try FROM daily_fx_rates WHERE business_day<=? ORDER BY business_day DESC LIMIT 1",new String[]{day})){if(!c.moveToFirst())return null;return new Rates(c.getString(0),c.getDouble(1),c.getDouble(2),c.getDouble(3));}}
+ public double usdPerUnit(String businessDay,String currency){String cur=currency(currency);if("USD".equals(cur))return 1.0;Rates r=getOrPrevious(businessDay);if(r==null)throw new IllegalStateException("يجب تحديد سعر صرف يوم العمل أولاً");return "TRY".equals(cur)?1.0/r.tryPerUsd:1.0/r.sypPerUsd;}
+ private static void put(SQLiteDatabase db,String day,String currency,double usdPerUnit,long now){ContentValues v=new ContentValues();v.put("currency",day+":"+currency);v.put("usd_per_unit",usdPerUnit);v.put("updated_at",now);v.put("source","WORK_DAY");db.insertWithOnConflict("fx_rates",null,v,SQLiteDatabase.CONFLICT_REPLACE);}
+ private static boolean hasTransactions(SQLiteDatabase db,String day){try(Cursor c=db.rawQuery("SELECT opened_at,COALESCE(closed_at,9223372036854775807) FROM work_days WHERE business_day=? LIMIT 1",new String[]{day})){if(!c.moveToFirst())return false;long start=c.getLong(0),end=c.getLong(1);try(Cursor x=db.rawQuery("SELECT 1 FROM cash_moves WHERE created_at>=? AND created_at<=? LIMIT 1",new String[]{String.valueOf(start),String.valueOf(end)})){return x.moveToFirst();}}}
+ private static String day(String v){String x=v==null?"":v.trim();if(!x.matches("\\d{4}-\\d{2}-\\d{2}"))throw new IllegalArgumentException("تاريخ يوم العمل غير صالح");return x;}private static void valid(double v){if(!Double.isFinite(v)||v<=0)throw new IllegalArgumentException("سعر الصرف يجب أن يكون أكبر من صفر");}private static String currency(String v){String x=v==null?"":v.trim().toUpperCase();if(!x.equals("USD")&&!x.equals("TRY")&&!x.equals("SYP"))throw new IllegalArgumentException("عملة غير مدعومة");return x;}
+ public static final class Rates{public final String sourceDay;public final double tryPerUsd,sypPerUsd,sypPerTry;Rates(String d,double t,double s,double ts){sourceDay=d;tryPerUsd=t;sypPerUsd=s;sypPerTry=ts;}}
+}
