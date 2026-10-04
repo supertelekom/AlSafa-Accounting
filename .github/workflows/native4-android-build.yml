@@ -1,0 +1,54 @@
+name: Native4 Android Build
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - native4-core-migration
+    paths:
+      - 'native4/AlSafaNative4-Phase1/**'
+      - '.github/workflows/native4-android-build.yml'
+
+permissions:
+  contents: read
+
+env:
+  NATIVE4_DIR: native4/AlSafaNative4-Phase1
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout current ref
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+
+      - name: Verify isolated Native4 identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q "applicationId 'com.alsafa.native4.test'" "$NATIVE4_DIR/app/build.gradle"
+          grep -q '"project_id": "alsafa-native"' "$NATIVE4_DIR/app/google-services.json"
+          grep -q '"package_name": "com.alsafa.native4.test"' "$NATIVE4_DIR/app/google-services.json"
+
+      - name: Compile and test Native4
+        working-directory: ${{ env.NATIVE4_DIR }}
+        run: gradle --no-daemon clean testDebugUnitTest assembleDebug
+
+      - name: Upload debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: AlSafa-Native4-debug-${{ github.sha }}
+          path: ${{ env.NATIVE4_DIR }}/app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+          retention-days: 14
