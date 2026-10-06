@@ -1,7 +1,8 @@
 package com.alsafa.native4;
 
 import android.app.Activity;
-import android.graphics.Typeface;\nimport android.graphics.Color;
+import android.graphics.Typeface;
+import android.graphics.Color;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
