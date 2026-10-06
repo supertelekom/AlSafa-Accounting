@@ -1,1 +1,48 @@
-<resources><style name="AppTheme" parent="android:style/Theme.Material.Light.NoActionBar"><item name="android:fontFamily">sans</item><item name="android:windowLightStatusBar">true</item><item name="android:navigationBarColor">#FFFFFF</item></style></resources>
+<resources>
+    <!-- AlSafa v3.9.353 design tokens -->
+    <color name="alsafa_cream">#F8F3EB</color>
+    <color name="alsafa_paper">#FFFDF9</color>
+    <color name="alsafa_sand">#EFE4D0</color>
+    <color name="alsafa_sand_2">#DFC9A4</color>
+    <color name="alsafa_gold">#A97929</color>
+    <color name="alsafa_gold_deep">#7A5118</color>
+    <color name="alsafa_ink">#3E3429</color>
+    <color name="alsafa_muted">#8A7B6C</color>
+    <color name="alsafa_line">#EADFCE</color>
+    <color name="alsafa_danger">#B8584B</color>
+    <color name="alsafa_success">#5A8A67</color>
+
+    <style name="AppTheme" parent="android:style/Theme.Material.Light.NoActionBar">
+        <item name="android:fontFamily">sans</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:statusBarColor">@color/alsafa_sand</item>
+        <item name="android:navigationBarColor">@color/alsafa_paper</item>
+        <item name="android:windowBackground">@color/alsafa_cream</item>
+        <item name="android:colorAccent">@color/alsafa_gold</item>
+    </style>
+
+    <style name="AlSafaPrimaryButton" parent="@android:style/Widget.Material.Button">
+        <item name="android:minHeight">44dp</item>
+        <item name="android:textColor">#FFFFFF</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textSize">13sp</item>
+        <item name="android:backgroundTint">@color/alsafa_gold_deep</item>
+    </style>
+
+    <style name="AlSafaSecondaryButton" parent="@android:style/Widget.Material.Button">
+        <item name="android:minHeight">44dp</item>
+        <item name="android:textColor">@color/alsafa_gold_deep</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textSize">13sp</item>
+        <item name="android:backgroundTint">@color/alsafa_sand</item>
+    </style>
+
+    <style name="AlSafaField" parent="@android:style/Widget.Material.EditText">
+        <item name="android:minHeight">42dp</item>
+        <item name="android:textColor">@color/alsafa_ink</item>
+        <item name="android:textColorHint">@color/alsafa_muted</item>
+        <item name="android:backgroundTint">@color/alsafa_gold</item>
+        <item name="android:paddingLeft">10dp</item>
+        <item name="android:paddingRight">10dp</item>
+    </style>
+</resources>
