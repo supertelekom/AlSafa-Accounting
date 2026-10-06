@@ -13,7 +13,7 @@
     <color name="alsafa_success">#5A8A67</color>
 
     <style name="AppTheme" parent="android:style/Theme.Material.Light.NoActionBar">
-        <item name="android:fontFamily">sans</item>
+        <item name="android:fontFamily">sans</item>\n        <item name="android:windowActionModeOverlay">true</item>\n        <item name="android:windowNoTitle">true</item>
         <item name="android:windowLightStatusBar">true</item>
         <item name="android:statusBarColor">@color/alsafa_sand</item>
         <item name="android:navigationBarColor">@color/alsafa_paper</item>
