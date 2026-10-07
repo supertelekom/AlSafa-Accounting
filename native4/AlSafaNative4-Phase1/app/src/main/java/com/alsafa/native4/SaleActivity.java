@@ -18,4 +18,4 @@ public final class SaleActivity extends Activity {
   new CoreSalePanelBinder(this,services,status);
   findViewById(R.id.pageBack).setOnClickListener(v->finish());
  }
-}
+Nav5.bind(this,R.id.navSale);}
