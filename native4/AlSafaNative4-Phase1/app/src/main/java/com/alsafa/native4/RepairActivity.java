@@ -18,4 +18,4 @@ public final class RepairActivity extends Activity {
   new CoreRepairPanelBinder(this,services,status);
   findViewById(R.id.pageBack).setOnClickListener(v->finish());
  }
-}
+Nav5.bind(this,R.id.navRepair);}
