@@ -17,5 +17,6 @@ public final class SaleActivity extends Activity {
   TextView status=findViewById(R.id.status);
   new CoreSalePanelBinder(this,services,status);
   findViewById(R.id.pageBack).setOnClickListener(v->finish());
+  Nav5.bind(this,R.id.navSale);
  }
-Nav5.bind(this,R.id.navSale);}
+}
