@@ -1,0 +1,3 @@
+package com.alsafa.native4;
+import android.app.Activity;import android.os.Bundle;import android.widget.TextView;import com.alsafa.native4.core.CoreDb;import com.alsafa.native4.core.Native4Services;
+public final class ProductActivity extends Activity{private CoreDb db;@Override public void onCreate(Bundle s){super.onCreate(s);setContentView(R.layout.activity_product);db=new CoreDb(this);Native4Services services=new Native4Services(db,"native4-android-alpha");new CoreProductPanelBinder(this,services,(TextView)findViewById(R.id.status));findViewById(R.id.pageBack).setOnClickListener(v->finish());}}
