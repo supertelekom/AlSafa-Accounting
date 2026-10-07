@@ -17,5 +17,6 @@ public final class RepairActivity extends Activity {
   TextView status=findViewById(R.id.status);
   new CoreRepairPanelBinder(this,services,status);
   findViewById(R.id.pageBack).setOnClickListener(v->finish());
+  Nav5.bind(this,R.id.navRepair);
  }
-Nav5.bind(this,R.id.navRepair);}
+}
