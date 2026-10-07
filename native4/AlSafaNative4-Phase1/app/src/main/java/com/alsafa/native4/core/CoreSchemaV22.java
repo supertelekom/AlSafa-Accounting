@@ -1,0 +1,4 @@
+package com.alsafa.native4.core;
+import android.database.Cursor;import android.database.sqlite.SQLiteDatabase;
+/** Additive customer-to-invoice link for reliable local customer invoice search. */
+public final class CoreSchemaV22{private CoreSchemaV22(){}public static void create(SQLiteDatabase db){if(!has(db,"invoices","customer_id"))db.execSQL("ALTER TABLE invoices ADD COLUMN customer_id TEXT");db.execSQL("CREATE INDEX IF NOT EXISTS idx_invoices_customer ON invoices(customer_id,created_at)");db.execSQL("CREATE INDEX IF NOT EXISTS idx_invoices_customer_phone ON invoices(customer_phone,created_at)");}private static boolean has(SQLiteDatabase db,String table,String col){try(Cursor c=db.rawQuery("PRAGMA table_info("+table+")",null)){while(c.moveToNext())if(col.equals(c.getString(c.getColumnIndexOrThrow("name"))))return true;}return false;}}
