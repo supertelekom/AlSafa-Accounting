@@ -1,0 +1,1 @@
+package com.alsafa.native4;import android.app.Activity;import android.os.Bundle;public final class SettingsActivity extends Activity{@Override public void onCreate(Bundle s){super.onCreate(s);setContentView(R.layout.activity_settings);findViewById(R.id.pageBack).setOnClickListener(v->finish());}}
