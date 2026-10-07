@@ -1,0 +1,4 @@
+package com.alsafa.native4.core;
+import android.database.sqlite.SQLiteDatabase;
+/** Additive quick-repair button links. Buttons reference real repair_inventory rows; never duplicate stock. */
+public final class CoreSchemaV21{private CoreSchemaV21(){}public static void create(SQLiteDatabase db){db.execSQL("CREATE TABLE IF NOT EXISTS quick_repair_buttons(button_id TEXT PRIMARY KEY,label TEXT NOT NULL,icon TEXT NOT NULL DEFAULT '🔧',part_id TEXT NOT NULL,sort_order INTEGER NOT NULL DEFAULT 0,active INTEGER NOT NULL DEFAULT 1,created_at INTEGER NOT NULL,updated_at INTEGER NOT NULL)");db.execSQL("CREATE INDEX IF NOT EXISTS idx_quick_repair_buttons_part ON quick_repair_buttons(part_id,active,sort_order)");}}
