@@ -9,6 +9,7 @@
         <activity android:name=".SimpleHomeActivity" android:screenOrientation="portrait" android:exported="false"/>
         <activity android:name=".SettingsActivity" android:screenOrientation="portrait" android:exported="false"/>
         <activity android:name=".OnlineSaleActivity" android:screenOrientation="portrait" android:exported="false"/>
+        <activity android:name=".QuickRepairButtonsActivity" android:screenOrientation="portrait" android:exported="false"/>
         <activity android:name=".DirectPartSaleActivity" android:screenOrientation="portrait" android:exported="false"/>
         <activity android:name=".ClosingActivity" android:screenOrientation="portrait" android:exported="false"/>
         <activity android:name=".CashActivity" android:screenOrientation="portrait" android:exported="false"/>
