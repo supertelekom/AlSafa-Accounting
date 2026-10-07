@@ -1,6 +1,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.INTERNET"/>
     <application android:icon="@mipmap/ic_launcher" android:roundIcon="@mipmap/ic_launcher" android:allowBackup="false" android:label="الصفا Native 4 تجريبي" android:theme="@style/AppTheme" android:usesCleartextTraffic="false">
+        <activity android:name=".SimpleHomeActivity" android:screenOrientation="portrait" android:exported="false"/>
+        <activity android:name=".SettingsActivity" android:screenOrientation="portrait" android:exported="false"/>
         <activity android:name=".OnlineSaleActivity" android:screenOrientation="portrait" android:exported="false"/>
         <activity android:name=".DirectPartSaleActivity" android:screenOrientation="portrait" android:exported="false"/>
         <activity android:name=".ClosingActivity" android:screenOrientation="portrait" android:exported="false"/>
@@ -10,7 +12,6 @@
         <activity android:name=".PurchaseActivity" android:screenOrientation="portrait" android:exported="false"/>
         <activity android:name=".RepairActivity" android:screenOrientation="portrait" android:exported="false"/>
         <activity android:name=".SaleActivity" android:screenOrientation="portrait" android:exported="false"/>
-        <activity android:name=".SectionActivity" android:screenOrientation="portrait" android:exported="false"/>
         <activity android:name=".MainActivity" android:screenOrientation="portrait" android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/>
