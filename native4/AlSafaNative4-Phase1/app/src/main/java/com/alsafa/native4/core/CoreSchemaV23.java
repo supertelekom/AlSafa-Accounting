@@ -1,0 +1,3 @@
+package com.alsafa.native4.core;import android.database.sqlite.SQLiteDatabase;
+/** Additive immutable repair timeline. Existing repair rows remain untouched. */
+public final class CoreSchemaV23{private CoreSchemaV23(){}public static void create(SQLiteDatabase db){db.execSQL("CREATE TABLE IF NOT EXISTS repair_updates(update_id TEXT PRIMARY KEY,repair_id TEXT NOT NULL,kind TEXT NOT NULL,status TEXT,note TEXT,part_id TEXT,part_name TEXT,part_qty INTEGER NOT NULL DEFAULT 0,created_at INTEGER NOT NULL)");db.execSQL("CREATE INDEX IF NOT EXISTS idx_repair_updates_repair ON repair_updates(repair_id,created_at)");}}
