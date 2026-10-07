@@ -1,0 +1,4 @@
+package com.alsafa.native4.core;import android.database.Cursor;import android.database.sqlite.SQLiteDatabase;
+/** Additive fields required for 3.9.353 repair workflow parity. */
+public final class CoreSchemaV24{private CoreSchemaV24(){}public static void create(SQLiteDatabase db){add(db,"repairs","diagnosis","TEXT");add(db,"repairs","work_done","TEXT");add(db,"repairs","labor_price","REAL NOT NULL DEFAULT 0");add(db,"repairs","status_time","TEXT");add(db,"repairs","status_updated_at","INTEGER");add(db,"repairs","problem_updated_at","INTEGER");}
+ private static void add(SQLiteDatabase db,String table,String col,String def){try(Cursor c=db.rawQuery("PRAGMA table_info("+table+")",null)){while(c.moveToNext())if(col.equals(c.getString(c.getColumnIndexOrThrow("name"))))return;}db.execSQL("ALTER TABLE "+table+" ADD COLUMN "+col+" "+def);}}
