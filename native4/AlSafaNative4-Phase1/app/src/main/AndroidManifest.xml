@@ -1,6 +1,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.INTERNET"/>
     <application android:icon="@mipmap/ic_launcher" android:roundIcon="@mipmap/ic_launcher" android:allowBackup="false" android:label="الصفا Native 4 تجريبي" android:theme="@style/AppTheme" android:usesCleartextTraffic="false">
+        <activity android:name=".CashActivity" android:screenOrientation="portrait" android:exported="false"/>
+        <activity android:name=".ReportsActivity" android:screenOrientation="portrait" android:exported="false"/>
         <activity android:name=".ProductActivity" android:screenOrientation="portrait" android:exported="false"/>
         <activity android:name=".PurchaseActivity" android:screenOrientation="portrait" android:exported="false"/>
         <activity android:name=".RepairActivity" android:screenOrientation="portrait" android:exported="false"/>
