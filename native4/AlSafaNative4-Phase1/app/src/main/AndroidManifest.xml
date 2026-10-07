@@ -1,6 +1,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.INTERNET"/>
     <application android:icon="@mipmap/ic_launcher" android:roundIcon="@mipmap/ic_launcher" android:allowBackup="false" android:label="الصفا Native 4 تجريبي" android:theme="@style/AppTheme" android:usesCleartextTraffic="false">
+        <provider android:name="androidx.core.content.FileProvider" android:authorities="${applicationId}.files" android:exported="false" android:grantUriPermissions="true">
+            <meta-data android:name="android.support.FILE_PROVIDER_PATHS" android:resource="@xml/file_paths"/>
+        </provider>
         <activity android:name=".RecordDetailActivity" android:screenOrientation="portrait" android:exported="false"/>
         <activity android:name=".SearchActivity" android:screenOrientation="portrait" android:exported="false"/>
         <activity android:name=".MoreActivity" android:screenOrientation="portrait" android:exported="false"/>
