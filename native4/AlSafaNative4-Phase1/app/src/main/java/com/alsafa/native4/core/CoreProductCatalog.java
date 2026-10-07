@@ -20,7 +20,7 @@ public final class CoreProductCatalog {
   return out;
  }
 
- public ProductHit get(String productId){String id=productId==null?"":productId.trim();if(id.isEmpty())return null;try(Cursor c=provider.db().rawQuery("SELECT product_id,name,ref,barcode,brand,quantity,sale_price,cost_price,currency FROM products WHERE product_id=? AND deleted_at IS NULL LIMIT 1",new String[]{id})){return c.moveToFirst()?new ProductHit(c.getString(0),c.getString(1),c.getString(2),c.getString(3),c.getString(4),c.getInt(5),c.getDouble(6),c.getDouble(7),c.getString(8)):null;}}
+ public ProductHit get(String productId){String id=productId==null?"":productId.trim();if(id.isEmpty())return null;try(Cursor c=provider.db().rawQuery("SELECT product_id,name,ref,barcode,brand,quantity,sale_price,cost_price,currency,gender,display_type,dial_color,strap_type,case_color FROM products WHERE product_id=? AND deleted_at IS NULL LIMIT 1",new String[]{id})){return c.moveToFirst()?new ProductHit(c.getString(0),c.getString(1),c.getString(2),c.getString(3),c.getString(4),c.getInt(5),c.getDouble(6),c.getDouble(7),c.getString(8),c.getString(9),c.getString(10),c.getString(11),c.getString(12),c.getString(13)):null;}}
  private static String escapeLike(String s){return s.replace("\\","\\\\").replace("%","\\%").replace("_","\\_");}
  public static final class ProductHit{
   public final String id,name,ref,barcode,brand,currency,gender,displayType,dialColor,strapType,caseColor;public final int quantity;public final double salePrice,costPrice;
