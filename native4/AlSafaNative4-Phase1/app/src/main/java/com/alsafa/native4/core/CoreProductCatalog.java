@@ -24,7 +24,8 @@ public final class CoreProductCatalog {
  private static String escapeLike(String s){return s.replace("\\","\\\\").replace("%","\\%").replace("_","\\_");}
  public static final class ProductHit{
   public final String id,name,ref,barcode,brand,currency,gender,displayType,dialColor,strapType,caseColor;public final int quantity;public final double salePrice,costPrice;
-  ProductHit(String id,String name,String ref,String barcode,String brand,int quantity,double salePrice,double costPrice,String currency,String gender,String displayType,String dialColor,String strapType,String caseColor){this.id=id;this.name=name;this.ref=ref;this.barcode=barcode;this.brand=brand;this.quantity=quantity;this.salePrice=salePrice;this.costPrice=costPrice;this.currency=currency;this.gender=clean(gender);this.displayType=clean(displayType);this.dialColor=clean(dialColor);this.strapType=clean(strapType);this.caseColor=clean(caseColor);}\n  private static String clean(String s){return s==null?"":s;}
+  ProductHit(String id,String name,String ref,String barcode,String brand,int quantity,double salePrice,double costPrice,String currency,String gender,String displayType,String dialColor,String strapType,String caseColor){this.id=id;this.name=name;this.ref=ref;this.barcode=barcode;this.brand=brand;this.quantity=quantity;this.salePrice=salePrice;this.costPrice=costPrice;this.currency=currency;this.gender=clean(gender);this.displayType=clean(displayType);this.dialColor=clean(dialColor);this.strapType=clean(strapType);this.caseColor=clean(caseColor);}
+  private static String clean(String s){return s==null?"":s;}
   public String label(){String code=!ref.isEmpty()?ref:barcode;return name+(code.isEmpty()?"":" — "+code)+" — المخزون: "+quantity;}
  }
 }
