@@ -20,4 +20,9 @@ public class SaleLineGuardTest {
  @Test(expected=IllegalArgumentException.class) public void rejectsInfiniteLine(){SaleLineGuard.lineAmount(Double.MAX_VALUE,2);}
  @Test(expected=IllegalArgumentException.class) public void rejectsInfiniteSum(){SaleLineGuard.addAmount(Double.MAX_VALUE,Double.MAX_VALUE);}
  @Test(expected=IllegalArgumentException.class) public void rejectsNegativeLinePrice(){SaleLineGuard.lineAmount(-1.0,2);}
+ @Test public void computesUnpaidUsd(){assertEquals(15.0,SaleLineGuard.balanceUsd(60.0,45.0),0.00001);}
+ @Test public void acceptsExactPayment(){assertEquals(0.0,SaleLineGuard.balanceUsd(60.0,60.0),0.00001);}
+ @Test public void toleratesSubCentRounding(){assertEquals(0.0,SaleLineGuard.balanceUsd(60.0,60.005),0.00001);}
+ @Test(expected=IllegalArgumentException.class) public void rejectsExcessPayment(){SaleLineGuard.balanceUsd(60.0,61.0);}
+ @Test(expected=IllegalArgumentException.class) public void rejectsInvalidPayment(){SaleLineGuard.balanceUsd(60.0,Double.NaN);}
 }
