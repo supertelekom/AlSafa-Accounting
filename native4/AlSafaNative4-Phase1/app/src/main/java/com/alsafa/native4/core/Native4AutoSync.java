@@ -27,13 +27,14 @@ public final class Native4AutoSync {
   lastStatus="المزامنة مطلوبة";
   if(RUNNING.compareAndSet(false,true))start(activity,db,refresh);
  }
+ private static String operationName(String kind){if(kind==null)return "عملية";switch(kind){case "SALE":return "فاتورة مبيع";case "REPAIR":return "صيانة";case "PRODUCT":return "منتج";case "PURCHASE":return "مشتريات";case "CLOSING":return "إقفال يومي";case "CASH_MOVE":return "حركة صندوق";default:return kind;}}
  private static void start(Activity activity,CoreDb db,Runnable refresh){
   new Thread(()->{
    try{
     do {
      IMMEDIATE_PENDING.set(false);
      try{
-      Native4SyncCoordinator.Result result=new Native4SyncCoordinator(db).syncOnce((kind,id,index,total)->{lastStatus="جاري رفع "+kind+" ("+index+" من "+total+")";if(refresh!=null)activity.runOnUiThread(refresh);});
+      Native4SyncCoordinator.Result result=new Native4SyncCoordinator(db).syncOnce((kind,id,index,total)->{lastStatus="جاري رفع "+operationName(kind)+" ("+index+" من "+total+")";if(refresh!=null)activity.runOnUiThread(refresh);});
       lastStatus=(result.retries==0&&result.failed==0?"انتهت المزامنة":"المزامنة غير مكتملة")+" — رفع "+result.pushed+"، استقبال "+result.pulled+"، إعادة محاولة "+result.retries+"، فشل "+result.failed;
      }catch(Exception error){
       lastStatus="فشل المزامنة: "+error.getClass().getSimpleName();
