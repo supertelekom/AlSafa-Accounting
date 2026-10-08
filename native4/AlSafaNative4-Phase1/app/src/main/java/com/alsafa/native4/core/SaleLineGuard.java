@@ -14,6 +14,11 @@ public final class SaleLineGuard {
    if(!key.isEmpty()&&!seen.add(key))throw new IllegalArgumentException("Duplicate product in sale");
   }
  }
+ public static String paymentStatus(double invoiceUsd,double paidUsd,boolean hasPayments){
+  double due=balanceUsd(invoiceUsd,paidUsd);
+  if(due<=0.01)return "PAID";
+  return hasPayments?"PARTIAL":"DUE";
+ }
  public static double balanceUsd(double invoiceUsd,double paidUsd){
   if(!Double.isFinite(invoiceUsd)||!Double.isFinite(paidUsd)||invoiceUsd<0||paidUsd<0)throw new IllegalArgumentException("Invalid settlement amounts");
   double due=invoiceUsd-paidUsd;
