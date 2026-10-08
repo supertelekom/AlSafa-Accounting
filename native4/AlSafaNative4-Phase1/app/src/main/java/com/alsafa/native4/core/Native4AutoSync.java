@@ -29,6 +29,7 @@ public final class Native4AutoSync {
   if(RUNNING.compareAndSet(false,true))start(activity,db,refresh);
  }
  private static int pendingCount(CoreDb db){try(Cursor cursor=db.db().rawQuery("SELECT COUNT(*) FROM outbox WHERE state != ?",new String[]{"CONFIRMED"})){return cursor.moveToFirst()?cursor.getInt(0):0;}}
+ private static String operationLabel(String kind,String recordId){String label=operationName(kind);if(recordId==null||recordId.trim().isEmpty())return label;return label+" — "+recordId.trim();}
  private static String operationName(String kind){if(kind==null)return "عملية";switch(kind){case "SALE":return "فاتورة مبيع";case "REPAIR":return "صيانة";case "PRODUCT":return "منتج";case "PURCHASE":return "مشتريات";case "CLOSING":return "إقفال يومي";case "CASH_MOVE":return "حركة صندوق";default:return kind;}}
  private static void start(Activity activity,CoreDb db,Runnable refresh){
   new Thread(()->{
@@ -36,7 +37,7 @@ public final class Native4AutoSync {
     do {
      IMMEDIATE_PENDING.set(false);
      try{
-      Native4SyncCoordinator.Result result=new Native4SyncCoordinator(db).syncOnce((kind,id,index,total)->{lastStatus="جاري رفع "+operationName(kind)+" ("+index+" من "+total+")";if(refresh!=null)activity.runOnUiThread(refresh);},()->{lastStatus="جاري استقبال العمليات من Firebase";if(refresh!=null)activity.runOnUiThread(refresh);},(kind,id,index,total)->{lastStatus="جاري استقبال "+operationName(kind)+" ("+index+" من "+total+")";if(refresh!=null)activity.runOnUiThread(refresh);});
+      Native4SyncCoordinator.Result result=new Native4SyncCoordinator(db).syncOnce((kind,id,index,total)->{lastStatus="جاري رفع "+operationLabel(kind,id)+" ("+index+" من "+total+")";if(refresh!=null)activity.runOnUiThread(refresh);},()->{lastStatus="جاري استقبال العمليات من Firebase";if(refresh!=null)activity.runOnUiThread(refresh);},(kind,id,index,total)->{lastStatus="جاري استقبال "+operationLabel(kind,id)+" ("+index+" من "+total+")";if(refresh!=null)activity.runOnUiThread(refresh);});
       int pending=pendingCount(db);
       lastStatus=(result.retries==0&&result.failed==0&&pending==0?"انتهت المزامنة":"المزامنة غير مكتملة")+" — رفع "+result.pushed+"، استقبال "+result.pulled+"، متبقي "+pending+"، إعادة محاولة "+result.retries+"، فشل "+result.failed;
      }catch(Exception error){
