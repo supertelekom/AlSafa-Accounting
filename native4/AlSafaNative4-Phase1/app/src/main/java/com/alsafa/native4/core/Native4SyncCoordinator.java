@@ -11,5 +11,6 @@ public final class Native4SyncCoordinator {
  public Native4SyncCoordinator(CoreDb db){Native4FirestoreTransport transport=new Native4FirestoreTransport();sender=new Native4SyncEngine(db,transport);receiver=new Native4SyncReceiver(db,transport,new Native4OperationApplier());}
  public Result syncOnce()throws Exception{return syncOnce(null);}
  public Result syncOnce(Native4SyncEngine.Progress progress)throws Exception{return syncOnce(progress,null);}
- public Result syncOnce(Native4SyncEngine.Progress progress,Runnable beforePull)throws Exception{ synchronized(CYCLE_LOCK){ Native4SyncEngine.Result out=sender.pushPending(progress);if(beforePull!=null)beforePull.run();Native4SyncReceiver.Result in=receiver.pullOnce();return new Result(out.confirmed,out.retries,out.failed,in.applied,in.duplicates,in.checkpoint); } }
+ public Result syncOnce(Native4SyncEngine.Progress progress,Runnable beforePull)throws Exception{return syncOnce(progress,beforePull,null);}
+ public Result syncOnce(Native4SyncEngine.Progress progress,Runnable beforePull,Native4SyncReceiver.Progress receiveProgress)throws Exception{ synchronized(CYCLE_LOCK){ Native4SyncEngine.Result out=sender.pushPending(progress);if(beforePull!=null)beforePull.run();Native4SyncReceiver.Result in=receiver.pullOnce(receiveProgress);return new Result(out.confirmed,out.retries,out.failed,in.applied,in.duplicates,in.checkpoint); } }
 }
