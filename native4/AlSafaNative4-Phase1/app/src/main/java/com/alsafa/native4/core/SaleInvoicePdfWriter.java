@@ -29,15 +29,25 @@ public final class SaleInvoicePdfWriter {
    y+=28;
   }
   void line(String value){
-   String text=value==null?"":value.replace('\n',' ');
+   String text=value==null?"":value.replace('\r',' ').replace('\t',' ');
    if(text.isEmpty()){y+=22;return;}
-   while(!text.isEmpty()){
-    if(y>BOTTOM)next();
-    int count=paint.breakText(text,true,495,null);
-    if(count<=0)throw new IllegalStateException("تعذر تنسيق نص الفاتورة");
-    page.getCanvas().drawText(text.substring(0,count),555,y,paint);
-    text=text.substring(count);
-    y+=22;
+   for(String paragraph:text.split("\\n",-1)){
+    String remaining=paragraph;
+    if(remaining.isEmpty()){if(y>BOTTOM)next();y+=22;continue;}
+    while(!remaining.isEmpty()){
+     if(y>BOTTOM)next();
+     int count=paint.breakText(remaining,true,495,null);
+     if(count<=0)throw new IllegalStateException("تعذر تنسيق نص الفاتورة");
+     if(count<remaining.length() && Character.isHighSurrogate(remaining.charAt(count-1)))count--;
+     if(count<=0)throw new IllegalStateException("تعذر تقسيم نص الفاتورة");
+     if(count<remaining.length()){
+      int space=remaining.lastIndexOf(' ',count-1);
+      if(space>0 && space>count/2)count=space+1;
+     }
+     page.getCanvas().drawText(remaining.substring(0,count).trim(),555,y,paint);
+     remaining=remaining.substring(count);
+     y+=22;
+    }
    }
   }
   void close(){if(page!=null){document.finishPage(page);page=null;}document.close();}
