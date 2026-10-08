@@ -23,6 +23,7 @@ public final class JournalPostingStore {
    debit=Math.addExact(debit,line.debit);credit=Math.addExact(credit,line.credit);
   }
   if(debit==0||debit!=credit)throw new IllegalArgumentException("Unbalanced journal entry");
+  for(Line line:lines){try(Cursor account=db.rawQuery("SELECT active FROM ledger_accounts WHERE account_code=?",new String[]{line.account.trim()})){if(!account.moveToFirst()||account.getInt(0)!=1)throw new IllegalArgumentException("Unknown or inactive ledger account: "+line.account);}}
   try(Cursor existing=db.rawQuery("SELECT entry_id FROM journal_entries WHERE source_type=? AND source_id=? AND entry_kind=? AND currency=?",new String[]{sourceType,sourceId,kind,cur})){
    if(existing.moveToFirst())throw new IllegalStateException("Journal entry already posted");
   }
