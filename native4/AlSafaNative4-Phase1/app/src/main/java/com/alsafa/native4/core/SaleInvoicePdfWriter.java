@@ -62,7 +62,7 @@ public final class SaleInvoicePdfWriter {
   if(context==null||x==null)throw new IllegalArgumentException("بيانات الفاتورة مطلوبة");
   File dir=new File(context.getCacheDir(),"invoices");
   if(!dir.exists()&&!dir.mkdirs())throw new IllegalStateException("تعذر إنشاء مجلد الفاتورة");
-  File out=new File(dir,"invoice-"+safe(x.invoiceNo)+"-"+System.currentTimeMillis()+".pdf");
+  File out=File.createTempFile("invoice-"+safe(x.invoiceNo)+"-",".pdf",dir);
   Pages p=new Pages();boolean success=false;
   try{
    p.line("فاتورة مبيع");
