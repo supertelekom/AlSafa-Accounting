@@ -20,13 +20,19 @@ public final class SaleInvoicePdfWriter {
   int y,number;
   Pages(){paint.setTextSize(12);paint.setTextAlign(Paint.Align.RIGHT);next();}
   void next(){
-   if(page!=null)document.finishPage(page);
+   if(page!=null)finishPage();
    page=document.startPage(new PdfDocument.PageInfo.Builder(WIDTH,HEIGHT,++number).create());
    y=TOP;
    paint.setFakeBoldText(true);
    page.getCanvas().drawText("الصفا للساعات",555,y,paint);
    paint.setFakeBoldText(false);
    y+=28;
+  }
+  void finishPage(){
+   paint.setTextSize(10);paint.setTextAlign(Paint.Align.CENTER);
+   page.getCanvas().drawText("صفحة "+number,WIDTH/2f,HEIGHT-25,paint);
+   paint.setTextSize(12);paint.setTextAlign(Paint.Align.RIGHT);
+   document.finishPage(page);page=null;
   }
   void line(String value){
    String text=value==null?"":value.replace('\r',' ').replace('\t',' ');
@@ -50,7 +56,7 @@ public final class SaleInvoicePdfWriter {
     }
    }
   }
-  void close(){if(page!=null){document.finishPage(page);page=null;}document.close();}
+  void close(){if(page!=null)finishPage();document.close();}
  }
  public static File write(Context context,SaleInvoiceSnapshotStore.Snapshot x)throws Exception{
   if(context==null||x==null)throw new IllegalArgumentException("بيانات الفاتورة مطلوبة");
@@ -74,7 +80,7 @@ public final class SaleInvoicePdfWriter {
    for(SaleInvoiceSnapshotStore.Payment pay:x.payments)p.line("دفعة: "+money(pay.amount)+" "+pay.currency+" — "+pay.method);
    if(!x.warranty.isEmpty())p.line("الضمان: "+x.warranty);
    if(!x.notes.isEmpty())p.line("ملاحظات: "+x.notes);
-   p.document.finishPage(p.page);p.page=null;
+   p.finishPage();
    try(FileOutputStream fos=new FileOutputStream(out)){p.document.writeTo(fos);}
    success=true;return out;
   }finally{p.close();if(!success)out.delete();}
