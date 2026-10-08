@@ -14,6 +14,12 @@ public final class SaleLineGuard {
    if(!key.isEmpty()&&!seen.add(key))throw new IllegalArgumentException("Duplicate product in sale");
   }
  }
+ public static double payable(double subtotal,double discount){
+  if(!Double.isFinite(subtotal)||subtotal<0||!Double.isFinite(discount)||discount<0||discount>subtotal)throw new IllegalArgumentException("Invalid sale amount or discount");
+  double amount=subtotal-discount;
+  if(!Double.isFinite(amount))throw new IllegalArgumentException("Invalid sale total");
+  return amount;
+ }
  public static int remaining(int before,int sold){
   if(before<0||sold<=0||before<sold)throw new IllegalArgumentException("Insufficient stock");
   return before-sold;
