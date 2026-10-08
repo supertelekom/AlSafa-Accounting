@@ -33,8 +33,8 @@ public final class Native4AutoSync {
     do {
      IMMEDIATE_PENDING.set(false);
      try{
-      Native4SyncCoordinator.Result result=new Native4SyncCoordinator(db).syncOnce();
-      lastStatus="المزامنة: إرسال "+result.pushed+"، استقبال "+result.pulled+"، إعادة محاولة "+result.retries+"، فشل "+result.failed;
+      Native4SyncCoordinator.Result result=new Native4SyncCoordinator(db).syncOnce((kind,id,index,total)->{lastStatus="جاري رفع "+kind+" ("+index+" من "+total+")";if(refresh!=null)activity.runOnUiThread(refresh);});
+      lastStatus=(result.retries==0&&result.failed==0?"انتهت المزامنة":"المزامنة غير مكتملة")+" — رفع "+result.pushed+"، استقبال "+result.pulled+"، إعادة محاولة "+result.retries+"، فشل "+result.failed;
      }catch(Exception error){
       lastStatus="فشل المزامنة: "+error.getClass().getSimpleName();
      }
