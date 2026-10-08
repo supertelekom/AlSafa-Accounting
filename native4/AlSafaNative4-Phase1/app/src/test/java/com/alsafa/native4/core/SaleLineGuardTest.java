@@ -25,4 +25,8 @@ public class SaleLineGuardTest {
  @Test public void toleratesSubCentRounding(){assertEquals(0.0,SaleLineGuard.balanceUsd(60.0,60.005),0.00001);}
  @Test(expected=IllegalArgumentException.class) public void rejectsExcessPayment(){SaleLineGuard.balanceUsd(60.0,61.0);}
  @Test(expected=IllegalArgumentException.class) public void rejectsInvalidPayment(){SaleLineGuard.balanceUsd(60.0,Double.NaN);}
+ @Test public void marksFullyPaid(){assertEquals("PAID",SaleLineGuard.paymentStatus(60,60,true));}
+ @Test public void marksPartialPayment(){assertEquals("PARTIAL",SaleLineGuard.paymentStatus(60,40,true));}
+ @Test public void marksUnpaidInvoiceDue(){assertEquals("DUE",SaleLineGuard.paymentStatus(60,0,false));}
+ @Test public void marksZeroInvoicePaid(){assertEquals("PAID",SaleLineGuard.paymentStatus(0,0,false));}
 }
