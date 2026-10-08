@@ -15,10 +15,11 @@ public final class JournalPostingStore {
   if(!db.inTransaction())throw new IllegalStateException("Journal posting requires business transaction");
   if(sourceType==null||sourceType.trim().isEmpty()||sourceId==null||sourceId.trim().isEmpty()||kind==null||kind.trim().isEmpty())throw new IllegalArgumentException("Missing journal identity");
   String cur=MoneyRules.currency(currency);
+  if(postedAt<=0)throw new IllegalArgumentException("Invalid posting time");
   if(lines==null||lines.size()<2)throw new IllegalArgumentException("At least two journal lines required");
   long debit=0,credit=0;
   for(Line line:lines){
-   if(line==null||line.account==null||line.account.trim().isEmpty()||line.debit<0||line.credit<0||(line.debit==0)==(line.credit==0))throw new IllegalArgumentException("Invalid journal line");
+   if(line==null||line.account==null||line.account.trim().isEmpty()||!line.account.trim().matches("[A-Z0-9_]{2,40}")||line.debit<0||line.credit<0||(line.debit==0)==(line.credit==0))throw new IllegalArgumentException("Invalid journal line");
    debit=Math.addExact(debit,line.debit);credit=Math.addExact(credit,line.credit);
   }
   if(debit==0||debit!=credit)throw new IllegalArgumentException("Unbalanced journal entry");
