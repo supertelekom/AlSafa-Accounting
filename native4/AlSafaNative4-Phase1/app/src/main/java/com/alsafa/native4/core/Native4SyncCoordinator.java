@@ -9,5 +9,6 @@ public final class Native4SyncCoordinator {
  }
  private final Native4SyncEngine sender;private final Native4SyncReceiver receiver;
  public Native4SyncCoordinator(CoreDb db){Native4FirestoreTransport transport=new Native4FirestoreTransport();sender=new Native4SyncEngine(db,transport);receiver=new Native4SyncReceiver(db,transport,new Native4OperationApplier());}
- public Result syncOnce()throws Exception{ synchronized(CYCLE_LOCK){ Native4SyncEngine.Result out=sender.pushPending();Native4SyncReceiver.Result in=receiver.pullOnce();return new Result(out.confirmed,out.retries,out.failed,in.applied,in.duplicates,in.checkpoint); } }
+ public Result syncOnce()throws Exception{return syncOnce(null);}
+ public Result syncOnce(Native4SyncEngine.Progress progress)throws Exception{ synchronized(CYCLE_LOCK){ Native4SyncEngine.Result out=sender.pushPending(progress);Native4SyncReceiver.Result in=receiver.pullOnce();return new Result(out.confirmed,out.retries,out.failed,in.applied,in.duplicates,in.checkpoint); } }
 }
