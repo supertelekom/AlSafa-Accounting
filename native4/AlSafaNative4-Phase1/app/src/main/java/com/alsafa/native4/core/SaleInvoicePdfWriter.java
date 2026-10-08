@@ -70,7 +70,7 @@ public final class SaleInvoicePdfWriter {
    p.line("الخصم: "+money(x.discount));
    p.line("الضريبة: "+money(x.tax));
    p.line("الإجمالي: "+money(x.total)+" "+x.currency);
-   p.line("حالة الدفع: "+x.paymentStatus);
+   p.line("حالة الدفع: "+paymentLabel(x.paymentStatus));
    for(SaleInvoiceSnapshotStore.Payment pay:x.payments)p.line("دفعة: "+money(pay.amount)+" "+pay.currency+" — "+pay.method);
    if(!x.warranty.isEmpty())p.line("الضمان: "+x.warranty);
    if(!x.notes.isEmpty())p.line("ملاحظات: "+x.notes);
@@ -79,6 +79,7 @@ public final class SaleInvoicePdfWriter {
    success=true;return out;
   }finally{p.close();if(!success)out.delete();}
  }
+ private static String paymentLabel(String state){if("PAID".equals(state))return "مدفوعة";if("PARTIAL".equals(state))return "مدفوعة جزئياً";if("DUE".equals(state))return "غير مدفوعة";return state==null?"غير محددة":state;}
  private static String money(double v){return String.format(Locale.US,"%.2f",v);}
  private static String safe(String s){return s==null||s.trim().isEmpty()?"sale":s.replaceAll("[^a-zA-Z0-9_-]","_");}
 }
