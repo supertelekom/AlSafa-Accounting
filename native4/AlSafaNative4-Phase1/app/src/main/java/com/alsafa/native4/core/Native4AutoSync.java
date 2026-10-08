@@ -26,8 +26,7 @@ public final class Native4AutoSync {
  public static void requestImmediate(Activity activity,CoreDb db,Runnable refresh){
   if(activity==null||db==null||FirebaseAuth.getInstance().getCurrentUser()==null)return;
   IMMEDIATE_PENDING.set(true);
-  lastStatus="المزامنة مطلوبة";
-  if(RUNNING.compareAndSet(false,true))start(activity,db,refresh);
+  if(RUNNING.compareAndSet(false,true)){lastStatus="المزامنة قيد التنفيذ";start(activity,db,refresh);}
  }
  private static int pendingCount(CoreDb db){try(Cursor cursor=db.db().rawQuery("SELECT COUNT(*) FROM outbox WHERE state != ?",new String[]{"CONFIRMED"})){return cursor.moveToFirst()?cursor.getInt(0):0;}}
  private static String operationLabel(String kind,String recordId,String payload){
@@ -36,7 +35,7 @@ public final class Native4AutoSync {
   return operationLabel(kind,recordId);
  }
  private static String operationLabel(String kind,String recordId){String label=operationName(kind);if(recordId==null||recordId.trim().isEmpty())return label;return label+" — "+recordId.trim();}
- private static String operationName(String kind){if(kind==null)return "عملية";switch(kind){case "SALE":return "فاتورة مبيع";case "REPAIR":return "صيانة";case "PRODUCT":return "منتج";case "PURCHASE":return "مشتريات";case "CLOSING":return "إقفال يومي";case "CASH_MOVE":return "حركة صندوق";default:return kind;}}
+ private static String operationName(String kind){if(kind==null)return "عملية";switch(kind){case "SALE":case "SALE_CREATE":case "SALE_UPDATE":return "فاتورة مبيع";case "REPAIR":case "REPAIR_UPDATE":return "صيانة";case "PRODUCT":case "PRODUCT_CREATE":case "PRODUCT_UPDATE":case "PRODUCT_DELETE":return "منتج";case "PURCHASE":return "مشتريات";case "DAILY_CLOSING":case "CLOSING":return "إقفال يومي";case "CASH_MOVEMENT":case "CASH_MOVE":return "حركة صندوق";case "INVENTORY_ADJUSTMENT":return "تعديل مخزون";case "SETTING":return "إعدادات";default:return kind;}}
  private static void start(Activity activity,CoreDb db,Runnable refresh){
   new Thread(()->{
    try{
