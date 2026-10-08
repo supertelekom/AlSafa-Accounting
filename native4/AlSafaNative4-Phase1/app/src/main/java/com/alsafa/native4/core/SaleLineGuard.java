@@ -14,6 +14,18 @@ public final class SaleLineGuard {
    if(!key.isEmpty()&&!seen.add(key))throw new IllegalArgumentException("Duplicate product in sale");
   }
  }
+ public static double lineAmount(double unitPrice,int quantity){
+  if(!Double.isFinite(unitPrice)||unitPrice<0||quantity<=0)throw new IllegalArgumentException("Invalid sale line");
+  double amount=unitPrice*quantity;
+  if(!Double.isFinite(amount))throw new IllegalArgumentException("Sale line overflow");
+  return amount;
+ }
+ public static double addAmount(double first,double second){
+  if(!Double.isFinite(first)||!Double.isFinite(second)||first<0||second<0)throw new IllegalArgumentException("Invalid sale sum");
+  double total=first+second;
+  if(!Double.isFinite(total))throw new IllegalArgumentException("Sale sum overflow");
+  return total;
+ }
  public static double payable(double subtotal,double discount){
   if(!Double.isFinite(subtotal)||subtotal<0||!Double.isFinite(discount)||discount<0||discount>subtotal)throw new IllegalArgumentException("Invalid sale amount or discount");
   double amount=subtotal-discount;
