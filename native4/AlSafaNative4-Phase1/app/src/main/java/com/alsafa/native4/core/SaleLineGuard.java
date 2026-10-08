@@ -14,6 +14,12 @@ public final class SaleLineGuard {
    if(!key.isEmpty()&&!seen.add(key))throw new IllegalArgumentException("Duplicate product in sale");
   }
  }
+ public static double balanceUsd(double invoiceUsd,double paidUsd){
+  if(!Double.isFinite(invoiceUsd)||!Double.isFinite(paidUsd)||invoiceUsd<0||paidUsd<0)throw new IllegalArgumentException("Invalid settlement amounts");
+  double due=invoiceUsd-paidUsd;
+  if(!Double.isFinite(due)||due < -0.01)throw new IllegalArgumentException("Payment exceeds invoice");
+  return Math.max(0,due);
+ }
  public static double lineAmount(double unitPrice,int quantity){
   if(!Double.isFinite(unitPrice)||unitPrice<0||quantity<=0)throw new IllegalArgumentException("Invalid sale line");
   double amount=unitPrice*quantity;
