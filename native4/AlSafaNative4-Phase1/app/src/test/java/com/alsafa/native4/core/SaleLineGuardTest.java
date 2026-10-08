@@ -15,4 +15,9 @@ public class SaleLineGuardTest {
  @Test(expected=IllegalArgumentException.class) public void rejectsOverDiscount(){SaleLineGuard.payable(50.0,51.0);}
  @Test(expected=IllegalArgumentException.class) public void rejectsInfiniteSubtotal(){SaleLineGuard.payable(Double.POSITIVE_INFINITY,1.0);}
  @Test(expected=IllegalArgumentException.class) public void rejectsNaNDiscount(){SaleLineGuard.payable(50.0,Double.NaN);}
+ @Test public void multipliesSaleLine(){assertEquals(75.0,SaleLineGuard.lineAmount(25.0,3),0.00001);}
+ @Test public void sumsSaleLines(){assertEquals(125.0,SaleLineGuard.addAmount(75.0,50.0),0.00001);}
+ @Test(expected=IllegalArgumentException.class) public void rejectsInfiniteLine(){SaleLineGuard.lineAmount(Double.MAX_VALUE,2);}
+ @Test(expected=IllegalArgumentException.class) public void rejectsInfiniteSum(){SaleLineGuard.addAmount(Double.MAX_VALUE,Double.MAX_VALUE);}
+ @Test(expected=IllegalArgumentException.class) public void rejectsNegativeLinePrice(){SaleLineGuard.lineAmount(-1.0,2);}
 }
