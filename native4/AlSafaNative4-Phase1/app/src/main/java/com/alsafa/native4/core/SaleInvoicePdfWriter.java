@@ -9,32 +9,66 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 
-/** Read-only PDF renderer. It never changes accounting, stock, outbox or sync state. */
+/** Read-only renderer: no accounting, inventory or synchronization writes. */
 public final class SaleInvoicePdfWriter {
  private SaleInvoicePdfWriter(){}
- public static File write(Context context, SaleInvoiceSnapshotStore.Snapshot x)throws Exception{
-  if(context==null||x==null)throw new IllegalArgumentException("بيانات الفاتورة مطلوبة");
-  File dir=new File(context.getCacheDir(),"invoices");if(!dir.exists()&&!dir.mkdirs())throw new IllegalStateException("تعذر إنشاء مجلد الفاتورة");
-  File out=new File(dir,"invoice-"+safe(x.invoiceNo)+"-"+System.currentTimeMillis()+".pdf");
-  PdfDocument doc=new PdfDocument();PdfDocument.Page page=null;try{
-   PdfDocument.PageInfo info=new PdfDocument.PageInfo.Builder(595,842,1).create();page=doc.startPage(info);
-   Paint p=new Paint(Paint.ANTI_ALIAS_FLAG);p.setTextSize(18);p.setFakeBoldText(true);p.setTextAlign(Paint.Align.CENTER);page.getCanvas().drawText("الصفا للساعات",297,55,p);
-   p.setTextSize(12);page.getCanvas().drawText("فاتورة مبيع",297,78,p);
-   p.setFakeBoldText(false);p.setTextAlign(Paint.Align.RIGHT);int y=112;
-   y=line(page,p,"رقم الفاتورة: "+x.invoiceNo,555,y);y=line(page,p,"التاريخ: "+new SimpleDateFormat("yyyy-MM-dd HH:mm",Locale.US).format(new Date(x.businessAt)),555,y);
-   y=line(page,p,"العميل: "+(x.customerName.isEmpty()?"بدون عميل محدد":x.customerName),555,y);
-   if(!x.customerPhone.isEmpty())y=line(page,p,"الهاتف: "+x.customerPhone,555,y);
-   y+=18; y=line(page,p,"الأصناف",555,y);
-   for(SaleInvoiceSnapshotStore.Item i:x.items){y=line(page,p,i.description+"  |  "+i.quantity+" × "+money(i.unitPrice)+" = "+money(i.total),555,y);if(y>780)break;}
-   y+=16;y=line(page,p,"المجموع: "+money(x.subtotal)+" "+x.currency,555,y);y=line(page,p,"الخصم: "+money(x.discount),555,y);y=line(page,p,"الضريبة: "+money(x.tax),555,y);y=line(page,p,"الإجمالي: "+money(x.total)+" "+x.currency,555,y);
-   y+=16;y=line(page,p,"حالة الدفع: "+x.paymentStatus,555,y);
-   for(SaleInvoiceSnapshotStore.Payment pay:x.payments)y=line(page,p,"دفعة: "+money(pay.amount)+" "+pay.currency+" — "+pay.method,555,y);
-   if(!x.warranty.isEmpty())y=line(page,p,"الضمان: "+x.warranty,555,y);
-   if(!x.notes.isEmpty())line(page,p,"ملاحظات: "+x.notes,555,y);
-   doc.finishPage(page);page=null;try(FileOutputStream fos=new FileOutputStream(out)){doc.writeTo(fos);}return out;
-  }finally{if(page!=null)doc.finishPage(page);doc.close();}
+ private static final int WIDTH=595, HEIGHT=842, TOP=48, BOTTOM=790;
+ private static final class Pages {
+  final PdfDocument document=new PdfDocument();
+  final Paint paint=new Paint(Paint.ANTI_ALIAS_FLAG);
+  PdfDocument.Page page;
+  int y,number;
+  Pages(){paint.setTextSize(12);paint.setTextAlign(Paint.Align.RIGHT);next();}
+  void next(){
+   if(page!=null)document.finishPage(page);
+   page=document.startPage(new PdfDocument.PageInfo.Builder(WIDTH,HEIGHT,++number).create());
+   y=TOP;
+   paint.setFakeBoldText(true);
+   page.getCanvas().drawText("الصفا للساعات",555,y,paint);
+   paint.setFakeBoldText(false);
+   y+=28;
+  }
+  void line(String value){
+   String text=value==null?"":value.replace('\n',' ');
+   if(text.isEmpty()){y+=22;return;}
+   while(!text.isEmpty()){
+    if(y>BOTTOM)next();
+    int count=paint.breakText(text,true,495,null);
+    if(count<=0)throw new IllegalStateException("تعذر تنسيق نص الفاتورة");
+    page.getCanvas().drawText(text.substring(0,count),555,y,paint);
+    text=text.substring(count);
+    y+=22;
+   }
+  }
+  void close(){if(page!=null){document.finishPage(page);page=null;}document.close();}
  }
- private static int line(PdfDocument.Page page,Paint p,String text,float x,int y){page.getCanvas().drawText(text,x,y,p);return y+22;}
+ public static File write(Context context,SaleInvoiceSnapshotStore.Snapshot x)throws Exception{
+  if(context==null||x==null)throw new IllegalArgumentException("بيانات الفاتورة مطلوبة");
+  File dir=new File(context.getCacheDir(),"invoices");
+  if(!dir.exists()&&!dir.mkdirs())throw new IllegalStateException("تعذر إنشاء مجلد الفاتورة");
+  File out=new File(dir,"invoice-"+safe(x.invoiceNo)+"-"+System.currentTimeMillis()+".pdf");
+  Pages p=new Pages();boolean success=false;
+  try{
+   p.line("فاتورة مبيع");
+   p.line("رقم الفاتورة: "+x.invoiceNo);
+   p.line("التاريخ: "+new SimpleDateFormat("yyyy-MM-dd HH:mm",Locale.US).format(new Date(x.businessAt)));
+   p.line("العميل: "+(x.customerName.isEmpty()?"بدون عميل محدد":x.customerName));
+   if(!x.customerPhone.isEmpty())p.line("الهاتف: "+x.customerPhone);
+   p.line("الأصناف");
+   for(SaleInvoiceSnapshotStore.Item i:x.items)p.line(i.description+" | "+i.quantity+" × "+money(i.unitPrice)+" = "+money(i.total));
+   p.line("المجموع: "+money(x.subtotal)+" "+x.currency);
+   p.line("الخصم: "+money(x.discount));
+   p.line("الضريبة: "+money(x.tax));
+   p.line("الإجمالي: "+money(x.total)+" "+x.currency);
+   p.line("حالة الدفع: "+x.paymentStatus);
+   for(SaleInvoiceSnapshotStore.Payment pay:x.payments)p.line("دفعة: "+money(pay.amount)+" "+pay.currency+" — "+pay.method);
+   if(!x.warranty.isEmpty())p.line("الضمان: "+x.warranty);
+   if(!x.notes.isEmpty())p.line("ملاحظات: "+x.notes);
+   p.document.finishPage(p.page);p.page=null;
+   try(FileOutputStream fos=new FileOutputStream(out)){p.document.writeTo(fos);}
+   success=true;return out;
+  }finally{p.close();if(!success)out.delete();}
+ }
  private static String money(double v){return String.format(Locale.US,"%.2f",v);}
  private static String safe(String s){return s==null||s.trim().isEmpty()?"sale":s.replaceAll("[^a-zA-Z0-9_-]","_");}
 }
