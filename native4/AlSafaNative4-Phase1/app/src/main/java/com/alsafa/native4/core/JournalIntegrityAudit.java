@@ -5,11 +5,11 @@ import android.database.sqlite.SQLiteDatabase;
 public final class JournalIntegrityAudit {
  private JournalIntegrityAudit(){}
  public static final class Result {
-  public final long foreignKeyViolations,orphanLines,unbalancedEntries,emptyEntries,invalidAccounts;
-  Result(long foreignKeyViolations,long orphanLines,long unbalancedEntries,long emptyEntries,long invalidAccounts){
-   this.foreignKeyViolations=foreignKeyViolations;this.orphanLines=orphanLines;this.unbalancedEntries=unbalancedEntries;this.emptyEntries=emptyEntries;this.invalidAccounts=invalidAccounts;
+  public final long foreignKeyViolations,orphanLines,unbalancedEntries,emptyEntries,invalidAccounts,invalidLines;
+  Result(long foreignKeyViolations,long orphanLines,long unbalancedEntries,long emptyEntries,long invalidAccounts,long invalidLines){
+   this.foreignKeyViolations=foreignKeyViolations;this.orphanLines=orphanLines;this.unbalancedEntries=unbalancedEntries;this.emptyEntries=emptyEntries;this.invalidAccounts=invalidAccounts;this.invalidLines=invalidLines;
   }
-  public boolean isClean(){return foreignKeyViolations==0&&orphanLines==0&&unbalancedEntries==0&&emptyEntries==0&&invalidAccounts==0;}
+  public boolean isClean(){return foreignKeyViolations==0&&orphanLines==0&&unbalancedEntries==0&&emptyEntries==0&&invalidAccounts==0&&invalidLines==0;}
  }
  private static long count(SQLiteDatabase db,String sql){
   try(Cursor c=db.rawQuery(sql,null)){if(!c.moveToFirst())throw new IllegalStateException("Audit query failed");return c.getLong(0);}
@@ -21,6 +21,7 @@ public final class JournalIntegrityAudit {
   long unbalanced=count(db,"SELECT COUNT(*) FROM (SELECT e.entry_id FROM journal_entries e JOIN journal_lines l ON l.entry_id=e.entry_id GROUP BY e.entry_id HAVING SUM(l.debit_minor)<>SUM(l.credit_minor))");
   long empty=count(db,"SELECT COUNT(*) FROM journal_entries e WHERE NOT EXISTS(SELECT 1 FROM journal_lines l WHERE l.entry_id=e.entry_id)");
   long invalid=count(db,"SELECT COUNT(*) FROM journal_lines l LEFT JOIN ledger_accounts a ON a.account_code=l.account_code WHERE a.account_code IS NULL");
-  return new Result(fk,orphan,unbalanced,empty,invalid);
+  long invalidLines=count(db,"SELECT COUNT(*) FROM journal_lines WHERE debit_minor<0 OR credit_minor<0 OR (debit_minor=0 AND credit_minor=0) OR (debit_minor>0 AND credit_minor>0)");
+  return new Result(fk,orphan,unbalanced,empty,invalid,invalidLines);
  }
 }
