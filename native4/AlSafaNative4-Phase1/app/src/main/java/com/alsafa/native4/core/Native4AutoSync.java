@@ -10,16 +10,21 @@ public final class Native4AutoSync {
  private static final AtomicBoolean RUNNING=new AtomicBoolean(false);
  private static final AtomicBoolean IMMEDIATE_PENDING=new AtomicBoolean(false);
  private static volatile long lastStartedAt=0L;
+ private static volatile String lastStatus="لم تبدأ المزامنة بعد";
+ public static String status(){return lastStatus;}
+
  private Native4AutoSync(){}
  public static void request(Activity activity,CoreDb db,Runnable refresh){
   if(activity==null||db==null||FirebaseAuth.getInstance().getCurrentUser()==null)return;
   long now=System.currentTimeMillis();if(now-lastStartedAt<MIN_INTERVAL_MS||!RUNNING.compareAndSet(false,true))return;lastStartedAt=now;
+  lastStatus="المزامنة قيد التنفيذ";
   start(activity,db,refresh);
  }
  /** For a newly committed local operation. Unlike lifecycle refresh, this is not throttled. */
  public static void requestImmediate(Activity activity,CoreDb db,Runnable refresh){
   if(activity==null||db==null||FirebaseAuth.getInstance().getCurrentUser()==null)return;
   IMMEDIATE_PENDING.set(true);
+  lastStatus="المزامنة مطلوبة";
   if(RUNNING.compareAndSet(false,true))start(activity,db,refresh);
  }
  private static void start(Activity activity,CoreDb db,Runnable refresh){
@@ -27,7 +32,12 @@ public final class Native4AutoSync {
    try{
     do {
      IMMEDIATE_PENDING.set(false);
-     try{new Native4SyncCoordinator(db).syncOnce();}catch(Exception ignored){}
+     try{
+      Native4SyncCoordinator.Result result=new Native4SyncCoordinator(db).syncOnce();
+      lastStatus="المزامنة: إرسال "+result.pushed+"، استقبال "+result.pulled+"، إعادة محاولة "+result.retries+"، فشل "+result.failed;
+     }catch(Exception error){
+      lastStatus="فشل المزامنة: "+error.getClass().getSimpleName();
+     }
     }while(IMMEDIATE_PENDING.get());
    }finally{
     RUNNING.set(false);
