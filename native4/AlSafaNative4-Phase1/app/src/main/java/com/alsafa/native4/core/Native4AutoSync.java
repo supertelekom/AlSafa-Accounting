@@ -31,7 +31,7 @@ public final class Native4AutoSync {
  private static int pendingCount(CoreDb db){try(Cursor cursor=db.db().rawQuery("SELECT COUNT(*) FROM outbox WHERE state != ?",new String[]{"CONFIRMED"})){return cursor.moveToFirst()?cursor.getInt(0):0;}}
  private static String operationLabel(String kind,String recordId,String payload){
   String label=operationName(kind);
-  try{JSONObject j=new JSONObject(payload);String name="";if(kind!=null&&kind.startsWith("PRODUCT"))name=j.optString("name",j.optString("productName",""));else if(kind!=null&&(kind.startsWith("SALE")||kind.startsWith("REPAIR")))name=j.optString("invoiceNo","");else if("PURCHASE".equals(kind))name=j.optString("invoiceRef","");if(!name.trim().isEmpty())return label+" — "+name.trim();}catch(Exception ignored){}
+  try{JSONObject j=new JSONObject(payload);String name="";if(kind!=null&&kind.startsWith("PRODUCT"))name=j.optString("name",j.optString("productName",""));else if(kind!=null&&(kind.startsWith("SALE")||kind.startsWith("REPAIR")))name=j.optString("invoiceNo",j.optString("invoiceNumber",""));else if("PURCHASE".equals(kind))name=j.optString("invoiceRef","");else if("INVENTORY_ADJUSTMENT".equals(kind))name=j.optString("productName","");if(!name.trim().isEmpty())return label+" — "+name.trim();}catch(Exception ignored){}
   return operationLabel(kind,recordId);
  }
  private static String operationLabel(String kind,String recordId){String label=operationName(kind);if(recordId==null||recordId.trim().isEmpty())return label;return label+" — "+recordId.trim();}
