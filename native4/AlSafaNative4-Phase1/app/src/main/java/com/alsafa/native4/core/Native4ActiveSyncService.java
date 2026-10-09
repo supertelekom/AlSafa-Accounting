@@ -51,7 +51,7 @@ public final class Native4ActiveSyncService extends Service {
       synchronized(wakeLock){while(!syncRequested&&!stopped){try{wakeLock.wait();}catch(InterruptedException interrupted){Thread.currentThread().interrupt();return;}}syncRequested=false;}
       if(stopped)break;
       if(FirebaseAuth.getInstance().getCurrentUser()!=null){
-       try{new Native4SyncCoordinator(new CoreDb(getApplicationContext()),getApplicationContext()).syncOnce();}
+       try{Native4SyncCoordinator.Result result=new Native4SyncCoordinator(new CoreDb(getApplicationContext()),getApplicationContext()).syncOnce();if(result.retries>0)Native4BackgroundSyncWorker.enqueue(getApplicationContext());}
        catch(Exception e){android.util.Log.w("Native4Sync","Foreground sync retry pending",e);Native4BackgroundSyncWorker.enqueue(getApplicationContext());}
       }
      }
