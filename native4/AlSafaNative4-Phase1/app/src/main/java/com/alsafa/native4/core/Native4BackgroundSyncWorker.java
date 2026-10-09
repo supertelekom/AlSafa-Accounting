@@ -25,7 +25,7 @@ public final class Native4BackgroundSyncWorker extends Worker {
   WorkManager.getInstance(context.getApplicationContext()).enqueueUniqueWork(UNIQUE_NAME,ExistingWorkPolicy.KEEP,work);
  }
  @NonNull @Override public Result doWork(){
-  if(FirebaseAuth.getInstance().getCurrentUser()==null)return Result.retry();
+  if(FirebaseAuth.getInstance().getCurrentUser()==null)return Result.success();
   try{
    CoreDb db=new CoreDb(getApplicationContext());
    Native4SyncCoordinator.Result result=new Native4SyncCoordinator(db,getApplicationContext()).syncOnce();
