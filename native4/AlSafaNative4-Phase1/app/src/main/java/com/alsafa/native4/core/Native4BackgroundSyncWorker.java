@@ -7,6 +7,7 @@ import androidx.work.Constraints;
 import androidx.work.ExistingWorkPolicy;
 import androidx.work.NetworkType;
 import androidx.work.OneTimeWorkRequest;
+import androidx.work.PeriodicWorkRequest;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
 import androidx.work.WorkManager;
@@ -16,6 +17,12 @@ import java.util.concurrent.TimeUnit;
 /** Durable, network-aware sync that survives Activity navigation and process death. */
 public final class Native4BackgroundSyncWorker extends Worker {
  private static final String UNIQUE_NAME="native4-background-sync";
+ private static final String PERIODIC_NAME="native4-periodic-sync";
+ public static void ensurePeriodic(Context context){
+  Constraints constraints=new Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build();
+  PeriodicWorkRequest periodic=new PeriodicWorkRequest.Builder(Native4BackgroundSyncWorker.class,15,TimeUnit.MINUTES).setConstraints(constraints).build();
+  WorkManager.getInstance(context.getApplicationContext()).enqueueUniquePeriodicWork(PERIODIC_NAME,androidx.work.ExistingPeriodicWorkPolicy.KEEP,periodic);
+ }
  public Native4BackgroundSyncWorker(@NonNull Context context,@NonNull WorkerParameters params){super(context,params);}
  public static void enqueue(Context context){
   Constraints constraints=new Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build();
