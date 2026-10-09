@@ -5,12 +5,15 @@ import com.google.android.gms.tasks.Tasks;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.Source;
+import com.google.firebase.firestore.QuerySnapshot;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 /** Publishes only a checkpoint already committed in SQLite, never a speculative receipt. */
 public final class Native4DeviceReceipt {
+ public static QuerySnapshot readReceipts()throws Exception{return Tasks.await(FirebaseFirestore.getInstance().collection("native4_device_receipts").get(Source.SERVER),20,TimeUnit.SECONDS);}
  private Native4DeviceReceipt(){}
  public static String deviceId(Context context){
   SharedPreferences p=context.getApplicationContext().getSharedPreferences("native4_device_identity",Context.MODE_PRIVATE);
