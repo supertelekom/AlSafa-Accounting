@@ -18,6 +18,7 @@ public final class Native4ActiveSyncService extends Service {
  private final AtomicBoolean running=new AtomicBoolean(false);
  private final Object wakeLock=new Object();
  private volatile boolean stopped=false;
+ private volatile boolean syncRequested=true;
  public static final String ACTION_SYNC_NOW="com.alsafa.native4.SYNC_NOW";
  public static void start(Context context){
   Intent intent=new Intent(context,Native4ActiveSyncService.class).setAction(ACTION_SYNC_NOW);
@@ -33,16 +34,17 @@ public final class Native4ActiveSyncService extends Service {
   startForeground(NOTIFICATION_ID,notification);
  }
  @Override public int onStartCommand(Intent intent,int flags,int startId){
-  synchronized(wakeLock){wakeLock.notifyAll();}
+  synchronized(wakeLock){syncRequested=true;wakeLock.notifyAll();}
   if(running.compareAndSet(false,true)){
    new Thread(()->{
     try{
      while(!stopped&&!Thread.currentThread().isInterrupted()){
+      synchronized(wakeLock){while(!syncRequested&&!stopped){try{wakeLock.wait();}catch(InterruptedException interrupted){Thread.currentThread().interrupt();return;}}syncRequested=false;}
+      if(stopped)break;
       if(FirebaseAuth.getInstance().getCurrentUser()!=null){
        try{new Native4SyncCoordinator(new CoreDb(getApplicationContext()),getApplicationContext()).syncOnce();}
        catch(Exception e){android.util.Log.w("Native4Sync","Foreground sync retry pending",e);}
       }
-      synchronized(wakeLock){try{wakeLock.wait(30_000L);}catch(InterruptedException interrupted){Thread.currentThread().interrupt();break;}}
      }
     }finally{running.set(false);}
    },"native4-active-sync").start();
