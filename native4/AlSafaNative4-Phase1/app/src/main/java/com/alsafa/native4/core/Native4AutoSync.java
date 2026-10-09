@@ -44,7 +44,7 @@ public final class Native4AutoSync {
      try{
       Native4SyncCoordinator.Result result=new Native4SyncCoordinator(db).syncOnce((kind,id,payload,index,total)->{lastStatus="جاري رفع "+operationLabel(kind,id,payload)+" ("+index+" من "+total+")";if(refresh!=null)activity.runOnUiThread(refresh);},()->{lastStatus="جاري استقبال العمليات من Firebase";if(refresh!=null)activity.runOnUiThread(refresh);},(kind,id,payload,index,total)->{lastStatus="جاري استقبال "+operationLabel(kind,id,payload)+" ("+index+" من "+total+")";if(refresh!=null)activity.runOnUiThread(refresh);});
       int pending=pendingCount(db);
-      lastStatus=(result.retries==0&&result.failed==0&&pending==0?"انتهت المزامنة":"المزامنة غير مكتملة")+" — رفع "+result.pushed+"، استقبال "+result.pulled+"، متبقي "+pending+"، إعادة محاولة "+result.retries+"، فشل "+result.failed;
+      lastStatus=(result.retries==0&&result.failed==0&&pending==0?"اكتمل الرفع والاستقبال المحلي؛ لم يُتحقق من استلام الجهاز الآخر":"المزامنة المحلية غير مكتملة")+" — رفع "+result.pushed+"، استقبال "+result.pulled+"، متبقي "+pending+"، إعادة محاولة "+result.retries+"، فشل "+result.failed;
      }catch(Exception error){
       lastStatus="فشل المزامنة: "+error.getClass().getSimpleName();
      }
