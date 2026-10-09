@@ -28,11 +28,12 @@ public final class Native4BackgroundSyncWorker extends Worker {
  @NonNull @Override public Result doWork(){
   if(FirebaseAuth.getInstance().getCurrentUser()==null)return Result.success();
   try{
-   CoreDb db=new CoreDb(getApplicationContext());
-   Native4SyncCoordinator.Result result=new Native4SyncCoordinator(db,getApplicationContext()).syncOnce();
-   boolean pending;
-   try(Cursor cursor=db.db().rawQuery("SELECT 1 FROM outbox WHERE state IN ('PENDING','RETRY','SENDING') LIMIT 1",null)){pending=cursor.moveToFirst();}
-   return result.retries>0||pending?Result.retry():Result.success();
+   try(CoreDb db=new CoreDb(getApplicationContext())){
+    Native4SyncCoordinator.Result result=new Native4SyncCoordinator(db,getApplicationContext()).syncOnce();
+    boolean pending;
+    try(Cursor cursor=db.db().rawQuery("SELECT 1 FROM outbox WHERE state IN ('PENDING','RETRY','SENDING') LIMIT 1",null)){pending=cursor.moveToFirst();}
+    return result.retries>0||pending?Result.retry():Result.success();
+   }
   }catch(Exception e){android.util.Log.w("Native4Sync","Background sync will retry",e);return Result.retry();}
  }
 }
