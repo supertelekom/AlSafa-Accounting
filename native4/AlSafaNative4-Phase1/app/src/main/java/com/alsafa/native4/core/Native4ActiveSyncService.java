@@ -52,7 +52,7 @@ public final class Native4ActiveSyncService extends Service {
       if(stopped)break;
       if(FirebaseAuth.getInstance().getCurrentUser()!=null){
        try{new Native4SyncCoordinator(new CoreDb(getApplicationContext()),getApplicationContext()).syncOnce();}
-       catch(Exception e){android.util.Log.w("Native4Sync","Foreground sync retry pending",e);}
+       catch(Exception e){android.util.Log.w("Native4Sync","Foreground sync retry pending",e);Native4BackgroundSyncWorker.enqueue(getApplicationContext());}
       }
      }
     }finally{running.set(false);}
