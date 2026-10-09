@@ -5,6 +5,7 @@ import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QuerySnapshot;
+import com.google.firebase.firestore.Source;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -33,7 +34,7 @@ public final class Native4FirestoreTransport implements Native4SyncEngine.Transp
   }catch(Exception e){if(isOperationConflict(e))throw new Native4SyncEngine.Permanent("تعارض معرّف العملية؛ يلزم فحص يدوي");throw retryable(e);}
  }
  @Override public Native4SyncReceiver.Batch fetchAfter(long revision,int limit)throws Exception{
-  QuerySnapshot snap=Tasks.await(firestore.collection(COLLECTION).whereGreaterThan("revision",revision).orderBy("revision",Query.Direction.ASCENDING).limit(Math.max(1,Math.min(limit,100))).get(),20,TimeUnit.SECONDS);
+  QuerySnapshot snap=Tasks.await(firestore.collection(COLLECTION).whereGreaterThan("revision",revision).orderBy("revision",Query.Direction.ASCENDING).limit(Math.max(1,Math.min(limit,100))).get(Source.SERVER),20,TimeUnit.SECONDS);
   List<Native4SyncReceiver.RemoteOp> out=new ArrayList<>();for(DocumentSnapshot d:snap.getDocuments()){Long r=d.getLong("revision");if(r==null)throw new IllegalStateException("Missing sync revision");out.add(new Native4SyncReceiver.RemoteOp(r,d.getString("operationId"),d.getString("kind"),d.getString("recordId"),d.getString("payload"),d.getString("sourceDeviceId")));}return new Native4SyncReceiver.Batch(out);
  }
  private static boolean isOperationConflict(Throwable error){for(Throwable t=error;t!=null;t=t.getCause()){String m=t.getMessage();if(m!=null&&m.contains("تعارض خطير: معرّف العملية"))return true;}return false;}
