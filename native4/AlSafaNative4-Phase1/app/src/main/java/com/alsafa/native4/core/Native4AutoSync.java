@@ -28,7 +28,8 @@ public final class Native4AutoSync {
   IMMEDIATE_PENDING.set(true);
   if(RUNNING.compareAndSet(false,true)){lastStatus="المزامنة قيد التنفيذ";start(activity,db,refresh);}
  }
- private static int pendingCount(CoreDb db){try(Cursor cursor=db.db().rawQuery("SELECT COUNT(*) FROM outbox WHERE state != ?",new String[]{"CONFIRMED"})){return cursor.moveToFirst()?cursor.getInt(0):0;}}
+ private static int pendingCount(CoreDb db){try(Cursor cursor=db.db().rawQuery("SELECT COUNT(*) FROM outbox WHERE state IN ('PENDING','RETRY','SENDING')",null)){return cursor.moveToFirst()?cursor.getInt(0):0;}}
+ private static int failedCount(CoreDb db){try(Cursor cursor=db.db().rawQuery("SELECT COUNT(*) FROM outbox WHERE state='FAILED'",null)){return cursor.moveToFirst()?cursor.getInt(0):0;}}
  private static String operationLabel(String kind,String recordId,String payload){
   String label=operationName(kind);
   try{JSONObject j=new JSONObject(payload);String name="";if(kind!=null&&kind.startsWith("PRODUCT"))name=j.optString("name",j.optString("productName",""));else if(kind!=null&&(kind.startsWith("SALE")||kind.startsWith("REPAIR")))name=j.optString("invoiceNo",j.optString("invoiceNumber",""));else if("PURCHASE".equals(kind))name=j.optString("invoiceRef","");else if("INVENTORY_ADJUSTMENT".equals(kind))name=j.optString("productName","");if(!name.trim().isEmpty())return label+" — "+name.trim();}catch(Exception ignored){}
@@ -43,8 +44,8 @@ public final class Native4AutoSync {
      IMMEDIATE_PENDING.set(false);
      try{
       Native4SyncCoordinator.Result result=new Native4SyncCoordinator(db,activity.getApplicationContext()).syncOnce((kind,id,payload,index,total)->{lastStatus="جاري رفع "+operationLabel(kind,id,payload)+" ("+index+" من "+total+")";if(refresh!=null)activity.runOnUiThread(refresh);},()->{lastStatus="جاري استقبال العمليات من Firebase";if(refresh!=null)activity.runOnUiThread(refresh);},(kind,id,payload,index,total)->{lastStatus="جاري استقبال "+operationLabel(kind,id,payload)+" ("+index+" من "+total+")";if(refresh!=null)activity.runOnUiThread(refresh);});
-      int pending=pendingCount(db);
-      lastStatus=(result.retries==0&&result.failed==0&&pending==0?"تمت مزامنة هذا الجهاز مع Firebase":"هناك عمليات تنتظر المزامنة")+" — رفع "+result.pushed+"، استقبال "+result.pulled+"، متبقي "+pending+"، إعادة محاولة "+result.retries+"، فشل "+result.failed;
+      int pending=pendingCount(db),failed=failedCount(db);
+      lastStatus=(failed>0?"توجد عمليات تحتاج مراجعة":pending==0?"تمت مزامنة هذا الجهاز مع Firebase":"هناك عمليات تنتظر المزامنة")+" — رفع "+result.pushed+"، استقبال "+result.pulled+"، متبقي "+pending+"، إعادة محاولة "+result.retries+"، للمراجعة "+failed;
      }catch(Exception error){
       lastStatus="فشل المزامنة: "+error.getClass().getSimpleName();
      }
