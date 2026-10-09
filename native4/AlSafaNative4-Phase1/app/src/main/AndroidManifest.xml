@@ -19,6 +19,7 @@
         <activity android:name=".ClosingActivity" android:screenOrientation="portrait" android:exported="false"/>
         <activity android:name=".CashActivity" android:screenOrientation="portrait" android:exported="false"/>
         <activity android:name=".ReportsActivity" android:screenOrientation="portrait" android:exported="false"/>
+        <activity android:name=".ProductAuditActivity" android:screenOrientation="portrait" android:exported="false"/>
         <activity android:name=".ProductActivity" android:screenOrientation="portrait" android:exported="false"/>
         <activity android:name=".PurchaseActivity" android:screenOrientation="portrait" android:exported="false"/>
         <activity android:name=".RepairActivity" android:screenOrientation="portrait" android:exported="false"/>
