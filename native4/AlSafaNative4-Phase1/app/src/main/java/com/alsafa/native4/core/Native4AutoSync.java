@@ -29,6 +29,7 @@ public final class Native4AutoSync {
  public static void requestImmediate(Activity activity,CoreDb db,Runnable refresh){
   if(activity==null||db==null||FirebaseAuth.getInstance().getCurrentUser()==null)return;
   Native4BackgroundSyncWorker.enqueue(activity.getApplicationContext());
+  Native4ActiveSyncService.start(activity.getApplicationContext());
   IMMEDIATE_PENDING.set(true);
   if(RUNNING.compareAndSet(false,true)){lastStatus="المزامنة قيد التنفيذ";start(activity,db,refresh);}
  }
