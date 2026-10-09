@@ -34,7 +34,7 @@ public final class Native4FirestoreTransport implements Native4SyncEngine.Transp
  }
  @Override public Native4SyncReceiver.Batch fetchAfter(long revision,int limit)throws Exception{
   QuerySnapshot snap=Tasks.await(firestore.collection(COLLECTION).whereGreaterThan("revision",revision).orderBy("revision",Query.Direction.ASCENDING).limit(Math.max(1,Math.min(limit,100))).get(),20,TimeUnit.SECONDS);
-  List<Native4SyncReceiver.RemoteOp> out=new ArrayList<>();for(DocumentSnapshot d:snap.getDocuments()){Long r=d.getLong("revision");if(r==null)continue;out.add(new Native4SyncReceiver.RemoteOp(r,d.getString("operationId"),d.getString("kind"),d.getString("recordId"),d.getString("payload"),d.getString("sourceDeviceId")));}return new Native4SyncReceiver.Batch(out);
+  List<Native4SyncReceiver.RemoteOp> out=new ArrayList<>();for(DocumentSnapshot d:snap.getDocuments()){Long r=d.getLong("revision");if(r==null)throw new IllegalStateException("Missing sync revision");out.add(new Native4SyncReceiver.RemoteOp(r,d.getString("operationId"),d.getString("kind"),d.getString("recordId"),d.getString("payload"),d.getString("sourceDeviceId")));}return new Native4SyncReceiver.Batch(out);
  }
  private static boolean isOperationConflict(Throwable error){for(Throwable t=error;t!=null;t=t.getCause()){String m=t.getMessage();if(m!=null&&m.contains("تعارض خطير: معرّف العملية"))return true;}return false;}
  private static Native4SyncEngine.Retryable retryable(Exception e){String m=e.getMessage();return new Native4SyncEngine.Retryable(m==null?"تعذر الاتصال بـ Firestore":m);}
