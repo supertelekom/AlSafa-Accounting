@@ -8,6 +8,10 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
 import android.os.IBinder;
+import android.net.ConnectivityManager;
+import android.net.Network;
+import android.net.NetworkRequest;
+import android.net.NetworkCapabilities;
 import com.google.firebase.auth.FirebaseAuth;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -19,6 +23,8 @@ public final class Native4ActiveSyncService extends Service {
  private final Object wakeLock=new Object();
  private volatile boolean stopped=false;
  private volatile boolean syncRequested=true;
+ private ConnectivityManager connectivity;
+ private ConnectivityManager.NetworkCallback networkCallback;
  public static final String ACTION_SYNC_NOW="com.alsafa.native4.SYNC_NOW";
  public static void start(Context context){
   Intent intent=new Intent(context,Native4ActiveSyncService.class).setAction(ACTION_SYNC_NOW);
@@ -32,6 +38,9 @@ public final class Native4ActiveSyncService extends Service {
   Notification notification=new Notification.Builder(this,CHANNEL).setSmallIcon(android.R.drawable.stat_notify_sync)
    .setContentTitle("الصفا للساعات").setContentText("المزامنة تعمل في الخلفية").setOngoing(true).build();
   startForeground(NOTIFICATION_ID,notification);
+  connectivity=(ConnectivityManager)getSystemService(CONNECTIVITY_SERVICE);
+  networkCallback=new ConnectivityManager.NetworkCallback(){@Override public void onAvailable(Network network){synchronized(wakeLock){syncRequested=true;wakeLock.notifyAll();}}};
+  if(connectivity!=null){try{connectivity.registerNetworkCallback(new NetworkRequest.Builder().addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET).build(),networkCallback);}catch(RuntimeException error){android.util.Log.w("Native4Sync","Network callback unavailable",error);}}
  }
  @Override public int onStartCommand(Intent intent,int flags,int startId){
   synchronized(wakeLock){syncRequested=true;wakeLock.notifyAll();}
@@ -52,5 +61,5 @@ public final class Native4ActiveSyncService extends Service {
   return START_STICKY;
  }
  @Override public IBinder onBind(Intent intent){return null;}
- @Override public void onDestroy(){stopped=true;synchronized(wakeLock){wakeLock.notifyAll();}Native4BackgroundSyncWorker.enqueue(getApplicationContext());super.onDestroy();}
+ @Override public void onDestroy(){if(connectivity!=null&&networkCallback!=null){try{connectivity.unregisterNetworkCallback(networkCallback);}catch(RuntimeException ignored){}}stopped=true;synchronized(wakeLock){wakeLock.notifyAll();}Native4BackgroundSyncWorker.enqueue(getApplicationContext());super.onDestroy();}
 }
