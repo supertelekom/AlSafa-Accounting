@@ -8,7 +8,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
 import android.os.IBinder;
-import android.os.SystemClock;
 import com.google.firebase.auth.FirebaseAuth;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -17,8 +16,11 @@ public final class Native4ActiveSyncService extends Service {
  private static final String CHANNEL="native4_active_sync";
  private static final int NOTIFICATION_ID=4104;
  private final AtomicBoolean running=new AtomicBoolean(false);
+ private final Object wakeLock=new Object();
+ private volatile boolean stopped=false;
+ public static final String ACTION_SYNC_NOW="com.alsafa.native4.SYNC_NOW";
  public static void start(Context context){
-  Intent intent=new Intent(context,Native4ActiveSyncService.class);
+  Intent intent=new Intent(context,Native4ActiveSyncService.class).setAction(ACTION_SYNC_NOW);
   try{androidx.core.content.ContextCompat.startForegroundService(context,intent);}
   catch(RuntimeException e){android.util.Log.w("Native4Sync","Foreground start deferred to WorkManager",e);Native4BackgroundSyncWorker.enqueue(context);}
  }
@@ -31,15 +33,16 @@ public final class Native4ActiveSyncService extends Service {
   startForeground(NOTIFICATION_ID,notification);
  }
  @Override public int onStartCommand(Intent intent,int flags,int startId){
+  synchronized(wakeLock){wakeLock.notifyAll();}
   if(running.compareAndSet(false,true)){
    new Thread(()->{
     try{
-     while(!Thread.currentThread().isInterrupted()){
+     while(!stopped&&!Thread.currentThread().isInterrupted()){
       if(FirebaseAuth.getInstance().getCurrentUser()!=null){
        try{new Native4SyncCoordinator(new CoreDb(getApplicationContext()),getApplicationContext()).syncOnce();}
        catch(Exception e){android.util.Log.w("Native4Sync","Foreground sync retry pending",e);}
       }
-      SystemClock.sleep(30_000L);
+      synchronized(wakeLock){try{wakeLock.wait(30_000L);}catch(InterruptedException interrupted){Thread.currentThread().interrupt();break;}}
      }
     }finally{running.set(false);}
    },"native4-active-sync").start();
@@ -47,5 +50,5 @@ public final class Native4ActiveSyncService extends Service {
   return START_STICKY;
  }
  @Override public IBinder onBind(Intent intent){return null;}
- @Override public void onDestroy(){Native4BackgroundSyncWorker.enqueue(getApplicationContext());super.onDestroy();}
+ @Override public void onDestroy(){stopped=true;synchronized(wakeLock){wakeLock.notifyAll();}Native4BackgroundSyncWorker.enqueue(getApplicationContext());super.onDestroy();}
 }
