@@ -18,6 +18,7 @@ public final class Native4AutoSync {
  private Native4AutoSync(){}
  public static void request(Activity activity,CoreDb db,Runnable refresh){
   if(activity==null||db==null||FirebaseAuth.getInstance().getCurrentUser()==null)return;
+  Native4BackgroundSyncWorker.enqueue(activity.getApplicationContext());
   long now=System.currentTimeMillis();if(now-lastStartedAt<MIN_INTERVAL_MS||!RUNNING.compareAndSet(false,true))return;lastStartedAt=now;
   lastStatus="المزامنة قيد التنفيذ";
   start(activity,db,refresh);
@@ -25,6 +26,7 @@ public final class Native4AutoSync {
  /** For a newly committed local operation. Unlike lifecycle refresh, this is not throttled. */
  public static void requestImmediate(Activity activity,CoreDb db,Runnable refresh){
   if(activity==null||db==null||FirebaseAuth.getInstance().getCurrentUser()==null)return;
+  Native4BackgroundSyncWorker.enqueue(activity.getApplicationContext());
   IMMEDIATE_PENDING.set(true);
   if(RUNNING.compareAndSet(false,true)){lastStatus="المزامنة قيد التنفيذ";start(activity,db,refresh);}
  }
