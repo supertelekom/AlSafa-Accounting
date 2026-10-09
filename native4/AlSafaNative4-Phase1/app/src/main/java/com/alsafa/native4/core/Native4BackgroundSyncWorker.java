@@ -17,6 +17,7 @@ import java.util.concurrent.TimeUnit;
 public final class Native4BackgroundSyncWorker extends Worker {
  private static final String UNIQUE_NAME="native4-background-sync";
  public Native4BackgroundSyncWorker(@NonNull Context context,@NonNull WorkerParameters params){super(context,params);}
+ public static void cancelLegacyPeriodic(Context context){WorkManager.getInstance(context.getApplicationContext()).cancelUniqueWork("native4-periodic-sync");}
  public static void enqueue(Context context){
   Constraints constraints=new Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build();
   OneTimeWorkRequest work=new OneTimeWorkRequest.Builder(Native4BackgroundSyncWorker.class)
