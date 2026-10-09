@@ -1,6 +1,7 @@
 package com.alsafa.native4.core;
 
 import android.content.Context;
+import android.database.Cursor;
 import androidx.annotation.NonNull;
 import androidx.work.BackoffPolicy;
 import androidx.work.Constraints;
@@ -29,7 +30,9 @@ public final class Native4BackgroundSyncWorker extends Worker {
   try{
    CoreDb db=new CoreDb(getApplicationContext());
    Native4SyncCoordinator.Result result=new Native4SyncCoordinator(db,getApplicationContext()).syncOnce();
-   return result.retries>0?Result.retry():Result.success();
+   boolean pending;
+   try(Cursor cursor=db.db().rawQuery("SELECT 1 FROM outbox WHERE state IN ('PENDING','RETRY') LIMIT 1",null)){pending=cursor.moveToFirst();}
+   return result.retries>0||pending?Result.retry():Result.success();
   }catch(Exception e){android.util.Log.w("Native4Sync","Background sync will retry",e);return Result.retry();}
  }
 }
