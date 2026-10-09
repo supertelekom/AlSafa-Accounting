@@ -3,6 +3,8 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import com.google.android.gms.tasks.Tasks;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.DocumentSnapshot;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -25,6 +27,13 @@ public final class Native4DeviceReceipt {
   data.put("deviceId",id);
   data.put("appliedRevision",appliedRevision);
   data.put("updatedAt",System.currentTimeMillis());
-  Tasks.await(FirebaseFirestore.getInstance().collection("native4_device_receipts").document(id).set(data),20,TimeUnit.SECONDS);
+  DocumentReference ref=FirebaseFirestore.getInstance().collection("native4_device_receipts").document(id);
+  Tasks.await(FirebaseFirestore.getInstance().runTransaction(tx->{
+   DocumentSnapshot previous=tx.get(ref);
+   Long old=previous.getLong("appliedRevision");
+   if(old!=null&&old>=appliedRevision)return null;
+   tx.set(ref,data);
+   return null;
+  }),20,TimeUnit.SECONDS);
  }
 }
