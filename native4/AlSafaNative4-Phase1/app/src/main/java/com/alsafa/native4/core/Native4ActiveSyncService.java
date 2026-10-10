@@ -40,7 +40,7 @@ public final class Native4ActiveSyncService extends Service {
    .setContentTitle("الصفا للساعات").setContentText("المزامنة تعمل في الخلفية").setOngoing(true).build();
   startForeground(NOTIFICATION_ID,notification);
   connectivity=(ConnectivityManager)getSystemService(CONNECTIVITY_SERVICE);
-  networkCallback=new ConnectivityManager.NetworkCallback(){@Override public void onAvailable(Network network){synchronized(wakeLock){syncRequested=true;wakeLock.notifyAll();}}};
+  networkCallback=new ConnectivityManager.NetworkCallback(){@Override public void onAvailable(Network network){synchronized(wakeLock){if(!stopped){syncRequested=true;wakeLock.notifyAll();}}}};
   if(connectivity!=null){try{connectivity.registerNetworkCallback(new NetworkRequest.Builder().addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET).build(),networkCallback);}catch(RuntimeException error){android.util.Log.w("Native4Sync","Network callback unavailable",error);}}
  }
  @Override public int onStartCommand(Intent intent,int flags,int startId){
