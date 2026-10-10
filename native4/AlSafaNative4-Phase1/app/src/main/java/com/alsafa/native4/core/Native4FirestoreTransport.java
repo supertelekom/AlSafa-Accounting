@@ -31,7 +31,7 @@ public final class Native4FirestoreTransport implements Native4SyncEngine.Transp
     tx.set(seqRef,seqData);tx.set(opRef,data);return next;
    }),20,TimeUnit.SECONDS);
    return new Native4SyncEngine.Ack(revision);
-  }catch(Exception e){if(isOperationConflict(e))throw new Native4SyncEngine.Permanent("تعارض معرّف العملية؛ يلزم فحص يدوي");throw retryable(e);}
+  }catch(Exception e){if(isOperationConflict(e))throw new Native4SyncEngine.Permanent("تعارض معرّف العملية؛ يلزم فحص يدوي");try{DocumentSnapshot saved=Tasks.await(firestore.collection(COLLECTION).document(op.id).get(Source.SERVER),10,TimeUnit.SECONDS);if(saved.exists()){Long revision=saved.getLong("revision");if(revision!=null&&revision>0&&op.id.equals(saved.getString("operationId"))&&op.kind.equals(saved.getString("kind"))&&op.recordId.equals(saved.getString("recordId"))&&op.payload.equals(saved.getString("payload"))&&op.deviceId.equals(saved.getString("sourceDeviceId")))return new Native4SyncEngine.Ack(revision);if(revision!=null&&revision>0)throw new Native4SyncEngine.Permanent("تعارض عملية محفوظة في Firebase؛ تم الحفاظ على البيانات المحلية");}}catch(Native4SyncEngine.Permanent conflict){throw conflict;}catch(Exception verificationUnavailable){android.util.Log.w("Native4Sync","Cannot verify upload after failure; original operation retained",verificationUnavailable);}throw retryable(e);}
  }
  @Override public Native4SyncReceiver.Batch fetchAfter(long revision,int limit)throws Exception{
   QuerySnapshot snap=Tasks.await(firestore.collection(COLLECTION).whereGreaterThan("revision",revision).orderBy("revision",Query.Direction.ASCENDING).limit(Math.max(1,Math.min(limit,100))).get(Source.SERVER),20,TimeUnit.SECONDS);
