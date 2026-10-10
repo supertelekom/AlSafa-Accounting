@@ -32,6 +32,7 @@ public final class Native4BackgroundSyncWorker extends Worker {
     Native4SyncCoordinator.Result result=new Native4SyncCoordinator(db,getApplicationContext()).syncOnce();
     boolean pending;
     try(Cursor cursor=db.db().rawQuery("SELECT 1 FROM outbox WHERE state IN ('PENDING','RETRY','SENDING') LIMIT 1",null)){pending=cursor.moveToFirst();}
+    if(result.failed>0){android.util.Log.w("Native4Sync","Unresolved permanent upload failure; waiting for safe in-app recovery instead of retrying forever");return Result.success();}
     return result.retries>0||pending||result.pulled+result.duplicates>=2000?Result.retry():Result.success();
    }
   }catch(Exception e){android.util.Log.w("Native4Sync","Background sync will retry",e);return Result.retry();}
