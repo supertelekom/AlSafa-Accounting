@@ -38,5 +38,5 @@ public final class Native4FirestoreTransport implements Native4SyncEngine.Transp
   List<Native4SyncReceiver.RemoteOp> out=new ArrayList<>();for(DocumentSnapshot d:snap.getDocuments()){Long r=d.getLong("revision");if(r==null||r<=0)throw new IllegalStateException("Missing or invalid sync revision");String operationId=d.getString("operationId");if(operationId==null||!d.getId().equals(operationId))throw new IllegalStateException("Firestore operation document ID mismatch; reception stopped");out.add(new Native4SyncReceiver.RemoteOp(r,operationId,d.getString("kind"),d.getString("recordId"),d.getString("payload"),d.getString("sourceDeviceId")));}return new Native4SyncReceiver.Batch(out);
  }
  private static boolean isOperationConflict(Throwable error){for(Throwable t=error;t!=null;t=t.getCause()){String m=t.getMessage();if(m!=null&&m.contains("تعارض خطير: معرّف العملية"))return true;}return false;}
- private static Native4SyncEngine.Retryable retryable(Exception e){String m=e.getMessage();return new Native4SyncEngine.Retryable(m==null?"تعذر الاتصال بـ Firestore":m);}
+ private static Native4SyncEngine.Retryable retryable(Exception e){String m=e.getMessage();if(m==null||m.trim().isEmpty())m="تعذر الاتصال بـ Firestore";return new Native4SyncEngine.Retryable(m);}
 }
