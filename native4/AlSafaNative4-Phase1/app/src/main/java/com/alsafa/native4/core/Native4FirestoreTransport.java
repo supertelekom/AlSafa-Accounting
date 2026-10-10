@@ -23,7 +23,7 @@ public final class Native4FirestoreTransport implements Native4SyncEngine.Transp
    long revision=Tasks.await(firestore.runTransaction(tx->{
     com.google.firebase.firestore.DocumentReference opRef=firestore.collection(COLLECTION).document(op.id);
     DocumentSnapshot existing=tx.get(opRef);
-    if(existing.exists()){Long r=existing.getLong("revision");if(r==null||r<=0)throw new IllegalStateException("عملية مزامنة موجودة بلا revision صالح");if(!op.id.equals(existing.getString("operationId"))||!op.kind.equals(existing.getString("kind"))||!op.recordId.equals(existing.getString("recordId"))||!op.payload.equals(existing.getString("payload"))||!op.deviceId.equals(existing.getString("sourceDeviceId")))throw new IllegalStateException("تعارض خطير: معرّف العملية موجود بمحتوى مختلف؛ لم يتم اعتماد الرفع");return r;}
+    if(existing.exists()){if(!op.id.equals(existing.getId()))throw new IllegalStateException("تعارض خطير: معرّف العملية لا يطابق المستند");Long r=existing.getLong("revision");if(r==null||r<=0)throw new IllegalStateException("عملية مزامنة موجودة بلا revision صالح");if(!op.id.equals(existing.getString("operationId"))||!op.kind.equals(existing.getString("kind"))||!op.recordId.equals(existing.getString("recordId"))||!op.payload.equals(existing.getString("payload"))||!op.deviceId.equals(existing.getString("sourceDeviceId")))throw new IllegalStateException("تعارض خطير: معرّف العملية موجود بمحتوى مختلف؛ لم يتم اعتماد الرفع");return r;}
     com.google.firebase.firestore.DocumentReference seqRef=firestore.collection("native4_meta").document("sequence");
     DocumentSnapshot seq=tx.get(seqRef);Long current=seq.getLong("revision");long next=(current==null?0:current)+1;
     Map<String,Object> seqData=new HashMap<>();seqData.put("revision",next);
