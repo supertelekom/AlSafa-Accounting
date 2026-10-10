@@ -49,7 +49,7 @@ public final class Native4ActiveSyncService extends Service {
    new Thread(()->{
     try{
      while(!stopped&&!Thread.currentThread().isInterrupted()){
-      synchronized(wakeLock){while(!syncRequested&&!stopped){try{wakeLock.wait();}catch(InterruptedException interrupted){Thread.currentThread().interrupt();return;}}syncRequested=false;}
+      synchronized(wakeLock){while(!syncRequested&&!stopped){try{wakeLock.wait(60_000L);syncRequested=true;}catch(InterruptedException interrupted){Thread.currentThread().interrupt();return;}}syncRequested=false;}
       if(stopped)break;
       if(FirebaseAuth.getInstance().getCurrentUser()!=null){
        try(CoreDb db=new CoreDb(getApplicationContext())){
