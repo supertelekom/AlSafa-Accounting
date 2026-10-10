@@ -67,5 +67,5 @@ public final class Native4ActiveSyncService extends Service {
   return START_STICKY;
  }
  @Override public IBinder onBind(Intent intent){return null;}
- @Override public void onDestroy(){if(connectivity!=null&&networkCallback!=null){try{connectivity.unregisterNetworkCallback(networkCallback);}catch(RuntimeException ignored){}}stopped=true;synchronized(wakeLock){wakeLock.notifyAll();}if(FirebaseAuth.getInstance().getCurrentUser()!=null)Native4BackgroundSyncWorker.enqueue(getApplicationContext());super.onDestroy();}
+ @Override public void onDestroy(){stopped=true;if(connectivity!=null&&networkCallback!=null){try{connectivity.unregisterNetworkCallback(networkCallback);}catch(RuntimeException ignored){}}stopped=true;synchronized(wakeLock){wakeLock.notifyAll();}if(FirebaseAuth.getInstance().getCurrentUser()!=null)Native4BackgroundSyncWorker.enqueue(getApplicationContext());super.onDestroy();}
 }
