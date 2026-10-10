@@ -57,7 +57,7 @@ public final class Native4ActiveSyncService extends Service {
         Native4SyncCoordinator.Result result=new Native4SyncCoordinator(db,getApplicationContext()).syncOnce();
         boolean pending;
         try(Cursor cursor=db.db().rawQuery("SELECT 1 FROM outbox WHERE state IN ('PENDING','RETRY','SENDING') LIMIT 1",null)){pending=cursor.moveToFirst();}
-        if(result.failed==0&&(result.retries>0||pending||result.pulled+result.duplicates>=2000))Native4BackgroundSyncWorker.enqueue(getApplicationContext());
+        if(result.pulled+result.duplicates>=2000||(result.failed==0&&(result.retries>0||pending)))Native4BackgroundSyncWorker.enqueue(getApplicationContext());
        }
        catch(Exception e){android.util.Log.w("Native4Sync","Foreground sync retry pending",e);Native4BackgroundSyncWorker.enqueue(getApplicationContext());}
       }
