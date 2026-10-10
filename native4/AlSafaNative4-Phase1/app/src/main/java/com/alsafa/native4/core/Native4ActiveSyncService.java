@@ -44,6 +44,7 @@ public final class Native4ActiveSyncService extends Service {
   if(connectivity!=null){try{connectivity.registerNetworkCallback(new NetworkRequest.Builder().addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET).build(),networkCallback);}catch(RuntimeException error){android.util.Log.w("Native4Sync","Network callback unavailable",error);}}
  }
  @Override public int onStartCommand(Intent intent,int flags,int startId){
+  stopped=false;
   synchronized(wakeLock){syncRequested=true;wakeLock.notifyAll();}
   if(running.compareAndSet(false,true)){
    new Thread(()->{
