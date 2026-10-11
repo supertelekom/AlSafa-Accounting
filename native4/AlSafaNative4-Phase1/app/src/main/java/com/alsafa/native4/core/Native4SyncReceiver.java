@@ -4,7 +4,7 @@ import android.content.ContentValues;import android.database.Cursor;import andro
 public final class Native4SyncReceiver{
  public interface Source{Batch fetchAfter(long revision,int limit)throws Exception;}public interface Applier{void apply(SQLiteDatabase db,RemoteOp op)throws Exception;}
  public static final class RemoteOp{public final long revision;public final String id,kind,recordId,payload,sourceDeviceId;public RemoteOp(long r,String i,String k,String rid,String p,String d){revision=r;id=i;kind=k;recordId=rid;payload=p;sourceDeviceId=d;}}
- public static final class Batch{public final List<RemoteOp> operations;public Batch(List<RemoteOp> x){operations=x==null?Collections.emptyList():x;}}
+ public static final class Batch{public final List<RemoteOp> operations;public Batch(List<RemoteOp> x){if(x==null)throw new IllegalArgumentException("Remote sync batch operations must not be null");operations=new ArrayList<>(x);}}
  private static final String KEY="native4_remote_revision";private final CoreDb core;private final Source source;private final Applier applier;
  public Native4SyncReceiver(CoreDb c,Source s,Applier a){if(c==null||s==null||a==null)throw new IllegalArgumentException("Sync receiver dependencies مطلوبة");core=c;source=s;applier=a;}
  public interface Progress{void onOperation(String kind,String recordId,String payload,int index,int total);}
