@@ -21,7 +21,7 @@ public final class JournalIntegrityAudit {
   long unbalanced=count(db,"SELECT COUNT(*) FROM (SELECT e.entry_id FROM journal_entries e JOIN journal_lines l ON l.entry_id=e.entry_id GROUP BY e.entry_id HAVING SUM(l.debit_minor)<>SUM(l.credit_minor))");
   long empty=count(db,"SELECT COUNT(*) FROM journal_entries e WHERE NOT EXISTS(SELECT 1 FROM journal_lines l WHERE l.entry_id=e.entry_id)");
   long invalid=count(db,"SELECT COUNT(*) FROM journal_lines l LEFT JOIN ledger_accounts a ON a.account_code=l.account_code WHERE a.account_code IS NULL");
-  long invalidLines=count(db,"SELECT COUNT(*) FROM journal_lines WHERE debit_minor<0 OR credit_minor<0 OR (debit_minor=0 AND credit_minor=0) OR (debit_minor>0 AND credit_minor>0)");
+  long invalidLines=count(db,"SELECT COUNT(*) FROM journal_lines WHERE debit_minor IS NULL OR credit_minor IS NULL OR debit_minor<0 OR credit_minor<0 OR (debit_minor=0 AND credit_minor=0) OR (debit_minor>0 AND credit_minor>0)");
   long shortEntries=count(db,"SELECT COUNT(*) FROM (SELECT e.entry_id FROM journal_entries e JOIN journal_lines l ON l.entry_id=e.entry_id GROUP BY e.entry_id HAVING COUNT(l.line_id)<2)");
   return new Result(fk,orphan,unbalanced,empty,invalid,invalidLines,shortEntries);
  }
