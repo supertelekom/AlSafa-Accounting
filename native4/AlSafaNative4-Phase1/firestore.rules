@@ -1,18 +1,62 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /native4Stores/test-native4-android-alpha/operations/{operationId} {
-      allow get: if request.auth != null && resource.data.uid == request.auth.uid;
-      allow list, delete: if false;
-      allow create: if request.auth != null
-        && request.resource.data.uid == request.auth.uid
+    // Provision native4_access/{uid} manually from the Firebase console/admin SDK.
+    // A login alone never grants access to the store's accounting ledger.
+    function allowed() {
+      return request.auth != null
+        && exists(/databases/$(database)/documents/native4_access/$(request.auth.uid))
+        && get(/databases/$(database)/documents/native4_access/$(request.auth.uid)).data.enabled == true
+        && get(/databases/$(database)/documents/native4_access/$(request.auth.uid)).data.storeId == 'test-native4-android-alpha';
+    }
+    function writer() {
+      return allowed()
+        && get(/databases/$(database)/documents/native4_access/$(request.auth.uid)).data.canWrite == true;
+    }
+    match /native4_access/{uid} {
+      allow read, write: if false;
+    }
+    match /native4_operations/{operationId} {
+      allow read: if allowed();
+      allow create: if writer()
+        && request.resource.data.keys().hasOnly(['operationId','kind','recordId','payload','sourceDeviceId','createdAt','revision'])
         && request.resource.data.operationId == operationId
-        && request.resource.data.storeId == 'test-native4-android-alpha';
-      allow update: if request.auth != null
-        && resource.data.uid == request.auth.uid
-        && request.resource.data.uid == request.auth.uid
-        && request.resource.data.operationId == operationId
-        && request.resource.data.storeId == 'test-native4-android-alpha';
+        && request.resource.data.kind is string
+        && request.resource.data.recordId is string
+        && request.resource.data.payload is string
+        && request.resource.data.sourceDeviceId is string
+        && request.resource.data.createdAt is int
+        && request.resource.data.revision is int
+        && request.resource.data.revision > 0
+        && getAfter(/databases/$(database)/documents/native4_meta/sequence).data.revision == request.resource.data.revision;
+      allow update, delete: if false;
+    }
+    match /native4_meta/sequence {
+      allow read: if allowed();
+      allow create: if writer()
+        && request.resource.data.keys().hasOnly(['revision'])
+        && request.resource.data.revision == 1;
+      allow update: if writer()
+        && request.resource.data.keys().hasOnly(['revision'])
+        && request.resource.data.revision == resource.data.revision + 1;
+      allow delete: if false;
+    }
+    match /native4_device_receipts/{deviceId} {
+      allow read: if allowed();
+      allow create: if writer()
+        && request.resource.data.keys().hasOnly(['deviceId','appliedRevision','updatedAt'])
+        && request.resource.data.deviceId == deviceId
+        && request.resource.data.appliedRevision is int
+        && request.resource.data.appliedRevision > 0
+        && request.resource.data.updatedAt is int;
+      allow update: if writer()
+        && request.resource.data.keys().hasOnly(['deviceId','appliedRevision','updatedAt'])
+        && request.resource.data.deviceId == deviceId
+        && resource.data.deviceId == deviceId
+        && request.resource.data.appliedRevision is int
+        && request.resource.data.appliedRevision >= resource.data.appliedRevision
+        && request.resource.data.updatedAt is int;
+      allow delete: if false;
     }
     match /{document=**} {
       allow read, write: if false;
