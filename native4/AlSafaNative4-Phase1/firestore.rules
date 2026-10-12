@@ -28,7 +28,10 @@ service cloud.firestore {
         && request.resource.data.createdAt is int
         && request.resource.data.revision is int
         && request.resource.data.revision > 0
-        && getAfter(/databases/$(database)/documents/native4_meta/sequence).data.revision == request.resource.data.revision;
+        && getAfter(/databases/$(database)/documents/native4_meta/sequence).data.revision == request.resource.data.revision
+        && (!exists(/databases/$(database)/documents/native4_meta/sequence)
+          ? request.resource.data.revision == 1
+          : get(/databases/$(database)/documents/native4_meta/sequence).data.revision + 1 == request.resource.data.revision);
       allow update, delete: if false;
     }
     match /native4_meta/sequence {
