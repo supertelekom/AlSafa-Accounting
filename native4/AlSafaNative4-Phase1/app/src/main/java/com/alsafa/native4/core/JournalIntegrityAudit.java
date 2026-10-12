@@ -18,7 +18,7 @@ public final class JournalIntegrityAudit {
   long fk=0;
   try(Cursor c=db.rawQuery("PRAGMA foreign_key_check",null)){while(c.moveToNext())fk++;}
   long orphan=count(db,"SELECT COUNT(*) FROM journal_lines l LEFT JOIN journal_entries e ON e.entry_id=l.entry_id WHERE e.entry_id IS NULL");
-  long unbalanced=count(db,"SELECT COUNT(*) FROM (SELECT e.entry_id FROM journal_entries e JOIN journal_lines l ON l.entry_id=e.entry_id GROUP BY e.entry_id HAVING SUM(COALESCE(l.debit_minor,0))<>SUM(COALESCE(l.credit_minor,0)))");
+  long unbalanced=count(db,"SELECT COUNT(*) FROM (SELECT e.entry_id FROM journal_entries e JOIN journal_lines l ON l.entry_id=e.entry_id GROUP BY e.entry_id HAVING SUM(COALESCE(l.debit_minor,0))<>SUM(COALESCE(l.credit_minor,0)) OR SUM(CASE WHEN l.debit_minor IS NULL OR l.credit_minor IS NULL THEN 1 ELSE 0 END)>0)");
   long empty=count(db,"SELECT COUNT(*) FROM journal_entries e WHERE NOT EXISTS(SELECT 1 FROM journal_lines l WHERE l.entry_id=e.entry_id)");
   long invalid=count(db,"SELECT COUNT(*) FROM journal_lines l LEFT JOIN ledger_accounts a ON a.account_code=l.account_code WHERE a.account_code IS NULL OR TRIM(l.account_code)=''");
   long invalidLines=count(db,"SELECT COUNT(*) FROM journal_lines WHERE debit_minor IS NULL OR credit_minor IS NULL OR debit_minor<0 OR credit_minor<0 OR (debit_minor=0 AND credit_minor=0) OR (debit_minor>0 AND credit_minor>0)");
