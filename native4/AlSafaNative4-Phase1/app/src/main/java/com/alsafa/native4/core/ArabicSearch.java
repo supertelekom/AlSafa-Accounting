@@ -10,7 +10,7 @@ public final class ArabicSearch {
  }
  public static boolean matches(String normalizedQuery,String... values){
   if(normalizedQuery==null||normalizedQuery.isEmpty())return false;
-  for(String value:values)if(normalize(value).contains(normalizedQuery))return true;
+  String[] terms=normalizedQuery.split(" ");for(String value:values){String normalized=normalize(value);boolean all=true;for(String term:terms)if(!normalized.contains(term)){all=false;break;}if(all)return true;}
   return false;
  }
 }
