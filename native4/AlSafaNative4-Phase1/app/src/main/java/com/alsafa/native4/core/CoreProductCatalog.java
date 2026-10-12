@@ -13,6 +13,7 @@ public final class CoreProductCatalog {
  public List<ProductHit> search(String query,int limit){
   String q=query==null?"":query.trim();int safeLimit=Math.max(1,Math.min(limit,50));SQLiteDatabase db=provider.db();List<ProductHit> out=new ArrayList<>();
   String sql="SELECT product_id,name,ref,barcode,brand,quantity,sale_price,cost_price,currency,gender,display_type,dial_color,strap_type,case_color FROM products WHERE deleted_at IS NULL";
+  if(ArabicSearch.hasArabic(q)){String needle=ArabicSearch.normalize(q);try(Cursor c=db.rawQuery(sql+" ORDER BY name COLLATE NOCASE",null)){while(c.moveToNext()&&out.size()<safeLimit){String name=c.getString(1),ref=c.getString(2),barcode=c.getString(3),brand=c.getString(4);if(ArabicSearch.matches(needle,name,ref,barcode,brand))out.add(new ProductHit(c.getString(0),name,ref,barcode,brand,c.getInt(5),c.getDouble(6),c.getDouble(7),c.getString(8),c.getString(9),c.getString(10),c.getString(11),c.getString(12),c.getString(13)));}}return out;}
   String[] args;
   if(q.isEmpty()){sql+=" ORDER BY updated_at DESC LIMIT ?";args=new String[]{String.valueOf(safeLimit)};}
   else{sql+=" AND (name LIKE ? OR ref LIKE ? OR barcode LIKE ? OR brand LIKE ?) ORDER BY CASE WHEN barcode=? THEN 0 WHEN ref=? THEN 1 ELSE 2 END,name COLLATE NOCASE LIMIT ?";String like="%"+escapeLike(q)+"%";args=new String[]{like,like,like,like,q,q,String.valueOf(safeLimit)};}
