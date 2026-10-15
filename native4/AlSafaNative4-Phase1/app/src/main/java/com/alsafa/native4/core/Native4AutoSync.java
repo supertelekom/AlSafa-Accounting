@@ -12,7 +12,7 @@ public final class Native4AutoSync {
  private static final AtomicBoolean RUNNING=new AtomicBoolean(false);
  private static final AtomicBoolean IMMEDIATE_PENDING=new AtomicBoolean(false);
  private static volatile long lastStartedAt=0L;
- private static volatile String lastStatus="لم تبدأ المزامنة بعد";
+ private static volatile String lastStatus="المحاسبة المحلية متاحة؛ لم تبدأ مزامنة Firebase بعد";
  public static String status(){return lastStatus;}
 
  private Native4AutoSync(){}
