@@ -17,7 +17,7 @@ public final class Native4AutoSync {
 
  private Native4AutoSync(){}
  public static void request(Activity activity,CoreDb db,Runnable refresh){
-  if(activity==null||db==null||FirebaseAuth.getInstance().getCurrentUser()==null)return;
+  if(activity==null||db==null)return;if(FirebaseAuth.getInstance().getCurrentUser()==null){lastStatus="العمل المحلي متاح؛ النسخ إلى Firebase ينتظر تسجيل الدخول";if(refresh!=null)activity.runOnUiThread(refresh);return;}
   Native4BackgroundSyncWorker.cancelLegacyPeriodic(activity.getApplicationContext());
   Native4BackgroundSyncWorker.enqueue(activity.getApplicationContext());
   Native4ActiveSyncService.start(activity.getApplicationContext());
@@ -27,7 +27,7 @@ public final class Native4AutoSync {
  }
  /** For a newly committed local operation. Unlike lifecycle refresh, this is not throttled. */
  public static void requestImmediate(Activity activity,CoreDb db,Runnable refresh){
-  if(activity==null||db==null||FirebaseAuth.getInstance().getCurrentUser()==null)return;
+  if(activity==null||db==null)return;if(FirebaseAuth.getInstance().getCurrentUser()==null){lastStatus="العمل المحلي متاح؛ النسخ إلى Firebase ينتظر تسجيل الدخول";if(refresh!=null)activity.runOnUiThread(refresh);return;}
   Native4BackgroundSyncWorker.enqueue(activity.getApplicationContext());
   Native4ActiveSyncService.start(activity.getApplicationContext());
   IMMEDIATE_PENDING.set(true);
