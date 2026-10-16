@@ -8,9 +8,9 @@ public final class Native4SyncCoordinator {
   public final int pushed,retries,failed,pulled,duplicates;public final long checkpoint;
   Result(int p,int r,int f,int in,int d,long c){pushed=p;retries=r;failed=f;pulled=in;duplicates=d;checkpoint=c;}
  }
- private final Native4SyncEngine sender;private final Native4SyncReceiver receiver;private final Context receiptContext;
+ private final Native4SyncEngine sender;
  public Native4SyncCoordinator(CoreDb db){this(db,null);}
- public Native4SyncCoordinator(CoreDb db,Context context){receiptContext=context==null?null:context.getApplicationContext();Native4FirestoreTransport transport=new Native4FirestoreTransport();sender=new Native4SyncEngine(db,transport);receiver=new Native4SyncReceiver(db,transport,new Native4OperationApplier());}
+ public Native4SyncCoordinator(CoreDb db,Context context){Native4FirestoreTransport transport=new Native4FirestoreTransport();sender=new Native4SyncEngine(db,transport);}
  public Result syncOnce()throws Exception{return syncOnce(null);}
  public Result syncOnce(Native4SyncEngine.Progress progress)throws Exception{return syncOnce(progress,null);}
  public Result syncOnce(Native4SyncEngine.Progress progress,Runnable beforePull)throws Exception{return syncOnce(progress,beforePull,null);}
