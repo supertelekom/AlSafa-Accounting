@@ -22,7 +22,7 @@ public final class Native4AutoSync {
   Native4BackgroundSyncWorker.enqueue(activity.getApplicationContext());
   Native4ActiveSyncService.start(activity.getApplicationContext());
   long now=System.currentTimeMillis();if(now-lastStartedAt<MIN_INTERVAL_MS||!RUNNING.compareAndSet(false,true))return;lastStartedAt=now;
-  lastStatus="المزامنة قيد التنفيذ";
+  lastStatus="رفع العمليات إلى Firebase قيد التنفيذ";
   start(activity,db,refresh);
  }
  /** For a newly committed local operation. Unlike lifecycle refresh, this is not throttled. */
@@ -31,7 +31,7 @@ public final class Native4AutoSync {
   Native4BackgroundSyncWorker.enqueue(activity.getApplicationContext());
   Native4ActiveSyncService.start(activity.getApplicationContext());
   IMMEDIATE_PENDING.set(true);
-  if(RUNNING.compareAndSet(false,true)){lastStatus="المزامنة قيد التنفيذ";start(activity,db,refresh);}
+  if(RUNNING.compareAndSet(false,true)){lastStatus="رفع العمليات إلى Firebase قيد التنفيذ";start(activity,db,refresh);}
  }
  private static int pendingCount(CoreDb db){try(Cursor cursor=db.db().rawQuery("SELECT COUNT(*) FROM outbox WHERE state IN ('PENDING','RETRY','SENDING')",null)){return cursor.moveToFirst()?cursor.getInt(0):0;}}
  private static int failedCount(CoreDb db){try(Cursor cursor=db.db().rawQuery("SELECT COUNT(*) FROM outbox WHERE state='FAILED'",null)){return cursor.moveToFirst()?cursor.getInt(0):0;}}
