@@ -1,6 +1,6 @@
 package com.alsafa.native4.core;
 import android.content.ContentValues;import android.database.Cursor;import android.database.sqlite.SQLiteDatabase;import java.util.*;
-/** Native4 operation sync. Never replaces the local DB; absence is never a delete. */
+/** Uploads local outbox operations only. Never reads cloud records into or replaces the tablet database. */
 public final class Native4SyncEngine{
  public interface Transport{Ack push(Op op)throws Retryable,Permanent;}public static final class Ack{public final long revision;public Ack(long r){revision=r;}}public static final class Op{public final String id,kind,recordId,payload,deviceId;Op(String i,String k,String r,String p,String d){id=i;kind=k;recordId=r;payload=p;deviceId=d;}}public static final class Retryable extends Exception{public Retryable(String m){super(m);}}public static final class Permanent extends Exception{public Permanent(String m){super(m);}}
  private final CoreDb db;private final Transport transport;public Native4SyncEngine(CoreDb d,Transport t){if(d==null||t==null)throw new IllegalArgumentException("Sync dependencies مطلوبة");db=d;transport=t;}
