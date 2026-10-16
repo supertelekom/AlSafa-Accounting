@@ -25,7 +25,7 @@ public final class Native4FirestoreTransport implements Native4SyncEngine.Transp
     DocumentSnapshot existing=tx.get(opRef);
     if(existing.exists()){if(!op.id.equals(existing.getId()))throw new IllegalStateException("تعارض خطير: معرّف العملية لا يطابق المستند");Long r=existing.getLong("revision");if(r==null||r<=0)throw new IllegalStateException("عملية مزامنة موجودة بلا revision صالح");if(!op.id.equals(existing.getString("operationId"))||!op.kind.equals(existing.getString("kind"))||!op.recordId.equals(existing.getString("recordId"))||!op.payload.equals(existing.getString("payload"))||!op.deviceId.equals(existing.getString("sourceDeviceId")))throw new IllegalStateException("تعارض خطير: معرّف العملية موجود بمحتوى مختلف؛ لم يتم اعتماد الرفع");return r;}
     com.google.firebase.firestore.DocumentReference seqRef=firestore.collection("native4_meta").document("sequence");
-    DocumentSnapshot seq=tx.get(seqRef);Long current=seq.getLong("revision");long next=(current==null?0:current)+1;
+    DocumentSnapshot seq=tx.get(seqRef);Long current=seq.getLong("revision");if(current!=null&&current==Long.MAX_VALUE)throw new IllegalStateException("Firestore revision sequence exhausted");long next=(current==null?0:current)+1;
     Map<String,Object> seqData=new HashMap<>();seqData.put("revision",next);
     Map<String,Object> data=new HashMap<>();data.put("operationId",op.id);data.put("kind",op.kind);data.put("recordId",op.recordId);data.put("payload",op.payload);data.put("sourceDeviceId",op.deviceId);data.put("createdAt",System.currentTimeMillis());data.put("revision",next);
     tx.set(seqRef,seqData);tx.set(opRef,data);return next;
