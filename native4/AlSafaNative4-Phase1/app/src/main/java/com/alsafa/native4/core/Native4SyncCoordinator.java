@@ -13,7 +13,7 @@ public final class Native4SyncCoordinator {
  public Native4SyncCoordinator(CoreDb db){this(db,null);}
  public Native4SyncCoordinator(CoreDb db,Context context){Native4FirestoreTransport transport=new Native4FirestoreTransport();sender=new Native4SyncEngine(db,transport);}
  public Result syncOnce()throws Exception{return syncOnce(null);}
- public Result syncOnce(Native4SyncEngine.Progress progress)throws Exception{return syncOnce(progress,null,null);}
+ public Result syncOnce(Native4SyncEngine.Progress progress)throws Exception{ synchronized(CYCLE_LOCK){ Native4SyncEngine.Result out=sender.pushPending(progress);return new Result(out.confirmed,out.retries,out.failed,0,0,0); } }
  public Result syncOnce(Native4SyncEngine.Progress progress,Runnable beforePull)throws Exception{return syncOnce(progress,beforePull,null);}
  public Result syncOnce(Native4SyncEngine.Progress progress,Runnable beforePull,Native4SyncReceiver.Progress receiveProgress)throws Exception{ synchronized(CYCLE_LOCK){ Native4SyncEngine.Result out=sender.pushPending(progress);if(beforePull!=null){try{beforePull.run();}catch(RuntimeException callbackError){android.util.Log.w("Native4Sync","UI progress callback failed; upload continues",callbackError);}}return new Result(out.confirmed,out.retries,out.failed,0,0,0); } }
 }
