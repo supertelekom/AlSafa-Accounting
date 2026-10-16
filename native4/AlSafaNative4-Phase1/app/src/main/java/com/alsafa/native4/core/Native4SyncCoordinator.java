@@ -1,7 +1,7 @@
 package com.alsafa.native4.core;
 import android.content.Context;
 
-/** One safe Native4 sync cycle: push local operations, then pull/apply remote operations. */
+/** Tablet-first daily upload: sends committed local operations to Firebase; remote restore is separate. */
 public final class Native4SyncCoordinator {
  private static final Object CYCLE_LOCK = new Object();
  public static final class Result {
