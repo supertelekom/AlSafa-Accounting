@@ -10,7 +10,7 @@ import java.util.Objects;
  * Attempt numbers act as fencing tokens so stale network callbacks cannot acknowledge
  * a later retry. Cloud writer must use operation_id as an idempotency key.
  */
-public final class AndroidOutboxQueue {
+public final class AndroidOutboxQueue implements UploadOnlySync.Queue {
     public static final class Item {
         public final String operationId;
         public final String kind;
@@ -24,7 +24,7 @@ public final class AndroidOutboxQueue {
     public AndroidOutboxQueue(SQLiteDatabase db) { this.db=Objects.requireNonNull(db,"db"); }
 
     /** Claim one pending/retry item or expired in-flight attempt. Call off the UI thread. */
-    public synchronized Item claim(long nowMs,long leaseMs) {
+    public synchronized UploadOnlySync.Item claim(long nowMs,long leaseMs) {
         if (leaseMs<=0 || nowMs<0) throw new IllegalArgumentException("Invalid lease clock");
         db.beginTransactionNonExclusive();
         try {
@@ -45,12 +45,12 @@ public final class AndroidOutboxQueue {
                 new String[]{candidate.operationId,Long.toString(candidate.attempt)});
             if(changed!=1) throw new IllegalStateException("Concurrent outbox claim");
             db.setTransactionSuccessful();
-            return new Item(candidate.operationId,candidate.kind,candidate.payload,candidate.attempt+1);
+            return new UploadOnlySync.Item(candidate.operationId,candidate.kind,candidate.payload,candidate.attempt+1);
         } finally { db.endTransaction(); }
     }
 
     /** Only a currently active attempt may acknowledge successful remote persistence. */
-    public synchronized boolean confirm(String operationId,long attempt,long revision) {
+    @Override public synchronized boolean confirm(String operationId,long attempt,long revision) {
         if(revision<=0 || attempt<=0) throw new IllegalArgumentException("Invalid confirmation");
         ContentValues v=new ContentValues();
         v.put("state","CONFIRMED"); v.put("confirmed_revision",revision); v.putNull("last_error");
@@ -59,7 +59,7 @@ public final class AndroidOutboxQueue {
     }
 
     /** Transient network failures remain durable and retryable; never delete the event. */
-    public synchronized boolean retry(String operationId,long attempt,String error) {
+    @Override public synchronized boolean retry(String operationId,long attempt,String error) {
         if(attempt<=0) throw new IllegalArgumentException("Invalid attempt");
         ContentValues v=new ContentValues();
         v.put("state","RETRY"); v.put("last_error",error);
