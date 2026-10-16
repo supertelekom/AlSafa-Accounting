@@ -13,6 +13,8 @@ public class AtomicPostingServiceTest {
         final List<String> calls = new ArrayList<>();
         boolean duplicate;
         boolean failInventory;
+        boolean failOutbox;
+        boolean failCommit;
         @Override public void begin() { calls.add("begin"); }
         @Override public boolean eventExists(String id) { calls.add("exists"); return duplicate; }
         @Override public void insertEvent(String id, String kind) { calls.add("event"); }
@@ -21,8 +23,8 @@ public class AtomicPostingServiceTest {
             calls.add("inventory");
             if (failInventory) throw new IllegalStateException("Simulated inventory failure");
         }
-        @Override public void insertOutbox(String id, String kind, String payload) { calls.add("outbox"); }
-        @Override public void commit() { calls.add("commit"); }
+        @Override public void insertOutbox(String id, String kind, String payload) { calls.add("outbox"); if (failOutbox) throw new IllegalStateException("Simulated outbox failure"); }
+        @Override public void commit() { calls.add("commit"); if (failCommit) throw new IllegalStateException("Simulated commit failure"); }
         @Override public void rollback() { calls.add("rollback"); }
     }
     private PostingBatch batch() {
@@ -48,5 +50,17 @@ public class AtomicPostingServiceTest {
         try { new AtomicPostingService(port).post(batch()); fail("Expected duplicate rejection"); }
         catch (IllegalStateException expected) { }
         assertEquals(Arrays.asList("begin","exists","rollback"), port.calls);
+    }
+    @Test public void failedOutboxRollsBackFinancialPosting() {
+        FakePort port = new FakePort(); port.failOutbox = true;
+        try { new AtomicPostingService(port).post(batch()); fail("Expected outbox failure"); }
+        catch (IllegalStateException expected) { }
+        assertEquals(Arrays.asList("begin","exists","event","journal","journal","inventory","outbox","rollback"), port.calls);
+    }
+    @Test public void failedCommitRequestsRollback() {
+        FakePort port = new FakePort(); port.failCommit = true;
+        try { new AtomicPostingService(port).post(batch()); fail("Expected commit failure"); }
+        catch (IllegalStateException expected) { }
+        assertEquals(Arrays.asList("begin","exists","event","journal","journal","inventory","outbox","commit","rollback"), port.calls);
     }
 }
