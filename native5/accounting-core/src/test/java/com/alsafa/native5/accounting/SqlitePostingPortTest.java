@@ -68,4 +68,30 @@ public class SqlitePostingPortTest {
             }
         }
     }
+    @Test public void missingProductRollsBackEntirePosting() throws Exception {
+        try(Connection c=database()) {
+            JournalEntry entry = new JournalEntry("sale-missing", Arrays.asList(
+                new JournalEntry.Line("cash",new Money(USD,1800)),
+                new JournalEntry.Line("sales",new Money(USD,-1800))));
+            PostingBatch batch = new PostingBatch(entry,"SALE","{\"eventId\":\"sale-missing\"}",
+                Collections.singletonList(new InventoryDelta("unknown-watch",-1)));
+            try { new AtomicPostingService(new SqlitePostingPort(c)).post(batch); fail("Missing product must fail"); }
+            catch(IllegalStateException expected) { }
+            assertEquals(0,count(c,"accounting_events"));
+            assertEquals(0,count(c,"outbox"));
+        }
+    }
+    @Test public void successfulSaleFollowedByFailedSalePreservesFirstSale() throws Exception {
+        try(Connection c=database()) {
+            AtomicPostingService service = new AtomicPostingService(new SqlitePostingPort(c));
+            service.post(sale("sale-ok",-1));
+            try { service.post(sale("sale-failed",-2)); fail("Must reject insufficient stock"); }
+            catch(IllegalStateException expected) { }
+            assertEquals(1,count(c,"accounting_events"));
+            assertEquals(1,count(c,"outbox"));
+            try(Statement st=c.createStatement();ResultSet rs=st.executeQuery("SELECT quantity FROM inventory_balances WHERE product_id='watch-1'")) {
+                assertTrue(rs.next()); assertEquals(1,rs.getLong(1));
+            }
+        }
+    }
 }
