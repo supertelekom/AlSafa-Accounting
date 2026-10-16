@@ -20,11 +20,11 @@ public class AndroidOutboxQueueTest {
             db.execSQL("INSERT INTO accounting_events(event_id,operation_kind,created_at_ms) VALUES('e1','SALE',1)");
             db.execSQL("INSERT INTO outbox(operation_id,operation_kind,payload,created_at_ms) VALUES('e1','SALE','{}',1)");
             AndroidOutboxQueue queue=new AndroidOutboxQueue(db);
-            AndroidOutboxQueue.Item first=queue.claim(10000,1000);
+            UploadOnlySync.Item first=queue.claim(10000,1000);
             assertNotNull(first); assertEquals("e1",first.operationId); assertEquals(1,first.attempt);
             assertNull(queue.claim(10001,1000));
             assertTrue(queue.retry("e1",first.attempt,"offline"));
-            AndroidOutboxQueue.Item second=queue.claim(10002,1000);
+            UploadOnlySync.Item second=queue.claim(10002,1000);
             assertNotNull(second); assertEquals(2,second.attempt);
             assertFalse(queue.confirm("e1",first.attempt,1));
             assertTrue(queue.confirm("e1",second.attempt,1));
