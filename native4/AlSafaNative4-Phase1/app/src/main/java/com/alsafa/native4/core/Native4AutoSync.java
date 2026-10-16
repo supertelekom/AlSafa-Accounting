@@ -52,7 +52,7 @@ public final class Native4AutoSync {
       int pending=pendingCount(db),failed=failedCount(db);
       lastStatus=(failed>0?"توقف إرسال العمليات الجديدة بسبب عملية فاشلة تحتاج مراجعة؛ البيانات المحلية محفوظة":pending==0?(result.retries>0?"تعذر تأكيد بعض العمليات؛ ستُعاد المحاولة":"اكتمل رفع العمليات المحلية إلى Firebase"):"هناك عمليات تنتظر المزامنة")+" — تم رفع "+result.pushed+"، بانتظار الرفع "+pending+"، إعادة محاولة "+result.retries+"، للمراجعة "+failed;
      }catch(Exception error){
-      String detail=error.getMessage();if(detail==null||detail.trim().isEmpty())detail=error.getClass().getSimpleName();detail=detail.replaceAll("[\\r\\n]+"," ").trim();if(detail.length()>180)detail=detail.substring(0,180)+"…";lastStatus="فشل المزامنة: "+detail+" — العمليات المحلية محفوظة";android.util.Log.e("Native4Sync","Automatic sync failed",error);
+      String detail=error.getMessage();if(detail==null||detail.trim().isEmpty())detail=error.getClass().getSimpleName();detail=detail.replaceAll("[\\r\\n]+"," ").trim();if(detail.length()>180)detail=detail.substring(0,180)+"…";lastStatus="تعذر الرفع إلى Firebase: "+detail+" — العمليات المحلية محفوظة";android.util.Log.e("Native4Sync","Automatic sync failed",error);
      }
     }while(IMMEDIATE_PENDING.get());
    }finally{
