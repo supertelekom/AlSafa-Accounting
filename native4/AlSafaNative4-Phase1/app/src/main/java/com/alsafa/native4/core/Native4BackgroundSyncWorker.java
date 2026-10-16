@@ -33,7 +33,7 @@ public final class Native4BackgroundSyncWorker extends Worker {
     boolean pending;
     try(Cursor cursor=db.db().rawQuery("SELECT 1 FROM outbox WHERE state IN ('PENDING','RETRY','SENDING') LIMIT 1",null)){pending=cursor.moveToFirst();}
     if(result.failed>0){android.util.Log.w("Native4Sync","Cloud upload needs review: "+result.failed+" failed operation(s); local tablet data retained");return Result.success();}
-    return result.retries>0||pending||result.pulled+result.duplicates>=2000?Result.retry():Result.success();
+    if(result.retries>0||pending||result.pulled+result.duplicates>=2000){android.util.Log.i("Native4Sync","Cloud sync continuation queued; local accounting remains independent");return Result.retry();}return Result.success();
    }
   }catch(Exception e){android.util.Log.w("Native4Sync","Background sync will retry",e);return Result.retry();}
  }
