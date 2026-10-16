@@ -37,7 +37,7 @@ public final class Native4ActiveSyncService extends Service {
   NotificationManager manager=(NotificationManager)getSystemService(NOTIFICATION_SERVICE);
   if(Build.VERSION.SDK_INT>=26)manager.createNotificationChannel(new NotificationChannel(CHANNEL,"مزامنة الصفا",NotificationManager.IMPORTANCE_LOW));
   Notification notification=new Notification.Builder(this,CHANNEL).setSmallIcon(android.R.drawable.stat_notify_sync)
-   .setContentTitle("الصفا للساعات").setContentText("المزامنة تعمل في الخلفية").setOngoing(true).build();
+   .setContentTitle("الصفا للساعات").setContentText("رفع العمليات إلى Firebase في الخلفية").setOngoing(true).build();
   startForeground(NOTIFICATION_ID,notification);
   connectivity=(ConnectivityManager)getSystemService(CONNECTIVITY_SERVICE);
   networkCallback=new ConnectivityManager.NetworkCallback(){@Override public void onAvailable(Network network){synchronized(wakeLock){if(!stopped){syncRequested=true;wakeLock.notifyAll();}}}};
