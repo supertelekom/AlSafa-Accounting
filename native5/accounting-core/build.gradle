@@ -4,7 +4,6 @@ plugins {
 sourceCompatibility = JavaVersion.VERSION_17
 targetCompatibility = JavaVersion.VERSION_17
 tasks.withType(Test).configureEach { useJUnit() }
-repositories { mavenCentral() }
 dependencies {
     testImplementation 'junit:junit:4.13.2'
     testRuntimeOnly 'org.xerial:sqlite-jdbc:3.46.1.3'
