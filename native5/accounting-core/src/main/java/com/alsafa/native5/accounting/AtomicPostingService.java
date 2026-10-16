@@ -41,8 +41,14 @@ public final class AtomicPostingService implements PostingGateway {
             port.insertOutbox(eventId, batch.operationKind(), batch.payload());
             port.commit();
             committed = true;
-        } finally {
-            if (begun && !committed) port.rollback();
+        } catch (RuntimeException | Error original) {
+            if (begun && !committed) {
+                try { port.rollback(); }
+                catch (RuntimeException | Error rollbackFailure) {
+                    original.addSuppressed(rollbackFailure);
+                }
+            }
+            throw original;
         }
     }
 }
