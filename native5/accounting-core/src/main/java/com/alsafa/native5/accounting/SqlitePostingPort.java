@@ -55,11 +55,14 @@ public final class SqlitePostingPort implements AtomicPostingService.Transaction
     }
     @Override public void applyInventory(String id,int lineNo,InventoryDelta delta) {
         requireActive();
+        long change = delta.quantityChange();
+        if (change == Long.MIN_VALUE) throw new IllegalArgumentException("Inventory delta exceeds supported range");
         try (PreparedStatement update = connection.prepareStatement(
-                "UPDATE inventory_balances SET quantity=quantity+? WHERE product_id=? AND quantity>=?")) {
-            update.setLong(1,delta.quantityChange());
+                "UPDATE inventory_balances SET quantity=quantity+? WHERE product_id=? AND quantity>=? AND quantity<=?")) {
+            update.setLong(1,change);
             update.setString(2,delta.productId());
-            update.setLong(3,delta.quantityChange()<0 ? Math.negateExact(delta.quantityChange()) : 0);
+            update.setLong(3,change<0 ? -change : 0);
+            update.setLong(4,change>0 ? Long.MAX_VALUE-change : Long.MAX_VALUE);
             if (update.executeUpdate()!=1) throw new IllegalStateException("Insufficient stock or missing product: "+delta.productId());
         } catch (SQLException e) { throw failure(e); }
         try (PreparedStatement movement = connection.prepareStatement(
