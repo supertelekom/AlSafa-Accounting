@@ -3,8 +3,6 @@ package com.alsafa.native5.accounting;
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Objects;
 
 /**
@@ -27,7 +25,7 @@ public final class AndroidOutboxQueue {
 
     /** Claim one pending/retry item or expired in-flight attempt. Call off the UI thread. */
     public synchronized Item claim(long nowMs,long leaseMs) {
-        if (leaseMs<=0 || nowMs<0 || nowMs<leaseMs) throw new IllegalArgumentException("Invalid lease clock");
+        if (leaseMs<=0 || nowMs<0) throw new IllegalArgumentException("Invalid lease clock");
         db.beginTransactionNonExclusive();
         try {
             Item candidate=null;
@@ -35,7 +33,7 @@ public final class AndroidOutboxQueue {
                 "SELECT operation_id,operation_kind,payload,attempts FROM outbox "+
                 "WHERE state IN ('PENDING','RETRY') OR (state='SENDING' AND last_attempt_at_ms<=?) "+
                 "ORDER BY created_at_ms,operation_id LIMIT 1",
-                new String[]{Long.toString(nowMs-leaseMs)})) {
+                new String[]{Long.toString(Math.max(0L,nowMs-leaseMs))})) {
                 if(c.moveToFirst()) candidate=new Item(c.getString(0),c.getString(1),c.getString(2),c.getLong(3));
             }
             if(candidate==null) { db.setTransactionSuccessful(); return null; }
