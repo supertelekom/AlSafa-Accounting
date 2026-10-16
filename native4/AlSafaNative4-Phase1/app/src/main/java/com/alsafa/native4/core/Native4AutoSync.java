@@ -48,7 +48,7 @@ public final class Native4AutoSync {
     do {
      IMMEDIATE_PENDING.set(false);
      try{
-      Native4SyncCoordinator.Result result=new Native4SyncCoordinator(db,activity.getApplicationContext()).syncOnce((kind,id,payload,index,total)->{lastStatus="جاري رفع "+operationLabel(kind,id,payload)+" ("+index+" من "+total+")";if(refresh!=null)activity.runOnUiThread(refresh);},()->{lastStatus="جاري إتمام رفع العمليات إلى Firebase";if(refresh!=null)activity.runOnUiThread(refresh);},(kind,id,payload,index,total)->{lastStatus="جاري متابعة رفع "+operationLabel(kind,id,payload)+" ("+index+" من "+total+")";if(refresh!=null)activity.runOnUiThread(refresh);});
+      Native4SyncCoordinator.Result result=new Native4SyncCoordinator(db,activity.getApplicationContext()).syncOnce((kind,id,payload,index,total)->{lastStatus="جاري رفع "+operationLabel(kind,id,payload)+" ("+index+" من "+total+")";if(refresh!=null)activity.runOnUiThread(refresh);});
       int pending=pendingCount(db),failed=failedCount(db);
       lastStatus=(failed>0?"توقف إرسال العمليات الجديدة بسبب عملية فاشلة تحتاج مراجعة؛ البيانات المحلية محفوظة":pending==0?(result.retries>0?"تعذر تأكيد بعض العمليات؛ ستُعاد المحاولة":"اكتمل رفع العمليات المحلية إلى Firebase"):"هناك عمليات محلية تنتظر الرفع إلى Firebase")+" — تم رفع "+result.pushed+"، بانتظار الرفع "+pending+"، إعادة محاولة "+result.retries+"، للمراجعة "+failed;
      }catch(Exception error){
