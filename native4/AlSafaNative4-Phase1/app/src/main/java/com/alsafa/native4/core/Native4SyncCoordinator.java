@@ -3,6 +3,7 @@ import android.content.Context;
 
 /** Tablet-first daily upload: sends committed local operations to Firebase; remote restore is separate. */
 public final class Native4SyncCoordinator {
+ /** Serializes uploads so concurrent UI and background requests cannot push together. */
  private static final Object CYCLE_LOCK = new Object();
  public static final class Result {
   public final int pushed,retries,failed,pulled,duplicates;public final long checkpoint;
