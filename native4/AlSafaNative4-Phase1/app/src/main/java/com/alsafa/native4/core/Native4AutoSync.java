@@ -6,7 +6,7 @@ import org.json.JSONObject;
 import com.google.firebase.auth.FirebaseAuth;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-/** Lightweight lifecycle sync. Never blocks UI and never overlaps another automatic cycle. */
+/** Tablet upload scheduler: local accounting remains available without Firebase connectivity. */
 public final class Native4AutoSync {
  private static final long MIN_INTERVAL_MS=30_000L;
  private static final AtomicBoolean RUNNING=new AtomicBoolean(false);
