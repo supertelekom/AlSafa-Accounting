@@ -11,7 +11,10 @@ import android.database.sqlite.SQLiteOpenHelper;
 public final class Native5DatabaseHelper extends SQLiteOpenHelper {
     public static final String DATABASE_NAME = "alsafa_native5.db";
     public Native5DatabaseHelper(Context context) {
-        super(context, DATABASE_NAME, null, 1);
+        this(context,DATABASE_NAME);
+    }
+    Native5DatabaseHelper(Context context,String databaseName) {
+        super(context,databaseName,null,1);
     }
     @Override public void onConfigure(SQLiteDatabase db) {
         super.onConfigure(db);
