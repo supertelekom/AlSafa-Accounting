@@ -1,0 +1,33 @@
+name: Native5 accounting core tests
+on:
+  push:
+    branches: [native5-clean-foundation]
+    paths:
+      - 'native5/**'
+      - '.github/workflows/native5-accounting-tests.yml'
+  workflow_dispatch:
+jobs:
+  accounting-core:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+      - name: Run isolated accounting tests
+        working-directory: native5
+        run: gradle --no-daemon --stacktrace --console=plain :accounting-core:test
+      - name: Save JUnit reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: native5-accounting-tests
+          path: |
+            native5/accounting-core/build/reports/tests/
+            native5/accounting-core/build/test-results/
+          if-no-files-found: ignore
