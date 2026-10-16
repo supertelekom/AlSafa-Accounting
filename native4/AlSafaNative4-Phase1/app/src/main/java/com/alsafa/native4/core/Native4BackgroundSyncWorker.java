@@ -26,7 +26,7 @@ public final class Native4BackgroundSyncWorker extends Worker {
   WorkManager.getInstance(context.getApplicationContext()).enqueueUniqueWork(UNIQUE_NAME,ExistingWorkPolicy.KEEP,work);
  }
  @NonNull @Override public Result doWork(){
-  if(FirebaseAuth.getInstance().getCurrentUser()==null)return Result.success();
+  if(FirebaseAuth.getInstance().getCurrentUser()==null){android.util.Log.i("Native4Sync","Firebase sign-in pending; local tablet records remain available");return Result.success();}
   try{
    try(CoreDb db=new CoreDb(getApplicationContext())){
     Native4SyncCoordinator.Result result=new Native4SyncCoordinator(db,getApplicationContext()).syncOnce();
