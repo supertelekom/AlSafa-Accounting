@@ -23,11 +23,16 @@ jobs:
           gradle-version: '8.9'
       - name: Test Native4 sale guard
         working-directory: native4/AlSafaNative4-Phase1
-        run: gradle --no-daemon :app:testDebugUnitTest --tests 'com.alsafa.native4.core.SaleLineGuardTest'
+        run: |
+          set -o pipefail
+          gradle --no-daemon --stacktrace --console=plain :app:testDebugUnitTest --tests 'com.alsafa.native4.core.SaleLineGuardTest' 2>&1 | tee native4-sale-tests.log
       - name: Upload test reports
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: native4-sale-test-reports
-          path: native4/AlSafaNative4-Phase1/app/build/reports/tests/
+          path: |
+            native4/AlSafaNative4-Phase1/native4-sale-tests.log
+            native4/AlSafaNative4-Phase1/app/build/reports/tests/
+            native4/AlSafaNative4-Phase1/app/build/test-results/
           if-no-files-found: ignore
