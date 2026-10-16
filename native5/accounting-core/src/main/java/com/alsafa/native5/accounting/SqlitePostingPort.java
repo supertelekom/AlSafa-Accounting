@@ -82,17 +82,20 @@ public final class SqlitePostingPort implements AtomicPostingService.Transaction
     }
     @Override public void commit() {
         requireActive();
-        try { connection.commit(); connection.setAutoCommit(true); active=false; }
-        catch (SQLException e) { throw failure(e); }
+        try {
+            connection.commit();
+            active=false; // Commit succeeded; never attempt rollback of already-committed accounting data.
+            connection.setAutoCommit(true);
+        } catch (SQLException e) { throw failure(e); }
     }
     @Override public void rollback() {
         if (!active) return;
         try { connection.rollback(); }
         catch (SQLException e) { throw failure(e); }
         finally {
+            active=false;
             try { connection.setAutoCommit(true); }
             catch (SQLException e) { throw failure(e); }
-            active=false;
         }
     }
     private void requireActive() {
