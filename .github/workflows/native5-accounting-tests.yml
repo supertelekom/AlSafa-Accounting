@@ -1,10 +1,5 @@
 name: Native5 accounting core tests
 on:
-  push:
-    branches: [native5-clean-foundation]
-    paths:
-      - 'native5/**'
-      - '.github/workflows/native5-accounting-tests.yml'
   workflow_dispatch:
 jobs:
   accounting-core:
