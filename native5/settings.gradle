@@ -6,4 +6,4 @@ dependencyResolutionManagement {
     repositories { google(); mavenCentral() }
 }
 rootProject.name = 'AlSafaNative5'
-include ':accounting-core', ':android'
+include ':accounting-core', ':android', ':tablet'
