@@ -16,6 +16,6 @@ This is a **new, isolated implementation**. The production AlSafa app and Native
 - Stage 2: Android SQLite schema, atomic posting and durable outbox.
 - Stage 3: Firebase upload-only transport, offline retries, idempotency tests.
 - Stage 4: sales, purchases, repairs, inventory, cash, daily close, profit reports.
-- Stage 5: UI parity, read-only phone views, migration dry runs, verified APK.
+- Stage 5: tablet-only UI parity against production v3.9.353, migration dry runs, verified tablet APK.
 
 **Status:** foundation only; not an installable or production-ready app.
