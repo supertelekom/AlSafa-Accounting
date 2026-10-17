@@ -1,6 +1,8 @@
 package com.alsafa.native5.tablet;
 
 import android.app.Activity;
+import android.content.Intent;
+import android.widget.Button;
 import android.os.Bundle;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -31,6 +33,10 @@ public final class TabletHomeActivity extends Activity {
         note.setTextSize(16);
         note.setGravity(Gravity.CENTER);
         root.addView(note);
+        Button balances=new Button(this);
+        balances.setText("عرض أرصدة الخزنات — قراءة فقط");
+        balances.setOnClickListener(v -> startActivity(new Intent(this,VaultBalancesActivity.class)));
+        root.addView(balances);
         try (Native5DatabaseHelper helper = new Native5DatabaseHelper(this)) {
             SQLiteDatabase db = helper.getReadableDatabase();
             try (Cursor c = db.rawQuery("SELECT state, COUNT(*) FROM outbox GROUP BY state", null)) {
