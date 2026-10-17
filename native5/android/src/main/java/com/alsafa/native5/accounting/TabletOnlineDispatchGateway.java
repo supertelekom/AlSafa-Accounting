@@ -11,11 +11,14 @@ public final class TabletOnlineDispatchGateway {
     public TabletOnlineDispatchGateway(SQLiteDatabase db,Context context,String storeId) {
         service=new OnlineDispatchPostingService(db);
         this.context=context.getApplicationContext();
+        if(storeId==null || !storeId.matches("[A-Za-z0-9_-]{1,128}"))
+            throw new IllegalArgumentException("Invalid store ID");
         this.storeId=storeId;
     }
     public void dispatch(String eventId,String invoiceId,Money total,Money cost,
                          List<InventoryDelta> stock) {
         service.dispatch(eventId,invoiceId,total,cost,stock);
-        TabletSyncScheduler.schedule(context,storeId);
+        try { TabletSyncScheduler.schedule(context,storeId); }
+        catch (RuntimeException unavailable) { /* outbox is durable */ }
     }
 }
