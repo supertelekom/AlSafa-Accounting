@@ -1,0 +1,35 @@
+// Native5 dedicated Firestore rules template. DO NOT deploy over production rules.
+// Requires Firebase Auth custom claims: storeId and role=tablet/phone.
+// Local SQLite accounting never requires sign-in; cloud access does.
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function member(storeId) {
+      return request.auth != null
+        && request.auth.token.storeId == storeId
+        && request.auth.token.role in ['tablet','phone'];
+    }
+    function tablet(storeId) {
+      return member(storeId) && request.auth.token.role == 'tablet';
+    }
+    match /native5_stores/{storeId}/operations/{operationId} {
+      allow read: if member(storeId);
+      allow create: if tablet(storeId)
+        && request.resource.data.keys().hasOnly([
+          'operationId','kind','payload','sha256','revision','createdAt'
+        ])
+        && request.resource.data.keys().hasAll([
+          'operationId','kind','payload','sha256','revision','createdAt'
+        ])
+        && request.resource.data.operationId == operationId
+        && operationId.matches('^[A-Za-z0-9_-]{1,128}$')
+        && request.resource.data.kind is string
+        && request.resource.data.payload is string
+        && request.resource.data.sha256 is string
+        && request.resource.data.sha256.matches('^[a-f0-9]{64}$')
+        && request.resource.data.revision == 1
+        && request.resource.data.createdAt == request.time;
+      allow update, delete: if false;
+    }
+  }
+}
