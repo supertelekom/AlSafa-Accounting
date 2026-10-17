@@ -42,3 +42,8 @@ CREATE TABLE IF NOT EXISTS outbox (
 CREATE INDEX IF NOT EXISTS idx_native5_outbox_queue ON outbox(state, created_at_ms, operation_id);
 -- Journal balance is validated by JournalEntry before posting. Database-level validation
 -- and idempotent insert behavior are required in the forthcoming Android posting adapter.
+
+-- Posted entries cannot be silently changed; corrections require new reversal events.
+CREATE TRIGGER IF NOT EXISTS journal_no_update BEFORE UPDATE ON journal_lines BEGIN SELECT RAISE(ABORT, 'Posted journal is immutable'); END;
+CREATE TRIGGER IF NOT EXISTS journal_no_delete BEFORE DELETE ON journal_lines BEGIN SELECT RAISE(ABORT, 'Posted journal is immutable'); END;
+CREATE TRIGGER IF NOT EXISTS events_no_update BEFORE UPDATE ON accounting_events BEGIN SELECT RAISE(ABORT, 'Posted event is immutable'); END;
