@@ -22,3 +22,6 @@ After every successful tablet posting, call `TabletSyncScheduler.schedule(contex
 - Stage 5: tablet-only UI parity against production v3.9.353, migration dry runs, verified tablet APK.
 
 **Status:** foundation only; not an installable or production-ready app.
+
+## All-operation synchronization contract
+Every durable change, in either simplified or advanced mode, must generate an immutable outbox operation in the SAME local SQLite transaction. This includes sales, repairs, purchase/supplier invoices, supplier payments, cash withdrawals, expenses, transfers, daily closing, stock/product edits, partners and configuration changes. Financial journal postings use TabletPostingFactory and SyncAfterCommitGateway. Non-financial catalog/settings changes still require dedicated atomic write+outbox adapters; they are not yet implemented. The scheduler must be invoked after each successful commit, and periodic recovery is the safety net. Never infer that an unimplemented workflow is already synchronized.
