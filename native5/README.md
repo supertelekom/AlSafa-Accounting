@@ -11,6 +11,9 @@ This is a **new, isolated implementation**. The production AlSafa app and Native
 6. Corrections use reversal/adjustment entries, not destructive edits of posted financial history.
 7. Local operation never depends on network or Firebase authentication.
 
+## Background upload requirement
+After every successful tablet posting, call `TabletSyncScheduler.schedule(context, storeId)`; also schedule at app startup once a store ID and Firebase access have been configured. WorkManager persists work when the user opens WhatsApp or the app process exits, waits for network, and retries with backoff. Android does not guarantee immediate execution. The scheduler is implemented but is NOT yet connected to a configured store identity or every posting workflow; do not claim end-to-end background sync is operational.
+
 ## Delivery stages
 - Stage 1: pure-Java accounting rules and unit tests (this branch).
 - Stage 2: Android SQLite schema, atomic posting and durable outbox.
