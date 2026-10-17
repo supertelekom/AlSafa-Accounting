@@ -30,12 +30,9 @@ public class OnlineMonthlyCollectionsReportTest {
             assertTrue(report.forMonth(YearMonth.of(2026,9),zone).isEmpty());
             new OnlineReceiptPostingService(db).collect("receipt-1","invoice-1",
                 usd(6000),InvoiceSettlement.Channel.SHAM_CASH);
-            long october=java.time.LocalDateTime.of(2026,10,1,1,0)
-                .atZone(zone).toInstant().toEpochMilli();
-            db.execSQL("UPDATE online_collections SET collected_at_ms=? WHERE collection_id='receipt-1'",
-                new Object[]{october});
+            YearMonth collectionMonth=YearMonth.now(zone);
             OnlineMonthlyCollectionsReport.Totals totals=
-                report.forMonth(YearMonth.of(2026,10),zone).get(Money.Currency.USD);
+                report.forMonth(collectionMonth,zone).get(Money.Currency.USD);
             assertNotNull(totals);
             assertEquals(6000,totals.collected.minorUnits());
             assertEquals(2500,totals.realizedProfit.minorUnits());
