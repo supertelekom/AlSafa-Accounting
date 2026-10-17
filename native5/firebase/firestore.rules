@@ -1,5 +1,5 @@
 // Native5 dedicated Firestore rules template. DO NOT deploy over production rules.
-// Requires Firebase Auth custom claims: storeId and role=tablet/phone.
+// Requires Firebase Auth custom claims: storeId and role=tablet.
 // Local SQLite accounting never requires sign-in; cloud access does.
 rules_version = '2';
 service cloud.firestore {
@@ -7,10 +7,10 @@ service cloud.firestore {
     function member(storeId) {
       return request.auth != null
         && request.auth.token.storeId == storeId
-        && request.auth.token.role in ['tablet','phone'];
+        && request.auth.token.role == 'tablet';
     }
     function tablet(storeId) {
-      return member(storeId) && request.auth.token.role == 'tablet';
+      return member(storeId);
     }
     match /native5_stores/{storeId}/operations/{operationId} {
       allow read: if member(storeId);
