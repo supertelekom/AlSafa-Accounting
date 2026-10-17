@@ -2,6 +2,7 @@
     <application android:label="الصفا للمحاسبة — تجريبي"
         android:allowBackup="false" android:supportsRtl="true"
         android:theme="@android:style/Theme.Material.Light.NoActionBar">
+        <activity android:name=".VaultBalancesActivity" android:exported="false"/>
         <activity android:name=".TabletHomeActivity" android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
