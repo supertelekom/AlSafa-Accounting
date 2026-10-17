@@ -2,6 +2,9 @@ package com.alsafa.native5.tablet;
 
 import android.app.Activity;
 import android.os.Bundle;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
+import com.alsafa.native5.accounting.Native5DatabaseHelper;
 import android.view.Gravity;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -28,6 +31,18 @@ public final class TabletHomeActivity extends Activity {
         note.setTextSize(16);
         note.setGravity(Gravity.CENTER);
         root.addView(note);
+        try (Native5DatabaseHelper helper = new Native5DatabaseHelper(this)) {
+            SQLiteDatabase db = helper.getReadableDatabase();
+            try (Cursor c = db.rawQuery("SELECT state, COUNT(*) FROM outbox GROUP BY state", null)) {
+                StringBuilder status = new StringBuilder("حالة المزامنة المحلية:\\n");
+                while (c.moveToNext()) status.append(c.getString(0)).append(": ").append(c.getLong(1)).append("\\n");
+                TextView details = new TextView(this);
+                details.setText(status.toString());
+                root.addView(details);
+            }
+        } catch (Exception ex) {
+            note.setText("تعذر قراءة البيانات المحلية: " + ex.getClass().getSimpleName());
+        }
         setContentView(root);
     }
 }
