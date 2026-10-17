@@ -38,6 +38,14 @@ public class OnlineMonthlyCollectionsReportTest {
             assertEquals(6000,totals.collected.minorUnits());
             assertEquals(3500,totals.recoveredCapital.minorUnits());
             assertEquals(2500,totals.realizedProfit.minorUnits());
+            OnlineMonthlyCollectionsReport.Totals sham=report.forMonthAndDestination(
+                collectionMonth,zone,InvoiceSettlement.Channel.SHAM_CASH).get(Money.Currency.USD);
+            assertNotNull(sham);
+            assertEquals(6000,sham.collected.minorUnits());
+            assertEquals(3500,sham.recoveredCapital.minorUnits());
+            assertEquals(2500,sham.realizedProfit.minorUnits());
+            assertTrue(report.forMonthAndDestination(collectionMonth,zone,
+                InvoiceSettlement.Channel.CASH_DRAWER).isEmpty());
         } finally {helper.close();}
     }
 }
