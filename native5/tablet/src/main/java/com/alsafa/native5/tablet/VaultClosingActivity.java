@@ -41,7 +41,7 @@ public final class VaultClosingActivity extends Activity {
         heading.setTextSize(22);
         root.addView(heading);
         TextView warning=new TextView(this);
-        warning.setText("تُدخل المبالغ بوحداتها الصغرى مؤقتًا. مثال: 10.00 دولار = 1000. لا تستخدم لإقفال بيانات المتجر الفعلية.");
+        warning.setText("أدخل المبالغ بالشكل المعتاد مثل 10.50. لا تستخدم هذه الشاشة لإقفال بيانات المتجر الفعلية قبل الاختبار.");
         root.addView(warning);
         vaultSpinner=new Spinner(this);
         InvoiceSettlement.Channel[] vaults=InvoiceSettlement.Channel.values();
@@ -76,11 +76,11 @@ public final class VaultClosingActivity extends Activity {
             if(selectedVault==InvoiceSettlement.Channel.SHAM_CASH && currency==Money.Currency.TRY)
                 continue;
             TextView label=new TextView(this);
-            label.setText("المبلغ المعدود "+currency.name()+" (وحدات صغرى)");
+            label.setText("المبلغ المعدود "+currency.name()+"");
             countsArea.addView(label);
             EditText input=new EditText(this);
             input.setSingleLine(true);
-            input.setInputType(InputType.TYPE_CLASS_NUMBER);
+            input.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
             input.setHint("أدخل المبلغ المعدود");
             countsArea.addView(input);
             fields.put(currency,input);
@@ -93,9 +93,7 @@ public final class VaultClosingActivity extends Activity {
         for(Map.Entry<Money.Currency,EditText> entry:fields.entrySet()) {
             String value=entry.getValue().getText().toString().trim();
             if(value.isEmpty()) throw new IllegalArgumentException("يجب إدخال المبلغ لكل عملة");
-            long minor=Long.parseLong(value);
-            if(minor<0) throw new IllegalArgumentException("لا يمكن أن يكون المبلغ المعدود سالبًا");
-            counts.put(entry.getKey(),new Money(entry.getKey(),minor));
+            counts.put(entry.getKey(),CurrencyAmountInput.parse(entry.getKey(),value));
         }
         return counts;
     }
@@ -111,9 +109,9 @@ public final class VaultClosingActivity extends Activity {
             for(Map.Entry<Money.Currency,VaultClosingReconciliation.Difference> row:result.entrySet()) {
                 VaultClosingReconciliation.Difference d=row.getValue();
                 message.append(row.getKey()).append(": المتوقع ")
-                    .append(d.expected.minorUnits()).append("، المعدود ")
-                    .append(d.counted.minorUnits()).append("، الفرق ")
-                    .append(d.variance.minorUnits()).append("\n");
+                    .append(CurrencyAmountInput.display(d.expected)).append("، المعدود ")
+                    .append(CurrencyAmountInput.display(d.counted)).append("، الفرق ")
+                    .append(CurrencyAmountInput.display(d.variance)).append("\n");
             }
             message.append("\nسيُحفظ المحضر دون تعديل الرصيد أو تسجيل فرق كربح.");
             new AlertDialog.Builder(this)
