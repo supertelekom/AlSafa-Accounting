@@ -22,15 +22,16 @@ public class OnlineMonthlyCollectionsReportTest {
             new OnlineDispatchPostingService(db).dispatch("dispatch-1","invoice-1",
                 usd(6000),usd(3500),Collections.singletonList(new InventoryDelta("watch-1",-1)));
             ZoneId zone=ZoneId.of("Asia/Damascus");
-            long september=java.time.LocalDateTime.of(2026,9,30,23,0)
+            YearMonth collectionMonth=YearMonth.now(zone);
+            YearMonth priorMonth=collectionMonth.minusMonths(1);
+            long september=priorMonth.atEndOfMonth().atTime(23,0)
                 .atZone(zone).toInstant().toEpochMilli();
             db.execSQL("UPDATE online_invoices SET created_at_ms=? WHERE invoice_id='invoice-1'",
                 new Object[]{september});
             OnlineMonthlyCollectionsReport report=new OnlineMonthlyCollectionsReport(db);
-            assertTrue(report.forMonth(YearMonth.of(2026,9),zone).isEmpty());
+            assertTrue(report.forMonth(priorMonth,zone).isEmpty());
             new OnlineReceiptPostingService(db).collect("receipt-1","invoice-1",
                 usd(6000),InvoiceSettlement.Channel.SHAM_CASH);
-            YearMonth collectionMonth=YearMonth.now(zone);
             OnlineMonthlyCollectionsReport.Totals totals=
                 report.forMonth(collectionMonth,zone).get(Money.Currency.USD);
             assertNotNull(totals);
