@@ -36,6 +36,7 @@ public class OnlineMonthlyCollectionsReportTest {
                 report.forMonth(collectionMonth,zone).get(Money.Currency.USD);
             assertNotNull(totals);
             assertEquals(6000,totals.collected.minorUnits());
+            assertEquals(3500,totals.recoveredCapital.minorUnits());
             assertEquals(2500,totals.realizedProfit.minorUnits());
         } finally {helper.close();}
     }
