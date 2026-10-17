@@ -2,7 +2,6 @@ package com.alsafa.native5.accounting;
 
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
-import java.time.Instant;
 import java.time.YearMonth;
 import java.time.ZoneId;
 import java.util.EnumMap;
@@ -29,14 +28,29 @@ public final class OnlineMonthlyCollectionsReport {
         }
     }
     public EnumMap<Money.Currency,Totals> forMonth(YearMonth month,ZoneId storeZone) {
+        return query(month,storeZone,null);
+    }
+
+    /** Filter by the actual payment destination without mixing cash drawers. */
+    public EnumMap<Money.Currency,Totals> forMonthAndDestination(YearMonth month,ZoneId storeZone,
+            InvoiceSettlement.Channel destination) {
+        return query(month,storeZone,Objects.requireNonNull(destination,"destination"));
+    }
+
+    private EnumMap<Money.Currency,Totals> query(YearMonth month,ZoneId storeZone,
+            InvoiceSettlement.Channel destination) {
         Objects.requireNonNull(month,"month");
         Objects.requireNonNull(storeZone,"storeZone");
         long start=month.atDay(1).atStartOfDay(storeZone).toInstant().toEpochMilli();
         long end=month.plusMonths(1).atDay(1).atStartOfDay(storeZone).toInstant().toEpochMilli();
         EnumMap<Money.Currency,long[]> sums=new EnumMap<>(Money.Currency.class);
-        try(Cursor c=db.rawQuery(
-            "SELECT currency,received_minor,released_cost_minor FROM online_collections WHERE collected_at_ms>=? AND collected_at_ms<?",
-            new String[]{Long.toString(start),Long.toString(end)})) {
+        String sql="SELECT currency,received_minor,released_cost_minor FROM online_collections WHERE collected_at_ms>=? AND collected_at_ms<?";
+        String[] args={Long.toString(start),Long.toString(end)};
+        if(destination!=null) {
+            sql+=" AND destination=?";
+            args=new String[]{Long.toString(start),Long.toString(end),destination.name()};
+        }
+        try(Cursor c=db.rawQuery(sql,args)) {
             while(c.moveToNext()) {
                 Money.Currency unit=Money.Currency.valueOf(c.getString(0));
                 long[] values=sums.get(unit);
