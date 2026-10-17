@@ -28,6 +28,13 @@ public class VaultExchangePostingTest {
                 "SELECT SUM(signed_minor_units) FROM journal_lines WHERE account_id='asset:payment:SHAM_CASH' AND currency='USD'",null));
             assertEquals(1,android.database.DatabaseUtils.longForQuery(db,
                 "SELECT COUNT(*) FROM outbox WHERE operation_id='fx-1'",null));
+            VaultBalanceReader balances=new VaultBalanceReader(db);
+            assertEquals(0,balances.balance(InvoiceSettlement.Channel.CASH_DRAWER,
+                Money.Currency.TRY).minorUnits());
+            assertEquals(2500,balances.balance(InvoiceSettlement.Channel.SHAM_CASH,
+                Money.Currency.USD).minorUnits());
+            assertFalse(balances.balances(InvoiceSettlement.Channel.SHAM_CASH)
+                .containsKey(Money.Currency.TRY));
             reject(() -> service.exchange("fx-2",m(Money.Currency.TRY,1),
                 InvoiceSettlement.Channel.CASH_DRAWER,m(Money.Currency.USD,1),
                 InvoiceSettlement.Channel.SHAM_CASH));
