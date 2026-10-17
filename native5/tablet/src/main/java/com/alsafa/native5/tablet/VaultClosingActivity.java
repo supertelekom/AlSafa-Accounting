@@ -118,15 +118,22 @@ public final class VaultClosingActivity extends Activity {
                 .setTitle("تأكيد محضر الإقفال")
                 .setMessage(message.toString())
                 .setNegativeButton("إلغاء",null)
-                .setPositiveButton("حفظ المحضر",(dialog,which) -> save(vault,counts))
+                .setPositiveButton("حفظ المحضر",(dialog,which) -> save(vault,counts,result))
                 .show();
         } catch(Exception ex) {
             status.setText("تعذر إعداد الإقفال: "+ex.getMessage());
         }
     }
 
-    private void save(InvoiceSettlement.Channel vault,EnumMap<Money.Currency,Money> counts) {
+    private void save(InvoiceSettlement.Channel vault,EnumMap<Money.Currency,Money> counts,
+            EnumMap<Money.Currency,VaultClosingReconciliation.Difference> preview) {
         try {
+            EnumMap<Money.Currency,VaultClosingReconciliation.Difference> current=
+                new VaultClosingReconciliation(helper.getReadableDatabase()).reconcile(vault,counts);
+            for(Money.Currency currency:preview.keySet()) {
+                if(!preview.get(currency).expected.equals(current.get(currency).expected))
+                    throw new IllegalStateException("تغير الرصيد بعد المعاينة؛ راجع الفروقات مجددًا");
+            }
             String closingId="closing-"+UUID.randomUUID().toString();
             new VaultClosingPostingService(helper.getWritableDatabase()).close(closingId,vault,counts);
             status.setText("حُفظ محضر الإقفال محليًا: "+closingId+
