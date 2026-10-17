@@ -37,6 +37,10 @@ public final class TabletHomeActivity extends Activity {
         balances.setText("عرض أرصدة الخزنات — قراءة فقط");
         balances.setOnClickListener(v -> startActivity(new Intent(this,VaultBalancesActivity.class)));
         root.addView(balances);
+        Button closing=new Button(this);
+        closing.setText("إقفال الخزنة — تجريبي");
+        closing.setOnClickListener(v -> startActivity(new Intent(this,VaultClosingActivity.class)));
+        root.addView(closing);
         try (Native5DatabaseHelper helper = new Native5DatabaseHelper(this)) {
             SQLiteDatabase db = helper.getReadableDatabase();
             try (Cursor c = db.rawQuery("SELECT state, COUNT(*) FROM outbox GROUP BY state", null)) {
