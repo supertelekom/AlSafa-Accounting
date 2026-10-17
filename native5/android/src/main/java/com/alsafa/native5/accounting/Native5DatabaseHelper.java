@@ -5,7 +5,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
 /**
- * Schema v3. Future schema upgrades must use additive, tested migrations;
+ * Schema v4. Future schema upgrades must use additive, tested migrations;
  * NEVER delete or replace a shop's database to upgrade.
  */
 public final class Native5DatabaseHelper extends SQLiteOpenHelper {
@@ -14,7 +14,7 @@ public final class Native5DatabaseHelper extends SQLiteOpenHelper {
         this(context,DATABASE_NAME);
     }
     Native5DatabaseHelper(Context context,String databaseName) {
-        super(context,databaseName,null,3);
+        super(context,databaseName,null,4);
     }
     @Override public void onConfigure(SQLiteDatabase db) {
         super.onConfigure(db);
@@ -32,6 +32,7 @@ public final class Native5DatabaseHelper extends SQLiteOpenHelper {
         db.execSQL("CREATE TRIGGER events_no_update BEFORE UPDATE ON accounting_events BEGIN SELECT RAISE(ABORT, 'Posted event is immutable'); END");
         addOnlineInvoiceTables(db);
         addClosingTables(db);
+        addVarianceAdjustmentTables(db);
     }
     private static void addOnlineInvoiceTables(SQLiteDatabase db) {
         db.execSQL("CREATE TABLE IF NOT EXISTS online_invoices(invoice_id TEXT PRIMARY KEY NOT NULL,total_minor INTEGER NOT NULL CHECK(total_minor>0),cost_minor INTEGER NOT NULL CHECK(cost_minor>0),currency TEXT NOT NULL CHECK(currency IN ('USD','TRY','SYP')),collected_minor INTEGER NOT NULL DEFAULT 0 CHECK(collected_minor>=0),released_cost_minor INTEGER NOT NULL DEFAULT 0 CHECK(released_cost_minor>=0),created_at_ms INTEGER NOT NULL,CHECK(collected_minor<=total_minor),CHECK(released_cost_minor<=cost_minor))");
@@ -48,9 +49,15 @@ public final class Native5DatabaseHelper extends SQLiteOpenHelper {
         db.execSQL("CREATE TRIGGER IF NOT EXISTS vault_closing_counts_no_update BEFORE UPDATE ON vault_closing_counts BEGIN SELECT RAISE(ABORT,'Closing count is immutable'); END");
         db.execSQL("CREATE TRIGGER IF NOT EXISTS vault_closing_counts_no_delete BEFORE DELETE ON vault_closing_counts BEGIN SELECT RAISE(ABORT,'Closing count is immutable'); END");
     }
+    private static void addVarianceAdjustmentTables(SQLiteDatabase db) {
+        db.execSQL("CREATE TABLE IF NOT EXISTS vault_variance_adjustments(adjustment_id TEXT PRIMARY KEY NOT NULL REFERENCES accounting_events(event_id) ON DELETE RESTRICT,closing_id TEXT NOT NULL REFERENCES vault_closings(closing_id) ON DELETE RESTRICT,currency TEXT NOT NULL CHECK(currency IN ('USD','TRY','SYP')),variance_minor INTEGER NOT NULL CHECK(variance_minor<>0),reason TEXT NOT NULL CHECK(length(trim(reason))>=3),UNIQUE(closing_id,currency))");
+        db.execSQL("CREATE TRIGGER IF NOT EXISTS variance_adjustment_no_update BEFORE UPDATE ON vault_variance_adjustments BEGIN SELECT RAISE(ABORT,'Variance adjustment is immutable'); END");
+        db.execSQL("CREATE TRIGGER IF NOT EXISTS variance_adjustment_no_delete BEFORE DELETE ON vault_variance_adjustments BEGIN SELECT RAISE(ABORT,'Variance adjustment is immutable'); END");
+    }
     @Override public void onUpgrade(SQLiteDatabase db,int oldVersion,int newVersion) {
         if(oldVersion<2 && newVersion>=2) addOnlineInvoiceTables(db);
         if(oldVersion<3 && newVersion>=3) addClosingTables(db);
-        if(newVersion>3) throw new IllegalStateException("Unknown Native5 schema version");
+        if(oldVersion<4 && newVersion>=4) addVarianceAdjustmentTables(db);
+        if(newVersion>4) throw new IllegalStateException("Unknown Native5 schema version");
     }
 }
