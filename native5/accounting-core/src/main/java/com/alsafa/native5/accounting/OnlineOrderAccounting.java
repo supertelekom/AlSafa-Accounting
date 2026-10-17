@@ -41,6 +41,7 @@ public final class OnlineOrderAccounting {
         Objects.requireNonNull(collected,"collected");
         Objects.requireNonNull(costReleased,"costReleased");
         Objects.requireNonNull(destination,"destination");
+        VaultRouting.validate(destination,collected.currency());
         if(collected.minorUnits()<=0 || costReleased.minorUnits()<0 ||
            collected.currency()!=costReleased.currency())
             throw new IllegalArgumentException("Invalid collection/cost currency");
