@@ -27,6 +27,9 @@ public final class Native5DatabaseHelper extends SQLiteOpenHelper {
         db.execSQL("CREATE TABLE inventory_movements(event_id TEXT NOT NULL REFERENCES accounting_events(event_id) ON DELETE RESTRICT,line_no INTEGER NOT NULL CHECK(line_no>=0),product_id TEXT NOT NULL REFERENCES inventory_balances(product_id) ON DELETE RESTRICT,quantity_delta INTEGER NOT NULL CHECK(quantity_delta<>0),PRIMARY KEY(event_id,line_no))");
         db.execSQL("CREATE TABLE outbox(operation_id TEXT PRIMARY KEY NOT NULL REFERENCES accounting_events(event_id) ON DELETE RESTRICT,operation_kind TEXT NOT NULL,payload TEXT NOT NULL,state TEXT NOT NULL DEFAULT 'PENDING' CHECK(state IN ('PENDING','SENDING','RETRY','CONFIRMED','FAILED')),attempts INTEGER NOT NULL DEFAULT 0 CHECK(attempts>=0),created_at_ms INTEGER NOT NULL,last_attempt_at_ms INTEGER,confirmed_revision INTEGER CHECK(confirmed_revision IS NULL OR confirmed_revision>0),last_error TEXT)");
         db.execSQL("CREATE INDEX idx_native5_outbox_queue ON outbox(state,created_at_ms,operation_id)");
+        db.execSQL("CREATE TRIGGER journal_no_update BEFORE UPDATE ON journal_lines BEGIN SELECT RAISE(ABORT, 'Posted journal is immutable'); END");
+        db.execSQL("CREATE TRIGGER journal_no_delete BEFORE DELETE ON journal_lines BEGIN SELECT RAISE(ABORT, 'Posted journal is immutable'); END");
+        db.execSQL("CREATE TRIGGER events_no_update BEFORE UPDATE ON accounting_events BEGIN SELECT RAISE(ABORT, 'Posted event is immutable'); END");
     }
     @Override public void onUpgrade(SQLiteDatabase db,int oldVersion,int newVersion) {
         throw new IllegalStateException("Native5 migration not implemented: refusing destructive upgrade");
