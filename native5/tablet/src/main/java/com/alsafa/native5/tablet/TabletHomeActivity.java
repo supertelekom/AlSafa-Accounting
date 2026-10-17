@@ -34,8 +34,8 @@ public final class TabletHomeActivity extends Activity {
         try (Native5DatabaseHelper helper = new Native5DatabaseHelper(this)) {
             SQLiteDatabase db = helper.getReadableDatabase();
             try (Cursor c = db.rawQuery("SELECT state, COUNT(*) FROM outbox GROUP BY state", null)) {
-                StringBuilder status = new StringBuilder("حالة المزامنة المحلية:\\n");
-                while (c.moveToNext()) status.append(c.getString(0)).append(": ").append(c.getLong(1)).append("\\n");
+                StringBuilder status = new StringBuilder("حالة المزامنة المحلية:\n");
+                while (c.moveToNext()) status.append(c.getString(0)).append(": ").append(c.getLong(1)).append("\n");
                 TextView details = new TextView(this);
                 details.setText(status.toString());
                 root.addView(details);
