@@ -20,9 +20,11 @@ public final class OnlineMonthlyCollectionsReport {
     }
     public static final class Totals {
         public final Money collected;
+        public final Money recoveredCapital;
         public final Money realizedProfit;
-        Totals(Money collected,Money profit) {
+        Totals(Money collected,Money capital,Money profit) {
             this.collected=collected;
+            this.recoveredCapital=capital;
             this.realizedProfit=profit;
         }
     }
@@ -38,16 +40,17 @@ public final class OnlineMonthlyCollectionsReport {
             while(c.moveToNext()) {
                 Money.Currency unit=Money.Currency.valueOf(c.getString(0));
                 long[] values=sums.get(unit);
-                if(values==null) {values=new long[2];sums.put(unit,values);}
+                if(values==null) {values=new long[3];sums.put(unit,values);}
                 values[0]=Math.addExact(values[0],c.getLong(1));
-                values[1]=Math.addExact(values[1],
+                values[1]=Math.addExact(values[1],c.getLong(2));
+                values[2]=Math.addExact(values[2],
                     Math.subtractExact(c.getLong(1),c.getLong(2)));
             }
         }
         EnumMap<Money.Currency,Totals> result=new EnumMap<>(Money.Currency.class);
         for(Money.Currency unit:sums.keySet()) {
             long[] values=sums.get(unit);
-            result.put(unit,new Totals(new Money(unit,values[0]),new Money(unit,values[1])));
+            result.put(unit,new Totals(new Money(unit,values[0]),new Money(unit,values[1]),new Money(unit,values[2])));
         }
         return result;
     }
