@@ -39,6 +39,7 @@ public final class SupplierAccounting {
         requireId(supplierInvoiceId);
         requireNonNegative(paid);
         Objects.requireNonNull(source,"source");
+        VaultRouting.validate(source,paid.currency());
         if(paid.minorUnits()==0) throw new IllegalArgumentException("Zero supplier payment");
         List<JournalEntry.Line> lines=new ArrayList<>();
         lines.add(new JournalEntry.Line("liability:accounts_payable",paid));
