@@ -22,6 +22,7 @@ public final class InvoiceSettlement {
             this.channel=Objects.requireNonNull(channel,"channel");
             this.received=Objects.requireNonNull(received,"received");
             this.invoiceCurrencyValue=Objects.requireNonNull(invoiceCurrencyValue,"invoiceCurrencyValue");
+            VaultRouting.validate(channel,received.currency());
             if(received.minorUnits()<=0 || invoiceCurrencyValue.minorUnits()<=0)
                 throw new IllegalArgumentException("Receipt and valuation must be positive");
             if(received.currency()==invoiceCurrencyValue.currency()
