@@ -20,18 +20,11 @@ public final class OnlineOrderAccounting {
         requireId(invoiceId);
         Objects.requireNonNull(stockCost,"stockCost");
         Objects.requireNonNull(stockRemoval,"stockRemoval");
-        if(stockCost.minorUnits()<0) throw new IllegalArgumentException("Negative stock cost");
+        if(stockCost.minorUnits()<=0) throw new IllegalArgumentException("Stock cost must be positive; zero-cost stock requires a dedicated inventory-only event");
         if(stockRemoval.isEmpty()) throw new IllegalArgumentException("Online dispatch requires stock movement");
         List<JournalEntry.Line> lines=new ArrayList<>();
-        if(stockCost.minorUnits()>0) {
-            lines.add(new JournalEntry.Line("asset:goods_in_transit",stockCost));
-            lines.add(new JournalEntry.Line("asset:inventory",stockCost.negate()));
-        } else {
-            // Zero-cost stock still needs an auditable, balanced accounting event.
-            Money one=new Money(Money.Currency.USD,1);
-            lines.add(new JournalEntry.Line("memo:online_dispatch",one));
-            lines.add(new JournalEntry.Line("memo:online_dispatch_offset",one.negate()));
-        }
+        lines.add(new JournalEntry.Line("asset:goods_in_transit",stockCost));
+        lines.add(new JournalEntry.Line("asset:inventory",stockCost.negate()));
         String payload="{\"invoiceId\":\""+invoiceId+"\",\"costMinor\":"+
             stockCost.minorUnits()+",\"currency\":\""+stockCost.currency()+"\"}";
         return new PostingBatch(new JournalEntry(eventId,lines),"ONLINE_DISPATCH",payload,stockRemoval);
