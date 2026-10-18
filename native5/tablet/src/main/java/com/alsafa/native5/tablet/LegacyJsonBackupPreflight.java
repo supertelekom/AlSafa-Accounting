@@ -37,14 +37,23 @@ public final class LegacyJsonBackupPreflight {
         public final Map<String,Integer> referenceIssues;
         public final Map<String,String> vaultTotals;
         public final Map<String,Integer> fractionalAmounts;
-        Inspection(String sha256,String format,int version,Map<String,Integer> counts,int bytes,Map<String,Integer> referenceIssues,Map<String,String> vaultTotals,Map<String,Integer> fractionalAmounts) {
+        public final Map<String,Integer> inventorySupplierIssues;
+        Inspection(String sha256,String format,int version,Map<String,Integer> counts,int bytes,Map<String,Integer> referenceIssues,Map<String,String> vaultTotals,Map<String,Integer> fractionalAmounts,Map<String,Integer> inventorySupplierIssues) {
             this.sha256=sha256;this.format=format;this.version=version;
             this.counts=java.util.Collections.unmodifiableMap(new LinkedHashMap<>(counts));
             this.bytes=bytes;
             this.referenceIssues=java.util.Collections.unmodifiableMap(new LinkedHashMap<>(referenceIssues));
             this.vaultTotals=java.util.Collections.unmodifiableMap(new LinkedHashMap<>(vaultTotals));
             this.fractionalAmounts=java.util.Collections.unmodifiableMap(new LinkedHashMap<>(fractionalAmounts));
+            this.inventorySupplierIssues=java.util.Collections.unmodifiableMap(new LinkedHashMap<>(inventorySupplierIssues));
         }
+    }
+
+    private static Set<String> recordIds(JSONArray records) {
+        Set<String> ids=new HashSet<>();
+        if(records!=null) for(int i=0;i<records.length();i++)
+            ids.add(records.optJSONObject(i).optString("id",""));
+        return ids;
     }
 
     public static Inspection inspect(InputStream input) throws IOException, JSONException {
@@ -151,6 +160,35 @@ public final class LegacyJsonBackupPreflight {
         Map<String,String> vaultTotals=new LinkedHashMap<>();
         for(Map.Entry<String,BigDecimal> item:totals.entrySet())
             vaultTotals.put(item.getKey(),item.getValue().toPlainString());
+        Map<String,Integer> inventorySupplierIssues=new LinkedHashMap<>();
+        Set<String> supplierIds=recordIds(data.optJSONArray("suppliers"));
+        int missingSuppliers=0;
+        for(String collection:new String[]{"purchases","supplierLedger"}) {
+            JSONArray records=data.optJSONArray(collection);
+            if(records==null) continue;
+            for(int i=0;i<records.length();i++) {
+                String supplierId=records.optJSONObject(i).optString("supplierId","");
+                if(!supplierId.isEmpty() && !supplierIds.contains(supplierId))
+                    missingSuppliers++;
+            }
+        }
+        inventorySupplierIssues.put("missingSupplierReferences",missingSuppliers);
+        Set<String> productIds=recordIds(data.optJSONArray("products"));
+        Set<String> partIds=recordIds(data.optJSONArray("maintenanceParts"));
+        int missingInventory=0,unknownItemType=0;
+        JSONArray movements=data.optJSONArray("inventoryMovements");
+        if(movements!=null) for(int i=0;i<movements.length();i++) {
+            JSONObject movement=movements.optJSONObject(i);
+            String type=movement.optString("itemType","");
+            String itemId=movement.optString("itemId","");
+            if("product".equals(type)) {
+                if(!productIds.contains(itemId)) missingInventory++;
+            } else if("part".equals(type)) {
+                if(!partIds.contains(itemId)) missingInventory++;
+            } else unknownItemType++;
+        }
+        inventorySupplierIssues.put("missingInventoryItemReferences",missingInventory);
+        inventorySupplierIssues.put("unknownInventoryItemTypes",unknownItemType);
         MessageDigest digest;
         try {digest=MessageDigest.getInstance("SHA-256");}
         catch(NoSuchAlgorithmException e) {throw new AssertionError(e);}
@@ -158,6 +196,6 @@ public final class LegacyJsonBackupPreflight {
         for(byte part:digest.digest(raw))
             hex.append(Character.forDigit((part>>>4)&15,16))
                 .append(Character.forDigit(part&15,16));
-        return new Inspection(hex.toString(),format,version,counts,raw.length,referenceIssues,vaultTotals,fractionalAmounts);
+        return new Inspection(hex.toString(),format,version,counts,raw.length,referenceIssues,vaultTotals,fractionalAmounts,inventorySupplierIssues);
     }
 }
