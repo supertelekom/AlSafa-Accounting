@@ -8,7 +8,7 @@ import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
-import com.alsafa.native5.accounting.LegacyBackupPreflight;
+
 import java.io.InputStream;
 import java.util.Map;
 
@@ -32,16 +32,16 @@ public final class LegacyBackupInspectionActivity extends Activity {
         title.setTextSize(22);
         root.addView(title);
         TextView warning=new TextView(this);
-        warning.setText("هذه الخطوة تفحص بنية ملف ZIP ولا تستورد المنتجات أو الفواتير أو الأرصدة. لا تحذف النسخة الأصلية.");
+        warning.setText("هذه الخطوة تفحص ملف JSON الذي يصدّره تطبيق الصفا القديم، ولا تستورد المنتجات أو الفواتير أو الأرصدة. احتفظ بالنسخة الأصلية.");
         root.addView(warning);
         Button choose=new Button(this);
-        choose.setText("اختيار ملف النسخة الاحتياطية ZIP");
+        choose.setText("اختيار ملف النسخة الاحتياطية JSON");
         choose.setOnClickListener(v -> {
             Intent intent=new Intent(Intent.ACTION_OPEN_DOCUMENT);
             intent.addCategory(Intent.CATEGORY_OPENABLE);
-            intent.setType("application/zip");
+            intent.setType("application/json");
             intent.putExtra(Intent.EXTRA_MIME_TYPES,new String[]{
-                "application/zip","application/x-zip-compressed","application/octet-stream"});
+                "application/json","text/plain","application/octet-stream"});
             startActivityForResult(intent,PICK_BACKUP);
         });
         root.addView(choose);
@@ -61,16 +61,16 @@ public final class LegacyBackupInspectionActivity extends Activity {
         new Thread(() -> {
             String message;
             try(InputStream stream=getContentResolver().openInputStream(uri)) {
-                LegacyBackupPreflight.Inspection inspected=LegacyBackupPreflight.inspect(stream);
-                StringBuilder out=new StringBuilder("عدد الملفات: ").append(inspected.entries.size())
-                    .append("\nالحجم المفكوك: ").append(inspected.totalBytes)
-                    .append(" بايت\n\n");
-                for(Map.Entry<String,LegacyBackupPreflight.EntryInfo> entry:inspected.entries.entrySet()) {
-                    out.append(entry.getKey()).append(" — ")
-                        .append(entry.getValue().bytes).append(" بايت\nSHA-256: ")
-                        .append(entry.getValue().sha256).append("\n\n");
-                }
-                out.append("الفحص لا يثبت توافق الملف مع Native 5. يلزم تحليل صيغة البيانات ومطابقة السجلات قبل الاستيراد.");
+                LegacyJsonBackupPreflight.Inspection inspected=LegacyJsonBackupPreflight.inspect(stream);
+                StringBuilder out=new StringBuilder("نوع الملف: ").append(inspected.format)
+                    .append("\\nإصدار الصيغة: ").append(inspected.version)
+                    .append("\\nحجم الملف: ").append(inspected.bytes)
+                    .append(" بايت\\nSHA-256: ").append(inspected.sha256)
+                    .append("\\n\\nعدد السجلات حسب المجموعة (— تعني غير موجودة):\\n");
+                for(Map.Entry<String,Integer> entry:inspected.counts.entrySet())
+                    out.append(entry.getKey()).append(": ")
+                        .append(entry.getValue()<0?"—":entry.getValue()).append("\\n");
+                out.append("\\nفحص قراءة فقط: لم تُنقل أي بيانات ولم تُعتمد الأرصدة بعد.");
                 message=out.toString();
             } catch(Exception error) {
                 message="تعذر فحص الملف: "+error.getClass().getSimpleName()+
