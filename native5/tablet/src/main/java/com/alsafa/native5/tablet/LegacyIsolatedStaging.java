@@ -4,6 +4,7 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.Cursor;
+import android.database.DatabaseUtils;
 import android.database.sqlite.SQLiteOpenHelper;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -50,12 +51,18 @@ public final class LegacyIsolatedStaging extends SQLiteOpenHelper {
             throw new JSONException("Invalid backup structure");
         SQLiteDatabase db=getWritableDatabase();
         Map<String,Integer> counts=new LinkedHashMap<>();
-        try(Cursor existing=db.rawQuery("SELECT record_count FROM imports WHERE sha256=?",new String[]{sha256})) {
-            if(existing.moveToFirst())
-                throw new IllegalStateException("Backup already staged; existing records preserved");
-        }
         db.beginTransaction();
         try {
+            try(Cursor existing=db.rawQuery("SELECT record_count FROM imports WHERE sha256=?",new String[]{sha256})) {
+                if(existing.moveToFirst()) {
+                    long stored=DatabaseUtils.longForQuery(db,
+                        "SELECT COUNT(*) FROM historical_records WHERE sha256=?",
+                        new String[]{sha256});
+                    if(stored!=existing.getLong(0))
+                        throw new IllegalStateException("Existing staged backup count mismatch");
+                    throw new IllegalStateException("Backup already staged; existing records preserved");
+                }
+            }
             int total=0;
             for(String name:COLLECTIONS) {
                 JSONArray rows=data.optJSONArray(name);
@@ -100,6 +107,11 @@ public final class LegacyIsolatedStaging extends SQLiteOpenHelper {
             manifest.put("record_count",total);
             if(db.insertWithOnConflict("imports",null,manifest,SQLiteDatabase.CONFLICT_ABORT)==-1)
                 throw new IllegalStateException("Failed to create import manifest");
+            long verified=DatabaseUtils.longForQuery(db,
+                "SELECT COUNT(*) FROM historical_records WHERE sha256=?",
+                new String[]{sha256});
+            if(verified!=total)
+                throw new IllegalStateException("Staging row-count mismatch: "+verified+" vs "+total);
             db.setTransactionSuccessful();
         } finally {db.endTransaction();}
         return counts;
