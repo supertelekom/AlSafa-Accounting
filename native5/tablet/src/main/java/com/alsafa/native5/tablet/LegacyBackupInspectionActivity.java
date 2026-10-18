@@ -79,8 +79,8 @@ public final class LegacyBackupInspectionActivity extends Activity {
                 for(Map.Entry<String,String> entry:inspected.vaultTotals.entrySet())
                     out.append(entry.getKey()).append(": ")
                         .append(new BigDecimal(entry.getValue()).setScale(1,RoundingMode.HALF_UP).toPlainString())
-                        .append(" (عرض تقريبي)\\n");
-                out.append("\\nحركات ذات كسور تتجاوز منزلتين عشريتين:\n");
+                        .append(" (عرض تقريبي)\n");
+                out.append("\nحركات ذات كسور تتجاوز منزلتين عشريتين:\n");
                 for(Map.Entry<String,Integer> entry:inspected.fractionalAmounts.entrySet())
                     out.append(entry.getKey()).append(": ").append(entry.getValue()).append("\n");
                 out.append("\nالقيم الأصلية محفوظة للفحص المحاسبي؛ التقريب للعرض فقط. لم تُنقل بيانات أو تُعتمد أرصدة.");
