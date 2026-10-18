@@ -1,6 +1,7 @@
 package com.alsafa.native5.tablet;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
@@ -21,6 +22,9 @@ import java.math.RoundingMode;
 public final class LegacyBackupInspectionActivity extends Activity {
     private static final int PICK_BACKUP=1003;
     private TextView result;
+    private Button stageButton;
+    private Uri inspectedUri;
+    private LegacyJsonBackupPreflight.Inspection lastInspection;
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
         ScrollView scroll=new ScrollView(this);
@@ -47,6 +51,11 @@ public final class LegacyBackupInspectionActivity extends Activity {
             startActivityForResult(intent,PICK_BACKUP);
         });
         root.addView(choose);
+        stageButton=new Button(this);
+        stageButton.setText("تخزين تجريبي معزول — لا يمس المحاسبة");
+        stageButton.setEnabled(false);
+        stageButton.setOnClickListener(v -> confirmStaging());
+        root.addView(stageButton);
         result=new TextView(this);
         result.setText("لم يُختر ملف بعد.");
         result.setTextIsSelectable(true);
@@ -54,14 +63,55 @@ public final class LegacyBackupInspectionActivity extends Activity {
         setContentView(scroll);
     }
 
+    private void confirmStaging() {
+        final Uri file=inspectedUri;
+        final LegacyJsonBackupPreflight.Inspection snapshot=lastInspection;
+        if(file==null || snapshot==null) return;
+        new AlertDialog.Builder(this)
+            .setTitle("تأكيد التخزين التجريبي")
+            .setMessage("سيُحفظ سجل تاريخي في قاعدة مستقلة على التابلت فقط. لن تُنشأ فواتير أو قيود محاسبية، ولن تتغير الخزنات أو المخزون، ولن تُرسل بيانات إلى Firebase. قد يستغرق الملف الكبير بعض الوقت.")
+            .setNegativeButton("إلغاء",null)
+            .setPositiveButton("بدء التخزين التجريبي",(dialog,which) -> {
+                stageButton.setEnabled(false);
+                result.setText("جارٍ التخزين التجريبي المعزول والتحقق من العدد...");
+                new Thread(() -> {
+                    String message;
+                    try {
+                        Map<String,Integer> counts=LegacyStagingCoordinator.stageInspected(
+                            getApplicationContext(),file,snapshot);
+                        long total=0;
+                        for(Integer count:counts.values()) total+=count;
+                        message="اكتمل التخزين التجريبي المعزول: "+total+
+                            " سجل. لم تتغير المحاسبة أو المخزون. SHA-256: "+snapshot.sha256;
+                    } catch(Exception error) {
+                        message="لم يكتمل التخزين التجريبي: "+
+                            error.getClass().getSimpleName()+
+                            (error.getMessage()==null?"":" — "+error.getMessage())+
+                            ". لم تُعدّل قاعدة المحاسبة.";
+                    }
+                    final String display=message;
+                    runOnUiThread(() -> {
+                        if(!isFinishing() && !isDestroyed()) {
+                            result.setText(display);
+                            stageButton.setEnabled(true);
+                        }
+                    });
+                },"legacy-isolated-stage").start();
+            }).show();
+    }
+
     @Override protected void onActivityResult(int request,int response,Intent data) {
         super.onActivityResult(request,response,data);
         if(request!=PICK_BACKUP || response!=RESULT_OK || data==null || data.getData()==null)
             return;
         Uri uri=data.getData();
+        inspectedUri=null;
+        lastInspection=null;
+        stageButton.setEnabled(false);
         result.setText("جارٍ فحص الملف محليًا دون استيراد...");
         new Thread(() -> {
             String message;
+            LegacyJsonBackupPreflight.Inspection successful=null;
             try(InputStream stream=getContentResolver().openInputStream(uri)) {
                 LegacyJsonBackupPreflight.Inspection inspected=LegacyJsonBackupPreflight.inspect(stream);
                 StringBuilder out=new StringBuilder("نوع الملف: ").append(inspected.format)
@@ -97,13 +147,20 @@ public final class LegacyBackupInspectionActivity extends Activity {
                     else out.append("موجود، وتم التحقق من ").append(stored).append(" سجل.");
                 }
                 message=out.toString();
+                successful=inspected;
             } catch(Exception error) {
                 message="تعذر فحص الملف: "+error.getClass().getSimpleName()+
                     (error.getMessage()==null?"":" — "+error.getMessage());
             }
             final String display=message;
+            final LegacyJsonBackupPreflight.Inspection verified=successful;
             runOnUiThread(() -> {
-                if(!isFinishing() && !isDestroyed()) result.setText(display);
+                if(!isFinishing() && !isDestroyed()) {
+                    result.setText(display);
+                    inspectedUri=verified==null?null:uri;
+                    lastInspection=verified;
+                    stageButton.setEnabled(verified!=null);
+                }
             });
         },"legacy-backup-inspection").start();
     }
