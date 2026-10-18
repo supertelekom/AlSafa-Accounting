@@ -90,6 +90,12 @@ public final class LegacyBackupInspectionActivity extends Activity {
                 out.append("\n\nحركات مخزون تاريخية لأصناف غير موجودة حاليًا (معلومات فقط، دون تعديل):\n");
                 for(Map.Entry<String,Integer> entry:inspected.historicalInventoryWarnings.entrySet())
                     out.append(entry.getKey()).append(": ").append(entry.getValue()).append("\n");
+                try(LegacyIsolatedStaging staging=new LegacyIsolatedStaging(this)) {
+                    long stored=staging.verifiedRecordCount(inspected.sha256);
+                    out.append("\n\nحالة التخزين التجريبي المعزول: ");
+                    if(stored<0) out.append("لم يُخزّن هذا الملف بعد.");
+                    else out.append("موجود، وتم التحقق من ").append(stored).append(" سجل.");
+                }
                 message=out.toString();
             } catch(Exception error) {
                 message="تعذر فحص الملف: "+error.getClass().getSimpleName()+
