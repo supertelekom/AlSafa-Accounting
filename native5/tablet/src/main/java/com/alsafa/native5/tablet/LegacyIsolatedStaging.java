@@ -43,6 +43,23 @@ public final class LegacyIsolatedStaging extends SQLiteOpenHelper {
      * Called only after preflight. Atomic and idempotent for the same SHA.
      * Do not call from UI thread. No promotion to live accounting is possible here.
      */
+    /** Verify an existing isolated staging manifest without changing any data. */
+    public long verifiedRecordCount(String sha256) {
+        if(sha256==null || !sha256.matches("[0-9a-f]{64}"))
+            throw new IllegalArgumentException("Invalid backup digest");
+        SQLiteDatabase db=getReadableDatabase();
+        try(Cursor cursor=db.rawQuery("SELECT record_count FROM imports WHERE sha256=?",
+                new String[]{sha256})) {
+            if(!cursor.moveToFirst()) return -1L;
+            long count=DatabaseUtils.longForQuery(db,
+                "SELECT COUNT(*) FROM historical_records WHERE sha256=?",
+                new String[]{sha256});
+            if(count!=cursor.getLong(0))
+                throw new IllegalStateException("Staged record count mismatch");
+            return count;
+        }
+    }
+
     public Map<String,Integer> stage(String sha256,JSONObject data) throws JSONException {
         if(sha256==null || !sha256.matches("[0-9a-f]{64}"))
             throw new IllegalArgumentException("Invalid backup SHA-256");
