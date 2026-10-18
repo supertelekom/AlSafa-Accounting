@@ -63,14 +63,14 @@ public final class LegacyBackupInspectionActivity extends Activity {
             try(InputStream stream=getContentResolver().openInputStream(uri)) {
                 LegacyJsonBackupPreflight.Inspection inspected=LegacyJsonBackupPreflight.inspect(stream);
                 StringBuilder out=new StringBuilder("نوع الملف: ").append(inspected.format)
-                    .append("\\nإصدار الصيغة: ").append(inspected.version)
-                    .append("\\nحجم الملف: ").append(inspected.bytes)
-                    .append(" بايت\\nSHA-256: ").append(inspected.sha256)
-                    .append("\\n\\nعدد السجلات حسب المجموعة (— تعني غير موجودة):\\n");
+                    .append("\nإصدار الصيغة: ").append(inspected.version)
+                    .append("\nحجم الملف: ").append(inspected.bytes)
+                    .append(" بايت\nSHA-256: ").append(inspected.sha256)
+                    .append("\n\nعدد السجلات حسب المجموعة (— تعني غير موجودة):\n");
                 for(Map.Entry<String,Integer> entry:inspected.counts.entrySet())
                     out.append(entry.getKey()).append(": ")
-                        .append(entry.getValue()<0?"—":entry.getValue()).append("\\n");
-                out.append("\\nفحص قراءة فقط: لم تُنقل أي بيانات ولم تُعتمد الأرصدة بعد.");
+                        .append(entry.getValue()<0?"—":entry.getValue()).append("\n");
+                out.append("\nفحص قراءة فقط: لم تُنقل أي بيانات ولم تُعتمد الأرصدة بعد.");
                 message=out.toString();
             } catch(Exception error) {
                 message="تعذر فحص الملف: "+error.getClass().getSimpleName()+
