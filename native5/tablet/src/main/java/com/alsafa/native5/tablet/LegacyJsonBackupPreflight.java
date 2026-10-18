@@ -14,11 +14,11 @@ import java.util.Map;
 
 /** Read-only inspection of real v3.9.359 JSON backups; no database writes. */
 public final class LegacyJsonBackupPreflight {
-    private static final int MAX_BYTES = 30 * 1024 * 1024;
+    private static final int MAX_BYTES = 100 * 1024 * 1024;
     private static final String[] COLLECTIONS = {
         "products","maintenanceParts","sales","repairs","expenses","payments",
         "partnerWithdrawals","cashTransactions","dailyClosings","purchases",
-        "suppliers","returns","usedWatchTransactions","customerOrders","auditLog",
+        "suppliers","supplierLedger","returns","usedWatchTransactions","customerOrders","auditLog",
         "discountRules","loyaltyLedger","productCostHistory","smartReceipts",
         "productDetailOptions","inventoryMovements","inventorySessions",
         "customerSessions","shiftHandovers"
