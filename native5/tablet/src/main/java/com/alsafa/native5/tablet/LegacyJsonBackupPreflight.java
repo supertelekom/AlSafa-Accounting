@@ -11,6 +11,8 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.HashSet;
+import java.util.Set;
 
 /** Read-only inspection of real v3.9.359 JSON backups; no database writes. */
 public final class LegacyJsonBackupPreflight {
@@ -76,6 +78,20 @@ public final class LegacyJsonBackupPreflight {
             Object value=data.opt(name);
             if(value!=null && !(value instanceof JSONArray))
                 throw new JSONException("Invalid collection: "+name);
+            if(value instanceof JSONArray) {
+                JSONArray rows=(JSONArray)value;
+                Set<String> seen=new HashSet<>();
+                for(int i=0;i<rows.length();i++) {
+                    JSONObject record=rows.optJSONObject(i);
+                    if(record==null)
+                        throw new JSONException("Non-object record in "+name+" at "+i);
+                    String id=record.optString("id","").trim();
+                    if(id.isEmpty())
+                        throw new JSONException("Missing record ID in "+name+" at "+i);
+                    if(!seen.add(id))
+                        throw new JSONException("Duplicate record ID in "+name+" at "+i);
+                }
+            }
             counts.put(name,value==null?-1:((JSONArray)value).length());
         }
         MessageDigest digest;
