@@ -41,6 +41,10 @@ public final class TabletHomeActivity extends Activity {
         closing.setText("إقفال الخزنة — تجريبي");
         closing.setOnClickListener(v -> startActivity(new Intent(this,VaultClosingActivity.class)));
         root.addView(closing);
+        Button backup=new Button(this);
+        backup.setText("فحص نسخة التطبيق القديم — دون استيراد");
+        backup.setOnClickListener(v -> startActivity(new Intent(this,LegacyBackupInspectionActivity.class)));
+        root.addView(backup);
         try (Native5DatabaseHelper helper = new Native5DatabaseHelper(this)) {
             SQLiteDatabase db = helper.getReadableDatabase();
             try (Cursor c = db.rawQuery("SELECT state, COUNT(*) FROM outbox GROUP BY state", null)) {
