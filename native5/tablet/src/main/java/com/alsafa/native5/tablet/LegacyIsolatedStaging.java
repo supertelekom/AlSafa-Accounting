@@ -44,10 +44,6 @@ public final class LegacyIsolatedStaging extends SQLiteOpenHelper {
         throw new IllegalStateException("Unsupported staging database migration");
     }
 
-    /**
-     * Called only after preflight. Atomic and idempotent for the same SHA.
-     * Do not call from UI thread. No promotion to live accounting is possible here.
-     */
     /** Verify an existing isolated staging manifest without changing any data. */
     public long verifiedRecordCount(String sha256) {
         if(sha256==null || !sha256.matches("[0-9a-f]{64}"))
@@ -137,6 +133,8 @@ public final class LegacyIsolatedStaging extends SQLiteOpenHelper {
             JSONObject settings=new JSONObject(data.getJSONObject("settings").toString());
             settings.remove("sync");
             settings.remove("deviceSettings");
+            settings.remove("dailyCloseDeviceId");
+            settings.remove("dailyCloseDeviceName");
             ContentValues metadata=new ContentValues();
             metadata.put("sha256",sha256);
             metadata.put("settings_json",settings.toString());
