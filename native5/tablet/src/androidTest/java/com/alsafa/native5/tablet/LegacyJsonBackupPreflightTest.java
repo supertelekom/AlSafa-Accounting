@@ -40,4 +40,22 @@ public class LegacyJsonBackupPreflightTest {
             fail("Malformed collection accepted");
         } catch(org.json.JSONException expected) {}
     }
+    @Test public void rejectsDuplicateIds() throws Exception {
+        try {
+            inspect("{\\"settings\\":{},\\"products\\":[{\\"id\\":\\"same\\"},{\\"id\\":\\"same\\"}],\\"sales\\":[]}");
+            fail("Duplicate IDs accepted");
+        } catch(org.json.JSONException expected) {}
+    }
+    @Test public void rejectsMissingIds() throws Exception {
+        try {
+            inspect("{\\"settings\\":{},\\"products\\":[{}],\\"sales\\":[]}");
+            fail("Missing IDs accepted");
+        } catch(org.json.JSONException expected) {}
+    }
+    @Test public void rejectsNonObjectRows() throws Exception {
+        try {
+            inspect("{\\"settings\\":{},\\"products\\":[1],\\"sales\\":[]}");
+            fail("Non-object record accepted");
+        } catch(org.json.JSONException expected) {}
+    }
 }
