@@ -38,7 +38,8 @@ public final class LegacyJsonBackupPreflight {
         public final Map<String,String> vaultTotals;
         public final Map<String,Integer> fractionalAmounts;
         public final Map<String,Integer> inventorySupplierIssues;
-        Inspection(String sha256,String format,int version,Map<String,Integer> counts,int bytes,Map<String,Integer> referenceIssues,Map<String,String> vaultTotals,Map<String,Integer> fractionalAmounts,Map<String,Integer> inventorySupplierIssues) {
+        public final Map<String,Integer> historicalInventoryWarnings;
+        Inspection(String sha256,String format,int version,Map<String,Integer> counts,int bytes,Map<String,Integer> referenceIssues,Map<String,String> vaultTotals,Map<String,Integer> fractionalAmounts,Map<String,Integer> inventorySupplierIssues,Map<String,Integer> historicalInventoryWarnings) {
             this.sha256=sha256;this.format=format;this.version=version;
             this.counts=java.util.Collections.unmodifiableMap(new LinkedHashMap<>(counts));
             this.bytes=bytes;
@@ -46,6 +47,7 @@ public final class LegacyJsonBackupPreflight {
             this.vaultTotals=java.util.Collections.unmodifiableMap(new LinkedHashMap<>(vaultTotals));
             this.fractionalAmounts=java.util.Collections.unmodifiableMap(new LinkedHashMap<>(fractionalAmounts));
             this.inventorySupplierIssues=java.util.Collections.unmodifiableMap(new LinkedHashMap<>(inventorySupplierIssues));
+            this.historicalInventoryWarnings=java.util.Collections.unmodifiableMap(new LinkedHashMap<>(historicalInventoryWarnings));
         }
     }
 
@@ -187,7 +189,8 @@ public final class LegacyJsonBackupPreflight {
                 if(!partIds.contains(itemId)) missingInventory++;
             } else unknownItemType++;
         }
-        inventorySupplierIssues.put("missingInventoryItemReferences",missingInventory);
+        Map<String,Integer> historicalInventoryWarnings=new LinkedHashMap<>();
+        historicalInventoryWarnings.put("historicalMovementsWithoutCurrentProduct",missingInventory);
         inventorySupplierIssues.put("unknownInventoryItemTypes",unknownItemType);
         MessageDigest digest;
         try {digest=MessageDigest.getInstance("SHA-256");}
@@ -196,6 +199,6 @@ public final class LegacyJsonBackupPreflight {
         for(byte part:digest.digest(raw))
             hex.append(Character.forDigit((part>>>4)&15,16))
                 .append(Character.forDigit(part&15,16));
-        return new Inspection(hex.toString(),format,version,counts,raw.length,referenceIssues,vaultTotals,fractionalAmounts,inventorySupplierIssues);
+        return new Inspection(hex.toString(),format,version,counts,raw.length,referenceIssues,vaultTotals,fractionalAmounts,inventorySupplierIssues,historicalInventoryWarnings);
     }
 }
