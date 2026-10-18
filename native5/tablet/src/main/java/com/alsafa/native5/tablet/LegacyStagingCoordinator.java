@@ -63,10 +63,17 @@ public final class LegacyStagingCoordinator {
             verifiedSnapshot=LegacyJsonBackupPreflight.inspect(verification);
         }
         if(!verifiedSnapshot.sha256.equals(inspected.sha256) ||
-                verifiedSnapshot.bytes!=inspected.bytes)
+                verifiedSnapshot.bytes!=inspected.bytes ||
+                !verifiedSnapshot.counts.equals(inspected.counts))
             throw new IOException("Backup changed during validation");
         try(LegacyIsolatedStaging staging=new LegacyIsolatedStaging(context)) {
             Map<String,Integer> counts=staging.stage(inspected.sha256,data);
+            for(Map.Entry<String,Integer> entry:inspected.counts.entrySet()) {
+                int expectedCount=entry.getValue()<0?0:entry.getValue();
+                Integer actual=counts.get(entry.getKey());
+                if(actual==null || actual!=expectedCount)
+                    throw new IllegalStateException("Staging collection count mismatch: "+entry.getKey());
+            }
             long verified=staging.verifiedRecordCount(inspected.sha256);
             long expected=0;
             for(Integer count:counts.values()) expected+=count;
