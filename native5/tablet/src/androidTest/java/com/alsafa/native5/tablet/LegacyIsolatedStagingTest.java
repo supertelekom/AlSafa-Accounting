@@ -29,8 +29,9 @@ public class LegacyIsolatedStagingTest {
             .put("id","sale-1").put("amount",45.567)
             .put("deviceId","old-device").put("_syncState","pending")));
         try(LegacyIsolatedStaging staging=new LegacyIsolatedStaging(context)) {
-            assertEquals(2L,staging.stage(SHA,data).values().stream()
-                .mapToInt(Integer::intValue).sum());
+            java.util.Map<String,Integer> staged=staging.stage(SHA,data);
+            assertEquals(Integer.valueOf(1),staged.get("products"));
+            assertEquals(Integer.valueOf(1),staged.get("sales"));
             assertEquals(2L,staging.verifiedRecordCount(SHA));
             SQLiteDatabase db=staging.getReadableDatabase();
             try(Cursor c=db.rawQuery("SELECT settings_json,rates_json FROM backup_metadata WHERE sha256=?",
