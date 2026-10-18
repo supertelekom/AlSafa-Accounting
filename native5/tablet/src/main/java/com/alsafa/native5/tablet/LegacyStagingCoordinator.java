@@ -56,6 +56,15 @@ public final class LegacyStagingCoordinator {
             if(root.has("format")) throw new IOException("Unexpected backup envelope");
             data=root;
         }
+        // Revalidate all collections and identifiers before any staging write.
+        // A matching SHA alone is not proof of a valid historical dataset.
+        LegacyJsonBackupPreflight.Inspection verifiedSnapshot;
+        try(InputStream verification=context.getContentResolver().openInputStream(file)) {
+            verifiedSnapshot=LegacyJsonBackupPreflight.inspect(verification);
+        }
+        if(!verifiedSnapshot.sha256.equals(inspected.sha256) ||
+                verifiedSnapshot.bytes!=inspected.bytes)
+            throw new IOException("Backup changed during validation");
         try(LegacyIsolatedStaging staging=new LegacyIsolatedStaging(context)) {
             Map<String,Integer> counts=staging.stage(inspected.sha256,data);
             long verified=staging.verifiedRecordCount(inspected.sha256);
