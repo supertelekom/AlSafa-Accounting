@@ -33,10 +33,12 @@ public final class LegacyJsonBackupPreflight {
         public final int version;
         public final Map<String,Integer> counts;
         public final int bytes;
-        Inspection(String sha256,String format,int version,Map<String,Integer> counts,int bytes) {
+        public final Map<String,Integer> referenceIssues;
+        Inspection(String sha256,String format,int version,Map<String,Integer> counts,int bytes,Map<String,Integer> referenceIssues) {
             this.sha256=sha256;this.format=format;this.version=version;
             this.counts=java.util.Collections.unmodifiableMap(new LinkedHashMap<>(counts));
             this.bytes=bytes;
+            this.referenceIssues=java.util.Collections.unmodifiableMap(new LinkedHashMap<>(referenceIssues));
         }
     }
 
@@ -94,6 +96,32 @@ public final class LegacyJsonBackupPreflight {
             }
             counts.put(name,value==null?-1:((JSONArray)value).length());
         }
+        Map<String,Integer> referenceIssues=new LinkedHashMap<>();
+        String[][] mappings={
+            {"sale","sales"},{"repair","repairs"},{"purchase","purchases"},
+            {"supplier","suppliers"},{"expense","expenses"},{"return","returns"},
+            {"partnerWithdrawal","partnerWithdrawals"},{"dailyClosing","dailyClosings"}
+        };
+        JSONArray cash=data.optJSONArray("cashTransactions");
+        if(cash!=null) for(String[] mapping:mappings) {
+            JSONArray source=data.optJSONArray(mapping[1]);
+            if(source==null) {
+                referenceIssues.put(mapping[0]+":missing-collection",-1);
+                continue;
+            }
+            Set<String> ids=new HashSet<>();
+            for(int i=0;i<source.length();i++)
+                ids.add(source.optJSONObject(i).optString("id"));
+            int linked=0,orphan=0;
+            for(int i=0;i<cash.length();i++) {
+                JSONObject tx=cash.optJSONObject(i);
+                if(!mapping[0].equals(tx.optString("referenceType"))) continue;
+                linked++;
+                if(!ids.contains(tx.optString("referenceId"))) orphan++;
+            }
+            referenceIssues.put(mapping[0]+":linked",linked);
+            referenceIssues.put(mapping[0]+":orphan",orphan);
+        }
         MessageDigest digest;
         try {digest=MessageDigest.getInstance("SHA-256");}
         catch(NoSuchAlgorithmException e) {throw new AssertionError(e);}
@@ -101,6 +129,6 @@ public final class LegacyJsonBackupPreflight {
         for(byte part:digest.digest(raw))
             hex.append(Character.forDigit((part>>>4)&15,16))
                 .append(Character.forDigit(part&15,16));
-        return new Inspection(hex.toString(),format,version,counts,raw.length);
+        return new Inspection(hex.toString(),format,version,counts,raw.length,referenceIssues);
     }
 }
