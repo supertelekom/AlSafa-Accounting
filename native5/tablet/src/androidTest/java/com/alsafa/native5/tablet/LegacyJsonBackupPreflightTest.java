@@ -16,7 +16,7 @@ public class LegacyJsonBackupPreflightTest {
     @Test public void acceptsExportedEnvelopeAndCounts() throws Exception {
         LegacyJsonBackupPreflight.Inspection result=inspect(
             "{\"format\":\"alsafa-accounting-backup\",\"formatVersion\":2,"+
-            "\"data\":{\"settings\":{},\"products\":[{}],\"sales\":[],\"suppliers\":[{},{}]}}");
+            "\"data\":{\"settings\":{},\"products\":[{\"id\":\"p1\"}],\"sales\":[],\"suppliers\":[{\"id\":\"s1\"},{\"id\":\"s2\"}]}}");
         assertEquals(2,result.version);
         assertEquals(Integer.valueOf(1),result.counts.get("products"));
         assertEquals(Integer.valueOf(2),result.counts.get("suppliers"));
