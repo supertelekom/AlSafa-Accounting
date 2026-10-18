@@ -11,6 +11,8 @@ import android.widget.TextView;
 
 import java.io.InputStream;
 import java.util.Map;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 
 /**
  * Read-only legacy backup inspection. No permission to mutate or import any
@@ -73,13 +75,15 @@ public final class LegacyBackupInspectionActivity extends Activity {
                 out.append("\n\nمطابقة مراجع حركات الخزنات (orphan = مرجع مفقود):\n");
                 for(Map.Entry<String,Integer> entry:inspected.referenceIssues.entrySet())
                     out.append(entry.getKey()).append(": ").append(entry.getValue()).append("\n");
-                out.append("\nفحص قراءة فقط: لم تُنقل أي بيانات ولم تُعتمد الأرصدة بعد.");
                 out.append("\n\nمجاميع حركات الخزنات بحسب العملة (قبل التسويات):\n");
                 for(Map.Entry<String,String> entry:inspected.vaultTotals.entrySet())
-                    out.append(entry.getKey()).append(": ").append(entry.getValue()).append("\n");
-                out.append("\nحركات ذات كسور تتجاوز منزلتين عشريتين:\n");
+                    out.append(entry.getKey()).append(": ")
+                        .append(new BigDecimal(entry.getValue()).setScale(1,RoundingMode.HALF_UP).toPlainString())
+                        .append(" (عرض تقريبي)\\n");
+                out.append("\\nحركات ذات كسور تتجاوز منزلتين عشريتين:\n");
                 for(Map.Entry<String,Integer> entry:inspected.fractionalAmounts.entrySet())
                     out.append(entry.getKey()).append(": ").append(entry.getValue()).append("\n");
+                out.append("\nالقيم الأصلية محفوظة للفحص المحاسبي؛ التقريب للعرض فقط. لم تُنقل بيانات أو تُعتمد أرصدة.");
                 message=out.toString();
             } catch(Exception error) {
                 message="تعذر فحص الملف: "+error.getClass().getSimpleName()+
