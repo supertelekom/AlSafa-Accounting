@@ -3,6 +3,7 @@ package com.alsafa.native5.tablet;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
+import android.database.Cursor;
 import android.database.sqlite.SQLiteOpenHelper;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -49,6 +50,10 @@ public final class LegacyIsolatedStaging extends SQLiteOpenHelper {
             throw new JSONException("Invalid backup structure");
         SQLiteDatabase db=getWritableDatabase();
         Map<String,Integer> counts=new LinkedHashMap<>();
+        try(Cursor existing=db.rawQuery("SELECT record_count FROM imports WHERE sha256=?",new String[]{sha256})) {
+            if(existing.moveToFirst())
+                throw new IllegalStateException("Backup already staged; existing records preserved");
+        }
         db.beginTransaction();
         try {
             int total=0;
@@ -69,7 +74,16 @@ public final class LegacyIsolatedStaging extends SQLiteOpenHelper {
                     values.put("sha256",sha256);
                     values.put("collection_name",name);
                     values.put("legacy_id",id);
-                    values.put("payload",row.toString());
+                    JSONObject preserved=new JSONObject(row.toString());
+                    java.util.Iterator<String> keys=preserved.keys();
+                    java.util.ArrayList<String> excluded=new java.util.ArrayList<>();
+                    while(keys.hasNext()) {
+                        String key=keys.next();
+                        if(key.startsWith("_sync") || key.equals("deviceId") ||
+                                key.equals("deviceName")) excluded.add(key);
+                    }
+                    for(String key:excluded) preserved.remove(key);
+                    values.put("payload",preserved.toString());
                     long inserted=db.insertWithOnConflict("historical_records",null,values,SQLiteDatabase.CONFLICT_IGNORE);
                     if(inserted==-1) {
                         // A duplicate within this file must not silently overwrite history.
