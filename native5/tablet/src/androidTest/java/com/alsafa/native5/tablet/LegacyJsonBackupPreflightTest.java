@@ -42,20 +42,26 @@ public class LegacyJsonBackupPreflightTest {
     }
     @Test public void rejectsDuplicateIds() throws Exception {
         try {
-            inspect("{\\"settings\\":{},\\"products\\":[{\\"id\\":\\"same\\"},{\\"id\\":\\"same\\"}],\\"sales\\":[]}");
+            inspect("{\"settings\":{},\"products\":[{\"id\":\"same\"},{\"id\":\"same\"}],\"sales\":[]}");
             fail("Duplicate IDs accepted");
         } catch(org.json.JSONException expected) {}
     }
     @Test public void rejectsMissingIds() throws Exception {
         try {
-            inspect("{\\"settings\\":{},\\"products\\":[{}],\\"sales\\":[]}");
+            inspect("{\"settings\":{},\"products\":[{}],\"sales\":[]}");
             fail("Missing IDs accepted");
         } catch(org.json.JSONException expected) {}
     }
     @Test public void rejectsNonObjectRows() throws Exception {
         try {
-            inspect("{\\"settings\\":{},\\"products\\":[1],\\"sales\\":[]}");
+            inspect("{\"settings\":{},\"products\":[1],\"sales\":[]}");
             fail("Non-object record accepted");
         } catch(org.json.JSONException expected) {}
+    }
+    @Test public void totalsAndOrphans() throws Exception {
+        LegacyJsonBackupPreflight.Inspection result=inspect("{\"settings\":{},\"products\":[],\"sales\":[{\"id\":\"sale1\"}],\"cashTransactions\":[{\"id\":\"tx1\",\"vault\":\"drawer\",\"currency\":\"USD\",\"amount\":45.567,\"referenceType\":\"sale\",\"referenceId\":\"sale1\"},{\"id\":\"tx2\",\"vault\":\"drawer\",\"currency\":\"USD\",\"amount\":-5,\"referenceType\":\"sale\",\"referenceId\":\"missing\"}]}");
+        assertEquals("40.567",result.vaultTotals.get("drawer / USD"));
+        assertEquals(Integer.valueOf(1),result.fractionalAmounts.get("drawer / USD"));
+        assertEquals(Integer.valueOf(1),result.referenceIssues.get("sale:orphan"));
     }
 }
