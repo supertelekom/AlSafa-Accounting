@@ -87,6 +87,9 @@ public final class LegacyBackupInspectionActivity extends Activity {
                 out.append("\n\nتدقيق مراجع الموردين والمخزون:\n");
                 for(Map.Entry<String,Integer> entry:inspected.inventorySupplierIssues.entrySet())
                     out.append(entry.getKey()).append(": ").append(entry.getValue()).append("\n");
+                out.append("\n\nحركات مخزون تاريخية لأصناف غير موجودة حاليًا (معلومات فقط، دون تعديل):\n");
+                for(Map.Entry<String,Integer> entry:inspected.historicalInventoryWarnings.entrySet())
+                    out.append(entry.getKey()).append(": ").append(entry.getValue()).append("\n");
                 message=out.toString();
             } catch(Exception error) {
                 message="تعذر فحص الملف: "+error.getClass().getSimpleName()+
