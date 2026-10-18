@@ -60,7 +60,7 @@ public final class LegacyIsolatedStaging extends SQLiteOpenHelper {
         }
     }
 
-    public Map<String,Integer> stage(String sha256,JSONObject data) throws JSONException {
+    Map<String,Integer> stage(String sha256,JSONObject data) throws JSONException {
         if(sha256==null || !sha256.matches("[0-9a-f]{64}"))
             throw new IllegalArgumentException("Invalid backup SHA-256");
         if(data==null || data.optJSONObject("settings")==null ||
