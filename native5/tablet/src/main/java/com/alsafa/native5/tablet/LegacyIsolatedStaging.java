@@ -28,15 +28,20 @@ public final class LegacyIsolatedStaging extends SQLiteOpenHelper {
     };
 
     public LegacyIsolatedStaging(Context context) {
-        super(context,DB_NAME,null,1);
+        super(context,DB_NAME,null,2);
     }
     @Override public void onCreate(SQLiteDatabase db) {
         db.execSQL("CREATE TABLE imports (sha256 TEXT PRIMARY KEY, created_at INTEGER NOT NULL, record_count INTEGER NOT NULL)");
         db.execSQL("CREATE TABLE historical_records (sha256 TEXT NOT NULL, collection_name TEXT NOT NULL, legacy_id TEXT NOT NULL, payload TEXT NOT NULL, PRIMARY KEY (sha256,collection_name,legacy_id))");
         db.execSQL("CREATE INDEX idx_historical_collection ON historical_records (sha256,collection_name)");
+        db.execSQL("CREATE TABLE backup_metadata (sha256 TEXT PRIMARY KEY, settings_json TEXT NOT NULL, rates_json TEXT, FOREIGN KEY(sha256) REFERENCES imports(sha256))");
     }
     @Override public void onUpgrade(SQLiteDatabase db,int oldVersion,int newVersion) {
-        throw new IllegalStateException("Staging database migration requires explicit implementation");
+        if(oldVersion==1 && newVersion==2) {
+            db.execSQL("CREATE TABLE backup_metadata (sha256 TEXT PRIMARY KEY, settings_json TEXT NOT NULL, rates_json TEXT, FOREIGN KEY(sha256) REFERENCES imports(sha256))");
+            return;
+        }
+        throw new IllegalStateException("Unsupported staging database migration");
     }
 
     /**
@@ -129,6 +134,17 @@ public final class LegacyIsolatedStaging extends SQLiteOpenHelper {
                 new String[]{sha256});
             if(verified!=total)
                 throw new IllegalStateException("Staging row-count mismatch: "+verified+" vs "+total);
+            JSONObject settings=new JSONObject(data.getJSONObject("settings").toString());
+            settings.remove("sync");
+            settings.remove("deviceSettings");
+            ContentValues metadata=new ContentValues();
+            metadata.put("sha256",sha256);
+            metadata.put("settings_json",settings.toString());
+            JSONObject rates=data.optJSONObject("rates");
+            if(rates!=null) metadata.put("rates_json",rates.toString());
+            if(db.insertWithOnConflict("backup_metadata",null,metadata,
+                    SQLiteDatabase.CONFLICT_ABORT)==-1)
+                throw new IllegalStateException("Failed to preserve backup metadata");
             db.setTransactionSuccessful();
         } finally {db.endTransaction();}
         return counts;
