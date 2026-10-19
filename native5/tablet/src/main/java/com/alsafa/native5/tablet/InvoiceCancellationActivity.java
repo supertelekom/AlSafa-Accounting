@@ -31,7 +31,7 @@ public final class InvoiceCancellationActivity extends Activity {
         root.addView(notice);
         EditText number=new EditText(this);
         number.setHint("معرّف الفاتورة");
-        number.setInputType(android.text.InputType.TYPE_CLASS_NUMBER);
+        number.setInputType(android.text.InputType.TYPE_CLASS_TEXT);
         root.addView(number);
         EditText reason=new EditText(this);
         reason.setHint("سبب الإلغاء");
@@ -45,10 +45,10 @@ public final class InvoiceCancellationActivity extends Activity {
         Button review=new Button(this);
         review.setText("بحث ومعاينة الفاتورة — دون تنفيذ");
         review.setOnClickListener(v -> {
-            String n=normalizeInvoiceNumber(number.getText().toString());
+            String n=normalizeInvoiceId(number.getText().toString());
             String r=reason.getText().toString().trim();
             if(n.isEmpty() || r.isEmpty()) {
-                preview.setText("أدخل رقم فاتورة صحيحًا وسبب الإلغاء.");
+                preview.setText("أدخل معرّف فاتورة صحيحًا وسبب الإلغاء.");
                 return;
             }
             try (Native5DatabaseHelper helper=new Native5DatabaseHelper(this)) {
@@ -97,8 +97,8 @@ public final class InvoiceCancellationActivity extends Activity {
         setContentView(root);
     }
 
-    /** Accept ASCII, Arabic-Indic and Eastern Arabic numerals; reject other characters. */
-    static String normalizeInvoiceNumber(String value) {
+    /** Preserve opaque invoice IDs, normalizing only localized digits. */
+    static String normalizeInvoiceId(String value) {
         if(value==null) return "";
         StringBuilder result=new StringBuilder();
         String trimmed=value.trim();
@@ -107,8 +107,9 @@ public final class InvoiceCancellationActivity extends Activity {
             if(c>='0' && c<='9') result.append(c);
             else if(c>='٠' && c<='٩') result.append((char)('0'+c-'٠'));
             else if(c>='۰' && c<='۹') result.append((char)('0'+c-'۰'));
-            else return "";
+            else if(Character.isISOControl(c) || Character.isWhitespace(c)) return "";
+            else result.append(c);
         }
-        return result.toString();
+        return result.length()<=128 ? result.toString() : "";
     }
 }
