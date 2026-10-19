@@ -2,6 +2,9 @@ package com.alsafa.native5.tablet;
 
 import android.app.Activity;
 import android.os.Bundle;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
+import com.alsafa.native5.accounting.Native5DatabaseHelper;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -24,10 +27,10 @@ public final class InvoiceCancellationActivity extends Activity {
         heading.setTextSize(24);
         root.addView(heading);
         TextView notice=new TextView(this);
-        notice.setText("واجهة تجريبية فقط. لا يمكن إلغاء فاتورة حقيقية حتى يكتمل القيد العكسي الآمن. لا توجد خاصية مسح للفواتير.");
+        notice.setText("بحث محلي في الفواتير الإلكترونية المسجلة في Native 5 باستخدام معرّفها، وليس الرقم التسلسلي القديم. المعاينة للقراءة فقط ولا توجد خاصية مسح.");
         root.addView(notice);
         EditText number=new EditText(this);
-        number.setHint("رقم الفاتورة");
+        number.setHint("معرّف الفاتورة");
         number.setInputType(android.text.InputType.TYPE_CLASS_NUMBER);
         root.addView(number);
         EditText reason=new EditText(this);
@@ -40,7 +43,7 @@ public final class InvoiceCancellationActivity extends Activity {
         preview.setTextIsSelectable(true);
         root.addView(preview);
         Button review=new Button(this);
-        review.setText("معاينة طلب الإلغاء — دون تنفيذ");
+        review.setText("بحث ومعاينة الفاتورة — دون تنفيذ");
         review.setOnClickListener(v -> {
             String n=normalizeInvoiceNumber(number.getText().toString());
             String r=reason.getText().toString().trim();
@@ -48,9 +51,33 @@ public final class InvoiceCancellationActivity extends Activity {
                 preview.setText("أدخل رقم فاتورة صحيحًا وسبب الإلغاء.");
                 return;
             }
-            preview.setText("طلب إلغاء تجريبي\nرقم الفاتورة: "+n+
-                "\nالسبب: "+r+
-                "\nلم تُقرأ فاتورة فعلية ولم تتغير الحسابات أو المخزون.");
+            try (Native5DatabaseHelper helper=new Native5DatabaseHelper(this)) {
+                SQLiteDatabase db=helper.getReadableDatabase();
+                try (Cursor c=db.rawQuery(
+                    "SELECT invoice_id,total_minor,collected_minor,currency FROM online_invoices WHERE invoice_id=?",
+                    new String[]{n})) {
+                    if(!c.moveToFirst()) {
+                        preview.setText("لا توجد فاتورة إلكترونية بهذا المعرّف في قاعدة Native 5 المحلية.\\nلم يُنشأ طلب إلغاء.");
+                        return;
+                    }
+                    StringBuilder result=new StringBuilder("معاينة فاتورة موجودة — قراءة فقط");
+                    result.append("\\nالمعرّف: ").append(c.getString(0));
+                    result.append("\\nالإجمالي (وحدات صغرى): ").append(c.getLong(1));
+                    result.append("\\nالمحصّل (وحدات صغرى): ").append(c.getLong(2));
+                    result.append("\\nالعملة: ").append(c.getString(3));
+                    result.append("\\nالسبب: ").append(r);
+                    try(Cursor existing=db.rawQuery(
+                        "SELECT COUNT(*) FROM invoice_cancellation_requests WHERE invoice_id=?",
+                        new String[]{n})) {
+                        if(existing.moveToFirst() && existing.getLong(0)>0)
+                            result.append("\\nيوجد طلب إلغاء سابق لهذه الفاتورة.");
+                    }
+                    result.append("\\nلا يُنفّذ إلغاء أو قيد محاسبي من هذه الشاشة.");
+                    preview.setText(result.toString());
+                }
+            } catch(Exception ex) {
+                preview.setText("تعذرت قراءة الفاتورة محليًا: "+ex.getClass().getSimpleName());
+            }
         });
         root.addView(review);
         number.addTextChangedListener(new android.text.TextWatcher() {
