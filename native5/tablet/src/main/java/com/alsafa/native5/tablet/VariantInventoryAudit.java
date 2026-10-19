@@ -26,11 +26,11 @@ public final class VariantInventoryAudit {
         public int negativeStockRecords;
         public int salesWithMissingProduct;
         public int salesWithGroupedProduct;
-        public int variantSalesWithoutOwnProductId;
         public int groupsWithMixedStock;
         public int groupsWithBlankVariantRole;
-        public int duplicateProductIds;
         public int saleLinesMissingProductId;
+        public int duplicateBarcodesAcrossProducts;
+        public int saleLinesLinkedToMissingProducts;
     }
 
     public static Findings inspect(JSONObject data) {
@@ -40,6 +40,7 @@ public final class VariantInventoryAudit {
         if(products==null) throw new IllegalArgumentException("Missing products");
         Map<String,List<JSONObject>> groups=new HashMap<>();
         Set<String> ids=new HashSet<>();
+        Map<String,String> barcodeOwners=new HashMap<>();
         for(int i=0;i<products.length();i++) {
             JSONObject product=products.optJSONObject(i);
             if(product==null) throw new IllegalArgumentException("Invalid product");
@@ -47,6 +48,12 @@ public final class VariantInventoryAudit {
             if(id.isEmpty() || !ids.add(id))
                 throw new IllegalArgumentException("Missing or duplicate product ID");
             if(product.optDouble("stock",0)<0) findings.negativeStockRecords++;
+            String productBarcode=product.optString("barcode","").trim();
+            if(!productBarcode.isEmpty()) {
+                String previousOwner=barcodeOwners.putIfAbsent(productBarcode,id);
+                if(previousOwner!=null && !previousOwner.equals(id))
+                    findings.duplicateBarcodesAcrossProducts++;
+            }
             String group=product.optString("variantGroupId","").trim();
             if(!group.isEmpty()) {
                 if(!groups.containsKey(group)) groups.put(group,new ArrayList<>());
@@ -93,11 +100,13 @@ public final class VariantInventoryAudit {
                 if(item==null) continue;
                 String productId=item.optString("productId","").trim();
                 if(productId.isEmpty()) {
-                    findings.variantSalesWithoutOwnProductId++;
                     findings.saleLinesMissingProductId++;
                     continue;
                 }
-                if(!ids.contains(productId)) findings.salesWithMissingProduct++;
+                if(!ids.contains(productId)) {
+                    findings.salesWithMissingProduct++;
+                    findings.saleLinesLinkedToMissingProducts++;
+                }
                 if(groupedIds.contains(productId)) findings.salesWithGroupedProduct++;
             }
         }
