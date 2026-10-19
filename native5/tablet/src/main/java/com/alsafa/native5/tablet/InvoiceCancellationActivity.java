@@ -75,13 +75,16 @@ public final class InvoiceCancellationActivity extends Activity {
                     result.append("\nالتكلفة المسجلة (وحدات صغرى): ").append(c.getLong(5));
                     result.append("\nالتكلفة المعترف بها (وحدات صغرى): ").append(c.getLong(6));
                     try(Cursor collections=db.rawQuery(
-                        "SELECT currency,destination,COUNT(*),SUM(received_minor) FROM online_collections WHERE invoice_id=? GROUP BY currency,destination ORDER BY currency,destination",
+                        "SELECT currency,destination,COUNT(*),SUM(received_minor),SUM(released_cost_minor) FROM online_collections WHERE invoice_id=? GROUP BY currency,destination ORDER BY currency,destination",
                         new String[]{resolvedId})) {
                         long collectedInInvoiceCurrency=0L;
+                        long releasedCostFromEvents=0L;
                         boolean foreignCurrencyFound=false;
                         while(collections.moveToNext()) {
                             long amount=collections.getLong(3);
+                            long cost=collections.getLong(4);
                             String collectionCurrency=collections.getString(0);
+                            releasedCostFromEvents=Math.addExact(releasedCostFromEvents,cost);
                             if(c.getString(3).equals(collectionCurrency)) {
                                 collectedInInvoiceCurrency=Math.addExact(collectedInInvoiceCurrency,amount);
                             } else {
@@ -90,12 +93,17 @@ public final class InvoiceCancellationActivity extends Activity {
                             result.append("\nتحصيل: ").append(collectionCurrency)
                                 .append(" / ").append(collections.getString(1))
                                 .append(" — ").append(amount)
-                                .append(" (").append(collections.getLong(2)).append(" عملية)");
+                                .append(" (").append(collections.getLong(2)).append(" عملية)")
+                                .append(" | تكلفة معترف بها: ").append(cost);
                         }
                         if(foreignCurrencyFound)
                             result.append("\nتحذير: توجد تحصيلات بعملة مختلفة؛ يلزم التحقق من قيود التحويل قبل الإلغاء.");
                         else if(collectedInInvoiceCurrency!=c.getLong(2))
                             result.append("\nتحذير: إجمالي التحصيلات لا يطابق رصيد الفاتورة. يلزم التدقيق قبل الإلغاء.");
+                        if(releasedCostFromEvents!=c.getLong(6))
+                            result.append("\nتحذير: التكلفة المعترف بها لا تطابق مجموع قيود التحصيل. يلزم التدقيق قبل الإلغاء.");
+                        if(c.getLong(6)>c.getLong(5))
+                            result.append("\nتحذير: التكلفة المعترف بها أكبر من تكلفة الفاتورة.");
                     }
                     result.append("\nالسبب: ").append(r.isEmpty() ? "لم يُدخل بعد — مطلوب قبل الإلغاء" : r);
                     try(Cursor existing=db.rawQuery(
