@@ -17,6 +17,14 @@ public final class OnlineDispatchPostingService {
 
     public void dispatch(String operationId,String invoiceId,Money invoiceTotal,
                          Money inventoryCost,List<InventoryDelta> stockRemoval) {
+        dispatch(operationId,invoiceId,null,invoiceTotal,inventoryCost,stockRemoval);
+    }
+
+    /** Number is reserved in the same transaction as invoice, stock, journal and outbox. */
+    public void dispatch(String operationId,String invoiceId,String invoiceNumber,Money invoiceTotal,
+                         Money inventoryCost,List<InventoryDelta> stockRemoval) {
+        if(invoiceNumber!=null && !invoiceNumber.matches("[0-9]{1,20}"))
+            throw new IllegalArgumentException("Invalid public invoice number");
         if(operationId==null || !operationId.matches("[A-Za-z0-9_-]{1,128}") ||
            invoiceId==null || !invoiceId.matches("[A-Za-z0-9_-]{1,128}"))
             throw new IllegalArgumentException("Invalid operation/invoice ID");
@@ -45,6 +53,13 @@ public final class OnlineDispatchPostingService {
             invoice.put("currency",invoiceTotal.currency().name());
             invoice.put("created_at_ms",System.currentTimeMillis());
             db.insertOrThrow("online_invoices",null,invoice);
+            if(invoiceNumber!=null) {
+                ContentValues mapping=new ContentValues();
+                mapping.put("invoice_id",invoiceId);
+                mapping.put("invoice_number",invoiceNumber);
+                mapping.put("assigned_at_ms",System.currentTimeMillis());
+                db.insertOrThrow("invoice_number_mapping",null,mapping);
+            }
             port.insertEvent(operationId,batch.operationKind());
             int i=0;
             for(JournalEntry.Line line:batch.journal().lines())
