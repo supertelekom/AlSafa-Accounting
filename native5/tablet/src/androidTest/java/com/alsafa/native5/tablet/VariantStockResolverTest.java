@@ -42,4 +42,21 @@ public class VariantStockResolverTest {
         try { VariantStockResolver.displayGroupTotal(products,"model"); fail("Must reject"); }
         catch(IllegalStateException expected) { }
     }
+    @Test public void saleChecksExactColorAndDoesNotUseGroupTotal() throws Exception {
+        JSONArray products=colors();
+        assertEquals(0,VariantStockResolver.requireSaleQuantity(products,"blue",1),0);
+        assertEquals(1,products.getJSONObject(1).getInt("stock"));
+        try { VariantStockResolver.requireSaleQuantity(products,"base",1); fail("Must reject"); }
+        catch(IllegalStateException expected) { }
+        try { VariantStockResolver.requireSaleQuantity(products,"blue",2); fail("Must reject"); }
+        catch(IllegalStateException expected) { }
+    }
+
+    @Test public void saleRejectsInvalidQuantities() throws Exception {
+        for(double quantity:new double[]{0,-1,Double.NaN,Double.POSITIVE_INFINITY}) {
+            try { VariantStockResolver.requireSaleQuantity(colors(),"blue",quantity); fail("Must reject"); }
+            catch(IllegalArgumentException expected) { }
+        }
+    }
+
 }
