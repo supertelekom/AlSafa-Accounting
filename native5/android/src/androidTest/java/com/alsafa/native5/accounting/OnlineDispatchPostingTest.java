@@ -54,6 +54,15 @@ public class OnlineDispatchPostingTest {
             Money cost=new Money(Money.Currency.USD,3500);
             service.dispatch("dispatch-numbered-1","invoice-numbered-1","587",total,cost,
                 Collections.singletonList(new InventoryDelta("watch-1",-1)));
+            try(android.database.Cursor payload=db.rawQuery(
+                "SELECT payload FROM outbox WHERE operation_id='dispatch-numbered-1'",null)) {
+                assertTrue(payload.moveToFirst());
+                org.json.JSONObject json=new org.json.JSONObject(payload.getString(0));
+                assertEquals("587",json.getString("invoiceNumber"));
+                assertEquals("invoice-numbered-1",json.getString("invoiceId"));
+            } catch(org.json.JSONException malformed) {
+                throw new AssertionError("Dispatch payload must be valid JSON",malformed);
+            }
             assertEquals(2,android.database.DatabaseUtils.longForQuery(db,
                 "SELECT quantity FROM inventory_balances WHERE product_id='watch-1'",null));
             try {
