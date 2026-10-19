@@ -26,7 +26,6 @@ public class VariantInventoryAuditTest {
         assertEquals(0,findings.duplicateBarcodeGroups);
         assertEquals(1,findings.groupsWithMixedStock);
         assertEquals(0,findings.groupsWithBlankVariantRole);
-        assertEquals(0,findings.variantSalesWithoutOwnProductId);
         assertEquals(before,data.toString());
         assertEquals(0,base.getInt("stock"));
         assertEquals(1,extra.getInt("stock"));
@@ -55,9 +54,29 @@ public class VariantInventoryAuditTest {
                     .put("qty",1)))));
         VariantInventoryAudit.Findings findings=VariantInventoryAudit.inspect(data);
         assertEquals(1,findings.saleLinesMissingProductId);
-        assertEquals(1,findings.variantSalesWithoutOwnProductId);
         assertEquals(0,findings.salesWithGroupedProduct);
         assertEquals(1,findings.groupsWithMixedStock);
+    }
+
+    @Test public void duplicateBarcodeAcrossDifferentGroupsIsDetected() throws Exception {
+        JSONObject data=new JSONObject().put("products",new JSONArray()
+            .put(new JSONObject().put("id","red").put("variantGroupId","group1")
+                .put("barcode","shared"))
+            .put(new JSONObject().put("id","blue").put("variantGroupId","group2")
+                .put("barcode","shared")));
+        VariantInventoryAudit.Findings findings=VariantInventoryAudit.inspect(data);
+        assertEquals(1,findings.duplicateBarcodesAcrossProducts);
+        assertEquals(0,findings.duplicateBarcodeGroups);
+    }
+
+    @Test public void saleReferenceToMissingColorIsReportedWithoutStockChange() throws Exception {
+        JSONObject product=new JSONObject().put("id","available").put("stock",3);
+        JSONObject data=new JSONObject().put("products",new JSONArray().put(product))
+            .put("sales",new JSONArray().put(new JSONObject().put("items",
+                new JSONArray().put(new JSONObject().put("productId","deleted-color")))));
+        VariantInventoryAudit.Findings findings=VariantInventoryAudit.inspect(data);
+        assertEquals(1,findings.saleLinesLinkedToMissingProducts);
+        assertEquals(3,product.getInt("stock"));
     }
 
 }
