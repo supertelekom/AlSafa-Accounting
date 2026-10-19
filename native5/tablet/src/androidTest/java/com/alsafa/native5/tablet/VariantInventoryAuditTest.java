@@ -44,4 +44,20 @@ public class VariantInventoryAuditTest {
         assertEquals(1,findings.duplicateBarcodeGroups);
         assertEquals(1,findings.groupsWithBlankVariantRole);
     }
+    @Test public void missingSaleProductIdIsReportedWithoutGuessingVariant() throws Exception {
+        JSONObject data=new JSONObject().put("products",new JSONArray()
+            .put(new JSONObject().put("id","color-blue").put("stock",1)
+                .put("variantGroupId","model-x").put("variantRole","additional"))
+            .put(new JSONObject().put("id","color-black").put("stock",0)
+                .put("variantGroupId","model-x").put("variantRole","base")))
+            .put("sales",new JSONArray().put(new JSONObject().put("items",
+                new JSONArray().put(new JSONObject().put("name","Model X blue")
+                    .put("qty",1)))));
+        VariantInventoryAudit.Findings findings=VariantInventoryAudit.inspect(data);
+        assertEquals(1,findings.saleLinesMissingProductId);
+        assertEquals(1,findings.variantSalesWithoutOwnProductId);
+        assertEquals(0,findings.salesWithGroupedProduct);
+        assertEquals(1,findings.groupsWithMixedStock);
+    }
+
 }
