@@ -33,6 +33,10 @@ public final class TabletHomeActivity extends Activity {
         note.setTextSize(16);
         note.setGravity(Gravity.CENTER);
         root.addView(note);
+        Button cancelInvoice=new Button(this);
+        cancelInvoice.setText("قسم إلغاء الفواتير");
+        cancelInvoice.setOnClickListener(v -> startActivity(new Intent(this,InvoiceCancellationActivity.class)));
+        root.addView(cancelInvoice);
         Button balances=new Button(this);
         balances.setText("عرض أرصدة الخزنات — قراءة فقط");
         balances.setOnClickListener(v -> startActivity(new Intent(this,VaultBalancesActivity.class)));
