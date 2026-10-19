@@ -37,6 +37,7 @@ public final class InvoiceCancellationActivity extends Activity {
         reason.setFilters(new android.text.InputFilter[]{new android.text.InputFilter.LengthFilter(500)});
         root.addView(reason);
         TextView preview=new TextView(this);
+        preview.setTextIsSelectable(true);
         root.addView(preview);
         Button review=new Button(this);
         review.setText("معاينة طلب الإلغاء — دون تنفيذ");
@@ -52,6 +53,20 @@ public final class InvoiceCancellationActivity extends Activity {
                 "\nلم تُقرأ فاتورة فعلية ولم تتغير الحسابات أو المخزون.");
         });
         root.addView(review);
+        number.addTextChangedListener(new android.text.TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence text,int start,int count,int after) {}
+            @Override public void onTextChanged(CharSequence text,int start,int before,int count) {
+                preview.setText("");
+            }
+            @Override public void afterTextChanged(android.text.Editable text) {}
+        });
+        reason.addTextChangedListener(new android.text.TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence text,int start,int count,int after) {}
+            @Override public void onTextChanged(CharSequence text,int start,int before,int count) {
+                preview.setText("");
+            }
+            @Override public void afterTextChanged(android.text.Editable text) {}
+        });
         setContentView(root);
     }
 
