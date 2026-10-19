@@ -47,8 +47,8 @@ public final class InvoiceCancellationActivity extends Activity {
         review.setOnClickListener(v -> {
             String n=normalizeInvoiceId(number.getText().toString());
             String r=reason.getText().toString().trim();
-            if(n.isEmpty() || r.isEmpty()) {
-                preview.setText("أدخل رقم الفاتورة أو معرّفها وسبب الإلغاء.");
+            if(n.isEmpty()) {
+                preview.setText("أدخل رقم الفاتورة أو معرّفها للبحث.");
                 return;
             }
             try (Native5DatabaseHelper helper=new Native5DatabaseHelper(this)) {
@@ -70,6 +70,7 @@ public final class InvoiceCancellationActivity extends Activity {
                     result.append("\nالمعرّف: ").append(c.getString(0));
                     result.append("\nالإجمالي (وحدات صغرى): ").append(c.getLong(1));
                     result.append("\nالمحصّل (وحدات صغرى): ").append(c.getLong(2));
+                    result.append("\nالمتبقي غير المحصّل (وحدات صغرى): ").append(c.getLong(1)-c.getLong(2));
                     result.append("\nالعملة: ").append(c.getString(3));
                     result.append("\nالتكلفة المسجلة (وحدات صغرى): ").append(c.getLong(5));
                     result.append("\nالتكلفة المعترف بها (وحدات صغرى): ").append(c.getLong(6));
@@ -96,12 +97,16 @@ public final class InvoiceCancellationActivity extends Activity {
                         else if(collectedInInvoiceCurrency!=c.getLong(2))
                             result.append("\nتحذير: إجمالي التحصيلات لا يطابق رصيد الفاتورة. يلزم التدقيق قبل الإلغاء.");
                     }
-                    result.append("\nالسبب: ").append(r);
+                    result.append("\nالسبب: ").append(r.isEmpty() ? "لم يُدخل بعد — مطلوب قبل الإلغاء" : r);
                     try(Cursor existing=db.rawQuery(
-                        "SELECT COUNT(*) FROM invoice_cancellation_requests WHERE invoice_id=?",
+                        "SELECT request_id,reason,requested_at_ms FROM invoice_cancellation_requests WHERE invoice_id=?",
                         new String[]{c.getString(0)})) {
-                        if(existing.moveToFirst() && existing.getLong(0)>0)
-                            result.append("\nيوجد طلب إلغاء سابق لهذه الفاتورة.");
+                        if(existing.moveToFirst()) {
+                            result.append("\nيوجد طلب إلغاء سابق لهذه الفاتورة (لا يمكن تقديم طلب مكرر).");
+                            result.append("\nمعرّف الطلب السابق: ").append(existing.getString(0));
+                            result.append("\nسبب الطلب السابق: ").append(existing.getString(1));
+                            result.append("\nتاريخ الطلب السابق (ms): ").append(existing.getLong(2));
+                        }
                     }
                     result.append("\nلا يُنفّذ إلغاء أو قيد محاسبي من هذه الشاشة.");
                     preview.setText(result.toString());
