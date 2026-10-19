@@ -24,6 +24,9 @@ public class VariantInventoryAuditTest {
         assertEquals(0,findings.missingBaseGroups);
         assertEquals(1,findings.salesWithGroupedProduct);
         assertEquals(0,findings.duplicateBarcodeGroups);
+        assertEquals(1,findings.groupsWithMixedStock);
+        assertEquals(0,findings.groupsWithBlankVariantRole);
+        assertEquals(0,findings.variantSalesWithoutOwnProductId);
         assertEquals(before,data.toString());
         assertEquals(0,base.getInt("stock"));
         assertEquals(1,extra.getInt("stock"));
@@ -39,5 +42,6 @@ public class VariantInventoryAuditTest {
         assertEquals(1,findings.missingBaseGroups);
         assertEquals(1,findings.conflictingBaseNames);
         assertEquals(1,findings.duplicateBarcodeGroups);
+        assertEquals(1,findings.groupsWithBlankVariantRole);
     }
 }
