@@ -27,10 +27,10 @@ public final class InvoiceCancellationActivity extends Activity {
         heading.setTextSize(24);
         root.addView(heading);
         TextView notice=new TextView(this);
-        notice.setText("بحث محلي في الفواتير الإلكترونية المسجلة في Native 5 باستخدام معرّفها، وليس الرقم التسلسلي القديم. المعاينة للقراءة فقط ولا توجد خاصية مسح.");
+        notice.setText("بحث محلي برقم الفاتورة المسجل أو معرّفها الداخلي. الفواتير التي لم تُربط أرقامها بعد تُبحث بمعرّفها. المعاينة للقراءة فقط.");
         root.addView(notice);
         EditText number=new EditText(this);
-        number.setHint("معرّف الفاتورة");
+        number.setHint("رقم الفاتورة أو معرّفها");
         number.setInputType(android.text.InputType.TYPE_CLASS_TEXT);
         root.addView(number);
         EditText reason=new EditText(this);
@@ -48,16 +48,16 @@ public final class InvoiceCancellationActivity extends Activity {
             String n=normalizeInvoiceId(number.getText().toString());
             String r=reason.getText().toString().trim();
             if(n.isEmpty() || r.isEmpty()) {
-                preview.setText("أدخل معرّف فاتورة صحيحًا وسبب الإلغاء.");
+                preview.setText("أدخل رقم الفاتورة أو معرّفها وسبب الإلغاء.");
                 return;
             }
             try (Native5DatabaseHelper helper=new Native5DatabaseHelper(this)) {
                 SQLiteDatabase db=helper.getReadableDatabase();
                 try (Cursor c=db.rawQuery(
-                    "SELECT invoice_id,total_minor,collected_minor,currency FROM online_invoices WHERE invoice_id=?",
-                    new String[]{n})) {
+                    "SELECT i.invoice_id,i.total_minor,i.collected_minor,i.currency,m.invoice_number FROM online_invoices i LEFT JOIN invoice_number_mapping m ON m.invoice_id=i.invoice_id WHERE i.invoice_id=? OR m.invoice_number=?",
+                    new String[]{n,n})) {
                     if(!c.moveToFirst()) {
-                        preview.setText("لا توجد فاتورة إلكترونية بهذا المعرّف في قاعدة Native 5 المحلية.\\nلم يُنشأ طلب إلغاء.");
+                        preview.setText("لا توجد فاتورة إلكترونية بهذا الرقم أو المعرّف في قاعدة Native 5 المحلية.\\nلم يُنشأ طلب إلغاء.");
                         return;
                     }
                     StringBuilder result=new StringBuilder("معاينة فاتورة موجودة — قراءة فقط");
@@ -68,7 +68,7 @@ public final class InvoiceCancellationActivity extends Activity {
                     result.append("\\nالسبب: ").append(r);
                     try(Cursor existing=db.rawQuery(
                         "SELECT COUNT(*) FROM invoice_cancellation_requests WHERE invoice_id=?",
-                        new String[]{n})) {
+                        new String[]{c.getString(0)})) {
                         if(existing.moveToFirst() && existing.getLong(0)>0)
                             result.append("\\nيوجد طلب إلغاء سابق لهذه الفاتورة.");
                     }
