@@ -71,24 +71,32 @@ public final class InvoiceCancellationActivity extends Activity {
                     result.append("\nالإجمالي (وحدات صغرى): ").append(c.getLong(1));
                     result.append("\nالمحصّل (وحدات صغرى): ").append(c.getLong(2));
                     result.append("\nالعملة: ").append(c.getString(3));
-                    result.append("\\nالتكلفة المسجلة (وحدات صغرى): ").append(c.getLong(5));
-                    result.append("\\nالتكلفة المعترف بها (وحدات صغرى): ").append(c.getLong(6));
+                    result.append("\nالتكلفة المسجلة (وحدات صغرى): ").append(c.getLong(5));
+                    result.append("\nالتكلفة المعترف بها (وحدات صغرى): ").append(c.getLong(6));
                     try(Cursor collections=db.rawQuery(
                         "SELECT currency,destination,COUNT(*),SUM(received_minor) FROM online_collections WHERE invoice_id=? GROUP BY currency,destination ORDER BY currency,destination",
                         new String[]{resolvedId})) {
-                        long collectedFromEvents=0L;
+                        long collectedInInvoiceCurrency=0L;
+                        boolean foreignCurrencyFound=false;
                         while(collections.moveToNext()) {
                             long amount=collections.getLong(3);
-                            collectedFromEvents=Math.addExact(collectedFromEvents,amount);
-                            result.append("\\nتحصيل: ").append(collections.getString(0))
+                            String collectionCurrency=collections.getString(0);
+                            if(c.getString(3).equals(collectionCurrency)) {
+                                collectedInInvoiceCurrency=Math.addExact(collectedInInvoiceCurrency,amount);
+                            } else {
+                                foreignCurrencyFound=true;
+                            }
+                            result.append("\nتحصيل: ").append(collectionCurrency)
                                 .append(" / ").append(collections.getString(1))
                                 .append(" — ").append(amount)
                                 .append(" (").append(collections.getLong(2)).append(" عملية)");
                         }
-                        if(collectedFromEvents!=c.getLong(2))
-                            result.append("\\nتحذير: إجمالي التحصيلات لا يطابق رصيد الفاتورة. يلزم التدقيق قبل الإلغاء.");
+                        if(foreignCurrencyFound)
+                            result.append("\nتحذير: توجد تحصيلات بعملة مختلفة؛ يلزم التحقق من قيود التحويل قبل الإلغاء.");
+                        else if(collectedInInvoiceCurrency!=c.getLong(2))
+                            result.append("\nتحذير: إجمالي التحصيلات لا يطابق رصيد الفاتورة. يلزم التدقيق قبل الإلغاء.");
                     }
-                    result.append("\\nالسبب: ").append(r);
+                    result.append("\nالسبب: ").append(r);
                     try(Cursor existing=db.rawQuery(
                         "SELECT COUNT(*) FROM invoice_cancellation_requests WHERE invoice_id=?",
                         new String[]{c.getString(0)})) {
