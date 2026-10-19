@@ -5,7 +5,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
 /**
- * Schema v4. Future schema upgrades must use additive, tested migrations;
+ * Schema v5. Future schema upgrades must use additive, tested migrations;
  * NEVER delete or replace a shop's database to upgrade.
  */
 public final class Native5DatabaseHelper extends SQLiteOpenHelper {
@@ -14,7 +14,7 @@ public final class Native5DatabaseHelper extends SQLiteOpenHelper {
         this(context,DATABASE_NAME);
     }
     Native5DatabaseHelper(Context context,String databaseName) {
-        super(context,databaseName,null,4);
+        super(context,databaseName,null,5);
     }
     @Override public void onConfigure(SQLiteDatabase db) {
         super.onConfigure(db);
@@ -33,6 +33,7 @@ public final class Native5DatabaseHelper extends SQLiteOpenHelper {
         addOnlineInvoiceTables(db);
         addClosingTables(db);
         addVarianceAdjustmentTables(db);
+        addInvoiceCancellationTables(db);
     }
     private static void addOnlineInvoiceTables(SQLiteDatabase db) {
         db.execSQL("CREATE TABLE IF NOT EXISTS online_invoices(invoice_id TEXT PRIMARY KEY NOT NULL,total_minor INTEGER NOT NULL CHECK(total_minor>0),cost_minor INTEGER NOT NULL CHECK(cost_minor>0),currency TEXT NOT NULL CHECK(currency IN ('USD','TRY','SYP')),collected_minor INTEGER NOT NULL DEFAULT 0 CHECK(collected_minor>=0),released_cost_minor INTEGER NOT NULL DEFAULT 0 CHECK(released_cost_minor>=0),created_at_ms INTEGER NOT NULL,CHECK(collected_minor<=total_minor),CHECK(released_cost_minor<=cost_minor))");
@@ -54,10 +55,20 @@ public final class Native5DatabaseHelper extends SQLiteOpenHelper {
         db.execSQL("CREATE TRIGGER IF NOT EXISTS variance_adjustment_no_update BEFORE UPDATE ON vault_variance_adjustments BEGIN SELECT RAISE(ABORT,'Variance adjustment is immutable'); END");
         db.execSQL("CREATE TRIGGER IF NOT EXISTS variance_adjustment_no_delete BEFORE DELETE ON vault_variance_adjustments BEGIN SELECT RAISE(ABORT,'Variance adjustment is immutable'); END");
     }
+    /**
+     * Immutable cancellation requests and decisions. These are not accounting
+     * reversals: posting will require a separate atomic, tested workflow.
+     */
+    private static void addInvoiceCancellationTables(SQLiteDatabase db) {
+        db.execSQL("CREATE TABLE IF NOT EXISTS invoice_cancellation_requests(request_id TEXT PRIMARY KEY NOT NULL,invoice_id TEXT NOT NULL,invoice_number TEXT NOT NULL,reason TEXT NOT NULL CHECK(length(trim(reason))>=1),requested_at_ms INTEGER NOT NULL,UNIQUE(invoice_id))");
+        db.execSQL("CREATE TRIGGER IF NOT EXISTS cancellation_requests_no_update BEFORE UPDATE ON invoice_cancellation_requests BEGIN SELECT RAISE(ABORT,'Cancellation request is immutable'); END");
+        db.execSQL("CREATE TRIGGER IF NOT EXISTS cancellation_requests_no_delete BEFORE DELETE ON invoice_cancellation_requests BEGIN SELECT RAISE(ABORT,'Cancellation request is immutable'); END");
+    }
     @Override public void onUpgrade(SQLiteDatabase db,int oldVersion,int newVersion) {
         if(oldVersion<2 && newVersion>=2) addOnlineInvoiceTables(db);
         if(oldVersion<3 && newVersion>=3) addClosingTables(db);
         if(oldVersion<4 && newVersion>=4) addVarianceAdjustmentTables(db);
-        if(newVersion>4) throw new IllegalStateException("Unknown Native5 schema version");
+        if(oldVersion<5 && newVersion>=5) addInvoiceCancellationTables(db);
+        if(newVersion>5) throw new IllegalStateException("Unknown Native5 schema version");
     }
 }
