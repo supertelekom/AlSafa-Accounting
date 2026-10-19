@@ -66,6 +66,9 @@ public final class LegacyStagingCoordinator {
                 if(actual==null || actual!=expectedCount)
                     throw new IllegalStateException("Staging collection count mismatch: "+entry.getKey());
             }
+            Map<String,Integer> persisted=staging.verifiedCollectionCounts(inspected.sha256);
+            if(!persisted.equals(counts))
+                throw new IllegalStateException("Persisted collection counts do not match staged data");
             long verified=staging.verifiedRecordCount(inspected.sha256);
             long expected=0;
             for(Integer count:counts.values()) expected+=count;
