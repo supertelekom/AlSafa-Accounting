@@ -41,6 +41,20 @@ public final class VariantStockResolver {
     }
 
     /**
+     * Validates an individual sale line against its exact stock-bearing color.
+     * This is a preflight check only, not a posting or a stock mutation.
+     * The final SQLite posting must recheck stock inside the same transaction.
+     */
+    public static double requireSaleQuantity(JSONArray products, String productId, double quantity) {
+        if(Double.isNaN(quantity) || Double.isInfinite(quantity) || quantity<=0)
+            throw new IllegalArgumentException("Sale quantity must be finite and positive");
+        double available=stockOf(products,productId);
+        if(available<quantity)
+            throw new IllegalStateException("Insufficient stock for product: "+productId);
+        return available-quantity;
+    }
+
+    /**
      * Informational group total, never used to authorize a sale or decrement stock.
      * Excludes ungrouped products; deduplicates by product ID.
      */
