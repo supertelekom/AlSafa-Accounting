@@ -54,12 +54,18 @@ public final class InvoiceCancellationActivity extends Activity {
             try (Native5DatabaseHelper helper=new Native5DatabaseHelper(this)) {
                 SQLiteDatabase db=helper.getReadableDatabase();
                 try (Cursor c=db.rawQuery(
-                    "SELECT i.invoice_id,i.total_minor,i.collected_minor,i.currency,m.invoice_number FROM online_invoices i LEFT JOIN invoice_number_mapping m ON m.invoice_id=i.invoice_id WHERE i.invoice_id=? OR m.invoice_number=?",
+                    "SELECT i.invoice_id,i.total_minor,i.collected_minor,i.currency,m.invoice_number FROM online_invoices i LEFT JOIN invoice_number_mapping m ON m.invoice_id=i.invoice_id WHERE i.invoice_id=? OR m.invoice_number=? ORDER BY i.invoice_id LIMIT 2",
                     new String[]{n,n})) {
                     if(!c.moveToFirst()) {
                         preview.setText("لا توجد فاتورة إلكترونية بهذا الرقم أو المعرّف في قاعدة Native 5 المحلية.\\nلم يُنشأ طلب إلغاء.");
                         return;
                     }
+                    String resolvedId=c.getString(0);
+                    if(c.moveToNext() && !resolvedId.equals(c.getString(0))) {
+                        preview.setText("الرقم يطابق أكثر من فاتورة. يجب معالجة التعارض قبل عرض أي طلب إلغاء.");
+                        return;
+                    }
+                    c.moveToFirst();
                     StringBuilder result=new StringBuilder("معاينة فاتورة موجودة — قراءة فقط");
                     result.append("\\nالمعرّف: ").append(c.getString(0));
                     result.append("\\nالإجمالي (وحدات صغرى): ").append(c.getLong(1));
