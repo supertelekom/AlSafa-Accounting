@@ -63,6 +63,7 @@ public final class VariantInventoryAudit {
         findings.groups=groups.size();
         Set<String> groupedIds=new HashSet<>();
         for(List<JSONObject> members:groups.values()) {
+            for(JSONObject member:members) groupedIds.add(member.optString("id"));
             if(members.size()<2) continue;
             findings.multiColorGroups++;
             int bases=0;
@@ -73,7 +74,6 @@ public final class VariantInventoryAudit {
             Set<String> barcodes=new HashSet<>();
             boolean duplicateBarcode=false;
             for(JSONObject member:members) {
-                groupedIds.add(member.optString("id"));
                 if(member.optDouble("stock",0)==0) hasZeroStock=true;
                 if(member.optDouble("stock",0)>0) hasPositiveStock=true;
                 if(member.optString("variantRole","").trim().isEmpty()) hasBlankRole=true;
