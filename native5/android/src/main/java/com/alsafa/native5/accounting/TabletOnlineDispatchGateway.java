@@ -17,7 +17,11 @@ public final class TabletOnlineDispatchGateway {
     }
     public void dispatch(String eventId,String invoiceId,Money total,Money cost,
                          List<InventoryDelta> stock) {
-        service.dispatch(eventId,invoiceId,total,cost,stock);
+        dispatch(eventId,invoiceId,null,total,cost,stock);
+    }
+    public void dispatch(String eventId,String invoiceId,String invoiceNumber,Money total,Money cost,
+                         List<InventoryDelta> stock) {
+        service.dispatch(eventId,invoiceId,invoiceNumber,total,cost,stock);
         try { TabletSyncScheduler.schedule(context,storeId); }
         catch (RuntimeException unavailable) { /* outbox is durable */ }
     }
