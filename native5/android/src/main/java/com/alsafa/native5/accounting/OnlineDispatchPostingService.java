@@ -70,7 +70,7 @@ public final class OnlineDispatchPostingService {
             String payload=batch.payload();
             if(invoiceNumber!=null) {
                 if(!payload.endsWith("}")) throw new IllegalStateException("Invalid dispatch payload");
-                payload=payload.substring(0,payload.length()-1)+",\\\"invoiceNumber\\\":\\\""+invoiceNumber+"\\\"}";
+                payload=payload.substring(0,payload.length()-1)+",\"invoiceNumber\":\""+invoiceNumber+"\"}";
             }
             port.insertOutbox(operationId,batch.operationKind(),payload);
             port.commit();
