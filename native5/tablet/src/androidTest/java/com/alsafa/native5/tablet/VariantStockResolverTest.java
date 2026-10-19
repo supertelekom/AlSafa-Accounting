@@ -59,4 +59,29 @@ public class VariantStockResolverTest {
         }
     }
 
+    @Test public void duplicateInvoiceLinesCannotOversellOneColor() throws Exception {
+        JSONArray lines=new JSONArray()
+            .put(new JSONObject().put("productId","blue").put("qty",1))
+            .put(new JSONObject().put("productId","blue").put("qty",1));
+        try { VariantStockResolver.requireInvoiceQuantities(colors(),lines); fail("Must reject"); }
+        catch(IllegalStateException expected) { }
+    }
+
+    @Test public void wholeInvoiceValidatesEachColorIndependently() throws Exception {
+        JSONArray lines=new JSONArray()
+            .put(new JSONObject().put("productId","blue").put("qty",1))
+            .put(new JSONObject().put("productId","red").put("qty",2));
+        java.util.Map<String,Double> remaining=
+            VariantStockResolver.requireInvoiceQuantities(colors(),lines);
+        assertEquals(0,remaining.get("blue"),0);
+        assertEquals(0,remaining.get("red"),0);
+        assertEquals(2,remaining.size());
+    }
+
+    @Test public void invoiceWithoutProductIdIsRejected() throws Exception {
+        JSONArray lines=new JSONArray().put(new JSONObject().put("qty",1));
+        try { VariantStockResolver.requireInvoiceQuantities(colors(),lines); fail("Must reject"); }
+        catch(IllegalArgumentException expected) { }
+    }
+
 }
