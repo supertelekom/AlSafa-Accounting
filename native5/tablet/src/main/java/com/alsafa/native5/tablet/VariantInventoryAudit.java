@@ -26,6 +26,9 @@ public final class VariantInventoryAudit {
         public int negativeStockRecords;
         public int salesWithMissingProduct;
         public int salesWithGroupedProduct;
+        public int variantSalesWithoutOwnProductId;
+        public int groupsWithMixedStock;
+        public int groupsWithBlankVariantRole;
     }
 
     public static Findings inspect(JSONObject data) {
@@ -54,17 +57,25 @@ public final class VariantInventoryAudit {
             if(members.size()<2) continue;
             findings.multiColorGroups++;
             int bases=0;
+            boolean hasZeroStock=false;
+            boolean hasPositiveStock=false;
+            boolean hasBlankRole=false;
             Set<String> baseNames=new HashSet<>();
             Set<String> barcodes=new HashSet<>();
             boolean duplicateBarcode=false;
             for(JSONObject member:members) {
                 groupedIds.add(member.optString("id"));
+                if(member.optDouble("stock",0)==0) hasZeroStock=true;
+                if(member.optDouble("stock",0)>0) hasPositiveStock=true;
+                if(member.optString("variantRole","").trim().isEmpty()) hasBlankRole=true;
                 if("base".equals(member.optString("variantRole"))) bases++;
                 String name=member.optString("variantBaseName","").trim();
                 if(!name.isEmpty()) baseNames.add(name);
                 String barcode=member.optString("barcode","").trim();
                 if(!barcode.isEmpty() && !barcodes.add(barcode)) duplicateBarcode=true;
             }
+            if(hasZeroStock && hasPositiveStock) findings.groupsWithMixedStock++;
+            if(hasBlankRole) findings.groupsWithBlankVariantRole++;
             if(bases==0) findings.missingBaseGroups++;
             if(bases>1) findings.multipleBaseGroups++;
             if(baseNames.size()>1) findings.conflictingBaseNames++;
@@ -79,7 +90,10 @@ public final class VariantInventoryAudit {
                 JSONObject item=items.optJSONObject(j);
                 if(item==null) continue;
                 String productId=item.optString("productId","").trim();
-                if(productId.isEmpty()) continue;
+                if(productId.isEmpty()) {
+                    findings.variantSalesWithoutOwnProductId++;
+                    continue;
+                }
                 if(!ids.contains(productId)) findings.salesWithMissingProduct++;
                 if(groupedIds.contains(productId)) findings.salesWithGroupedProduct++;
             }
