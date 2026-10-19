@@ -37,4 +37,19 @@ public final class InvoiceCancellationRequestServiceTest {
             } catch(IllegalArgumentException expected) {}
         }
     }
+
+    @Test public void inconsistentCollectionsRejectRequestWithoutSavingIt() {
+        try(Native5DatabaseHelper helper=new Native5DatabaseHelper(
+            ApplicationProvider.getApplicationContext(),":memory:")) {
+            SQLiteDatabase db=helper.getWritableDatabase();
+            db.execSQL("INSERT INTO online_invoices(invoice_id,total_minor,cost_minor,currency,collected_minor,released_cost_minor,created_at_ms) VALUES('inv-mismatch',1000,400,'USD',200,80,1)");
+            InvoiceCancellationRequestService service=new InvoiceCancellationRequestService(db);
+            try {
+                service.requestReview("review-mismatch","inv-mismatch","مراجعة");
+                fail("Mismatched collections accepted");
+            } catch(IllegalStateException expected) {}
+            assertEquals(0,android.database.DatabaseUtils.longForQuery(db,
+                "SELECT COUNT(*) FROM invoice_cancellation_requests",null));
+        }
+    }
 }
