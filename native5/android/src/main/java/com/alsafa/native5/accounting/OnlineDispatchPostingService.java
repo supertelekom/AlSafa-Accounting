@@ -67,7 +67,12 @@ public final class OnlineDispatchPostingService {
             i=0;
             for(InventoryDelta delta:stockRemoval)
                 port.applyInventory(operationId,i++,delta);
-            port.insertOutbox(operationId,batch.operationKind(),batch.payload());
+            String payload=batch.payload();
+            if(invoiceNumber!=null) {
+                if(!payload.endsWith("}")) throw new IllegalStateException("Invalid dispatch payload");
+                payload=payload.substring(0,payload.length()-1)+",\\\"invoiceNumber\\\":\\\""+invoiceNumber+"\\\"}";
+            }
+            port.insertOutbox(operationId,batch.operationKind(),payload);
             port.commit();
             finished=true;
         } finally {
