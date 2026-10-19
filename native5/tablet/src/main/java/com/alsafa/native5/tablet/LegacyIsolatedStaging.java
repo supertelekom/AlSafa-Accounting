@@ -61,6 +61,27 @@ public final class LegacyIsolatedStaging extends SQLiteOpenHelper {
         }
     }
 
+    /** Verify every historical collection independently; never writes to the database. */
+    public Map<String,Integer> verifiedCollectionCounts(String sha256) {
+        if(sha256==null || !sha256.matches("[0-9a-f]{64}"))
+            throw new IllegalArgumentException("Invalid backup digest");
+        SQLiteDatabase db=getReadableDatabase();
+        Map<String,Integer> counts=new LinkedHashMap<>();
+        long sum=0;
+        for(String name:COLLECTIONS) {
+            long n=DatabaseUtils.longForQuery(db,
+                "SELECT COUNT(*) FROM historical_records WHERE sha256=? AND collection_name=?",
+                new String[]{sha256,name});
+            if(n>Integer.MAX_VALUE) throw new IllegalStateException("Collection too large");
+            counts.put(name,(int)n);
+            sum+=n;
+        }
+        long verified=verifiedRecordCount(sha256);
+        if(verified<0 || verified!=sum)
+            throw new IllegalStateException("Historical collection count mismatch");
+        return counts;
+    }
+
     Map<String,Integer> stage(String sha256,JSONObject data) throws JSONException {
         if(sha256==null || !sha256.matches("[0-9a-f]{64}"))
             throw new IllegalArgumentException("Invalid backup SHA-256");
