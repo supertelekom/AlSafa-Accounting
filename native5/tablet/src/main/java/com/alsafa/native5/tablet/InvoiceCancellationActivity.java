@@ -57,7 +57,7 @@ public final class InvoiceCancellationActivity extends Activity {
                     "SELECT i.invoice_id,i.total_minor,i.collected_minor,i.currency,m.invoice_number FROM online_invoices i LEFT JOIN invoice_number_mapping m ON m.invoice_id=i.invoice_id WHERE i.invoice_id=? OR m.invoice_number=? ORDER BY i.invoice_id LIMIT 2",
                     new String[]{n,n})) {
                     if(!c.moveToFirst()) {
-                        preview.setText("لا توجد فاتورة إلكترونية بهذا الرقم أو المعرّف في قاعدة Native 5 المحلية.\\nلم يُنشأ طلب إلغاء.");
+                        preview.setText("لا توجد فاتورة إلكترونية بهذا الرقم أو المعرّف في قاعدة Native 5 المحلية.\nلم يُنشأ طلب إلغاء.");
                         return;
                     }
                     String resolvedId=c.getString(0);
@@ -67,18 +67,18 @@ public final class InvoiceCancellationActivity extends Activity {
                     }
                     c.moveToFirst();
                     StringBuilder result=new StringBuilder("معاينة فاتورة موجودة — قراءة فقط");
-                    result.append("\\nالمعرّف: ").append(c.getString(0));
-                    result.append("\\nالإجمالي (وحدات صغرى): ").append(c.getLong(1));
-                    result.append("\\nالمحصّل (وحدات صغرى): ").append(c.getLong(2));
-                    result.append("\\nالعملة: ").append(c.getString(3));
-                    result.append("\\nالسبب: ").append(r);
+                    result.append("\nالمعرّف: ").append(c.getString(0));
+                    result.append("\nالإجمالي (وحدات صغرى): ").append(c.getLong(1));
+                    result.append("\nالمحصّل (وحدات صغرى): ").append(c.getLong(2));
+                    result.append("\nالعملة: ").append(c.getString(3));
+                    result.append("\nالسبب: ").append(r);
                     try(Cursor existing=db.rawQuery(
                         "SELECT COUNT(*) FROM invoice_cancellation_requests WHERE invoice_id=?",
                         new String[]{c.getString(0)})) {
                         if(existing.moveToFirst() && existing.getLong(0)>0)
-                            result.append("\\nيوجد طلب إلغاء سابق لهذه الفاتورة.");
+                            result.append("\nيوجد طلب إلغاء سابق لهذه الفاتورة.");
                     }
-                    result.append("\\nلا يُنفّذ إلغاء أو قيد محاسبي من هذه الشاشة.");
+                    result.append("\nلا يُنفّذ إلغاء أو قيد محاسبي من هذه الشاشة.");
                     preview.setText(result.toString());
                 }
             } catch(Exception ex) {
