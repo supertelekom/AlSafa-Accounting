@@ -54,7 +54,7 @@ public final class InvoiceCancellationActivity extends Activity {
             try (Native5DatabaseHelper helper=new Native5DatabaseHelper(this)) {
                 SQLiteDatabase db=helper.getReadableDatabase();
                 try (Cursor c=db.rawQuery(
-                    "SELECT i.invoice_id,i.total_minor,i.collected_minor,i.currency,m.invoice_number FROM online_invoices i LEFT JOIN invoice_number_mapping m ON m.invoice_id=i.invoice_id WHERE i.invoice_id=? OR m.invoice_number=? ORDER BY i.invoice_id LIMIT 2",
+                    "SELECT i.invoice_id,i.total_minor,i.collected_minor,i.currency,m.invoice_number,i.cost_minor,i.released_cost_minor FROM online_invoices i LEFT JOIN invoice_number_mapping m ON m.invoice_id=i.invoice_id WHERE i.invoice_id=? OR m.invoice_number=? ORDER BY i.invoice_id LIMIT 2",
                     new String[]{n,n})) {
                     if(!c.moveToFirst()) {
                         preview.setText("لا توجد فاتورة إلكترونية بهذا الرقم أو المعرّف في قاعدة Native 5 المحلية.\nلم يُنشأ طلب إلغاء.");
@@ -71,7 +71,24 @@ public final class InvoiceCancellationActivity extends Activity {
                     result.append("\nالإجمالي (وحدات صغرى): ").append(c.getLong(1));
                     result.append("\nالمحصّل (وحدات صغرى): ").append(c.getLong(2));
                     result.append("\nالعملة: ").append(c.getString(3));
-                    result.append("\nالسبب: ").append(r);
+                    result.append("\\nالتكلفة المسجلة (وحدات صغرى): ").append(c.getLong(5));
+                    result.append("\\nالتكلفة المعترف بها (وحدات صغرى): ").append(c.getLong(6));
+                    try(Cursor collections=db.rawQuery(
+                        "SELECT currency,destination,COUNT(*),SUM(received_minor) FROM online_collections WHERE invoice_id=? GROUP BY currency,destination ORDER BY currency,destination",
+                        new String[]{resolvedId})) {
+                        long collectedFromEvents=0L;
+                        while(collections.moveToNext()) {
+                            long amount=collections.getLong(3);
+                            collectedFromEvents=Math.addExact(collectedFromEvents,amount);
+                            result.append("\\nتحصيل: ").append(collections.getString(0))
+                                .append(" / ").append(collections.getString(1))
+                                .append(" — ").append(amount)
+                                .append(" (").append(collections.getLong(2)).append(" عملية)");
+                        }
+                        if(collectedFromEvents!=c.getLong(2))
+                            result.append("\\nتحذير: إجمالي التحصيلات لا يطابق رصيد الفاتورة. يلزم التدقيق قبل الإلغاء.");
+                    }
+                    result.append("\\nالسبب: ").append(r);
                     try(Cursor existing=db.rawQuery(
                         "SELECT COUNT(*) FROM invoice_cancellation_requests WHERE invoice_id=?",
                         new String[]{c.getString(0)})) {
