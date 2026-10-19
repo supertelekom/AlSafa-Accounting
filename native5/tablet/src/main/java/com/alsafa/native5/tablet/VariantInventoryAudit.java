@@ -29,6 +29,8 @@ public final class VariantInventoryAudit {
         public int variantSalesWithoutOwnProductId;
         public int groupsWithMixedStock;
         public int groupsWithBlankVariantRole;
+        public int duplicateProductIds;
+        public int saleLinesMissingProductId;
     }
 
     public static Findings inspect(JSONObject data) {
@@ -92,6 +94,7 @@ public final class VariantInventoryAudit {
                 String productId=item.optString("productId","").trim();
                 if(productId.isEmpty()) {
                     findings.variantSalesWithoutOwnProductId++;
+                    findings.saleLinesMissingProductId++;
                     continue;
                 }
                 if(!ids.contains(productId)) findings.salesWithMissingProduct++;
