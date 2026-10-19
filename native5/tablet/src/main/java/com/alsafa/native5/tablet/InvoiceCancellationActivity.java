@@ -28,22 +28,23 @@ public final class InvoiceCancellationActivity extends Activity {
         root.addView(notice);
         EditText number=new EditText(this);
         number.setHint("رقم الفاتورة");
-        number.setInputType(android.text.InputType.TYPE_CLASS_TEXT);
+        number.setInputType(android.text.InputType.TYPE_CLASS_NUMBER);
         root.addView(number);
         EditText reason=new EditText(this);
         reason.setHint("سبب الإلغاء");
         reason.setSingleLine(false);
         reason.setMinLines(2);
+        reason.setFilters(new android.text.InputFilter[]{new android.text.InputFilter.LengthFilter(500)});
         root.addView(reason);
         TextView preview=new TextView(this);
         root.addView(preview);
         Button review=new Button(this);
         review.setText("معاينة طلب الإلغاء — دون تنفيذ");
         review.setOnClickListener(v -> {
-            String n=number.getText().toString().trim();
+            String n=normalizeInvoiceNumber(number.getText().toString());
             String r=reason.getText().toString().trim();
             if(n.isEmpty() || r.isEmpty()) {
-                preview.setText("أدخل رقم الفاتورة وسبب الإلغاء.");
+                preview.setText("أدخل رقم فاتورة صحيحًا وسبب الإلغاء.");
                 return;
             }
             preview.setText("طلب إلغاء تجريبي\nرقم الفاتورة: "+n+
@@ -52,5 +53,20 @@ public final class InvoiceCancellationActivity extends Activity {
         });
         root.addView(review);
         setContentView(root);
+    }
+
+    /** Accept ASCII, Arabic-Indic and Eastern Arabic numerals; reject other characters. */
+    static String normalizeInvoiceNumber(String value) {
+        if(value==null) return "";
+        StringBuilder result=new StringBuilder();
+        String trimmed=value.trim();
+        for(int i=0;i<trimmed.length();i++) {
+            char c=trimmed.charAt(i);
+            if(c>='0' && c<='9') result.append(c);
+            else if(c>='٠' && c<='٩') result.append((char)('0'+c-'٠'));
+            else if(c>='۰' && c<='۹') result.append((char)('0'+c-'۰'));
+            else return "";
+        }
+        return result.toString();
     }
 }
