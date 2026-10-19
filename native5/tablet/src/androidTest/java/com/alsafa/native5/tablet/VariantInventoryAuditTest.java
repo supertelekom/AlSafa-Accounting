@@ -79,4 +79,16 @@ public class VariantInventoryAuditTest {
         assertEquals(3,product.getInt("stock"));
     }
 
+    @Test public void singletonLegacyVariantStillCountsAsGroupedSale() throws Exception {
+        JSONObject data=new JSONObject().put("products",new JSONArray()
+            .put(new JSONObject().put("id","only-color").put("stock",2)
+                .put("variantGroupId","legacy-group")))
+            .put("sales",new JSONArray().put(new JSONObject().put("items",
+                new JSONArray().put(new JSONObject().put("productId","only-color")))));
+        VariantInventoryAudit.Findings findings=VariantInventoryAudit.inspect(data);
+        assertEquals(1,findings.groups);
+        assertEquals(0,findings.multiColorGroups);
+        assertEquals(1,findings.salesWithGroupedProduct);
+    }
+
 }
