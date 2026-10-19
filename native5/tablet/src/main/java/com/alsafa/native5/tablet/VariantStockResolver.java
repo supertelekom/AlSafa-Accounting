@@ -3,6 +3,8 @@ package com.alsafa.native5.tablet;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import java.util.HashSet;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -52,6 +54,39 @@ public final class VariantStockResolver {
         if(available<quantity)
             throw new IllegalStateException("Insufficient stock for product: "+productId);
         return available-quantity;
+    }
+
+    /**
+     * Validates a whole invoice before posting. Repeated lines for the same
+     * color are summed so two individually valid lines cannot oversell it.
+     * The posting transaction must repeat this check against current SQLite stock.
+     */
+    public static Map<String,Double> requireInvoiceQuantities(
+            JSONArray products, JSONArray lines) {
+        if(lines==null || lines.length()==0)
+            throw new IllegalArgumentException("Invoice has no items");
+        Map<String,Double> requested=new HashMap<>();
+        for(int i=0;i<lines.length();i++) {
+            JSONObject line=lines.optJSONObject(i);
+            if(line==null) throw new IllegalArgumentException("Invalid invoice line");
+            String id=line.optString("productId","").trim();
+            if(id.isEmpty()) throw new IllegalArgumentException("Missing product ID in invoice");
+            Object raw=line.opt("qty");
+            if(!(raw instanceof Number))
+                throw new IllegalArgumentException("Missing numeric sale quantity");
+            double qty=((Number)raw).doubleValue();
+            if(!Double.isFinite(qty) || qty<=0)
+                throw new IllegalArgumentException("Invalid sale quantity");
+            double sum=requested.containsKey(id)?requested.get(id)+qty:qty;
+            if(!Double.isFinite(sum))
+                throw new IllegalArgumentException("Invoice quantity overflow");
+            requested.put(id,sum);
+        }
+        Map<String,Double> remaining=new HashMap<>();
+        for(Map.Entry<String,Double> entry:requested.entrySet())
+            remaining.put(entry.getKey(),
+                    requireSaleQuantity(products,entry.getKey(),entry.getValue()));
+        return java.util.Collections.unmodifiableMap(remaining);
     }
 
     /**
