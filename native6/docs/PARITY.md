@@ -145,3 +145,10 @@ Inspected the user's original **AlSafa Backup v2**, exported 2026-10-18 (approxi
 - The 2026-10-18 source snapshot has 86 sales, 6 purchases, 5 supplier ledger entries, 28 payments, 49 partner withdrawals, 566 cash transactions, 26 closings, 18 expenses, 2 returns, 413 inventory movements and 2 loyalty entries.
 - These entries are historical **evidence**, not reconstructed financial journal postings. Profit, supplier debt, cash and partner balances remain unverified until transaction mapping and reconciliation are implemented.
 - Large embedded product photos and preservation of the full original backup may make the Native backup exceed its 128 MiB safety limit. This must be addressed before production migration.
+
+## Native backup v4 compression
+
+- Native backup exports now use `schema=4`, `encoding=gzip-base64`, SHA-256 of the **uncompressed** JSON data, and a compressed data payload. The external backup JSON limit remains 128 MiB, while decompression is capped at 256 MiB to avoid unbounded expansion.
+- Imports retain backward compatibility with native schemas 1, 2 and 3; older schemas have missing archive tables initialized empty.
+- Historical `legacy_records` are now protected against SQL UPDATE and DELETE by triggers, not just a UI convention.
+- Added compression round-trip, tampering and existing financial-integrity regression adaptations. CI/Android execution remains unverified.
