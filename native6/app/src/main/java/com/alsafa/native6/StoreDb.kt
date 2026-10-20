@@ -17,9 +17,12 @@ class StoreDb(context: Context, name: String = "alsafa_native6.db") : SQLiteOpen
         }
     }
     override fun onUpgrade(db: SQLiteDatabase,old: Int,new: Int) {
-        if (old in 1..2 && new >= 3) {
+        require(old in 1..3 && new == 4) {
+            "Unsupported migration $old → $new; database preserved"
+        }
+        if (old <= 2) {
             com.alsafa.native6.accounting.PartnerSchema.statements.forEach(db::execSQL)
-        } else if (old != 3 || new != 4) error("Unsupported migration $old → $new; database preserved")
+        }
         if (new == 4) {
             db.execSQL(legacyRecordsTable)
             db.execSQL(legacyRecordsNoUpdate)
