@@ -8,3 +8,7 @@ android {
 }
 dependencies { testImplementation("junit:junit:4.13.2"); testImplementation("org.robolectric:robolectric:4.14.1") }
 android.testOptions.unitTests.isIncludeAndroidResources = true
+
+tasks.withType<Test>().configureEach {
+    listOf("https.proxyHost", "https.proxyPort", "http.proxyHost", "http.proxyPort", "javax.net.ssl.trustStore", "javax.net.ssl.trustStorePassword").forEach { key -> System.getProperty(key)?.let { systemProperty(key, it) } }
+}

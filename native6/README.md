@@ -6,4 +6,6 @@ Reference: v3.9.353 PHONE-SUPPLIER-PAYMENT-RECOVERY source archive. `docs/legacy
 
 Development build only. Not approved for shop deployment. Feature parity and final device validation are mandatory before release.
 
-Build with JDK 17, Android SDK 34, Gradle 8.9: `gradle :app:assembleDebug`.
+Build with JDK 17 and Android SDK 34: `./gradlew :app:assembleDebug :app:testDebugUnitTest`. Gradle 8.9 wrapper is pinned with SHA-256.
+
+Implemented and pending work are listed in `docs/PARITY.md`; posting rules are documented in `docs/ACCOUNTING.md`. Backup export uses the Android document picker, including Google Drive when provided by an installed app. Drive uploading itself requires connectivity; all accounting remains offline.

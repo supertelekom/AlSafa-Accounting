@@ -119,6 +119,17 @@ class Store(val helper:StoreDb) {
             else->error("نوع الحركة غير صالح")
         };event(command,kind.uppercase(),date,note);post(command,lines)
     }
+    fun exchange(source:String,from:Currency,spent:Long,destination:String,to:Currency,received:Long,date:String=today(),command:String=id())=transaction {
+        require(from!=to&&spent>0&&received>0);enough(source,from,spent);vault(destination)
+        event(command,"CURRENCY_EXCHANGE",date,"صرف ${Money(spent,from).display()} مقابل ${Money(received,to).display()}")
+        post(command,listOf(Posting("cash:$source",from,-spent),Posting("fx:clearing",from,spent),Posting("cash:$destination",to,received),Posting("fx:clearing",to,-received)))
+    }
+    fun supplierOpening(supplier:String,c:Currency,amount:Long,date:String=today(),command:String=id())=transaction {
+        require(amount>0&&scalar("SELECT count(*) FROM suppliers WHERE id=?",supplier)==1L)
+        require(scalar("SELECT count(*) FROM journal j JOIN events e ON e.id=j.event_id WHERE e.kind='SUPPLIER_OPENING' AND j.account=? AND j.currency=?","payable:$supplier",c.name)==0L){"الرصيد الافتتاحي مسجل سابقاً"}
+        event(command,"SUPPLIER_OPENING",date,"دين سابق للمورد $supplier")
+        post(command,listOf(Posting("equity:opening",c,amount),Posting("payable:$supplier",c,-amount)))
+    }
     fun closeDay(v:String,counts:Map<Currency,Long>,date:String=today(),command:String=id())=transaction {
         vault(v);require(counts.keys==Currency.entries.toSet()&&counts.values.all{it>=0});require(scalar("SELECT count(*) FROM closings c JOIN events e ON e.id=c.event_id WHERE c.vault=? AND e.date=?",v,date)==0L){"اليوم مقفل لهذه الخزنة"}
         require(date==today()){"الإقفال متاح لليوم الحالي فقط"};event(command,"CLOSING",date,"إقفال $v")

@@ -23,11 +23,11 @@ class InvoicePdf(private val context:Context,private val store:Store) {
             lines.add("المستحق رده: ${Money(store.refundable(id),invoice.currency).display()}")
         }
         val paint=TextPaint().apply{color=Color.rgb(62,52,41);textSize=16f;typeface=Typeface.createFromAsset(context.assets,"Tajawal-Medium.ttf");isAntiAlias=true}
-        PdfDocument().use{doc->var number=1;var page=doc.startPage(PdfDocument.PageInfo.Builder(420,595,number).create());var y=30
+        val doc=PdfDocument();try {var number=1;var page=doc.startPage(PdfDocument.PageInfo.Builder(420,595,number).create());var y=30
             lines.forEach{line->val layout=StaticLayout.Builder.obtain(line,0,line.length,paint,360).setAlignment(Layout.Alignment.ALIGN_OPPOSITE).setIncludePad(true).build()
                 if(y+layout.height>565){doc.finishPage(page);number++;page=doc.startPage(PdfDocument.PageInfo.Builder(420,595,number).create());y=30}
                 page.canvas.save();page.canvas.translate(30f,y.toFloat());layout.draw(page.canvas);page.canvas.restore();y+=layout.height+12
             };doc.finishPage(page);doc.writeTo(output)
-        }
+        } finally { doc.close() }
     }
 }
