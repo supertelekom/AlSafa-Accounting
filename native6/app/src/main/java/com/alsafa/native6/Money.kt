@@ -1,0 +1,25 @@
+package com.alsafa.native6
+
+import java.math.BigDecimal
+import java.math.RoundingMode
+
+enum class Currency { USD, TRY, SYP }
+/** Native5 Money/JournalEntry rules ported to Kotlin: exact integers; balanced per currency. */
+data class Money(val minor: Long, val currency: Currency) {
+    operator fun plus(other: Money): Money { require(currency == other.currency); return copy(minor = Math.addExact(minor, other.minor)) }
+    fun display() = "${BigDecimal.valueOf(minor, 2).toPlainString()} ${currency.name}"
+    companion object {
+        fun parse(text: String, currency: Currency): Money {
+            val normalized = text.trim().map { c -> when(c) { in '٠'..'٩' -> '0' + (c-'٠'); in '۰'..'۹' -> '0' + (c-'۰'); '٫' -> '.'; else -> c } }.joinToString("")
+            return Money(BigDecimal(normalized).setScale(2, RoundingMode.UNNECESSARY).movePointRight(2).longValueExact(), currency)
+        }
+    }
+}
+data class Posting(val account: String, val currency: Currency, val amount: Long)
+fun validatePosting(lines: List<Posting>) {
+    require(lines.size >= 2 && lines.all { it.account.isNotBlank() && it.amount != 0L }) { "قيد غير صالح" }
+    lines.groupBy { it.currency }.values.forEach { group -> require(group.fold(0L) { a, p -> Math.addExact(a,p.amount) } == 0L) { "قيد غير متوازن" } }
+}
+fun add(a: Long,b: Long) = Math.addExact(a,b)
+fun mul(a: Long,b: Long) = Math.multiplyExact(a,b)
+fun proportional(value: Long, quantity: Long, total: Long): Long = BigDecimal.valueOf(value).multiply(BigDecimal.valueOf(quantity)).divide(BigDecimal.valueOf(total),0,RoundingMode.HALF_UP).longValueExact()

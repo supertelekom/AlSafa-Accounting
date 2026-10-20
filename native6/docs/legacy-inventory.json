@@ -1,0 +1,4046 @@
+{
+  "version": "3.9.353",
+  "sourceSha256": "4c64a486843f33247531ba28aad854c8fdf9e8429228662a00ecee43c7b173b9",
+  "functions": [
+    {
+      "name": "messageTemplates",
+      "line": 77
+    },
+    {
+      "name": "applyMessageTemplate",
+      "line": 78
+    },
+    {
+      "name": "repairLegacyCloudRecordIds",
+      "line": 198
+    },
+    {
+      "name": "deepCopy",
+      "line": 250
+    },
+    {
+      "name": "number",
+      "line": 251
+    },
+    {
+      "name": "id",
+      "line": 252
+    },
+    {
+      "name": "invoiceSequenceMax",
+      "line": 253
+    },
+    {
+      "name": "invoiceSequenceObserve",
+      "line": 261
+    },
+    {
+      "name": "assignMissingInvoiceNumbers",
+      "line": 267
+    },
+    {
+      "name": "nextInvoiceNumber",
+      "line": 278
+    },
+    {
+      "name": "invoiceNumber",
+      "line": 284
+    },
+    {
+      "name": "customerInvoiceFilename",
+      "line": 288
+    },
+    {
+      "name": "firstDayOfMonth",
+      "line": 293
+    },
+    {
+      "name": "esc",
+      "line": 294
+    },
+    {
+      "name": "inRange",
+      "line": 295
+    },
+    {
+      "name": "localeNumber",
+      "line": 296
+    },
+    {
+      "name": "dateText",
+      "line": 297
+    },
+    {
+      "name": "timeText",
+      "line": 298
+    },
+    {
+      "name": "dateTimeText",
+      "line": 299
+    },
+    {
+      "name": "storedTime",
+      "line": 300
+    },
+    {
+      "name": "normalizedCurrency",
+      "line": 301
+    },
+    {
+      "name": "currencyName",
+      "line": 308
+    },
+    {
+      "name": "money",
+      "line": 309
+    },
+    {
+      "name": "appCurrencyShort",
+      "line": 310
+    },
+    {
+      "name": "moneyInputHtml",
+      "line": 311
+    },
+    {
+      "name": "appDisplayCurrency",
+      "line": 312
+    },
+    {
+      "name": "displayMoney",
+      "line": 313
+    },
+    {
+      "name": "displayUsdMoney",
+      "line": 318
+    },
+    {
+      "name": "currencyOptions",
+      "line": 319
+    },
+    {
+      "name": "paymentMethodOptions",
+      "line": 320
+    },
+    {
+      "name": "supplierVaultOptions",
+      "line": 321
+    },
+    {
+      "name": "deliveryPaymentMethodOptions",
+      "line": 322
+    },
+    {
+      "name": "paymentStatusOptions",
+      "line": 323
+    },
+    {
+      "name": "normalizeWhatsAppChannel",
+      "line": 324
+    },
+    {
+      "name": "whatsappChannelOptions",
+      "line": 325
+    },
+    {
+      "name": "whatsappChannelLabel",
+      "line": 326
+    },
+    {
+      "name": "cloudStateLoad",
+      "line": 329
+    },
+    {
+      "name": "cloudStateSave",
+      "line": 332
+    },
+    {
+      "name": "cloudHash",
+      "line": 333
+    },
+    {
+      "name": "cloudConfigPayload",
+      "line": 339
+    },
+    {
+      "name": "cloudAuthLoad",
+      "line": 347
+    },
+    {
+      "name": "cloudAuthSave",
+      "line": 348
+    },
+    {
+      "name": "firebaseErrorMessage",
+      "line": 349
+    },
+    {
+      "name": "firebaseResponseFailure",
+      "line": 355
+    },
+    {
+      "name": "firebaseAuthFetch",
+      "line": 362
+    },
+    {
+      "name": "firebaseAuthToken",
+      "line": 375
+    },
+    {
+      "name": "firestoreBase",
+      "line": 395
+    },
+    {
+      "name": "firestoreDocPath",
+      "line": 396
+    },
+    {
+      "name": "firestoreRequest",
+      "line": 397
+    },
+    {
+      "name": "cloudCountOperation",
+      "line": 417
+    },
+    {
+      "name": "firestoreFields",
+      "line": 425
+    },
+    {
+      "name": "firestorePut",
+      "line": 426
+    },
+    {
+      "name": "firestorePatchRawFields",
+      "line": 431
+    },
+    {
+      "name": "firestoreDelete",
+      "line": 439
+    },
+    {
+      "name": "firestorePayload",
+      "line": 444
+    },
+    {
+      "name": "firestoreList",
+      "line": 447
+    },
+    {
+      "name": "firestoreGet",
+      "line": 458
+    },
+    {
+      "name": "cloudRecordId",
+      "line": 464
+    },
+    {
+      "name": "cloudComparableRecord",
+      "line": 465
+    },
+    {
+      "name": "cloudRecordUpdatedAt",
+      "line": 471
+    },
+    {
+      "name": "firestoreDocUpdatedAt",
+      "line": 474
+    },
+    {
+      "name": "cloudQueueDelete",
+      "line": 477
+    },
+    {
+      "name": "cloudQueueExplicitTransactionDelete",
+      "line": 486
+    },
+    {
+      "name": "cloudQueueExplicitProductDelete",
+      "line": 502
+    },
+    {
+      "name": "cloudQueueExplicitMaintenancePartDelete",
+      "line": 518
+    },
+    {
+      "name": "cloudRecordDisplayName",
+      "line": 534
+    },
+    {
+      "name": "cloudQueueMap",
+      "line": 541
+    },
+    {
+      "name": "cloudEnqueueRecord",
+      "line": 542
+    },
+    {
+      "name": "cloudPendingCount",
+      "line": 547
+    },
+    {
+      "name": "cloudQueueStatus",
+      "line": 548
+    },
+    {
+      "name": "cloudSeedPendingQueueOnce",
+      "line": 552
+    },
+    {
+      "name": "cloudStampLocalChanges",
+      "line": 571
+    },
+    {
+      "name": "pushCloudTombstones",
+      "line": 600
+    },
+    {
+      "name": "pullCloudTombstones",
+      "line": 627
+    },
+    {
+      "name": "cloudCompressTransportImage",
+      "line": 646
+    },
+    {
+      "name": "cloudPrepareTransportValue",
+      "line": 665
+    },
+    {
+      "name": "cloudPrepareRecordForUpload",
+      "line": 676
+    },
+    {
+      "name": "cloudCleanRemoteRecord",
+      "line": 695
+    },
+    {
+      "name": "pushCloudCollection",
+      "line": 700
+    },
+    {
+      "name": "productSyncKey",
+      "line": 736
+    },
+    {
+      "name": "cloudLocalRecordForRemote",
+      "line": 745
+    },
+    {
+      "name": "applyRemoteFundingAdjustments",
+      "line": 760
+    },
+    {
+      "name": "applyRemoteInventoryMovementOnce",
+      "line": 794
+    },
+    {
+      "name": "mergeCloudDocuments",
+      "line": 843
+    },
+    {
+      "name": "cloudLocalDayFromMs",
+      "line": 921
+    },
+    {
+      "name": "cloudRecordTouchesToday",
+      "line": 922
+    },
+    {
+      "name": "repairIncomingCashTotal",
+      "line": 932
+    },
+    {
+      "name": "repairExpectedIncomingAmount",
+      "line": 942
+    },
+    {
+      "name": "repairLegacyEquivalentCash",
+      "line": 955
+    },
+    {
+      "name": "repairPaymentProof",
+      "line": 971
+    },
+    {
+      "name": "removeDuplicateRestoredRepairCashToday",
+      "line": 981
+    },
+    {
+      "name": "reconcileMissingQuickRepairCashToday",
+      "line": 999
+    },
+    {
+      "name": "partnerWithdrawalCashTotal",
+      "line": 1020
+    },
+    {
+      "name": "partnerWithdrawalFromCashRow",
+      "line": 1029
+    },
+    {
+      "name": "reconcilePartnerWithdrawalLinksToday",
+      "line": 1039
+    },
+    {
+      "name": "cloudDailyManualCatchUp",
+      "line": 1062
+    },
+    {
+      "name": "dailyAuditButton",
+      "line": 1126
+    },
+    {
+      "name": "safeUnionAuditButton",
+      "line": 1127
+    },
+    {
+      "name": "safeUnionAuditSummaryHtml",
+      "line": 1128
+    },
+    {
+      "name": "cloudSafeUnionAuditFinance",
+      "line": 1135
+    },
+    {
+      "name": "cloudSafeUnionRecoverFinance",
+      "line": 1160
+    },
+    {
+      "name": "pullCloudCollection",
+      "line": 1213
+    },
+    {
+      "name": "pullCloudRecords",
+      "line": 1216
+    },
+    {
+      "name": "pushCloudConfig",
+      "line": 1228
+    },
+    {
+      "name": "pullCloudConfig",
+      "line": 1233
+    },
+    {
+      "name": "quickRepairCloudRows",
+      "line": 1261
+    },
+    {
+      "name": "pushCloudQuickRepairButtons",
+      "line": 1275
+    },
+    {
+      "name": "mergeCloudQuickRepairDocuments",
+      "line": 1286
+    },
+    {
+      "name": "pullCloudQuickRepairButtons",
+      "line": 1295
+    },
+    {
+      "name": "pullCloudQuickRepairButtonRecords",
+      "line": 1296
+    },
+    {
+      "name": "cloudMigrateQuickRepairButtons",
+      "line": 1300
+    },
+    {
+      "name": "cloudMarkDirty",
+      "line": 1320
+    },
+    {
+      "name": "cloudDeviceSignalId",
+      "line": 1327
+    },
+    {
+      "name": "cloudAuthorizedDeviceId",
+      "line": 1331
+    },
+    {
+      "name": "cloudPairCode",
+      "line": 1332
+    },
+    {
+      "name": "cloudPairId",
+      "line": 1333
+    },
+    {
+      "name": "cloudPairDocument",
+      "line": 1334
+    },
+    {
+      "name": "cloudPairModal",
+      "line": 1335
+    },
+    {
+      "name": "cloudPairReset",
+      "line": 1339
+    },
+    {
+      "name": "cloudPairCreate",
+      "line": 1340
+    },
+    {
+      "name": "cloudPairJoin",
+      "line": 1341
+    },
+    {
+      "name": "cloudMergeSignals",
+      "line": 1342
+    },
+    {
+      "name": "cloudReadSignal",
+      "line": 1363
+    },
+    {
+      "name": "cloudRegisterDevice",
+      "line": 1379
+    },
+    {
+      "name": "cloudReadDeviceDirectory",
+      "line": 1389
+    },
+    {
+      "name": "cloudWriteSignal",
+      "line": 1398
+    },
+    {
+      "name": "cloudPullChangedCollections",
+      "line": 1443
+    },
+    {
+      "name": "cloudFullPull",
+      "line": 1491
+    },
+    {
+      "name": "cloudSafeCatchUpReceive",
+      "line": 1509
+    },
+    {
+      "name": "cloudSafeUnionReconcile",
+      "line": 1529
+    },
+    {
+      "name": "cloudRecoverUnconfirmedLocalRows",
+      "line": 1565
+    },
+    {
+      "name": "cloudRepublishProductDeliveryWindow",
+      "line": 1582
+    },
+    {
+      "name": "cloudPushLocal",
+      "line": 1598
+    },
+    {
+      "name": "persistCloudChangedData",
+      "line": 1646
+    },
+    {
+      "name": "cloudSyncNow",
+      "line": 1654
+    },
+    {
+      "name": "scheduleCloudSync",
+      "line": 1869
+    },
+    {
+      "name": "cloudRealtimeProbe",
+      "line": 1875
+    },
+    {
+      "name": "realtimeProbeDelay",
+      "line": 1914
+    },
+    {
+      "name": "scheduleRealtimeProbe",
+      "line": 1919
+    },
+    {
+      "name": "realtimeProbeWatchdog",
+      "line": 1934
+    },
+    {
+      "name": "nativeBridge",
+      "line": 1939
+    },
+    {
+      "name": "nativeHttpGet",
+      "line": 1940
+    },
+    {
+      "name": "thermalPrinterLoad",
+      "line": 1951
+    },
+    {
+      "name": "thermalPrinterSave",
+      "line": 1957
+    },
+    {
+      "name": "pairedBluetoothPrinters",
+      "line": 1958
+    },
+    {
+      "name": "renderPrinterSettings",
+      "line": 1966
+    },
+    {
+      "name": "saveSelectedPrinter",
+      "line": 1977
+    },
+    {
+      "name": "thermalReceiptRows",
+      "line": 1984
+    },
+    {
+      "name": "thermalWrap",
+      "line": 2013
+    },
+    {
+      "name": "makeThermalReceiptCanvas",
+      "line": 2021
+    },
+    {
+      "name": "thermalCanvasToEscPos",
+      "line": 2044
+    },
+    {
+      "name": "isSimplifiedQuickRepair",
+      "line": 2064
+    },
+    {
+      "name": "quickRepairServiceName",
+      "line": 2067
+    },
+    {
+      "name": "repairReceiptIdentityRows",
+      "line": 2070
+    },
+    {
+      "name": "thermalRepairReceiptRows",
+      "line": 2083
+    },
+    {
+      "name": "makeThermalRepairReceiptCanvas",
+      "line": 2104
+    },
+    {
+      "name": "printRepairThermal",
+      "line": 2116
+    },
+    {
+      "name": "printSaleThermal",
+      "line": 2121
+    },
+    {
+      "name": "randomLocalId",
+      "line": 2141
+    },
+    {
+      "name": "securityLoad",
+      "line": 2142
+    },
+    {
+      "name": "securitySave",
+      "line": 2143
+    },
+    {
+      "name": "activityLoad",
+      "line": 2144
+    },
+    {
+      "name": "activitySave",
+      "line": 2145
+    },
+    {
+      "name": "recordLocalActivity",
+      "line": 2146
+    },
+    {
+      "name": "activityDateTime",
+      "line": 2147
+    },
+    {
+      "name": "securityHashPin",
+      "line": 2148
+    },
+    {
+      "name": "securityPinValid",
+      "line": 2149
+    },
+    {
+      "name": "securityIsLocked",
+      "line": 2150
+    },
+    {
+      "name": "securityInitSession",
+      "line": 2151
+    },
+    {
+      "name": "renderSecurityLock",
+      "line": 2152
+    },
+    {
+      "name": "securityUnlockFromScreen",
+      "line": 2153
+    },
+    {
+      "name": "securityEnablePin",
+      "line": 2154
+    },
+    {
+      "name": "securityDisablePin",
+      "line": 2155
+    },
+    {
+      "name": "securitySaveDeviceName",
+      "line": 2156
+    },
+    {
+      "name": "securityAssignClosingDevice",
+      "line": 2157
+    },
+    {
+      "name": "currentDeviceCanClose",
+      "line": 2168
+    },
+    {
+      "name": "securityLockNow",
+      "line": 2172
+    },
+    {
+      "name": "renderSecurity",
+      "line": 2173
+    },
+    {
+      "name": "networkState",
+      "line": 2175
+    },
+    {
+      "name": "hasNetwork",
+      "line": 2182
+    },
+    {
+      "name": "parsePayload",
+      "line": 2183
+    },
+    {
+      "name": "payloadRevision",
+      "line": 2184
+    },
+    {
+      "name": "payloadInventoryShape",
+      "line": 2191
+    },
+    {
+      "name": "payloadInventoryIds",
+      "line": 2198
+    },
+    {
+      "name": "setContainsAll",
+      "line": 2203
+    },
+    {
+      "name": "payloadInventoryContains",
+      "line": 2204
+    },
+    {
+      "name": "recordLocalSnapshotConflict",
+      "line": 2208
+    },
+    {
+      "name": "chooseSafestLocalPayload",
+      "line": 2215
+    },
+    {
+      "name": "newestPayload",
+      "line": 2235
+    },
+    {
+      "name": "savedPayload",
+      "line": 2238
+    },
+    {
+      "name": "withInventoryReplacementAllowed",
+      "line": 2255
+    },
+    {
+      "name": "withInventoryShrinkAllowed",
+      "line": 2259
+    },
+    {
+      "name": "inventoryShrinkIsExactlyAuthorized",
+      "line": 2264
+    },
+    {
+      "name": "withDestructivePersistAllowed",
+      "line": 2273
+    },
+    {
+      "name": "stablePayloadValue",
+      "line": 2277
+    },
+    {
+      "name": "durablePayloadEquivalent",
+      "line": 2286
+    },
+    {
+      "name": "persistPayload",
+      "line": 2292
+    },
+    {
+      "name": "hydrateData",
+      "line": 2352
+    },
+    {
+      "name": "loadData",
+      "line": 2467
+    },
+    {
+      "name": "saveData",
+      "line": 2472
+    },
+    {
+      "name": "reloadDataFromStorage",
+      "line": 2560
+    },
+    {
+      "name": "navigateTo",
+      "line": 2565
+    },
+    {
+      "name": "navigateAfterCommit",
+      "line": 2573
+    },
+    {
+      "name": "appendAudit",
+      "line": 2581
+    },
+    {
+      "name": "commitData",
+      "line": 2588
+    },
+    {
+      "name": "refreshApplication",
+      "line": 2598
+    },
+    {
+      "name": "currentSnapshot",
+      "line": 2609
+    },
+    {
+      "name": "rateFor",
+      "line": 2610
+    },
+    {
+      "name": "convertCurrencyAmount",
+      "line": 2611
+    },
+    {
+      "name": "usdValue",
+      "line": 2612
+    },
+    {
+      "name": "saleTotal",
+      "line": 2613
+    },
+    {
+      "name": "saleSubtotalValue",
+      "line": 2614
+    },
+    {
+      "name": "saleCost",
+      "line": 2618
+    },
+    {
+      "name": "onlineSaleReceiptEvents",
+      "line": 2619
+    },
+    {
+      "name": "onlineSaleReceiptCost",
+      "line": 2651
+    },
+    {
+      "name": "paidFor",
+      "line": 2656
+    },
+    {
+      "name": "returnsFor",
+      "line": 2657
+    },
+    {
+      "name": "returnCreditFor",
+      "line": 2658
+    },
+    {
+      "name": "refundedFor",
+      "line": 2659
+    },
+    {
+      "name": "effectiveTotalFor",
+      "line": 2660
+    },
+    {
+      "name": "netPaidFor",
+      "line": 2661
+    },
+    {
+      "name": "balanceFor",
+      "line": 2662
+    },
+    {
+      "name": "paymentStatusFor",
+      "line": 2663
+    },
+    {
+      "name": "stockValue",
+      "line": 2664
+    },
+    {
+      "name": "productById",
+      "line": 2665
+    },
+    {
+      "name": "normalizeBarcode",
+      "line": 2666
+    },
+    {
+      "name": "normalizeImageData",
+      "line": 2667
+    },
+    {
+      "name": "formData",
+      "line": 2668
+    },
+    {
+      "name": "formIdentifier",
+      "line": 2690
+    },
+    {
+      "name": "productByBarcode",
+      "line": 2693
+    },
+    {
+      "name": "couplePartnerFor",
+      "line": 2694
+    },
+    {
+      "name": "coupleSetAvailable",
+      "line": 2695
+    },
+    {
+      "name": "coupleSaleChoiceModal",
+      "line": 2696
+    },
+    {
+      "name": "addCoupleSetToSale",
+      "line": 2703
+    },
+    {
+      "name": "addProductToSale",
+      "line": 2714
+    },
+    {
+      "name": "metricData",
+      "line": 2734
+    },
+    {
+      "name": "debtRecords",
+      "line": 2747
+    },
+    {
+      "name": "cashTodayUsd",
+      "line": 2753
+    },
+    {
+      "name": "walletEntries",
+      "line": 2761
+    },
+    {
+      "name": "repairReceiptEvents",
+      "line": 2771
+    },
+    {
+      "name": "repairReceiptCost",
+      "line": 2779
+    },
+    {
+      "name": "walletBalance",
+      "line": 2780
+    },
+    {
+      "name": "recentTransactions",
+      "line": 2781
+    },
+    {
+      "name": "icon",
+      "line": 2792
+    },
+    {
+      "name": "transactionRow",
+      "line": 2793
+    },
+    {
+      "name": "rateCard",
+      "line": 2794
+    },
+    {
+      "name": "syncStatusMeta",
+      "line": 2796
+    },
+    {
+      "name": "syncStatusHtml",
+      "line": 2818
+    },
+    {
+      "name": "updateSyncIndicator",
+      "line": 2822
+    },
+    {
+      "name": "topLogo",
+      "line": 2830
+    },
+    {
+      "name": "renderDashboard",
+      "line": 2831
+    },
+    {
+      "name": "todayMoneyByReference",
+      "line": 2835
+    },
+    {
+      "name": "homeCurrencyAmountsHtml",
+      "line": 2838
+    },
+    {
+      "name": "renderFatherHome",
+      "line": 2844
+    },
+    {
+      "name": "dashboardAmountFromUsd",
+      "line": 2854
+    },
+    {
+      "name": "dashboardKpiMoney",
+      "line": 2859
+    },
+    {
+      "name": "dashboardCurrencySelector",
+      "line": 2864
+    },
+    {
+      "name": "renderAdvancedHome",
+      "line": 2868
+    },
+    {
+      "name": "fatherPaymentChoices",
+      "line": 2874
+    },
+    {
+      "name": "fatherCurrencyChoices",
+      "line": 2875
+    },
+    {
+      "name": "fatherConvertedValue",
+      "line": 2876
+    },
+    {
+      "name": "updateFatherCurrencyAmount",
+      "line": 2877
+    },
+    {
+      "name": "saleProductSearchMatches",
+      "line": 2879
+    },
+    {
+      "name": "saleProductSearchResults",
+      "line": 2883
+    },
+    {
+      "name": "renderFatherSale",
+      "line": 2888
+    },
+    {
+      "name": "quickRepairButtons",
+      "line": 2890
+    },
+    {
+      "name": "quickRepairStoredRows",
+      "line": 2899
+    },
+    {
+      "name": "quickRepairButtonById",
+      "line": 2905
+    },
+    {
+      "name": "quickRepairCostUSD",
+      "line": 2906
+    },
+    {
+      "name": "renderFatherRepair",
+      "line": 2907
+    },
+    {
+      "name": "setFatherSaleProduct",
+      "line": 2911
+    },
+    {
+      "name": "saveFatherSale",
+      "line": 2912
+    },
+    {
+      "name": "saveFatherRepair",
+      "line": 2913
+    },
+    {
+      "name": "searchMatches",
+      "line": 2941
+    },
+    {
+      "name": "searchRowsHtml",
+      "line": 2959
+    },
+    {
+      "name": "renderSearch",
+      "line": 2965
+    },
+    {
+      "name": "openingOperationalActivityExists",
+      "line": 2969
+    },
+    {
+      "name": "openingCashField",
+      "line": 2972
+    },
+    {
+      "name": "openingInventoryValueUSD",
+      "line": 2976
+    },
+    {
+      "name": "openingCashValueUSD",
+      "line": 2979
+    },
+    {
+      "name": "renderOpeningBalances",
+      "line": 2983
+    },
+    {
+      "name": "saveOpeningCash",
+      "line": 2993
+    },
+    {
+      "name": "renderMore",
+      "line": 3036
+    },
+    {
+      "name": "saleLine",
+      "line": 3066
+    },
+    {
+      "name": "safeProductsImportKey",
+      "line": 3070
+    },
+    {
+      "name": "processProductsAddOnlyText",
+      "line": 3078
+    },
+    {
+      "name": "importProductsAddOnlyFile",
+      "line": 3103
+    },
+    {
+      "name": "productPickerOptions",
+      "line": 3117
+    },
+    {
+      "name": "renderSaleForm",
+      "line": 3118
+    },
+    {
+      "name": "returnedQtyFor",
+      "line": 3139
+    },
+    {
+      "name": "invoiceEditModal",
+      "line": 3140
+    },
+    {
+      "name": "saveInvoiceEdit",
+      "line": 3144
+    },
+    {
+      "name": "invoiceFilterHtml",
+      "line": 3152
+    },
+    {
+      "name": "filterInvoiceRows",
+      "line": 3156
+    },
+    {
+      "name": "saleReturnModal",
+      "line": 3157
+    },
+    {
+      "name": "repairReturnedPartQty",
+      "line": 3170
+    },
+    {
+      "name": "repairReturnCalculation",
+      "line": 3173
+    },
+    {
+      "name": "updateRepairReturnPreview",
+      "line": 3180
+    },
+    {
+      "name": "repairReturnModal",
+      "line": 3189
+    },
+    {
+      "name": "saleReturnCalculation",
+      "line": 3196
+    },
+    {
+      "name": "updateSaleReturnPreview",
+      "line": 3205
+    },
+    {
+      "name": "saveSaleReturn",
+      "line": 3218
+    },
+    {
+      "name": "saveRepairReturn",
+      "line": 3250
+    },
+    {
+      "name": "createReturnReceipt",
+      "line": 3267
+    },
+    {
+      "name": "returnRowsHtml",
+      "line": 3271
+    },
+    {
+      "name": "renderReturns",
+      "line": 3275
+    },
+    {
+      "name": "renderSales",
+      "line": 3277
+    },
+    {
+      "name": "photoPicker",
+      "line": 3282
+    },
+    {
+      "name": "usedWatchConditionOptions",
+      "line": 3288
+    },
+    {
+      "name": "ean13CheckDigit",
+      "line": 3291
+    },
+    {
+      "name": "generateUsedBarcode",
+      "line": 3292
+    },
+    {
+      "name": "usedWatchNameFrom",
+      "line": 3300
+    },
+    {
+      "name": "usedWatchProductFromForm",
+      "line": 3301
+    },
+    {
+      "name": "usedWatchCommonFields",
+      "line": 3309
+    },
+    {
+      "name": "renderUsedWatches",
+      "line": 3313
+    },
+    {
+      "name": "usedWatchMaintenancePartOptions",
+      "line": 3317
+    },
+    {
+      "name": "openUsedWatchCost",
+      "line": 3318
+    },
+    {
+      "name": "capitalizeUsedWatchCost",
+      "line": 3319
+    },
+    {
+      "name": "saveUsedWatchCost",
+      "line": 3320
+    },
+    {
+      "name": "renderUsedWatchPurchase",
+      "line": 3321
+    },
+    {
+      "name": "usedNewProductOptions",
+      "line": 3322
+    },
+    {
+      "name": "renderUsedWatchExchange",
+      "line": 3323
+    },
+    {
+      "name": "updateUsedExchangePreview",
+      "line": 3324
+    },
+    {
+      "name": "saveUsedWatchPurchase",
+      "line": 3325
+    },
+    {
+      "name": "saveUsedWatchExchange",
+      "line": 3327
+    },
+    {
+      "name": "createUsedWatchReceipt",
+      "line": 3329
+    },
+    {
+      "name": "renderProducts",
+      "line": 3331
+    },
+    {
+      "name": "productValueUSD",
+      "line": 3335
+    },
+    {
+      "name": "casioManualFamily",
+      "line": 3347
+    },
+    {
+      "name": "casioFamilySelectHtml",
+      "line": 3348
+    },
+    {
+      "name": "watchBrandChoices",
+      "line": 3350
+    },
+    {
+      "name": "watchBrandControlHtml",
+      "line": 3351
+    },
+    {
+      "name": "watchBrandUiUpdate",
+      "line": 3355
+    },
+    {
+      "name": "saveWatchBrand",
+      "line": 3362
+    },
+    {
+      "name": "casioRefNormalize",
+      "line": 3367
+    },
+    {
+      "name": "casioLikelyCategory",
+      "line": 3378
+    },
+    {
+      "name": "casioArabicMaterial",
+      "line": 3384
+    },
+    {
+      "name": "casioArabicBand",
+      "line": 3394
+    },
+    {
+      "name": "casioArabicGlass",
+      "line": 3398
+    },
+    {
+      "name": "casioArabicWater",
+      "line": 3402
+    },
+    {
+      "name": "casioArabicBattery",
+      "line": 3408
+    },
+    {
+      "name": "casioCleanText",
+      "line": 3413
+    },
+    {
+      "name": "casioSpecMap",
+      "line": 3414
+    },
+    {
+      "name": "casioSpecMapFromReaderText",
+      "line": 3478
+    },
+    {
+      "name": "casioMergeSpecMaps",
+      "line": 3522
+    },
+    {
+      "name": "casioSpecGet",
+      "line": 3525
+    },
+    {
+      "name": "casioArabicFeatureValue",
+      "line": 3526
+    },
+    {
+      "name": "casioArabicFeatureLine",
+      "line": 3551
+    },
+    {
+      "name": "casioInferGenderGeneral",
+      "line": 3560
+    },
+    {
+      "name": "casioInferProfile",
+      "line": 3572
+    },
+    {
+      "name": "watchArabicColorFromText",
+      "line": 3605
+    },
+    {
+      "name": "casioInferStrapColorSafe",
+      "line": 3625
+    },
+    {
+      "name": "casioInferColor",
+      "line": 3637
+    },
+    {
+      "name": "casioDefaultWarranty",
+      "line": 3654
+    },
+    {
+      "name": "casioOfficialImageUrls",
+      "line": 3659
+    },
+    {
+      "name": "casioDownloadImage",
+      "line": 3680
+    },
+    {
+      "name": "casioSetPhotoField",
+      "line": 3702
+    },
+    {
+      "name": "casioImportOfficialImages",
+      "line": 3708
+    },
+    {
+      "name": "casioSetField",
+      "line": 3714
+    },
+    {
+      "name": "casioSetAdvisorChip",
+      "line": 3715
+    },
+    {
+      "name": "casioOfficialFeatureText",
+      "line": 3716
+    },
+    {
+      "name": "casioApplyAdvisorFromOfficial",
+      "line": 3720
+    },
+    {
+      "name": "casioDisplayTypeFromSpecs",
+      "line": 3732
+    },
+    {
+      "name": "casioMovementFromOfficial",
+      "line": 3738
+    },
+    {
+      "name": "casioRefCandidates",
+      "line": 3744
+    },
+    {
+      "name": "casioCategoryCandidates",
+      "line": 3777
+    },
+    {
+      "name": "casioReaderDoc",
+      "line": 3786
+    },
+    {
+      "name": "casioPathsForRegionFamily",
+      "line": 3853
+    },
+    {
+      "name": "casioOfficialUrlsForRef",
+      "line": 3862
+    },
+    {
+      "name": "casioDirectProductUrls",
+      "line": 3875
+    },
+    {
+      "name": "casioPriorityDirectUrls",
+      "line": 3898
+    },
+    {
+      "name": "casioReaderScore",
+      "line": 3912
+    },
+    {
+      "name": "casioReadOfficialUrl",
+      "line": 3920
+    },
+    {
+      "name": "casioReaderBatch",
+      "line": 3935
+    },
+    {
+      "name": "casioDdgCache",
+      "line": 3944
+    },
+    {
+      "name": "casioDdgCacheGet",
+      "line": 3945
+    },
+    {
+      "name": "casioDdgCachePut",
+      "line": 3946
+    },
+    {
+      "name": "casioDdgDecodeUrl",
+      "line": 3947
+    },
+    {
+      "name": "casioDdgExtractUrls",
+      "line": 3953
+    },
+    {
+      "name": "casioJinaSearchCache",
+      "line": 3961
+    },
+    {
+      "name": "casioJinaSearchCacheGet",
+      "line": 3962
+    },
+    {
+      "name": "casioJinaSearchCachePut",
+      "line": 3963
+    },
+    {
+      "name": "casioExtractOfficialProductUrls",
+      "line": 3964
+    },
+    {
+      "name": "casioJinaSearchResolve",
+      "line": 3981
+    },
+    {
+      "name": "casioDuckDuckGoResolve",
+      "line": 4003
+    },
+    {
+      "name": "casioFetchViaWebIndex",
+      "line": 4021
+    },
+    {
+      "name": "casioFetchViaReader",
+      "line": 4043
+    },
+    {
+      "name": "casioFamilySpecFallbackRefs",
+      "line": 4066
+    },
+    {
+      "name": "casioFetchSiblingSpecs",
+      "line": 4078
+    },
+    {
+      "name": "casioBuiltInOfficialFamilySpecs",
+      "line": 4102
+    },
+    {
+      "name": "casioFetchOfficialNetwork",
+      "line": 4135
+    },
+    {
+      "name": "casioClearRefCaches",
+      "line": 4181
+    },
+    {
+      "name": "casioFetchOfficial",
+      "line": 4188
+    },
+    {
+      "name": "watchLookupBrandKey",
+      "line": 4240
+    },
+    {
+      "name": "watchRefKey",
+      "line": 4246
+    },
+    {
+      "name": "watchAbsUrl",
+      "line": 4247
+    },
+    {
+      "name": "watchPageHasRef",
+      "line": 4248
+    },
+    {
+      "name": "watchFindProductJson",
+      "line": 4249
+    },
+    {
+      "name": "watchGenericSpecMap",
+      "line": 4254
+    },
+    {
+      "name": "watchSpecAny",
+      "line": 4278
+    },
+    {
+      "name": "watchArabicMovement",
+      "line": 4288
+    },
+    {
+      "name": "watchArabicGender",
+      "line": 4289
+    },
+    {
+      "name": "watchSpecLabelKey",
+      "line": 4290
+    },
+    {
+      "name": "watchArabicMaterial",
+      "line": 4291
+    },
+    {
+      "name": "watchArabicBand",
+      "line": 4303
+    },
+    {
+      "name": "watchArabicGlassValue",
+      "line": 4307
+    },
+    {
+      "name": "watchArabicWaterValue",
+      "line": 4311
+    },
+    {
+      "name": "watchArabicColorsText",
+      "line": 4318
+    },
+    {
+      "name": "watchArabicFeatureText",
+      "line": 4330
+    },
+    {
+      "name": "watchArabicDimension",
+      "line": 4344
+    },
+    {
+      "name": "watchArabicSpecLabel",
+      "line": 4350
+    },
+    {
+      "name": "watchGenericSpecAllowed",
+      "line": 4363
+    },
+    {
+      "name": "watchArabicSpecValue",
+      "line": 4371
+    },
+    {
+      "name": "watchArabicProductName",
+      "line": 4385
+    },
+    {
+      "name": "watchArabicDescription",
+      "line": 4393
+    },
+    {
+      "name": "watchGenericImages",
+      "line": 4405
+    },
+    {
+      "name": "watchDownloadImageData",
+      "line": 4423
+    },
+    {
+      "name": "watchImportImages",
+      "line": 4432
+    },
+    {
+      "name": "watchRefMatches",
+      "line": 4434
+    },
+    {
+      "name": "watchAllowedUrl",
+      "line": 4440
+    },
+    {
+      "name": "watchMatchingProduct",
+      "line": 4441
+    },
+    {
+      "name": "watchProductFields",
+      "line": 4446
+    },
+    {
+      "name": "watchValidatedPage",
+      "line": 4465
+    },
+    {
+      "name": "watchReaderDocument",
+      "line": 4483
+    },
+    {
+      "name": "watchSkmeiSynthetic",
+      "line": 4497
+    },
+    {
+      "name": "watchSkmeiShopifyLookup",
+      "line": 4557
+    },
+    {
+      "name": "watchSkmeiOriginalCatalog",
+      "line": 4606
+    },
+    {
+      "name": "watchSkmeiWebIndexLookup",
+      "line": 4628
+    },
+    {
+      "name": "watchSkmeiDetailEvidence",
+      "line": 4654
+    },
+    {
+      "name": "watchSkmeiAddDetailImages",
+      "line": 4664
+    },
+    {
+      "name": "watchSkmeiLookup",
+      "line": 4675
+    },
+    {
+      "name": "casioNativeBridgeRequest",
+      "line": 4797
+    },
+    {
+      "name": "casioNativeRequest",
+      "line": 4809
+    },
+    {
+      "name": "watchXhrRequest",
+      "line": 4818
+    },
+    {
+      "name": "watchCasioUnifiedLookup",
+      "line": 4839
+    },
+    {
+      "name": "casioDirectProductUrl",
+      "line": 4859
+    },
+    {
+      "name": "casioRefFromDirectUrl",
+      "line": 4860
+    },
+    {
+      "name": "watchDirectProductUrl",
+      "line": 4861
+    },
+    {
+      "name": "watchDirectModel",
+      "line": 4862
+    },
+    {
+      "name": "watchFetchGeneric",
+      "line": 4863
+    },
+    {
+      "name": "watchTimehouseLookup",
+      "line": 4893
+    },
+    {
+      "name": "watchGenericApplyAdvisor",
+      "line": 4922
+    },
+    {
+      "name": "watchLookupScope",
+      "line": 4933
+    },
+    {
+      "name": "watchSetLookupField",
+      "line": 4934
+    },
+    {
+      "name": "watchSetLookupText",
+      "line": 4940
+    },
+    {
+      "name": "watchResetPreviousAutoLookup",
+      "line": 4945
+    },
+    {
+      "name": "watchGenericAutoLookup",
+      "line": 4957
+    },
+    {
+      "name": "casioAbortPreviousLookup",
+      "line": 4982
+    },
+    {
+      "name": "casioLookupController",
+      "line": 4988
+    },
+    {
+      "name": "casioReleaseController",
+      "line": 4989
+    },
+    {
+      "name": "watchAutoLookup",
+      "line": 4991
+    },
+    {
+      "name": "casioAutoLookup",
+      "line": 5000
+    },
+    {
+      "name": "colorVariantRowHtml",
+      "line": 5045
+    },
+    {
+      "name": "colorVariantsEditorHtml",
+      "line": 5061
+    },
+    {
+      "name": "variantColorKey",
+      "line": 5065
+    },
+    {
+      "name": "variantIdentity",
+      "line": 5066
+    },
+    {
+      "name": "productVariantIdentity",
+      "line": 5069
+    },
+    {
+      "name": "variantProductName",
+      "line": 5072
+    },
+    {
+      "name": "productVariantGroupItems",
+      "line": 5079
+    },
+    {
+      "name": "legacyVariantGroupNeedsBaseChoice",
+      "line": 5087
+    },
+    {
+      "name": "legacyVariantBaseChoiceModal",
+      "line": 5091
+    },
+    {
+      "name": "productVariantRowsForEditor",
+      "line": 5095
+    },
+    {
+      "name": "productVariantRowFromProduct",
+      "line": 5100
+    },
+    {
+      "name": "baseVariantFromForm",
+      "line": 5103
+    },
+    {
+      "name": "readColorVariantRows",
+      "line": 5107
+    },
+    {
+      "name": "openingProductCanBeCorrected",
+      "line": 5132
+    },
+    {
+      "name": "productHasInvoiceActivity",
+      "line": 5142
+    },
+    {
+      "name": "productCanBeFullyEdited",
+      "line": 5151
+    },
+    {
+      "name": "syncOpeningProductFunding",
+      "line": 5152
+    },
+    {
+      "name": "validateColorVariants",
+      "line": 5159
+    },
+    {
+      "name": "watchDetailCustomValues",
+      "line": 5191
+    },
+    {
+      "name": "watchDetailValues",
+      "line": 5192
+    },
+    {
+      "name": "watchDetailOptionLabel",
+      "line": 5197
+    },
+    {
+      "name": "watchDetailVariantColorSelect",
+      "line": 5198
+    },
+    {
+      "name": "watchDetailSelectHtml",
+      "line": 5199
+    },
+    {
+      "name": "watchDetailNamedSelectHtml",
+      "line": 5203
+    },
+    {
+      "name": "watchCustomerDetailsFields",
+      "line": 5207
+    },
+    {
+      "name": "addWatchDetailOptionFromSelect",
+      "line": 5223
+    },
+    {
+      "name": "productQuickForm",
+      "line": 5241
+    },
+    {
+      "name": "productForm",
+      "line": 5265
+    },
+    {
+      "name": "inventoryBarcodeConflict",
+      "line": 5323
+    },
+    {
+      "name": "maintenancePartByBarcode",
+      "line": 5331
+    },
+    {
+      "name": "maintenancePartById",
+      "line": 5332
+    },
+    {
+      "name": "inventoryDeviceName",
+      "line": 5335
+    },
+    {
+      "name": "fundingConsumeAdjustments",
+      "line": 5336
+    },
+    {
+      "name": "fundingRestoreAdjustments",
+      "line": 5337
+    },
+    {
+      "name": "addInventoryMovement",
+      "line": 5338
+    },
+    {
+      "name": "inventoryAdjustmentFunding",
+      "line": 5348
+    },
+    {
+      "name": "productStockAdjustmentModal",
+      "line": 5362
+    },
+    {
+      "name": "saveProductStockAdjustment",
+      "line": 5366
+    },
+    {
+      "name": "lowStockItems",
+      "line": 5375
+    },
+    {
+      "name": "lowStockSummaryHtml",
+      "line": 5380
+    },
+    {
+      "name": "renderStockAlerts",
+      "line": 5386
+    },
+    {
+      "name": "renderInventoryMovements",
+      "line": 5390
+    },
+    {
+      "name": "lowStockNoticeState",
+      "line": 5394
+    },
+    {
+      "name": "lowStockNoticeSave",
+      "line": 5395
+    },
+    {
+      "name": "notifyNativeLowStock",
+      "line": 5396
+    },
+    {
+      "name": "checkLowStockAlerts",
+      "line": 5399
+    },
+    {
+      "name": "renderMaintenanceParts",
+      "line": 5412
+    },
+    {
+      "name": "maintenancePartForm",
+      "line": 5416
+    },
+    {
+      "name": "saveMaintenancePart",
+      "line": 5422
+    },
+    {
+      "name": "repairPartsSummaryHtml",
+      "line": 5433
+    },
+    {
+      "name": "repairPartsInvoiceTotal",
+      "line": 5438
+    },
+    {
+      "name": "repairLaborPrice",
+      "line": 5443
+    },
+    {
+      "name": "repairInvoiceTotal",
+      "line": 5450
+    },
+    {
+      "name": "repairSelectedParts",
+      "line": 5455
+    },
+    {
+      "name": "repairPartsTotal",
+      "line": 5456
+    },
+    {
+      "name": "repairPartsCost",
+      "line": 5457
+    },
+    {
+      "name": "repairPartsPickerHtml",
+      "line": 5458
+    },
+    {
+      "name": "wireRepairPartsPicker",
+      "line": 5476
+    },
+    {
+      "name": "readRepairParts",
+      "line": 5488
+    },
+    {
+      "name": "applyRepairPartsStock",
+      "line": 5495
+    },
+    {
+      "name": "restoreRepairPartsStock",
+      "line": 5501
+    },
+    {
+      "name": "renderRepairForm",
+      "line": 5507
+    },
+    {
+      "name": "repairDeliveryActualPayment",
+      "line": 5519
+    },
+    {
+      "name": "repairDisplaySettlement",
+      "line": 5525
+    },
+    {
+      "name": "renderRepairs",
+      "line": 5529
+    },
+    {
+      "name": "supplierById",
+      "line": 5535
+    },
+    {
+      "name": "purchaseItemOptions",
+      "line": 5537
+    },
+    {
+      "name": "supplierOptions",
+      "line": 5541
+    },
+    {
+      "name": "purchaseDebtUSD",
+      "line": 5542
+    },
+    {
+      "name": "shopPurchaseDebtUSD",
+      "line": 5543
+    },
+    {
+      "name": "inventoryCostUSD",
+      "line": 5544
+    },
+    {
+      "name": "shopInventoryCostUSD",
+      "line": 5545
+    },
+    {
+      "name": "vaultsUSD",
+      "line": 5546
+    },
+    {
+      "name": "receivablesUSD",
+      "line": 5547
+    },
+    {
+      "name": "repairPrepaymentsLiabilityUSD",
+      "line": 5548
+    },
+    {
+      "name": "externalPartnersDueUSD",
+      "line": 5549
+    },
+    {
+      "name": "externalPartnersReceivableUSD",
+      "line": 5550
+    },
+    {
+      "name": "businessCapitalUSD",
+      "line": 5551
+    },
+    {
+      "name": "taxNetAmount",
+      "line": 5552
+    },
+    {
+      "name": "taxLiabilityUSD",
+      "line": 5553
+    },
+    {
+      "name": "supplierPurchases",
+      "line": 5554
+    },
+    {
+      "name": "supplierLedgerRows",
+      "line": 5555
+    },
+    {
+      "name": "supplierLegacyBalanceUSD",
+      "line": 5556
+    },
+    {
+      "name": "supplierLegacyDebtUSD",
+      "line": 5557
+    },
+    {
+      "name": "supplierTotals",
+      "line": 5558
+    },
+    {
+      "name": "supplierStatementModal",
+      "line": 5559
+    },
+    {
+      "name": "supplierOpeningDebtModal",
+      "line": 5563
+    },
+    {
+      "name": "saveSupplierOpeningDebt",
+      "line": 5564
+    },
+    {
+      "name": "supplierCorrectOpeningDebtModal",
+      "line": 5565
+    },
+    {
+      "name": "saveSupplierCorrectOpeningDebt",
+      "line": 5566
+    },
+    {
+      "name": "supplierDirectPaymentModal",
+      "line": 5567
+    },
+    {
+      "name": "saveSupplierDirectPayment",
+      "line": 5568
+    },
+    {
+      "name": "purchaseFundingOutstanding",
+      "line": 5570
+    },
+    {
+      "name": "purchasePaymentModal",
+      "line": 5573
+    },
+    {
+      "name": "updatePurchasePaymentFundingUi",
+      "line": 5578
+    },
+    {
+      "name": "savePurchasePayment",
+      "line": 5579
+    },
+    {
+      "name": "purchaseInvoiceItems",
+      "line": 5590
+    },
+    {
+      "name": "productFundingLots",
+      "line": 5595
+    },
+    {
+      "name": "productFundingTrackedQty",
+      "line": 5600
+    },
+    {
+      "name": "productFundingMismatch",
+      "line": 5601
+    },
+    {
+      "name": "productInventoryCostUSD",
+      "line": 5602
+    },
+    {
+      "name": "productAverageFundingCost",
+      "line": 5603
+    },
+    {
+      "name": "addFundingLot",
+      "line": 5604
+    },
+    {
+      "name": "consumeFundingLots",
+      "line": 5608
+    },
+    {
+      "name": "restoreFundingAllocations",
+      "line": 5613
+    },
+    {
+      "name": "returnFundingAllocationsForQty",
+      "line": 5614
+    },
+    {
+      "name": "fundingCostInSaleCurrency",
+      "line": 5615
+    },
+    {
+      "name": "purchaseFundingOptions",
+      "line": 5616
+    },
+    {
+      "name": "purchaseLine",
+      "line": 5617
+    },
+    {
+      "name": "cancelPurchase",
+      "line": 5651
+    },
+    {
+      "name": "renderPurchases",
+      "line": 5671
+    },
+    {
+      "name": "purchaseDraftImageDb",
+      "line": 5682
+    },
+    {
+      "name": "purchaseDraftImagesPut",
+      "line": 5683
+    },
+    {
+      "name": "purchaseDraftImagesGet",
+      "line": 5684
+    },
+    {
+      "name": "purchaseDraftImagesDelete",
+      "line": 5685
+    },
+    {
+      "name": "purchaseDraftStableId",
+      "line": 5687
+    },
+    {
+      "name": "purchaseDraftCapture",
+      "line": 5688
+    },
+    {
+      "name": "purchaseDraftSchedule",
+      "line": 5700
+    },
+    {
+      "name": "purchaseDraftClear",
+      "line": 5701
+    },
+    {
+      "name": "purchaseDraftRestore",
+      "line": 5702
+    },
+    {
+      "name": "renderPurchaseForm",
+      "line": 5718
+    },
+    {
+      "name": "supplierModal",
+      "line": 5743
+    },
+    {
+      "name": "saveSupplier",
+      "line": 5744
+    },
+    {
+      "name": "deleteSupplier",
+      "line": 5745
+    },
+    {
+      "name": "readPurchaseLines",
+      "line": 5747
+    },
+    {
+      "name": "updatePurchaseFundingUi",
+      "line": 5775
+    },
+    {
+      "name": "updatePurchaseTotals",
+      "line": 5784
+    },
+    {
+      "name": "filterPurchaseItemOptions",
+      "line": 5800
+    },
+    {
+      "name": "purchaseRowSelectionChanged",
+      "line": 5810
+    },
+    {
+      "name": "savePurchase",
+      "line": 5817
+    },
+    {
+      "name": "renderExpenseForm",
+      "line": 5863
+    },
+    {
+      "name": "renderExpenses",
+      "line": 5864
+    },
+    {
+      "name": "renderDebts",
+      "line": 5866
+    },
+    {
+      "name": "financeMethodVault",
+      "line": 5875
+    },
+    {
+      "name": "rawVaultBalance",
+      "line": 5883
+    },
+    {
+      "name": "vaultBalance",
+      "line": 5886
+    },
+    {
+      "name": "addCashTransaction",
+      "line": 5899
+    },
+    {
+      "name": "recordIncomingPayment",
+      "line": 5905
+    },
+    {
+      "name": "vaultCardsHtml",
+      "line": 5911
+    },
+    {
+      "name": "vaultSummaryRange",
+      "line": 5919
+    },
+    {
+      "name": "usdSumRows",
+      "line": 5925
+    },
+    {
+      "name": "vaultPeriodSummary",
+      "line": 5928
+    },
+    {
+      "name": "vaultSummaryYears",
+      "line": 5955
+    },
+    {
+      "name": "vaultPeriodFlowHtml",
+      "line": 5961
+    },
+    {
+      "name": "vaultSummaryHtml",
+      "line": 5969
+    },
+    {
+      "name": "renderVaults",
+      "line": 5997
+    },
+    {
+      "name": "cashMovementModal",
+      "line": 6002
+    },
+    {
+      "name": "saveCashMovement",
+      "line": 6016
+    },
+    {
+      "name": "todayMethodTotals",
+      "line": 6045
+    },
+    {
+      "name": "todayVaultNet",
+      "line": 6051
+    },
+    {
+      "name": "dailyCloseTarget",
+      "line": 6055
+    },
+    {
+      "name": "previousDailyClosing",
+      "line": 6056
+    },
+    {
+      "name": "carriedDrawerBalance",
+      "line": 6057
+    },
+    {
+      "name": "drawerExpectedForDay",
+      "line": 6058
+    },
+    {
+      "name": "dailyCloseSuggestedTransfer",
+      "line": 6059
+    },
+    {
+      "name": "applyDailyCloseSuggestions",
+      "line": 6060
+    },
+    {
+      "name": "dailyCloseInputRow",
+      "line": 6062
+    },
+    {
+      "name": "dailyVaultSnapshot",
+      "line": 6067
+    },
+    {
+      "name": "dailyCloseVaultLinkHtml",
+      "line": 6084
+    },
+    {
+      "name": "dailyReturnExchangeSummaryHtml",
+      "line": 6091
+    },
+    {
+      "name": "renderDailyClose",
+      "line": 6102
+    },
+    {
+      "name": "updateDailyCloseComputed",
+      "line": 6121
+    },
+    {
+      "name": "saveDailyClose",
+      "line": 6129
+    },
+    {
+      "name": "renderWallet",
+      "line": 6158
+    },
+    {
+      "name": "reportMonthRange",
+      "line": 6171
+    },
+    {
+      "name": "reportProfitBreakdown",
+      "line": 6172
+    },
+    {
+      "name": "readOnlyBalanceAuditHtml",
+      "line": 6193
+    },
+    {
+      "name": "renderReports",
+      "line": 6194
+    },
+    {
+      "name": "externalPartnerSaleShares",
+      "line": 6200
+    },
+    {
+      "name": "externalPartnerReturnShares",
+      "line": 6205
+    },
+    {
+      "name": "externalPartnerSaleAccruedUsd",
+      "line": 6211
+    },
+    {
+      "name": "saleEffectiveAt",
+      "line": 6214
+    },
+    {
+      "name": "saleNetCollectedAt",
+      "line": 6215
+    },
+    {
+      "name": "externalPartnerCollectedAt",
+      "line": 6216
+    },
+    {
+      "name": "dayBefore",
+      "line": 6217
+    },
+    {
+      "name": "externalPartnerCollectedDeltaUsdForRange",
+      "line": 6218
+    },
+    {
+      "name": "externalPartnerAccruedDeltaUsdForRange",
+      "line": 6219
+    },
+    {
+      "name": "externalPartnerShareUsdForRange",
+      "line": 6220
+    },
+    {
+      "name": "externalPartnerCapitalStockUsd",
+      "line": 6221
+    },
+    {
+      "name": "externalPartnerCapitalSoldUsdForRange",
+      "line": 6222
+    },
+    {
+      "name": "externalPartnerAccruedUsdForRange",
+      "line": 6223
+    },
+    {
+      "name": "externalPartnerPurchasesUsd",
+      "line": 6224
+    },
+    {
+      "name": "externalPartnerPayoutUsd",
+      "line": 6225
+    },
+    {
+      "name": "externalPartnerPayoutUsdForRange",
+      "line": 6226
+    },
+    {
+      "name": "externalPartnerMonthSummary",
+      "line": 6227
+    },
+    {
+      "name": "externalPartnerMonthOptions",
+      "line": 6228
+    },
+    {
+      "name": "externalPartnerDueUsd",
+      "line": 6229
+    },
+    {
+      "name": "externalPartnerPayoutModal",
+      "line": 6231
+    },
+    {
+      "name": "familyProfitUsdForRange",
+      "line": 6232
+    },
+    {
+      "name": "grossProfitUsdForRange",
+      "line": 6233
+    },
+    {
+      "name": "profitUsdForRange",
+      "line": 6254
+    },
+    {
+      "name": "currentMonthRange",
+      "line": 6255
+    },
+    {
+      "name": "partnerWithdrawalUsd",
+      "line": 6256
+    },
+    {
+      "name": "renderPartners",
+      "line": 6257
+    },
+    {
+      "name": "partnerWithdrawalModal",
+      "line": 6269
+    },
+    {
+      "name": "normalizedInventoryName",
+      "line": 6272
+    },
+    {
+      "name": "exactInventoryNameConflict",
+      "line": 6273
+    },
+    {
+      "name": "quickPartLinkedButton",
+      "line": 6274
+    },
+    {
+      "name": "quickRepairButtonModal",
+      "line": 6276
+    },
+    {
+      "name": "saveQuickRepairButton",
+      "line": 6283
+    },
+    {
+      "name": "renderSettings",
+      "line": 6297
+    },
+    {
+      "name": "saleDiscountDetailRows",
+      "line": 6312
+    },
+    {
+      "name": "saleActualPaymentMeta",
+      "line": 6324
+    },
+    {
+      "name": "salePaymentBreakdownHtml",
+      "line": 6330
+    },
+    {
+      "name": "detailModal",
+      "line": 6331
+    },
+    {
+      "name": "receiptPreviewHtml",
+      "line": 6339
+    },
+    {
+      "name": "receiptActionModal",
+      "line": 6347
+    },
+    {
+      "name": "receiptPreviewModal",
+      "line": 6351
+    },
+    {
+      "name": "paymentModal",
+      "line": 6354
+    },
+    {
+      "name": "customerKey",
+      "line": 6360
+    },
+    {
+      "name": "customerDirectory",
+      "line": 6361
+    },
+    {
+      "name": "warrantyEndDate",
+      "line": 6367
+    },
+    {
+      "name": "warrantyState",
+      "line": 6368
+    },
+    {
+      "name": "renderTodayCenter",
+      "line": 6369
+    },
+    {
+      "name": "renderCustomers",
+      "line": 6373
+    },
+    {
+      "name": "customerRowsHtml",
+      "line": 6374
+    },
+    {
+      "name": "customerModal",
+      "line": 6375
+    },
+    {
+      "name": "customerOrderActive",
+      "line": 6376
+    },
+    {
+      "name": "customerOrderQty",
+      "line": 6377
+    },
+    {
+      "name": "customerOrderDepositUsed",
+      "line": 6378
+    },
+    {
+      "name": "customerOrderDepositHeld",
+      "line": 6379
+    },
+    {
+      "name": "reservedStockForProduct",
+      "line": 6380
+    },
+    {
+      "name": "availableStockForSale",
+      "line": 6383
+    },
+    {
+      "name": "refreshOrderAvailabilityForProduct",
+      "line": 6384
+    },
+    {
+      "name": "refreshAllOrderAvailability",
+      "line": 6390
+    },
+    {
+      "name": "orderLinkedProduct",
+      "line": 6391
+    },
+    {
+      "name": "orderDepositLabel",
+      "line": 6392
+    },
+    {
+      "name": "orderProductLinkLabel",
+      "line": 6393
+    },
+    {
+      "name": "renderCustomerOrders",
+      "line": 6394
+    },
+    {
+      "name": "customerOrderModal",
+      "line": 6400
+    },
+    {
+      "name": "saveCustomerOrder",
+      "line": 6404
+    },
+    {
+      "name": "customerOrderProductModal",
+      "line": 6412
+    },
+    {
+      "name": "saveCustomerOrderLink",
+      "line": 6416
+    },
+    {
+      "name": "completeCustomerOrderModal",
+      "line": 6417
+    },
+    {
+      "name": "saveCustomerOrderComplete",
+      "line": 6421
+    },
+    {
+      "name": "cancelCustomerOrderModal",
+      "line": 6429
+    },
+    {
+      "name": "saveCustomerOrderCancel",
+      "line": 6430
+    },
+    {
+      "name": "deleteCustomerOrder",
+      "line": 6432
+    },
+    {
+      "name": "renderWarranties",
+      "line": 6433
+    },
+    {
+      "name": "inventorySalesQty",
+      "line": 6434
+    },
+    {
+      "name": "productLastSale",
+      "line": 6435
+    },
+    {
+      "name": "ageDays",
+      "line": 6436
+    },
+    {
+      "name": "renderInventoryAnalytics",
+      "line": 6437
+    },
+    {
+      "name": "renderAuditLog",
+      "line": 6438
+    },
+    {
+      "name": "modernHomeShortcuts",
+      "line": 6447
+    },
+    {
+      "name": "modernEnsureData",
+      "line": 6448
+    },
+    {
+      "name": "modernNorm",
+      "line": 6449
+    },
+    {
+      "name": "modernFindDuplicateCandidate",
+      "line": 6450
+    },
+    {
+      "name": "modernDuplicateGroups",
+      "line": 6451
+    },
+    {
+      "name": "modernRecordCost",
+      "line": 6452
+    },
+    {
+      "name": "modernDiscountOptions",
+      "line": 6453
+    },
+    {
+      "name": "modernDiscountRuleCalc",
+      "line": 6454
+    },
+    {
+      "name": "modernApplyDiscountRule",
+      "line": 6464
+    },
+    {
+      "name": "modernRecordLoyaltyEarn",
+      "line": 6473
+    },
+    {
+      "name": "loyaltyPhoneDigits",
+      "line": 6474
+    },
+    {
+      "name": "loyaltyPhoneMatch",
+      "line": 6475
+    },
+    {
+      "name": "modernCustomerPoints",
+      "line": 6476
+    },
+    {
+      "name": "modernSaleLoyaltyAvailable",
+      "line": 6478
+    },
+    {
+      "name": "modernSaleLoyaltyRequested",
+      "line": 6482
+    },
+    {
+      "name": "modernSaleLoyaltyDiscount",
+      "line": 6483
+    },
+    {
+      "name": "modernRefreshSaleLoyalty",
+      "line": 6489
+    },
+    {
+      "name": "modernSales30",
+      "line": 6502
+    },
+    {
+      "name": "modernReorderRows",
+      "line": 6503
+    },
+    {
+      "name": "modernAnomalies",
+      "line": 6504
+    },
+    {
+      "name": "modernFinancialAlerts",
+      "line": 6505
+    },
+    {
+      "name": "modernProductFamilyKey",
+      "line": 6506
+    },
+    {
+      "name": "modernProductFamilyLabel",
+      "line": 6507
+    },
+    {
+      "name": "modernDecisionRows",
+      "line": 6508
+    },
+    {
+      "name": "modernWorkTasks",
+      "line": 6509
+    },
+    {
+      "name": "opsProductByBarcode",
+      "line": 6511
+    },
+    {
+      "name": "opsLocationOptions",
+      "line": 6512
+    },
+    {
+      "name": "renderCustomerSession",
+      "line": 6513
+    },
+    {
+      "name": "renderInventoryCameraCount",
+      "line": 6514
+    },
+    {
+      "name": "handoverMoneyInputs",
+      "line": 6521
+    },
+    {
+      "name": "handoverPendingGroups",
+      "line": 6526
+    },
+    {
+      "name": "handoverGroupHtml",
+      "line": 6533
+    },
+    {
+      "name": "renderShiftHandover",
+      "line": 6534
+    },
+    {
+      "name": "renderFatherDeliveries",
+      "line": 6538
+    },
+    {
+      "name": "modernHubCard",
+      "line": 6542
+    },
+    {
+      "name": "smartPriceInfo",
+      "line": 6544
+    },
+    {
+      "name": "renderSmartPricing",
+      "line": 6553
+    },
+    {
+      "name": "careSoldWatches",
+      "line": 6554
+    },
+    {
+      "name": "careText",
+      "line": 6559
+    },
+    {
+      "name": "careRepairMatchesWatch",
+      "line": 6560
+    },
+    {
+      "name": "careWatchEvents",
+      "line": 6568
+    },
+    {
+      "name": "renderAlsafaCare",
+      "line": 6574
+    },
+    {
+      "name": "openCareWatch",
+      "line": 6578
+    },
+    {
+      "name": "renderModernHub",
+      "line": 6583
+    },
+    {
+      "name": "renderModernWork",
+      "line": 6584
+    },
+    {
+      "name": "renderModernDecisions",
+      "line": 6585
+    },
+    {
+      "name": "renderModernAlerts",
+      "line": 6586
+    },
+    {
+      "name": "modernProductSearch",
+      "line": 6587
+    },
+    {
+      "name": "modernSellerRows",
+      "line": 6588
+    },
+    {
+      "name": "renderSalesAssistant",
+      "line": 6589
+    },
+    {
+      "name": "renderCustomerDisplay",
+      "line": 6590
+    },
+    {
+      "name": "renderDuplicateCenter",
+      "line": 6591
+    },
+    {
+      "name": "renderReorderCenter",
+      "line": 6592
+    },
+    {
+      "name": "modernPublicWatchUrl",
+      "line": 6596
+    },
+    {
+      "name": "modernPublicImage",
+      "line": 6597
+    },
+    {
+      "name": "modernPublicCardPayload",
+      "line": 6601
+    },
+    {
+      "name": "modernCustomerCardHtml",
+      "line": 6613
+    },
+    {
+      "name": "modernPreviewCustomerWatch",
+      "line": 6637
+    },
+    {
+      "name": "modernPublishPublicWatch",
+      "line": 6640
+    },
+    {
+      "name": "modernProductQrModal",
+      "line": 6650
+    },
+    {
+      "name": "code128Svg",
+      "line": 6669
+    },
+    {
+      "name": "productLabelMarkup",
+      "line": 6687
+    },
+    {
+      "name": "productLabelModal",
+      "line": 6717
+    },
+    {
+      "name": "readProductLabelInputs",
+      "line": 6736
+    },
+    {
+      "name": "validateProductLabel",
+      "line": 6742
+    },
+    {
+      "name": "refreshProductLabel",
+      "line": 6747
+    },
+    {
+      "name": "saveProductLabel",
+      "line": 6754
+    },
+    {
+      "name": "loadImageForLabel",
+      "line": 6770
+    },
+    {
+      "name": "drawCode128OnCanvas",
+      "line": 6773
+    },
+    {
+      "name": "makeProductLabelCanvas",
+      "line": 6782
+    },
+    {
+      "name": "printProductLabel",
+      "line": 6806
+    },
+    {
+      "name": "renderProductQr",
+      "line": 6823
+    },
+    {
+      "name": "renderWatchCompare",
+      "line": 6826
+    },
+    {
+      "name": "renderDiscountRules",
+      "line": 6827
+    },
+    {
+      "name": "modernDiscountModal",
+      "line": 6828
+    },
+    {
+      "name": "modernLoyaltyCustomerLookup",
+      "line": 6829
+    },
+    {
+      "name": "modernRefreshLoyaltyCustomerSearch",
+      "line": 6830
+    },
+    {
+      "name": "renderLoyaltyCenter",
+      "line": 6831
+    },
+    {
+      "name": "modernLoyaltyRedeemModal",
+      "line": 6832
+    },
+    {
+      "name": "renderCostHistory",
+      "line": 6833
+    },
+    {
+      "name": "renderSupplierProfiles",
+      "line": 6834
+    },
+    {
+      "name": "modernSupplierProfileModal",
+      "line": 6835
+    },
+    {
+      "name": "modernShortcutSettings",
+      "line": 6836
+    },
+    {
+      "name": "renderSmartReceiving",
+      "line": 6837
+    },
+    {
+      "name": "modernStartReceiving",
+      "line": 6838
+    },
+    {
+      "name": "modernAdjustReceiving",
+      "line": 6839
+    },
+    {
+      "name": "modernReceiveBarcode",
+      "line": 6840
+    },
+    {
+      "name": "modernImageDescriptor",
+      "line": 6842
+    },
+    {
+      "name": "modernDescDist",
+      "line": 6843
+    },
+    {
+      "name": "modernVisualSearch",
+      "line": 6844
+    },
+    {
+      "name": "renderVisualWatchFinder",
+      "line": 6845
+    },
+    {
+      "name": "modernManagementPdf",
+      "line": 6846
+    },
+    {
+      "name": "renderAnomalyCenter",
+      "line": 6847
+    },
+    {
+      "name": "renderModernReports",
+      "line": 6848
+    },
+    {
+      "name": "resetWatchAdvisorState",
+      "line": 6852
+    },
+    {
+      "name": "watchAdvisorReset",
+      "line": 6853
+    },
+    {
+      "name": "advisorPersona",
+      "line": 6875
+    },
+    {
+      "name": "advisorPersonaStep",
+      "line": 6876
+    },
+    {
+      "name": "advisorAllStockProducts",
+      "line": 6877
+    },
+    {
+      "name": "advisorPriceInDisplayCurrency",
+      "line": 6878
+    },
+    {
+      "name": "advisorNorm",
+      "line": 6879
+    },
+    {
+      "name": "advisorText",
+      "line": 6880
+    },
+    {
+      "name": "advisorDerivedValues",
+      "line": 6881
+    },
+    {
+      "name": "advisorDynamicChoices",
+      "line": 6882
+    },
+    {
+      "name": "advisorSteps",
+      "line": 6883
+    },
+    {
+      "name": "advisorChoiceIcon",
+      "line": 6884
+    },
+    {
+      "name": "advisorColorStyle",
+      "line": 6885
+    },
+    {
+      "name": "advisorStepChoices",
+      "line": 6886
+    },
+    {
+      "name": "advisorBudgetStockCount",
+      "line": 6887
+    },
+    {
+      "name": "advisorBudgetRounded",
+      "line": 6888
+    },
+    {
+      "name": "advisorBudgetChoices",
+      "line": 6889
+    },
+    {
+      "name": "advisorProgress",
+      "line": 6890
+    },
+    {
+      "name": "renderWatchAdvisor",
+      "line": 6891
+    },
+    {
+      "name": "advisorAdvanceOrSearch",
+      "line": 6892
+    },
+    {
+      "name": "advisorTagList",
+      "line": 6893
+    },
+    {
+      "name": "advisorHasAny",
+      "line": 6894
+    },
+    {
+      "name": "advisorProductScore",
+      "line": 6895
+    },
+    {
+      "name": "watchAdvisorSearch",
+      "line": 6903
+    },
+    {
+      "name": "bodyForRoute",
+      "line": 6905
+    },
+    {
+      "name": "navItem",
+      "line": 6906
+    },
+    {
+      "name": "render",
+      "line": 6907
+    },
+    {
+      "name": "toast",
+      "line": 6908
+    },
+    {
+      "name": "openModal",
+      "line": 6909
+    },
+    {
+      "name": "scannerStatus",
+      "line": 6910
+    },
+    {
+      "name": "barcodeScanFeedback",
+      "line": 6911
+    },
+    {
+      "name": "scannerRoot",
+      "line": 6928
+    },
+    {
+      "name": "stopBarcodeScanner",
+      "line": 6929
+    },
+    {
+      "name": "closeBarcodeScanner",
+      "line": 6945
+    },
+    {
+      "name": "applyScannedBarcode",
+      "line": 6950
+    },
+    {
+      "name": "requestNativeCameraPermission",
+      "line": 6983
+    },
+    {
+      "name": "nativeCameraPermissionStatus",
+      "line": 6986
+    },
+    {
+      "name": "wait",
+      "line": 6989
+    },
+    {
+      "name": "waitForCameraPermission",
+      "line": 6990
+    },
+    {
+      "name": "browserGetUserMedia",
+      "line": 6999
+    },
+    {
+      "name": "startBarcodeScanner",
+      "line": 7005
+    },
+    {
+      "name": "startNativeMlkitBarcodePump",
+      "line": 7093
+    },
+    {
+      "name": "retryBarcodeScanner",
+      "line": 7141
+    },
+    {
+      "name": "openQuaggaBarcodeScanner",
+      "line": 7147
+    },
+    {
+      "name": "openBarcodeScanner",
+      "line": 7173
+    },
+    {
+      "name": "retailBarcodeChecksumValid",
+      "line": 7180
+    },
+    {
+      "name": "pickGalleryPhoto",
+      "line": 7226
+    },
+    {
+      "name": "photoCaptureRoot",
+      "line": 7251
+    },
+    {
+      "name": "photoCaptureStatus",
+      "line": 7252
+    },
+    {
+      "name": "stopPhotoCapture",
+      "line": 7253
+    },
+    {
+      "name": "closePhotoCapture",
+      "line": 7258
+    },
+    {
+      "name": "setCapturedPhoto",
+      "line": 7259
+    },
+    {
+      "name": "clearCapturedPhoto",
+      "line": 7284
+    },
+    {
+      "name": "waitForPhotoCameraPermission",
+      "line": 7287
+    },
+    {
+      "name": "startPhotoCapture",
+      "line": 7296
+    },
+    {
+      "name": "capturePhotoFromCamera",
+      "line": 7319
+    },
+    {
+      "name": "openPhotoCapture",
+      "line": 7335
+    },
+    {
+      "name": "showPhoto",
+      "line": 7345
+    },
+    {
+      "name": "closeModal",
+      "line": 7350
+    },
+    {
+      "name": "appBackToHome",
+      "line": 7351
+    },
+    {
+      "name": "readSaleItems",
+      "line": 7370
+    },
+    {
+      "name": "changeSaleInvoiceCurrency",
+      "line": 7371
+    },
+    {
+      "name": "changeRepairInvoiceCurrency",
+      "line": 7387
+    },
+    {
+      "name": "updateSaleTotals",
+      "line": 7412
+    },
+    {
+      "name": "setSalePaymentDefaults",
+      "line": 7448
+    },
+    {
+      "name": "usableRates",
+      "line": 7450
+    },
+    {
+      "name": "fetchRatesFromWeb",
+      "line": 7454
+    },
+    {
+      "name": "refreshRates",
+      "line": 7469
+    },
+    {
+      "name": "testConnection",
+      "line": 7493
+    },
+    {
+      "name": "saleMessage",
+      "line": 7499
+    },
+    {
+      "name": "repairReceivedMessage",
+      "line": 7500
+    },
+    {
+      "name": "repairReadyMessage",
+      "line": 7501
+    },
+    {
+      "name": "repairProblemMessage",
+      "line": 7502
+    },
+    {
+      "name": "repairPaymentMessage",
+      "line": 7503
+    },
+    {
+      "name": "repairStatusOptions",
+      "line": 7505
+    },
+    {
+      "name": "repairStatusMessage",
+      "line": 7506
+    },
+    {
+      "name": "whatsappPhone",
+      "line": 7507
+    },
+    {
+      "name": "cleanPhone",
+      "line": 7538
+    },
+    {
+      "name": "invalidWhatsAppPhoneToast",
+      "line": 7539
+    },
+    {
+      "name": "launchWhatsApp",
+      "line": 7542
+    },
+    {
+      "name": "imageBase64",
+      "line": 7557
+    },
+    {
+      "name": "imageBlob",
+      "line": 7558
+    },
+    {
+      "name": "sharePdfDirectToCustomer",
+      "line": 7562
+    },
+    {
+      "name": "shareImageDirectToCustomer",
+      "line": 7569
+    },
+    {
+      "name": "shareImageWithWhatsApp",
+      "line": 7574
+    },
+    {
+      "name": "sendRepairReceivedMessage",
+      "line": 7588
+    },
+    {
+      "name": "repairProblemModal",
+      "line": 7598
+    },
+    {
+      "name": "saveRepairProblemUpdate",
+      "line": 7604
+    },
+    {
+      "name": "repairStatusModal",
+      "line": 7632
+    },
+    {
+      "name": "saveRepairStatus",
+      "line": 7639
+    },
+    {
+      "name": "saveSale",
+      "line": 7670
+    },
+    {
+      "name": "saleReceiptChainInfo",
+      "line": 7693
+    },
+    {
+      "name": "saleReceiptCorrectionRows",
+      "line": 7708
+    },
+    {
+      "name": "saleReceiptFootprintText",
+      "line": 7712
+    },
+    {
+      "name": "saleReceiptCurrentState",
+      "line": 7723
+    },
+    {
+      "name": "saleReturnFinalTarget",
+      "line": 7731
+    },
+    {
+      "name": "openSalePaymentCorrection",
+      "line": 7737
+    },
+    {
+      "name": "repairMissingMixedSaleCash",
+      "line": 7746
+    },
+    {
+      "name": "openSaleFootprintRepair",
+      "line": 7758
+    },
+    {
+      "name": "saveSaleFootprintRepair",
+      "line": 7764
+    },
+    {
+      "name": "saveSalePaymentCorrection",
+      "line": 7774
+    },
+    {
+      "name": "saveProduct",
+      "line": 7792
+    },
+    {
+      "name": "saveRepair",
+      "line": 7905
+    },
+    {
+      "name": "saveExpense",
+      "line": 7947
+    },
+    {
+      "name": "appendPayment",
+      "line": 7956
+    },
+    {
+      "name": "savePayment",
+      "line": 7968
+    },
+    {
+      "name": "updateRepairDeliveryPaymentPreview",
+      "line": 7976
+    },
+    {
+      "name": "appendRepairDeliveryPayment",
+      "line": 7994
+    },
+    {
+      "name": "repairDeliveryModal",
+      "line": 8004
+    },
+    {
+      "name": "saveRepairDelivery",
+      "line": 8012
+    },
+    {
+      "name": "deleteRecord",
+      "line": 8024
+    },
+    {
+      "name": "arrayBufferToBase64",
+      "line": 8078
+    },
+    {
+      "name": "getPdfFont",
+      "line": 8079
+    },
+    {
+      "name": "logoDataUrl",
+      "line": 8092
+    },
+    {
+      "name": "arabic",
+      "line": 8093
+    },
+    {
+      "name": "pdfLine",
+      "line": 8094
+    },
+    {
+      "name": "nativeResultOk",
+      "line": 8095
+    },
+    {
+      "name": "downloadReceipt",
+      "line": 8096
+    },
+    {
+      "name": "invoiceWesternDigits",
+      "line": 8099
+    },
+    {
+      "name": "invoiceDateTime",
+      "line": 8104
+    },
+    {
+      "name": "invoiceMoneyText",
+      "line": 8109
+    },
+    {
+      "name": "prepareTextInvoice",
+      "line": 8112
+    },
+    {
+      "name": "drawTextInvoiceRow",
+      "line": 8145
+    },
+    {
+      "name": "finishTextInvoice",
+      "line": 8172
+    },
+    {
+      "name": "createCompactSaleReceipt",
+      "line": 8177
+    },
+    {
+      "name": "createCompactRepairReceipt",
+      "line": 8220
+    },
+    {
+      "name": "createReceipt",
+      "line": 8289
+    },
+    {
+      "name": "backup",
+      "line": 8321
+    },
+    {
+      "name": "backupFileName",
+      "line": 8322
+    },
+    {
+      "name": "backupPayloadText",
+      "line": 8326
+    },
+    {
+      "name": "automaticBackupMeta",
+      "line": 8332
+    },
+    {
+      "name": "automaticBackupStatusText",
+      "line": 8333
+    },
+    {
+      "name": "abnormalBackupDrop",
+      "line": 8334
+    },
+    {
+      "name": "runAutomaticBackup",
+      "line": 8335
+    },
+    {
+      "name": "restoreAutomaticBackup",
+      "line": 8350
+    },
+    {
+      "name": "exportBackupFile",
+      "line": 8354
+    },
+    {
+      "name": "importBackupFile",
+      "line": 8369
+    },
+    {
+      "name": "normalizeBackupFile",
+      "line": 8378
+    },
+    {
+      "name": "restoreRecordRevision",
+      "line": 8384
+    },
+    {
+      "name": "mergeInventoryRecordWithoutSnapshotLoss",
+      "line": 8385
+    },
+    {
+      "name": "nonDestructiveRestoreMerge",
+      "line": 8397
+    },
+    {
+      "name": "restoreBackupFileText",
+      "line": 8421
+    },
+    {
+      "name": "importBackup",
+      "line": 8436
+    },
+    {
+      "name": "handleAction",
+      "line": 8447
+    },
+    {
+      "name": "formIsValid",
+      "line": 8699
+    },
+    {
+      "name": "submitFormDirect",
+      "line": 8718
+    },
+    {
+      "name": "saveControlFromTarget",
+      "line": 8743
+    },
+    {
+      "name": "wireInteractiveElements",
+      "line": 8817
+    },
+    {
+      "name": "deferSearchInput",
+      "line": 8860
+    },
+    {
+      "name": "handleFormSubmit",
+      "line": 8900
+    },
+    {
+      "name": "dataFreshness",
+      "line": 8979
+    },
+    {
+      "name": "refreshFromStorageIfNewer",
+      "line": 8980
+    },
+    {
+      "name": "pageAtTop",
+      "line": 9000
+    },
+    {
+      "name": "updatePullIndicator",
+      "line": 9001
+    }
+  ],
+  "routes": [
+    "advanced-home",
+    "audit-log",
+    "customer-orders",
+    "customers",
+    "daily-close",
+    "dashboard",
+    "debts",
+    "expense-form",
+    "expenses",
+    "father-deliveries",
+    "father-home",
+    "father-repair",
+    "father-sale",
+    "inventory-analytics",
+    "inventory-movements",
+    "maintenance-parts",
+    "modern-hub",
+    "more",
+    "opening-balances",
+    "partners",
+    "printer",
+    "products",
+    "purchase-form",
+    "purchases",
+    "repair-form",
+    "repairs",
+    "reports",
+    "returns",
+    "sale-form",
+    "sales",
+    "search",
+    "security",
+    "settings",
+    "shift-handover",
+    "shortcut-settings",
+    "stock-alerts",
+    "today-center",
+    "used-watch-exchange",
+    "used-watch-purchase",
+    "used-watches",
+    "vaults",
+    "wallet",
+    "warranties",
+    "watch-advisor"
+  ],
+  "forms": [
+    "cash-movement-form",
+    "customer-order-cancel-form",
+    "customer-order-complete-form",
+    "customer-order-form",
+    "customer-order-link-form",
+    "customer-session-start",
+    "daily-close-form",
+    "expense-form",
+    "external-partner-payout-form",
+    "external-partners-settings-form",
+    "father-repair-form",
+    "father-sale-form",
+    "invoice-edit-form",
+    "maintenance-part-form",
+    "message-templates-form",
+    "modern-discount-form",
+    "modern-loyalty-form",
+    "modern-loyalty-redeem-form",
+    "modern-shortcuts-form",
+    "opening-cash-form",
+    "partner-withdrawal-form",
+    "partners-settings-form",
+    "payment-form",
+    "product-form",
+    "product-stock-adjustment-form",
+    "purchase-form",
+    "purchase-payment-form",
+    "quick-repair-button-form",
+    "rates-form",
+    "repair-delivery-form",
+    "repair-form",
+    "repair-problem-form",
+    "repair-return-form",
+    "repair-status-form",
+    "report-form",
+    "sale-footprint-repair-form",
+    "sale-form",
+    "sale-payment-correction-form",
+    "sale-return-form",
+    "settings-form",
+    "shift-handover-form",
+    "supplier-correct-opening-debt-form",
+    "supplier-direct-payment-form",
+    "supplier-form",
+    "supplier-opening-debt-form",
+    "used-watch-cost-form",
+    "used-watch-exchange-form",
+    "used-watch-purchase-form"
+  ],
+  "fields": [
+    "SYP",
+    "TRY",
+    "TRY_SYP",
+    "acquisitionValue",
+    "actualPaymentAmount",
+    "actualStock",
+    "actual_",
+    "advisorAges",
+    "advisorGender",
+    "advisorGift",
+    "advisorPresence",
+    "advisorSize",
+    "advisorStyles",
+    "advisorUses",
+    "amount",
+    "barcode",
+    "baseAmount",
+    "baseCurrency",
+    "brand",
+    "caseMaterial",
+    "category",
+    "color",
+    "condition",
+    "couplePartnerId",
+    "coupleRole",
+    "creditAmount",
+    "currency",
+    "customer",
+    "date",
+    "debtId",
+    "defaultCurrency",
+    "deliverNow",
+    "deposit",
+    "depositVault",
+    "description",
+    "details",
+    "diagnosis",
+    "dialColor",
+    "diameter",
+    "displayType",
+    "enabled",
+    "entryMode",
+    "exchangeInAmount",
+    "exchangeInCurrency",
+    "exchangeInVault",
+    "expectedPrice",
+    "expectedVariantIds",
+    "externalCost",
+    "externalPartnerId",
+    "externalPartnerShare",
+    "extraPaymentNow",
+    "from",
+    "fundingSource",
+    "gender",
+    "glassType",
+    "icon",
+    "id",
+    "invoiceNo",
+    "itemIndex",
+    "kind",
+    "label",
+    "laborPrice",
+    "loyaltyPoints",
+    "manualSYP",
+    "manualTRY",
+    "method",
+    "minStock",
+    "minTotal",
+    "mixed",
+    "mixedSYP",
+    "mixedTRY",
+    "mixedUSD",
+    "model",
+    "money_",
+    "month",
+    "movement",
+    "name",
+    "newProductId",
+    "next_",
+    "note",
+    "notes",
+    "opening_",
+    "order",
+    "paid",
+    "partId",
+    "partQty",
+    "partnerId",
+    "payCurrency",
+    "paymentAmount",
+    "paymentCurrency",
+    "paymentMethod",
+    "paymentStatus",
+    "paymentVault",
+    "person",
+    "phone",
+    "photo",
+    "photo2",
+    "photo3",
+    "pointValueUsd",
+    "points",
+    "pointsPerUsd",
+    "price",
+    "priceMode",
+    "problem",
+    "product",
+    "productId",
+    "qty",
+    "quickEntry",
+    "quickId",
+    "reason",
+    "receiptMode",
+    "refundAmount",
+    "refundVault",
+    "repairPartIndex",
+    "repairPartsJson",
+    "repeatEntry",
+    "replacementAmount",
+    "replacementId",
+    "replacementPartId",
+    "replacementPartQty",
+    "replacementQty",
+    "restoreReturnedPart",
+    "returnPenalty",
+    "returnPenaltyReason",
+    "returnedPartQty",
+    "route",
+    "salePrice",
+    "saleType",
+    "sendWhatsApp",
+    "serial",
+    "service",
+    "settlement",
+    "shamActual_SYP",
+    "shamActual_USD",
+    "share",
+    "shopName",
+    "sku",
+    "specs",
+    "status",
+    "stock",
+    "strapColor",
+    "strapMaterial",
+    "supplierId",
+    "supplierInvoice",
+    "targetOrderId",
+    "target_",
+    "taxRate",
+    "time",
+    "to",
+    "toVault",
+    "transfer_",
+    "twitter",
+    "type",
+    "unitPrice",
+    "value",
+    "vault",
+    "warrantyMonths",
+    "watch",
+    "watchFamily",
+    "watchProductUrl",
+    "watchType",
+    "waterResistance",
+    "whatsappChannel",
+    "whatsappNumber",
+    "workDone"
+  ],
+  "note": "Static inventory of the complete main.js; inventory is not proof of completed migration."
+}
