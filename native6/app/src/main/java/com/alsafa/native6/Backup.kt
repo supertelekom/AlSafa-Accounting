@@ -11,6 +11,7 @@ import java.security.MessageDigest
 class Backup(private val context:Context,private val store:Store) {
     companion object {
         val tables=listOf("events","products","suppliers","invoices","journal","stock_moves","invoice_lines","receipts","returns","refunds","closings","repairs","settings","legacy_imports","partner_members","partner_share_periods","partner_share_lines","partner_drawings")
+        val partnerTables=listOf("partner_members","partner_share_periods","partner_share_lines","partner_drawings")
         const val MAX_BYTES=128*1024*1024
         fun sha(bytes:ByteArray)=MessageDigest.getInstance("SHA-256").digest(bytes).joinToString(""){"%02x".format(it)}
         fun read(input:InputStream):ByteArray {val out=java.io.ByteArrayOutputStream();val buffer=ByteArray(8192);while(true){val n=input.read(buffer);if(n<0)break;require(out.size()+n<=MAX_BYTES){"حجم الملف أكبر من الحد المدعوم"};out.write(buffer,0,n)};return out.toByteArray()}
@@ -21,8 +22,12 @@ class Backup(private val context:Context,private val store:Store) {
         output.write(result);output.flush()
     }
     fun restore(input:InputStream) {
-        val root=JSONObject(String(read(input),Charsets.UTF_8));require(root.getString("format")=="alsafa-native6-backup"&&root.getInt("schema")==2){"نوع النسخة غير مدعوم"}
+        val root=JSONObject(String(read(input),Charsets.UTF_8));require(root.getString("format")=="alsafa-native6-backup"&&root.getInt("schema") in 1..2){"نوع النسخة غير مدعوم"}
         val text=root.getString("data");require(sha(text.toByteArray(Charsets.UTF_8))==root.getString("sha256")){"فشل التحقق من سلامة النسخة"};val data=JSONObject(text)
+        if(root.getInt("schema")==1) {
+            require(data.keys().asSequence().toSet()==(tables-partnerTables).toSet()){"جداول النسخة القديمة غير مكتملة"}
+            partnerTables.forEach { data.put(it,JSONArray()) }
+        }
         require(data.keys().asSequence().toSet()==tables.toSet()){"جداول النسخة غير مكتملة"}
         // Validate in a disposable database, then restore atomically only into an empty database.
         val name="validate-${Store.id()}.db";val helper=StoreDb(context,name);val staging=Store(helper)
