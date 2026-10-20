@@ -56,7 +56,7 @@ class Backup(private val context:Context,private val store:Store) {
             require(data.keys().asSequence().toSet()==(tables-partnerTables-listOf("legacy_records")).toSet()){"جداول النسخة القديمة غير مكتملة"}
             partnerTables.forEach { data.put(it,JSONArray()) }
         }
-        if(root.getInt("schema")==2) data.put("legacy_records",JSONArray())
+        if(root.getInt("schema") in 1..2) data.put("legacy_records",JSONArray())
         require(data.keys().asSequence().toSet()==tables.toSet()){"جداول النسخة غير مكتملة"}
         // Validate in a disposable database, then restore atomically only into an empty database.
         val name="validate-${Store.id()}.db";val helper=StoreDb(context,name);val staging=Store(helper)
