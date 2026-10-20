@@ -76,17 +76,27 @@ class PartnerReportReader(private val db: SQLiteDatabase) {
             }
         }
         val allocations=linkedMapOf<String,Long>()
-        // An initial effective schedule is mandatory, including for months with no postings.
-        sharesAt(month.atDay(1))
-        // Include every partner effective at month end, even with zero daily profit.
-        sharesAt(month.atEndOfMonth()).forEach { allocations[it.partnerId]=0L }
+        // Collect every schedule active during the month, including partners who leave
+        // before month-end. Otherwise their earlier earned profit disappears from reports.
+        val changeDates=db.rawQuery(
+            "SELECT effective_date FROM partner_share_periods WHERE effective_date>? AND effective_date<? ORDER BY effective_date",
+            arrayOf(from,until)
+        ).use { cursor ->
+            buildList { while(cursor.moveToNext()) add(LocalDate.parse(cursor.getString(0))) }
+        }
+        (listOf(month.atDay(1)) + changeDates).forEach { day ->
+            sharesAt(day).forEach { allocations.putIfAbsent(it.partnerId,0L) }
+        }
         for ((day,profit) in profitByDay) {
             val lines=PartnerMonthCalculator.allocate(month,currency,profit,sharesAt(day),emptyList())
             for(line in lines) allocations[line.partnerId]=Math.addExact(allocations[line.partnerId]?:0L,line.allocatedProfitMinor)
         }
         val drawings=withdrawals(month,currency)
+        // A drawing can belong to a partner no longer present in the active share schedule.
+        drawings.forEach { allocations.putIfAbsent(it.partnerId,0L) }
+        val drawingsByPartner=drawings.groupBy { it.partnerId }
         return allocations.map { (partner,profit) ->
-            val withdrawn=drawings.filter { it.partnerId==partner }.fold(0L) { total,draw ->
+            val withdrawn=drawingsByPartner[partner].orEmpty().fold(0L) { total,draw ->
                 Math.addExact(total,draw.amountMinor)
             }
             PartnerMonthLine(partner,month,currency,profit,withdrawn,Math.subtractExact(profit,withdrawn))
