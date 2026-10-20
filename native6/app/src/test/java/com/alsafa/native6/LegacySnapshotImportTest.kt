@@ -231,4 +231,21 @@ class LegacySnapshotImportTest {
         } finally { helper.close();context.deleteDatabase(name) }
     }
 
+    @Test fun firstNativeSaleContinuesLegacyInvoiceSequence() {
+        val context=RuntimeEnvironment.getApplication<Context>()
+        val name="legacy-invoice-sequence-test.db"
+        context.deleteDatabase(name)
+        val helper=StoreDb(context,name)
+        try {
+            val root=JSONObject(payload())
+            root.getJSONObject("data").put("settings",
+                JSONObject().put("invoiceSequenceHighWater",335))
+            val store=Store(helper)
+            LegacySnapshotImport.import(store,root.toString())
+            val invoiceId=store.sale(listOf(SaleItem("legacy-product-1",1L,1790L)),
+                "Test customer","",Currency.USD,0L,"drawer")
+            assertEquals(336L,store.invoice(invoiceId).number)
+        } finally { helper.close();context.deleteDatabase(name) }
+    }
+
 }
