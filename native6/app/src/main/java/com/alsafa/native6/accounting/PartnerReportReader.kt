@@ -76,6 +76,8 @@ class PartnerReportReader(private val db: SQLiteDatabase) {
             }
         }
         val allocations=linkedMapOf<String,Long>()
+        // An initial effective schedule is mandatory, including for months with no postings.
+        sharesAt(month.atDay(1))
         // Include every partner effective at month end, even with zero daily profit.
         sharesAt(month.atEndOfMonth()).forEach { allocations[it.partnerId]=0L }
         for ((day,profit) in profitByDay) {
