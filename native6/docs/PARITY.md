@@ -186,3 +186,11 @@ Inspected the user's original **AlSafa Backup v2**, exported 2026-10-18 (approxi
 - Cash movement audit groups raw amounts by the **actual recorded calendar month and original currency** (USD, TRY, SYP). These are descriptive totals, not cash balances, profit, or journal postings.
 - Added regression tests for cross-category invoice collisions and month/currency segregation.
 - **Remaining blockers:** source schema field mapping for all purchase liabilities and partner profit events, journal posting reconciliation, CI test execution and a verified installable APK. The current application is not production-ready.
+
+## October 20: receivables and migration hardening
+
+- The read-only audit reports unpaid sales invoice portions separately by original currency, **before** allocating later payment records; amounts are provisional, not customer account balances.
+- Source payment reference types are counted so subsequent matching can be reviewed explicitly.
+- Partial legacy restore now asserts that no native invoices or cash receipts were created during import; supplier counts are reconciled before transaction commit.
+- SQLite upgrades from schema 1/2/3 to schema 4 now install the same immutable accounting triggers as new installations.
+- Added unit regression for separating provisional USD and TRY unpaid sales. No APK build or test execution has been confirmed.
