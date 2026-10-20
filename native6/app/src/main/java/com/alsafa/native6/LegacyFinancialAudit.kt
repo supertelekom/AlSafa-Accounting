@@ -37,6 +37,6 @@ object LegacyFinancialAudit {
         }
         result += "تحذير: هذه إجماليات خام؛ قد تتداخل المقبوضات مع المبيعات والحركات النقدية. لا تُستخدم لإثبات الربح أو دين المورد أو رصيد الخزنة."
         result += "لم تُنشأ فواتير أو قيود مالية جديدة."
-        return result.joinToString("\\n")
+        return result.joinToString("\n")
     }
 }
