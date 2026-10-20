@@ -6,6 +6,9 @@ import org.json.JSONObject
 import java.io.InputStream
 import java.io.OutputStream
 import java.security.MessageDigest
+import java.util.zip.GZIPOutputStream
+import java.util.zip.GZIPInputStream
+import android.util.Base64
 
 /** Logical snapshot includes every local table, metadata and embedded media in JSON details. */
 class Backup(private val context:Context,private val store:Store) {
@@ -13,18 +16,42 @@ class Backup(private val context:Context,private val store:Store) {
         val tables=listOf("events","products","suppliers","invoices","journal","stock_moves","invoice_lines","receipts","returns","refunds","closings","repairs","settings","legacy_imports","partner_members","partner_share_periods","partner_share_lines","partner_drawings","legacy_records")
         val partnerTables=listOf("partner_members","partner_share_periods","partner_share_lines","partner_drawings")
         const val MAX_BYTES=128*1024*1024
+        const val MAX_EXPANDED_BYTES=256*1024*1024
+        fun gzip(text:String):String {
+            val bytes=java.io.ByteArrayOutputStream()
+            GZIPOutputStream(bytes).use { it.write(text.toByteArray(Charsets.UTF_8)) }
+            return Base64.encodeToString(bytes.toByteArray(),Base64.NO_WRAP)
+        }
+        fun ungzip(encoded:String):String {
+            val compressed=Base64.decode(encoded,Base64.DEFAULT)
+            GZIPInputStream(compressed.inputStream()).use { input ->
+                val out=java.io.ByteArrayOutputStream()
+                val buffer=ByteArray(8192)
+                while(true) {
+                    val n=input.read(buffer)
+                    if(n<0) break
+                    require(out.size().toLong()+n<=MAX_EXPANDED_BYTES){"النسخة المضغوطة تتجاوز الحجم الآمن بعد فك الضغط"}
+                    out.write(buffer,0,n)
+                }
+                return out.toString("UTF-8")
+            }
+        }
         fun sha(bytes:ByteArray)=MessageDigest.getInstance("SHA-256").digest(bytes).joinToString(""){"%02x".format(it)}
         fun read(input:InputStream):ByteArray {val out=java.io.ByteArrayOutputStream();val buffer=ByteArray(8192);while(true){val n=input.read(buffer);if(n<0)break;require(out.size()+n<=MAX_BYTES){"حجم الملف أكبر من الحد المدعوم"};out.write(buffer,0,n)};return out.toByteArray()}
     }
     fun export(output:OutputStream) {
         val data=store.transaction {validate(store);val obj=JSONObject();tables.forEach { table ->val list=JSONArray();store.db.rawQuery("SELECT * FROM $table",null).use{c->while(c.moveToNext()){val row=JSONObject();c.columnNames.forEachIndexed{i,n->row.put(n,when(c.getType(i)){android.database.Cursor.FIELD_TYPE_NULL->JSONObject.NULL;android.database.Cursor.FIELD_TYPE_INTEGER->c.getLong(i);else->c.getString(i)})};list.put(row)}};obj.put(table,list)};obj.toString()}
-        val result=JSONObject().put("format","alsafa-native6-backup").put("schema",3).put("sha256",sha(data.toByteArray(Charsets.UTF_8))).put("data",data).toString().toByteArray(Charsets.UTF_8)
+        val result=JSONObject().put("format","alsafa-native6-backup").put("schema",4).put("encoding","gzip-base64").put("sha256",sha(data.toByteArray(Charsets.UTF_8))).put("data",gzip(data)).toString().toByteArray(Charsets.UTF_8)
         require(result.size<=MAX_BYTES){"حجم النسخة أكبر من الحد المدعوم للاستعادة؛ لم يُكتب ملف ناقص"}
         output.write(result);output.flush()
     }
     fun restore(input:InputStream) {
-        val root=JSONObject(String(read(input),Charsets.UTF_8));require(root.getString("format")=="alsafa-native6-backup"&&root.getInt("schema") in 1..3){"نوع النسخة غير مدعوم"}
-        val text=root.getString("data");require(sha(text.toByteArray(Charsets.UTF_8))==root.getString("sha256")){"فشل التحقق من سلامة النسخة"};val data=JSONObject(text)
+        val root=JSONObject(String(read(input),Charsets.UTF_8));require(root.getString("format")=="alsafa-native6-backup"&&root.getInt("schema") in 1..4){"نوع النسخة غير مدعوم"}
+        val text=if(root.getInt("schema")==4) {
+            require(root.getString("encoding")=="gzip-base64"){"نوع ضغط غير مدعوم"}
+            ungzip(root.getString("data"))
+        } else root.getString("data")
+        require(sha(text.toByteArray(Charsets.UTF_8))==root.getString("sha256")){"فشل التحقق من سلامة النسخة"};val data=JSONObject(text)
         if(root.getInt("schema")==1) {
             require(data.keys().asSequence().toSet()==(tables-partnerTables-listOf("legacy_records")).toSet()){"جداول النسخة القديمة غير مكتملة"}
             partnerTables.forEach { data.put(it,JSONArray()) }
