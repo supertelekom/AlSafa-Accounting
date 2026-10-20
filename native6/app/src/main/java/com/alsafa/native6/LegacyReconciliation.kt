@@ -243,6 +243,25 @@ object LegacyReconciliation {
             lines += "مطابقة مدفوعات المبيع: نفس عملة الفاتورة $sameCurrency، عملة مختلفة $otherCurrency، فاتورة غير معروفة $missingInvoice، عملة تحصيل غير محددة $unspecifiedCurrency"
             lines += "المدفوع المحفوظ داخل الفاتورة قد يتضمن الدفعات اللاحقة؛ لا يُخصم سجل المدفوعات مرة ثانية."
         }
+        data.optJSONArray("partnerWithdrawals")?.let { withdrawals ->
+            val byMonth=sortedMapOf<String,BigDecimal>()
+            var invalid=0
+            for(i in 0 until withdrawals.length()) {
+                val row=withdrawals.optJSONObject(i)
+                val date=row?.optString("date").orEmpty()
+                val partner=row?.optString("partnerId").orEmpty()
+                val currency=row?.optString("currency").orEmpty()
+                val amount=row?.optString("amount")?.toBigDecimalOrNull()
+                if(date.length<7 || partner.isBlank() ||
+                    currency !in listOf("USD","TRY","SYP") ||
+                    amount==null || amount.signum()<0) {invalid++;continue}
+                val key="${date.take(7)} | $partner | $currency"
+                byMonth[key]=(byMonth[key] ?: BigDecimal.ZERO).add(amount)
+            }
+            lines += "سحوبات الشركاء بحسب شهر السحب الحقيقي (دون ترحيلها لشهر ربح سابق):"
+            byMonth.forEach { (key,value) -> lines += "$key: ${value.toPlainString()}" }
+            if(invalid>0) lines += "سحوبات تحتاج مراجعة: $invalid"
+        }
         lines += "مهم: حركات الصناديق قد تعكس المبيعات والصيانة والسحوبات نفسها. لا تُسجل ثانيةً كدخل أو مصروف."
         return lines.joinToString("\n")
     }
