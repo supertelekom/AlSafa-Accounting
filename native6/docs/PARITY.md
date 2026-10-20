@@ -244,3 +244,10 @@ Inspected the user's original **AlSafa Backup v2**, exported 2026-10-18 (approxi
 - New native sale, purchase and repair invoices use the larger of the existing native invoice number and the archived legacy `settings.invoiceSequenceHighWater`, then increment it. The original October backup has high-water 335, so the first native invoice should be 336, avoiding number reuse.
 - Added tests for the first two sales after importing legacy settings. A corrupted archived numbering JSON now blocks new invoice issuance instead of silently restarting the sequence.
 - This is not a substitute for verifying invoice-number duplicates already present in historical records, and does not post legacy invoices into native accounting.
+
+## Inventory validation hardening
+
+- Product creation and editing compare trimmed barcode values before enforcing uniqueness, and limit barcode input to 128 characters.
+- Product edits reject missing IDs rather than emitting a misleading audit event.
+- Product search trims leading and trailing query whitespace.
+- Added regression tests for whitespace-equivalent duplicate barcodes and nonexistent-product edit rollback. Build/test results are not yet verified.
