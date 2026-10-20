@@ -78,7 +78,7 @@ class MainActivity:Activity() {
         text("نسخة تطوير — حفظ محلي على التابلت",root,13f)
         if(page!="home")button("‹ الرئيسية",root){go("home")}
         val scroll=ScrollView(this);body=column();scroll.addView(body);root.addView(scroll,LinearLayout.LayoutParams(-1,0,1f))
-        when(page){"home"->home();"simple"->simple();"advanced"->advanced();"products"->products();"sale"->sale();"invoices"->invoices();"vaults"->vaults();"suppliers"->suppliers();"repairs"->repairs();"reports"->reports();"partners"->partners();"backup"->backup();"audit"->audit()}
+        when(page){"home"->home();"simple"->simple();"advanced"->advanced();"products"->products();"sale"->sale();"invoices"->invoices();"vaults"->vaults();"suppliers"->suppliers();"repairs"->repairs();"reports"->reports();"partners"->partners();"backup"->backup();"legacy-audit"->legacyAudit();"audit"->audit()}
     }
     private fun home(){text("ALSAFA WATCHES",size=16f);text("كيف تريد أن تبدأ؟",size=28f);button("⚡ الوضع المبسط · بيع وصيانة وتسليم سريع"){go("simple")};button("◆ الوضع الكامل · الإدارة والمخزون والحسابات"){go("advanced")}}
     private fun simple(){text("العمل السريع",size=26f);button("مبيع"){go("sale")};button("استلام وتسليم صيانة"){go("repairs")};button("الفواتير وقبض الديون"){go("invoices")};button("الخزنات والإقفال اليومي"){go("vaults")}}
@@ -195,7 +195,24 @@ class MainActivity:Activity() {
         button("تصدير نسخة كاملة"){startActivityForResult(Intent(Intent.ACTION_CREATE_DOCUMENT).apply{addCategory(Intent.CATEGORY_OPENABLE);type="application/json";putExtra(Intent.EXTRA_TITLE,"AlSafa-Native6-${Store.today()}.json")},101)}
         button("استعادة Native 6 إلى قاعدة فارغة"){pick(102)}
         button("فحص نسخة التطبيق القديم وحفظها معزولة"){pick(103)}
+        button("النسخ القديمة المحفوظة للفحص"){go("legacy-audit")}
         text("ترحيل الحسابات القديمة غير مفعّل بعد؛ الفحص يحفظ الأصل كاملاً دون إضافة أرصدة أو تعديل المخزون.")
+    }
+    private fun legacyAudit(){
+        text("أرشيف نسخ التطبيق القديم",size=25f)
+        text("هذه النسخ محفوظة للفحص فقط، ولم تُرحّل إلى المبيعات أو المخزون أو الحسابات.",size=15f)
+        val items=store.rows("SELECT hash,created,summary FROM legacy_imports ORDER BY created DESC LIMIT 50")
+        if(items.isEmpty()) text("لا توجد نسخ قديمة محفوظة بعد.")
+        items.forEach { item->
+            val summary=try {
+                val data=org.json.JSONObject(item.getValue("summary"))
+                listOf("products","sales","repairs","suppliers","customers").mapNotNull { key->
+                    if(data.has(key)) "$key: ${data.optInt(key)}" else null
+                }.joinToString(" · ")
+            } catch (_:Exception) { "تعذر قراءة الملخص" }
+            text("البصمة: ${item.getValue("hash").take(16)}",size=16f)
+            text("السجلات: $summary",size=15f)
+        }
     }
     private fun pick(code:Int){startActivityForResult(Intent(Intent.ACTION_OPEN_DOCUMENT).apply{addCategory(Intent.CATEGORY_OPENABLE);type="application/json"},code)}
     override fun onActivityResult(request:Int,result:Int,data:Intent?){super.onActivityResult(request,result,data);if(result!=RESULT_OK)return;val uri=data?.data?:return
