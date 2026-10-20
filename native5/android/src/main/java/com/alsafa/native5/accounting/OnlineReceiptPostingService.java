@@ -23,7 +23,7 @@ public final class OnlineReceiptPostingService {
         db.beginTransactionNonExclusive();
         try {
             try(android.database.Cursor pending=db.rawQuery(
-                "SELECT 1 FROM invoice_cancellation_requests WHERE invoice_id=? LIMIT 1",
+                "SELECT 1 FROM invoice_cancellation_requests r LEFT JOIN invoice_cancellation_decisions d ON d.request_id=r.request_id WHERE r.invoice_id=? AND (d.decision IS NULL OR d.decision<>\'REJECTED\') LIMIT 1",
                 new String[]{invoiceId})) {
                 if(pending.moveToFirst())
                     throw new IllegalStateException("Invoice has pending cancellation review");
