@@ -215,4 +215,20 @@ class LegacySnapshotImportTest {
         } finally { helper.close();context.deleteDatabase(name) }
     }
 
+    @Test fun unknownLegacyRepairStatusIsNotSilentlyMarkedReceived() {
+        val context=RuntimeEnvironment.getApplication<Context>()
+        val name="legacy-unknown-status-test.db"
+        context.deleteDatabase(name)
+        val helper=StoreDb(context,name)
+        try {
+            val root=JSONObject(payload())
+            root.getJSONObject("data").getJSONArray("repairs")
+                .getJSONObject(0).put("status","custom-old-state")
+            val store=Store(helper)
+            LegacySnapshotImport.import(store,root.toString())
+            assertEquals(1L,store.scalar(
+                "SELECT count(*) FROM repairs WHERE status='legacy_unknown'"))
+        } finally { helper.close();context.deleteDatabase(name) }
+    }
+
 }
