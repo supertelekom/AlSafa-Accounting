@@ -37,4 +37,25 @@ public class OnlineReceiptPostingTest {
                 "SELECT released_cost_minor FROM online_invoices WHERE invoice_id='invoice-1'",null));
         } finally { helper.close(); }
     }
+
+    @Test public void pendingCancellationReviewPreventsReceiptAndLeavesBalancesUnchanged() {
+        try(Native5DatabaseHelper helper=new Native5DatabaseHelper(
+            ApplicationProvider.getApplicationContext(),":memory:")) {
+            SQLiteDatabase db=helper.getWritableDatabase();
+            db.execSQL("INSERT INTO online_invoices(invoice_id,total_minor,cost_minor,currency,created_at_ms) VALUES('invoice-review',6000,3500,'USD',1)");
+            new InvoiceCancellationRequestService(db).requestReview("request-1","invoice-review","مراجعة");
+            try {
+                new OnlineReceiptPostingService(db).collect("receipt-blocked","invoice-review",
+                    new Money(Money.Currency.USD,2000),InvoiceSettlement.Channel.CASH_DRAWER);
+                fail("Collection was allowed while review is pending");
+            } catch(IllegalStateException expected) {}
+            assertFalse(db.inTransaction());
+            assertEquals(0,android.database.DatabaseUtils.longForQuery(db,
+                "SELECT collected_minor FROM online_invoices WHERE invoice_id='invoice-review'",null));
+            assertEquals(0,android.database.DatabaseUtils.longForQuery(db,
+                "SELECT COUNT(*) FROM accounting_events",null));
+            assertEquals(0,android.database.DatabaseUtils.longForQuery(db,
+                "SELECT COUNT(*) FROM outbox",null));
+        }
+    }
 }
