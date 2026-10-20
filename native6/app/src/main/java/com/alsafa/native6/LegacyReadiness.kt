@@ -51,6 +51,7 @@ object LegacyReadiness {
                 lines += "  حقول عينة: ${keys.take(15).joinToString("، ")}"
             }
         }
+        lines += "تحذير: أسماء الحقول المفحوصة افتراضية حتى تُطابق مع مخطط v3.9.353 الفعلي."
         lines += "لا يمكن اعتماد ترحيل الأرصدة قبل مطابقة الديون والفواتير والمخزون مع الأصل."
         return lines.joinToString("\n")
     }
