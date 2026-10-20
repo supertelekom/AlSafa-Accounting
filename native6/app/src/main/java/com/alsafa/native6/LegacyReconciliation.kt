@@ -180,6 +180,38 @@ object LegacyReconciliation {
             lines += "أنواع المدفوعات اللاحقة التي تحتاج مطابقة:"
             counts.forEach { (type,count) -> lines += "$type: $count" }
         }
+        // Count later payments by their original reference and payment currency.
+        // Never subtract a payment twice or convert across currencies implicitly.
+        data.optJSONArray("payments")?.let { payments ->
+            val totals=sortedMapOf<String,BigDecimal>()
+            val seen=HashSet<String>()
+            var invalid=0
+            var duplicate=0
+            for(i in 0 until payments.length()) {
+                val row=payments.optJSONObject(i)
+                if(row==null) {invalid++;continue}
+                val id=row.optString("id")
+                if(id.isNotBlank() && !seen.add(id)) {duplicate++;continue}
+                val type=row.optString("referenceType")
+                val ref=row.optString("referenceId")
+                val currency=row.optString("paymentCurrency")
+                    .ifBlank { row.optString("currency") }
+                val amount=row.optString("paymentAmount")
+                    .ifBlank { row.optString("amount") }.toBigDecimalOrNull()
+                if(type.isBlank() || ref.isBlank() ||
+                    currency !in listOf("USD","TRY","SYP") ||
+                    amount==null || amount.signum()<0) {invalid++;continue}
+                val key="$type | $ref | $currency"
+                totals[key]=(totals[key] ?: BigDecimal.ZERO).add(amount)
+            }
+            lines += "مدفوعات لاحقة بحسب مرجع العملية وعملة التحصيل (دون خصم تلقائي):"
+            totals.entries.take(50).forEach { (key,value) ->
+                lines += "$key: ${value.toPlainString()}"
+            }
+            if(totals.size>50) lines += "توجد ${totals.size-50} مراجع إضافية غير معروضة."
+            if(invalid>0) lines += "مدفوعات تحتاج مراجعة: $invalid"
+            if(duplicate>0) lines += "معرفات مدفوعات مكررة: $duplicate"
+        }
         lines += "مهم: حركات الصناديق قد تعكس المبيعات والصيانة والسحوبات نفسها. لا تُسجل ثانيةً كدخل أو مصروف."
         return lines.joinToString("\n")
     }
