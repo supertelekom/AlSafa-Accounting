@@ -231,3 +231,10 @@ Inspected the user's original **AlSafa Backup v2**, exported 2026-10-18 (approxi
 - Legacy repair state mapping now preserves known Arabic and English states, and marks unrecognized nonempty states as `legacy_unknown` for manual review rather than silently converting them to `received`.
 - Historical repair archive list now shows the original repair state.
 - These tests have been committed, but their execution and Android APK build have not been independently verified.
+
+## Archive interaction fixes
+
+- Switching archive categories refreshes immediately and resets pagination; changing the search term also resets to the first page.
+- Empty archive results are explicit rather than displaying a blank screen.
+- Archive rows show available customer names, dates, totals and currencies from several legacy field variants, without calculating or altering financial balances.
+- See `docs/RELEASE_CHECKLIST.md` for the release acceptance gate; build and device testing are not yet confirmed.
