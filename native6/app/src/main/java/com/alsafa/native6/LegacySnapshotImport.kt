@@ -27,6 +27,7 @@ object LegacySnapshotImport {
             "هذه عملية نقل مخزون وسجل صيانة فقط؛ لن تُستعاد الفواتير أو الديون أو النقد أو أرباح الشركاء بهذه الخطوة."
     }
     fun import(store:Store,payload:String):String {
+        val root=JSONObject(payload)
         val d=data(payload)
         val lists=listOf("products" to "watch","maintenanceParts" to "part")
         val suppliers=d.getJSONArray("suppliers")
@@ -81,7 +82,8 @@ object LegacySnapshotImport {
             }
             store.insert("settings","key" to "legacy_snapshot_import","value" to JSONObject()
                 .put("scope","inventory_suppliers_repairs_only")
-                .put("sourceAppVersion","3.9.x")
+                .put("sourceAppVersion",root.optString("appVersion","unknown"))
+                .put("sourceExportedAt",root.optString("exportedAt",""))
                 .put("products",d.getJSONArray("products").length())
                 .put("maintenanceParts",d.getJSONArray("maintenanceParts").length())
                 .put("suppliers",suppliers.length())
