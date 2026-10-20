@@ -23,7 +23,7 @@ Source: v3.9.353; 944 declared functions, 44 static navigation routes, 48 forms,
 | modern-hub | Pending migration; no dummy screen added |
 | more | Pending migration; no dummy screen added |
 | opening-balances | Pending migration; no dummy screen added |
-| partners | SQLite v2 schema, dated share registry, linked cash drawings and month report backend; UI and split-period allocations pending |
+| partners | Native tablet partner screen, dated share registry, journal-linked drawings, selected-month and older-balance lines; mid-month schedule splits and final audit pending |
 | printer | Pending migration; no dummy screen added |
 | products | Create/edit/search; images and variants pending |
 | purchase-form | Pending migration; no dummy screen added |
@@ -73,3 +73,10 @@ Priority: complete partner share schedules, month-isolated allocations and withd
 - If share schedules change inside a month, the reader rejects that month rather than silently applying the wrong percentage. Effective-date splitting remains pending.
 - Existing historical withdrawal journal entries are not backfilled into partner_drawings automatically. A verified one-time migration is required before historical reports are complete.
 - Native 6 SQLite schema version 2 upgrades version 1 in place; it does not touch the legacy application database.
+
+## October 20 partner UI batch
+
+- Native screen supports partner creation, effective-dated share schedules, a confirmation-gated historical withdrawal register backfill, and one selected-month report with older balances shown separately.
+- Older balances are calculated only from the explicitly chosen first month; this is not an assertion of complete lifetime partner debt.
+- Existing journal withdrawals whose destination does not match a registered partner ID are deliberately not guessed or backfilled.
+- No claim of a passing Android build or device validation for this batch. Do not deploy to the shop yet.
