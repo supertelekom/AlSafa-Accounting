@@ -43,6 +43,30 @@ class Backup(private val context:Context,private val store:Store) {
         require(target.rows("PRAGMA integrity_check").single().values.single()=="ok");require(target.rows("PRAGMA foreign_key_check").isEmpty())
         require(target.rows("SELECT event_id,currency,sum(amount) s FROM journal GROUP BY event_id,currency HAVING s<>0").isEmpty()){"قيود غير متوازنة"}
         require(target.rows("SELECT p.id FROM products p LEFT JOIN stock_moves m ON m.product_id=p.id GROUP BY p.id HAVING p.stock<>coalesce(sum(m.quantity),0) OR p.value<>coalesce(sum(m.value_delta),0)").isEmpty()){"المخزون غير مطابق للحركات"}
+        // A partner drawing must match the immutable journal in amount, currency,
+        // partner identity and actual event date. Foreign keys alone cannot verify this.
+        require(target.rows("""SELECT d.id FROM partner_drawings d
+            JOIN events e ON e.id=d.event_id
+            LEFT JOIN journal j ON j.event_id=d.event_id
+                AND j.account=('equity:withdrawal:' || d.partner_id)
+                AND j.currency=d.currency
+            GROUP BY d.id
+            HAVING d.actual_date<>e.date OR d.amount_minor<>coalesce(sum(j.amount),0)
+        """).isEmpty()){"سحوبات الشركاء لا تطابق القيود المحاسبية"}
+        val schedules=target.rows("""SELECT p.id,p.effective_date,l.percent
+            FROM partner_share_periods p LEFT JOIN partner_share_lines l ON l.period_id=p.id
+            ORDER BY p.effective_date,p.id""")
+        val grouped=schedules.groupBy { it.getValue("id") }
+        grouped.forEach { (_, lines) ->
+            require(lines.none { it["percent"].isNullOrBlank() }){"جدول نسب بلا شركاء"}
+            val total=lines.fold(java.math.BigDecimal.ZERO) { sum,line ->
+                val share=java.math.BigDecimal(line.getValue("percent"))
+                require(share>=java.math.BigDecimal.ZERO && share<=java.math.BigDecimal("100")){"نسبة شريك غير صالحة"}
+                sum.add(share)
+            }
+            require(total.compareTo(java.math.BigDecimal("100"))==0){"مجموع نسب الشركاء ليس 100%"}
+        }
+
     }
     fun stageLegacy(input:InputStream):String {
         val bytes=read(input);val text=String(bytes,Charsets.UTF_8).removePrefix("\uFEFF");val root=JSONObject(text);val data=if(root.optString("format")=="alsafa-accounting-backup")root.getJSONObject("data") else root
