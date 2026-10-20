@@ -177,3 +177,5 @@ Inspected the user's original **AlSafa Backup v2**, exported 2026-10-18 (approxi
 - The 566 cash transactions include 236 repair incomes, 84 sale incomes, 49 partner withdrawals and 18 expenses; these are often representations of underlying business records and must not be posted again as separate profit.
 - Supplier opening-debt ledger consists of 3 opening entries and 2 payments: 520 USD paid in full, 1500 USD with 500 USD paid (1000 USD remainder), and 770 USD with no ledger payment. These are opening-ledger differences **only**, not total supplier liabilities; purchase invoices and payments must be reconciled separately.
 - Added tests for cash-reference classification and supplier opening-debt reconciliation. Execution on Android/CI is still unverified.
+
+- The legacy import now checks actual stored product, repair and historical archive record counts against the source JSON before its enclosing transaction commits; a mismatch rejects and rolls back the import.
