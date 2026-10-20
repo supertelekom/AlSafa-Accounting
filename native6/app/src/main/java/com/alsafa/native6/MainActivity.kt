@@ -57,11 +57,11 @@ class MainActivity:Activity() {
         text("نسخة تطوير — حفظ محلي على التابلت",root,13f)
         if(page!="home")button("‹ الرئيسية",root){go("home")}
         val scroll=ScrollView(this);body=column();scroll.addView(body);root.addView(scroll,LinearLayout.LayoutParams(-1,0,1f))
-        when(page){"home"->home();"simple"->simple();"advanced"->advanced();"products"->products();"sale"->sale();"invoices"->invoices();"vaults"->vaults();"suppliers"->suppliers();"repairs"->repairs();"reports"->reports();"backup"->backup();"audit"->audit()}
+        when(page){"home"->home();"simple"->simple();"advanced"->advanced();"products"->products();"sale"->sale();"invoices"->invoices();"vaults"->vaults();"suppliers"->suppliers();"repairs"->repairs();"reports"->reports();"partners"->partners();"backup"->backup();"audit"->audit()}
     }
     private fun home(){text("ALSAFA WATCHES",size=16f);text("كيف تريد أن تبدأ؟",size=28f);button("⚡ الوضع المبسط · بيع وصيانة وتسليم سريع"){go("simple")};button("◆ الوضع الكامل · الإدارة والمخزون والحسابات"){go("advanced")}}
     private fun simple(){text("العمل السريع",size=26f);button("مبيع"){go("sale")};button("استلام وتسليم صيانة"){go("repairs")};button("الفواتير وقبض الديون"){go("invoices")};button("الخزنات والإقفال اليومي"){go("vaults")}}
-    private fun advanced(){text("الوضع الكامل",size=26f);listOf("مبيع" to "sale","المنتجات وقطع الصيانة" to "products","الفواتير والمرتجعات" to "invoices","استلام وتسليم صيانة" to "repairs","الخزنات والمصاريف والإقفال" to "vaults","الموردون والمشتريات" to "suppliers","تقرير شهر واحد" to "reports","سجل العمليات" to "audit","النسخ الاحتياطي والاستعادة" to "backup").forEach{(label,route)->button(label){go(route)}}}
+    private fun advanced(){text("الوضع الكامل",size=26f);listOf("مبيع" to "sale","المنتجات وقطع الصيانة" to "products","الفواتير والمرتجعات" to "invoices","استلام وتسليم صيانة" to "repairs","الخزنات والمصاريف والإقفال" to "vaults","الموردون والمشتريات" to "suppliers","تقرير شهر واحد" to "reports","الشركاء ونسب الأرباح" to "partners","سجل العمليات" to "audit","النسخ الاحتياطي والاستعادة" to "backup").forEach{(label,route)->button(label){go(route)}}}
     private fun products(){text("المنتجات وقطع الصيانة",size=25f);button("＋ إضافة منتج / قطعة"){productForm()};val query=field("بحث بالاسم أو الباركود أو REF",body);val list=column();body.addView(list)
         fun show(){list.removeAllViews();store.products(query.text.toString()).forEach{p->button("${p.name}  ·  ${money(p.price,p.currency)}\nالمخزون ${p.stock}  ·  ${p.barcode}",list){productForm(p)}}};button("بحث"){show()};show()}
     private fun productForm(p:Product?=null){form(if(p==null)"إضافة منتج" else "تعديل المنتج"){box->
@@ -109,6 +109,55 @@ class MainActivity:Activity() {
         store.rows("SELECT * FROM repairs ORDER BY date DESC").forEach{r->val id=r.getValue("id");text("${r.getValue("customer")} · ${r.getValue("watch")} · ${label(r.getValue("status"))}");if(r.getValue("status")=="received")button("جاهزة للاستلام"){work{store.repairReady(id)}};if(r.getValue("status")=="ready")button("تسليم وفاتورة أجرة عمل"){form("تسليم الصيانة"){box->val c=select("العملة",Currency.entries.map{it.name},box);val n=field("أجرة العمل",box,"0",true);val paid=field("المدفوع",box,"0",true);val v=select("خزنة القبض",vaultNames,box);{val curr=Currency.entries[c.selectedItemPosition];val value=amount(n,curr);val pay=amount(paid,curr);val vault=Store.vaults[v.selectedItemPosition];work{store.deliverRepair(id,curr,value,pay,vault)}}}}}
     }
     private fun reports(){text("تقرير شهر واحد",size=25f);val month=field("الشهر YYYY-MM",body,YearMonth.now().toString());val result=column();body.addView(result);button("عرض"){try{val rows=store.monthReport(month.text.toString());result.removeAllViews();Currency.entries.forEach{c->val selected=rows.filter{it.getValue("currency")==c.name};val revenue=-selected.filter{it.getValue("account").startsWith("revenue:")}.sumOf{it.getValue("amount").toLong()};val expense=selected.filter{it.getValue("account").startsWith("expense:")}.sumOf{it.getValue("amount").toLong()};text("${c.name} · صافي الربح الدفتري ${money(revenue-expense,c)}",result);selected.filter{it.getValue("account").startsWith("equity:withdrawal:")}.forEach{text("سحب ${it.getValue("account").substringAfterLast(':')} في الشهر: ${money(it.getValue("amount").toLong(),c)}",result)}}}catch(e:Exception){error(e)}}}
+
+    private fun partners(){
+        text("الشركاء ونسب الأرباح",size=25f)
+        text("النسب تُسجل بتاريخ سريانها، ولا تُعدّل قيود الأشهر السابقة.",size=15f)
+        button("＋ إضافة شريك"){
+            form("إضافة شريك"){box->
+                val name=field("اسم الشريك",box)
+                ({work { com.alsafa.native6.accounting.PartnerRegistry(store.db).addPartner(name.text.toString()) }})
+            }
+        }
+        val partners=store.rows("SELECT id,name FROM partner_members ORDER BY name")
+        partners.forEach { text(it.getValue("name")+" · "+it.getValue("id"),size=15f) }
+        if(partners.isNotEmpty()) button("تسجيل نسب الشركاء بتاريخ سريان"){
+            form("نسب الشركاء"){box->
+                val date=field("تاريخ السريان YYYY-MM-DD",box,Store.today())
+                val entries=partners.map { it.getValue("id") to field(it.getValue("name")+" %",box,"0",true) }
+                ({work {
+                    val shares=entries.associate { (id,input)-> id to java.math.BigDecimal(input.text.toString()) }
+                    com.alsafa.native6.accounting.PartnerRegistry(store.db).setShares(java.time.LocalDate.parse(date.text.toString()),shares)
+                }})
+            }
+        }
+        button("ربط السحوبات السابقة المسجلة"){
+            AlertDialog.Builder(this).setTitle("مراجعة السحوبات القديمة")
+                .setMessage("سيُربط فقط السحب الذي يحمل معرف شريك مطابقًا وقيدًا محاسبيًا واضحًا. لن تتغير مبالغ الخزنات أو القيود القديمة.")
+                .setNegativeButton("إلغاء",null)
+                .setPositiveButton("متابعة"){_,_->work {
+                    com.alsafa.native6.accounting.PartnerRegistry(store.db).backfillPostedDrawings()
+                }}.show()
+        }
+        val month=field("شهر التقرير YYYY-MM",body,YearMonth.now().toString())
+        val currency=select("عملة التقرير",Currency.entries.map { it.name },body)
+        val result=column();body.addView(result)
+        button("عرض تقرير الشركاء"){
+            try {
+                val selected=YearMonth.parse(month.text.toString())
+                val curr=Currency.entries[currency.selectedItemPosition]
+                val lines=store.partnerMonthReport(selected.toString(),curr)
+                result.removeAllViews()
+                lines.forEach { line->
+                    val name=partners.firstOrNull { it["id"]==line.partnerId }?.get("name")?:line.partnerId
+                    text(name,result,20f)
+                    text("ربح الشهر: ${money(line.allocatedProfitMinor,curr)}",result)
+                    text("سحوبات الشهر: ${money(line.withdrawnThisMonthMinor,curr)}",result)
+                    text("المتبقي للشهر: ${money(line.monthRemainderMinor,curr)}",result)
+                }
+            } catch(e:Exception){error(e)}
+        }
+    }
     private fun audit(){text("سجل العمليات",size=25f);store.rows("SELECT * FROM events ORDER BY created DESC LIMIT 250").forEach{text("${it.getValue("date")} · ${it.getValue("kind")}\n${it.getValue("memo")}")}}
     private fun backup(){text("النسخ الاحتياطي",size=25f);text("اختر Google Drive من منتقي Android إن كان مثبتاً. إنشاء الملف محلي؛ رفعه إلى Drive يحتاج اتصالاً.")
         button("تصدير نسخة كاملة"){startActivityForResult(Intent(Intent.ACTION_CREATE_DOCUMENT).apply{addCategory(Intent.CATEGORY_OPENABLE);type="application/json";putExtra(Intent.EXTRA_TITLE,"AlSafa-Native6-${Store.today()}.json")},101)}
