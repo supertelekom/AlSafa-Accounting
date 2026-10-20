@@ -124,6 +124,31 @@ object LegacyReconciliation {
             if(missingFields>0)
                 lines += "حركات نقدية دون تاريخ أو عملة أو مبلغ صالح للتجميع: $missingFields"
         }
+        // Unpaid purchase invoice portions are distinct from opening supplier debt.
+        data.optJSONArray("purchases")?.let { purchases ->
+            val remaining=sortedMapOf<String,BigDecimal>()
+            var invalid=0
+            for(i in 0 until purchases.length()) {
+                val row=purchases.optJSONObject(i)
+                if(row==null) {invalid++;continue}
+                val supplier=row.optString("supplierId")
+                val currency=row.optString("currency")
+                val total=row.optString("total").toBigDecimalOrNull()
+                val paid=row.optString("paid").toBigDecimalOrNull()
+                if(supplier.isBlank() || currency !in listOf("USD","TRY","SYP") ||
+                    total==null || paid==null || total.signum()<0 ||
+                    paid.signum()<0 || paid>total) {invalid++;continue}
+                val key="$supplier | $currency"
+                remaining[key]=(remaining[key] ?: BigDecimal.ZERO)
+                    .add(total.subtract(paid))
+            }
+            lines += "متبقي فواتير الشراء وفق المدفوع المسجل في الفاتورة فقط:"
+            remaining.forEach { (key,amount) ->
+                lines += "$key: ${amount.toPlainString()}"
+            }
+            if(invalid>0) lines += "فواتير شراء تحتاج مراجعة: $invalid"
+            lines += "تنبيه: لا يُجمع هذا المبلغ مع سجل المورد إلا بعد فحص المدفوعات المرتبطة لمنع التكرار."
+        }
         lines += "مهم: حركات الصناديق قد تعكس المبيعات والصيانة والسحوبات نفسها. لا تُسجل ثانيةً كدخل أو مصروف."
         return lines.joinToString("\n")
     }
