@@ -28,6 +28,11 @@ public final class OnlineReceiptPostingService {
                 if(pending.moveToFirst())
                     throw new IllegalStateException("Invoice has pending cancellation review");
             }
+            try(android.database.Cursor cancelled=db.rawQuery(
+                "SELECT 1 FROM online_cancellations WHERE invoice_id=? LIMIT 1",
+                new String[]{invoiceId})) {
+                if(cancelled.moveToFirst()) throw new IllegalStateException("Invoice is cancelled");
+            }
             OnlineCollectionPlan plan=new OnlineInvoiceBalanceGuard(db).apply(invoiceId,receipt);
             PostingBatch batch=plan.toPosting(operationId,invoiceId,destination);
             long now=System.currentTimeMillis();
