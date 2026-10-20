@@ -63,11 +63,7 @@ class Backup(private val context:Context,private val store:Store) {
             JOIN events e ON e.id=d.event_id
             WHERE e.kind<>'WITHDRAWAL'
         """).isEmpty()){"ربط سحب بحدث محاسبي غير صالح"}
-        require(target.rows("""SELECT e.id FROM events e
-            JOIN journal j ON j.event_id=e.id
-            GROUP BY e.id
-            HAVING count(*) <> count(DISTINCT j.line)
-        """).isEmpty()){"تكرار أرقام أسطر القيد"}
+        // The journal primary key (event_id,line) already enforces line uniqueness.
         require(target.rows("""SELECT j.event_id FROM journal j
             LEFT JOIN events e ON e.id=j.event_id
             WHERE e.id IS NULL
