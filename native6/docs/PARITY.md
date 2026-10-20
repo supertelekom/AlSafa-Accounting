@@ -238,3 +238,9 @@ Inspected the user's original **AlSafa Backup v2**, exported 2026-10-18 (approxi
 - Empty archive results are explicit rather than displaying a blank screen.
 - Archive rows show available customer names, dates, totals and currencies from several legacy field variants, without calculating or altering financial balances.
 - See `docs/RELEASE_CHECKLIST.md` for the release acceptance gate; build and device testing are not yet confirmed.
+
+## Invoice numbering continuity
+
+- New native sale, purchase and repair invoices use the larger of the existing native invoice number and the archived legacy `settings.invoiceSequenceHighWater`, then increment it. The original October backup has high-water 335, so the first native invoice should be 336, avoiding number reuse.
+- Added tests for the first two sales after importing legacy settings. A corrupted archived numbering JSON now blocks new invoice issuance instead of silently restarting the sequence.
+- This is not a substitute for verifying invoice-number duplicates already present in historical records, and does not post legacy invoices into native accounting.
