@@ -1,6 +1,8 @@
 package com.alsafa.native6
 
 import org.json.JSONObject
+import java.math.BigDecimal
+import java.math.RoundingMode
 
 /**
  * Imports only a verified current inventory snapshot from a staged AlSafa Backup v2.
@@ -8,6 +10,7 @@ import org.json.JSONObject
  * The original backup remains intact in legacy_imports for a later ledger migration.
  */
 object LegacySnapshotImport {
+    private fun legacyMinor(raw:String):Long = BigDecimal(raw).setScale(2,RoundingMode.HALF_UP).movePointRight(2).longValueExact()
     private fun data(payload:String):JSONObject {
         val root=JSONObject(payload)
         require(root.optString("format")=="alsafa-accounting-backup"){"يلزم ملف AlSafa Backup v2 الأصلي"}
@@ -44,8 +47,8 @@ object LegacySnapshotImport {
                     require(barcode.isEmpty() || barcodes.add(barcode)){"باركود مكرر: $barcode"}
                     val name=item.getString("name").trim()
                     val currency=Currency.valueOf(item.getString("currency"))
-                    val price=Money.parse(item.optString("salePrice","0"),currency).minor
-                    val cost=Money.parse(item.optString("cost","0"),currency).minor
+                    val price=legacyMinor(item.optString("salePrice","0"))
+                    val cost=legacyMinor(item.optString("cost","0"))
                     val qty=item.getLong("stock")
                     require(qty>=0 && price>=0 && cost>=0 && name.isNotEmpty()){"بيانات مخزون غير صالحة: $id"}
                     // Preserve all legacy metadata and embedded photos as JSON details.
