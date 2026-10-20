@@ -94,3 +94,10 @@ Priority: complete partner share schedules, month-isolated allocations and withd
 - Startup now falls back to Android's system font when the bundled Tajawal asset is unavailable, and a failed page render displays a recovery screen with a backup shortcut instead of terminating the activity.
 - **Critical blocker:** importing the v3.9.353 shop backup into the live Native 6 ledger is NOT implemented. Legacy JSON can only be staged in isolation. Do not enter real trading on Native 6 yet: products, debts, receipts, repair history and partner capital must be reconciled and migrated first.
 - Keep the current app and an external copy of its backup untouched; test only on a separate tablet/install with disposable data until migration validation passes.
+
+## Legacy readiness audit (development)
+
+- Staged old-format JSON backups can now be inspected from the native archive screen, without writing anything into sales, journal, inventory or supplier balances.
+- The inspector reports counts for products, sales, repairs and suppliers, samples field names and flags duplicate/missing recognized identifiers. Missing identifiers are warnings, not proof of corrupt records: the legacy format may use other keys.
+- Added unit tests for duplicate detection and missing sections. CI is configured, but no passing Android build or test run has been independently verified.
+- **This is not migration**. Mapping old identifiers, invoices, debt settlements, stock valuation, partner shares and all currencies into balanced Native 6 journal entries is still blocked pending source-schema reconciliation and a real backup sample.
