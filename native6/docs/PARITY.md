@@ -169,3 +169,11 @@ Inspected the user's original **AlSafa Backup v2**, exported 2026-10-18 (approxi
 - Confirmed from the original 2026-10-18 source settings: partner shares father 40%, me 35%, brother 25%, and invoice sequence high-water 335. These figures are **source metadata**; effective dates and historical account balances still require reconciliation.
 - Financial audit now surfaces partner shares and invoice sequence and continues to distinguish historical withdrawals by transaction month.
 - New regression covers an unknown future section and settings retention. Android build and test execution still pending; source changes must not be interpreted as a verified APK.
+
+## Referential reconciliation of original 2026-10-18 backup
+
+- Added `LegacyReconciliation` with a read-only screen to classify cash transactions and customer payments by source `referenceType/referenceId`, detect missing known invoice references, and distinguish unsupported types from truly missing references.
+- **Measured against the original source:** all 28 payment references resolve; among 566 cash transactions, 398 resolve to known source record types, 103 have no reference ID, and 65 use reference types requiring additional reconciliation. There were **zero missing IDs** for supported reference types.
+- The 566 cash transactions include 236 repair incomes, 84 sale incomes, 49 partner withdrawals and 18 expenses; these are often representations of underlying business records and must not be posted again as separate profit.
+- Supplier opening-debt ledger consists of 3 opening entries and 2 payments: 520 USD paid in full, 1500 USD with 500 USD paid (1000 USD remainder), and 770 USD with no ledger payment. These are opening-ledger differences **only**, not total supplier liabilities; purchase invoices and payments must be reconciled separately.
+- Added tests for cash-reference classification and supplier opening-debt reconciliation. Execution on Android/CI is still unverified.
