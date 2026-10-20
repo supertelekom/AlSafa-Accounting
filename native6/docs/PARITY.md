@@ -161,3 +161,11 @@ Inspected the user's original **AlSafa Backup v2**, exported 2026-10-18 (approxi
 - **Verified source invoice collisions:** sale invoice number 9 occurs twice; repair invoice number 221 occurs twice. Original record IDs remain distinct; never key migration by invoice number alone.
 - Preserve legacy settings and exchange rates as non-active configuration evidence. In particular, historical partner percentages and invoice sequence high-water must not be inferred from current defaults.
 - The financial ledger migration remains **not done**; raw cash transactions overlap sales/repairs/payments and must not be double-booked. Do not present raw financial totals as balances.
+
+## Legacy import safeguards — continued implementation
+
+- Historical sections are discovered dynamically rather than using a fixed allowlist, so unrecognized array sections are retained in `legacy_records` instead of being discarded. Non-object array values are wrapped in `_legacyValue` for lossless representation.
+- Original settings, exchange rates and device metadata are archived as read-only evidence; they do **not** activate Firebase or overwrite the offline Native 6 configuration.
+- Confirmed from the original 2026-10-18 source settings: partner shares father 40%, me 35%, brother 25%, and invoice sequence high-water 335. These figures are **source metadata**; effective dates and historical account balances still require reconciliation.
+- Financial audit now surfaces partner shares and invoice sequence and continues to distinguish historical withdrawals by transaction month.
+- New regression covers an unknown future section and settings retention. Android build and test execution still pending; source changes must not be interpreted as a verified APK.
