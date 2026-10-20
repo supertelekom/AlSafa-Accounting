@@ -9,7 +9,7 @@ import static org.junit.Assert.*;
 
 @RunWith(AndroidJUnit4.class)
 public final class UncollectedOnlineCancellationTest {
-    @Test public void returnedStockReversesOnlyOnce() {
+    @Test public void returnedStockReversesOnlyOnce() throws Exception {
         try(Native5DatabaseHelper helper=new Native5DatabaseHelper(ApplicationProvider.getApplicationContext(),":memory:")) {
             SQLiteDatabase db=helper.getWritableDatabase();
             db.execSQL("INSERT INTO inventory_balances(product_id,quantity) VALUES('p',5)");
