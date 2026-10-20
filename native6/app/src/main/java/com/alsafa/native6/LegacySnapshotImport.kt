@@ -75,7 +75,8 @@ object LegacySnapshotImport {
                     "تم التسليم" -> "delivered"
                     "قيد الصيانة" -> "in_progress"
                     "جاهزة","جاهز","جاهز للاستلام","بانتظار التسليم" -> "ready"
-                    else -> "received"
+                    "مستلمة","تم الاستلام","قيد الانتظار","received" -> "received"
+                    else -> if(originalStatus.isBlank()) "received" else "legacy_unknown"
                 }
                 store.insert("repairs","id" to id,"customer" to repair.optString("customer"),
                     "phone" to repair.optString("phone"),"watch" to repair.optString("watch"),
