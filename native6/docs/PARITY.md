@@ -23,14 +23,14 @@ Source: v3.9.353; 944 declared functions, 44 static navigation routes, 48 forms,
 | modern-hub | Pending migration; no dummy screen added |
 | more | Pending migration; no dummy screen added |
 | opening-balances | Pending migration; no dummy screen added |
-| partners | Pending migration; no dummy screen added |
+| partners | SQLite v2 schema, dated share registry, linked cash drawings and month report backend; UI and split-period allocations pending |
 | printer | Pending migration; no dummy screen added |
 | products | Create/edit/search; images and variants pending |
 | purchase-form | Pending migration; no dummy screen added |
 | purchases | Pending migration; no dummy screen added |
 | repair-form | Receive without media |
 | repairs | Receive/ready/labor invoice; parts and full state machine pending |
-| reports | One-month accrual profit, actual-date withdrawals; partner allocation pending |
+| reports | One-month accrual report; preliminary partner allocation API with dated drawings; full accounting audit and UI pending |
 | returns | Partial/full sale returns and separate refund; exchanges pending |
 | sale-form | Same-currency store sale, discount, debt and cash; advanced options pending |
 | sales | List, collection, returns, cancellation, native PDF |
@@ -65,3 +65,11 @@ No real shop backup has been opened or changed in this work.
 ## Next implementation batch
 
 Priority: complete partner share schedules, month-isolated allocations and withdrawals by actual transaction date; supplier opening debt and dated settlements; then multi-currency receipts and repair parts. Every change must preserve append-only per-currency balanced journals and atomic SQLite transactions. Do not migrate live data until explicit approval. Tests are the final verification stage, not a substitute for feature completion.
+
+## Partner integration caveats
+
+- Partner membership and effective shares are not pre-seeded. Configure them explicitly before requesting partner month reports.
+- The partner month report currently uses posted revenue and expense accounts as its preliminary distributable-profit basis; partner-specific profit policy, taxes and adjustments require further reconciliation.
+- If share schedules change inside a month, the reader rejects that month rather than silently applying the wrong percentage. Effective-date splitting remains pending.
+- Existing historical withdrawal journal entries are not backfilled into partner_drawings automatically. A verified one-time migration is required before historical reports are complete.
+- Native 6 SQLite schema version 2 upgrades version 1 in place; it does not touch the legacy application database.
