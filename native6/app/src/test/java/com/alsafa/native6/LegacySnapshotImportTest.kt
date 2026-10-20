@@ -6,6 +6,8 @@ import org.json.JSONObject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.io.ByteArrayOutputStream
+import java.io.ByteArrayInputStream
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
@@ -83,6 +85,34 @@ class LegacySnapshotImportTest {
             assertEquals(0L,store.scalar("SELECT count(*) FROM journal"))
             assertEquals(0L,store.scalar("SELECT count(*) FROM events"))
         } finally { helper.close();context.deleteDatabase(name) }
+    }
+
+    @Test fun importedSnapshotCanBeExportedAndRestored() {
+        val context=RuntimeEnvironment.getApplication<Context>()
+        val sourceName="legacy-export-source-test.db"
+        val targetName="legacy-export-target-test.db"
+        context.deleteDatabase(sourceName)
+        context.deleteDatabase(targetName)
+        val sourceDb=StoreDb(context,sourceName)
+        val targetDb=StoreDb(context,targetName)
+        try {
+            val source=Store(sourceDb)
+            LegacySnapshotImport.import(source,payload())
+            val bytes=ByteArrayOutputStream()
+            Backup(context,source).export(bytes)
+            val target=Store(targetDb)
+            Backup(context,target).restore(ByteArrayInputStream(bytes.toByteArray()))
+            assertEquals(2L,target.scalar("SELECT count(*) FROM products"))
+            assertEquals(1L,target.scalar("SELECT count(*) FROM suppliers"))
+            assertEquals(1L,target.scalar("SELECT count(*) FROM repairs"))
+            assertEquals(3L,target.product("legacy-product-1").stock)
+            assertEquals(0L,target.scalar("SELECT count(*) FROM invoices"))
+        } finally {
+            sourceDb.close()
+            targetDb.close()
+            context.deleteDatabase(sourceName)
+            context.deleteDatabase(targetName)
+        }
     }
 
 }
