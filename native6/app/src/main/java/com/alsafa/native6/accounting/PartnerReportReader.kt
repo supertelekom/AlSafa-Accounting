@@ -51,6 +51,46 @@ class PartnerReportReader(private val db: SQLiteDatabase) {
         }
     }
 
+    /**
+     * Splits posted monthly profit by event date and the effective share schedule.
+     * A dated journal net is required: allocating an aggregate monthly net across
+     * mid-month share changes would fabricate partner entitlements.
+     */
+    fun monthlyFromPostedJournal(month: YearMonth, currency: String): List<PartnerMonthLine> {
+        require(currency in setOf("USD", "TRY", "SYP"))
+        val from=month.atDay(1).toString()
+        val until=month.plusMonths(1).atDay(1).toString()
+        val profitByDay = db.rawQuery(
+            """SELECT e.date,
+                 coalesce(sum(CASE
+                   WHEN j.account LIKE 'revenue:%' THEN -j.amount
+                   WHEN j.account LIKE 'expense:%' THEN -j.amount
+                   ELSE 0 END),0) AS profit
+               FROM events e JOIN journal j ON j.event_id=e.id
+               WHERE e.date>=? AND e.date<? AND j.currency=?
+               GROUP BY e.date ORDER BY e.date""",
+            arrayOf(from,until,currency)
+        ).use { cursor ->
+            buildList {
+                while(cursor.moveToNext()) add(LocalDate.parse(cursor.getString(0)) to cursor.getLong(1))
+            }
+        }
+        val allocations=linkedMapOf<String,Long>()
+        // Include every partner effective at month end, even with zero daily profit.
+        sharesAt(month.atEndOfMonth()).forEach { allocations[it.partnerId]=0L }
+        for ((day,profit) in profitByDay) {
+            val lines=PartnerMonthCalculator.allocate(month,currency,profit,sharesAt(day),emptyList())
+            for(line in lines) allocations[line.partnerId]=Math.addExact(allocations[line.partnerId]?:0L,line.allocatedProfitMinor)
+        }
+        val drawings=withdrawals(month,currency)
+        return allocations.map { (partner,profit) ->
+            val withdrawn=drawings.filter { it.partnerId==partner }.fold(0L) { total,draw ->
+                Math.addExact(total,draw.amountMinor)
+            }
+            PartnerMonthLine(partner,month,currency,profit,withdrawn,Math.subtractExact(profit,withdrawn))
+        }
+    }
+
     fun monthly(
         month: YearMonth,
         currency: String,
@@ -60,7 +100,7 @@ class PartnerReportReader(private val db: SQLiteDatabase) {
         val end = month.atEndOfMonth()
         val startShares = sharesAt(start)
         require(sharesAt(end) == startShares && db.rawQuery("SELECT count(*) FROM partner_share_periods WHERE effective_date>? AND effective_date<=?", arrayOf(start.toString(), end.toString())).use { cursor -> cursor.moveToFirst(); cursor.getLong(0) == 0L }) {
-            "Partner shares changed during this month; profit must be split by effective-date subperiods"
+            "Partner shares changed during this month; use monthlyFromPostedJournal"
         }
         return PartnerMonthCalculator.allocate(month, currency, distributableProfitMinor, startShares, withdrawals(month, currency))
     }
