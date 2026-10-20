@@ -25,9 +25,17 @@ public final class TabletSyncWorker extends Worker {
                 processed++;
             }
             if(isStopped()) return Result.retry();
+            ReviewSyncUploader reviewSync=new ReviewSyncUploader(db,
+                new FirestoreOperationWriter(FirebaseFirestore.getInstance(),storeId));
+            int reviews=0;
+            while(reviews<25 && !isStopped()) {
+                if(!reviewSync.uploadNext()) break;
+                reviews++;
+            }
+            if(isStopped()) return Result.retry();
             // Retry unfinished or failed uploads. Never mark them as uploaded locally.
             try(android.database.Cursor c=db.rawQuery(
-                "SELECT COUNT(*) FROM outbox WHERE state IN ('PENDING','RETRY','SENDING')",null)) {
+                "SELECT (SELECT COUNT(*) FROM outbox WHERE state IN ('PENDING','RETRY','SENDING')) + (SELECT COUNT(*) FROM review_sync_outbox WHERE state='PENDING')",null)) {
                 c.moveToFirst();
                 return c.getLong(0)>0 ? Result.retry() : Result.success();
             }
