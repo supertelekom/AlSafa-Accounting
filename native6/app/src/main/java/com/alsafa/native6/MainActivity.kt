@@ -86,7 +86,9 @@ class MainActivity:Activity() {
         text("هذه السجلات لم تُرحّل كفواتير جديدة، ولا تدخل في رصيد الصندوق أو الأرباح.",size=15f)
         val categories=listOf("sales","repairs","purchases","payments","cashTransactions",
             "supplierLedger","partnerWithdrawals","expenses","returns")
-        val choice=select("نوع السجل",categories,body)
+        val categoryLabels=listOf("المبيعات","الصيانة","المشتريات","الدفعات","حركات الصناديق",
+            "حساب الموردين","سحوبات الشركاء","المصاريف","المرتجعات")
+        val choice=select("نوع السجل",categoryLabels,body)
         val search=field("بحث في بيانات السجل القديم",body)
         val results=column()
         body.addView(results)
