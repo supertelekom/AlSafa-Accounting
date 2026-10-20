@@ -36,6 +36,15 @@ object LegacyReadiness {
                     else if(!ids.add(row.optString(idField))) duplicate++
                     if(i<20) row.keys().forEachRemaining { keys.add(it) }
                 }
+                if(key=="sales" && arr.length()>0) {
+                    var invalid=0
+                    for(i in 0 until arr.length()) {
+                        val row=arr.optJSONObject(i) ?: continue
+                        if(row.has("total") && !row.isNull("total") &&
+                            row.optString("total").toBigDecimalOrNull()==null) invalid++
+                    }
+                    if(invalid>0) lines += "  إجمالي مبيعات غير رقمي: $invalid"
+                }
                 if(duplicate>0) lines += "  معرفات مكررة: $duplicate"
                 if(missing>0) lines += "  سجلات بلا معرف معروف: $missing (قد تستخدم النسخة تسمية مختلفة)"
                 if(nonObjects>0) lines += "  سجلات غير صالحة ككائنات: $nonObjects"
