@@ -5,7 +5,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
 /**
- * Schema v8. Future schema upgrades must use additive, tested migrations;
+ * Schema v9. Future schema upgrades must use additive, tested migrations;
  * NEVER delete or replace a shop's database to upgrade.
  */
 public final class Native5DatabaseHelper extends SQLiteOpenHelper {
@@ -14,7 +14,7 @@ public final class Native5DatabaseHelper extends SQLiteOpenHelper {
         this(context,DATABASE_NAME);
     }
     Native5DatabaseHelper(Context context,String databaseName) {
-        super(context,databaseName,null,8);
+        super(context,databaseName,null,9);
     }
     @Override public void onConfigure(SQLiteDatabase db) {
         super.onConfigure(db);
@@ -37,6 +37,7 @@ public final class Native5DatabaseHelper extends SQLiteOpenHelper {
         addInvoiceNumberMapping(db);
         addCancellationDecisions(db);
         addOnlineCancellationPostingTables(db);
+        addReviewSyncTables(db);
     }
     private static void addOnlineInvoiceTables(SQLiteDatabase db) {
         db.execSQL("CREATE TABLE IF NOT EXISTS online_invoices(invoice_id TEXT PRIMARY KEY NOT NULL,total_minor INTEGER NOT NULL CHECK(total_minor>0),cost_minor INTEGER NOT NULL CHECK(cost_minor>0),currency TEXT NOT NULL CHECK(currency IN ('USD','TRY','SYP')),collected_minor INTEGER NOT NULL DEFAULT 0 CHECK(collected_minor>=0),released_cost_minor INTEGER NOT NULL DEFAULT 0 CHECK(released_cost_minor>=0),created_at_ms INTEGER NOT NULL,CHECK(collected_minor<=total_minor),CHECK(released_cost_minor<=cost_minor))");
@@ -90,6 +91,13 @@ public final class Native5DatabaseHelper extends SQLiteOpenHelper {
         db.execSQL("CREATE TRIGGER IF NOT EXISTS online_cancellations_no_update BEFORE UPDATE ON online_cancellations BEGIN SELECT RAISE(ABORT,'Cancellation is immutable'); END");
         db.execSQL("CREATE TRIGGER IF NOT EXISTS online_cancellations_no_delete BEFORE DELETE ON online_cancellations BEGIN SELECT RAISE(ABORT,'Cancellation is immutable'); END");
     }
+    /** Append-only review synchronization operations, independent from accounting events. */
+    private static void addReviewSyncTables(SQLiteDatabase db) {
+        db.execSQL("CREATE TABLE IF NOT EXISTS review_sync_outbox(operation_id TEXT PRIMARY KEY NOT NULL,kind TEXT NOT NULL CHECK(kind IN ('CANCELLATION_REVIEW_REQUEST','CANCELLATION_REVIEW_DECISION')),payload TEXT NOT NULL,created_at_ms INTEGER NOT NULL,state TEXT NOT NULL DEFAULT 'PENDING' CHECK(state IN ('PENDING','CONFIRMED')),attempts INTEGER NOT NULL DEFAULT 0 CHECK(attempts>=0),last_error TEXT)");
+        db.execSQL("CREATE INDEX IF NOT EXISTS idx_review_sync_pending ON review_sync_outbox(state,created_at_ms)");
+        db.execSQL("CREATE TRIGGER IF NOT EXISTS review_sync_payload_no_update BEFORE UPDATE OF operation_id,kind,payload,created_at_ms ON review_sync_outbox BEGIN SELECT RAISE(ABORT,'Review sync operation immutable'); END");
+        db.execSQL("CREATE TRIGGER IF NOT EXISTS review_sync_no_delete BEFORE DELETE ON review_sync_outbox BEGIN SELECT RAISE(ABORT,'Review sync operation cannot be deleted'); END");
+    }
     @Override public void onUpgrade(SQLiteDatabase db,int oldVersion,int newVersion) {
         if(oldVersion<2 && newVersion>=2) addOnlineInvoiceTables(db);
         if(oldVersion<3 && newVersion>=3) addClosingTables(db);
@@ -98,6 +106,7 @@ public final class Native5DatabaseHelper extends SQLiteOpenHelper {
         if(oldVersion<6 && newVersion>=6) addInvoiceNumberMapping(db);
         if(oldVersion<7 && newVersion>=7) addCancellationDecisions(db);
         if(oldVersion<8 && newVersion>=8) addOnlineCancellationPostingTables(db);
-        if(newVersion>8) throw new IllegalStateException("Unknown Native5 schema version");
+        if(oldVersion<9 && newVersion>=9) addReviewSyncTables(db);
+        if(newVersion>9) throw new IllegalStateException("Unknown Native5 schema version");
     }
 }
