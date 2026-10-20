@@ -84,12 +84,11 @@ object LegacySnapshotImport {
             }
             // Preserve historical financial records verbatim for accurate later ledger
             // reconstruction. They are NOT booked as new income or cash movements.
-            val historical=listOf("sales","purchases","supplierLedger","payments",
-                "partnerWithdrawals","cashTransactions","dailyClosings","expenses",
-                "returns","inventoryMovements","usedWatchTransactions","loyaltyLedger",
-                "productCostHistory","auditLog","smartReceipts","discountRules",
-                "productDetailOptions","customerOrders","inventorySessions",
-                "customerSessions","shiftHandovers")
+            // Archive every other array from the original backup, including
+            // future sections unknown to this app version.
+            val historical=d.keys().asSequence()
+                .filter { it !in setOf("products","maintenanceParts","suppliers","repairs") }
+                .filter { d.optJSONArray(it)!=null }.toList()
             historical.forEach { key ->
                 val array=d.optJSONArray(key) ?: return@forEach
                 for(i in 0 until array.length()) {
