@@ -45,6 +45,14 @@ class Backup(private val context:Context,private val store:Store) {
         require(target.rows("PRAGMA integrity_check").single().values.single()=="ok");require(target.rows("PRAGMA foreign_key_check").isEmpty())
         require(target.rows("SELECT event_id,currency,sum(amount) s FROM journal GROUP BY event_id,currency HAVING s<>0").isEmpty()){"قيود غير متوازنة"}
         require(target.rows("SELECT p.id FROM products p LEFT JOIN stock_moves m ON m.product_id=p.id GROUP BY p.id HAVING p.stock<>coalesce(sum(m.quantity),0) OR p.value<>coalesce(sum(m.value_delta),0)").isEmpty()){"المخزون غير مطابق للحركات"}
+        require(target.rows("""SELECT m.event_id FROM stock_moves m
+            LEFT JOIN events e ON e.id=m.event_id
+            WHERE e.id IS NULL
+        """).isEmpty()){"حركة مخزون بلا حدث"}
+        require(target.rows("""SELECT m.product_id FROM stock_moves m
+            LEFT JOIN products p ON p.id=m.product_id
+            WHERE p.id IS NULL
+        """).isEmpty()){"حركة مخزون لمنتج غير موجود"}
         // A partner drawing must match the immutable journal in amount, currency,
         // partner identity and actual event date. Foreign keys alone cannot verify this.
         require(target.rows("""SELECT d.id FROM partner_drawings d
