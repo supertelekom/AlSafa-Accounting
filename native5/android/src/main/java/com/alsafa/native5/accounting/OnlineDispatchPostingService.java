@@ -61,6 +61,10 @@ public final class OnlineDispatchPostingService {
                 db.insertOrThrow("invoice_number_mapping",null,mapping);
             }
             port.insertEvent(operationId,batch.operationKind());
+            ContentValues link=new ContentValues();
+            link.put("invoice_id",invoiceId);
+            link.put("dispatch_event_id",operationId);
+            db.insertOrThrow("online_dispatch_links",null,link);
             int i=0;
             for(JournalEntry.Line line:batch.journal().lines())
                 port.insertJournalLine(operationId,i++,line);
