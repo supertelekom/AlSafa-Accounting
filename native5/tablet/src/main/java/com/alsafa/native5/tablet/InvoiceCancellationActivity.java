@@ -29,7 +29,7 @@ public final class InvoiceCancellationActivity extends Activity {
         heading.setTextSize(24);
         root.addView(heading);
         TextView notice=new TextView(this);
-        notice.setText("بحث محلي برقم الفاتورة المسجل أو معرّفها الداخلي. الفواتير التي لم تُربط أرقامها بعد تُبحث بمعرّفها. المعاينة والطلب ورفض الطلب فقط؛ لا يتم الإلغاء المحاسبي من هذه الشاشة.");
+        notice.setText("بحث محلي برقم الفاتورة المسجل أو معرّفها الداخلي. الفواتير التي لم تُربط أرقامها بعد تُبحث بمعرّفها. المعاينة والطلب ورفض الطلب محلية على هذا الجهاز فقط، ولم تُربط مزامنة قرارات المراجعة بين الأجهزة بعد. لا يتم الإلغاء المحاسبي من هذه الشاشة.");
         root.addView(notice);
         EditText number=new EditText(this);
         number.setHint("رقم الفاتورة أو معرّفها");
@@ -143,7 +143,7 @@ public final class InvoiceCancellationActivity extends Activity {
                     String id=new InvoiceCancellationRequestService(helper.getWritableDatabase())
                         .requestReview(UUID.randomUUID().toString(),lookup,why);
                     preview.setText("سُجل طلب مراجعة الفاتورة: "+id+
-                        "\\nتم تعليق التحصيل إلى حين حسم الطلب. لم تُلغ الفاتورة ولم يُعد المخزون.");
+                        "\\nتم تعليق التحصيل محليًا إلى حين حسم الطلب. لم تُلغ الفاتورة ولم يُعد المخزون.");
                 } catch(Exception ex) {
                     preview.setText("تعذر تسجيل طلب المراجعة: "+ex.getClass().getSimpleName());
                 }
