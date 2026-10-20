@@ -224,3 +224,10 @@ Inspected the user's original **AlSafa Backup v2**, exported 2026-10-18 (approxi
 - Archive search uses literal SQLite `instr` matching, avoiding unintended `%`/`_` wildcard behavior.
 - CI now installs Gradle 8.9 with `gradle/actions/setup-gradle`, runs unit tests and debug APK assembly, and uploads test reports even on failed builds. APK success is **not** yet confirmed.
 - Added a regression test asserting that archived financial records cannot be modified or deleted directly in SQLite.
+
+## Import rollback and repair state integrity
+
+- Added Robolectric regression tests for atomic rollback of the full legacy import when duplicate barcodes or unsupported currency values are encountered. Tests assert zero residual products, events and journal entries.
+- Legacy repair state mapping now preserves known Arabic and English states, and marks unrecognized nonempty states as `legacy_unknown` for manual review rather than silently converting them to `received`.
+- Historical repair archive list now shows the original repair state.
+- These tests have been committed, but their execution and Android APK build have not been independently verified.
