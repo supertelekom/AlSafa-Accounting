@@ -26,7 +26,7 @@ class Store(val helper:StoreDb) {
     fun balance(v:String,c:Currency)=scalar("SELECT coalesce(sum(amount),0) FROM journal WHERE account=? AND currency=?","cash:$v",c.name)
     private fun enough(v:String,c:Currency,amount:Long) { vault(v);require(amount>=0 && balance(v,c)>=amount){"رصيد الخزنة غير كافٍ"} }
     private fun toProduct(r:Map<String,String>)=Product(r.getValue("id"),r.getValue("name"),r.getValue("barcode"),Currency.valueOf(r.getValue("currency")),r.getValue("price").toLong(),r.getValue("cost").toLong(),r.getValue("stock").toLong(),r.getValue("kind"),r.getValue("value").toLong())
-    fun products(query:String="")=rows("SELECT * FROM products WHERE archived=0 AND (instr(lower(name),lower(?))>0 OR instr(lower(barcode),lower(?))>0 OR instr(lower(model),lower(?))>0) ORDER BY name",query,query,query).map(::toProduct)
+    fun products(query:String="")=rows("SELECT * FROM products WHERE archived=0 AND (instr(lower(name),lower(?))>0 OR instr(lower(barcode),lower(?))>0 OR instr(lower(model),lower(?))>0) ORDER BY name",query.trim(),query.trim(),query.trim()).map(::toProduct)
     fun product(id:String)=toProduct(rows("SELECT * FROM products WHERE id=?",id).single())
     fun addProduct(name:String,barcode:String,currency:Currency,price:Long,cost:Long,quantity:Long,kind:String="watch",details:String="{}",command:String=id()):String=transaction {
         require(name.isNotBlank() && price>=0 && cost>=0 && quantity>=0);require(kind in listOf("watch","part"));JSONObject(details)
