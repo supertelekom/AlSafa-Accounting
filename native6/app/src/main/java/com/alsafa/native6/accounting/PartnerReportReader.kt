@@ -59,7 +59,7 @@ class PartnerReportReader(private val db: SQLiteDatabase) {
         val start = month.atDay(1)
         val end = month.atEndOfMonth()
         val startShares = sharesAt(start)
-        require(sharesAt(end) == startShares) {
+        require(sharesAt(end) == startShares && db.rawQuery("SELECT count(*) FROM partner_share_periods WHERE effective_date>? AND effective_date<=?", arrayOf(start.toString(), end.toString())).use { cursor -> cursor.moveToFirst(); cursor.getLong(0) == 0L }) {
             "Partner shares changed during this month; profit must be split by effective-date subperiods"
         }
         return PartnerMonthCalculator.allocate(month, currency, distributableProfitMinor, startShares, withdrawals(month, currency))
