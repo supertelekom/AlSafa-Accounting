@@ -74,6 +74,11 @@ class Backup(private val context:Context,private val store:Store) {
             GROUP BY e.id
             HAVING count(j.line)=0
         """).isEmpty()){"عملية مالية بلا قيد محاسبي"}
+        require(target.rows("""SELECT e.id FROM events e
+            JOIN journal j ON j.event_id=e.id
+            GROUP BY e.id,j.currency
+            HAVING sum(j.amount)<>0
+        """).isEmpty()){"عملية غير متوازنة بعملة واحدة"}
         val schedules=target.rows("""SELECT p.id,p.effective_date,l.percent
             FROM partner_share_periods p LEFT JOIN partner_share_lines l ON l.period_id=p.id
             ORDER BY p.effective_date,p.id""")
