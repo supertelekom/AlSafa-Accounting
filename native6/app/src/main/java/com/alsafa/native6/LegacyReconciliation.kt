@@ -228,6 +228,7 @@ object LegacyReconciliation {
             }
             var sameCurrency=0
             var otherCurrency=0
+            var unspecifiedCurrency=0
             var missingInvoice=0
             for(i in 0 until paymentRows.length()) {
                 val row=paymentRows.optJSONObject(i) ?: continue
@@ -236,9 +237,10 @@ object LegacyReconciliation {
                 if(invoice==null) {missingInvoice++;continue}
                 val receiptCurrency=row.optString("paymentCurrency")
                     .ifBlank { row.optString("currency") }
-                if(receiptCurrency==invoice.first) sameCurrency++ else otherCurrency++
+                if(receiptCurrency.isBlank()) unspecifiedCurrency++
+                else if(receiptCurrency==invoice.first) sameCurrency++ else otherCurrency++
             }
-            lines += "مطابقة مدفوعات المبيع: نفس عملة الفاتورة $sameCurrency، عملة مختلفة $otherCurrency، فاتورة غير معروفة $missingInvoice"
+            lines += "مطابقة مدفوعات المبيع: نفس عملة الفاتورة $sameCurrency، عملة مختلفة $otherCurrency، فاتورة غير معروفة $missingInvoice، عملة تحصيل غير محددة $unspecifiedCurrency"
             lines += "المدفوع المحفوظ داخل الفاتورة قد يتضمن الدفعات اللاحقة؛ لا يُخصم سجل المدفوعات مرة ثانية."
         }
         lines += "مهم: حركات الصناديق قد تعكس المبيعات والصيانة والسحوبات نفسها. لا تُسجل ثانيةً كدخل أو مصروف."
