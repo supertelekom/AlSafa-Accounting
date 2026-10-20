@@ -196,8 +196,9 @@ object LegacyReconciliation {
                 val ref=row.optString("referenceId")
                 val currency=row.optString("paymentCurrency")
                     .ifBlank { row.optString("currency") }
-                val amount=row.optString("paymentAmount")
-                    .ifBlank { row.optString("amount") }.toBigDecimalOrNull()
+                val amount=if(row.optString("paymentCurrency").isNotBlank())
+                    row.optString("paymentAmount").toBigDecimalOrNull()
+                    else row.optString("amount").toBigDecimalOrNull()
                 if(type.isBlank() || ref.isBlank() ||
                     currency !in listOf("USD","TRY","SYP") ||
                     amount==null || amount.signum()<0) {invalid++;continue}
