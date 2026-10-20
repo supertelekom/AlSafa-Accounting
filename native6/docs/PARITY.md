@@ -120,3 +120,13 @@ Priority: complete partner share schedules, month-isolated allocations and withd
 - Added purchase → weighted-average inventory → sale test, asserting the remaining units and minor-unit inventory valuation.
 - Added a tampered-backup test where the attacker recomputes the JSON SHA-256 after altering product valuation. Restoration must still reject it using ledger/stock reconciliation and leave the destination database empty.
 - Tests are committed, not yet independently executed; do not claim a successful build from these additions.
+
+## Actual legacy v3.9.353 backup mapping — 2026-10-20
+
+Inspected the user's original **AlSafa Backup v2**, exported 2026-10-18 (approximately 61.9 MB), without uploading the private backup to GitHub. Verified actual legacy sections: 552 products, 72 maintenance parts, 13 suppliers, 243 repairs, 86 sales, 6 purchases, 5 supplier-ledger entries, 28 payments, 49 partner withdrawals, 566 cash transactions and 26 daily closings.
+
+- Implemented an **explicit, atomic, empty-database-only partial restore** from a staged v2 backup: watches, maintenance parts, suppliers, and repair history. Original product JSON (including embedded photos) and repair JSON remain in the details field; source archive remains untouched.
+- Legacy prices/costs can have more than two decimals. Current Native 6 minor-unit storage rounds half-up to two decimals; original precision remains in details. This is not a historical profit reconciliation.
+- **Not yet imported:** legacy sales/invoice numbering, purchases, historical supplier debt and repayments, cash/closing balances, partner shares/withdrawals, and other historical ledgers. They must not be fabricated from opening inventory.
+- This partial restore must not be described as a completed migration or production-ready accounting app.
+- Added Robolectric tests for the partial importer; build/test execution remains unverified.
