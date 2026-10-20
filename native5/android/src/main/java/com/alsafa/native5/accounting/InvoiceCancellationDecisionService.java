@@ -11,6 +11,15 @@ public final class InvoiceCancellationDecisionService {
     public InvoiceCancellationDecisionService(SQLiteDatabase db) { this.db=Objects.requireNonNull(db); }
 
     public void reject(String requestId,String reason) {
+        decide(requestId,reason,"REJECTED");
+    }
+
+    /** Approval authorizes later review; it never posts a reversal or refund. */
+    public void approveForPosting(String requestId,String reason) {
+        decide(requestId,reason,"APPROVED_FOR_POSTING");
+    }
+
+    private void decide(String requestId,String reason,String decision) {
         if(requestId==null || !requestId.matches("[A-Za-z0-9_-]{1,128}"))
             throw new IllegalArgumentException("Invalid request ID");
         if(reason==null || reason.trim().isEmpty() || reason.length()>500)
@@ -25,7 +34,7 @@ public final class InvoiceCancellationDecisionService {
             }
             ContentValues v=new ContentValues();
             v.put("request_id",requestId);
-            v.put("decision","REJECTED");
+            v.put("decision",decision);
             v.put("reason",reason.trim());
             v.put("decided_at_ms",System.currentTimeMillis());
             db.insertOrThrow("invoice_cancellation_decisions",null,v);
