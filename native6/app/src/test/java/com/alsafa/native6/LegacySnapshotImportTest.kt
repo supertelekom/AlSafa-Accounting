@@ -174,4 +174,25 @@ class LegacySnapshotImportTest {
         } finally { helper.close();context.deleteDatabase(name) }
     }
 
+    @Test fun duplicateBarcodeRollsBackWholeImport() {
+        val context=RuntimeEnvironment.getApplication<Context>()
+        val name="legacy-duplicate-barcode-test.db"
+        context.deleteDatabase(name)
+        val helper=StoreDb(context,name)
+        try {
+            val root=JSONObject(payload())
+            root.getJSONObject("data").getJSONArray("maintenanceParts")
+                .getJSONObject(0).put("barcode","123")
+            val store=Store(helper)
+            var rejected=false
+            try { LegacySnapshotImport.import(store,root.toString()) }
+            catch (_:IllegalArgumentException) { rejected=true }
+            assertTrue(rejected)
+            assertEquals(0L,store.scalar("SELECT count(*) FROM products"))
+            assertEquals(0L,store.scalar("SELECT count(*) FROM journal"))
+            assertEquals(0L,store.scalar("SELECT count(*) FROM events"))
+            assertEquals(0L,store.scalar("SELECT count(*) FROM legacy_records"))
+        } finally { helper.close();context.deleteDatabase(name) }
+    }
+
 }
