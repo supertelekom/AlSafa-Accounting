@@ -124,6 +124,7 @@ class MainActivity:Activity() {
                 "SELECT legacy_id,payload FROM legacy_records WHERE category=? AND instr(payload,?)>0 ORDER BY rowid DESC LIMIT 30 OFFSET ?",
                 category,term,offset.toString())
             text("الصفحة ${offset/30+1} من ${((total+29)/30).coerceAtLeast(1)} · مجموع السجلات $total",results,14f)
+            if(entries.isEmpty()) text("لا توجد سجلات مطابقة للبحث.",results,16f)
             entries.forEach { record ->
                 val raw=record["payload"].orEmpty()
                 val obj=try { org.json.JSONObject(raw) } catch (_:Exception) { org.json.JSONObject() }
