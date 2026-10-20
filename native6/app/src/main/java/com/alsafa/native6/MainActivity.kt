@@ -97,13 +97,13 @@ class MainActivity:Activity() {
             val term=search.text.toString().trim()
             val entries=if(category=="repairs") {
                 if(term.isBlank()) store.rows("SELECT id AS legacy_id,details AS payload FROM repairs ORDER BY rowid DESC LIMIT 30 OFFSET ?",offset.toString())
-                else store.rows("SELECT id AS legacy_id,details AS payload FROM repairs WHERE details LIKE ? ORDER BY rowid DESC LIMIT 30 OFFSET ?","%"+term+"%",offset.toString())
+                else store.rows("SELECT id AS legacy_id,details AS payload FROM repairs WHERE instr(details,?)>0 ORDER BY rowid DESC LIMIT 30 OFFSET ?",term,offset.toString())
             } else if(term.isBlank()) store.rows(
                 "SELECT legacy_id,payload FROM legacy_records WHERE category=? ORDER BY rowid DESC LIMIT 30 OFFSET ?",
                 category,offset.toString())
             else store.rows(
-                "SELECT legacy_id,payload FROM legacy_records WHERE category=? AND payload LIKE ? ORDER BY rowid DESC LIMIT 30 OFFSET ?",
-                category,"%"+term+"%",offset.toString())
+                "SELECT legacy_id,payload FROM legacy_records WHERE category=? AND instr(payload,?)>0 ORDER BY rowid DESC LIMIT 30 OFFSET ?",
+                category,term,offset.toString())
             text("الصفحة ${offset/30+1} · عدد السجلات المعروضة ${entries.size}",results,14f)
             entries.forEach { record ->
                 val raw=record["payload"].orEmpty()
