@@ -202,3 +202,10 @@ Inspected the user's original **AlSafa Backup v2**, exported 2026-10-18 (approxi
 - The report explicitly requires a verified historical exchange rate before cross-currency payments can be allocated against invoice receivables.
 - The partial legacy import must create **no historical invoices or receipts**. Opening inventory is intentionally posted to inventory/equity at the current snapshot date; that legitimate journal must not be rejected.
 - A unit regression covers TRY receipt against USD sale. Android test execution and APK build are not yet confirmed.
+
+## Additional accounting integrity work
+
+- The legacy snapshot importer now checks the supplier count, the absence of native invoices and receipts, and ensures only `OPENING_STOCK` events were created by partial import. Inventory opening entries are deliberately posted to inventory/equity and are **not** sales history.
+- The financial preflight distinguishes later sale payments in the same invoice currency, different currency, missing invoice, or missing payment currency. Since the source invoice `paid` may already reflect later payments, it never deducts those payments a second time.
+- Partner withdrawals are grouped by their actual recorded month, partner ID, and currency. Historical unpaid profit from other months is not merged into the selected month.
+- Added regression tests for duplicate receipt protection and withdrawal month isolation. Tests are committed but not yet executed in Android CI.
