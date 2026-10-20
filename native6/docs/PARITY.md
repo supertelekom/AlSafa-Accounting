@@ -87,3 +87,10 @@ Priority: complete partner share schedules, month-isolated allocations and withd
 - Existing Native 6 databases at versions 1 and 2 upgrade to version 3 in place. Existing records are retained; migration will reject contradictory duplicate effective dates rather than silently discard data.
 - Historical corrections require explicit reversing/adjustment records in a future workflow, not editing posted history.
 - Build and migration test execution remain outstanding; do not deploy to live shop data.
+
+## Urgent stabilization and migration gate
+
+- A GitHub Actions workflow now compiles the debug APK and runs JVM unit tests on pushes to the Native 6 development branch. A passing build is required before any tablet trial.
+- Startup now falls back to Android's system font when the bundled Tajawal asset is unavailable, and a failed page render displays a recovery screen with a backup shortcut instead of terminating the activity.
+- **Critical blocker:** importing the v3.9.353 shop backup into the live Native 6 ledger is NOT implemented. Legacy JSON can only be staged in isolation. Do not enter real trading on Native 6 yet: products, debts, receipts, repair history and partner capital must be reconciled and migrated first.
+- Keep the current app and an external copy of its backup untouched; test only on a separate tablet/install with disposable data until migration validation passes.
