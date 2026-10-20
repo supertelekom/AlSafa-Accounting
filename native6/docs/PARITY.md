@@ -179,3 +179,10 @@ Inspected the user's original **AlSafa Backup v2**, exported 2026-10-18 (approxi
 - Added tests for cash-reference classification and supplier opening-debt reconciliation. Execution on Android/CI is still unverified.
 
 - The legacy import now checks actual stored product, repair and historical archive record counts against the source JSON before its enclosing transaction commits; a mismatch rejects and rolls back the import.
+
+## Additional financial reconciliation safeguards
+
+- Read-only financial audit now detects invoice number collisions **across** sales, purchases and repairs, not just duplicates within a single section. Original transaction IDs remain authoritative.
+- Cash movement audit groups raw amounts by the **actual recorded calendar month and original currency** (USD, TRY, SYP). These are descriptive totals, not cash balances, profit, or journal postings.
+- Added regression tests for cross-category invoice collisions and month/currency segregation.
+- **Remaining blockers:** source schema field mapping for all purchase liabilities and partner profit events, journal posting reconciliation, CI test execution and a verified installable APK. The current application is not production-ready.
