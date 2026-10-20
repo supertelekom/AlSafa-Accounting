@@ -80,6 +80,20 @@ object LegacySnapshotImport {
                     "date" to repair.optString("date"),"invoice_id" to null,
                     "details" to repair.toString())
             }
+            // Preserve historical financial records verbatim for accurate later ledger
+            // reconstruction. They are NOT booked as new income or cash movements.
+            val historical=listOf("sales","purchases","supplierLedger","payments",
+                "partnerWithdrawals","cashTransactions","dailyClosings","expenses",
+                "returns","inventoryMovements","usedWatchTransactions","loyaltyLedger")
+            historical.forEach { key ->
+                val array=d.optJSONArray(key) ?: return@forEach
+                for(i in 0 until array.length()) {
+                    val row=array.getJSONObject(i)
+                    val recordId=row.optString("id").ifBlank { "$key-$i" }
+                    store.insert("legacy_records","category" to key,
+                        "legacy_id" to recordId,"payload" to row.toString())
+                }
+            }
             store.insert("settings","key" to "legacy_snapshot_import","value" to JSONObject()
                 .put("scope","inventory_suppliers_repairs_only")
                 .put("sourceAppVersion",root.optString("appVersion","unknown"))
@@ -87,7 +101,8 @@ object LegacySnapshotImport {
                 .put("products",d.getJSONArray("products").length())
                 .put("maintenanceParts",d.getJSONArray("maintenanceParts").length())
                 .put("suppliers",suppliers.length())
-                .put("repairs",repairs.length()).toString())
+                .put("repairs",repairs.length())
+                .put("archivedFinancialRecords",store.scalar("SELECT count(*) FROM legacy_records")).toString())
             "نُقل المخزون الحالي والموردون وسجل الصيانة. الفواتير والأرصدة القديمة ما زالت في الأرشيف ولم تُرحّل."
         }
     }
