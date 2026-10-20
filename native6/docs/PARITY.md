@@ -152,3 +152,12 @@ Inspected the user's original **AlSafa Backup v2**, exported 2026-10-18 (approxi
 - Imports retain backward compatibility with native schemas 1, 2 and 3; older schemas have missing archive tables initialized empty.
 - Historical `legacy_records` are now protected against SQL UPDATE and DELETE by triggers, not just a UI convention.
 - Added compression round-trip, tampering and existing financial-integrity regression adaptations. CI/Android execution remains unverified.
+
+## 2026-10-20 real-backup historical data preflight
+
+- Independently inspected the 61,896,278-byte original backup in a private working environment (the backup itself was **not** committed or uploaded to GitHub).
+- 4,002 array records total, of which 880 are products, maintenance parts, suppliers and repairs; 3,122 other historical records are now retained in the archive by automatic section discovery, including unknown future array categories. No duplicate record IDs were found inside any archived category.
+- The source includes 86 sales, 243 repairs, 6 purchases, 5 supplier ledger entries, 28 payments, 49 partner withdrawals and 566 cash transactions.
+- **Verified source invoice collisions:** sale invoice number 9 occurs twice; repair invoice number 221 occurs twice. Original record IDs remain distinct; never key migration by invoice number alone.
+- Preserve legacy settings and exchange rates as non-active configuration evidence. In particular, historical partner percentages and invoice sequence high-water must not be inferred from current defaults.
+- The financial ledger migration remains **not done**; raw cash transactions overlap sales/repairs/payments and must not be double-booked. Do not present raw financial totals as balances.
