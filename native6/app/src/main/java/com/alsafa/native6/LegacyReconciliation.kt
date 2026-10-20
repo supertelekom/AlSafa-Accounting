@@ -212,6 +212,7 @@ object LegacyReconciliation {
             if(totals.size>50) lines += "توجد ${totals.size-50} مراجع إضافية غير معروضة."
             if(invalid>0) lines += "مدفوعات تحتاج مراجعة: $invalid"
             if(duplicate>0) lines += "معرفات مدفوعات مكررة: $duplicate"
+            lines += "تحذير: المدفوعات بعملة مختلفة عن الفاتورة تحتاج سعر صرف تاريخيًا مثبتًا قبل خصمها من الذمم."
         }
         lines += "مهم: حركات الصناديق قد تعكس المبيعات والصيانة والسحوبات نفسها. لا تُسجل ثانيةً كدخل أو مصروف."
         return lines.joinToString("\n")
