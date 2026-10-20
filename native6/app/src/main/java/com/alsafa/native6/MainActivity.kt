@@ -90,17 +90,18 @@ class MainActivity:Activity() {
         val search=field("بحث في بيانات السجل القديم",body)
         val results=column()
         body.addView(results)
+        var offset=0
         fun refresh() {
             results.removeAllViews()
             val category=categories[choice.selectedItemPosition.coerceIn(categories.indices)]
             val term=search.text.toString().trim()
             val entries=if(term.isBlank()) store.rows(
-                "SELECT legacy_id,payload FROM legacy_records WHERE category=? ORDER BY rowid DESC LIMIT 30",
-                category)
+                "SELECT legacy_id,payload FROM legacy_records WHERE category=? ORDER BY rowid DESC LIMIT 30 OFFSET ?",
+                category,offset.toString())
             else store.rows(
-                "SELECT legacy_id,payload FROM legacy_records WHERE category=? AND payload LIKE ? ORDER BY rowid DESC LIMIT 30",
-                category,"%"+term+"%")
-            text("آخر ${entries.size} سجل مطابق (الحد 30)",results,14f)
+                "SELECT legacy_id,payload FROM legacy_records WHERE category=? AND payload LIKE ? ORDER BY rowid DESC LIMIT 30 OFFSET ?",
+                category,"%"+term+"%",offset.toString())
+            text("الصفحة ${offset/30+1} · عدد السجلات المعروضة ${entries.size}",results,14f)
             entries.forEach { record ->
                 val raw=record["payload"].orEmpty()
                 val obj=try { org.json.JSONObject(raw) } catch (_:Exception) { org.json.JSONObject() }
@@ -119,7 +120,9 @@ class MainActivity:Activity() {
                 }
             }
         }
-        button("بحث / تحديث"){ refresh() }
+        button("بحث / تحديث"){ offset=0;refresh() }
+        button("الصفحة السابقة"){ offset=(offset-30).coerceAtLeast(0);refresh() }
+        button("الصفحة التالية"){ offset+=30;refresh() }
         refresh()
     }
     private fun home(){text("ALSAFA WATCHES",size=16f);text("كيف تريد أن تبدأ؟",size=28f);button("⚡ الوضع المبسط · بيع وصيانة وتسليم سريع"){go("simple")};button("◆ الوضع الكامل · الإدارة والمخزون والحسابات"){go("advanced")}}
