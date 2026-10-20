@@ -97,7 +97,9 @@ class MainActivity:Activity() {
         val results=column()
         body.addView(results)
         var offset=0
+        var previousCategory=-1
         fun refresh() {
+            if(previousCategory!=choice.selectedItemPosition) { offset=0;previousCategory=choice.selectedItemPosition }
             results.removeAllViews()
             val category=categories[choice.selectedItemPosition.coerceIn(categories.indices)]
             val term=search.text.toString().trim()
