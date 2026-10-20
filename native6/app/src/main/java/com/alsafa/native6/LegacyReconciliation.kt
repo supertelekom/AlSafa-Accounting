@@ -149,6 +149,27 @@ object LegacyReconciliation {
             if(invalid>0) lines += "فواتير شراء تحتاج مراجعة: $invalid"
             lines += "تنبيه: لا يُجمع هذا المبلغ مع سجل المورد إلا بعد فحص المدفوعات المرتبطة لمنع التكرار."
         }
+        data.optJSONArray("sales")?.let { sales ->
+            val unpaid=sortedMapOf<String,BigDecimal>()
+            var invalid=0
+            for(i in 0 until sales.length()) {
+                val row=sales.optJSONObject(i)
+                val currency=row?.optString("currency").orEmpty()
+                val total=row?.optString("total")?.toBigDecimalOrNull()
+                val paid=row?.optString("paid")?.toBigDecimalOrNull()
+                if(currency !in listOf("USD","TRY","SYP") || total==null ||
+                    paid==null || paid< BigDecimal.ZERO || total<paid) {
+                    invalid++
+                    continue
+                }
+                unpaid[currency]=(unpaid[currency] ?: BigDecimal.ZERO).add(total.subtract(paid))
+            }
+            lines += "متبقي المبيعات حسب حقول الفواتير فقط، قبل مطابقة الدفعات اللاحقة:"
+            unpaid.forEach { (currency,amount) ->
+                lines += "$currency: ${amount.toPlainString()}"
+            }
+            if(invalid>0) lines += "فواتير بيع غير قابلة للتجميع: $invalid"
+        }
         lines += "مهم: حركات الصناديق قد تعكس المبيعات والصيانة والسحوبات نفسها. لا تُسجل ثانيةً كدخل أو مصروف."
         return lines.joinToString("\n")
     }
