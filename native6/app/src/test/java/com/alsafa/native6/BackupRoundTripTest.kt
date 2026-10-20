@@ -49,6 +49,23 @@ class BackupRoundTripTest {
         helper.close()
     }
 
+    @Test fun stockedProductAndNonfinancialEditSurviveRoundTrip() {
+        val (sourceDb,source)=store("backup-stock-source.db")
+        val productId=source.addProduct("Citizen","CIT-100",Currency.USD,2000,1000,3)
+        source.editProduct(productId,"Citizen revised","CIT-100",2100)
+        val bytes=ByteArrayOutputStream()
+        Backup(context,source).export(bytes)
+        sourceDb.close()
+        val (targetDb,target)=store("backup-stock-target.db")
+        Backup(context,target).restore(ByteArrayInputStream(bytes.toByteArray()))
+        val restored=target.product(productId)
+        assertEquals("Citizen revised",restored.name)
+        assertEquals(3L,restored.stock)
+        assertEquals(3000L,restored.value)
+        assertEquals(1L,target.scalar("SELECT count(*) FROM stock_moves"))
+        targetDb.close()
+    }
+
     @Test fun corruptedBackupCannotWriteToTarget() {
         val (sourceDb,source)=store("backup-corrupt-source.db")
         val bytes=ByteArrayOutputStream()
