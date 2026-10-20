@@ -139,6 +139,11 @@ class PartnerReportReader(private val db: SQLiteDatabase) {
         ).use { cursor -> cursor.moveToFirst(); cursor.getLong(0) }==0L) {
             "Unlinked partner withdrawals in $month ($currency); audit and backfill first"
         }
+        val invalid = db.rawQuery(
+            "SELECT count(*) FROM partner_drawings d JOIN events e ON e.id=d.event_id WHERE e.date>=? AND e.date<? AND d.currency=? AND (d.actual_date<>e.date OR e.kind<>?)",
+            arrayOf(month.atDay(1).toString(),month.plusMonths(1).atDay(1).toString(),currency,"WITHDRAWAL")
+        ).use { cursor -> cursor.moveToFirst(); cursor.getLong(0) }
+        require(invalid==0L) { "Invalid partner drawing dates or event types" }
         val start = month.atDay(1)
         val end = month.atEndOfMonth()
         val startShares = sharesAt(start)
