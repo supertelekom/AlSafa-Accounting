@@ -65,8 +65,6 @@ public final class UncollectedOnlineCancellationService {
                     c.getLong(1)!=-cost || !currency.equals(c.getString(2)) || c.moveToNext())
                     throw new IllegalStateException("Dispatch journal does not reconcile");
             }
-            AndroidSqlitePostingPort port=new AndroidSqlitePostingPort(db);
-            // The transaction is already held to protect review, stock and invoice state.
             long now=System.currentTimeMillis();
             ContentValues event=new ContentValues();
             event.put("event_id",eventId); event.put("operation_kind","ONLINE_DISPATCH_CANCELLATION");
