@@ -36,8 +36,15 @@ public final class InvoiceCancellationDecisionService {
             v.put("request_id",requestId);
             v.put("decision",decision);
             v.put("reason",reason.trim());
-            v.put("decided_at_ms",System.currentTimeMillis());
+            long now=System.currentTimeMillis();
+            v.put("decided_at_ms",now);
             db.insertOrThrow("invoice_cancellation_decisions",null,v);
+            ContentValues sync=new ContentValues();
+            sync.put("operation_id","decision-"+requestId);
+            sync.put("kind","CANCELLATION_REVIEW_DECISION");
+            sync.put("payload",ReviewSyncPayload.decision(requestId,decision,reason.trim(),now));
+            sync.put("created_at_ms",now);
+            db.insertOrThrow("review_sync_outbox",null,sync);
             db.setTransactionSuccessful();
         } finally { db.endTransaction(); }
     }
