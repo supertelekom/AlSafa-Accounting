@@ -67,7 +67,7 @@ class PartnerRegistry(private val db: SQLiteDatabase) {
             .use { c -> require(c.moveToFirst()) { "Event does not exist" }; c.getString(0) }
         require(eventDate == actualDate.toString()) { "Drawing date must match its posted event" }
         val posted = db.rawQuery(
-            "SELECT coalesce(sum(-amount),0) FROM journal WHERE event_id=? AND account=? AND currency=?",
+            "SELECT coalesce(sum(amount),0) FROM journal WHERE event_id=? AND account=? AND currency=?",
             arrayOf(eventId, "equity:withdrawal:$partnerId", currency)
         ).use { c -> c.moveToFirst(); c.getLong(0) }
         require(posted == amountMinor) { "Journal drawing does not match amount or partner" }
