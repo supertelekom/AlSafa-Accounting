@@ -5,7 +5,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
 /**
- * Schema v7. Future schema upgrades must use additive, tested migrations;
+ * Schema v8. Future schema upgrades must use additive, tested migrations;
  * NEVER delete or replace a shop's database to upgrade.
  */
 public final class Native5DatabaseHelper extends SQLiteOpenHelper {
@@ -14,7 +14,7 @@ public final class Native5DatabaseHelper extends SQLiteOpenHelper {
         this(context,DATABASE_NAME);
     }
     Native5DatabaseHelper(Context context,String databaseName) {
-        super(context,databaseName,null,7);
+        super(context,databaseName,null,8);
     }
     @Override public void onConfigure(SQLiteDatabase db) {
         super.onConfigure(db);
@@ -36,6 +36,7 @@ public final class Native5DatabaseHelper extends SQLiteOpenHelper {
         addInvoiceCancellationTables(db);
         addInvoiceNumberMapping(db);
         addCancellationDecisions(db);
+        addOnlineCancellationPostingTables(db);
     }
     private static void addOnlineInvoiceTables(SQLiteDatabase db) {
         db.execSQL("CREATE TABLE IF NOT EXISTS online_invoices(invoice_id TEXT PRIMARY KEY NOT NULL,total_minor INTEGER NOT NULL CHECK(total_minor>0),cost_minor INTEGER NOT NULL CHECK(cost_minor>0),currency TEXT NOT NULL CHECK(currency IN ('USD','TRY','SYP')),collected_minor INTEGER NOT NULL DEFAULT 0 CHECK(collected_minor>=0),released_cost_minor INTEGER NOT NULL DEFAULT 0 CHECK(released_cost_minor>=0),created_at_ms INTEGER NOT NULL,CHECK(collected_minor<=total_minor),CHECK(released_cost_minor<=cost_minor))");
@@ -80,6 +81,15 @@ public final class Native5DatabaseHelper extends SQLiteOpenHelper {
         db.execSQL("CREATE TRIGGER IF NOT EXISTS cancellation_decisions_no_update BEFORE UPDATE ON invoice_cancellation_decisions BEGIN SELECT RAISE(ABORT,'Cancellation decision is immutable'); END");
         db.execSQL("CREATE TRIGGER IF NOT EXISTS cancellation_decisions_no_delete BEFORE DELETE ON invoice_cancellation_decisions BEGIN SELECT RAISE(ABORT,'Cancellation decision is immutable'); END");
     }
+    /** Explicit dispatch linkage; never infer legacy stock movements from invoice numbers. */
+    private static void addOnlineCancellationPostingTables(SQLiteDatabase db) {
+        db.execSQL("CREATE TABLE IF NOT EXISTS online_dispatch_links(invoice_id TEXT PRIMARY KEY NOT NULL REFERENCES online_invoices(invoice_id) ON DELETE RESTRICT,dispatch_event_id TEXT NOT NULL UNIQUE REFERENCES accounting_events(event_id) ON DELETE RESTRICT)");
+        db.execSQL("CREATE TRIGGER IF NOT EXISTS dispatch_links_no_update BEFORE UPDATE ON online_dispatch_links BEGIN SELECT RAISE(ABORT,'Dispatch link is immutable'); END");
+        db.execSQL("CREATE TRIGGER IF NOT EXISTS dispatch_links_no_delete BEFORE DELETE ON online_dispatch_links BEGIN SELECT RAISE(ABORT,'Dispatch link is immutable'); END");
+        db.execSQL("CREATE TABLE IF NOT EXISTS online_cancellations(invoice_id TEXT PRIMARY KEY NOT NULL REFERENCES online_invoices(invoice_id) ON DELETE RESTRICT,cancellation_event_id TEXT NOT NULL UNIQUE REFERENCES accounting_events(event_id) ON DELETE RESTRICT,request_id TEXT NOT NULL UNIQUE REFERENCES invoice_cancellation_requests(request_id) ON DELETE RESTRICT,actor_id TEXT NOT NULL CHECK(length(trim(actor_id))>0),reason TEXT NOT NULL CHECK(length(trim(reason))>0),physical_return_confirmed INTEGER NOT NULL CHECK(physical_return_confirmed=1),cancelled_at_ms INTEGER NOT NULL)");
+        db.execSQL("CREATE TRIGGER IF NOT EXISTS online_cancellations_no_update BEFORE UPDATE ON online_cancellations BEGIN SELECT RAISE(ABORT,'Cancellation is immutable'); END");
+        db.execSQL("CREATE TRIGGER IF NOT EXISTS online_cancellations_no_delete BEFORE DELETE ON online_cancellations BEGIN SELECT RAISE(ABORT,'Cancellation is immutable'); END");
+    }
     @Override public void onUpgrade(SQLiteDatabase db,int oldVersion,int newVersion) {
         if(oldVersion<2 && newVersion>=2) addOnlineInvoiceTables(db);
         if(oldVersion<3 && newVersion>=3) addClosingTables(db);
@@ -87,6 +97,7 @@ public final class Native5DatabaseHelper extends SQLiteOpenHelper {
         if(oldVersion<5 && newVersion>=5) addInvoiceCancellationTables(db);
         if(oldVersion<6 && newVersion>=6) addInvoiceNumberMapping(db);
         if(oldVersion<7 && newVersion>=7) addCancellationDecisions(db);
-        if(newVersion>7) throw new IllegalStateException("Unknown Native5 schema version");
+        if(oldVersion<8 && newVersion>=8) addOnlineCancellationPostingTables(db);
+        if(newVersion>8) throw new IllegalStateException("Unknown Native5 schema version");
     }
 }
