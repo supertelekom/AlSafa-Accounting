@@ -28,6 +28,11 @@ public final class InvoiceCancellationRequestService {
                 if(c.moveToNext()&&!invoiceId.equals(c.getString(0)))
                     throw new IllegalStateException("Ambiguous invoice");
             }
+            try(Cursor cancelled=db.rawQuery(
+                "SELECT 1 FROM online_cancellations WHERE invoice_id=? LIMIT 1",
+                new String[]{invoiceId})) {
+                if(cancelled.moveToFirst()) throw new IllegalStateException("Invoice already cancelled");
+            }
             if(!collectionsReconcile(invoiceId)) throw new IllegalStateException("Invoice collections require reconciliation");
             ContentValues v=new ContentValues();
             v.put("request_id",requestId);
