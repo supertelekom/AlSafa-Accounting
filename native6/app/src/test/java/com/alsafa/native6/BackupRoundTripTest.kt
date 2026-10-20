@@ -120,6 +120,28 @@ class BackupRoundTripTest {
         helper.close()
     }
 
+    @Test fun validHashCannotHideInvalidInventoryValuation() {
+        val (sourceDb,source)=store("backup-invalid-stock-source.db")
+        source.addProduct("Watch","",Currency.USD,2000,1000,2)
+        val bytes=ByteArrayOutputStream()
+        Backup(context,source).export(bytes)
+        sourceDb.close()
+        val root=JSONObject(bytes.toString("UTF-8"))
+        val data=JSONObject(root.getString("data"))
+        data.getJSONArray("products").getJSONObject(0).put("value",9999)
+        val payload=data.toString()
+        root.put("data",payload)
+        root.put("sha256",Backup.sha(payload.toByteArray(Charsets.UTF_8)))
+        val (targetDb,target)=store("backup-invalid-stock-target.db")
+        var rejected=false
+        try {
+            Backup(context,target).restore(ByteArrayInputStream(root.toString().toByteArray()))
+        } catch (_:Exception) { rejected=true }
+        assertTrue(rejected)
+        assertEquals(0L,target.scalar("SELECT count(*) FROM products"))
+        targetDb.close()
+    }
+
     @Test fun corruptedBackupCannotWriteToTarget() {
         val (sourceDb,source)=store("backup-corrupt-source.db")
         val bytes=ByteArrayOutputStream()
