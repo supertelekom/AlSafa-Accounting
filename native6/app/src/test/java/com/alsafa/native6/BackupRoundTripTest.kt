@@ -79,6 +79,18 @@ class BackupRoundTripTest {
         targetDb.close()
     }
 
+    @Test fun inventoryLedgerMatchesStockAcrossCurrencies() {
+        val (helper,source)=store("backup-currency-stock-test.db")
+        source.addProduct("USD Watch","",Currency.USD,2000,1000,2)
+        source.addProduct("TRY Watch","",Currency.TRY,50000,30000,3)
+        assertEquals(2000L,source.scalar("SELECT coalesce(sum(value),0) FROM products WHERE currency='USD'"))
+        assertEquals(90000L,source.scalar("SELECT coalesce(sum(value),0) FROM products WHERE currency='TRY'"))
+        val bytes=ByteArrayOutputStream()
+        Backup(context,source).export(bytes)
+        assertTrue(bytes.size()>0)
+        helper.close()
+    }
+
     @Test fun corruptedBackupCannotWriteToTarget() {
         val (sourceDb,source)=store("backup-corrupt-source.db")
         val bytes=ByteArrayOutputStream()
