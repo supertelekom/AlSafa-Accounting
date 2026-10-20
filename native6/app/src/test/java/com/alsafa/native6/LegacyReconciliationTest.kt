@@ -66,4 +66,14 @@ class LegacyReconciliationTest {
         assertTrue(report.contains("TRY: 150"))
     }
 
+    @Test fun paymentsKeepCollectionCurrency() {
+        val p=JSONObject().put("id","p1").put("referenceType","sale")
+            .put("referenceId","s1").put("currency","USD")
+            .put("amount",10).put("paymentCurrency","TRY").put("paymentAmount",420)
+        val d=JSONObject().put("payments",JSONArray().put(p))
+        val root=JSONObject().put("format","alsafa-accounting-backup").put("data",d)
+        assertTrue(LegacyReconciliation.inspect(root.toString())
+            .contains("sale | s1 | TRY: 420"))
+    }
+
 }
