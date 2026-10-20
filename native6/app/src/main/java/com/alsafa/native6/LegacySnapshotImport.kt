@@ -92,10 +92,18 @@ object LegacySnapshotImport {
             historical.forEach { key ->
                 val array=d.optJSONArray(key) ?: return@forEach
                 for(i in 0 until array.length()) {
-                    val row=array.getJSONObject(i)
-                    val recordId=row.optString("id").ifBlank { "$key-$i" }
+                    // Some historical sections contain scalar values or nested arrays.
+                    // Preserve their exact JSON representation instead of failing the import.
+                    val raw=array.get(i)
+                    val row=raw as? JSONObject
+                    val recordId=row?.optString("id")?.takeIf { it.isNotBlank() }
+                        ?: "$key-$i"
+                    val serialized=when(raw) {
+                        is JSONObject -> raw.toString()
+                        else -> JSONObject().put("_legacyValue",raw).toString()
+                    }
                     store.insert("legacy_records","category" to key,
-                        "legacy_id" to recordId,"payload" to row.toString())
+                        "legacy_id" to recordId,"payload" to serialized)
                 }
             }
             // Retain non-list business configuration as source evidence.
