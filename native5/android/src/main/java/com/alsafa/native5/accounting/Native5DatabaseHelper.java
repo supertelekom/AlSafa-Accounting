@@ -5,7 +5,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
 /**
- * Schema v6. Future schema upgrades must use additive, tested migrations;
+ * Schema v7. Future schema upgrades must use additive, tested migrations;
  * NEVER delete or replace a shop's database to upgrade.
  */
 public final class Native5DatabaseHelper extends SQLiteOpenHelper {
@@ -14,7 +14,7 @@ public final class Native5DatabaseHelper extends SQLiteOpenHelper {
         this(context,DATABASE_NAME);
     }
     Native5DatabaseHelper(Context context,String databaseName) {
-        super(context,databaseName,null,6);
+        super(context,databaseName,null,7);
     }
     @Override public void onConfigure(SQLiteDatabase db) {
         super.onConfigure(db);
@@ -35,6 +35,7 @@ public final class Native5DatabaseHelper extends SQLiteOpenHelper {
         addVarianceAdjustmentTables(db);
         addInvoiceCancellationTables(db);
         addInvoiceNumberMapping(db);
+        addCancellationDecisions(db);
     }
     private static void addOnlineInvoiceTables(SQLiteDatabase db) {
         db.execSQL("CREATE TABLE IF NOT EXISTS online_invoices(invoice_id TEXT PRIMARY KEY NOT NULL,total_minor INTEGER NOT NULL CHECK(total_minor>0),cost_minor INTEGER NOT NULL CHECK(cost_minor>0),currency TEXT NOT NULL CHECK(currency IN ('USD','TRY','SYP')),collected_minor INTEGER NOT NULL DEFAULT 0 CHECK(collected_minor>=0),released_cost_minor INTEGER NOT NULL DEFAULT 0 CHECK(released_cost_minor>=0),created_at_ms INTEGER NOT NULL,CHECK(collected_minor<=total_minor),CHECK(released_cost_minor<=cost_minor))");
@@ -73,12 +74,19 @@ public final class Native5DatabaseHelper extends SQLiteOpenHelper {
         db.execSQL("CREATE TRIGGER IF NOT EXISTS invoice_number_mapping_no_update BEFORE UPDATE ON invoice_number_mapping BEGIN SELECT RAISE(ABORT,'Invoice number is immutable'); END");
         db.execSQL("CREATE TRIGGER IF NOT EXISTS invoice_number_mapping_no_delete BEFORE DELETE ON invoice_number_mapping BEGIN SELECT RAISE(ABORT,'Invoice number is immutable'); END");
     }
+    /** Immutable decisions. A rejected review reopens collection; approval is not a posted reversal. */
+    private static void addCancellationDecisions(SQLiteDatabase db) {
+        db.execSQL("CREATE TABLE IF NOT EXISTS invoice_cancellation_decisions(request_id TEXT PRIMARY KEY NOT NULL REFERENCES invoice_cancellation_requests(request_id) ON DELETE RESTRICT,decision TEXT NOT NULL CHECK(decision IN ('REJECTED','APPROVED_FOR_POSTING')),reason TEXT NOT NULL CHECK(length(trim(reason))>0),decided_at_ms INTEGER NOT NULL)");
+        db.execSQL("CREATE TRIGGER IF NOT EXISTS cancellation_decisions_no_update BEFORE UPDATE ON invoice_cancellation_decisions BEGIN SELECT RAISE(ABORT,'Cancellation decision is immutable'); END");
+        db.execSQL("CREATE TRIGGER IF NOT EXISTS cancellation_decisions_no_delete BEFORE DELETE ON invoice_cancellation_decisions BEGIN SELECT RAISE(ABORT,'Cancellation decision is immutable'); END");
+    }
     @Override public void onUpgrade(SQLiteDatabase db,int oldVersion,int newVersion) {
         if(oldVersion<2 && newVersion>=2) addOnlineInvoiceTables(db);
         if(oldVersion<3 && newVersion>=3) addClosingTables(db);
         if(oldVersion<4 && newVersion>=4) addVarianceAdjustmentTables(db);
         if(oldVersion<5 && newVersion>=5) addInvoiceCancellationTables(db);
         if(oldVersion<6 && newVersion>=6) addInvoiceNumberMapping(db);
-        if(newVersion>6) throw new IllegalStateException("Unknown Native5 schema version");
+        if(oldVersion<7 && newVersion>=7) addCancellationDecisions(db);
+        if(newVersion>7) throw new IllegalStateException("Unknown Native5 schema version");
     }
 }
