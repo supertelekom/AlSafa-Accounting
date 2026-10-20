@@ -51,7 +51,7 @@ class Backup(private val context:Context,private val store:Store) {
                 AND j.account=('equity:withdrawal:' || d.partner_id)
                 AND j.currency=d.currency
             GROUP BY d.id
-            HAVING d.actual_date<>e.date OR d.amount_minor<>coalesce(sum(j.amount),0)
+            HAVING d.actual_date<>e.date OR e.kind<>'WITHDRAWAL' OR d.amount_minor<>coalesce(sum(j.amount),0)
         """).isEmpty()){"سحوبات الشركاء لا تطابق القيود المحاسبية"}
         val schedules=target.rows("""SELECT p.id,p.effective_date,l.percent
             FROM partner_share_periods p LEFT JOIN partner_share_lines l ON l.period_id=p.id
