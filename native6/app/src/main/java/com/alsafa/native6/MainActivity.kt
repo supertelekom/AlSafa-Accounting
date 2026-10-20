@@ -204,6 +204,7 @@ class MainActivity:Activity() {
         val items=store.rows("SELECT hash,created,summary FROM legacy_imports ORDER BY created DESC LIMIT 50")
         if(items.isEmpty()) text("لا توجد نسخ قديمة محفوظة بعد.")
         text("عدد النسخ المعروضة: ${items.size}",size=15f)
+        if(items.size==50) text("تُعرض آخر 50 نسخة فقط؛ قد توجد نسخ أقدم.",size=14f)
         items.forEach { item->
             val summary=try {
                 val data=org.json.JSONObject(item.getValue("summary"))
@@ -213,6 +214,8 @@ class MainActivity:Activity() {
             } catch (_:Exception) { "تعذر قراءة الملخص" }
             text("البصمة: ${item.getValue("hash").take(16)}",size=16f)
             text("السجلات: $summary",size=15f)
+            val stamp=item.getValue("created").toLongOrNull()
+            if(stamp!=null) text("تاريخ الحفظ: ${java.time.Instant.ofEpochMilli(stamp).atZone(java.time.ZoneId.systemDefault()).toLocalDateTime()}",size=14f)
         }
     }
     private fun pick(code:Int){startActivityForResult(Intent(Intent.ACTION_OPEN_DOCUMENT).apply{addCategory(Intent.CATEGORY_OPENABLE);type="application/json"},code)}
