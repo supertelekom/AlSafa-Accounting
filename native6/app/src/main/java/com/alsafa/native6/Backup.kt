@@ -93,7 +93,15 @@ class Backup(private val context:Context,private val store:Store) {
         val bytes=read(input);val text=String(bytes,Charsets.UTF_8).removePrefix("\uFEFF");val root=JSONObject(text);val data=if(root.optString("format")=="alsafa-accounting-backup")root.getJSONObject("data") else root
         require(data.optJSONObject("settings")!=null&&data.optJSONArray("products")!=null&&data.optJSONArray("sales")!=null){"ليست نسخة الصفا القديمة"}
         val summary=JSONObject();data.keys().forEach{k->(data.opt(k) as? JSONArray)?.let{summary.put(k,it.length())}}
-        val report="تم حفظ نسخة معزولة للفحص: ${summary}. لم يُرحّل أي رصيد أو فاتورة إلى الحسابات الجديدة."
-        store.transaction {store.insert("legacy_imports","hash" to sha(bytes),"payload" to text,"created" to System.currentTimeMillis(),"summary" to summary.toString())};return report
+        val fingerprint=sha(bytes)
+        val inserted=store.transaction {
+            if(store.scalar("SELECT count(*) FROM legacy_imports WHERE hash=?",fingerprint)>0L) false
+            else {
+                store.insert("legacy_imports","hash" to fingerprint,"payload" to text,"created" to System.currentTimeMillis(),"summary" to summary.toString())
+                true
+            }
+        }
+        val status=if(inserted) "تم حفظ النسخة القديمة معزولة" else "هذه النسخة محفوظة سابقاً ولم تتكرر"
+        return "$status. البصمة: ${fingerprint.take(16)}. المحتويات: $summary. لم يُرحّل أي رصيد أو فاتورة إلى الحسابات الجديدة."
     }
 }
