@@ -23,7 +23,8 @@ object LegacyFinancialAudit {
             val totals=linkedMapOf<String,BigDecimal>()
             var invalid=0
             for(i in 0 until a.length()) {
-                val row=a.optJSONObject(i) ?: run {invalid++;continue}
+                val row=a.optJSONObject(i)
+                if(row==null) {invalid++;continue}
                 val currency=row.optString("currency")
                 val field=when(key) {"sales","purchases"->"total";else->"amount"}
                 val amount=row.optString(field).toBigDecimalOrNull()
