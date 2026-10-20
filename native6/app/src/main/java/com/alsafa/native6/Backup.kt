@@ -37,7 +37,8 @@ class Backup(private val context:Context,private val store:Store) {
     private fun load(target:Store,data:JSONObject)=target.transaction {
         require(tables.all{target.scalar("SELECT count(*) FROM $it")==0L}){"الاستعادة تتطلب قاعدة فارغة؛ لن تستبدل بيانات موجودة"}
         tables.forEach {table->val allowed=target.rows("PRAGMA table_info($table)").map{it.getValue("name")}.toSet();val list=data.getJSONArray(table)
-            for(i in 0 until list.length()){val row=list.getJSONObject(i);require(row.keys().asSequence().all{it in allowed});val fields=row.keys().asSequence().map{k->k to if(row.isNull(k))null else row.get(k)}.toList();target.insert(table,*fields.toTypedArray())}}
+            require(list.length()<=1000000){"عدد سجلات غير منطقي في $table"}
+            for(i in 0 until list.length()){val row=list.getJSONObject(i);require(row.keys().asSequence().all{it in allowed}){"عمود غير معروف في نسخة $table"};val fields=row.keys().asSequence().map{k->k to if(row.isNull(k))null else row.get(k)}.toList();target.insert(table,*fields.toTypedArray())}}
         validate(target)
     }
     private fun validate(target:Store) {
