@@ -268,4 +268,25 @@ class LegacySnapshotImportTest {
         } finally { helper.close();context.deleteDatabase(name) }
     }
 
+    @Test fun corruptLegacyNumberingBlocksSaleWithoutPostingLedger() {
+        val context=RuntimeEnvironment.getApplication<Context>()
+        val name="legacy-corrupt-sequence-test.db"
+        context.deleteDatabase(name)
+        val helper=StoreDb(context,name)
+        try {
+            val store=Store(helper)
+            LegacySnapshotImport.import(store,payload())
+            store.insert("legacy_records","category" to "configuration",
+                "legacy_id" to "settings","payload" to "not-json")
+            var rejected=false
+            try {
+                store.sale(listOf(SaleItem("legacy-product-1",1L,1790L)),
+                    "Test","",Currency.USD,0L,"drawer")
+            } catch (_:IllegalStateException) { rejected=true }
+            assertTrue(rejected)
+            assertEquals(0L,store.scalar("SELECT count(*) FROM invoices"))
+            assertEquals(3L,store.product("legacy-product-1").stock)
+        } finally { helper.close();context.deleteDatabase(name) }
+    }
+
 }
