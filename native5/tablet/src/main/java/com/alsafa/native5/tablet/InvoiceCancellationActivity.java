@@ -7,6 +7,7 @@ import android.database.sqlite.SQLiteDatabase;
 import com.alsafa.native5.accounting.Native5DatabaseHelper;
 import com.alsafa.native5.accounting.InvoiceCancellationRequestService;
 import com.alsafa.native5.accounting.InvoiceCancellationDecisionService;
+import com.alsafa.native5.accounting.TabletSyncScheduler;
 import java.util.UUID;
 import android.view.View;
 import android.widget.Button;
@@ -142,6 +143,7 @@ public final class InvoiceCancellationActivity extends Activity {
                 try(Native5DatabaseHelper helper=new Native5DatabaseHelper(this)) {
                     String id=new InvoiceCancellationRequestService(helper.getWritableDatabase())
                         .requestReview(UUID.randomUUID().toString(),lookup,why);
+                    // A store ID must be supplied by the authenticated store session before scheduling.
                     preview.setText("سُجل طلب مراجعة الفاتورة: "+id+
                         "\\nتم تعليق التحصيل محليًا إلى حين حسم الطلب. لم تُلغ الفاتورة ولم يُعد المخزون.");
                 } catch(Exception ex) {
