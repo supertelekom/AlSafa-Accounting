@@ -50,6 +50,24 @@ object LegacyFinancialAudit {
             result += "تسلسل الفواتير المحفوظ: " +
                 settings.optString("invoiceSequenceHighWater","غير محدد")
         }
+        // Cross-category collisions matter because Native 6 uses a single invoice
+        // sequence for sale, purchase and repair invoices.
+        val globalNumbers=sortedMapOf<String,MutableSet<String>>()
+        for(section in listOf("sales","purchases","repairs")) {
+            val list=data.optJSONArray(section) ?: continue
+            for(i in 0 until list.length()) {
+                val row=list.optJSONObject(i) ?: continue
+                val number=row.optString("invoiceNo").trim()
+                if(number.isNotEmpty()) globalNumbers
+                    .getOrPut(number) { linkedSetOf() }.add(section)
+            }
+        }
+        val sharedNumbers=globalNumbers.filterValues { it.size>1 }
+        result += "أرقام فواتير مشتركة بين المبيع والشراء والصيانة: ${sharedNumbers.size}"
+        if(sharedNumbers.isNotEmpty()) result +=
+            "أمثلة تعارض الأنواع: " + sharedNumbers.entries.take(20)
+                .joinToString("، ") { "${it.key} (${it.value.joinToString("/")})" }
+        result += "تنبيه: الرقم الظاهر لا يصلح كمفتاح فريد؛ يجب الاحتفاظ بمعرف السجل الأصلي."
         // Withdrawal reports use the transaction's actual month, never the oldest
         // unpaid profit month. Group by partner and currency without FX guessing.
         data.optJSONArray("partnerWithdrawals")?.let { withdrawals ->
