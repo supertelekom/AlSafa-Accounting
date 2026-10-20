@@ -40,11 +40,22 @@ public final class UncollectedOnlineCancellationService {
                 currency=c.getString(3); requestId=c.getString(4);
                 reason=c.getString(5); dispatchId=c.getString(6);
             }
+            try(Cursor original=db.rawQuery(
+                "SELECT operation_kind FROM accounting_events WHERE event_id=?",
+                new String[]{dispatchId})) {
+                if(!original.moveToFirst() || !"ONLINE_DISPATCH".equals(original.getString(0)))
+                    throw new IllegalStateException("Linked event is not an online dispatch");
+            }
             if(received!=0 || released!=0 || cost<=0)
                 throw new IllegalStateException("Collected invoices require a refund-specific workflow");
             try(Cursor c=db.rawQuery("SELECT 1 FROM online_collections WHERE invoice_id=? LIMIT 1",
                 new String[]{invoiceId})) {
                 if(c.moveToFirst()) throw new IllegalStateException("Collection history exists");
+            }
+            try(Cursor previous=db.rawQuery(
+                "SELECT 1 FROM online_cancellations WHERE invoice_id=? LIMIT 1",
+                new String[]{invoiceId})) {
+                if(previous.moveToFirst()) throw new IllegalStateException("Invoice already cancelled");
             }
             List<InventoryDelta> returned=new ArrayList<>();
             try(Cursor c=db.rawQuery(
