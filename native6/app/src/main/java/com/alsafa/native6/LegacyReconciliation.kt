@@ -170,6 +170,16 @@ object LegacyReconciliation {
             }
             if(invalid>0) lines += "فواتير بيع غير قابلة للتجميع: $invalid"
         }
+        data.optJSONArray("payments")?.let { payments ->
+            val counts=sortedMapOf<String,Int>()
+            for(i in 0 until payments.length()) {
+                val row=payments.optJSONObject(i) ?: continue
+                val type=row.optString("referenceType","غير محدد")
+                counts[type]=(counts[type] ?: 0)+1
+            }
+            lines += "أنواع المدفوعات اللاحقة التي تحتاج مطابقة:"
+            counts.forEach { (type,count) -> lines += "$type: $count" }
+        }
         lines += "مهم: حركات الصناديق قد تعكس المبيعات والصيانة والسحوبات نفسها. لا تُسجل ثانيةً كدخل أو مصروف."
         return lines.joinToString("\n")
     }
