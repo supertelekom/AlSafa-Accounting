@@ -63,6 +63,15 @@ class Backup(private val context:Context,private val store:Store) {
             JOIN events e ON e.id=d.event_id
             WHERE e.kind<>'WITHDRAWAL'
         """).isEmpty()){"ربط سحب بحدث محاسبي غير صالح"}
+        require(target.rows("""SELECT e.id FROM events e
+            JOIN journal j ON j.event_id=e.id
+            GROUP BY e.id
+            HAVING count(*) <> count(DISTINCT j.line)
+        """).isEmpty()){"تكرار أرقام أسطر القيد"}
+        require(target.rows("""SELECT j.event_id FROM journal j
+            LEFT JOIN events e ON e.id=j.event_id
+            WHERE e.id IS NULL
+        """).isEmpty()){"قيد بلا حدث محاسبي"}
         val schedules=target.rows("""SELECT p.id,p.effective_date,l.percent
             FROM partner_share_periods p LEFT JOIN partner_share_lines l ON l.period_id=p.id
             ORDER BY p.effective_date,p.id""")
