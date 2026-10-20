@@ -40,7 +40,8 @@ class MainActivity:Activity() {
     private fun form(title:String,submit:String="حفظ",build:(LinearLayout)->(()->Unit)) {
         val layout=column();val action=build(layout);val scroll=ScrollView(this);scroll.addView(layout)
         val dialog=AlertDialog.Builder(this).setTitle(title).setView(scroll).setNegativeButton("رجوع",null).setPositiveButton(submit,null).create()
-        dialog.setOnShowListener{dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {try{action();dialog.dismiss()}catch(e:Exception){error(e)}}};dialog.show()
+        dialog.setOnShowListener{dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {try{action();dialog.dismiss()}catch(e:Exception){error(e)}}}
+        dialog.show()
         // setOnShowListener is invoked by show(); keep validation errors on screen.
     }
     private fun error(e:Exception){AlertDialog.Builder(this).setTitle("لم تُحفظ العملية").setMessage(e.message?:"حدث خطأ").setPositiveButton("حسناً",null).show()}
