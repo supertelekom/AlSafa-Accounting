@@ -49,6 +49,10 @@ class MainActivity:Activity() {
     private fun label(value:String)=mapOf("sale" to "مبيع", "purchase" to "شراء", "repair" to "صيانة", "posted" to "مسجلة", "cancelled" to "ملغاة", "received" to "مستلمة", "ready" to "جاهزة", "delivered" to "تم التسليم")[value]?:value
     private fun money(n:Long,c:Currency)=Money(n,c).display()
     private fun amount(e:EditText,c:Currency)=Money.parse(e.text.toString(),c).minor
+    override fun onDestroy() {
+        io.shutdown()
+        super.onDestroy()
+    }
     override fun onSaveInstanceState(out:Bundle){out.putString("page",page);out.putString("pdfInvoice",pdfInvoice);super.onSaveInstanceState(out)}
     override fun onBackPressed(){if(page!="home")go("home")else super.onBackPressed()}
     private fun safeRender() {
