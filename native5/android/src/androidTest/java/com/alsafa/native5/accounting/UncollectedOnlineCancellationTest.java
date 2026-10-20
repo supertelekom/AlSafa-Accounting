@@ -17,6 +17,7 @@ public final class UncollectedOnlineCancellationTest {
                 new Money(Money.Currency.USD,1000),new Money(Money.Currency.USD,400),
                 java.util.Collections.singletonList(new InventoryDelta("p",-2)));
             new InvoiceCancellationRequestService(db).requestReview("review","invoice","return");
+            new InvoiceCancellationDecisionService(db).approveForPosting("review","verified return");
             UncollectedOnlineCancellationService service=new UncollectedOnlineCancellationService(db);
             service.cancel("cancel","invoice","tablet",true);
             assertEquals(5,android.database.DatabaseUtils.longForQuery(db,
@@ -40,6 +41,7 @@ public final class UncollectedOnlineCancellationTest {
             new OnlineReceiptPostingService(db).collect("receipt2","invoice2",
                 new Money(Money.Currency.USD,100),InvoiceSettlement.Channel.CASH_DRAWER);
             new InvoiceCancellationRequestService(db).requestReview("review2","invoice2","refund needed");
+            new InvoiceCancellationDecisionService(db).approveForPosting("review2","reviewed");
             try {
                 new UncollectedOnlineCancellationService(db).cancel("cancel2","invoice2","tablet",true);
                 fail("Collected invoice cancellation accepted");
@@ -59,6 +61,7 @@ public final class UncollectedOnlineCancellationTest {
                 new Money(Money.Currency.USD,1000),new Money(Money.Currency.USD,400),
                 java.util.Collections.singletonList(new InventoryDelta("overflow",-1)));
             new InvoiceCancellationRequestService(db).requestReview("review-overflow","invoice-overflow","return");
+            new InvoiceCancellationDecisionService(db).approveForPosting("review-overflow","verified");
             db.execSQL("UPDATE inventory_balances SET quantity=? WHERE product_id='overflow'",
                 new Object[]{Long.MAX_VALUE});
             try {
