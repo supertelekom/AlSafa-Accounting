@@ -141,6 +141,10 @@ class MainActivity:Activity() {
                 }
             }
         }
+        choice.onItemSelectedListener=object:android.widget.AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent:android.widget.AdapterView<*>?,view:View?,position:Int,id:Long) { refresh() }
+            override fun onNothingSelected(parent:android.widget.AdapterView<*>?) {}
+        }
         button("بحث / تحديث"){ offset=0;refresh() }
         button("الصفحة السابقة"){ offset=(offset-30).coerceAtLeast(0);refresh() }
         button("الصفحة التالية"){ if(offset<=Int.MAX_VALUE-30) offset+=30;refresh() }
