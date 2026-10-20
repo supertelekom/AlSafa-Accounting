@@ -130,3 +130,10 @@ Inspected the user's original **AlSafa Backup v2**, exported 2026-10-18 (approxi
 - **Not yet imported:** legacy sales/invoice numbering, purchases, historical supplier debt and repayments, cash/closing balances, partner shares/withdrawals, and other historical ledgers. They must not be fabricated from opening inventory.
 - This partial restore must not be described as a completed migration or production-ready accounting app.
 - Added Robolectric tests for the partial importer; build/test execution remains unverified.
+
+## 2026-10-20 legacy restore implementation continuation
+
+- Ran an independent **read-only preflight on the actual 2026-10-18 backup** for all 552 products, 72 maintenance parts, 13 suppliers and 243 repairs: 880 unique identifiers, no duplicate nonblank barcodes, no negative stock, and supported currencies for inventory. This is a structural preflight, not an Android runtime test.
+- Added transaction rollback regression for a duplicate barcode, and Native 6 export/restore regression after snapshot import.
+- Added read-only historical financial audit from the staged original: sales, purchases, supplier ledger, payments, partner withdrawals, cash transactions and closings. Currency totals are not converted or presented as balances; duplicate accounting representations must be reconciled before any financial migration.
+- **Remaining:** verified historical journal import, legacy invoice numbering, supplier balance reconciliation, cash opening balances, partner share/withdrawal reconstruction, Android CI build and on-device acceptance tests.
