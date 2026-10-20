@@ -40,4 +40,20 @@ class LegacyReconciliationTest {
         assertTrue(report.contains("لا تشمل فواتير الشراء"))
     }
 
+    @Test fun rawCashMonthlyAuditNeverCombinesCurrencies() {
+        val movements=JSONArray()
+            .put(JSONObject().put("date","2026-09-30").put("currency","USD")
+                .put("amount",10))
+            .put(JSONObject().put("date","2026-10-01").put("currency","USD")
+                .put("amount",20))
+            .put(JSONObject().put("date","2026-10-02").put("currency","TRY")
+                .put("amount",500))
+        val payload=JSONObject().put("format","alsafa-accounting-backup")
+            .put("data",JSONObject().put("cashTransactions",movements)).toString()
+        val report=LegacyReconciliation.inspect(payload)
+        assertTrue(report.contains("2026-09 | USD: 10 (1 حركة)"))
+        assertTrue(report.contains("2026-10 | USD: 20 (1 حركة)"))
+        assertTrue(report.contains("2026-10 | TRY: 500 (1 حركة)"))
+    }
+
 }
