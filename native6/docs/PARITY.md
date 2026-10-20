@@ -114,3 +114,9 @@ Priority: complete partner share schedules, month-isolated allocations and withd
 - Regression tests added for separate USD/TRY opening stock and an unpaid sale fully returned to inventory.
 - This checks Native 6 internal consistency only; it does not establish parity with legacy v3.9.353 stock, supplier balances or profits.
 - Android CI/test results remain unverified.
+
+## Additional accounting regression cases
+
+- Added purchase → weighted-average inventory → sale test, asserting the remaining units and minor-unit inventory valuation.
+- Added a tampered-backup test where the attacker recomputes the JSON SHA-256 after altering product valuation. Restoration must still reject it using ledger/stock reconciliation and leave the destination database empty.
+- Tests are committed, not yet independently executed; do not claim a successful build from these additions.
