@@ -1,0 +1,67 @@
+package com.alsafa.native6
+
+import android.content.Context
+import org.json.JSONArray
+import org.json.JSONObject
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.RuntimeEnvironment
+
+@RunWith(RobolectricTestRunner::class)
+class LegacySnapshotImportTest {
+    private fun payload():String {
+        val data=JSONObject()
+            .put("products",JSONArray().put(JSONObject()
+                .put("id","legacy-product-1").put("name","Watch").put("barcode","123")
+                .put("currency","USD").put("salePrice",17.908286644)
+                .put("cost",6.964333695).put("stock",3).put("photo","data:image/jpeg;base64,abc")))
+            .put("maintenanceParts",JSONArray().put(JSONObject()
+                .put("id","legacy-part-1").put("name","Battery").put("barcode","")
+                .put("currency","TRY").put("salePrice",10).put("cost",3).put("stock",2)))
+            .put("suppliers",JSONArray().put(JSONObject()
+                .put("id","supplier-1").put("name","Supplier").put("phone","")))
+            .put("repairs",JSONArray().put(JSONObject()
+                .put("id","repair-1").put("date","2026-10-18")
+                .put("customer","Customer").put("phone","").put("watch","Watch")
+                .put("problem","Battery").put("status","جاهز للاستلام")))
+        return JSONObject().put("format","alsafa-accounting-backup")
+            .put("formatVersion",2).put("data",data).toString()
+    }
+
+    @Test fun importsInventorySuppliersAndRepairsWithoutHistoricalInvoices() {
+        val context=RuntimeEnvironment.getApplication<Context>()
+        val name="legacy-snapshot-test.db"
+        context.deleteDatabase(name)
+        val helper=StoreDb(context,name)
+        try {
+            val store=Store(helper)
+            val result=LegacySnapshotImport.import(store,payload())
+            assertTrue(result.contains("المخزون"))
+            assertEquals(2L,store.scalar("SELECT count(*) FROM products"))
+            assertEquals(1L,store.scalar("SELECT count(*) FROM suppliers"))
+            assertEquals(1L,store.scalar("SELECT count(*) FROM repairs"))
+            assertEquals(0L,store.scalar("SELECT count(*) FROM invoices"))
+            assertEquals(3L,store.product("legacy-product-1").stock)
+            assertEquals(697L,store.product("legacy-product-1").cost)
+            assertEquals(1L,store.scalar("SELECT count(*) FROM repairs WHERE status='ready'"))
+        } finally { helper.close();context.deleteDatabase(name) }
+    }
+
+    @Test fun rejectsSecondImportWithoutChangingExistingProducts() {
+        val context=RuntimeEnvironment.getApplication<Context>()
+        val name="legacy-repeat-test.db"
+        context.deleteDatabase(name)
+        val helper=StoreDb(context,name)
+        try {
+            val store=Store(helper)
+            LegacySnapshotImport.import(store,payload())
+            var rejected=false
+            try { LegacySnapshotImport.import(store,payload()) } catch(_:IllegalArgumentException) { rejected=true }
+            assertTrue(rejected)
+            assertEquals(2L,store.scalar("SELECT count(*) FROM products"))
+        } finally { helper.close();context.deleteDatabase(name) }
+    }
+}
