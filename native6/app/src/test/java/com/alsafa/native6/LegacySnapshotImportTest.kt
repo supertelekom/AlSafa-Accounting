@@ -305,4 +305,19 @@ class LegacySnapshotImportTest {
         } finally { helper.close();context.deleteDatabase(name) }
     }
 
+    @Test fun missingProductEditCannotCreateFakeAuditEvent() {
+        val context=RuntimeEnvironment.getApplication<Context>()
+        val name="missing-product-edit-test.db"
+        context.deleteDatabase(name)
+        val helper=StoreDb(context,name)
+        try {
+            val store=Store(helper)
+            var rejected=false
+            try { store.editProduct("missing","Watch","NEW",100L) }
+            catch (_:IllegalArgumentException) { rejected=true }
+            assertTrue(rejected)
+            assertEquals(0L,store.scalar("SELECT count(*) FROM events"))
+        } finally { helper.close();context.deleteDatabase(name) }
+    }
+
 }
