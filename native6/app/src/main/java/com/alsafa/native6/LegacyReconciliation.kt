@@ -1,6 +1,7 @@
 package com.alsafa.native6
 
 import org.json.JSONObject
+import java.math.BigDecimal
 
 /**
  * Referential audit of the original backup. Never posts journal entries or
@@ -67,6 +68,35 @@ object LegacyReconciliation {
             }
             lines += "تصنيف الحركات النقدية الأصلية:"
             groups.forEach { (type,count) -> lines += "$type: $count" }
+        }
+        // Reconcile opening supplier debt against its own ledger payments only.
+        // Purchase invoices are separate liabilities and must be considered later.
+        data.optJSONArray("supplierLedger")?.let { ledger ->
+            val opening=sortedMapOf<String,BigDecimal>()
+            val paid=sortedMapOf<String,BigDecimal>()
+            var unsupported=0
+            for(i in 0 until ledger.length()) {
+                val row=ledger.optJSONObject(i)
+                if(row==null) {unsupported++;continue}
+                val supplier=row.optString("supplierId")
+                val currency=row.optString("currency")
+                val amount=row.optString("amount").toBigDecimalOrNull()
+                if(supplier.isBlank() || currency !in listOf("USD","TRY","SYP") ||
+                    amount==null || amount.signum()<0) {unsupported++;continue}
+                val key="$supplier | $currency"
+                when(row.optString("kind")) {
+                    "opening-debt" -> opening[key]=(opening[key] ?: BigDecimal.ZERO).add(amount)
+                    "payment" -> paid[key]=(paid[key] ?: BigDecimal.ZERO).add(amount)
+                    else -> unsupported++
+                }
+            }
+            lines += "تسوية ديون الموردين الافتتاحية فقط — لا تشمل فواتير الشراء:"
+            (opening.keys+paid.keys).sorted().forEach { key ->
+                val due=opening[key] ?: BigDecimal.ZERO
+                val settled=paid[key] ?: BigDecimal.ZERO
+                lines += "$key: افتتاحي ${due.toPlainString()}، مدفوع ${settled.toPlainString()}، الفرق ${due.subtract(settled).toPlainString()}"
+            }
+            if(unsupported>0) lines += "قيود مورد غير مصنفة: $unsupported"
         }
         lines += "مهم: حركات الصناديق قد تعكس المبيعات والصيانة والسحوبات نفسها. لا تُسجل ثانيةً كدخل أو مصروف."
         return lines.joinToString("\n")
