@@ -29,3 +29,9 @@ No live shop data or Firebase records were modified by these source commits.
 - **Release blocker:** do not use this review UI for multi-device store operation until review request/decision operations are synced and authorized consistently on all devices. This is especially important because a review blocks collections only on the device holding that review.
 - The UI cancellation posting action remains deliberately disabled until a verified idempotent phone/cloud replay and actual instrumentation tests exist.
 - Android build, migrations, Firebase replay and instrumented tests have not been run in this session. These are source changes only; no APK or release certification is claimed.
+
+## Further accounting integrity hardening
+- Cancellation now verifies that the linked original accounting event has kind `ONLINE_DISPATCH`, not merely matching journal amounts and inventory movements. A non-dispatch event cannot be reversed through this path.
+- Kept database uniqueness enforcement for duplicate cancellation to preserve the existing instrumentation test's expected SQLite constraint exception.
+- Review-request UI integration is source-only. No evidence of a successful Android build or instrumentation execution has been obtained.
+- **Critical remaining work:** no production-safe cloud-to-phone cancellation replay or review-decision replication, no collected-invoice refund workflow, and no verified end-to-end multi-device tests. Consequently this is **not a completed release batch**, and enabling production cancellation would be unsafe.
