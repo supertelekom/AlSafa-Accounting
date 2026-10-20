@@ -136,7 +136,7 @@ class MainActivity:Activity() {
         }
         button("بحث / تحديث"){ offset=0;refresh() }
         button("الصفحة السابقة"){ offset=(offset-30).coerceAtLeast(0);refresh() }
-        button("الصفحة التالية"){ offset+=30;refresh() }
+        button("الصفحة التالية"){ if(offset<=Int.MAX_VALUE-30) offset+=30;refresh() }
         refresh()
     }
     private fun home(){text("ALSAFA WATCHES",size=16f);text("كيف تريد أن تبدأ؟",size=28f);button("⚡ الوضع المبسط · بيع وصيانة وتسليم سريع"){go("simple")};button("◆ الوضع الكامل · الإدارة والمخزون والحسابات"){go("advanced")}}
