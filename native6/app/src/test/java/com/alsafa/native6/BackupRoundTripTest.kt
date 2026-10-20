@@ -142,6 +142,22 @@ class BackupRoundTripTest {
         targetDb.close()
     }
 
+    @Test fun compressedBackupUsesSchemaFourAndRestores() {
+        val (helper,source)=store("backup-gzip-source.db")
+        source.addProduct("Watch","",Currency.USD,1200,600,3)
+        val bytes=ByteArrayOutputStream()
+        Backup(context,source).export(bytes)
+        val root=JSONObject(bytes.toString("UTF-8"))
+        assertEquals(4,root.getInt("schema"))
+        assertEquals("gzip-base64",root.getString("encoding"))
+        assertTrue(Backup.ungzip(root.getString("data")).contains("Watch"))
+        val (targetHelper,target)=store("backup-gzip-target.db")
+        Backup(context,target).restore(ByteArrayInputStream(bytes.toByteArray()))
+        assertEquals(3L,target.products().single().stock)
+        helper.close()
+        targetHelper.close()
+    }
+
     @Test fun corruptedBackupCannotWriteToTarget() {
         val (sourceDb,source)=store("backup-corrupt-source.db")
         val bytes=ByteArrayOutputStream()
