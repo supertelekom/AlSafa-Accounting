@@ -77,6 +77,11 @@ class PartnerReportReader(private val db: SQLiteDatabase) {
             arrayOf(from,until,currency)
         ).use { cursor -> cursor.moveToFirst(); cursor.getLong(0) }
         require(unlinked==0L) { "Unlinked partner withdrawals in $month ($currency); audit and backfill first" }
+        val invalidDates = db.rawQuery(
+            "SELECT count(*) FROM partner_drawings d JOIN events e ON e.id=d.event_id WHERE e.date>=? AND e.date<? AND d.currency=? AND (d.actual_date<>e.date OR e.kind<>?)",
+            arrayOf(from,until,currency,"WITHDRAWAL")
+        ).use { cursor -> cursor.moveToFirst(); cursor.getLong(0) }
+        require(invalidDates==0L) { "Invalid partner drawing dates or event types" }
         val profitByDay = db.rawQuery(
             """SELECT e.date,
                  coalesce(sum(CASE
