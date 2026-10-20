@@ -20,3 +20,12 @@ Branch: `native5-clean-foundation`. This report describes source changes, not pr
 7. Before any real rollout: run migrations on a disposable copy of a current backup, instrumentation tests, two-device offline/online sync tests, inventory and journal reconciliation, and verify zero writes to live data until explicit approval.
 
 No live shop data or Firebase records were modified by these source commits.
+
+## Tablet review UI integration (subsequent batch)
+- Added explicit confirmation before saving a review request; a required reason and the exact invoice lookup are validated by the service.
+- Added a separate confirmed review rejection action that uses the immutable decision service. No invoice deletion, refund or stock restoration occurs from these UI controls.
+- Prevented new review requests for invoices already marked cancelled.
+- UI explicitly warns that review requests and decisions are **local to this device**; no cross-device replication for these records has been built.
+- **Release blocker:** do not use this review UI for multi-device store operation until review request/decision operations are synced and authorized consistently on all devices. This is especially important because a review blocks collections only on the device holding that review.
+- The UI cancellation posting action remains deliberately disabled until a verified idempotent phone/cloud replay and actual instrumentation tests exist.
+- Android build, migrations, Firebase replay and instrumented tests have not been run in this session. These are source changes only; no APK or release certification is claimed.
