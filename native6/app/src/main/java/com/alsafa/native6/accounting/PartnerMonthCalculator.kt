@@ -33,7 +33,7 @@ object PartnerMonthCalculator {
         shares: List<PartnerShare>,
         withdrawals: List<DatedPartnerWithdrawal>
     ): List<PartnerMonthLine> {
-        require(currency.isNotBlank())
+        require(currency in setOf("USD", "TRY", "SYP"))
         require(shares.isNotEmpty())
         require(shares.map { it.partnerId }.distinct().size == shares.size)
         require(shares.all { it.partnerId.isNotBlank() && it.percentage >= BigDecimal.ZERO })
