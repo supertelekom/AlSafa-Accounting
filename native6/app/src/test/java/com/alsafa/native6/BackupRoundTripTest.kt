@@ -56,6 +56,22 @@ class BackupRoundTripTest {
         targetDb.close()
     }
 
+    @Test fun stagingSameLegacyBackupTwiceIsIdempotent() {
+        val (helper,target)=store("backup-legacy-stage-test.db")
+        val legacy=JSONObject()
+            .put("settings",JSONObject())
+            .put("products",org.json.JSONArray())
+            .put("sales",org.json.JSONArray())
+            .toString().toByteArray(Charsets.UTF_8)
+        val backup=Backup(context,target)
+        backup.stageLegacy(ByteArrayInputStream(legacy))
+        backup.stageLegacy(ByteArrayInputStream(legacy))
+        assertEquals(1L,target.scalar("SELECT count(*) FROM legacy_imports"))
+        assertEquals(0L,target.scalar("SELECT count(*) FROM products"))
+        assertEquals(0L,target.scalar("SELECT count(*) FROM invoices"))
+        helper.close()
+    }
+
     @Test fun restoreRefusesOccupiedDatabaseWithoutChangingIt() {
         val (sourceDb,source)=store("backup-occupied-source.db")
         val bytes=ByteArrayOutputStream()
