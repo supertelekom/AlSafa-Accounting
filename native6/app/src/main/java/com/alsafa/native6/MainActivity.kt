@@ -129,7 +129,8 @@ class MainActivity:Activity() {
                 val number=obj.optString("invoiceNo")
                 val date=obj.optString("date")
                 val amount=obj.optString("total").ifBlank { obj.optString("amount") }
-                val summary=listOf(number,date,name,amount).filter { it.isNotBlank() }
+                val status=if(category=="repairs") obj.optString("status") else ""
+                val summary=listOf(number,date,name,amount,status).filter { it.isNotBlank() }
                     .joinToString(" · ").ifBlank { record["legacy_id"].orEmpty() }
                 button(summary.take(110),results) {
                     AlertDialog.Builder(this).setTitle("السجل الأصلي · $category")
