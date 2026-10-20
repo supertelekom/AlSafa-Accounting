@@ -53,6 +53,21 @@ class Backup(private val context:Context,private val store:Store) {
             LEFT JOIN products p ON p.id=m.product_id
             WHERE p.id IS NULL
         """).isEmpty()){"حركة مخزون لمنتج غير موجود"}
+        // Inventory valuation must agree with the financial ledger, per currency.
+        require(target.rows("""SELECT p.currency FROM products p
+            LEFT JOIN (SELECT currency,coalesce(sum(amount),0) ledger_value
+                       FROM journal WHERE account='inventory' GROUP BY currency) j
+                ON j.currency=p.currency
+            GROUP BY p.currency
+            HAVING sum(p.value)<>coalesce(max(j.ledger_value),0)
+        """).isEmpty()){"قيمة المخزون لا تطابق حساب المخزون في دفتر الأستاذ"}
+        require(target.rows("""SELECT j.currency FROM
+            (SELECT currency,sum(amount) ledger_value FROM journal
+             WHERE account='inventory' GROUP BY currency) j
+            LEFT JOIN products p ON p.currency=j.currency
+            GROUP BY j.currency,j.ledger_value
+            HAVING j.ledger_value<>coalesce(sum(p.value),0)
+        """).isEmpty()){"قيد مخزون بلا قيمة مقابلة في المنتجات"}
         // A partner drawing must match the immutable journal in amount, currency,
         // partner identity and actual event date. Foreign keys alone cannot verify this.
         require(target.rows("""SELECT d.id FROM partner_drawings d
