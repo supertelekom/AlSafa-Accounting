@@ -194,3 +194,11 @@ Inspected the user's original **AlSafa Backup v2**, exported 2026-10-18 (approxi
 - Partial legacy restore now asserts that no native invoices or cash receipts were created during import; supplier counts are reconciled before transaction commit.
 - SQLite upgrades from schema 1/2/3 to schema 4 now install the same immutable accounting triggers as new installations.
 - Added unit regression for separating provisional USD and TRY unpaid sales. No APK build or test execution has been confirmed.
+
+## Subsequent payment matching
+
+- Added read-only aggregation of historical payment entries by original reference type, reference ID and **actual payment currency**. Duplicate payment IDs are flagged, and ambiguous amounts are excluded.
+- When `paymentCurrency` is present, the original `paymentAmount` is required; an amount denominated in invoice currency must not be substituted or silently converted.
+- The report explicitly requires a verified historical exchange rate before cross-currency payments can be allocated against invoice receivables.
+- The partial legacy import must create **no historical invoices or receipts**. Opening inventory is intentionally posted to inventory/equity at the current snapshot date; that legitimate journal must not be rejected.
+- A unit regression covers TRY receipt against USD sale. Android test execution and APK build are not yet confirmed.
