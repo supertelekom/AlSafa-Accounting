@@ -85,9 +85,13 @@ class MainActivity:Activity() {
         text("أرشيف العمليات القديمة — قراءة فقط",size=25f)
         text("هذه السجلات لم تُرحّل كفواتير جديدة، ولا تدخل في رصيد الصندوق أو الأرباح.",size=15f)
         val categories=listOf("sales","repairs","purchases","payments","cashTransactions",
-            "supplierLedger","partnerWithdrawals","expenses","returns")
+            "supplierLedger","partnerWithdrawals","expenses","returns","dailyClosings",
+            "inventoryMovements","productCostHistory","auditLog","loyaltyLedger",
+            "smartReceipts","discountRules","productDetailOptions")
         val categoryLabels=listOf("المبيعات","الصيانة","المشتريات","الدفعات","حركات الصناديق",
-            "حساب الموردين","سحوبات الشركاء","المصاريف","المرتجعات")
+            "حساب الموردين","سحوبات الشركاء","المصاريف","المرتجعات","الإقفالات اليومية",
+            "حركات المخزون","تاريخ تكلفة المنتجات","سجل التدقيق","سجل الولاء",
+            "الإيصالات الذكية","قواعد الخصومات","خيارات تفاصيل المنتجات")
         val choice=select("نوع السجل",categoryLabels,body)
         val search=field("بحث في بيانات السجل القديم",body)
         val results=column()
