@@ -201,9 +201,15 @@ class MainActivity:Activity() {
     }
     private fun legacyAudit(){
         text("أرشيف نسخ التطبيق القديم",size=25f)
-        text("يمكن فحص النسخة ثم استعادة المخزون والموردين والصيانة فقط إلى قاعدة فارغة. لا تُستعاد القيود المالية التاريخية.",size=15f)
+        text("يمكن نقل المخزون والموردين والصيانة وحفظ السجلات المالية القديمة كأرشيف مستقل. لا تُرحّل القيود والأرصدة المالية إلى دفتر الأستاذ.",size=15f)
         val items=store.rows("SELECT hash,created,summary FROM legacy_imports ORDER BY created DESC LIMIT 50")
         if(items.isEmpty()) text("لا توجد نسخ قديمة محفوظة بعد.")
+        val archived=store.rows("SELECT category,count(*) AS count FROM legacy_records GROUP BY category ORDER BY category")
+        if(archived.isNotEmpty()) {
+            text("السجلات المالية القديمة المنقولة للأرشيف المحلي (لا تدخل في الحسابات):",size=16f)
+            archived.forEach { record -> text("${record.getValue("category")}: ${record.getValue("count")}",size=14f) }
+        }
+
         text("إجمالي النسخ المحفوظة: ${store.scalar("SELECT count(*) FROM legacy_imports")}",size=15f)
         text("عدد النسخ المعروضة: ${items.size}",size=15f)
         if(items.size==50) text("تُعرض آخر 50 نسخة فقط؛ قد توجد نسخ أقدم.",size=14f)
