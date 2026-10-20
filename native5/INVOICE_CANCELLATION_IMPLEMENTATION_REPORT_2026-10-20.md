@@ -50,3 +50,11 @@ No live shop data or Firebase records were modified by these source commits.
 - `TabletSyncWorker` uploads review operations as well as accounting outbox entries, with bounded batches and retry while either queue is pending.
 - **Not yet complete:** review operations are upload-only; the phone has no verified read/apply pipeline. UI does not directly schedule the worker because it lacks a verified store session ID; pending operations await normal worker scheduling. Cloud authorization and remote application are not validated.
 - **Deferred per user request:** build, migration/instrumentation and two-device tests will be run at the final testing stage. These changes are not yet approved for production.
+
+## Consolidated cancellation completion pass
+- Added a distinct tablet **approve for posting** control with explicit confirmation; approval never posts a reversal or refund.
+- Updated uncollected cancellation regression fixtures to record approval before attempting a reversal, consistent with the service's authorization gate.
+- Corrected the legacy migration test's expected database schema from v7 to v9 and added a check that the review sync queue exists after migration. The tests remain deferred and have not been executed.
+- Cloud IDs for review operations are prefixed `review-` to avoid accidental collision with accounting operation IDs in the same Firestore collection.
+- Tablet invoice preview now shows an immutable review decision and existing posted cancellation audit record, when present.
+- The implementation still lacks a verified phone/cloud replay and paid-invoice credit-note/refund posting, so **the complete cancellation feature is not yet finished**. No production activation is justified.
