@@ -101,3 +101,9 @@ Priority: complete partner share schedules, month-isolated allocations and withd
 - The inspector reports counts for products, sales, repairs and suppliers, samples field names and flags duplicate/missing recognized identifiers. Missing identifiers are warnings, not proof of corrupt records: the legacy format may use other keys.
 - Added unit tests for duplicate detection and missing sections. CI is configured, but no passing Android build or test run has been independently verified.
 - **This is not migration**. Mapping old identifiers, invoices, debt settlements, stock valuation, partner shares and all currencies into balanced Native 6 journal entries is still blocked pending source-schema reconciliation and a real backup sample.
+
+## Backup regression coverage — October 2026
+
+- Integrity checks verify that each stock movement references a valid accounting event and product, in addition to checking aggregate quantity and valuation.
+- Added round-trip regression cases for stocked opening inventory with a later nonfinancial product edit and for a zero-stock opening event without journal entries.
+- Tests have been committed but are **not reported as passing** until an Android/Gradle runner executes them.
