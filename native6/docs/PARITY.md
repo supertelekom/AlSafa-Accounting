@@ -80,3 +80,10 @@ Priority: complete partner share schedules, month-isolated allocations and withd
 - Older balances are calculated only from the explicitly chosen first month; this is not an assertion of complete lifetime partner debt.
 - Existing journal withdrawals whose destination does not match a registered partner ID are deliberately not guessed or backfilled.
 - No claim of a passing Android build or device validation for this batch. Do not deploy to the shop yet.
+
+## SQLite v3 partner integrity batch
+
+- Added immutable UPDATE/DELETE triggers for partner drawings, share periods, and share lines, plus a unique effective-date index.
+- Existing Native 6 databases at versions 1 and 2 upgrade to version 3 in place. Existing records are retained; migration will reject contradictory duplicate effective dates rather than silently discard data.
+- Historical corrections require explicit reversing/adjustment records in a future workflow, not editing posted history.
+- Build and migration test execution remain outstanding; do not deploy to live shop data.
