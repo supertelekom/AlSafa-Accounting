@@ -183,6 +183,41 @@ public final class InvoiceCancellationActivity extends Activity {
                 }).show();
         });
         root.addView(reject);
+        Button approve=new Button(this);
+        approve.setText("الموافقة على طلب المراجعة — دون إلغاء الفاتورة");
+        approve.setOnClickListener(v -> {
+            String lookup=normalizeInvoiceId(number.getText().toString());
+            String why=reason.getText().toString().trim();
+            if(lookup.isEmpty() || why.isEmpty()) {
+                preview.setText("أدخل رقم الفاتورة وسبب الموافقة.");
+                return;
+            }
+            new android.app.AlertDialog.Builder(this)
+                .setTitle("تأكيد الموافقة")
+                .setMessage("تسمح الموافقة بمراجعة الإلغاء لاحقًا فقط، ولا تنفذ قيدًا محاسبيًا أو رد أموال.")
+                .setNegativeButton("تراجع",null)
+                .setPositiveButton("تأكيد",(dialog,which) -> {
+                    try(Native5DatabaseHelper helper=new Native5DatabaseHelper(this)) {
+                        SQLiteDatabase db=helper.getWritableDatabase();
+                        try(Cursor c=db.rawQuery(
+                            "SELECT r.request_id FROM invoice_cancellation_requests r "+
+                            "JOIN online_invoices i ON i.invoice_id=r.invoice_id "+
+                            "LEFT JOIN invoice_number_mapping m ON m.invoice_id=i.invoice_id "+
+                            "WHERE i.invoice_id=? OR m.invoice_number=? ORDER BY r.request_id LIMIT 2",
+                            new String[]{lookup,lookup})) {
+                            if(!c.moveToFirst()) throw new IllegalArgumentException("Review not found");
+                            String requestId=c.getString(0);
+                            if(c.moveToNext()) throw new IllegalStateException("Ambiguous invoice");
+                            new InvoiceCancellationDecisionService(db).approveForPosting(requestId,why);
+                            preview.setText("تم حفظ الموافقة محليًا. لم يتم إلغاء الفاتورة.");
+                        }
+                    } catch(Exception ex) {
+                        preview.setText("تعذرت الموافقة: "+ex.getClass().getSimpleName());
+                    }
+                }).show();
+        });
+        root.addView(approve);
+
         number.addTextChangedListener(new android.text.TextWatcher() {
             @Override public void beforeTextChanged(CharSequence text,int start,int count,int after) {}
             @Override public void onTextChanged(CharSequence text,int start,int before,int count) {
