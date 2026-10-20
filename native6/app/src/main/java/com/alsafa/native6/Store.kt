@@ -38,7 +38,7 @@ class Store(val helper:StoreDb) {
     }
     fun editProduct(id:String,name:String,barcode:String,price:Long) = transaction {
         require(scalar("SELECT count(*) FROM products WHERE id=?",id)==1L){"المنتج غير موجود"}
-        require(name.isNotBlank() && price>=0);require(barcode.isBlank() || scalar("SELECT count(*) FROM products WHERE barcode=? AND id<>?",barcode.trim(),id)==0L){"الباركود مكرر"}
+        require(name.isNotBlank() && price>=0 && barcode.trim().length<=128);require(barcode.isBlank() || scalar("SELECT count(*) FROM products WHERE barcode=? AND id<>?",barcode.trim(),id)==0L){"الباركود مكرر"}
         db.execSQL("UPDATE products SET name=?,barcode=?,price=? WHERE id=?",arrayOf(name.trim(),barcode.trim(),price,id));event(id(),"PRODUCT_EDIT",today(),"تعديل وصف المنتج $id")
     }
     fun invoices()=rows("SELECT * FROM invoices ORDER BY number DESC").map { Invoice(it.getValue("id"),it.getValue("number").toLong(),it.getValue("kind"),it.getValue("party"),Currency.valueOf(it.getValue("currency")),it.getValue("total").toLong(),it.getValue("status")) }
