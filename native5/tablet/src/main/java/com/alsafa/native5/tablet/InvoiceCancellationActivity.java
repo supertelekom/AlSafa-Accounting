@@ -118,7 +118,23 @@ public final class InvoiceCancellationActivity extends Activity {
                             result.append("\nتاريخ الطلب السابق (ms): ").append(existing.getLong(2));
                         }
                     }
-                    result.append("\nلا يُنفّذ إلغاء أو قيد محاسبي من هذه الشاشة.");
+                    try(Cursor decision=db.rawQuery(
+                        "SELECT d.decision,d.reason FROM invoice_cancellation_requests r "+
+                        "JOIN invoice_cancellation_decisions d ON d.request_id=r.request_id "+
+                        "WHERE r.invoice_id=?",new String[]{resolvedId})) {
+                        if(decision.moveToFirst())
+                            result.append("\\nقرار المراجعة: ").append(decision.getString(0))
+                                .append(" — ").append(decision.getString(1));
+                    }
+                    try(Cursor cancelled=db.rawQuery(
+                        "SELECT cancellation_event_id,actor_id,reason FROM online_cancellations WHERE invoice_id=?",
+                        new String[]{resolvedId})) {
+                        if(cancelled.moveToFirst())
+                            result.append("\\nالفاتورة ملغاة محاسبيًا: ").append(cancelled.getString(0))
+                                .append(" — المنفذ: ").append(cancelled.getString(1))
+                                .append(" — السبب: ").append(cancelled.getString(2));
+                    }
+                    result.append("\\nلا يُنفّذ إلغاء أو قيد محاسبي من هذه الشاشة.");
                     preview.setText(result.toString());
                 }
             } catch(Exception ex) {
