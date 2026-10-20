@@ -96,8 +96,11 @@ object LegacySnapshotImport {
                     // Preserve their exact JSON representation instead of failing the import.
                     val raw=array.get(i)
                     val row=raw as? JSONObject
-                    val recordId=row?.optString("id")?.takeIf { it.isNotBlank() }
-                        ?: "$key-$i"
+                    val sourceId=row?.optString("id")?.trim()
+                    // A legacy ID may be duplicated or absent in malformed history.
+                    // The array index is part of the archival key, so no entry is
+                    // silently replaced and original IDs remain inside the payload.
+                    val recordId="$i:${sourceId?.takeIf { it.isNotEmpty() } ?: "no-id"}"
                     val serialized=when(raw) {
                         is JSONObject -> raw.toString()
                         else -> JSONObject().put("_legacyValue",raw).toString()
