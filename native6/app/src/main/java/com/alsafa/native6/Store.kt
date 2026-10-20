@@ -161,21 +161,10 @@ class Store(val helper:StoreDb) {
         return com.alsafa.native6.accounting.PartnerBalanceSummaryCalculator.summarize(selected,currency.name,history)
     }
 
-    /** One selected month only; partner withdrawals remain dated to their actual month. */
-    fun partnerMonthReport(month:String,currency:Currency):List<com.alsafa.native6.accounting.PartnerMonthLine> {
-        val selected=java.time.YearMonth.parse(month)
-        val totals=monthReport(month).filter { it["currency"]==currency.name }
-        val net=totals.fold(0L) { sum,row ->
-            val account=row.getValue("account")
-            val amount=row.getValue("amount").toLong()
-            when {
-                account.startsWith("revenue:") -> Math.subtractExact(sum,amount)
-                account.startsWith("expense:") -> Math.subtractExact(sum,amount)
-                else -> sum
-            }
-        }
-        return com.alsafa.native6.accounting.PartnerReportReader(db).monthly(selected,currency.name,net)
-    }
+    /** One selected month, split by actual journal posting dates when shares change. */
+    fun partnerMonthReport(month:String,currency:Currency):List<com.alsafa.native6.accounting.PartnerMonthLine> =
+        com.alsafa.native6.accounting.PartnerReportReader(db)
+            .monthlyFromPostedJournal(java.time.YearMonth.parse(month),currency.name)
     fun monthReport(month:String):List<Map<String,String>> {java.time.YearMonth.parse(month);return rows("SELECT j.currency,j.account,sum(j.amount) amount FROM journal j JOIN events e ON e.id=j.event_id WHERE substr(e.date,1,7)=? GROUP BY j.currency,j.account ORDER BY j.currency,j.account",month)}
     fun receiveRepair(customer:String,phone:String,watch:String,problem:String,command:String=id()):String=transaction {require(customer.isNotBlank()&&watch.isNotBlank());insert("repairs","id" to command,"customer" to customer,"phone" to phone,"watch" to watch,"problem" to problem,"status" to "received","date" to today());event(command,"REPAIR_RECEIVED",today(),"استلام صيانة $customer");command}
     fun repairReady(id:String)=transaction {require(rows("SELECT status FROM repairs WHERE id=?",id).single().getValue("status")=="received");db.execSQL("UPDATE repairs SET status='ready' WHERE id=?",arrayOf(id));event(id(),"REPAIR_READY",today(),"جاهزة $id")}
