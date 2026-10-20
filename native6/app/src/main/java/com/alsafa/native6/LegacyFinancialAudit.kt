@@ -35,6 +35,28 @@ object LegacyFinancialAudit {
                 totals.entries.joinToString("، "){"${it.key}: ${it.value.toPlainString()}"}
             if(invalid>0)result += "$key — سجلات تتطلب مراجعة: $invalid"
         }
+        // Withdrawal reports use the transaction's actual month, never the oldest
+        // unpaid profit month. Group by partner and currency without FX guessing.
+        data.optJSONArray("partnerWithdrawals")?.let { withdrawals ->
+            val monthly=sortedMapOf<String,BigDecimal>()
+            var malformed=0
+            for(i in 0 until withdrawals.length()) {
+                val row=withdrawals.optJSONObject(i)
+                if(row==null) {malformed++;continue}
+                val date=row.optString("date")
+                val currency=row.optString("currency")
+                val partner=row.optString("partnerId")
+                val amount=row.optString("amount").toBigDecimalOrNull()
+                if(!date.matches(Regex("\\d{4}-\\d{2}-\\d{2}")) ||
+                    currency !in listOf("USD","TRY","SYP") ||
+                    partner.isBlank() || amount==null) {malformed++;continue}
+                val key="${date.substring(0,7)} | $partner | $currency"
+                monthly[key]=(monthly[key] ?: BigDecimal.ZERO).add(amount)
+            }
+            result += "سحوبات الشركاء بحسب شهر العملية الفعلي (دون تسوية أرباح):"
+            monthly.forEach { (key,total) -> result += "$key: ${total.toPlainString()}" }
+            if(malformed>0) result += "سحوبات غير صالحة للتجميع: $malformed"
+        }
         // Invoice numbers are display identifiers, not safe primary keys.
         // The original data may contain duplicate numbers across different records.
         listOf("sales","repairs").forEach { key ->
