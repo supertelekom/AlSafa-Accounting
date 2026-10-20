@@ -129,7 +129,9 @@ class MainActivity:Activity() {
                 val raw=record["payload"].orEmpty()
                 val obj=try { org.json.JSONObject(raw) } catch (_:Exception) { org.json.JSONObject() }
                 val name=obj.optString("customer").ifBlank {
-                    obj.optString("supplierName").ifBlank { obj.optString("partnerName") }
+                    obj.optString("customerName").ifBlank {
+                        obj.optString("supplierName").ifBlank { obj.optString("partnerName") }
+                    }
                 }
                 val number=obj.optString("invoiceNo")
                 val date=obj.optString("date")
