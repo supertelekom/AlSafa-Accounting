@@ -289,4 +289,20 @@ class LegacySnapshotImportTest {
         } finally { helper.close();context.deleteDatabase(name) }
     }
 
+    @Test fun duplicateBarcodeWithWhitespaceIsRejected() {
+        val context=RuntimeEnvironment.getApplication<Context>()
+        val name="barcode-normalization-test.db"
+        context.deleteDatabase(name)
+        val helper=StoreDb(context,name)
+        try {
+            val store=Store(helper)
+            store.addProduct("First","ABC",Currency.USD,100L,50L,1L)
+            var rejected=false
+            try { store.addProduct("Second"," ABC ",Currency.USD,100L,50L,1L) }
+            catch (_:IllegalArgumentException) { rejected=true }
+            assertTrue(rejected)
+            assertEquals(1L,store.scalar("SELECT count(*) FROM products"))
+        } finally { helper.close();context.deleteDatabase(name) }
+    }
+
 }
