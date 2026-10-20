@@ -8,7 +8,7 @@ import org.json.JSONObject
  * No amounts are converted and no legacy records are posted to Native 6.
  */
 object LegacyReadiness {
-    private val core = listOf("products", "sales", "repairs", "suppliers")
+    private val core = listOf("products", "sales", "repairs", "suppliers", "customers", "expenses", "purchases", "maintenanceParts")
     private val identityFields = listOf("id", "uuid", "invoiceId", "invoice_id")
 
     fun inspect(payload: String): String {
