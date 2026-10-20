@@ -99,6 +99,17 @@ object LegacySnapshotImport {
                         "legacy_id" to recordId,"payload" to row.toString())
                 }
             }
+            // Retain non-list business configuration as source evidence.
+            // No settings are activated until separately reviewed and mapped.
+            listOf("settings","rates","sync").forEach { key ->
+                val source=d.optJSONObject(key) ?: return@forEach
+                store.insert("legacy_records","category" to "configuration",
+                    "legacy_id" to key,"payload" to source.toString())
+            }
+            val deviceSettings=root.optJSONObject("deviceSettings")
+            if(deviceSettings!=null) store.insert("legacy_records",
+                "category" to "configuration","legacy_id" to "deviceSettings",
+                "payload" to deviceSettings.toString())
             store.insert("settings","key" to "legacy_snapshot_import","value" to JSONObject()
                 .put("scope","inventory_suppliers_repairs_only")
                 .put("sourceAppVersion",root.optString("appVersion","unknown"))
