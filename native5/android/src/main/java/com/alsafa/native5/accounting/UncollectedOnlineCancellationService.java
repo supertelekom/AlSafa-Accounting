@@ -32,10 +32,10 @@ public final class UncollectedOnlineCancellationService {
                 "SELECT i.cost_minor,i.collected_minor,i.released_cost_minor,i.currency,r.request_id,r.reason,l.dispatch_event_id "+
                 "FROM online_invoices i JOIN invoice_cancellation_requests r ON r.invoice_id=i.invoice_id "+
                 "JOIN online_dispatch_links l ON l.invoice_id=i.invoice_id "+
-                "LEFT JOIN invoice_cancellation_decisions d ON d.request_id=r.request_id "+
-                "WHERE i.invoice_id=? AND d.request_id IS NULL",
+                "JOIN invoice_cancellation_decisions d ON d.request_id=r.request_id "+
+                "WHERE i.invoice_id=? AND d.decision=\'APPROVED_FOR_POSTING\'",
                 new String[]{invoiceId})) {
-                if(!c.moveToFirst()) throw new IllegalStateException("Missing pending review or dispatch linkage");
+                if(!c.moveToFirst()) throw new IllegalStateException("Missing approved review or dispatch linkage");
                 cost=c.getLong(0); received=c.getLong(1); released=c.getLong(2);
                 currency=c.getString(3); requestId=c.getString(4);
                 reason=c.getString(5); dispatchId=c.getString(6);
