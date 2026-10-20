@@ -1,7 +1,7 @@
 package com.alsafa.native6.accounting
 
 import android.content.Context
-import androidx.test.core.app.ApplicationProvider
+import org.robolectric.RuntimeEnvironment
 import com.alsafa.native6.Currency
 import com.alsafa.native6.Store
 import com.alsafa.native6.StoreDb
@@ -24,7 +24,7 @@ class PartnerLedgerIntegrationTest {
     private lateinit var registry: PartnerRegistry
 
     @Before fun setup() {
-        context=ApplicationProvider.getApplicationContext()
+        context=RuntimeEnvironment.getApplication()
         helper=StoreDb(context,"partner-ledger-test.db")
         store=Store(helper)
         registry=PartnerRegistry(store.db)
