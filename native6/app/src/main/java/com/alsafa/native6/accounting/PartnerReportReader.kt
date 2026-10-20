@@ -15,7 +15,14 @@ object PartnerSchema {
         "CREATE TABLE IF NOT EXISTS partner_share_periods(id TEXT PRIMARY KEY NOT NULL, effective_date TEXT NOT NULL, note TEXT NOT NULL DEFAULT '')",
         "CREATE TABLE IF NOT EXISTS partner_share_lines(period_id TEXT NOT NULL REFERENCES partner_share_periods(id), partner_id TEXT NOT NULL REFERENCES partner_members(id), percent TEXT NOT NULL, PRIMARY KEY(period_id,partner_id))",
         "CREATE TABLE IF NOT EXISTS partner_drawings(id TEXT PRIMARY KEY NOT NULL, partner_id TEXT NOT NULL REFERENCES partner_members(id), event_id TEXT NOT NULL UNIQUE REFERENCES events(id), actual_date TEXT NOT NULL, currency TEXT NOT NULL CHECK(currency IN ('USD','TRY','SYP')), amount_minor INTEGER NOT NULL CHECK(amount_minor>0))",
-        "CREATE INDEX IF NOT EXISTS partner_drawings_month ON partner_drawings(actual_date,currency,partner_id)"
+        "CREATE INDEX IF NOT EXISTS partner_drawings_month ON partner_drawings(actual_date,currency,partner_id)",
+        "CREATE UNIQUE INDEX IF NOT EXISTS partner_share_effective_unique ON partner_share_periods(effective_date)",
+        "CREATE TRIGGER IF NOT EXISTS partner_drawings_no_update BEFORE UPDATE ON partner_drawings BEGIN SELECT RAISE(ABORT,'Immutable partner drawing'); END",
+        "CREATE TRIGGER IF NOT EXISTS partner_drawings_no_delete BEFORE DELETE ON partner_drawings BEGIN SELECT RAISE(ABORT,'Immutable partner drawing'); END",
+        "CREATE TRIGGER IF NOT EXISTS partner_share_periods_no_update BEFORE UPDATE ON partner_share_periods BEGIN SELECT RAISE(ABORT,'Immutable share schedule'); END",
+        "CREATE TRIGGER IF NOT EXISTS partner_share_periods_no_delete BEFORE DELETE ON partner_share_periods BEGIN SELECT RAISE(ABORT,'Immutable share schedule'); END",
+        "CREATE TRIGGER IF NOT EXISTS partner_share_lines_no_update BEFORE UPDATE ON partner_share_lines BEGIN SELECT RAISE(ABORT,'Immutable share allocation'); END",
+        "CREATE TRIGGER IF NOT EXISTS partner_share_lines_no_delete BEFORE DELETE ON partner_share_lines BEGIN SELECT RAISE(ABORT,'Immutable share allocation'); END"
     )
 }
 
