@@ -4,7 +4,7 @@ import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 
-class StoreDb(context: Context, name: String = "alsafa_native6.db") : SQLiteOpenHelper(context,name,null,2) {
+class StoreDb(context: Context, name: String = "alsafa_native6.db") : SQLiteOpenHelper(context,name,null,3) {
     override fun onConfigure(db: SQLiteDatabase) { db.setForeignKeyConstraintsEnabled(true); db.execSQL("PRAGMA synchronous=FULL") }
     override fun onCreate(db: SQLiteDatabase) {
         schema.forEach(db::execSQL)
@@ -14,7 +14,7 @@ class StoreDb(context: Context, name: String = "alsafa_native6.db") : SQLiteOpen
         }
     }
     override fun onUpgrade(db: SQLiteDatabase,old: Int,new: Int) {
-        if (old == 1 && new == 2) {
+        if (old in 1..2 && new == 3) {
             com.alsafa.native6.accounting.PartnerSchema.statements.forEach(db::execSQL)
         } else error("Unsupported migration $old → $new; database preserved")
     }
