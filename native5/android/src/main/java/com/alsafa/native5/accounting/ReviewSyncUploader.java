@@ -23,7 +23,7 @@ public final class ReviewSyncUploader {
             if(!c.moveToFirst()) return false;
             id=c.getString(0);kind=c.getString(1);payload=c.getString(2);
         }
-        long revision=writer.writeOnce(id,kind,payload);
+        long revision=writer.writeOnce("review-"+id,kind,payload);
         if(revision<=0) throw new IllegalStateException("Invalid cloud confirmation");
         ContentValues v=new ContentValues();
         v.put("state","CONFIRMED");
