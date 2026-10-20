@@ -89,4 +89,16 @@ class LegacyReconciliationTest {
         assertTrue(report.contains("نفس عملة الفاتورة 1"))
     }
 
+    @Test fun partnerWithdrawalsStayInTheirActualMonth() {
+        val w=JSONArray().put(JSONObject().put("date","2026-09-30")
+            .put("partnerId","father").put("currency","USD").put("amount",12))
+            .put(JSONObject().put("date","2026-10-01")
+                .put("partnerId","father").put("currency","USD").put("amount",8))
+        val root=JSONObject().put("format","alsafa-accounting-backup")
+            .put("data",JSONObject().put("partnerWithdrawals",w))
+        val report=LegacyReconciliation.inspect(root.toString())
+        assertTrue(report.contains("2026-09 | father | USD: 12"))
+        assertTrue(report.contains("2026-10 | father | USD: 8"))
+    }
+
 }
