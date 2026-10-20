@@ -137,7 +137,8 @@ class MainActivity:Activity() {
                 val date=obj.optString("date").ifBlank { obj.optString("createdAt").take(10) }
                 val amount=obj.optString("total").ifBlank { obj.optString("totalUSD").ifBlank { obj.optString("amount") } }
                 val status=if(category=="repairs") obj.optString("status") else ""
-                val summary=listOf(number,date,name,amount,status).filter { it.isNotBlank() }
+                val currency=obj.optString("currency")
+                val summary=listOf(number,date,name,amount,currency,status).filter { it.isNotBlank() }
                     .joinToString(" · ").ifBlank { record["legacy_id"].orEmpty() }
                 button(summary.take(110),results) {
                     AlertDialog.Builder(this).setTitle("السجل الأصلي · $category")
