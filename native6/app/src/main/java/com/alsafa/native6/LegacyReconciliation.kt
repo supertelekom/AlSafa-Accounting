@@ -262,6 +262,26 @@ object LegacyReconciliation {
             byMonth.forEach { (key,value) -> lines += "$key: ${value.toPlainString()}" }
             if(invalid>0) lines += "سحوبات تحتاج مراجعة: $invalid"
         }
+        // Reconcile historical receipts without changing invoice balances.
+        data.optJSONArray("payments")?.let { payments ->
+            var converted=0
+            var invalidFx=0
+            val convertedPairs=sortedMapOf<String,Int>()
+            for(i in 0 until payments.length()) {
+                val row=payments.optJSONObject(i) ?: continue
+                val source=row.optString("currency")
+                val received=row.optString("paymentCurrency")
+                if(source.isBlank() || received.isBlank() || source==received) continue
+                converted++
+                val pair="$source → $received"
+                convertedPairs[pair]=(convertedPairs[pair] ?: 0)+1
+                if(row.optString("paymentAmount").toBigDecimalOrNull()==null ||
+                    row.optJSONObject("rateSnapshot")==null) invalidFx++
+            }
+            lines += "دفعات بعملة مختلفة عن الفاتورة: $converted"
+            convertedPairs.forEach { (pair,count) -> lines += "$pair: $count" }
+            if(invalidFx>0) lines += "دفعات تحتاج تدقيق مبلغ التحصيل أو سعر الصرف: $invalidFx"
+        }
         lines += "مهم: حركات الصناديق قد تعكس المبيعات والصيانة والسحوبات نفسها. لا تُسجل ثانيةً كدخل أو مصروف."
         return lines.joinToString("\n")
     }
