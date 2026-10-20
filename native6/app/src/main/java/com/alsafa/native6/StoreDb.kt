@@ -9,6 +9,8 @@ class StoreDb(context: Context, name: String = "alsafa_native6.db") : SQLiteOpen
     override fun onCreate(db: SQLiteDatabase) {
         schema.forEach(db::execSQL)
         db.execSQL(legacyRecordsTable)
+        db.execSQL(legacyRecordsNoUpdate)
+        db.execSQL(legacyRecordsNoDelete)
         com.alsafa.native6.accounting.PartnerSchema.statements.forEach(db::execSQL)
         listOf("events","journal","stock_moves","invoice_lines","receipts","returns","refunds","closings").forEach { table ->
             listOf("UPDATE","DELETE").forEach { action -> db.execSQL("CREATE TRIGGER ${table}_${action.lowercase()} BEFORE $action ON $table BEGIN SELECT RAISE(ABORT,'Immutable accounting record'); END") }
@@ -18,9 +20,15 @@ class StoreDb(context: Context, name: String = "alsafa_native6.db") : SQLiteOpen
         if (old in 1..2 && new >= 3) {
             com.alsafa.native6.accounting.PartnerSchema.statements.forEach(db::execSQL)
         } else if (old != 3 || new != 4) error("Unsupported migration $old → $new; database preserved")
-        if (new == 4) db.execSQL(legacyRecordsTable)
+        if (new == 4) {
+            db.execSQL(legacyRecordsTable)
+            db.execSQL(legacyRecordsNoUpdate)
+            db.execSQL(legacyRecordsNoDelete)
+        }
     }
     companion object {
+        val legacyRecordsNoUpdate = "CREATE TRIGGER legacy_records_no_update BEFORE UPDATE ON legacy_records BEGIN SELECT RAISE(ABORT,'Immutable legacy archive'); END"
+        val legacyRecordsNoDelete = "CREATE TRIGGER legacy_records_no_delete BEFORE DELETE ON legacy_records BEGIN SELECT RAISE(ABORT,'Immutable legacy archive'); END"
         val legacyRecordsTable = "CREATE TABLE legacy_records(category TEXT NOT NULL,legacy_id TEXT NOT NULL,payload TEXT NOT NULL,PRIMARY KEY(category,legacy_id))"
         val schema = listOf(
             "CREATE TABLE events(id TEXT PRIMARY KEY NOT NULL,kind TEXT NOT NULL,date TEXT NOT NULL,created INTEGER NOT NULL,memo TEXT NOT NULL)",
