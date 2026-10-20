@@ -213,6 +213,16 @@ class MainActivity:Activity() {
                 }.joinToString(" · ")
             } catch (_:Exception) { "تعذر قراءة الملخص" }
             text("البصمة: ${item.getValue("hash").take(16)}",size=16f)
+            button("فحص جاهزية هذه النسخة",body) {
+                val hash=item.getValue("hash")
+                work {
+                    val report=store.db.rawQuery("SELECT payload FROM legacy_imports WHERE hash=?",arrayOf(hash)).use { cursor->
+                        require(cursor.moveToFirst()){"لم يُعثر على النسخة"}
+                        LegacyReadiness.inspect(cursor.getString(0))
+                    }
+                    runOnUiThread { AlertDialog.Builder(this).setTitle("تدقيق النسخة القديمة").setMessage(report).setPositiveButton("إغلاق",null).show() }
+                }
+            }
             text("السجلات: $summary",size=15f)
             val stamp=item.getValue("created").toLongOrNull()
             if(stamp!=null) text("تاريخ الحفظ: ${java.time.Instant.ofEpochMilli(stamp).atZone(java.time.ZoneId.systemDefault()).toLocalDateTime()}",size=14f)
