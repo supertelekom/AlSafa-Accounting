@@ -209,3 +209,11 @@ Inspected the user's original **AlSafa Backup v2**, exported 2026-10-18 (approxi
 - The financial preflight distinguishes later sale payments in the same invoice currency, different currency, missing invoice, or missing payment currency. Since the source invoice `paid` may already reflect later payments, it never deducts those payments a second time.
 - Partner withdrawals are grouped by their actual recorded month, partner ID, and currency. Historical unpaid profit from other months is not merged into the selected month.
 - Added regression tests for duplicate receipt protection and withdrawal month isolation. Tests are committed but not yet executed in Android CI.
+
+## Read-only legacy history browser
+
+- The Android Native UI now exposes a `legacy-history` page from advanced mode, with archive categories for old sales, repairs, purchases, payments, cash movements, supplier ledgers, partner withdrawals, expenses, and returns.
+- Search uses SQLite parameter binding; records are fetched in pages of 30 and inspected in a read-only dialog. Archive payloads remain immutable and are not reposted to accounting.
+- Historical invoice numbers are displayed but are not used as unique keys: original archive row identity remains distinct even for repeated invoice numbers.
+- Verified against the private October 18 source backup structure: 86 sales, 6 purchases, 243 repairs, 28 payments, 566 cash movements, and 49 partner withdrawals. The source backup was **not** committed to GitHub.
+- APK build and UI tests remain unverified; this screen is an implementation, not proof of release readiness.
