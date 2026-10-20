@@ -35,3 +35,8 @@ No live shop data or Firebase records were modified by these source commits.
 - Kept database uniqueness enforcement for duplicate cancellation to preserve the existing instrumentation test's expected SQLite constraint exception.
 - Review-request UI integration is source-only. No evidence of a successful Android build or instrumentation execution has been obtained.
 - **Critical remaining work:** no production-safe cloud-to-phone cancellation replay or review-decision replication, no collected-invoice refund workflow, and no verified end-to-end multi-device tests. Consequently this is **not a completed release batch**, and enabling production cancellation would be unsafe.
+
+## Integrity checks added in latest batch
+- Android instrumentation test now forces a stock quantity overflow while reversing a physically returned uncollected invoice. It asserts rollback of the cancellation event, journal, audit record and outbox; no partial reversal is allowed.
+- New read-only `OnlineCancellationAudit.summary(invoiceId)` exposes cancellation event ID, local outbox state and counts of journal and inventory movement lines for diagnostic use. **Counts are not proof of accounting correctness** and must not be used as a release gate without deeper reconciliation.
+- All changes remain on the development branch. Instrumentation tests and APK builds remain unexecuted/unverified.
