@@ -50,7 +50,9 @@ class Store(val helper:StoreDb) {
         val raw=rows("SELECT payload FROM legacy_records WHERE category=? AND legacy_id=?","configuration","settings").firstOrNull()?.get("payload")
         val previous=if(raw==null) 0L else try {
             JSONObject(raw).optLong("invoiceSequenceHighWater",0L).coerceAtLeast(0L)
-        } catch (_:org.json.JSONException) { 0L }
+        } catch (_:org.json.JSONException) {
+            throw IllegalStateException("تعذر قراءة تسلسل الفواتير القديم؛ أوقف إنشاء الفاتورة لحماية الأرقام")
+        }
         return add(maxOf(existing,previous),1L)
     }
     fun sale(items:List<SaleItem>,party:String,phone:String,currency:Currency,paid:Long,vault:String,discount:Long=0,date:String=today(),command:String=id()):String=transaction {
