@@ -96,13 +96,13 @@ class MainActivity:Activity() {
             val category=categories[choice.selectedItemPosition.coerceIn(categories.indices)]
             val term=search.text.toString().trim()
             val entries=if(category=="repairs") {
-                if(term.isBlank()) store.rows("SELECT id AS legacy_id,substr(details,1,16000) AS payload FROM repairs ORDER BY rowid DESC LIMIT 30 OFFSET ?",offset.toString())
-                else store.rows("SELECT id AS legacy_id,substr(details,1,16000) AS payload FROM repairs WHERE instr(details,?)>0 ORDER BY rowid DESC LIMIT 30 OFFSET ?",term,offset.toString())
+                if(term.isBlank()) store.rows("SELECT id AS legacy_id,details AS payload FROM repairs ORDER BY rowid DESC LIMIT 30 OFFSET ?",offset.toString())
+                else store.rows("SELECT id AS legacy_id,details AS payload FROM repairs WHERE instr(details,?)>0 ORDER BY rowid DESC LIMIT 30 OFFSET ?",term,offset.toString())
             } else if(term.isBlank()) store.rows(
-                "SELECT legacy_id,substr(payload,1,16000) AS payload FROM legacy_records WHERE category=? ORDER BY rowid DESC LIMIT 30 OFFSET ?",
+                "SELECT legacy_id,payload FROM legacy_records WHERE category=? ORDER BY rowid DESC LIMIT 30 OFFSET ?",
                 category,offset.toString())
             else store.rows(
-                "SELECT legacy_id,substr(payload,1,16000) AS payload FROM legacy_records WHERE category=? AND instr(payload,?)>0 ORDER BY rowid DESC LIMIT 30 OFFSET ?",
+                "SELECT legacy_id,payload FROM legacy_records WHERE category=? AND instr(payload,?)>0 ORDER BY rowid DESC LIMIT 30 OFFSET ?",
                 category,term,offset.toString())
             text("الصفحة ${offset/30+1} · عدد السجلات المعروضة ${entries.size}",results,14f)
             entries.forEach { record ->
