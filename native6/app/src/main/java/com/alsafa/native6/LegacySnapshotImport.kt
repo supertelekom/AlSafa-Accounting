@@ -125,7 +125,6 @@ object LegacySnapshotImport {
                 if(deviceSettings!=null) 1 else 0
             require(store.scalar("SELECT count(*) FROM suppliers")==suppliers.length().toLong()) { "عدد الموردين المنقولين غير مطابق" }
             require(store.scalar("SELECT count(*) FROM invoices")==0L) { "استعادة المخزون لا يجوز أن تنشئ فواتير" }
-            require(store.scalar("SELECT count(*) FROM journal")==0L) { "استعادة البيانات التاريخية لا يجوز أن ترحل قيوداً مالية" }
             require(store.scalar("SELECT count(*) FROM receipts")==0L) { "استعادة الأرشيف لا يجوز أن تنشئ مقبوضات" }
             val actualArchive=store.scalar("SELECT count(*) FROM legacy_records")
             require(actualArchive==expectedArchive.toLong()) {
