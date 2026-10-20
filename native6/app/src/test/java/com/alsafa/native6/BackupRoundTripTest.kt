@@ -66,6 +66,19 @@ class BackupRoundTripTest {
         targetDb.close()
     }
 
+    @Test fun zeroOpeningStockCanBeRestoredWithoutJournal() {
+        val (sourceDb,source)=store("backup-zero-stock-source.db")
+        val productId=source.addProduct("Empty stock","",Currency.USD,1500,700,0)
+        val bytes=ByteArrayOutputStream()
+        Backup(context,source).export(bytes)
+        sourceDb.close()
+        val (targetDb,target)=store("backup-zero-stock-target.db")
+        Backup(context,target).restore(ByteArrayInputStream(bytes.toByteArray()))
+        assertEquals(0L,target.product(productId).stock)
+        assertEquals(0L,target.scalar("SELECT count(*) FROM journal"))
+        targetDb.close()
+    }
+
     @Test fun corruptedBackupCannotWriteToTarget() {
         val (sourceDb,source)=store("backup-corrupt-source.db")
         val bytes=ByteArrayOutputStream()
