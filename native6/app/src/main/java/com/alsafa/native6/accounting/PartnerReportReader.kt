@@ -125,6 +125,15 @@ class PartnerReportReader(private val db: SQLiteDatabase) {
         currency: String,
         distributableProfitMinor: Long
     ): List<PartnerMonthLine> {
+        require(db.rawQuery(
+            """SELECT count(*) FROM events e JOIN journal j ON j.event_id=e.id
+               WHERE e.date>=? AND e.date<? AND j.currency=?
+                 AND e.kind='WITHDRAWAL' AND j.account LIKE 'equity:withdrawal:%'
+                 AND NOT EXISTS (SELECT 1 FROM partner_drawings d WHERE d.event_id=e.id)""",
+            arrayOf(month.atDay(1).toString(),month.plusMonths(1).atDay(1).toString(),currency)
+        ).use { cursor -> cursor.moveToFirst(); cursor.getLong(0) }==0L) {
+            "Unlinked partner withdrawals in $month ($currency); audit and backfill first"
+        }
         val start = month.atDay(1)
         val end = month.atEndOfMonth()
         val startShares = sharesAt(start)
