@@ -35,4 +35,17 @@ class LegacyFinancialAuditTest {
         assertTrue(report.contains("repairs — أرقام فواتير مكررة: 1"))
     }
 
+    @Test fun withdrawalsStayInTheirActualCalendarMonth() {
+        val drawings=JSONArray()
+            .put(JSONObject().put("partnerId","father").put("date","2026-09-30")
+                .put("currency","TRY").put("amount",100))
+            .put(JSONObject().put("partnerId","father").put("date","2026-10-01")
+                .put("currency","TRY").put("amount",50))
+        val payload=JSONObject().put("format","alsafa-accounting-backup")
+            .put("data",JSONObject().put("partnerWithdrawals",drawings)).toString()
+        val report=LegacyFinancialAudit.inspect(payload)
+        assertTrue(report.contains("2026-09 | father | TRY: 100"))
+        assertTrue(report.contains("2026-10 | father | TRY: 50"))
+    }
+
 }
