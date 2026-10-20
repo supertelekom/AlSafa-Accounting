@@ -140,20 +140,22 @@ class MainActivity:Activity() {
                 }}.show()
         }
         val month=field("شهر التقرير YYYY-MM",body,YearMonth.now().toString())
+        val firstMonth=field("أول شهر للحسابات السابقة YYYY-MM",body,YearMonth.now().toString())
         val currency=select("عملة التقرير",Currency.entries.map { it.name },body)
         val result=column();body.addView(result)
         button("عرض تقرير الشركاء"){
             try {
                 val selected=YearMonth.parse(month.text.toString())
                 val curr=Currency.entries[currency.selectedItemPosition]
-                val lines=store.partnerMonthReport(selected.toString(),curr)
+                val lines=store.partnerBalanceSummary(selected.toString(),firstMonth.text.toString(),curr)
                 result.removeAllViews()
                 lines.forEach { line->
                     val name=partners.firstOrNull { it["id"]==line.partnerId }?.get("name")?:line.partnerId
                     text(name,result,20f)
-                    text("ربح الشهر: ${money(line.allocatedProfitMinor,curr)}",result)
-                    text("سحوبات الشهر: ${money(line.withdrawnThisMonthMinor,curr)}",result)
-                    text("المتبقي للشهر: ${money(line.monthRemainderMinor,curr)}",result)
+                    text("ربح الشهر: ${money(line.selectedMonthProfitMinor,curr)}",result)
+                    text("سحوبات الشهر: ${money(line.selectedMonthDrawingsMinor,curr)}",result)
+                    text("المتبقي للشهر: ${money(line.selectedMonthRemainderMinor,curr)}",result)
+                    text("رصيد الأشهر السابقة (من بداية الفترة المحددة): ${money(line.olderUnpaidMinor,curr)}",result)
                 }
             } catch(e:Exception){error(e)}
         }
