@@ -203,6 +203,7 @@ class MainActivity:Activity() {
         text("هذه النسخ محفوظة للفحص فقط، ولم تُرحّل إلى المبيعات أو المخزون أو الحسابات.",size=15f)
         val items=store.rows("SELECT hash,created,summary FROM legacy_imports ORDER BY created DESC LIMIT 50")
         if(items.isEmpty()) text("لا توجد نسخ قديمة محفوظة بعد.")
+        text("عدد النسخ المعروضة: ${items.size}",size=15f)
         items.forEach { item->
             val summary=try {
                 val data=org.json.JSONObject(item.getValue("summary"))
