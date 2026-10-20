@@ -39,6 +39,16 @@ class BackupRoundTripTest {
         targetDb.close()
     }
 
+    @Test fun productEditWithoutFinancialJournalStillExports() {
+        val (helper,source)=store("backup-product-edit-test.db")
+        val id=source.addProduct("Casio","",Currency.USD,1200,600,0)
+        source.editProduct(id,"Casio updated","",1300)
+        val bytes=ByteArrayOutputStream()
+        Backup(context,source).export(bytes)
+        assertTrue(bytes.size()>0)
+        helper.close()
+    }
+
     @Test fun corruptedBackupCannotWriteToTarget() {
         val (sourceDb,source)=store("backup-corrupt-source.db")
         val bytes=ByteArrayOutputStream()
