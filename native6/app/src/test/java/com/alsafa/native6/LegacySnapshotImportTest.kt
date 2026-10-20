@@ -154,4 +154,24 @@ class LegacySnapshotImportTest {
         } finally { helper.close();context.deleteDatabase(name) }
     }
 
+    @Test fun legacyArchiveCannotBeDeletedOrModified() {
+        val context=RuntimeEnvironment.getApplication<Context>()
+        val name="legacy-immutable-test.db"
+        context.deleteDatabase(name)
+        val helper=StoreDb(context,name)
+        try {
+            val store=Store(helper)
+            LegacySnapshotImport.import(store,payload())
+            var deleteBlocked=false
+            try { store.db.execSQL("DELETE FROM legacy_records") }
+            catch (_:android.database.SQLException) { deleteBlocked=true }
+            assertTrue(deleteBlocked)
+            var updateBlocked=false
+            try { store.db.execSQL("UPDATE legacy_records SET payload='{}'") }
+            catch (_:android.database.SQLException) { updateBlocked=true }
+            assertTrue(updateBlocked)
+            assertEquals(2L,store.scalar("SELECT count(*) FROM legacy_records"))
+        } finally { helper.close();context.deleteDatabase(name) }
+    }
+
 }
