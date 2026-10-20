@@ -6,7 +6,7 @@ import java.math.RoundingMode
 
 /**
  * Imports only a verified current inventory snapshot from a staged AlSafa Backup v2.
- * Historical sales, cash, debts and partner profits are deliberately NOT reconstructed.
+ * Historical sales, cash, debts and partner profits are archived verbatim but NOT posted to the ledger.
  * The original backup remains intact in legacy_imports for a later ledger migration.
  */
 object LegacySnapshotImport {
@@ -24,7 +24,7 @@ object LegacySnapshotImport {
         val suppliers=d.getJSONArray("suppliers")
         val repairs=d.getJSONArray("repairs")
         return "مخزون الساعات: ${products.length()}، قطع الصيانة: ${parts.length()}، الموردون: ${suppliers.length()}، سجل الصيانة: ${repairs.length()}. " +
-            "هذه عملية نقل مخزون وسجل صيانة فقط؛ لن تُستعاد الفواتير أو الديون أو النقد أو أرباح الشركاء بهذه الخطوة."
+            "سيُنقل المخزون والموردون والصيانة، وتُحفظ الفواتير والحركات القديمة كأرشيف قابل للقراءة فقط، دون احتسابها في الأرصدة أو الأرباح."
     }
     fun import(store:Store,payload:String):String {
         val root=JSONObject(payload)
@@ -103,7 +103,7 @@ object LegacySnapshotImport {
                 .put("suppliers",suppliers.length())
                 .put("repairs",repairs.length())
                 .put("archivedFinancialRecords",store.scalar("SELECT count(*) FROM legacy_records")).toString())
-            "نُقل المخزون الحالي والموردون وسجل الصيانة. الفواتير والأرصدة القديمة ما زالت في الأرشيف ولم تُرحّل."
+            "نُقل المخزون والموردون والصيانة، وحُفظت الحركات المالية التاريخية في أرشيف منفصل. لم تُرحّل الأرصدة والأرباح المحاسبية."
         }
     }
 }
