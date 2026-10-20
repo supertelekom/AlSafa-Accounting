@@ -50,4 +50,31 @@ public final class UncollectedOnlineCancellationTest {
                 "SELECT COUNT(*) FROM online_cancellations",null));
         }
     }
+
+    @Test public void failedReturnRollsBackJournalStockAndOutbox() {
+        try(Native5DatabaseHelper helper=new Native5DatabaseHelper(ApplicationProvider.getApplicationContext(),":memory:")) {
+            SQLiteDatabase db=helper.getWritableDatabase();
+            db.execSQL("INSERT INTO inventory_balances(product_id,quantity) VALUES('overflow',5)");
+            new OnlineDispatchPostingService(db).dispatch("dispatch-overflow","invoice-overflow",
+                new Money(Money.Currency.USD,1000),new Money(Money.Currency.USD,400),
+                java.util.Collections.singletonList(new InventoryDelta("overflow",-1)));
+            new InvoiceCancellationRequestService(db).requestReview("review-overflow","invoice-overflow","return");
+            db.execSQL("UPDATE inventory_balances SET quantity=? WHERE product_id='overflow'",
+                new Object[]{Long.MAX_VALUE});
+            try {
+                new UncollectedOnlineCancellationService(db).cancel("cancel-overflow",
+                    "invoice-overflow","tablet",true);
+                fail("Overflow accepted");
+            } catch(IllegalStateException expected) {}
+            assertFalse(db.inTransaction());
+            assertEquals(0,android.database.DatabaseUtils.longForQuery(db,
+                "SELECT COUNT(*) FROM accounting_events WHERE event_id='cancel-overflow'",null));
+            assertEquals(0,android.database.DatabaseUtils.longForQuery(db,
+                "SELECT COUNT(*) FROM journal_lines WHERE event_id='cancel-overflow'",null));
+            assertEquals(0,android.database.DatabaseUtils.longForQuery(db,
+                "SELECT COUNT(*) FROM online_cancellations WHERE invoice_id='invoice-overflow'",null));
+            assertEquals(0,android.database.DatabaseUtils.longForQuery(db,
+                "SELECT COUNT(*) FROM outbox WHERE operation_id='cancel-overflow'",null));
+        }
+    }
 }
