@@ -76,4 +76,17 @@ class LegacyReconciliationTest {
             .contains("sale | s1 | TRY: 420"))
     }
 
+    @Test fun laterPaymentAuditDoesNotDoubleDeductInvoicePaid() {
+        val sales=JSONArray().put(JSONObject().put("id","s1")
+            .put("currency","USD").put("total",100).put("paid",60))
+        val payments=JSONArray().put(JSONObject().put("id","p1")
+            .put("referenceType","sale").put("referenceId","s1")
+            .put("paymentCurrency","USD").put("paymentAmount",20))
+        val data=JSONObject().put("sales",sales).put("payments",payments)
+        val report=LegacyReconciliation.inspect(JSONObject()
+            .put("format","alsafa-accounting-backup").put("data",data).toString())
+        assertTrue(report.contains("USD: 40"))
+        assertTrue(report.contains("نفس عملة الفاتورة 1"))
+    }
+
 }
