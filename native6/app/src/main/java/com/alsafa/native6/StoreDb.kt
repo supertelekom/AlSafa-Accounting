@@ -4,21 +4,24 @@ import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 
-class StoreDb(context: Context, name: String = "alsafa_native6.db") : SQLiteOpenHelper(context,name,null,3) {
+class StoreDb(context: Context, name: String = "alsafa_native6.db") : SQLiteOpenHelper(context,name,null,4) {
     override fun onConfigure(db: SQLiteDatabase) { db.setForeignKeyConstraintsEnabled(true); db.execSQL("PRAGMA synchronous=FULL") }
     override fun onCreate(db: SQLiteDatabase) {
         schema.forEach(db::execSQL)
+        db.execSQL(legacyRecordsTable)
         com.alsafa.native6.accounting.PartnerSchema.statements.forEach(db::execSQL)
         listOf("events","journal","stock_moves","invoice_lines","receipts","returns","refunds","closings").forEach { table ->
             listOf("UPDATE","DELETE").forEach { action -> db.execSQL("CREATE TRIGGER ${table}_${action.lowercase()} BEFORE $action ON $table BEGIN SELECT RAISE(ABORT,'Immutable accounting record'); END") }
         }
     }
     override fun onUpgrade(db: SQLiteDatabase,old: Int,new: Int) {
-        if (old in 1..2 && new == 3) {
+        if (old in 1..2 && new >= 3) {
             com.alsafa.native6.accounting.PartnerSchema.statements.forEach(db::execSQL)
-        } else error("Unsupported migration $old → $new; database preserved")
+        } else if (old != 3 || new != 4) error("Unsupported migration $old → $new; database preserved")
+        if (new == 4) db.execSQL(legacyRecordsTable)
     }
     companion object {
+        val legacyRecordsTable = "CREATE TABLE legacy_records(category TEXT NOT NULL,legacy_id TEXT NOT NULL,payload TEXT NOT NULL,PRIMARY KEY(category,legacy_id))"
         val schema = listOf(
             "CREATE TABLE events(id TEXT PRIMARY KEY NOT NULL,kind TEXT NOT NULL,date TEXT NOT NULL,created INTEGER NOT NULL,memo TEXT NOT NULL)",
             "CREATE TABLE journal(event_id TEXT NOT NULL REFERENCES events(id),line INTEGER NOT NULL,account TEXT NOT NULL,currency TEXT NOT NULL CHECK(currency IN ('USD','TRY','SYP')),amount INTEGER NOT NULL CHECK(typeof(amount)='integer' AND amount<>0),PRIMARY KEY(event_id,line))",
