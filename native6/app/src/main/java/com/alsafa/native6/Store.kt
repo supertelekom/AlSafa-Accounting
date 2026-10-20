@@ -118,6 +118,9 @@ class Store(val helper:StoreDb) {
             "transfer"->{vault(destination);require(v!=destination);enough(v,c,amount);listOf(Posting("cash:$destination",c,amount),Posting("cash:$v",c,-amount))}
             else->error("نوع الحركة غير صالح")
         };event(command,kind.uppercase(),date,note);post(command,lines)
+        if (kind=="withdrawal" && scalar("SELECT count(*) FROM partner_members WHERE id=?",destination)==1L) {
+            com.alsafa.native6.accounting.PartnerRegistry(db).linkPostedDrawing(command,destination,LocalDate.parse(date),c.name,amount)
+        }
     }
     fun exchange(source:String,from:Currency,spent:Long,destination:String,to:Currency,received:Long,date:String=today(),command:String=id())=transaction {
         require(from!=to&&spent>0&&received>0);enough(source,from,spent);vault(destination)
