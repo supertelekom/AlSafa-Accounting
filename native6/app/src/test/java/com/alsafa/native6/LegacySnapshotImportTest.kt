@@ -119,4 +119,23 @@ class LegacySnapshotImportTest {
         }
     }
 
+    @Test fun preservesUnknownHistoricalSectionsAndConfiguration() {
+        val context=RuntimeEnvironment.getApplication<Context>()
+        val name="legacy-unknown-section-test.db"
+        context.deleteDatabase(name)
+        val helper=StoreDb(context,name)
+        try {
+            val root=JSONObject(payload())
+            val data=root.getJSONObject("data")
+            data.put("futureLedger",JSONArray().put(JSONObject()
+                .put("id","future-1").put("amount",15)))
+            data.put("settings",JSONObject().put("invoiceSequenceHighWater",335))
+            val store=Store(helper)
+            LegacySnapshotImport.import(store,root.toString())
+            assertEquals(1L,store.scalar("SELECT count(*) FROM legacy_records WHERE category=?","futureLedger"))
+            assertEquals(1L,store.scalar("SELECT count(*) FROM legacy_records WHERE category=?","configuration"))
+            assertEquals(0L,store.scalar("SELECT count(*) FROM invoices"))
+        } finally { helper.close();context.deleteDatabase(name) }
+    }
+
 }
