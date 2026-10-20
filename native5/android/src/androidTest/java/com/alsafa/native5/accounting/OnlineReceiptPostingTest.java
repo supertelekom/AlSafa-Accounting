@@ -67,6 +67,12 @@ public class OnlineReceiptPostingTest {
             new InvoiceCancellationRequestService(db).requestReview("review-reopen","invoice-reopen","تدقيق");
             InvoiceCancellationDecisionService decisions=new InvoiceCancellationDecisionService(db);
             decisions.reject("review-reopen","الفاتورة صحيحة");
+            assertEquals(0,android.database.DatabaseUtils.longForQuery(db,
+                "SELECT COUNT(*) FROM accounting_events",null));
+            assertEquals(0,android.database.DatabaseUtils.longForQuery(db,
+                "SELECT COUNT(*) FROM outbox",null));
+            assertEquals(0,android.database.DatabaseUtils.longForQuery(db,
+                "SELECT collected_minor FROM online_invoices WHERE invoice_id='invoice-reopen'",null));
             try {
                 decisions.reject("review-reopen","تكرار");
                 fail("Duplicate rejection accepted");
