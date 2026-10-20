@@ -95,6 +95,15 @@ class MainActivity:Activity() {
             results.removeAllViews()
             val category=categories[choice.selectedItemPosition.coerceIn(categories.indices)]
             val term=search.text.toString().trim()
+            val total=if(category=="repairs") {
+                if(term.isBlank()) store.scalar("SELECT count(*) FROM repairs")
+                else store.scalar("SELECT count(*) FROM repairs WHERE instr(details,?)>0",term)
+            } else {
+                if(term.isBlank()) store.scalar("SELECT count(*) FROM legacy_records WHERE category=?",category)
+                else store.scalar("SELECT count(*) FROM legacy_records WHERE category=? AND instr(payload,?)>0",category,term)
+            }
+            if(total==0L) offset=0
+            else if(offset.toLong()>=total) offset=((total-1)/30*30).toInt()
             val entries=if(category=="repairs") {
                 if(term.isBlank()) store.rows("SELECT id AS legacy_id,details AS payload FROM repairs ORDER BY rowid DESC LIMIT 30 OFFSET ?",offset.toString())
                 else store.rows("SELECT id AS legacy_id,details AS payload FROM repairs WHERE instr(details,?)>0 ORDER BY rowid DESC LIMIT 30 OFFSET ?",term,offset.toString())
@@ -104,7 +113,7 @@ class MainActivity:Activity() {
             else store.rows(
                 "SELECT legacy_id,payload FROM legacy_records WHERE category=? AND instr(payload,?)>0 ORDER BY rowid DESC LIMIT 30 OFFSET ?",
                 category,term,offset.toString())
-            text("الصفحة ${offset/30+1} · عدد السجلات المعروضة ${entries.size}",results,14f)
+            text("الصفحة ${offset/30+1} من ${((total+29)/30).coerceAtLeast(1)} · مجموع السجلات $total",results,14f)
             entries.forEach { record ->
                 val raw=record["payload"].orEmpty()
                 val obj=try { org.json.JSONObject(raw) } catch (_:Exception) { org.json.JSONObject() }
