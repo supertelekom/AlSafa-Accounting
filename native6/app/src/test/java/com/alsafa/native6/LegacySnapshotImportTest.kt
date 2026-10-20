@@ -195,4 +195,24 @@ class LegacySnapshotImportTest {
         } finally { helper.close();context.deleteDatabase(name) }
     }
 
+    @Test fun malformedCurrencyCannotPartiallyImportInventory() {
+        val context=RuntimeEnvironment.getApplication<Context>()
+        val name="legacy-bad-currency-test.db"
+        context.deleteDatabase(name)
+        val helper=StoreDb(context,name)
+        try {
+            val root=JSONObject(payload())
+            root.getJSONObject("data").getJSONArray("maintenanceParts")
+                .getJSONObject(0).put("currency","EUR")
+            val store=Store(helper)
+            var rejected=false
+            try { LegacySnapshotImport.import(store,root.toString()) }
+            catch (_:IllegalArgumentException) { rejected=true }
+            assertTrue(rejected)
+            assertEquals(0L,store.scalar("SELECT count(*) FROM products"))
+            assertEquals(0L,store.scalar("SELECT count(*) FROM journal"))
+            assertEquals(0L,store.scalar("SELECT count(*) FROM events"))
+        } finally { helper.close();context.deleteDatabase(name) }
+    }
+
 }
