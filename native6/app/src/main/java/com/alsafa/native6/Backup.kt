@@ -1,0 +1,49 @@
+package com.alsafa.native6
+
+import android.content.Context
+import org.json.JSONArray
+import org.json.JSONObject
+import java.io.InputStream
+import java.io.OutputStream
+import java.security.MessageDigest
+
+/** Logical snapshot includes every local table, metadata and embedded media in JSON details. */
+class Backup(private val context:Context,private val store:Store) {
+    companion object {
+        val tables=listOf("events","products","suppliers","invoices","journal","stock_moves","invoice_lines","receipts","returns","refunds","closings","repairs","settings","legacy_imports")
+        const val MAX_BYTES=128*1024*1024
+        fun sha(bytes:ByteArray)=MessageDigest.getInstance("SHA-256").digest(bytes).joinToString(""){"%02x".format(it)}
+        fun read(input:InputStream):ByteArray {val out=java.io.ByteArrayOutputStream();val buffer=ByteArray(8192);while(true){val n=input.read(buffer);if(n<0)break;require(out.size()+n<=MAX_BYTES){"حجم الملف أكبر من الحد المدعوم"};out.write(buffer,0,n)};return out.toByteArray()}
+    }
+    fun export(output:OutputStream) {
+        val data=store.transaction {val obj=JSONObject();tables.forEach { table ->val list=JSONArray();store.db.rawQuery("SELECT * FROM $table",null).use{c->while(c.moveToNext()){val row=JSONObject();c.columnNames.forEachIndexed{i,n->row.put(n,when(c.getType(i)){android.database.Cursor.FIELD_TYPE_NULL->JSONObject.NULL;android.database.Cursor.FIELD_TYPE_INTEGER->c.getLong(i);else->c.getString(i)})};list.put(row)}};obj.put(table,list)};obj.toString()}
+        val result=JSONObject().put("format","alsafa-native6-backup").put("schema",1).put("sha256",sha(data.toByteArray(Charsets.UTF_8))).put("data",data).toString().toByteArray(Charsets.UTF_8)
+        output.write(result);output.flush()
+    }
+    fun restore(input:InputStream) {
+        val root=JSONObject(String(read(input),Charsets.UTF_8));require(root.getString("format")=="alsafa-native6-backup"&&root.getInt("schema")==1){"نوع النسخة غير مدعوم"}
+        val text=root.getString("data");require(sha(text.toByteArray(Charsets.UTF_8))==root.getString("sha256")){"فشل التحقق من سلامة النسخة"};val data=JSONObject(text)
+        require(data.keys().asSequence().toSet()==tables.toSet()){"جداول النسخة غير مكتملة"}
+        // Validate in a disposable database, then restore atomically only into an empty database.
+        val name="validate-${Store.id()}.db";val helper=StoreDb(context,name);val staging=Store(helper)
+        try { load(staging,data);validate(staging);load(store,data) }finally{helper.close();context.deleteDatabase(name)}
+    }
+    private fun load(target:Store,data:JSONObject)=target.transaction {
+        require(tables.all{target.scalar("SELECT count(*) FROM $it")==0L}){"الاستعادة تتطلب قاعدة فارغة؛ لن تستبدل بيانات موجودة"}
+        tables.forEach {table->val allowed=target.rows("PRAGMA table_info($table)").map{it.getValue("name")}.toSet();val list=data.getJSONArray(table)
+            for(i in 0 until list.length()){val row=list.getJSONObject(i);require(row.keys().asSequence().all{it in allowed});val fields=row.keys().asSequence().map{k->k to if(row.isNull(k))null else row.get(k)}.toList();target.insert(table,*fields.toTypedArray())}}
+        validate(target)
+    }
+    private fun validate(target:Store) {
+        require(target.rows("PRAGMA integrity_check").single().values.single()=="ok");require(target.rows("PRAGMA foreign_key_check").isEmpty())
+        require(target.rows("SELECT event_id,currency,sum(amount) s FROM journal GROUP BY event_id,currency HAVING s<>0").isEmpty()){"قيود غير متوازنة"}
+        require(target.rows("SELECT p.id FROM products p LEFT JOIN stock_moves m ON m.product_id=p.id GROUP BY p.id HAVING p.stock<>coalesce(sum(m.quantity),0) OR p.value<>coalesce(sum(m.value_delta),0)").isEmpty()){"المخزون غير مطابق للحركات"}
+    }
+    fun stageLegacy(input:InputStream):String {
+        val bytes=read(input);val text=String(bytes,Charsets.UTF_8).removePrefix("\uFEFF");val root=JSONObject(text);val data=if(root.optString("format")=="alsafa-accounting-backup")root.getJSONObject("data") else root
+        require(data.optJSONObject("settings")!=null&&data.optJSONArray("products")!=null&&data.optJSONArray("sales")!=null){"ليست نسخة الصفا القديمة"}
+        val summary=JSONObject();data.keys().forEach{k->(data.opt(k) as? JSONArray)?.let{summary.put(k,it.length())}}
+        val report="تم حفظ نسخة معزولة للفحص: ${summary}. لم يُرحّل أي رصيد أو فاتورة إلى الحسابات الجديدة."
+        store.transaction {store.insert("legacy_imports","hash" to sha(bytes),"payload" to text,"created" to System.currentTimeMillis(),"summary" to summary.toString())};return report
+    }
+}
