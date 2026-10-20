@@ -107,3 +107,10 @@ Priority: complete partner share schedules, month-isolated allocations and withd
 - Integrity checks verify that each stock movement references a valid accounting event and product, in addition to checking aggregate quantity and valuation.
 - Added round-trip regression cases for stocked opening inventory with a later nonfinancial product edit and for a zero-stock opening event without journal entries.
 - Tests have been committed but are **not reported as passing** until an Android/Gradle runner executes them.
+
+## Per-currency inventory reconciliation
+
+- Backup integrity now compares the product valuation totals with the immutable inventory asset journal for every currency, in both directions (including a journal currency with no products).
+- Regression tests added for separate USD/TRY opening stock and an unpaid sale fully returned to inventory.
+- This checks Native 6 internal consistency only; it does not establish parity with legacy v3.9.353 stock, supplier balances or profits.
+- Android CI/test results remain unverified.
