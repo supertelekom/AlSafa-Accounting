@@ -28,7 +28,7 @@ class MainActivity:Activity() {
     private val ink=Color.rgb(62,52,41)
     private val gold=Color.rgb(169,121,41)
     private val vaultNames=listOf("درج المحل","الصندوق الخارجي","شام كاش","البنك")
-    override fun onCreate(state:Bundle?) {super.onCreate(state);store=Store(StoreDb(this));font=Typeface.createFromAsset(assets,"Tajawal-Medium.ttf");page=state?.getString("page")?:"home";pdfInvoice=state?.getString("pdfInvoice");render()}
+    override fun onCreate(state:Bundle?) {super.onCreate(state);store=Store(StoreDb(this));font=try { Typeface.createFromAsset(assets,"Tajawal-Medium.ttf") } catch (_:Exception) { Typeface.DEFAULT };page=state?.getString("page")?:"home";pdfInvoice=state?.getString("pdfInvoice");safeRender()}
     private fun dp(n:Int)=(n*resources.displayMetrics.density).toInt()
     private fun style(v:TextView){v.typeface=font;v.setTextColor(ink);v.textSize=18f;v.setPadding(dp(12),dp(10),dp(12),dp(10))}
     private fun background(color:Int=Color.rgb(255,253,249))=GradientDrawable().apply{setColor(color);cornerRadius=dp(14).toFloat();setStroke(dp(1),Color.rgb(234,223,206))}
@@ -44,13 +44,24 @@ class MainActivity:Activity() {
         // setOnShowListener is invoked by show(); keep validation errors on screen.
     }
     private fun error(e:Exception){AlertDialog.Builder(this).setTitle("لم تُحفظ العملية").setMessage(e.message?:"حدث خطأ").setPositiveButton("حسناً",null).show()}
-    private fun work(task:()->Unit){if(busy)return;busy=true;io.execute{try{task();runOnUiThread{busy=false;Toast.makeText(this,"تم الحفظ محلياً",Toast.LENGTH_SHORT).show();render()}}catch(e:Exception){runOnUiThread{busy=false;error(e)}}}}
-    private fun go(value:String){page=value;render()}
+    private fun work(task:()->Unit){if(busy)return;busy=true;io.execute{try{task();runOnUiThread{busy=false;Toast.makeText(this,"تم الحفظ محلياً",Toast.LENGTH_SHORT).show();safeRender()}}catch(e:Exception){runOnUiThread{busy=false;error(e)}}}}
+    private fun go(value:String){page=value;safeRender()}
     private fun label(value:String)=mapOf("sale" to "مبيع", "purchase" to "شراء", "repair" to "صيانة", "posted" to "مسجلة", "cancelled" to "ملغاة", "received" to "مستلمة", "ready" to "جاهزة", "delivered" to "تم التسليم")[value]?:value
     private fun money(n:Long,c:Currency)=Money(n,c).display()
     private fun amount(e:EditText,c:Currency)=Money.parse(e.text.toString(),c).minor
     override fun onSaveInstanceState(out:Bundle){out.putString("page",page);out.putString("pdfInvoice",pdfInvoice);super.onSaveInstanceState(out)}
     override fun onBackPressed(){if(page!="home")go("home")else super.onBackPressed()}
+    private fun safeRender() {
+        try { render() } catch (e: Exception) {
+            page="home"
+            val root=column()
+            setContentView(root)
+            text("تعذر فتح الشاشة المطلوبة",root,22f)
+            text(e.message ?: "حدث خطأ أثناء قراءة البيانات المحلية",root,15f)
+            button("العودة إلى الرئيسية",root) { safeRender() }
+            button("النسخ الاحتياطي",root) { page="backup";safeRender() }
+        }
+    }
     private fun render(){
         val root=column();root.setBackgroundColor(Color.rgb(248,243,235));setContentView(root)
         text("الصفا للساعات   |   Native 6",root,24f).setTextColor(gold)
