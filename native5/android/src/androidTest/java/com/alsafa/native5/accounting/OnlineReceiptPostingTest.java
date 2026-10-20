@@ -58,4 +58,25 @@ public class OnlineReceiptPostingTest {
                 "SELECT COUNT(*) FROM outbox",null));
         }
     }
+
+    @Test public void rejectedReviewReopensCollectionAndCannotBeRejectedTwice() {
+        try(Native5DatabaseHelper helper=new Native5DatabaseHelper(
+            ApplicationProvider.getApplicationContext(),":memory:")) {
+            SQLiteDatabase db=helper.getWritableDatabase();
+            db.execSQL("INSERT INTO online_invoices(invoice_id,total_minor,cost_minor,currency,created_at_ms) VALUES('invoice-reopen',6000,3500,'USD',1)");
+            new InvoiceCancellationRequestService(db).requestReview("review-reopen","invoice-reopen","تدقيق");
+            InvoiceCancellationDecisionService decisions=new InvoiceCancellationDecisionService(db);
+            decisions.reject("review-reopen","الفاتورة صحيحة");
+            try {
+                decisions.reject("review-reopen","تكرار");
+                fail("Duplicate rejection accepted");
+            } catch(android.database.SQLException expected) {}
+            new OnlineReceiptPostingService(db).collect("receipt-reopened","invoice-reopen",
+                new Money(Money.Currency.USD,2000),InvoiceSettlement.Channel.CASH_DRAWER);
+            assertEquals(2000,android.database.DatabaseUtils.longForQuery(db,
+                "SELECT collected_minor FROM online_invoices WHERE invoice_id='invoice-reopen'",null));
+            assertEquals(1,android.database.DatabaseUtils.longForQuery(db,
+                "SELECT COUNT(*) FROM invoice_cancellation_decisions",null));
+        }
+    }
 }
