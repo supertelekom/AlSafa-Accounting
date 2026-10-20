@@ -35,6 +35,21 @@ object LegacyFinancialAudit {
                 totals.entries.joinToString("، "){"${it.key}: ${it.value.toPlainString()}"}
             if(invalid>0)result += "$key — سجلات تتطلب مراجعة: $invalid"
         }
+        data.optJSONObject("settings")?.let { settings ->
+            val partners=settings.optJSONArray("partners")
+            if(partners!=null) {
+                var sum=BigDecimal.ZERO
+                for(i in 0 until partners.length()) {
+                    val partner=partners.optJSONObject(i) ?: continue
+                    val share=partner.optString("share").toBigDecimalOrNull()
+                    if(share!=null) sum=sum.add(share)
+                    result += "شريك ${partner.optString("id")}: ${partner.optString("share")}%"
+                }
+                result += "مجموع نسب الشركاء: ${sum.toPlainString()}%"
+            }
+            result += "تسلسل الفواتير المحفوظ: " +
+                settings.optString("invoiceSequenceHighWater","غير محدد")
+        }
         // Withdrawal reports use the transaction's actual month, never the oldest
         // unpaid profit month. Group by partner and currency without FX guessing.
         data.optJSONArray("partnerWithdrawals")?.let { withdrawals ->
