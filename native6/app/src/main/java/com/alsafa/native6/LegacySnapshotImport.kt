@@ -86,7 +86,10 @@ object LegacySnapshotImport {
             // reconstruction. They are NOT booked as new income or cash movements.
             val historical=listOf("sales","purchases","supplierLedger","payments",
                 "partnerWithdrawals","cashTransactions","dailyClosings","expenses",
-                "returns","inventoryMovements","usedWatchTransactions","loyaltyLedger")
+                "returns","inventoryMovements","usedWatchTransactions","loyaltyLedger",
+                "productCostHistory","auditLog","smartReceipts","discountRules",
+                "productDetailOptions","customerOrders","inventorySessions",
+                "customerSessions","shiftHandovers")
             historical.forEach { key ->
                 val array=d.optJSONArray(key) ?: return@forEach
                 for(i in 0 until array.length()) {
