@@ -124,6 +124,7 @@ object LegacySnapshotImport {
                 listOf("settings","rates","sync").count { d.optJSONObject(it)!=null } +
                 if(deviceSettings!=null) 1 else 0
             require(store.scalar("SELECT count(*) FROM suppliers")==suppliers.length().toLong()) { "عدد الموردين المنقولين غير مطابق" }
+            require(store.scalar("SELECT count(*) FROM invoices")==0L) { "استعادة المخزون لا يجوز أن تنشئ فواتير" }
             val actualArchive=store.scalar("SELECT count(*) FROM legacy_records")
             require(actualArchive==expectedArchive.toLong()) {
                 "عدد السجلات التاريخية المستعادة لا يطابق النسخة الأصلية: $actualArchive / $expectedArchive"
