@@ -62,3 +62,6 @@ Source: v3.9.353; 944 declared functions, 44 static navigation routes, 48 forms,
 - Real tablet UI/end-to-end acceptance and release signing.
 
 No real shop backup has been opened or changed in this work.
+## Next implementation batch
+
+Priority: complete partner share schedules, month-isolated allocations and withdrawals by actual transaction date; supplier opening debt and dated settlements; then multi-currency receipts and repair parts. Every change must preserve append-only per-currency balanced journals and atomic SQLite transactions. Do not migrate live data until explicit approval. Tests are the final verification stage, not a substitute for feature completion.
