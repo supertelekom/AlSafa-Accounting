@@ -53,6 +53,43 @@ class PartnerRegistry(private val db: SQLiteDatabase) {
         id
     }
 
+    /**
+     * Reconstruct the register from immutable withdrawal journals. Idempotent, and refuses
+     * ambiguous events instead of guessing a partner or changing historical accounting.
+     */
+    fun backfillPostedDrawings(): Int = write {
+        val candidates = db.rawQuery(
+            """SELECT e.id,e.date,j.account,j.currency,j.amount
+               FROM events e JOIN journal j ON j.event_id=e.id
+               WHERE e.kind='WITHDRAWAL' AND j.account LIKE 'equity:withdrawal:%'
+               AND NOT EXISTS (SELECT 1 FROM partner_drawings d WHERE d.event_id=e.id)
+               ORDER BY e.date,e.id""", null
+        ).use { cursor ->
+            buildList {
+                while (cursor.moveToNext()) add(listOf(
+                    cursor.getString(0),cursor.getString(1),cursor.getString(2),
+                    cursor.getString(3),cursor.getString(4)
+                ))
+            }
+        }
+        var linked = 0
+        for (row in candidates) {
+            val (eventId,date,account,currency,amountText) = row
+            val partnerId = account.removePrefix("equity:withdrawal:")
+            val registered = db.rawQuery("SELECT count(*) FROM partner_members WHERE id=?", arrayOf(partnerId))
+                .use { it.moveToFirst(); it.getLong(0)==1L }
+            if (!registered) continue
+            val matching = db.rawQuery(
+                "SELECT count(*) FROM journal WHERE event_id=? AND account LIKE 'equity:withdrawal:%'",
+                arrayOf(eventId)
+            ).use { it.moveToFirst(); it.getLong(0) }
+            require(matching==1L) { "Ambiguous withdrawal event $eventId" }
+            linkPostedDrawing(eventId,partnerId,LocalDate.parse(date),currency,amountText.toLong())
+            linked++
+        }
+        linked
+    }
+
     /** Register only a posted journal drawing, never create cash movements here. */
     fun linkPostedDrawing(
         eventId: String,
