@@ -98,6 +98,32 @@ object LegacyReconciliation {
             }
             if(unsupported>0) lines += "قيود مورد غير مصنفة: $unsupported"
         }
+        // Never combine different currencies into one closing balance.
+        // This is a descriptive audit, not an accounting posting.
+        cash?.let { movements ->
+            val daily=sortedMapOf<String,Pair<BigDecimal,Int>>()
+            var missingFields=0
+            for(i in 0 until movements.length()) {
+                val row=movements.optJSONObject(i)
+                if(row==null) {missingFields++;continue}
+                val date=row.optString("date")
+                val currency=row.optString("currency")
+                val amount=row.optString("amount").toBigDecimalOrNull()
+                if(!date.matches(Regex("\\d{4}-\\d{2}-\\d{2}")) ||
+                    currency !in listOf("USD","TRY","SYP") || amount==null) {
+                    missingFields++;continue
+                }
+                val key="${date.substring(0,7)} | $currency"
+                val prior=daily[key] ?: (BigDecimal.ZERO to 0)
+                daily[key]=prior.first.add(amount) to (prior.second+1)
+            }
+            lines += "إجماليات مبالغ الحركات الخام شهريًا (ليست أرصدة ولا أرباح):"
+            daily.forEach { (key,value) ->
+                lines += "$key: ${value.first.toPlainString()} (${value.second} حركة)"
+            }
+            if(missingFields>0)
+                lines += "حركات نقدية دون تاريخ أو عملة أو مبلغ صالح للتجميع: $missingFields"
+        }
         lines += "مهم: حركات الصناديق قد تعكس المبيعات والصيانة والسحوبات نفسها. لا تُسجل ثانيةً كدخل أو مصروف."
         return lines.joinToString("\n")
     }
