@@ -134,8 +134,8 @@ class MainActivity:Activity() {
                     }
                 }
                 val number=obj.optString("invoiceNo")
-                val date=obj.optString("date")
-                val amount=obj.optString("total").ifBlank { obj.optString("amount") }
+                val date=obj.optString("date").ifBlank { obj.optString("createdAt").take(10) }
+                val amount=obj.optString("total").ifBlank { obj.optString("totalUSD").ifBlank { obj.optString("amount") } }
                 val status=if(category=="repairs") obj.optString("status") else ""
                 val summary=listOf(number,date,name,amount,status).filter { it.isNotBlank() }
                     .joinToString(" · ").ifBlank { record["legacy_id"].orEmpty() }
