@@ -137,3 +137,11 @@ Inspected the user's original **AlSafa Backup v2**, exported 2026-10-18 (approxi
 - Added transaction rollback regression for a duplicate barcode, and Native 6 export/restore regression after snapshot import.
 - Added read-only historical financial audit from the staged original: sales, purchases, supplier ledger, payments, partner withdrawals, cash transactions and closings. Currency totals are not converted or presented as balances; duplicate accounting representations must be reconciled before any financial migration.
 - **Remaining:** verified historical journal import, legacy invoice numbering, supplier balance reconciliation, cash opening balances, partner share/withdrawal reconstruction, Android CI build and on-device acceptance tests.
+
+## Historical records archive (database schema 4; native backup schema 3)
+
+- Added `legacy_records(category,legacy_id,payload)` to preserve original historical sales, purchases, supplier ledger, payments, partner withdrawals, cash transactions, daily closings, expenses, returns, inventory movements and loyalty entries as **unposted, separate SQLite records** during explicit import.
+- The archive participates in Native 6 backup export and restore, and the archive screen displays per-category counts. Previous Native backup schema 1 and 2 can still be restored with an empty archive.
+- The 2026-10-18 source snapshot has 86 sales, 6 purchases, 5 supplier ledger entries, 28 payments, 49 partner withdrawals, 566 cash transactions, 26 closings, 18 expenses, 2 returns, 413 inventory movements and 2 loyalty entries.
+- These entries are historical **evidence**, not reconstructed financial journal postings. Profit, supplier debt, cash and partner balances remain unverified until transaction mapping and reconciliation are implemented.
+- Large embedded product photos and preservation of the full original backup may make the Native backup exceed its 128 MiB safety limit. This must be addressed before production migration.
