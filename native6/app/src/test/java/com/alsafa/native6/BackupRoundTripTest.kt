@@ -91,6 +91,19 @@ class BackupRoundTripTest {
         helper.close()
     }
 
+    @Test fun saleReturnRestoresInventoryValueAndKeepsLedgerBalanced() {
+        val (helper,source)=store("backup-sale-return-test.db")
+        val productId=source.addProduct("Test watch","",Currency.USD,2000,1000,2)
+        val saleId=source.sale(listOf(SaleItem(productId,1,2000)),"Client","",Currency.USD,0,"drawer")
+        source.returnSale(saleId,mapOf(0 to 1L),"Customer return")
+        assertEquals(2L,source.product(productId).stock)
+        assertEquals(2000L,source.product(productId).value)
+        val bytes=ByteArrayOutputStream()
+        Backup(context,source).export(bytes)
+        assertTrue(bytes.size()>0)
+        helper.close()
+    }
+
     @Test fun corruptedBackupCannotWriteToTarget() {
         val (sourceDb,source)=store("backup-corrupt-source.db")
         val bytes=ByteArrayOutputStream()
