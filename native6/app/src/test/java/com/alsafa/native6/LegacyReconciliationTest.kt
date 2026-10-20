@@ -24,4 +24,20 @@ class LegacyReconciliationTest {
         assertTrue(report.contains("payments — مراجع صحيحة: 1، مفقودة: 0"))
         assertTrue(report.contains("sale / sale-404"))
     }
+    @Test fun openingSupplierDebtIsSeparateFromPurchaseLiabilities() {
+        val ledger=JSONArray()
+            .put(JSONObject().put("supplierId","supplier-1").put("currency","USD")
+                .put("kind","opening-debt").put("amount",1500))
+            .put(JSONObject().put("supplierId","supplier-1").put("currency","USD")
+                .put("kind","payment").put("amount",500))
+        val data=JSONObject().put("supplierLedger",ledger)
+            .put("purchases",JSONArray().put(JSONObject().put("id","purchase-1")
+                .put("supplierId","supplier-1").put("total",250)))
+        val payload=JSONObject().put("format","alsafa-accounting-backup")
+            .put("data",data).toString()
+        val report=LegacyReconciliation.inspect(payload)
+        assertTrue(report.contains("supplier-1 | USD: افتتاحي 1500، مدفوع 500، الفرق 1000"))
+        assertTrue(report.contains("لا تشمل فواتير الشراء"))
+    }
+
 }
