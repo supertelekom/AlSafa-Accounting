@@ -53,6 +53,16 @@ class Backup(private val context:Context,private val store:Store) {
             GROUP BY d.id
             HAVING d.actual_date<>e.date OR e.kind<>'WITHDRAWAL' OR d.amount_minor<>coalesce(sum(j.amount),0)
         """).isEmpty()){"سحوبات الشركاء لا تطابق القيود المحاسبية"}
+        require(target.rows("""SELECT d.id FROM partner_drawings d
+            JOIN journal j ON j.event_id=d.event_id
+            WHERE j.account LIKE 'equity:withdrawal:%'
+            GROUP BY d.id
+            HAVING count(*)<>1
+        """).isEmpty()){"حدث سحب مرتبط بأكثر من قيد شريك"}
+        require(target.rows("""SELECT d.id FROM partner_drawings d
+            JOIN events e ON e.id=d.event_id
+            WHERE e.kind<>'WITHDRAWAL'
+        """).isEmpty()){"ربط سحب بحدث محاسبي غير صالح"}
         val schedules=target.rows("""SELECT p.id,p.effective_date,l.percent
             FROM partner_share_periods p LEFT JOIN partner_share_lines l ON l.period_id=p.id
             ORDER BY p.effective_date,p.id""")
