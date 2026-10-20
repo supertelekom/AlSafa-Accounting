@@ -117,6 +117,20 @@ object LegacySnapshotImport {
             if(deviceSettings!=null) store.insert("legacy_records",
                 "category" to "configuration","legacy_id" to "deviceSettings",
                 "payload" to deviceSettings.toString())
+            val expectedArchive=historical.sumOf { d.getJSONArray(it).length() } +
+                listOf("settings","rates","sync").count { d.optJSONObject(it)!=null } +
+                if(deviceSettings!=null) 1 else 0
+            val actualArchive=store.scalar("SELECT count(*) FROM legacy_records")
+            require(actualArchive==expectedArchive.toLong()) {
+                "عدد السجلات التاريخية المستعادة لا يطابق النسخة الأصلية: $actualArchive / $expectedArchive"
+            }
+            require(store.scalar("SELECT count(*) FROM products")==
+                (d.getJSONArray("products").length()+d.getJSONArray("maintenanceParts").length()).toLong()) {
+                "عدد سجلات المخزون لا يطابق النسخة الأصلية"
+            }
+            require(store.scalar("SELECT count(*) FROM repairs")==repairs.length().toLong()) {
+                "عدد سجلات الصيانة لا يطابق النسخة الأصلية"
+            }
             store.insert("settings","key" to "legacy_snapshot_import","value" to JSONObject()
                 .put("scope","inventory_suppliers_repairs_only")
                 .put("sourceAppVersion",root.optString("appVersion","unknown"))
