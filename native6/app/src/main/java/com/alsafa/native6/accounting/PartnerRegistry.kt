@@ -91,6 +91,18 @@ class PartnerRegistry(private val db: SQLiteDatabase) {
         linked
     }
 
+    /** Read-only audit: unlinked posted withdrawals require an explicit identity review. */
+    fun unlinkedWithdrawals(): List<String> = db.rawQuery(
+        """SELECT e.date || ' · ' || e.id || ' · ' || j.account || ' · ' ||
+                  j.currency || ' · ' || j.amount
+           FROM events e JOIN journal j ON j.event_id=e.id
+           WHERE e.kind='WITHDRAWAL' AND j.account LIKE 'equity:withdrawal:%'
+             AND NOT EXISTS (SELECT 1 FROM partner_drawings d WHERE d.event_id=e.id)
+           ORDER BY e.date DESC,e.id""", null
+    ).use { cursor ->
+        buildList { while(cursor.moveToNext()) add(cursor.getString(0)) }
+    }
+
     /** Register only a posted journal drawing, never create cash movements here. */
     fun linkPostedDrawing(
         eventId: String,
