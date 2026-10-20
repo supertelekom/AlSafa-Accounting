@@ -245,6 +245,22 @@ class MainActivity:Activity() {
                     }
                 }
             }
+            button("مطابقة مراجع الفواتير وحركات الصناديق",body) {
+                val hash=item.getValue("hash")
+                work {
+                    val report=store.db.rawQuery(
+                        "SELECT payload FROM legacy_imports WHERE hash=?",arrayOf(hash)
+                    ).use { cursor ->
+                        require(cursor.moveToFirst()){"النسخة غير موجودة"}
+                        LegacyReconciliation.inspect(cursor.getString(0))
+                    }
+                    runOnUiThread {
+                        if(!isFinishing&&!isDestroyed) AlertDialog.Builder(this)
+                            .setTitle("مطابقة المراجع القديمة — قراءة فقط")
+                            .setMessage(report).setPositiveButton("إغلاق",null).show()
+                    }
+                }
+            }
             button("استعادة المخزون والصيانة والموردين",body) {
                 val hash=item.getValue("hash")
                 work {
