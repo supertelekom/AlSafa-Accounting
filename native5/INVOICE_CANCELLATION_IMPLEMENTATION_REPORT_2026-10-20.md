@@ -58,3 +58,8 @@ No live shop data or Firebase records were modified by these source commits.
 - Cloud IDs for review operations are prefixed `review-` to avoid accidental collision with accounting operation IDs in the same Firestore collection.
 - Tablet invoice preview now shows an immutable review decision and existing posted cancellation audit record, when present.
 - The implementation still lacks a verified phone/cloud replay and paid-invoice credit-note/refund posting, so **the complete cancellation feature is not yet finished**. No production activation is justified.
+
+## Paid-invoice schema groundwork — not activated
+- Native5 SQLite schema advanced to v10 with `online_credit_notes` (customer refund liability) and `online_refunds` (separate actual refund event). Both preserve immutable audit identity; the credit-note row only permits controlled changes to the cumulative refunded amount.
+- **Important:** no credit-note posting service, refund posting service, stock return reconciliation, UI activation or cloud-to-phone replay has been successfully committed in this batch. Schema alone must never be represented as a working cancellation or refund feature.
+- Android migrations and tests are deferred as requested. This branch is not production-ready.
