@@ -6,6 +6,9 @@ import android.database.sqlite.SQLiteDatabase;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import org.json.JSONArray;
+import org.json.JSONObject;
+import org.json.JSONException;
 
 /**
  * Narrow, safe cancellation: ONLY never-collected online dispatches whose exact
@@ -96,9 +99,27 @@ public final class UncollectedOnlineCancellationService {
             ContentValues outbox=new ContentValues();
             outbox.put("operation_id",eventId);
             outbox.put("operation_kind","ONLINE_DISPATCH_CANCELLATION");
-            outbox.put("payload","{\"invoiceId\":\""+invoiceId+"\",\"dispatchEventId\":\""+dispatchId+
-                "\",\"requestId\":\""+requestId+"\",\"actorId\":\""+actorId+
-                "\",\"costMinor\":"+cost+",\"currency\":\""+currency+"\",\"physicalReturnConfirmed\":true}");
+            JSONObject payload=new JSONObject();
+            JSONArray movements=new JSONArray();
+            try {
+                payload.put("invoiceId",invoiceId);
+                payload.put("dispatchEventId",dispatchId);
+                payload.put("requestId",requestId);
+                payload.put("actorId",actorId);
+                payload.put("costMinor",cost);
+                payload.put("currency",currency);
+                payload.put("physicalReturnConfirmed",true);
+                for(InventoryDelta delta:returned) {
+                    JSONObject movement=new JSONObject();
+                    movement.put("productId",delta.productId());
+                    movement.put("quantityDelta",delta.quantityChange());
+                    movements.put(movement);
+                }
+                payload.put("inventoryMovements",movements);
+            } catch(JSONException invalid) {
+                throw new IllegalStateException("Cannot encode cancellation payload",invalid);
+            }
+            outbox.put("payload",payload.toString());
             outbox.put("created_at_ms",now);
             db.insertOrThrow("outbox",null,outbox);
             db.setTransactionSuccessful();
