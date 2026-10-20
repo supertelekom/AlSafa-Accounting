@@ -32,7 +32,9 @@ object LegacySnapshotImport {
         val lists=listOf("products" to "watch","maintenanceParts" to "part")
         val suppliers=d.getJSONArray("suppliers")
         return store.transaction {
-            require(store.scalar("SELECT count(*) FROM products")==0L &&
+            require(store.scalar("SELECT count(*) FROM legacy_records")==0L &&
+                store.scalar("SELECT count(*) FROM repairs")==0L &&
+                store.scalar("SELECT count(*) FROM products")==0L &&
                 store.scalar("SELECT count(*) FROM suppliers")==0L &&
                 store.scalar("SELECT count(*) FROM events")==0L &&
                 store.scalar("SELECT count(*) FROM invoices")==0L &&
