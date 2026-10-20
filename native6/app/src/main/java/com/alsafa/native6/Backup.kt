@@ -98,6 +98,9 @@ class Backup(private val context:Context,private val store:Store) {
         val bytes=read(input);val text=String(bytes,Charsets.UTF_8).removePrefix("\uFEFF");val root=JSONObject(text);val data=if(root.optString("format")=="alsafa-accounting-backup")root.getJSONObject("data") else root
         require(data.optJSONObject("settings")!=null&&data.optJSONArray("products")!=null&&data.optJSONArray("sales")!=null){"ليست نسخة الصفا القديمة"}
         val summary=JSONObject();data.keys().forEach{k->(data.opt(k) as? JSONArray)?.let{summary.put(k,it.length())}}
+        summary.put("_source_sha256",sha(bytes))
+        summary.put("_source_bytes",bytes.size)
+        require(bytes.size<=MAX_BYTES){"حجم النسخة القديمة أكبر من الحد المدعوم"}
         val fingerprint=sha(bytes)
         val inserted=store.transaction {
             if(store.scalar("SELECT count(*) FROM legacy_imports WHERE hash=?",fingerprint)>0L) false
