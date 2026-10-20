@@ -22,7 +22,8 @@ object LegacySnapshotImport {
         val products=d.getJSONArray("products")
         val parts=d.getJSONArray("maintenanceParts")
         val suppliers=d.getJSONArray("suppliers")
-        return "مخزون الساعات: ${products.length()}، قطع الصيانة: ${parts.length()}، الموردون: ${suppliers.length()}. " +
+        val repairs=d.getJSONArray("repairs")
+        return "مخزون الساعات: ${products.length()}، قطع الصيانة: ${parts.length()}، الموردون: ${suppliers.length()}، سجل الصيانة: ${repairs.length()}. " +
             "هذه عملية نقل مخزون حالي فقط؛ لن تُستعاد الفواتير أو الديون أو النقد أو أرباح الشركاء بهذه الخطوة."
     }
     fun import(store:Store,payload:String):String {
@@ -61,13 +62,31 @@ object LegacySnapshotImport {
                 require(id.isNotEmpty() && seen.add(id)){"معرف مورد مكرر"}
                 store.insert("suppliers","id" to id,"name" to s.getString("name"),"phone" to s.optString("phone"))
             }
+            val repairs=d.getJSONArray("repairs")
+            for(i in 0 until repairs.length()) {
+                val repair=repairs.getJSONObject(i)
+                val id=repair.getString("id").trim()
+                require(id.isNotEmpty() && seen.add(id)){"معرف صيانة مكرر"}
+                val originalStatus=repair.optString("status")
+                val status=when(originalStatus) {
+                    "تم التسليم" -> "delivered"
+                    "جاهزة","جاهز" -> "ready"
+                    else -> "received"
+                }
+                store.insert("repairs","id" to id,"customer" to repair.optString("customer"),
+                    "phone" to repair.optString("phone"),"watch" to repair.optString("watch"),
+                    "problem" to repair.optString("problem"),"status" to status,
+                    "date" to repair.optString("date"),"invoice_id" to null,
+                    "details" to repair.toString())
+            }
             store.insert("settings","key" to "legacy_snapshot_import","value" to JSONObject()
                 .put("scope","inventory_and_suppliers_only")
                 .put("sourceAppVersion","3.9.x")
                 .put("products",d.getJSONArray("products").length())
                 .put("maintenanceParts",d.getJSONArray("maintenanceParts").length())
-                .put("suppliers",suppliers.length()).toString())
-            "نُقل المخزون الحالي والموردون فقط. الفواتير والأرصدة القديمة ما زالت في الأرشيف ولم تُرحّل."
+                .put("suppliers",suppliers.length())
+                .put("repairs",repairs.length()).toString())
+            "نُقل المخزون الحالي والموردون وسجل الصيانة. الفواتير والأرصدة القديمة ما زالت في الأرشيف ولم تُرحّل."
         }
     }
 }
