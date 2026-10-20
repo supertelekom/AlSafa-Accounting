@@ -4,15 +4,20 @@ import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 
-class StoreDb(context: Context, name: String = "alsafa_native6.db") : SQLiteOpenHelper(context,name,null,1) {
+class StoreDb(context: Context, name: String = "alsafa_native6.db") : SQLiteOpenHelper(context,name,null,2) {
     override fun onConfigure(db: SQLiteDatabase) { db.setForeignKeyConstraintsEnabled(true); db.execSQL("PRAGMA synchronous=FULL") }
     override fun onCreate(db: SQLiteDatabase) {
         schema.forEach(db::execSQL)
+        com.alsafa.native6.accounting.PartnerSchema.statements.forEach(db::execSQL)
         listOf("events","journal","stock_moves","invoice_lines","receipts","returns","refunds","closings").forEach { table ->
             listOf("UPDATE","DELETE").forEach { action -> db.execSQL("CREATE TRIGGER ${table}_${action.lowercase()} BEFORE $action ON $table BEGIN SELECT RAISE(ABORT,'Immutable accounting record'); END") }
         }
     }
-    override fun onUpgrade(db: SQLiteDatabase,old: Int,new: Int) { error("Unsupported migration $old → $new; database preserved") }
+    override fun onUpgrade(db: SQLiteDatabase,old: Int,new: Int) {
+        if (old == 1 && new == 2) {
+            com.alsafa.native6.accounting.PartnerSchema.statements.forEach(db::execSQL)
+        } else error("Unsupported migration $old → $new; database preserved")
+    }
     companion object {
         val schema = listOf(
             "CREATE TABLE events(id TEXT PRIMARY KEY NOT NULL,kind TEXT NOT NULL,date TEXT NOT NULL,created INTEGER NOT NULL,memo TEXT NOT NULL)",
