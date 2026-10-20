@@ -214,6 +214,33 @@ object LegacyReconciliation {
             if(duplicate>0) lines += "معرفات مدفوعات مكررة: $duplicate"
             lines += "تحذير: المدفوعات بعملة مختلفة عن الفاتورة تحتاج سعر صرف تاريخيًا مثبتًا قبل خصمها من الذمم."
         }
+        // Source invoices may already include later receipts in their paid field.
+        // Compare but never subtract the payment table from that field again.
+        val saleRows=data.optJSONArray("sales")
+        val paymentRows=data.optJSONArray("payments")
+        if(saleRows!=null && paymentRows!=null) {
+            val invoices=HashMap<String,Pair<String,BigDecimal>>()
+            for(i in 0 until saleRows.length()) {
+                val row=saleRows.optJSONObject(i) ?: continue
+                val id=row.optString("id")
+                val paid=row.optString("paid").toBigDecimalOrNull() ?: continue
+                if(id.isNotBlank()) invoices[id]=row.optString("currency") to paid
+            }
+            var sameCurrency=0
+            var otherCurrency=0
+            var missingInvoice=0
+            for(i in 0 until paymentRows.length()) {
+                val row=paymentRows.optJSONObject(i) ?: continue
+                if(row.optString("referenceType")!="sale") continue
+                val invoice=invoices[row.optString("referenceId")]
+                if(invoice==null) {missingInvoice++;continue}
+                val receiptCurrency=row.optString("paymentCurrency")
+                    .ifBlank { row.optString("currency") }
+                if(receiptCurrency==invoice.first) sameCurrency++ else otherCurrency++
+            }
+            lines += "مطابقة مدفوعات المبيع: نفس عملة الفاتورة $sameCurrency، عملة مختلفة $otherCurrency، فاتورة غير معروفة $missingInvoice"
+            lines += "المدفوع المحفوظ داخل الفاتورة قد يتضمن الدفعات اللاحقة؛ لا يُخصم سجل المدفوعات مرة ثانية."
+        }
         lines += "مهم: حركات الصناديق قد تعكس المبيعات والصيانة والسحوبات نفسها. لا تُسجل ثانيةً كدخل أو مصروف."
         return lines.joinToString("\n")
     }
