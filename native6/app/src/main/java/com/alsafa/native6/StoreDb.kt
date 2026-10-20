@@ -31,7 +31,7 @@ class StoreDb(context: Context, name: String = "alsafa_native6.db") : SQLiteOpen
         }
     }
     companion object {
-        val immutableTriggers = listOf("events","journal","stock_moves","invoice_lines","receipts","returns","refunds","closings").flatMap { table -> listOf("UPDATE","DELETE").map { action -> "CREATE TRIGGER IF NOT EXISTS "+table+"_"+action.lowercase()+" BEFORE "+action+" ON "+table+" BEGIN SELECT RAISE(ABORT,\u0027Immutable accounting record\u0027); END" } }
+        val immutableTriggers = listOf("events","journal","stock_moves","invoice_lines","receipts","returns","refunds","closings").flatMap { table -> listOf("UPDATE","DELETE").map { action -> "CREATE TRIGGER IF NOT EXISTS "+table+"_"+action.lowercase()+" BEFORE "+action+" ON "+table+" BEGIN SELECT RAISE(ABORT,'Immutable accounting record'); END" } }
         val legacyRecordsNoUpdate = "CREATE TRIGGER legacy_records_no_update BEFORE UPDATE ON legacy_records BEGIN SELECT RAISE(ABORT,'Immutable legacy archive'); END"
         val legacyRecordsNoDelete = "CREATE TRIGGER legacy_records_no_delete BEFORE DELETE ON legacy_records BEGIN SELECT RAISE(ABORT,'Immutable legacy archive'); END"
         val legacyRecordsTable = "CREATE TABLE legacy_records(category TEXT NOT NULL,legacy_id TEXT NOT NULL,payload TEXT NOT NULL,PRIMARY KEY(category,legacy_id))"
