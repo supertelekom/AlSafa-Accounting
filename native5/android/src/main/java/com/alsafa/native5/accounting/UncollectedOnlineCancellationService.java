@@ -52,11 +52,6 @@ public final class UncollectedOnlineCancellationService {
                 new String[]{invoiceId})) {
                 if(c.moveToFirst()) throw new IllegalStateException("Collection history exists");
             }
-            try(Cursor previous=db.rawQuery(
-                "SELECT 1 FROM online_cancellations WHERE invoice_id=? LIMIT 1",
-                new String[]{invoiceId})) {
-                if(previous.moveToFirst()) throw new IllegalStateException("Invoice already cancelled");
-            }
             List<InventoryDelta> returned=new ArrayList<>();
             try(Cursor c=db.rawQuery(
                 "SELECT product_id,quantity_delta FROM inventory_movements WHERE event_id=? ORDER BY line_no",
