@@ -124,6 +124,7 @@ object LegacySnapshotImport {
                 listOf("settings","rates","sync").count { d.optJSONObject(it)!=null } +
                 (if(deviceSettings!=null) 1 else 0)
             require(store.scalar("SELECT count(*) FROM suppliers")==suppliers.length().toLong()) { "عدد الموردين المنقولين غير مطابق" }
+            require(store.scalar("SELECT count(*) FROM events WHERE kind<>?", "OPENING_STOCK")==0L) { "الاستعادة أنشأت حدثاً محاسبياً غير رصيد المخزون الافتتاحي" }
             require(store.scalar("SELECT count(*) FROM invoices")==0L) { "استعادة المخزون لا يجوز أن تنشئ فواتير" }
             require(store.scalar("SELECT count(*) FROM receipts")==0L) { "استعادة الأرشيف لا يجوز أن تنشئ مقبوضات" }
             val actualArchive=store.scalar("SELECT count(*) FROM legacy_records")
