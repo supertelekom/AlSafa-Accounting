@@ -9,12 +9,12 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import static org.junit.Assert.*;
 
-/** Migration regression: a v6 invoice and review must survive v7 upgrade. */
+/** Migration regression: a v6 invoice and review must survive upgrades through v9. */
 @RunWith(AndroidJUnit4.class)
 public final class Native5CancellationDecisionMigrationTest {
     @Test public void upgradeKeepsInvoiceAndReviewAndAddsImmutableDecisions() {
         Context ctx=InstrumentationRegistry.getInstrumentation().getTargetContext();
-        String name="native5-v6-v7-review.db";
+        String name="native5-v6-v9-review.db";
         ctx.deleteDatabase(name);
         try {
             try(Native5DatabaseHelper helper=new Native5DatabaseHelper(ctx,name)) {
@@ -39,7 +39,10 @@ public final class Native5CancellationDecisionMigrationTest {
                     db.execSQL("UPDATE invoice_cancellation_decisions SET reason='تغيير' WHERE request_id='prior-review'");
                     fail("Immutable decision was changed");
                 } catch(android.database.SQLException expected) { }
-                assertEquals(7,db.getVersion());
+                assertEquals(9,db.getVersion());
+                db.execSQL("INSERT INTO review_sync_outbox(operation_id,kind,payload,created_at_ms) VALUES('migrated-review','CANCELLATION_REVIEW_REQUEST','{}',4)");
+                assertEquals(1,android.database.DatabaseUtils.longForQuery(db,
+                    "SELECT COUNT(*) FROM review_sync_outbox WHERE operation_id='migrated-review'",null));
             }
         } finally { ctx.deleteDatabase(name); }
     }
