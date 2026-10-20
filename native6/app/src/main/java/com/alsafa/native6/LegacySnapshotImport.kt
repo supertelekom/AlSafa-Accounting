@@ -24,7 +24,7 @@ object LegacySnapshotImport {
         val suppliers=d.getJSONArray("suppliers")
         val repairs=d.getJSONArray("repairs")
         return "مخزون الساعات: ${products.length()}، قطع الصيانة: ${parts.length()}، الموردون: ${suppliers.length()}، سجل الصيانة: ${repairs.length()}. " +
-            "هذه عملية نقل مخزون حالي فقط؛ لن تُستعاد الفواتير أو الديون أو النقد أو أرباح الشركاء بهذه الخطوة."
+            "هذه عملية نقل مخزون وسجل صيانة فقط؛ لن تُستعاد الفواتير أو الديون أو النقد أو أرباح الشركاء بهذه الخطوة."
     }
     fun import(store:Store,payload:String):String {
         val d=data(payload)
@@ -70,7 +70,7 @@ object LegacySnapshotImport {
                 val originalStatus=repair.optString("status")
                 val status=when(originalStatus) {
                     "تم التسليم" -> "delivered"
-                    "جاهزة","جاهز" -> "ready"
+                    "جاهزة","جاهز","جاهز للاستلام","بانتظار التسليم" -> "ready"
                     else -> "received"
                 }
                 store.insert("repairs","id" to id,"customer" to repair.optString("customer"),
@@ -80,7 +80,7 @@ object LegacySnapshotImport {
                     "details" to repair.toString())
             }
             store.insert("settings","key" to "legacy_snapshot_import","value" to JSONObject()
-                .put("scope","inventory_and_suppliers_only")
+                .put("scope","inventory_suppliers_repairs_only")
                 .put("sourceAppVersion","3.9.x")
                 .put("products",d.getJSONArray("products").length())
                 .put("maintenanceParts",d.getJSONArray("maintenanceParts").length())
