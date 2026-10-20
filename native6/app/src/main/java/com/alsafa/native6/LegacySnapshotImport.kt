@@ -73,6 +73,7 @@ object LegacySnapshotImport {
                 val originalStatus=repair.optString("status")
                 val status=when(originalStatus) {
                     "تم التسليم" -> "delivered"
+                    "قيد الصيانة" -> "in_progress"
                     "جاهزة","جاهز","جاهز للاستلام","بانتظار التسليم" -> "ready"
                     else -> "received"
                 }
