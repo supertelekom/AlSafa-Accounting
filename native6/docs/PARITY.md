@@ -217,3 +217,10 @@ Inspected the user's original **AlSafa Backup v2**, exported 2026-10-18 (approxi
 - Historical invoice numbers are displayed but are not used as unique keys: original archive row identity remains distinct even for repeated invoice numbers.
 - Verified against the private October 18 source backup structure: 86 sales, 6 purchases, 243 repairs, 28 payments, 566 cash movements, and 49 partner withdrawals. The source backup was **not** committed to GitHub.
 - APK build and UI tests remain unverified; this screen is an implementation, not proof of release readiness.
+
+## Archive usability and CI build reliability
+
+- Added Arabic archive labels, accurate page counts and bounded pagination. Read-only browsing now includes daily closings, inventory movements, product cost history, audit logs, loyalty and discount data in addition to invoices and payments.
+- Archive search uses literal SQLite `instr` matching, avoiding unintended `%`/`_` wildcard behavior.
+- CI now installs Gradle 8.9 with `gradle/actions/setup-gradle`, runs unit tests and debug APK assembly, and uploads test reports even on failed builds. APK success is **not** yet confirmed.
+- Added a regression test asserting that archived financial records cannot be modified or deleted directly in SQLite.
