@@ -48,7 +48,9 @@ class Store(val helper:StoreDb) {
     private fun nextNumber():Long {
         val existing=scalar("SELECT coalesce(max(number),0) FROM invoices")
         val raw=rows("SELECT payload FROM legacy_records WHERE category=? AND legacy_id=?","configuration","settings").firstOrNull()?.get("payload")
-        val previous=if(raw==null) 0L else JSONObject(raw).optLong("invoiceSequenceHighWater",0L).coerceAtLeast(0L)
+        val previous=if(raw==null) 0L else try {
+            JSONObject(raw).optLong("invoiceSequenceHighWater",0L).coerceAtLeast(0L)
+        } catch (_:org.json.JSONException) { 0L }
         return add(maxOf(existing,previous),1L)
     }
     fun sale(items:List<SaleItem>,party:String,phone:String,currency:Currency,paid:Long,vault:String,discount:Long=0,date:String=today(),command:String=id()):String=transaction {
