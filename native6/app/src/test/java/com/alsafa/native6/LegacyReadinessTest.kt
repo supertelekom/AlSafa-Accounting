@@ -12,6 +12,12 @@ class LegacyReadinessTest {
         assertTrue(report.contains("قراءة فقط"))
     }
 
+    @Test fun reportsMalformedSaleTotals() {
+        val payload="""{"settings":{},"products":[],"sales":[{"id":"sale-1","total":"not-a-number"}],"repairs":[],"suppliers":[]}"""
+        val report=LegacyReadiness.inspect(payload)
+        assertTrue(report.contains("إجمالي مبيعات غير رقمي: 1"))
+    }
+
     @Test fun handlesAbsentOptionalSections() {
         val payload="""{"settings":{},"products":[],"sales":[]}"""
         val report=LegacyReadiness.inspect(payload)
