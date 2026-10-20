@@ -79,11 +79,52 @@ class MainActivity:Activity() {
         text("نسخة تطوير — حفظ محلي على التابلت",root,13f)
         if(page!="home")button("‹ الرئيسية",root){go("home")}
         val scroll=ScrollView(this);body=column();scroll.addView(body);root.addView(scroll,LinearLayout.LayoutParams(-1,0,1f))
-        when(page){"home"->home();"simple"->simple();"advanced"->advanced();"products"->products();"sale"->sale();"invoices"->invoices();"vaults"->vaults();"suppliers"->suppliers();"repairs"->repairs();"reports"->reports();"partners"->partners();"backup"->backup();"legacy-audit"->legacyAudit();"audit"->audit()}
+        when(page){"home"->home();"simple"->simple();"advanced"->advanced();"products"->products();"sale"->sale();"invoices"->invoices();"vaults"->vaults();"suppliers"->suppliers();"repairs"->repairs();"reports"->reports();"partners"->partners();"backup"->backup();"legacy-audit"->legacyAudit();"legacy-history"->legacyHistory();"audit"->audit()}
+    }
+    private fun legacyHistory() {
+        text("أرشيف العمليات القديمة — قراءة فقط",size=25f)
+        text("هذه السجلات لم تُرحّل كفواتير جديدة، ولا تدخل في رصيد الصندوق أو الأرباح.",size=15f)
+        val categories=listOf("sales","repairs","purchases","payments","cashTransactions",
+            "supplierLedger","partnerWithdrawals","expenses","returns")
+        val choice=select("نوع السجل",categories,body)
+        val search=field("بحث في بيانات السجل القديم",body)
+        val results=column()
+        body.addView(results)
+        fun refresh() {
+            results.removeAllViews()
+            val category=categories[choice.selectedItemPosition.coerceIn(categories.indices)]
+            val term=search.text.toString().trim()
+            val entries=if(term.isBlank()) store.rows(
+                "SELECT legacy_id,payload FROM legacy_records WHERE category=? ORDER BY rowid DESC LIMIT 30",
+                category)
+            else store.rows(
+                "SELECT legacy_id,payload FROM legacy_records WHERE category=? AND payload LIKE ? ORDER BY rowid DESC LIMIT 30",
+                category,"%"+term.replace("%","\\%").replace("_","\\_")+"%")
+            text("آخر ${entries.size} سجل مطابق (الحد 30)",results,14f)
+            entries.forEach { record ->
+                val raw=record["payload"].orEmpty()
+                val obj=try { org.json.JSONObject(raw) } catch (_:Exception) { org.json.JSONObject() }
+                val name=obj.optString("customer").ifBlank {
+                    obj.optString("supplierName").ifBlank { obj.optString("partnerName") }
+                }
+                val number=obj.optString("invoiceNo")
+                val date=obj.optString("date")
+                val amount=obj.optString("total").ifBlank { obj.optString("amount") }
+                val summary=listOf(number,date,name,amount).filter { it.isNotBlank() }
+                    .joinToString(" · ").ifBlank { record["legacy_id"].orEmpty() }
+                button(summary.take(110),results) {
+                    AlertDialog.Builder(this).setTitle("السجل الأصلي · $category")
+                        .setMessage(obj.toString(2).take(15000))
+                        .setPositiveButton("إغلاق",null).show()
+                }
+            }
+        }
+        button("بحث / تحديث"){ refresh() }
+        refresh()
     }
     private fun home(){text("ALSAFA WATCHES",size=16f);text("كيف تريد أن تبدأ؟",size=28f);button("⚡ الوضع المبسط · بيع وصيانة وتسليم سريع"){go("simple")};button("◆ الوضع الكامل · الإدارة والمخزون والحسابات"){go("advanced")}}
     private fun simple(){text("العمل السريع",size=26f);button("مبيع"){go("sale")};button("استلام وتسليم صيانة"){go("repairs")};button("الفواتير وقبض الديون"){go("invoices")};button("الخزنات والإقفال اليومي"){go("vaults")}}
-    private fun advanced(){text("الوضع الكامل",size=26f);listOf("مبيع" to "sale","المنتجات وقطع الصيانة" to "products","الفواتير والمرتجعات" to "invoices","استلام وتسليم صيانة" to "repairs","الخزنات والمصاريف والإقفال" to "vaults","الموردون والمشتريات" to "suppliers","تقرير شهر واحد" to "reports","الشركاء ونسب الأرباح" to "partners","سجل العمليات" to "audit","النسخ الاحتياطي والاستعادة" to "backup").forEach{(label,route)->button(label){go(route)}}}
+    private fun advanced(){text("الوضع الكامل",size=26f);listOf("مبيع" to "sale","المنتجات وقطع الصيانة" to "products","الفواتير والمرتجعات" to "invoices","استلام وتسليم صيانة" to "repairs","الخزنات والمصاريف والإقفال" to "vaults","الموردون والمشتريات" to "suppliers","تقرير شهر واحد" to "reports","الشركاء ونسب الأرباح" to "partners","سجل العمليات" to "audit","النسخ الاحتياطي والاستعادة" to "backup","أرشيف الفواتير القديمة" to "legacy-history").forEach{(label,route)->button(label){go(route)}}}
     private fun products(){text("المنتجات وقطع الصيانة",size=25f);button("＋ إضافة منتج / قطعة"){productForm()};val query=field("بحث بالاسم أو الباركود أو REF",body);val list=column();body.addView(list)
         fun show(){list.removeAllViews();store.products(query.text.toString()).forEach{p->button("${p.name}  ·  ${money(p.price,p.currency)}\nالمخزون ${p.stock}  ·  ${p.barcode}",list){productForm(p)}}};button("بحث"){show()};show()}
     private fun productForm(p:Product?=null){form(if(p==null)"إضافة منتج" else "تعديل المنتج"){box->
