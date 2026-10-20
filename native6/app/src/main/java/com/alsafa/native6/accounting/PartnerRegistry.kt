@@ -9,6 +9,7 @@ import java.util.UUID
 /** Explicit, transactional configuration. Never rewrites historical partner allocations. */
 class PartnerRegistry(private val db: SQLiteDatabase) {
     private fun <T> write(block: () -> T): T {
+        if (db.inTransaction()) return block()
         db.beginTransaction()
         try {
             val value = block()
