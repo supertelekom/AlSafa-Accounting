@@ -99,7 +99,7 @@ class MainActivity:Activity() {
                 category)
             else store.rows(
                 "SELECT legacy_id,payload FROM legacy_records WHERE category=? AND payload LIKE ? ORDER BY rowid DESC LIMIT 30",
-                category,"%"+term.replace("%","\\%").replace("_","\\_")+"%")
+                category,"%"+term+"%")
             text("آخر ${entries.size} سجل مطابق (الحد 30)",results,14f)
             entries.forEach { record ->
                 val raw=record["payload"].orEmpty()
