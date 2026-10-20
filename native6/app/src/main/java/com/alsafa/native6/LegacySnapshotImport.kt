@@ -72,9 +72,9 @@ object LegacySnapshotImport {
                 require(id.isNotEmpty() && seen.add(id)){"معرف صيانة مكرر"}
                 val originalStatus=repair.optString("status")
                 val status=when(originalStatus) {
-                    "تم التسليم" -> "delivered"
-                    "قيد الصيانة" -> "in_progress"
-                    "جاهزة","جاهز","جاهز للاستلام","بانتظار التسليم" -> "ready"
+                    "تم التسليم","delivered" -> "delivered"
+                    "قيد الصيانة","in_progress" -> "in_progress"
+                    "جاهزة","جاهز","جاهز للاستلام","بانتظار التسليم","ready" -> "ready"
                     "مستلمة","تم الاستلام","قيد الانتظار","received" -> "received"
                     else -> if(originalStatus.isBlank()) "received" else "legacy_unknown"
                 }
