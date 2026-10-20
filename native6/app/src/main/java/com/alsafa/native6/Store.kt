@@ -45,7 +45,12 @@ class Store(val helper:StoreDb) {
     fun credit(id:String)=scalar("SELECT coalesce(sum(credit),0) FROM returns WHERE invoice_id=?",id)
     fun due(id:String):Long {val inv=invoice(id);return maxOf(0,inv.total-credit(id)-paid(id))}
     fun refundable(id:String)=maxOf(0,paid(id)-(invoice(id).total-credit(id))-scalar("SELECT coalesce(sum(amount),0) FROM refunds WHERE invoice_id=?",id))
-    private fun nextNumber()=add(scalar("SELECT coalesce(max(number),0) FROM invoices"),1)
+    private fun nextNumber():Long {
+        val existing=scalar("SELECT coalesce(max(number),0) FROM invoices")
+        val raw=rows("SELECT payload FROM legacy_records WHERE category=? AND legacy_id=?","configuration","settings").firstOrNull()?.get("payload")
+        val previous=if(raw==null) 0L else JSONObject(raw).optLong("invoiceSequenceHighWater",0L).coerceAtLeast(0L)
+        return add(maxOf(existing,previous),1L)
+    }
     fun sale(items:List<SaleItem>,party:String,phone:String,currency:Currency,paid:Long,vault:String,discount:Long=0,date:String=today(),command:String=id()):String=transaction {
         require(items.isNotEmpty() && items.map {it.productId}.distinct().size==items.size){"الصنف مكرر"};vault(vault)
         val products=items.map { product(it.productId) };require(products.all {it.currency==currency}){"اختلاف عملة المنتج: يلزم تحويل مسجل قبل هذه العملية"}
