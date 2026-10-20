@@ -276,7 +276,7 @@ object LegacyReconciliation {
                 val pair="$source → $received"
                 convertedPairs[pair]=(convertedPairs[pair] ?: 0)+1
                 if(row.optString("paymentAmount").toBigDecimalOrNull()==null ||
-                    row.optJSONObject("rateSnapshot")==null) invalidFx++
+                    !row.has("rateSnapshot") || row.isNull("rateSnapshot")) invalidFx++
             }
             lines += "دفعات بعملة مختلفة عن الفاتورة: $converted"
             convertedPairs.forEach { (pair,count) -> lines += "$pair: $count" }
