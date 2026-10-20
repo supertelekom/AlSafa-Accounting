@@ -10,18 +10,18 @@ import java.security.MessageDigest
 /** Logical snapshot includes every local table, metadata and embedded media in JSON details. */
 class Backup(private val context:Context,private val store:Store) {
     companion object {
-        val tables=listOf("events","products","suppliers","invoices","journal","stock_moves","invoice_lines","receipts","returns","refunds","closings","repairs","settings","legacy_imports")
+        val tables=listOf("events","products","suppliers","invoices","journal","stock_moves","invoice_lines","receipts","returns","refunds","closings","repairs","settings","legacy_imports","partner_members","partner_share_periods","partner_share_lines","partner_drawings")
         const val MAX_BYTES=128*1024*1024
         fun sha(bytes:ByteArray)=MessageDigest.getInstance("SHA-256").digest(bytes).joinToString(""){"%02x".format(it)}
         fun read(input:InputStream):ByteArray {val out=java.io.ByteArrayOutputStream();val buffer=ByteArray(8192);while(true){val n=input.read(buffer);if(n<0)break;require(out.size()+n<=MAX_BYTES){"حجم الملف أكبر من الحد المدعوم"};out.write(buffer,0,n)};return out.toByteArray()}
     }
     fun export(output:OutputStream) {
         val data=store.transaction {val obj=JSONObject();tables.forEach { table ->val list=JSONArray();store.db.rawQuery("SELECT * FROM $table",null).use{c->while(c.moveToNext()){val row=JSONObject();c.columnNames.forEachIndexed{i,n->row.put(n,when(c.getType(i)){android.database.Cursor.FIELD_TYPE_NULL->JSONObject.NULL;android.database.Cursor.FIELD_TYPE_INTEGER->c.getLong(i);else->c.getString(i)})};list.put(row)}};obj.put(table,list)};obj.toString()}
-        val result=JSONObject().put("format","alsafa-native6-backup").put("schema",1).put("sha256",sha(data.toByteArray(Charsets.UTF_8))).put("data",data).toString().toByteArray(Charsets.UTF_8)
+        val result=JSONObject().put("format","alsafa-native6-backup").put("schema",2).put("sha256",sha(data.toByteArray(Charsets.UTF_8))).put("data",data).toString().toByteArray(Charsets.UTF_8)
         output.write(result);output.flush()
     }
     fun restore(input:InputStream) {
-        val root=JSONObject(String(read(input),Charsets.UTF_8));require(root.getString("format")=="alsafa-native6-backup"&&root.getInt("schema")==1){"نوع النسخة غير مدعوم"}
+        val root=JSONObject(String(read(input),Charsets.UTF_8));require(root.getString("format")=="alsafa-native6-backup"&&root.getInt("schema")==2){"نوع النسخة غير مدعوم"}
         val text=root.getString("data");require(sha(text.toByteArray(Charsets.UTF_8))==root.getString("sha256")){"فشل التحقق من سلامة النسخة"};val data=JSONObject(text)
         require(data.keys().asSequence().toSet()==tables.toSet()){"جداول النسخة غير مكتملة"}
         // Validate in a disposable database, then restore atomically only into an empty database.
