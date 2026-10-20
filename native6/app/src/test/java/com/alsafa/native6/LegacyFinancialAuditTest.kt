@@ -48,4 +48,13 @@ class LegacyFinancialAuditTest {
         assertTrue(report.contains("2026-10 | father | TRY: 50"))
     }
 
+    @Test fun flagsCrossCategoryInvoiceCollision() {
+        val data=JSONObject().put("sales",JSONArray().put(JSONObject()
+            .put("invoiceNo","42"))).put("repairs",JSONArray().put(JSONObject()
+            .put("invoiceNo","42")))
+        val report=LegacyFinancialAudit.inspect(JSONObject()
+            .put("format","alsafa-accounting-backup").put("data",data).toString())
+        assertTrue(report.contains("أرقام فواتير مشتركة بين المبيع والشراء والصيانة: 1"))
+    }
+
 }
