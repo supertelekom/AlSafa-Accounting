@@ -5,6 +5,9 @@ import android.os.Bundle;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import com.alsafa.native5.accounting.Native5DatabaseHelper;
+import com.alsafa.native5.accounting.InvoiceCancellationRequestService;
+import com.alsafa.native5.accounting.InvoiceCancellationDecisionService;
+import java.util.UUID;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -12,8 +15,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 /**
- * Dedicated cancellation section. Preview-only until atomic reversal posting
- * and an authoritative invoice lookup are implemented and tested.
+ * Dedicated cancellation review section. Financial reversal remains separately gated.
  */
 public final class InvoiceCancellationActivity extends Activity {
     @Override public void onCreate(Bundle state) {
@@ -27,7 +29,7 @@ public final class InvoiceCancellationActivity extends Activity {
         heading.setTextSize(24);
         root.addView(heading);
         TextView notice=new TextView(this);
-        notice.setText("بحث محلي برقم الفاتورة المسجل أو معرّفها الداخلي. الفواتير التي لم تُربط أرقامها بعد تُبحث بمعرّفها. المعاينة للقراءة فقط.");
+        notice.setText("بحث محلي برقم الفاتورة المسجل أو معرّفها الداخلي. الفواتير التي لم تُربط أرقامها بعد تُبحث بمعرّفها. المعاينة والطلب ورفض الطلب فقط؛ لا يتم الإلغاء المحاسبي من هذه الشاشة.");
         root.addView(notice);
         EditText number=new EditText(this);
         number.setHint("رقم الفاتورة أو معرّفها");
@@ -124,6 +126,63 @@ public final class InvoiceCancellationActivity extends Activity {
             }
         });
         root.addView(review);
+        Button request=new Button(this);
+        request.setText("تسجيل طلب مراجعة إلغاء — لا يلغي الفاتورة");
+        request.setOnClickListener(v -> new android.app.AlertDialog.Builder(this)
+            .setTitle("تأكيد طلب مراجعة الإلغاء")
+            .setMessage("سيُمنع التحصيل مؤقتًا حتى يُرفض الطلب أو يُعالج. لن تُلغى الفاتورة أو يُعاد المخزون بهذه الخطوة. هل تريد تسجيل الطلب؟")
+            .setNegativeButton("تراجع",null)
+            .setPositiveButton("تسجيل طلب مراجعة",(dialog,which) -> {
+                String lookup=normalizeInvoiceId(number.getText().toString());
+                String why=reason.getText().toString().trim();
+                if(lookup.isEmpty() || why.isEmpty()) {
+                    preview.setText("أدخل رقم الفاتورة وسببًا واضحًا قبل تسجيل طلب المراجعة.");
+                    return;
+                }
+                try(Native5DatabaseHelper helper=new Native5DatabaseHelper(this)) {
+                    String id=new InvoiceCancellationRequestService(helper.getWritableDatabase())
+                        .requestReview(UUID.randomUUID().toString(),lookup,why);
+                    preview.setText("سُجل طلب مراجعة الفاتورة: "+id+
+                        "\\nتم تعليق التحصيل إلى حين حسم الطلب. لم تُلغ الفاتورة ولم يُعد المخزون.");
+                } catch(Exception ex) {
+                    preview.setText("تعذر تسجيل طلب المراجعة: "+ex.getClass().getSimpleName());
+                }
+            }).show());
+        root.addView(request);
+        Button reject=new Button(this);
+        reject.setText("رفض طلب المراجعة وإعادة السماح بالتحصيل");
+        reject.setOnClickListener(v -> {
+            String lookup=normalizeInvoiceId(number.getText().toString());
+            String why=reason.getText().toString().trim();
+            if(lookup.isEmpty() || why.isEmpty()) {
+                preview.setText("أدخل معرّف الفاتورة أو رقمها وسبب الرفض.");
+                return;
+            }
+            new android.app.AlertDialog.Builder(this)
+                .setTitle("تأكيد رفض المراجعة")
+                .setMessage("سيُسجل رفض نهائي لهذا الطلب وتُفتح إمكانية تحصيل الفاتورة من جديد. هل تؤكد؟")
+                .setNegativeButton("تراجع",null)
+                .setPositiveButton("تأكيد الرفض",(dialog,which) -> {
+                    try(Native5DatabaseHelper helper=new Native5DatabaseHelper(this)) {
+                        SQLiteDatabase db=helper.getWritableDatabase();
+                        try(Cursor c=db.rawQuery(
+                            "SELECT r.request_id FROM invoice_cancellation_requests r "+
+                            "JOIN online_invoices i ON i.invoice_id=r.invoice_id "+
+                            "LEFT JOIN invoice_number_mapping m ON m.invoice_id=i.invoice_id "+
+                            "WHERE i.invoice_id=? OR m.invoice_number=? ORDER BY r.request_id LIMIT 2",
+                            new String[]{lookup,lookup})) {
+                            if(!c.moveToFirst()) throw new IllegalArgumentException("Review not found");
+                            String requestId=c.getString(0);
+                            if(c.moveToNext()) throw new IllegalStateException("Ambiguous invoice");
+                            new InvoiceCancellationDecisionService(db).reject(requestId,why);
+                            preview.setText("تم رفض طلب المراجعة وإعادة السماح بالتحصيل. لم تتغير القيود المحاسبية.");
+                        }
+                    } catch(Exception ex) {
+                        preview.setText("تعذر رفض المراجعة: "+ex.getClass().getSimpleName());
+                    }
+                }).show();
+        });
+        root.addView(reject);
         number.addTextChangedListener(new android.text.TextWatcher() {
             @Override public void beforeTextChanged(CharSequence text,int start,int count,int after) {}
             @Override public void onTextChanged(CharSequence text,int start,int before,int count) {
