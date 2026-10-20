@@ -21,6 +21,17 @@ public final class OnlineReceiptPostingService {
             throw new IllegalArgumentException("Invalid invoice ID");
         if(db.inTransaction()) throw new IllegalStateException("Nested transaction not supported");
         db.beginTransactionNonExclusive();
+        try(android.database.Cursor pending=db.rawQuery(
+            "SELECT 1 FROM invoice_cancellation_requests WHERE invoice_id=? LIMIT 1",
+            new String[]{invoiceId})) {
+            if(pending.moveToFirst()) {
+                db.endTransaction();
+                throw new IllegalStateException("Invoice has pending cancellation review");
+            }
+        } catch(RuntimeException failure) {
+            if(db.inTransaction()) db.endTransaction();
+            throw failure;
+        }
         try {
             OnlineCollectionPlan plan=new OnlineInvoiceBalanceGuard(db).apply(invoiceId,receipt);
             PostingBatch batch=plan.toPosting(operationId,invoiceId,destination);
