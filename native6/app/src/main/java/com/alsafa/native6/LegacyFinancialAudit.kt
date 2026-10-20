@@ -35,6 +35,20 @@ object LegacyFinancialAudit {
                 totals.entries.joinToString("، "){"${it.key}: ${it.value.toPlainString()}"}
             if(invalid>0)result += "$key — سجلات تتطلب مراجعة: $invalid"
         }
+        // Invoice numbers are display identifiers, not safe primary keys.
+        // The original data may contain duplicate numbers across different records.
+        listOf("sales","repairs").forEach { key ->
+            val a=data.optJSONArray(key) ?: return@forEach
+            val numbers=linkedMapOf<String,Int>()
+            for(i in 0 until a.length()) {
+                val number=a.optJSONObject(i)?.optString("invoiceNo")?.trim().orEmpty()
+                if(number.isNotEmpty()) numbers[number]=(numbers[number] ?: 0)+1
+            }
+            val collisions=numbers.filterValues { it>1 }
+            result += "$key — أرقام فواتير مكررة: ${collisions.size}"
+            if(collisions.isNotEmpty()) result +=
+                "$key — أرقام تحتاج تدقيقًا: " + collisions.keys.take(20).joinToString("، ")
+        }
         result += "تحذير: هذه إجماليات خام؛ قد تتداخل المقبوضات مع المبيعات والحركات النقدية. لا تُستخدم لإثبات الربح أو دين المورد أو رصيد الخزنة."
         result += "لم تُنشأ فواتير أو قيود مالية جديدة."
         return result.joinToString("\n")
