@@ -56,4 +56,14 @@ class LegacyReconciliationTest {
         assertTrue(report.contains("2026-10 | TRY: 500 (1 حركة)"))
     }
 
+    @Test fun unpaidSalesAreReportedByCurrencyWithoutAssumingPaymentAllocation() {
+        val data=JSONObject().put("sales",JSONArray()
+            .put(JSONObject().put("currency","USD").put("total",100).put("paid",30))
+            .put(JSONObject().put("currency","TRY").put("total",200).put("paid",50)))
+        val report=LegacyReconciliation.inspect(JSONObject()
+            .put("format","alsafa-accounting-backup").put("data",data).toString())
+        assertTrue(report.contains("USD: 70"))
+        assertTrue(report.contains("TRY: 150"))
+    }
+
 }
