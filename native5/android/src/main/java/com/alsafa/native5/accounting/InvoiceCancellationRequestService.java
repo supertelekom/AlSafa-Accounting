@@ -4,6 +4,7 @@ import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import java.util.Objects;
+import org.json.JSONObject;
 
 /** Immutable review request only. Does not cancel, refund or reverse an invoice. */
 public final class InvoiceCancellationRequestService {
@@ -41,6 +42,12 @@ public final class InvoiceCancellationRequestService {
             v.put("reason",reason.trim());
             v.put("requested_at_ms",System.currentTimeMillis());
             db.insertOrThrow("invoice_cancellation_requests",null,v);
+            ContentValues sync=new ContentValues();
+            sync.put("operation_id",requestId);
+            sync.put("kind","CANCELLATION_REVIEW_REQUEST");
+            sync.put("payload",ReviewSyncPayload.request(requestId,invoiceId,publicNumber,reason.trim(),v.getAsLong("requested_at_ms")));
+            sync.put("created_at_ms",v.getAsLong("requested_at_ms"));
+            db.insertOrThrow("review_sync_outbox",null,sync);
             db.setTransactionSuccessful();
             return invoiceId;
         } finally { db.endTransaction(); }
