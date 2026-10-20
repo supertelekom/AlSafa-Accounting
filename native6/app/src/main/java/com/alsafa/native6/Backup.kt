@@ -68,6 +68,12 @@ class Backup(private val context:Context,private val store:Store) {
             LEFT JOIN events e ON e.id=j.event_id
             WHERE e.id IS NULL
         """).isEmpty()){"قيد بلا حدث محاسبي"}
+        require(target.rows("""SELECT d.id FROM partner_drawings d
+            JOIN journal j ON j.event_id=d.event_id
+            WHERE j.account LIKE 'equity:withdrawal:%'
+            GROUP BY d.id
+            HAVING count(*)<>1
+        """).isEmpty()){"سحب مرتبط بعدة قيود"}
         val schedules=target.rows("""SELECT p.id,p.effective_date,l.percent
             FROM partner_share_periods p LEFT JOIN partner_share_lines l ON l.period_id=p.id
             ORDER BY p.effective_date,p.id""")
