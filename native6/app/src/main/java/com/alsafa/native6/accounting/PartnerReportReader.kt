@@ -67,6 +67,16 @@ class PartnerReportReader(private val db: SQLiteDatabase) {
         require(currency in setOf("USD", "TRY", "SYP"))
         val from=month.atDay(1).toString()
         val until=month.plusMonths(1).atDay(1).toString()
+        // Detect any unregistered historical drawings before presenting a report.
+        // Such records must not be silently omitted from a partner's monthly totals.
+        val unlinked = db.rawQuery(
+            """SELECT count(*) FROM events e JOIN journal j ON j.event_id=e.id
+               WHERE e.date>=? AND e.date<? AND j.currency=?
+                 AND e.kind='WITHDRAWAL' AND j.account LIKE 'equity:withdrawal:%'
+                 AND NOT EXISTS (SELECT 1 FROM partner_drawings d WHERE d.event_id=e.id)""",
+            arrayOf(from,until,currency)
+        ).use { cursor -> cursor.moveToFirst(); cursor.getLong(0) }
+        require(unlinked==0L) { "Unlinked partner withdrawals in $month ($currency); audit and backfill first" }
         val profitByDay = db.rawQuery(
             """SELECT e.date,
                  coalesce(sum(CASE
