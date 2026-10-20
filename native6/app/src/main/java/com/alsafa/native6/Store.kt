@@ -12,7 +12,7 @@ data class Invoice(val id:String,val number:Long,val kind:String,val party:Strin
 class Store(val helper:StoreDb) {
     val db:SQLiteDatabase get()=helper.writableDatabase
     companion object { fun id()=UUID.randomUUID().toString(); fun today()=LocalDate.now().toString(); val vaults=listOf("drawer","external","sham","bank") }
-    @Synchronized fun <T> transaction(block:()->T):T { db.beginTransaction();try { val result=block(); db.setTransactionSuccessful();return result } finally { db.endTransaction() } }
+    @Synchronized fun <T> transaction(block:()->T):T { if(db.inTransaction()) return block(); db.beginTransaction();try { val result=block(); db.setTransactionSuccessful();return result } finally { db.endTransaction() } }
     fun rows(sql:String,vararg args:String):List<Map<String,String>> = db.rawQuery(sql,args).use { c -> buildList { while(c.moveToNext()) add(c.columnNames.indices.associate { c.getColumnName(it) to (c.getString(it)?:"") }) } }
     fun scalar(sql:String,vararg args:String)=rows(sql,*args).firstOrNull()?.values?.firstOrNull()?.toLongOrNull()?:0L
     fun insert(table:String,vararg fields:Pair<String,Any?>) { val values=ContentValues();fields.forEach { (k,v)->when(v) { null->values.putNull(k);is Long->values.put(k,v);is Int->values.put(k,v);else->values.put(k,v.toString()) } };db.insertOrThrow(table,null,values) }
