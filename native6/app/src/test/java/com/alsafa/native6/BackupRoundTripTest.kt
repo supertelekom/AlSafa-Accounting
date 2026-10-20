@@ -127,10 +127,10 @@ class BackupRoundTripTest {
         Backup(context,source).export(bytes)
         sourceDb.close()
         val root=JSONObject(bytes.toString("UTF-8"))
-        val data=JSONObject(root.getString("data"))
+        val data=JSONObject(Backup.ungzip(root.getString("data")))
         data.getJSONArray("products").getJSONObject(0).put("value",9999)
         val payload=data.toString()
-        root.put("data",payload)
+        root.put("data",Backup.gzip(payload))
         root.put("sha256",Backup.sha(payload.toByteArray(Charsets.UTF_8)))
         val (targetDb,target)=store("backup-invalid-stock-target.db")
         var rejected=false
