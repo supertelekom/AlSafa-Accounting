@@ -109,6 +109,8 @@ class PartnerRegistry(private val db: SQLiteDatabase) {
             arrayOf(eventId, "equity:withdrawal:$partnerId", currency)
         ).use { c -> c.moveToFirst(); c.getLong(0) }
         require(posted == amountMinor) { "Journal drawing does not match amount or partner" }
+        val eventKind = db.rawQuery("SELECT kind FROM events WHERE id=?", arrayOf(eventId)).use { cursor -> cursor.moveToFirst(); cursor.getString(0) }
+        require(eventKind == "WITHDRAWAL") { "Only withdrawal events may be linked" }
         val values = ContentValues().apply {
             put("id", id); put("partner_id", partnerId); put("event_id", eventId)
             put("actual_date", actualDate.toString()); put("currency", currency); put("amount_minor", amountMinor)
