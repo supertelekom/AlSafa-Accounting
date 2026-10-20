@@ -158,6 +158,26 @@ class BackupRoundTripTest {
         targetHelper.close()
     }
 
+    @Test fun compressedBackupRejectsTamperedPayloadBeforeWriting() {
+        val (helper,source)=store("backup-gzip-tamper-source.db")
+        source.addProduct("Watch","",Currency.USD,1200,600,3)
+        val bytes=ByteArrayOutputStream()
+        Backup(context,source).export(bytes)
+        val root=JSONObject(bytes.toString("UTF-8"))
+        val data=JSONObject(Backup.ungzip(root.getString("data")))
+        data.getJSONArray("products").getJSONObject(0).put("stock",900)
+        root.put("data",Backup.gzip(data.toString()))
+        val (targetHelper,target)=store("backup-gzip-tamper-target.db")
+        var rejected=false
+        try {
+            Backup(context,target).restore(ByteArrayInputStream(root.toString().toByteArray()))
+        } catch (_:Exception) { rejected=true }
+        assertTrue(rejected)
+        assertEquals(0L,target.scalar("SELECT count(*) FROM products"))
+        helper.close()
+        targetHelper.close()
+    }
+
     @Test fun corruptedBackupCannotWriteToTarget() {
         val (sourceDb,source)=store("backup-corrupt-source.db")
         val bytes=ByteArrayOutputStream()
