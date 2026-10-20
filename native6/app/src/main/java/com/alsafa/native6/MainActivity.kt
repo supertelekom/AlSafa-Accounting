@@ -131,6 +131,15 @@ class MainActivity:Activity() {
                 }})
             }
         }
+        button("تدقيق السحوبات غير المرتبطة"){
+            try {
+                val pending=com.alsafa.native6.accounting.PartnerRegistry(store.db).unlinkedWithdrawals()
+                AlertDialog.Builder(this)
+                    .setTitle("سحوبات تحتاج مراجعة · ${pending.size}")
+                    .setMessage(if(pending.isEmpty()) "لا توجد سحوبات غير مرتبطة" else pending.take(50).joinToString("\n"))
+                    .setPositiveButton("حسناً",null).show()
+            } catch(e:Exception){error(e)}
+        }
         button("ربط السحوبات السابقة المسجلة"){
             AlertDialog.Builder(this).setTitle("مراجعة السحوبات القديمة")
                 .setMessage("سيُربط فقط السحب الذي يحمل معرف شريك مطابقًا وقيدًا محاسبيًا واضحًا. لن تتغير مبالغ الخزنات أو القيود القديمة.")
