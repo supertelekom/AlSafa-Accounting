@@ -225,19 +225,24 @@ class MainActivity:Activity() {
                     runOnUiThread { AlertDialog.Builder(this).setTitle("تدقيق النسخة القديمة").setMessage(report).setPositiveButton("إغلاق",null).show() }
                 }
             }
-            button("استعادة المخزون والموردين فقط",body) {
+            button("استعادة المخزون والصيانة والموردين",body) {
                 val hash=item.getValue("hash")
-                val payload=store.db.rawQuery("SELECT payload FROM legacy_imports WHERE hash=?",arrayOf(hash)).use { cursor->
-                    require(cursor.moveToFirst()){"النسخة غير موجودة"}
-                    cursor.getString(0)
+                work {
+                    val payload=store.db.rawQuery("SELECT payload FROM legacy_imports WHERE hash=?",arrayOf(hash)).use { cursor->
+                        require(cursor.moveToFirst()){"النسخة غير موجودة"}
+                        cursor.getString(0)
+                    }
+                    val preview=LegacySnapshotImport.preview(payload)
+                    runOnUiThread {
+                        if(!isFinishing&&!isDestroyed) AlertDialog.Builder(this)
+                            .setTitle("استعادة جزئية — لا تشمل الحسابات")
+                            .setMessage(preview+"\\n\\nتتطلب قاعدة محاسبية فارغة، ولا تستبدل أي بيانات قائمة. هل تريد التنفيذ؟")
+                            .setNegativeButton("إلغاء",null)
+                            .setPositiveButton("استعادة البيانات"){_,_->work {
+                                LegacySnapshotImport.import(store,payload)
+                            }}.show()
+                    }
                 }
-                val preview=try { LegacySnapshotImport.preview(payload) } catch(e:Exception) { error(e);return@button }
-                AlertDialog.Builder(this).setTitle("استعادة جزئية — لا تشمل الحسابات")
-                    .setMessage(preview+"\\n\\nتتطلب قاعدة محاسبية فارغة، ولا تستبدل أي بيانات قائمة. هل تريد التنفيذ؟")
-                    .setNegativeButton("إلغاء",null)
-                    .setPositiveButton("استعادة المخزون"){_,_->work {
-                        LegacySnapshotImport.import(store,payload)
-                    }}.show()
             }
             text("السجلات: $summary",size=15f)
             val stamp=item.getValue("created").toLongOrNull()
