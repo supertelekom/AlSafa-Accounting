@@ -40,3 +40,13 @@ No live shop data or Firebase records were modified by these source commits.
 - Android instrumentation test now forces a stock quantity overflow while reversing a physically returned uncollected invoice. It asserts rollback of the cancellation event, journal, audit record and outbox; no partial reversal is allowed.
 - New read-only `OnlineCancellationAudit.summary(invoiceId)` exposes cancellation event ID, local outbox state and counts of journal and inventory movement lines for diagnostic use. **Counts are not proof of accounting correctness** and must not be used as a release gate without deeper reconciliation.
 - All changes remain on the development branch. Instrumentation tests and APK builds remain unexecuted/unverified.
+
+## Review synchronization implementation batch — source only
+- Schema v9 `review_sync_outbox` is append-only for request and decision payloads (only queue delivery status is mutable).
+- Review request service now inserts its versioned JSON upload operation **in the same SQLite transaction** as the immutable review request.
+- Review decision service likewise inserts its upload operation atomically with the immutable reject/approve decision.
+- `ReviewSyncPayload` encodes structured versioned JSON for both review operations.
+- `ReviewSyncUploader` uses the existing immutable Firestore operation writer; retries can re-send identical IDs without overwriting conflicting cloud records.
+- `TabletSyncWorker` uploads review operations as well as accounting outbox entries, with bounded batches and retry while either queue is pending.
+- **Not yet complete:** review operations are upload-only; the phone has no verified read/apply pipeline. UI does not directly schedule the worker because it lacks a verified store session ID; pending operations await normal worker scheduling. Cloud authorization and remote application are not validated.
+- **Deferred per user request:** build, migration/instrumentation and two-device tests will be run at the final testing stage. These changes are not yet approved for production.
