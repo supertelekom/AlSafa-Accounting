@@ -104,6 +104,22 @@ class BackupRoundTripTest {
         helper.close()
     }
 
+    @Test fun purchaseAndSaleMaintainInventoryLedgerValue() {
+        val (helper,source)=store("backup-purchase-sale-test.db")
+        val productId=source.addProduct("Watch","",Currency.USD,2000,1000,2)
+        val supplier=source.addSupplier("Supplier","")
+        source.purchase(supplier,listOf(SaleItem(productId,2,1200)),Currency.USD,0,"drawer")
+        assertEquals(4L,source.product(productId).stock)
+        assertEquals(4400L,source.product(productId).value)
+        source.sale(listOf(SaleItem(productId,1,2000)),"Client","",Currency.USD,0,"drawer")
+        assertEquals(3L,source.product(productId).stock)
+        assertEquals(3300L,source.product(productId).value)
+        val bytes=ByteArrayOutputStream()
+        Backup(context,source).export(bytes)
+        assertTrue(bytes.size()>0)
+        helper.close()
+    }
+
     @Test fun corruptedBackupCannotWriteToTarget() {
         val (sourceDb,source)=store("backup-corrupt-source.db")
         val bytes=ByteArrayOutputStream()
