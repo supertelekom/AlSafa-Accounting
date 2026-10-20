@@ -139,6 +139,28 @@ class Store(val helper:StoreDb) {
         counts.forEach{(c,n)->insert("closings","event_id" to command,"vault" to v,"currency" to c.name,"expected" to balance(v,c),"counted" to n)}
         // Counting never overwrites book balances. Carry is the actual ledger balance.
     }
+    /**
+     * Older balances are displayed separately and never applied to current-month drawings.
+     * Start month is explicit: no assumption about the beginning of store history.
+     */
+    fun partnerBalanceSummary(
+        selectedMonth:String,
+        firstMonth:String,
+        currency:Currency
+    ):List<com.alsafa.native6.accounting.PartnerBalanceSummary> {
+        val selected=java.time.YearMonth.parse(selectedMonth)
+        val first=java.time.YearMonth.parse(firstMonth)
+        require(!first.isAfter(selected)){"بداية السجل بعد شهر التقرير"}
+        require(java.time.temporal.ChronoUnit.MONTHS.between(first,selected)<=240){"الفترة تتجاوز 20 سنة"}
+        val history=mutableListOf<com.alsafa.native6.accounting.PartnerMonthLine>()
+        var cursor=first
+        while(!cursor.isAfter(selected)) {
+            history.addAll(partnerMonthReport(cursor.toString(),currency))
+            cursor=cursor.plusMonths(1)
+        }
+        return com.alsafa.native6.accounting.PartnerBalanceSummaryCalculator.summarize(selected,currency.name,history)
+    }
+
     /** One selected month only; partner withdrawals remain dated to their actual month. */
     fun partnerMonthReport(month:String,currency:Currency):List<com.alsafa.native6.accounting.PartnerMonthLine> {
         val selected=java.time.YearMonth.parse(month)
