@@ -12,9 +12,7 @@ class StoreDb(context: Context, name: String = "alsafa_native6.db") : SQLiteOpen
         db.execSQL(legacyRecordsNoUpdate)
         db.execSQL(legacyRecordsNoDelete)
         com.alsafa.native6.accounting.PartnerSchema.statements.forEach(db::execSQL)
-        listOf("events","journal","stock_moves","invoice_lines","receipts","returns","refunds","closings").forEach { table ->
-            listOf("UPDATE","DELETE").forEach { action -> db.execSQL("CREATE TRIGGER ${table}_${action.lowercase()} BEFORE $action ON $table BEGIN SELECT RAISE(ABORT,'Immutable accounting record'); END") }
-        }
+        immutableTriggers.forEach(db::execSQL)
     }
     override fun onUpgrade(db: SQLiteDatabase,old: Int,new: Int) {
         require(old in 1..3 && new == 4) {
