@@ -64,4 +64,25 @@ class LegacySnapshotImportTest {
             assertEquals(2L,store.scalar("SELECT count(*) FROM products"))
         } finally { helper.close();context.deleteDatabase(name) }
     }
+    @Test fun invalidSecondProductRollsBackEveryInsertedRecord() {
+        val context=RuntimeEnvironment.getApplication<Context>()
+        val name="legacy-atomic-test.db"
+        context.deleteDatabase(name)
+        val helper=StoreDb(context,name)
+        try {
+            val store=Store(helper)
+            val root=JSONObject(payload())
+            val data=root.getJSONObject("data")
+            data.getJSONArray("products").put(JSONObject()
+                .put("id","broken-item").put("name","Bad watch").put("barcode","123")
+                .put("currency","USD").put("salePrice",10).put("cost",5).put("stock",1))
+            var rejected=false
+            try { LegacySnapshotImport.import(store,root.toString()) } catch(_:Exception) { rejected=true }
+            assertTrue(rejected)
+            assertEquals(0L,store.scalar("SELECT count(*) FROM products"))
+            assertEquals(0L,store.scalar("SELECT count(*) FROM journal"))
+            assertEquals(0L,store.scalar("SELECT count(*) FROM events"))
+        } finally { helper.close();context.deleteDatabase(name) }
+    }
+
 }
