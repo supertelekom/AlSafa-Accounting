@@ -98,11 +98,13 @@ class MainActivity:Activity() {
         body.addView(results)
         var offset=0
         var previousCategory=-1
+        var previousTerm=""
         fun refresh() {
             if(previousCategory!=choice.selectedItemPosition) { offset=0;previousCategory=choice.selectedItemPosition }
             results.removeAllViews()
             val category=categories[choice.selectedItemPosition.coerceIn(categories.indices)]
             val term=search.text.toString().trim()
+            if(term!=previousTerm) { offset=0;previousTerm=term }
             val total=if(category=="repairs") {
                 if(term.isBlank()) store.scalar("SELECT count(*) FROM repairs")
                 else store.scalar("SELECT count(*) FROM repairs WHERE instr(details,?)>0",term)
