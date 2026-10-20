@@ -47,7 +47,7 @@ class MainActivity:Activity() {
     private fun error(e:Exception){AlertDialog.Builder(this).setTitle("لم تُحفظ العملية").setMessage(e.message?:"حدث خطأ").setPositiveButton("حسناً",null).show()}
     private fun work(task:()->Unit){if(busy)return;busy=true;io.execute{try{task();runOnUiThread{if(!isFinishing&&!isDestroyed){busy=false;Toast.makeText(this,"اكتملت العملية",Toast.LENGTH_SHORT).show();safeRender()}}}catch(e:Exception){runOnUiThread{if(!isFinishing&&!isDestroyed){busy=false;error(e)}}}}}
     private fun go(value:String){page=value;safeRender()}
-    private fun label(value:String)=mapOf("sale" to "مبيع", "purchase" to "شراء", "repair" to "صيانة", "posted" to "مسجلة", "cancelled" to "ملغاة", "received" to "مستلمة", "ready" to "جاهزة", "delivered" to "تم التسليم")[value]?:value
+    private fun label(value:String)=mapOf("sale" to "مبيع", "purchase" to "شراء", "repair" to "صيانة", "posted" to "مسجلة", "cancelled" to "ملغاة", "received" to "مستلمة", "in_progress" to "قيد الصيانة", "ready" to "جاهزة", "delivered" to "تم التسليم")[value]?:value
     private fun money(n:Long,c:Currency)=Money(n,c).display()
     private fun amount(e:EditText,c:Currency)=Money.parse(e.text.toString(),c).minor
     override fun onDestroy() {
