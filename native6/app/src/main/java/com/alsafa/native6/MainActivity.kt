@@ -58,8 +58,14 @@ class MainActivity:Activity() {
             setContentView(root)
             text("تعذر فتح الشاشة المطلوبة",root,22f)
             text(e.message ?: "حدث خطأ أثناء قراءة البيانات المحلية",root,15f)
-            button("العودة إلى الرئيسية",root) { safeRender() }
-            button("النسخ الاحتياطي",root) { page="backup";safeRender() }
+            button("العودة إلى الرئيسية",root) { page="home";safeRender() }
+            button("تصدير نسخة احتياطية",root) {
+                startActivityForResult(Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
+                    addCategory(Intent.CATEGORY_OPENABLE)
+                    type="application/json"
+                    putExtra(Intent.EXTRA_TITLE,"AlSafa-Native6-recovery-${Store.today()}.json")
+                },101)
+            }
         }
     }
     private fun render(){
