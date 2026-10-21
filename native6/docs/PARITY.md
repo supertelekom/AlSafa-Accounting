@@ -289,3 +289,9 @@ Inspected the user's original **AlSafa Backup v2**, exported 2026-10-18 (approxi
 - Monthly supplier view now exposes prior balance, new liabilities, supplier payments, net movement and month-end balance for one selected month and one currency. Dated transaction rows retain their running balance.
 - Closing balances are computed as of the next month's start, excluding later postings. Tests include September opening debt, October partial payment and a later November payment that must not rewrite October's report.
 - The figures come only from Native 6 posted journal data; imported legacy archives remain read-only and are not yet merged into active payable accounts. Android CI has not been confirmed green.
+
+## Supplier month reconciliation invariant
+
+- Supplier month control totals now separate new liabilities from repayments, and check opening + charges - payments = closing. The tablet refuses to present an inconsistent monthly statement.
+- Regression checks cover three consecutive months and ensure a November settlement cannot change the October closing balance.
+- These invariants apply to posted Native 6 journal transactions, not archived historical v3.9.353 supplier balances. Compilation and automated test success have not been verified.
