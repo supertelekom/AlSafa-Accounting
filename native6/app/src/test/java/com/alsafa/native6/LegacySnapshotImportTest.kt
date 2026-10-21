@@ -441,4 +441,24 @@ class LegacySnapshotImportTest {
         } finally { helper.close();context.deleteDatabase(name) }
     }
 
+    @Test fun supplierRunningBalanceMatchesPostedLiability() {
+        val context=RuntimeEnvironment.getApplication<Context>()
+        val name="supplier-running-balance-test.db"
+        context.deleteDatabase(name)
+        val helper=StoreDb(context,name)
+        try {
+            val store=Store(helper)
+            val supplier=store.addSupplier("Supplier","")
+            store.supplierOpening(supplier,Currency.USD,5000L)
+            store.cash("opening","drawer",Currency.USD,3000L,"Initial")
+            store.paySupplier(supplier,Currency.USD,2000L,"drawer")
+            val entries=store.supplierLedgerWithBalances(supplier,Currency.USD)
+            assertEquals(2,entries.size)
+            assertEquals("5000",entries[0]["remaining"])
+            assertEquals("3000",entries[1]["remaining"])
+            assertEquals(3000L,store.supplierDue(supplier,Currency.USD))
+            assertEquals(1000L,store.balance("drawer",Currency.USD))
+        } finally { helper.close();context.deleteDatabase(name) }
+    }
+
 }
