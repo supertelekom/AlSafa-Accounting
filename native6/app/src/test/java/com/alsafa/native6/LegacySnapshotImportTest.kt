@@ -462,4 +462,23 @@ class LegacySnapshotImportTest {
         } finally { helper.close();context.deleteDatabase(name) }
     }
 
+    @Test fun supplierMonthFilterRetainsOlderDebtInRunningBalance() {
+        val context=RuntimeEnvironment.getApplication<Context>()
+        val name="supplier-month-filter-test.db"
+        context.deleteDatabase(name)
+        val helper=StoreDb(context,name)
+        try {
+            val store=Store(helper)
+            val supplier=store.addSupplier("Supplier","")
+            store.supplierOpening(supplier,Currency.USD,10000L,"2026-09-15")
+            store.cash("opening","drawer",Currency.USD,5000L,"Initial","2026-09-15")
+            store.paySupplier(supplier,Currency.USD,2500L,"drawer","2026-10-20")
+            val october=store.supplierLedgerMonth(supplier,Currency.USD,"2026-10")
+            assertEquals(1,october.size)
+            assertEquals("7500",october.single()["remaining"])
+            assertEquals("SUPPLIER_PAYMENT",october.single()["kind"])
+            assertTrue(october.single().getValue("event_id").isNotBlank())
+        } finally { helper.close();context.deleteDatabase(name) }
+    }
+
 }
