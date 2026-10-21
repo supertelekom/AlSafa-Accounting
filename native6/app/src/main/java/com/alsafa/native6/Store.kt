@@ -42,6 +42,7 @@ class Store(val helper:StoreDb) {
     }
     fun vaultMonthInflows(v:String,c:Currency,month:String):Long = vaultMonthEntries(v,c,month).filter { it.getValue("amount").toLong()>0 }.sumOf { it.getValue("amount").toLong() }
     fun vaultMonthOutflows(v:String,c:Currency,month:String):Long = vaultMonthEntries(v,c,month).filter { it.getValue("amount").toLong()<0 }.sumOf { -it.getValue("amount").toLong() }
+    fun vaultMonthFlowReconciles(v:String,c:Currency,month:String):Boolean = vaultMonthInflows(v,c,month)-vaultMonthOutflows(v,c,month)==vaultMonthMovement(v,c,month)
     fun vaultMonthEntriesReconcile(v:String,c:Currency,month:String):Boolean =
         vaultMonthEntries(v,c,month).fold(0L) { sum,row -> add(sum,row.getValue("amount").toLong()) }==vaultMonthMovement(v,c,month)
     fun vaultMonthReconciles(v:String,c:Currency,month:String):Boolean =
