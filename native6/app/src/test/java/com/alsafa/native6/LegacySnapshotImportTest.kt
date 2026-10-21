@@ -644,6 +644,13 @@ class LegacySnapshotImportTest {
             assertEquals(10000L,store.vaultDayClosing("drawer",Currency.USD,yesterday))
             assertEquals(10000L,store.vaultDayOpening("drawer",Currency.USD,Store.today()))
             assertEquals(10000L,store.balance("drawer",Currency.USD))
+            assertEquals(3,store.automaticClosingsNeedingReview("drawer").size)
+            val difference=store.reviewAutomaticClosing("drawer",yesterday,Currency.USD,9700L,"Next-day count")
+            assertEquals(-300L,difference)
+            assertEquals(2,store.automaticClosingsNeedingReview("drawer").size)
+            assertEquals(1,store.automaticClosingReviews("drawer").size)
+            assertEquals("-300",store.automaticClosingReviews("drawer").single()["variance"])
+            assertEquals(10000L,store.balance("drawer",Currency.USD))
         } finally {helper.close();context.deleteDatabase(name)}
     }
 
