@@ -198,6 +198,12 @@ class Store(val helper:StoreDb) {
         val day=LocalDate.parse(date).toString()
         return scalar("SELECT count(*) FROM closings c JOIN events e ON e.id=c.event_id WHERE c.vault=? AND e.date=?",v,day)>0L
     }
+    fun closingHistoryMonth(v:String,month:String):List<Map<String,String>> {
+        val first=java.time.YearMonth.parse(month).atDay(1).toString()
+        val next=java.time.YearMonth.parse(month).plusMonths(1).atDay(1).toString()
+        vault(v)
+        return rows("SELECT e.id event_id,e.date,c.currency,c.expected,c.counted,(c.counted-c.expected) variance FROM closings c JOIN events e ON e.id=c.event_id WHERE c.vault=? AND e.date>=? AND e.date<? ORDER BY e.date DESC,e.created DESC,c.currency",v,first,next)
+    }
     fun closingHistory(v:String,limit:Int=60):List<Map<String,String>> {
         vault(v)
         require(limit in 1..365)
