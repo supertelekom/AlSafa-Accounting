@@ -122,6 +122,10 @@ class Store(val helper:StoreDb) {
         val last=entries.lastOrNull()?.get("remaining")?.toLongOrNull()?:0L
         return last==supplierDue(supplier,c)
     }
+    fun supplierLedgerMonth(supplier:String,c:Currency,month:String):List<Map<String,String>> {
+        java.time.YearMonth.parse(month)
+        return supplierLedgerWithBalances(supplier,c).filter { it.getValue("date").startsWith("$month-") }
+    }
     fun supplierDue(supplier:String,c:Currency) = -scalar("SELECT coalesce(sum(amount),0) FROM journal WHERE account=? AND currency=?","payable:$supplier",c.name)
     fun purchase(supplier:String,items:List<SaleItem>,c:Currency,paid:Long,v:String,date:String=today(),command:String=id()):String=transaction {
         require(scalar("SELECT count(*) FROM suppliers WHERE id=?",supplier)==1L);require(items.isNotEmpty()&&items.map{it.productId}.distinct().size==items.size)
