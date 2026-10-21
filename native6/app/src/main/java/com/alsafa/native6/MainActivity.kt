@@ -159,8 +159,33 @@ class MainActivity:Activity() {
     private fun home(){text("ALSAFA WATCHES",size=16f);text("كيف تريد أن تبدأ؟",size=28f);button("⚡ الوضع المبسط · بيع وصيانة وتسليم سريع"){go("simple")};button("◆ الوضع الكامل · الإدارة والمخزون والحسابات"){go("advanced")}}
     private fun simple(){text("العمل السريع",size=26f);button("مبيع"){go("sale")};button("استلام وتسليم صيانة"){go("repairs")};button("الفواتير وقبض الديون"){go("invoices")};button("الخزنات والإقفال اليومي"){go("vaults")}}
     private fun advanced(){text("الوضع الكامل",size=26f);listOf("مبيع" to "sale","المنتجات وقطع الصيانة" to "products","الفواتير والمرتجعات" to "invoices","استلام وتسليم صيانة" to "repairs","الخزنات والمصاريف والإقفال" to "vaults","الموردون والمشتريات" to "suppliers","تقرير شهر واحد" to "reports","تقرير بين تاريخين" to "period-reports","الشركاء ونسب الأرباح" to "partners","سجل العمليات" to "audit","النسخ الاحتياطي والاستعادة" to "backup","أرشيف الفواتير القديمة" to "legacy-history").forEach{(label,route)->button(label){go(route)}}}
-    private fun products(){text("المنتجات وقطع الصيانة",size=25f);button("＋ إضافة منتج / قطعة"){productForm()};val query=field("بحث بالاسم أو الباركود أو REF",body);val list=column();body.addView(list)
+    private fun products(){text("المنتجات وقطع الصيانة",size=25f);button("＋ إضافة منتج / قطعة"){productForm()};button("تقييم المخزون والتنبيهات"){go("inventory"){inventoryDashboard()}};val query=field("بحث بالاسم أو الباركود أو REF",body);val list=column();body.addView(list)
         fun show(){list.removeAllViews();store.products(query.text.toString()).forEach{p->button("${p.name}  ·  ${money(p.price,p.currency)}\nالمخزون ${p.stock}  ·  ${p.barcode}",list){productForm(p)}}};button("بحث"){show()};show()}
+    private fun inventoryDashboard(){
+        text("تقييم المخزون والتنبيهات",size=25f)
+        text("تقييم التكلفة وسعر البيع حسب عملة كل منتج، دون خلط العملات. هامش الربح المتوقع ليس ربحاً محققاً.",size=15f)
+        val threshold=field("تنبيه عندما تكون الكمية أقل من أو تساوي",body,"2",true)
+        val output=column();body.addView(output)
+        button("عرض تقييم المخزون"){
+            try{
+                val limit=threshold.text.toString().trim().toLong()
+                require(limit>=0){"حد التنبيه غير صالح"}
+                output.removeAllViews()
+                Currency.entries.forEach{currency->
+                    text("العملة ${currency.name}",output,size=21f)
+                    listOf("watch" to "الساعات","part" to "قطع الصيانة").forEach{(kind,title)->
+                        val summary=store.inventorySummary(currency,kind)
+                        text("$title · أصناف ${summary.getValue("products")} · قطع ${summary.getValue("quantity")}",output)
+                        text("التكلفة ${money(summary.getValue("cost_value"),currency)} · قيمة البيع ${money(summary.getValue("retail_value"),currency)}",output)
+                        text("هامش متوقع ${money(summary.getValue("potential_margin"),currency)} · نافد ${summary.getValue("out_of_stock")}",output)
+                        val alerts=store.inventoryAlerts(currency,limit,kind)
+                        text("تنبيهات المخزون: ${alerts.size}",output)
+                        alerts.forEach{p->text("${p.name} · المتبقي ${p.stock} · ${p.barcode}",output)}
+                    }
+                }
+            }catch(e:Exception){error(e)}
+        }
+    }
     private fun productForm(p:Product?=null){form(if(p==null)"إضافة منتج" else "تعديل المنتج"){box->
         val name=field("الاسم",box,p?.name?:"");val barcode=field("الباركود",box,p?.barcode?:"");val curr=select("العملة",Currency.entries.map{it.name},box);curr.setSelection(p?.currency?.ordinal?:0);curr.isEnabled=p==null
         val price=field("سعر البيع",box,p?.let{Money(it.price,it.currency).display().substringBefore(' ')}?:"0",true)
