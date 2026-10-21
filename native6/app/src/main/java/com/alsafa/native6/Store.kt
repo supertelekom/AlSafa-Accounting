@@ -386,7 +386,9 @@ class Store(val helper:StoreDb) {
     fun refundable(id:String):Long {
         val inv=invoice(id)
         if(inv.kind!="sale" && inv.kind!="repair") return 0L
-        return maxOf(0L,Math.subtractExact(Math.subtractExact(paid(id),Math.subtractExact(inv.total,credit(id))),scalar("SELECT coalesce(sum(amount),0) FROM refunds WHERE invoice_id=?",id)))
+        val returned=credit(id);val received=paid(id);val refunded=scalar("SELECT coalesce(sum(amount),0) FROM refunds WHERE invoice_id=?",id)
+        require(returned in 0..inv.total && received>=0L && refunded>=0L && refunded<=received){"حركات القبض والمرتجعات غير متسقة مع الفاتورة"}
+        return maxOf(0L,Math.subtractExact(Math.subtractExact(received,Math.subtractExact(inv.total,returned)),refunded))
     }
     private fun nextNumber():Long {
         val existing=scalar("SELECT coalesce(max(number),0) FROM invoices")
