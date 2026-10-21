@@ -369,7 +369,11 @@ class Store(val helper:StoreDb) {
             it.getValue("kind"),it.getValue("party"),Currency.valueOf(it.getValue("currency")),
             it.getValue("total").toLong(),it.getValue("status"))}
     }
-    fun invoice(id:String)=invoices().first { it.id==id }
+    fun invoice(id:String):Invoice {
+        val row=rows("SELECT id,number,kind,party,currency,total,status FROM invoices WHERE id=?",id).singleOrNull()
+            ?: throw IllegalArgumentException("الفاتورة غير موجودة")
+        return Invoice(row.getValue("id"),row.getValue("number").toLong(),row.getValue("kind"),row.getValue("party"),Currency.valueOf(row.getValue("currency")),row.getValue("total").toLong(),row.getValue("status"))
+    }
     fun paid(id:String)=scalar("SELECT coalesce(sum(amount),0) FROM receipts WHERE invoice_id=?",id)
     fun credit(id:String)=scalar("SELECT coalesce(sum(credit),0) FROM returns WHERE invoice_id=?",id)
     fun due(id:String):Long {val inv=invoice(id);return maxOf(0,inv.total-credit(id)-paid(id))}
