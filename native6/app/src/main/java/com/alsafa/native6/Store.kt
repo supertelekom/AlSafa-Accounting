@@ -136,8 +136,9 @@ class Store(val helper:StoreDb) {
     }
     /** Audit the stock valuation against its posted inventory journal account. */
     fun inventoryJournalReconciliation(c:Currency):Map<String,Long> {
-        val stockValue=products().filter{it.currency==c}
-            .fold(0L){sum,p->Math.addExact(sum,p.value)}
+        // Include archived products: archiving hides catalog entries, not inventory assets.
+        val stockValue=rows("SELECT coalesce(sum(value),0) total FROM products WHERE currency=?",c.name)
+            .single().getValue("total").toLong()
         val journalValue=scalar("""SELECT coalesce(sum(amount),0) FROM journal
             WHERE account='inventory' AND currency=?""",c.name)
         return mapOf("stock_value" to stockValue,"journal_value" to journalValue,
