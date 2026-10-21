@@ -181,4 +181,18 @@ class LegacyReconciliationTest {
         assertTrue(report.contains("فواتير شراء تحتاج مراجعة قبل اعتماد"))
     }
 
+    @Test fun purchasePaymentReferenceDoesNotDoubleSubtractInvoicePaid() {
+        val purchases=JSONArray().put(JSONObject().put("id","p-1")
+            .put("supplierId","s").put("currency","USD").put("total",100).put("paid",40))
+        val payments=JSONArray().put(JSONObject().put("id","payment-1")
+            .put("referenceType","purchase").put("referenceId","p-1")
+            .put("currency","USD").put("amount",40))
+        val data=JSONObject().put("purchases",purchases).put("payments",payments)
+        val report=LegacyReconciliation.inspect(JSONObject()
+            .put("format","alsafa-accounting-backup").put("data",data).toString())
+        assertTrue(report.contains("s | USD: 60"))
+        assertTrue(report.contains("ربط دفعات فواتير الشراء: مراجع صحيحة 1، فواتير مفقودة 0"))
+        assertTrue(report.contains("يمنع خصمها مرة ثانية"))
+    }
+
 }
