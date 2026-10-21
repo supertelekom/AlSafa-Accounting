@@ -283,3 +283,9 @@ Inspected the user's original **AlSafa Backup v2**, exported 2026-10-18 (approxi
 - Added `supplierLedgerMonth` to select only movements in a requested calendar month while retaining each row's running balance from the entire previous ledger history. A regression test covers September debt and an October partial payment.
 - The tablet supplier statement continues to show full history until a month selector is implemented; do not claim that monthly filtering is exposed in the UI.
 - Legacy archive liabilities are not included in posted supplier statements; historical migration remains blocked pending verified reconciliation.
+
+## Supplier monthly control totals
+
+- Monthly supplier view now exposes prior balance, new liabilities, supplier payments, net movement and month-end balance for one selected month and one currency. Dated transaction rows retain their running balance.
+- Closing balances are computed as of the next month's start, excluding later postings. Tests include September opening debt, October partial payment and a later November payment that must not rewrite October's report.
+- The figures come only from Native 6 posted journal data; imported legacy archives remain read-only and are not yet merged into active payable accounts. Android CI has not been confirmed green.
