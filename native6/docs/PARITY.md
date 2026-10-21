@@ -322,3 +322,9 @@ Inspected the user's original **AlSafa Backup v2**, exported 2026-10-18 (approxi
 - Tablet vault screen has a month summary for all vaults and a filtered detailed transaction list for one vault/currency/month.
 - Detailed event-linked journal cash movements must reconcile to the selected month's book balance delta before display. No currency conversion is inferred and viewing reports never posts journal entries.
 - Regression test covers September opening, October expense, November expense and currency/vault separation. CI and APK builds remain unverified.
+
+## Monthly vault cash-flow split
+
+- Detailed monthly vault statements now display incoming and outgoing cash separately, alongside prior and closing balances. These are cash movements, not profit/revenue classifications; internal transfers remain movements.
+- Statement rendering validates both dated journal entry totals and cash-in minus cash-out against the net movement. Regression assertions cover September and October, USD and TRY.
+- All values are read from the local posted journal. No archived historical financial records are posted or modified by viewing the report. Build and test execution have not been verified.
