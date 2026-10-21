@@ -550,6 +550,9 @@ class LegacySnapshotImportTest {
             assertEquals(0,store.vaultDayEntries("drawer",Currency.USD,"2026-10-13").size)
             assertEquals(1,store.vaultDayEntries("drawer",Currency.USD,"2026-10-12").size)
             assertTrue(store.vaultDayReconciles("drawer",Currency.USD,"2026-10-12"))
+            assertEquals(0L,store.vaultDayInflows("drawer",Currency.USD,"2026-10-12"))
+            assertEquals(1500L,store.vaultDayOutflows("drawer",Currency.USD,"2026-10-12"))
+            assertEquals(0L,store.vaultDayOutflows("drawer",Currency.TRY,"2026-10-12"))
             assertTrue(store.vaultDayReconciles("drawer",Currency.TRY,"2026-10-12"))
 
             assertEquals(-1500L,store.vaultMonthMovement("drawer",Currency.USD,"2026-10"))
