@@ -79,7 +79,7 @@ class MainActivity:Activity() {
         text("نسخة تطوير — حفظ محلي على التابلت",root,13f)
         if(page!="home")button("‹ الرئيسية",root){go("home")}
         val scroll=ScrollView(this);body=column();scroll.addView(body);root.addView(scroll,LinearLayout.LayoutParams(-1,0,1f))
-        when(page){"home"->home();"simple"->simple();"advanced"->advanced();"products"->products();"inventory"->inventoryDashboard();"stock-history"->selectedProduct?.let{stockHistory(it)};"sale"->sale();"invoices"->invoices();"vaults"->vaults();"suppliers"->suppliers();"repairs"->repairs();"reports"->reports();"period-reports"->periodReports();"trial-balance"->trialBalanceScreen();"account-ledger"->accountLedgerScreen();"partners"->partners();"backup"->backup();"legacy-audit"->legacyAudit();"legacy-history"->legacyHistory();"audit"->audit()}
+        when(page){"home"->home();"simple"->simple();"advanced"->advanced();"products"->products();"inventory"->inventoryDashboard();"stock-history"->selectedProduct?.let{stockHistory(it)};"sale"->sale();"invoices"->invoices();"vaults"->vaults();"suppliers"->suppliers();"repairs"->repairs();"reports"->reports();"period-reports"->periodReports();"trial-balance"->trialBalanceScreen();"account-ledger"->accountLedgerScreen();"journal-integrity"->journalIntegrityScreen();"partners"->partners();"backup"->backup();"legacy-audit"->legacyAudit();"legacy-history"->legacyHistory();"audit"->audit()}
     }
     private fun legacyHistory() {
         text("أرشيف العمليات القديمة — قراءة فقط",size=25f)
@@ -476,8 +476,37 @@ class MainActivity:Activity() {
         text("مستلمة: ${counts.getValue("received")} · قيد العمل: ${counts.getValue("in_progress")} · جاهزة: ${counts.getValue("ready")} · مسلّمة: ${counts.getValue("delivered")}",size=15f)
         store.repairList().filter{it.getValue("status")!="delivered"}.forEach{r->val id=r.getValue("id");text("${r.getValue("customer")} · ${r.getValue("watch")} · ${label(r.getValue("status"))}");if(r.getValue("status")=="received")button("بدء الصيانة"){work{store.startRepair(id)}};if(r.getValue("status") in setOf("received","in_progress"))button("جاهزة للاستلام"){work{store.repairReady(id)}};if(r.getValue("status")=="ready")button("تسليم وفاتورة أجرة عمل"){form("تسليم الصيانة"){box->val c=select("العملة",Currency.entries.map{it.name},box);val n=field("أجرة العمل",box,"0",true);val paid=field("المدفوع",box,"0",true);val v=select("خزنة القبض",vaultNames,box);{val curr=Currency.entries[c.selectedItemPosition];val value=amount(n,curr);val pay=amount(paid,curr);val vault=Store.vaults[v.selectedItemPosition];work{store.deliverRepair(id,curr,value,pay,vault)}}}}}
     }
-    private fun reports(){text("تقرير شهر واحد",size=25f);button("ميزان المراجعة بين تاريخين"){go("trial-balance")};button("دفتر الأستاذ التفصيلي"){go("account-ledger")};val month=field("الشهر YYYY-MM",body,YearMonth.now().toString());val result=column();body.addView(result);button("عرض"){try{val rows=store.monthReport(month.text.toString());result.removeAllViews();Currency.entries.forEach{c->val selected=rows.filter{it.getValue("currency")==c.name};val revenue=-selected.filter{it.getValue("account").startsWith("revenue:")}.sumOf{it.getValue("amount").toLong()};val expense=selected.filter{it.getValue("account").startsWith("expense:")}.sumOf{it.getValue("amount").toLong()};text("${c.name} · صافي الربح الدفتري ${money(revenue-expense,c)}",result);selected.filter{it.getValue("account").startsWith("equity:withdrawal:")}.forEach{text("سحب ${it.getValue("account").substringAfterLast(':')} في الشهر: ${money(it.getValue("amount").toLong(),c)}",result)}}}catch(e:Exception){error(e)}}}
+    private fun reports(){text("تقرير شهر واحد",size=25f);button("ميزان المراجعة بين تاريخين"){go("trial-balance")};button("دفتر الأستاذ التفصيلي"){go("account-ledger")};button("تدقيق توازن القيود"){go("journal-integrity")};val month=field("الشهر YYYY-MM",body,YearMonth.now().toString());val result=column();body.addView(result);button("عرض"){try{val rows=store.monthReport(month.text.toString());result.removeAllViews();Currency.entries.forEach{c->val selected=rows.filter{it.getValue("currency")==c.name};val revenue=-selected.filter{it.getValue("account").startsWith("revenue:")}.sumOf{it.getValue("amount").toLong()};val expense=selected.filter{it.getValue("account").startsWith("expense:")}.sumOf{it.getValue("amount").toLong()};text("${c.name} · صافي الربح الدفتري ${money(revenue-expense,c)}",result);selected.filter{it.getValue("account").startsWith("equity:withdrawal:")}.forEach{text("سحب ${it.getValue("account").substringAfterLast(':')} في الشهر: ${money(it.getValue("amount").toLong(),c)}",result)}}}catch(e:Exception){error(e)}}}
 
+    private fun journalIntegrityScreen(){
+        text("تدقيق توازن القيود المحاسبية",size=25f)
+        text("فحص كل عملية على حدة، دون تغيير أو ترحيل أي قيد.",size=15f)
+        val from=field("من YYYY-MM-DD",body,YearMonth.now().atDay(1).toString())
+        val until=field("إلى YYYY-MM-DD",body,Store.today())
+        val output=column();body.addView(output)
+        button("فحص القيود"){
+            try{
+                output.removeAllViews()
+                val start=from.text.toString().trim()
+                val end=until.text.toString().trim()
+                Currency.entries.forEach{c->
+                    val summary=store.journalIntegritySummary(c,start,end)
+                    val problems=store.unbalancedEvents(c,start,end)
+                    text("${c.name} · "+(if(problems.isEmpty() && summary.getValue("difference")==0L)
+                        "قيود الفترة متوازنة" else "تحذير: توجد فروقات"),output,size=21f)
+                    text("مدين "+money(summary.getValue("debits"),c)+
+                        " · دائن "+money(summary.getValue("credits"),c)+
+                        " · الفرق "+money(summary.getValue("difference"),c),output)
+                    text("عمليات غير متوازنة: ${summary.getValue("unbalanced_events")}",output)
+                    problems.forEach{row->
+                        text(row.getValue("date")+" · "+row.getValue("kind")+" · "+row.getValue("memo"),output)
+                        text("رقم العملية "+row.getValue("event_id")+
+                            " · فرق "+money(row.getValue("difference").toLong(),c),output)
+                    }
+                }
+            }catch(e:Exception){error(e)}
+        }
+    }
     private fun accountLedgerScreen(){
         text("دفتر الأستاذ التفصيلي",size=25f)
         val currency=select("العملة",Currency.entries.map{it.name},body)
