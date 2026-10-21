@@ -225,7 +225,7 @@ class Store(val helper:StoreDb) {
         event(command,"AUTO_CLOSING",day.toString(),"إقفال دفتري تلقائي - العد الفعلي غير مؤكد")
         Currency.entries.forEach { c ->
             val expected=vaultDayClosing(v,c,day.toString())
-            insert("closings","event_id" to command,"vault" to v,"currency" to c.name,"expected" to expected,"counted" to expected)
+            insert("closings","event_id" to command,"vault" to v,"currency" to c.name,"expected" to expected,"counted" to null)
         }
         true
     }
@@ -248,7 +248,7 @@ class Store(val helper:StoreDb) {
     fun closingForDay(v:String,date:String):List<Map<String,String>> {
         vault(v)
         val day=LocalDate.parse(date).toString()
-        return rows("SELECT e.id event_id,e.date,e.kind,c.currency,c.expected,c.counted,(c.counted-c.expected) variance FROM closings c JOIN events e ON e.id=c.event_id WHERE c.vault=? AND e.date=? ORDER BY c.currency",v,day)
+        return rows("SELECT e.id event_id,e.date,e.kind,c.currency,c.expected,c.counted,CASE WHEN c.counted IS NULL THEN NULL ELSE (c.counted-c.expected) END variance FROM closings c JOIN events e ON e.id=c.event_id WHERE c.vault=? AND e.date=? ORDER BY c.currency",v,day)
     }
     /** A late or backdated posting can change book cash after a physical closing. Flag it, never rewrite the original count. */
     fun reviewAutomaticClosing(v:String,date:String,c:Currency,actual:Long,note:String):Long=transaction {
