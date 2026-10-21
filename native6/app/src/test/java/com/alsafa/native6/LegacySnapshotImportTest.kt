@@ -532,4 +532,26 @@ class LegacySnapshotImportTest {
         } finally {helper.close();context.deleteDatabase(name)}
     }
 
+    @Test fun monthlyVaultBalancesExcludeLaterMonthAndKeepCurrenciesSeparate() {
+        val context=RuntimeEnvironment.getApplication<Context>()
+        val name="monthly-vault-report-test.db"
+        context.deleteDatabase(name)
+        val helper=StoreDb(context,name)
+        try {
+            val store=Store(helper)
+            store.cash("opening","drawer",Currency.USD,10000L,"Opening","2026-09-15")
+            store.cash("opening","drawer",Currency.TRY,20000L,"TRY","2026-09-15")
+            store.cash("expense","drawer",Currency.USD,1500L,"Expense","2026-10-12")
+            assertEquals(10000L,store.vaultMonthOpening("drawer",Currency.USD,"2026-10"))
+            assertEquals(8500L,store.vaultMonthClosing("drawer",Currency.USD,"2026-10"))
+            assertEquals(-1500L,store.vaultMonthMovement("drawer",Currency.USD,"2026-10"))
+            assertEquals(20000L,store.vaultMonthClosing("drawer",Currency.TRY,"2026-10"))
+            assertEquals(0L,store.vaultMonthClosing("external",Currency.USD,"2026-10"))
+            assertTrue(store.vaultMonthReconciles("drawer",Currency.USD,"2026-10"))
+            store.cash("expense","drawer",Currency.USD,500L,"Later","2026-11-02")
+            assertEquals(8500L,store.vaultMonthClosing("drawer",Currency.USD,"2026-10"))
+            assertEquals(8000L,store.vaultMonthClosing("drawer",Currency.USD,"2026-11"))
+        } finally {helper.close();context.deleteDatabase(name)}
+    }
+
 }
