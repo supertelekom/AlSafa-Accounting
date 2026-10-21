@@ -195,4 +195,17 @@ class LegacyReconciliationTest {
         assertTrue(report.contains("يمنع خصمها مرة ثانية"))
     }
 
+    @Test fun purchaseWithBlankIdIsNotSilentlyMergedWithOtherInvoices() {
+        val purchases=JSONArray()
+            .put(JSONObject().put("id","").put("supplierId","s")
+                .put("currency","USD").put("total",20).put("paid",0))
+            .put(JSONObject().put("id","").put("supplierId","s")
+                .put("currency","USD").put("total",30).put("paid",0))
+        val data=JSONObject().put("purchases",purchases)
+        val report=LegacyReconciliation.inspect(JSONObject()
+            .put("format","alsafa-accounting-backup").put("data",data).toString())
+        assertTrue(report.contains("فواتير شراء بلا معرف 2"))
+        assertTrue(report.contains("s | USD: 50"))
+    }
+
 }
