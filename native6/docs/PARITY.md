@@ -328,3 +328,10 @@ Inspected the user's original **AlSafa Backup v2**, exported 2026-10-18 (approxi
 - Detailed monthly vault statements now display incoming and outgoing cash separately, alongside prior and closing balances. These are cash movements, not profit/revenue classifications; internal transfers remain movements.
 - Statement rendering validates both dated journal entry totals and cash-in minus cash-out against the net movement. Regression assertions cover September and October, USD and TRY.
 - All values are read from the local posted journal. No archived historical financial records are posted or modified by viewing the report. Build and test execution have not been verified.
+
+## Partner drawing and closing workflow
+
+- The tablet's cash withdrawal form now selects an existing registered partner by stable ID rather than accepting an arbitrary name. This is needed for partner-month drawing attribution; older free-text drawings still require audit.
+- Daily closing displays a read-only confirmation preview for all USD/TRY/SYP balances: expected, physically counted and variance. A user must confirm before saving; a same-day duplicate is rejected.
+- Cash count differences are not posted as adjustments to the ledger. A regression test checks that preview leaves events and book balances untouched and that confirmed closing preserves book cash.
+- Changes are source-only until Android build and Robolectric test execution is verified.
