@@ -377,3 +377,10 @@ Inspected the user's original **AlSafa Backup v2**, exported 2026-10-18 (approxi
 - Automatic backfill now skips dates before a vault has any recorded cash journal history. Book carry-forward remains a ledger calculation, not a new cash posting.
 - Review differences are calculated against the **current book balance when cash is counted**, not claimed as a verified historical count for the missed day. A discrepancy requires explicit accounting investigation and a separately authorized correction.
 - Additive SQLite v4-to-v5 migration; Android build and test suite are not yet verified.
+
+## Recount preflight and discrepancy investigations
+
+- Added `automaticClosingReviewPreview` to distinguish book cash at the missed close from the current book cash when a physical recount is made; reject duplicate reviews before committing them.
+- Reviewed, nonzero differences are separately discoverable through `automaticReviewExceptions` and an investigation list on the vault page. These are audit exceptions, not automatic cash adjustment journal entries.
+- A matching physical recount does not imply that an earlier missed day was physically counted. Current balances can include later activity, and backdated entries can alter historical book balances. Investigations remain outstanding until an explicit resolution workflow is implemented.
+- Source and test assertions were updated; Android compilation and tests have not yet been executed successfully.
