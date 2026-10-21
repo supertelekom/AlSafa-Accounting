@@ -134,6 +134,27 @@ class Store(val helper:StoreDb) {
                     "value_difference" to Math.subtractExact(p.value,expectedValue).toString())
             }
     }
+    /** Audit the stock valuation against its posted inventory journal account. */
+    fun inventoryJournalReconciliation(c:Currency):Map<String,Long> {
+        val stockValue=products().filter{it.currency==c}
+            .fold(0L){sum,p->Math.addExact(sum,p.value)}
+        val journalValue=scalar("""SELECT coalesce(sum(amount),0) FROM journal
+            WHERE account='inventory' AND currency=?""",c.name)
+        return mapOf("stock_value" to stockValue,"journal_value" to journalValue,
+            "difference" to Math.subtractExact(stockValue,journalValue))
+    }
+    /** Detailed inventory journal movements with their original transaction dates. */
+    fun inventoryJournalEntries(c:Currency,start:String,end:String):List<Map<String,String>> {
+        val from=LocalDate.parse(start).toString()
+        val until=LocalDate.parse(end).toString()
+        require(from<=until){"بداية الفترة بعد نهايتها"}
+        require(java.time.temporal.ChronoUnit.DAYS.between(LocalDate.parse(from),LocalDate.parse(until))<=366)
+        return rows("""SELECT e.date,e.kind,e.memo,e.id event_id,j.amount
+            FROM journal j JOIN events e ON e.id=j.event_id
+            WHERE j.account='inventory' AND j.currency=?
+                AND e.date>=? AND e.date<=?
+            ORDER BY e.date,e.created,e.id""",c.name,from,until)
+    }
     fun product(id:String)=toProduct(rows("SELECT * FROM products WHERE id=?",id).single())
     fun addProduct(name:String,barcode:String,currency:Currency,price:Long,cost:Long,quantity:Long,kind:String="watch",details:String="{}",command:String=id()):String=transaction {
         require(name.isNotBlank() && price>=0 && cost>=0 && quantity>=0);require(kind in listOf("watch","part"));JSONObject(details)
