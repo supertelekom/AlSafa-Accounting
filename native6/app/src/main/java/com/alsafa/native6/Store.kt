@@ -134,6 +134,7 @@ class Store(val helper:StoreDb) {
     fun supplierMonthCharges(supplier:String,c:Currency,month:String):Long = supplierLedgerMonth(supplier,c,month).filter { it.getValue("amount").toLong()<0L }.fold(0L) { total,row -> add(total,-row.getValue("amount").toLong()) }
     fun supplierMonthPayments(supplier:String,c:Currency,month:String):Long = supplierLedgerMonth(supplier,c,month).filter { it.getValue("amount").toLong()>0L }.fold(0L) { total,row -> add(total,row.getValue("amount").toLong()) }
     fun supplierMonthMovement(supplier:String,c:Currency,month:String):Long = add(supplierMonthClosing(supplier,c,month),-supplierMonthOpening(supplier,c,month))
+    fun supplierMonthReconciles(supplier:String,c:Currency,month:String):Boolean = supplierMonthClosing(supplier,c,month)==add(supplierMonthOpening(supplier,c,month),supplierMonthMovement(supplier,c,month)) && supplierMonthMovement(supplier,c,month)==add(supplierMonthCharges(supplier,c,month),-supplierMonthPayments(supplier,c,month))
     fun supplierDue(supplier:String,c:Currency) = -scalar("SELECT coalesce(sum(amount),0) FROM journal WHERE account=? AND currency=?","payable:$supplier",c.name)
     fun purchase(supplier:String,items:List<SaleItem>,c:Currency,paid:Long,v:String,date:String=today(),command:String=id()):String=transaction {
         require(scalar("SELECT count(*) FROM suppliers WHERE id=?",supplier)==1L);require(items.isNotEmpty()&&items.map{it.productId}.distinct().size==items.size)
