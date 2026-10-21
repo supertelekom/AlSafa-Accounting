@@ -98,6 +98,32 @@ object LegacyReconciliation {
             }
             if(unsupported>0) lines += "قيود مورد غير مصنفة: $unsupported"
         }
+        // A recovered supplier payment is often also present as a cash transaction.
+        // Report the shared identity; never treat the two records as two payments.
+        data.optJSONArray("supplierLedger")?.let { ledger ->
+            val cashIds=HashSet<String>()
+            data.optJSONArray("cashTransactions")?.let { transactions ->
+                for(i in 0 until transactions.length()) {
+                    val id=transactions.optJSONObject(i)?.optString("id").orEmpty()
+                    if(id.isNotBlank()) cashIds.add(id)
+                }
+            }
+            var linked=0
+            var missing=0
+            var duplicate=0
+            val seen=HashSet<String>()
+            for(i in 0 until ledger.length()) {
+                val row=ledger.optJSONObject(i) ?: continue
+                if(row.optString("kind")!="payment") continue
+                val cashId=row.optString("recoveredFromCashTransactionId")
+                if(cashId.isBlank()) continue
+                if(!seen.add(cashId)) duplicate++
+                if(cashId in cashIds) linked++ else missing++
+            }
+            lines += "مدفوعات المورد المستعادة من حركات الخزنة: مرتبطة $linked، مرجع نقدي مفقود $missing، مرجع مستعاد مكرر $duplicate"
+            if(linked>0 || missing>0 || duplicate>0)
+                lines += "هذه المدفوعات ليست حركات دفع جديدة؛ يمنع إعادة خصمها من الخزنة أثناء الترحيل."
+        }
         // Never combine different currencies into one closing balance.
         // This is a descriptive audit, not an accounting posting.
         cash?.let { movements ->
