@@ -70,6 +70,31 @@ class Store(val helper:StoreDb) {
     private fun enough(v:String,c:Currency,amount:Long) { vault(v);require(amount>=0 && balance(v,c)>=amount){"رصيد الخزنة غير كافٍ"} }
     private fun toProduct(r:Map<String,String>)=Product(r.getValue("id"),r.getValue("name"),r.getValue("barcode"),Currency.valueOf(r.getValue("currency")),r.getValue("price").toLong(),r.getValue("cost").toLong(),r.getValue("stock").toLong(),r.getValue("kind"),r.getValue("value").toLong())
     fun products(query:String="")=rows("SELECT * FROM products WHERE archived=0 AND (instr(lower(name),lower(?))>0 OR instr(lower(barcode),lower(?))>0 OR instr(lower(model),lower(?))>0) ORDER BY name",query.trim(),query.trim(),query.trim()).map(::toProduct)
+    /** Inventory valuation by original product currency; no fictitious cross-currency sum. */
+    fun inventorySummary(c:Currency,kind:String="all"):Map<String,Long> {
+        require(kind in setOf("all","watch","part"))
+        val items=products().filter{it.currency==c && (kind=="all"||it.kind==kind)}
+        var quantity=0L
+        var costValue=0L
+        var sellingValue=0L
+        var zero=0L
+        items.forEach{p->
+            require(p.stock>=0L && p.cost>=0L && p.price>=0L){"بيانات مخزون غير صالحة"}
+            quantity=Math.addExact(quantity,p.stock)
+            costValue=Math.addExact(costValue,Math.multiplyExact(p.stock,p.cost))
+            sellingValue=Math.addExact(sellingValue,Math.multiplyExact(p.stock,p.price))
+            if(p.stock==0L)zero=Math.addExact(zero,1L)
+        }
+        return mapOf("products" to items.size.toLong(),"quantity" to quantity,
+            "cost_value" to costValue,"retail_value" to sellingValue,
+            "potential_margin" to Math.subtractExact(sellingValue,costValue),
+            "out_of_stock" to zero)
+    }
+    fun inventoryAlerts(c:Currency,threshold:Long=2L,kind:String="all"):List<Product> {
+        require(threshold>=0L && kind in setOf("all","watch","part"))
+        return products().filter{it.currency==c && (kind=="all"||it.kind==kind) && it.stock<=threshold}
+            .sortedWith(compareBy<Product>{it.stock}.thenBy{it.name})
+    }
     fun product(id:String)=toProduct(rows("SELECT * FROM products WHERE id=?",id).single())
     fun addProduct(name:String,barcode:String,currency:Currency,price:Long,cost:Long,quantity:Long,kind:String="watch",details:String="{}",command:String=id()):String=transaction {
         require(name.isNotBlank() && price>=0 && cost>=0 && quantity>=0);require(kind in listOf("watch","part"));JSONObject(details)
