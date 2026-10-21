@@ -531,6 +531,42 @@ class Store(val helper:StoreDb) {
             "gross_profit" to gross,"operating_expenses" to expenses,
             "net_result" to net,"partner_drawings" to drawings)
     }
+    /** Profit components by actual posting date, suitable for daily audit and reconciliation. */
+    fun operatingDailyRange(start:String,end:String,c:Currency):List<Map<String,Long>> {
+        val from=LocalDate.parse(start)
+        val until=LocalDate.parse(end)
+        require(!from.isAfter(until)){"بداية الفترة بعد نهايتها"}
+        require(java.time.temporal.ChronoUnit.DAYS.between(from,until)<=366){"الفترة تتجاوز سنة"}
+        val postings=rows("""SELECT e.date,j.account,j.amount FROM journal j
+            JOIN events e ON e.id=j.event_id
+            WHERE j.currency=? AND e.date>=? AND e.date<=?
+              AND (j.account LIKE 'revenue:%' OR j.account LIKE 'expense:%'
+                   OR j.account LIKE 'equity:withdrawal:%')
+            ORDER BY e.date,e.created,e.id""",c.name,from.toString(),until.toString())
+        return postings.groupBy{it.getValue("date")}.toSortedMap().map{(day,entries)->
+            var revenue=0L
+            var cost=0L
+            var expense=0L
+            var drawings=0L
+            entries.forEach{entry->
+                val amount=entry.getValue("amount").toLong()
+                when {
+                    entry.getValue("account").startsWith("revenue:") ->
+                        revenue=Math.subtractExact(revenue,amount)
+                    entry.getValue("account")=="expense:cogs" ->
+                        cost=Math.addExact(cost,amount)
+                    entry.getValue("account").startsWith("expense:") ->
+                        expense=Math.addExact(expense,amount)
+                    entry.getValue("account").startsWith("equity:withdrawal:") ->
+                        drawings=Math.addExact(drawings,amount)
+                }
+            }
+            mapOf("date_epoch" to day.replace("-","").toLong(),
+                "revenue" to revenue,"cost_of_sales" to cost,
+                "operating_expenses" to expense,"drawings" to drawings,
+                "net_result" to Math.subtractExact(Math.subtractExact(revenue,cost),expense))
+        }
+    }
     fun monthReport(month:String):List<Map<String,String>> {java.time.YearMonth.parse(month);return rows("SELECT j.currency,j.account,sum(j.amount) amount FROM journal j JOIN events e ON e.id=j.event_id WHERE substr(e.date,1,7)=? GROUP BY j.currency,j.account ORDER BY j.currency,j.account",month)}
     fun repairList(query:String="",status:String="all"):List<Map<String,String>> {
         require(status in setOf("all","received","in_progress","ready","delivered")){"حالة الصيانة غير صالحة"}
