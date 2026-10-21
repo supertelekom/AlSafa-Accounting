@@ -628,7 +628,12 @@ class Store(val helper:StoreDb) {
             "payments" to payments,"closing" to closing,
             "historical_debt" to opening,"current_month_net" to Math.subtractExact(charges,payments)) + categories
     }
-    fun supplierDue(supplier:String,c:Currency) = Math.negateExact(scalar("SELECT coalesce(sum(amount),0) FROM journal WHERE account=? AND currency=?","payable:$supplier",c.name))
+    fun supplierDue(supplier:String,c:Currency):Long {
+        require(scalar("SELECT count(*) FROM suppliers WHERE id=?",supplier)==1L){"المورد غير موجود"}
+        val remaining=Math.negateExact(scalar("SELECT coalesce(sum(amount),0) FROM journal WHERE account=? AND currency=?","payable:$supplier",c.name))
+        require(remaining>=0L){"رصيد المورد سالب؛ راجع المدفوعات والمشتريات"}
+        return remaining
+    }
     fun purchase(supplier:String,items:List<SaleItem>,c:Currency,paid:Long,v:String,date:String=today(),command:String=id()):String=transaction {
         require(scalar("SELECT count(*) FROM suppliers WHERE id=?",supplier)==1L){"المورد غير موجود"};require(items.isNotEmpty()&&items.map{it.productId}.distinct().size==items.size){"فاتورة الشراء فارغة أو تحتوي أصنافاً مكررة"}
         require(items.all{it.qty>0&&it.unitPrice>=0}){"كمية الشراء أو سعر الوحدة غير صالح"};val total=items.fold(0L){a,i->add(a,mul(i.qty,i.unitPrice))};require(total>0&&paid in 0..total){"إجمالي الشراء أو الدفعة غير صالح"}
