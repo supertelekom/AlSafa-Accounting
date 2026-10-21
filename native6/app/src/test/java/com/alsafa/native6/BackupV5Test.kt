@@ -23,7 +23,7 @@ class BackupV5Test {
             val output = ByteArrayOutputStream()
             Backup(context, Store(first)).export(output)
             val root = JSONObject(output.toString("UTF-8"))
-            assertEquals(5, root.getInt("schema"))
+            assertEquals(6, root.getInt("schema"))
             val payload = JSONObject(Backup.ungzip(root.getString("data")))
             assertTrue(payload.has("auto_closing_reviews"))
             assertEquals(0, payload.getJSONArray("auto_closing_reviews").length())
