@@ -309,3 +309,9 @@ Inspected the user's original **AlSafa Backup v2**, exported 2026-10-18 (approxi
 - Separately reconciles subsequent payments referring to purchase invoices; it never subtracts later payments a second time from an invoice's already stored `paid` field. Cross-currency payment references are counted for review, without inventing FX rates.
 - Duplicate or blank purchase IDs are flagged rather than used as unique migration keys. Regression tests cover duplicate IDs, unknown suppliers, overpaid invoices, repeated payments and missing IDs.
 - No historical supplier balances or cash payments are posted by these read-only audits. Build/test execution remains unverified.
+
+## Purchase payment identity and currency safeguards
+
+- Later purchase payments referencing duplicate purchase IDs are now marked ambiguous instead of matched to an arbitrary invoice. Duplicate or blank purchase payment IDs are reported.
+- Cross-currency purchase settlements lacking a historical `rateSnapshot` are flagged; no inferred FX conversion is posted. The audit remains read-only, retaining source invoice paid fields without a second deduction.
+- Regression cases added for duplicate purchase IDs, duplicate payment IDs and cross-currency purchase settlement without FX evidence. CI/build results remain unverified.
