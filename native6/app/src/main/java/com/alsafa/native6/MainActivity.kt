@@ -160,7 +160,28 @@ class MainActivity:Activity() {
     private fun simple(){text("العمل السريع",size=26f);button("مبيع"){go("sale")};button("استلام وتسليم صيانة"){go("repairs")};button("الفواتير وقبض الديون"){go("invoices")};button("الخزنات والإقفال اليومي"){go("vaults")}}
     private fun advanced(){text("الوضع الكامل",size=26f);listOf("مبيع" to "sale","المنتجات وقطع الصيانة" to "products","الفواتير والمرتجعات" to "invoices","استلام وتسليم صيانة" to "repairs","الخزنات والمصاريف والإقفال" to "vaults","الموردون والمشتريات" to "suppliers","تقرير شهر واحد" to "reports","تقرير بين تاريخين" to "period-reports","الشركاء ونسب الأرباح" to "partners","سجل العمليات" to "audit","النسخ الاحتياطي والاستعادة" to "backup","أرشيف الفواتير القديمة" to "legacy-history").forEach{(label,route)->button(label){go(route)}}}
     private fun products(){text("المنتجات وقطع الصيانة",size=25f);button("＋ إضافة منتج / قطعة"){productForm()};button("تقييم المخزون والتنبيهات"){go("inventory")};val query=field("بحث بالاسم أو الباركود أو REF",body);val list=column();body.addView(list)
-        fun show(){list.removeAllViews();store.products(query.text.toString()).forEach{p->button("${p.name}  ·  ${money(p.price,p.currency)}\nالمخزون ${p.stock}  ·  ${p.barcode}",list){productForm(p)};button("سجل مخزون ${p.name}",list){selectedProduct=p;go("stock-history")}}};button("بحث"){show()};show()}
+        fun show(){list.removeAllViews();store.products(query.text.toString()).forEach{p->button("${p.name}  ·  ${money(p.price,p.currency)}\nالمخزون ${p.stock}  ·  ${p.barcode}",list){productForm(p)};button("سجل مخزون ${p.name}",list){selectedProduct=p;go("stock-history")};button("جرد فعلي ${p.name}",list){stocktakeForm(p)}}};button("بحث"){show()};show()}
+    private fun stocktakeForm(p:Product){
+        form("جرد فعلي · ${p.name}","حفظ تسوية الجرد"){box->
+            text("الكمية المسجلة حالياً: ${p.stock}",box)
+            text("أي فرق سيُسجل بحركة مخزون وقيد محاسبي قابل للتدقيق.",box)
+            val count=field("الكمية التي تم عدّها فعلياً",box,p.stock.toString(),true)
+            val reason=field("سبب الفرق (إلزامي)",box)
+            ({
+                val counted=count.text.toString().trim().toLong()
+                val why=reason.text.toString().trim()
+                require(counted>=0 && counted!=p.stock){"أدخل كمية مختلفة وغير سالبة"}
+                require(why.length>=5){"اكتب سبب الفرق بوضوح"}
+                AlertDialog.Builder(this)
+                    .setTitle("تأكيد تسوية المخزون")
+                    .setMessage("المنتج: ${p.name}\nالكمية المسجلة: ${p.stock}\nالكمية الفعلية: $counted\nالفرق: ${counted-p.stock}\nالسبب: $why")
+                    .setNegativeButton("تراجع",null)
+                    .setPositiveButton("تأكيد وحفظ"){_,_->
+                        work{store.adjustStockCount(p.id,counted,why)}
+                    }.show()
+            })
+        }
+    }
     private fun inventoryDashboard(){
         text("تقييم المخزون والتنبيهات",size=25f)
         text("تقييم التكلفة وسعر البيع حسب عملة كل منتج، دون خلط العملات. هامش الربح المتوقع ليس ربحاً محققاً.",size=15f)
