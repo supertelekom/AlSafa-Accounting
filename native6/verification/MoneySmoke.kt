@@ -11,6 +11,8 @@ fun main() {
     check(allocateInvoiceNet(listOf(1L, 1L, 1L), 2L).sum() == 1L)
     check(allocateInvoiceNet(listOf(0L, 250L, 0L), 50L) == listOf(0L, 200L, 0L))
     check(allocateInvoiceNet(listOf(5L, 5L), 0L) == listOf(5L, 5L))
+    check(allocateReturnIncrement(101L, 3L, 1L, 34L, 2L) == 67L)
+    check(allocateReturnIncrement(0L, 3L, 1L, 0L, 2L) == 0L)
     var expectedFailures = 0
     fun rejects(block: () -> Unit) {
         try {
@@ -35,6 +37,9 @@ fun main() {
     rejects { allocateInvoiceNet(listOf(0L, 0L), 0L) }
     rejects { allocateInvoiceNet(listOf(5L), 5L) }
     rejects { allocateInvoiceNet(listOf(Long.MAX_VALUE, 1L), 0L) }
-    check(expectedFailures == 11)
-    println("PASS: 9 successful assertions and 11 expected failures")
+    rejects { allocateReturnIncrement(100L, 2L, 2L, 100L, 1L) }
+    rejects { allocateReturnIncrement(100L, 2L, 1L, 90L, 1L) }
+    rejects { allocateReturnIncrement(100L, 2L, 1L, 0L, 1L) }
+    check(expectedFailures == 14)
+    println("PASS: 11 successful assertions and 14 expected failures")
 }
