@@ -267,7 +267,16 @@ class Store(val helper:StoreDb) {
         insert("auto_closing_reviews","event_id" to command,"closing_event_id" to closingId,"vault" to v,"currency" to c.name,"review_date" to today(),"book_balance" to expected,"actual_count" to actual,"note" to note)
         difference
     }
-    fun pendingAutomaticReviewCount(v:String,days:Int=30):Int =
+    fun automaticClosingReviewPreview(v:String,date:String,c:Currency,actual:Long):Map<String,Long> {
+        vault(v)
+        require(actual>=0L)
+        val day=LocalDate.parse(date)
+        require(day.isBefore(LocalDate.now()))
+        val closing=closingForDay(v,day.toString()).singleOrNull{it["currency"]==c.name && it["kind"]=="AUTO_CLOSING"}?:error("Missing automatic closing")
+        val book=balance(v,c)
+        return mapOf("book_at_close" to closing.getValue("expected").toLong(),"book_now" to book,"actual_now" to actual,"variance_now" to Math.subtractExact(actual,book))
+    }
+
         automaticClosingsNeedingReview(v,days).size
 
     fun automaticReviewDifference(v:String,c:Currency,days:Int=30):Long {
