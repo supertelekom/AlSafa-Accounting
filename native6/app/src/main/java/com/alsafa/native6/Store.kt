@@ -196,6 +196,32 @@ class Store(val helper:StoreDb) {
             require(amount>0L){"دفعة مورد بقيمة غير صالحة"}
             Math.addExact(sum,amount)
         }
+    /** Breakdown of supplier obligations: opening debts, purchases, and cash settlements. */
+    fun supplierMonthCategories(supplier:String,c:Currency,month:String):Map<String,Long> {
+        val period=java.time.YearMonth.parse(month)
+        val first=period.atDay(1).toString()
+        val next=period.plusMonths(1).atDay(1).toString()
+        require(scalar("SELECT count(*) FROM suppliers WHERE id=?",supplier)==1L){"المورد غير موجود"}
+        val rows=rows("""SELECT e.kind,coalesce(sum(j.amount),0) amount
+            FROM journal j JOIN events e ON e.id=j.event_id
+            WHERE j.account=? AND j.currency=? AND e.date>=? AND e.date<?
+            GROUP BY e.kind""","payable:$supplier",c.name,first,next)
+        var openingDebt=0L
+        var purchases=0L
+        var settlements=0L
+        var other=0L
+        rows.forEach { row ->
+            val amount=row.getValue("amount").toLong()
+            when(row.getValue("kind")) {
+                "SUPPLIER_OPENING" -> openingDebt=Math.subtractExact(openingDebt,amount)
+                "PURCHASE" -> purchases=Math.subtractExact(purchases,amount)
+                "SUPPLIER_PAYMENT" -> settlements=Math.addExact(settlements,amount)
+                else -> other=Math.subtractExact(other,amount)
+            }
+        }
+        return mapOf("new_opening_debt" to openingDebt,"purchases" to purchases,
+            "settlements" to settlements,"other_debt_changes" to other)
+    }
     /** Historic supplier debt and payments remain in their original transaction months. */
     fun supplierStatement(supplier:String,c:Currency,month:String):Map<String,Long> {
         val selected=java.time.YearMonth.parse(month).toString()
@@ -205,9 +231,14 @@ class Store(val helper:StoreDb) {
         val payments=supplierMonthPayments(supplier,c,selected)
         val closing=supplierMonthClosing(supplier,c,selected)
         require(closing==Math.subtractExact(Math.addExact(opening,charges),payments)){"كشف المورد غير متوازن"}
+        val categories=supplierMonthCategories(supplier,c,selected)
+        val classifiedCharges=Math.addExact(Math.addExact(categories.getValue("new_opening_debt"),
+            categories.getValue("purchases")),categories.getValue("other_debt_changes"))
+        require(Math.subtractExact(classifiedCharges,categories.getValue("settlements"))==
+            Math.subtractExact(charges,payments)){"تصنيف حركات المورد لا يطابق الدفتر"}
         return mapOf("opening" to opening,"charges" to charges,
             "payments" to payments,"closing" to closing,
-            "historical_debt" to opening,"current_month_net" to Math.subtractExact(charges,payments))
+            "historical_debt" to opening,"current_month_net" to Math.subtractExact(charges,payments)) + categories
     }
     fun supplierDue(supplier:String,c:Currency) = -scalar("SELECT coalesce(sum(amount),0) FROM journal WHERE account=? AND currency=?","payable:$supplier",c.name)
     fun purchase(supplier:String,items:List<SaleItem>,c:Currency,paid:Long,v:String,date:String=today(),command:String=id()):String=transaction {
