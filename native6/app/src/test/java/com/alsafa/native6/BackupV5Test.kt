@@ -72,6 +72,35 @@ class BackupV5Test {
         }
     }
 
+    @Test fun sqliteRejectsInventedCountsAndMissingManualCounts() {
+        val context = RuntimeEnvironment.getApplication()
+        val name = "closing-guard-${Store.id()}.db"
+        val helper = StoreDb(context, name)
+        try {
+            val store = Store(helper)
+            store.insert("events", "id" to "auto-guard", "kind" to "AUTO_CLOSING",
+                "date" to "2026-10-18", "created" to 1L, "memo" to "Automatic")
+            store.insert("events", "id" to "manual-guard", "kind" to "CLOSING",
+                "date" to "2026-10-19", "created" to 2L, "memo" to "Manual")
+            var automaticRejected = false
+            try {
+                store.insert("closings", "event_id" to "auto-guard", "vault" to "drawer",
+                    "currency" to "USD", "expected" to 1000L, "counted" to 1000L)
+            } catch (_: android.database.SQLException) { automaticRejected = true }
+            assertTrue(automaticRejected)
+            var manualRejected = false
+            try {
+                store.insert("closings", "event_id" to "manual-guard", "vault" to "drawer",
+                    "currency" to "USD", "expected" to 1000L, "counted" to null)
+            } catch (_: android.database.SQLException) { manualRejected = true }
+            assertTrue(manualRejected)
+            assertEquals(0L, store.scalar("SELECT count(*) FROM closings"))
+        } finally {
+            helper.close()
+            context.deleteDatabase(name)
+        }
+    }
+
     @Test fun schemaSixExportKeepsUnknownAutomaticCount() {
         val context = RuntimeEnvironment.getApplication()
         val name = "unknown-count-${Store.id()}.db"
