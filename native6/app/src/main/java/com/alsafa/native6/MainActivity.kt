@@ -251,9 +251,11 @@ class MainActivity:Activity() {
         val result=column();body.addView(result)
         button("عرض تقرير الشركاء"){
             try {
-                val selected=YearMonth.parse(month.text.toString())
+                val selected=YearMonth.parse(month.text.toString().trim())
+                val first=YearMonth.parse(firstMonth.text.toString().trim())
+                require(!first.isAfter(selected)){"شهر بداية الأرصدة السابقة يجب ألا يكون بعد شهر التقرير"}
                 val curr=Currency.entries[currency.selectedItemPosition]
-                val lines=store.partnerBalanceSummary(selected.toString(),firstMonth.text.toString(),curr)
+                val lines=store.partnerBalanceSummary(selected.toString(),first.toString(),curr)
                 result.removeAllViews()
                 lines.forEach { line->
                     val name=partners.firstOrNull { it["id"]==line.partnerId }?.get("name")?:line.partnerId
