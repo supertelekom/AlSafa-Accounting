@@ -26,3 +26,23 @@ fun proportional(value: Long, quantity: Long, total: Long): Long {
     require(value>=0L && quantity>=0L && total>0L && quantity<=total) { "نسبة محاسبية غير صالحة" }
     return BigDecimal.valueOf(value).multiply(BigDecimal.valueOf(quantity)).divide(BigDecimal.valueOf(total),0,RoundingMode.HALF_UP).longValueExact()
 }
+
+/** Allocate an invoice total across nonnegative gross lines without losing a minor unit. */
+fun allocateInvoiceNet(grossLines: List<Long>, discount: Long): List<Long> {
+    require(grossLines.isNotEmpty() && grossLines.all { it >= 0L }) { "قيم الأصناف غير صالحة" }
+    val gross = grossLines.fold(0L, ::add)
+    require(gross > 0L && discount >= 0L && discount < gross) { "إجمالي الفاتورة أو الخصم غير صالح" }
+    val net = Math.subtractExact(gross, discount)
+    var grossRunning = 0L
+    var netRunning = 0L
+    val result = grossLines.map { line ->
+        grossRunning = add(grossRunning, line)
+        val target = proportional(net, grossRunning, gross)
+        val allocated = Math.subtractExact(target, netRunning)
+        netRunning = target
+        require(allocated >= 0L) { "توزيع الخصم غير صالح" }
+        allocated
+    }
+    check(netRunning == net)
+    return result
+}
