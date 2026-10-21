@@ -460,7 +460,7 @@ class Store(val helper:StoreDb) {
     }
     fun supplierLedgerConsistent(supplier:String,c:Currency):Boolean {
         val entries=supplierLedgerWithBalances(supplier,c)
-        val last=entries.lastOrNull()?.get("remaining")?.toLongOrNull()?:0L
+        val last=entries.lastOrNull()?.get("remaining")?.toLongOrNull() ?: if(entries.isEmpty()) 0L else throw IllegalStateException("رصيد مورد غير صالح")
         return last==supplierDue(supplier,c)
     }
     fun supplierLedgerMonth(supplier:String,c:Currency,month:String):List<Map<String,String>> {
