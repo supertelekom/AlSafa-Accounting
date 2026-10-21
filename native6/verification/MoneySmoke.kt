@@ -11,7 +11,7 @@ fun main() {
     check(allocateInvoiceNet(listOf(1L, 1L, 1L), 2L).sum() == 1L)
     check(allocateInvoiceNet(listOf(0L, 250L, 0L), 50L) == listOf(0L, 200L, 0L))
     check(allocateInvoiceNet(listOf(5L, 5L), 0L) == listOf(5L, 5L))
-        var expectedFailures = 0
+    var expectedFailures = 0
     fun rejects(block: () -> Unit) {
         try {
             block()
