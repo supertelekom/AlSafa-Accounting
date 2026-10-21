@@ -447,6 +447,7 @@ class Store(val helper:StoreDb) {
         command
     }
     fun cancelSale(invoiceId:String,reason:String,date:String=today(),command:String=id()):String=transaction {
+        require(reason.isNotBlank()){"سبب إلغاء الفاتورة مطلوب"}
         val inv=invoice(invoiceId)
         require(inv.kind=="sale" && inv.status=="posted"){"إلغاء المبيع متاح للفواتير النشطة فقط"}
         val remaining=rows("SELECT l.line,l.qty-coalesce((SELECT sum(r.qty) FROM returns r WHERE r.invoice_id=l.invoice_id AND r.line=l.line),0) AS remaining FROM invoice_lines l WHERE l.invoice_id=?",invoiceId)
