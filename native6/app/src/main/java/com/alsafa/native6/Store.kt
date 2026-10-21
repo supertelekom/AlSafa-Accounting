@@ -387,7 +387,7 @@ class Store(val helper:StoreDb) {
     fun sale(items:List<SaleItem>,party:String,phone:String,currency:Currency,paid:Long,vault:String,discount:Long=0,date:String=today(),command:String=id()):String=transaction {
         require(items.isNotEmpty() && items.map {it.productId}.distinct().size==items.size){"الصنف مكرر"};vault(vault)
         val products=items.map { product(it.productId) };require(products.all {it.currency==currency}){"اختلاف عملة المنتج: يلزم تحويل مسجل قبل هذه العملية"}
-        require(items.all {it.qty>0&&it.unitPrice>=0});val gross=items.fold(0L){a,i->add(a,mul(i.qty,i.unitPrice))};require(discount in 0 until gross)
+        require(items.all {it.qty>0&&it.unitPrice>=0}){"الكمية والسعر غير صالحين"};val gross=items.fold(0L){a,i->add(a,mul(i.qty,i.unitPrice))};require(gross>0){"لا يمكن إنشاء فاتورة بإجمالي صفر"};require(discount>=0 && discount<gross){"الخصم غير صالح"}
         val total=gross-discount;require(paid in 0..total);require(paid==total||party.isNotBlank()){"اسم العميل مطلوب للبيع الآجل"}
         var allocated=0L;var grossAllocated=0L
         val nets=items.map {item->grossAllocated=add(grossAllocated,mul(item.qty,item.unitPrice));val cumulative=proportional(total,grossAllocated,gross);val n=cumulative-allocated;allocated=cumulative;n}
