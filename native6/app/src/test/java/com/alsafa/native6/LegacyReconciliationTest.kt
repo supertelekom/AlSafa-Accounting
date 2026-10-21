@@ -142,4 +142,16 @@ class LegacyReconciliationTest {
         assertTrue(report.contains("تجاوزت دفعات سجل الدين الافتتاحي"))
     }
 
+    @Test fun recoveredSupplierCashAmountOrCurrencyMismatchIsFlagged() {
+        val ledger=JSONArray().put(JSONObject()
+            .put("supplierId","s").put("kind","payment").put("currency","USD")
+            .put("amount",520).put("recoveredFromCashTransactionId","cash-1"))
+        val cash=JSONArray().put(JSONObject()
+            .put("id","cash-1").put("currency","TRY").put("amount",520))
+        val data=JSONObject().put("supplierLedger",ledger).put("cashTransactions",cash)
+        val report=LegacyReconciliation.inspect(JSONObject()
+            .put("format","alsafa-accounting-backup").put("data",data).toString())
+        assertTrue(report.contains("لا تطابق مبلغ أو عملة حركة الخزنة"))
+    }
+
 }
