@@ -189,6 +189,32 @@ object LegacyReconciliation {
             if(invalid>0) lines += "فواتير شراء تحتاج مراجعة: $invalid"
             lines += "تنبيه: لا يُجمع هذا المبلغ مع سجل المورد إلا بعد فحص المدفوعات المرتبطة لمنع التكرار."
         }
+        // Purchase invoice payment totals must not be deducted again from cash entries.
+        data.optJSONArray("purchases")?.let { purchases ->
+            val ids=HashSet<String>()
+            var duplicateIds=0
+            var missingSupplier=0
+            var invalidPaid=0
+            val supplierIds=HashSet<String>()
+            data.optJSONArray("suppliers")?.let { suppliers ->
+                for(i in 0 until suppliers.length()) {
+                    val id=suppliers.optJSONObject(i)?.optString("id").orEmpty()
+                    if(id.isNotBlank()) supplierIds.add(id)
+                }
+            }
+            for(i in 0 until purchases.length()) {
+                val row=purchases.optJSONObject(i) ?: continue
+                val id=row.optString("id")
+                if(id.isNotBlank() && !ids.add(id)) duplicateIds++
+                if(supplierIds.isNotEmpty() && row.optString("supplierId") !in supplierIds) missingSupplier++
+                val total=row.optString("total").toBigDecimalOrNull()
+                val paid=row.optString("paid").toBigDecimalOrNull()
+                if(total==null || paid==null || total.signum()<0 || paid.signum()<0 || paid>total) invalidPaid++
+            }
+            lines += "تدقيق فواتير الشراء: معرفات مكررة $duplicateIds، مورد غير معروف $missingSupplier، قيم مدفوعة غير صالحة $invalidPaid"
+            if(duplicateIds>0 || missingSupplier>0 || invalidPaid>0)
+                lines += "تحذير: فواتير شراء تحتاج مراجعة قبل اعتماد رصيد المورد التاريخي."
+        }
         data.optJSONArray("sales")?.let { sales ->
             val unpaid=sortedMapOf<String,BigDecimal>()
             var invalid=0
