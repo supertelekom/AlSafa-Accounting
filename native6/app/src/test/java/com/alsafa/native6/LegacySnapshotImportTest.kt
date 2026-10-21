@@ -507,10 +507,10 @@ class LegacySnapshotImportTest {
             store.cash("opening","drawer",Currency.TRY,20000L,"Initial","2026-10-01")
             store.cash("expense","drawer",Currency.TRY,2500L,"Utilities","2026-10-05")
             val early=store.periodReport("2026-10-01","2026-10-03")
-            assertEquals("1000",early.single { it["currency"]=="USD" && it["account"]=="expense:general" }["amount"])
-            assertTrue(early.none { it["currency"]=="TRY" && it["account"]=="expense:general" })
+            assertEquals("1000",early.single { it["currency"]=="USD" && it["account"]=="expense:operating" }["amount"])
+            assertTrue(early.none { it["currency"]=="TRY" && it["account"]=="expense:operating" })
             val full=store.periodReport("2026-10-01","2026-10-05")
-            assertEquals("2500",full.single { it["currency"]=="TRY" && it["account"]=="expense:general" }["amount"])
+            assertEquals("2500",full.single { it["currency"]=="TRY" && it["account"]=="expense:operating" }["amount"])
         } finally { helper.close();context.deleteDatabase(name) }
     }
 
