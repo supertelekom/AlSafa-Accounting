@@ -263,3 +263,9 @@ Inspected the user's original **AlSafa Backup v2**, exported 2026-10-18 (approxi
 - Duplicate opening-cash posting for the same vault and currency is rejected. Different currencies and vaults can each have their own opening balance. This protects against accidentally doubling cash balances.
 - Added tests for unpaid repair delivery followed by partial collection, balanced repair invoice journal, counted-versus-book cash at daily close, duplicate opening rejection and distinct vault/currency openings.
 - These tests are committed but not independently run; do not treat them as passing or as validation of historical financial migration. Legacy supplier debts, partner withdrawals, multi-currency settlements and real-device acceptance remain release blockers.
+
+## Supplier ledger transparency
+
+- Added a read-only supplier ledger breakdown grouped by accounting event, date and kind, filtered to one currency. Tablet supplier screen now exposes the dated ledger lines without modifying any postings.
+- Added regression coverage for independent USD and TRY opening supplier liabilities. Historical v3.9.353 supplier ledger and purchase payment migration still requires reconciliation and is not represented by this native ledger report.
+- CI and APK build have not been verified.
