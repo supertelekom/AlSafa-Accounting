@@ -278,6 +278,7 @@ class Store(val helper:StoreDb) {
         return mapOf("book_at_close" to closing.getValue("expected").toLong(),"book_now" to book,"actual_now" to actual,"variance_now" to Math.subtractExact(actual,book))
     }
 
+    fun automaticPendingReviewCount(v:String,days:Int=30):Int =
         automaticClosingsNeedingReview(v,days).size
 
     fun automaticReviewExceptionCount(v:String,days:Int=30):Int =
