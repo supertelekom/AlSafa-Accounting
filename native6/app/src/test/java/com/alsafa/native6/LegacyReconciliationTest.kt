@@ -208,4 +208,14 @@ class LegacyReconciliationTest {
         assertTrue(report.contains("s | USD: 50"))
     }
 
+    @Test fun emptySupplierDirectoryDoesNotValidatePurchaseSupplier() {
+        val data=JSONObject().put("suppliers",JSONArray())
+            .put("purchases",JSONArray().put(JSONObject()
+                .put("id","purchase-1").put("supplierId","unknown")
+                .put("currency","USD").put("total",10).put("paid",0)))
+        val report=LegacyReconciliation.inspect(JSONObject()
+            .put("format","alsafa-accounting-backup").put("data",data).toString())
+        assertTrue(report.contains("مورد غير معروف 1"))
+    }
+
 }
