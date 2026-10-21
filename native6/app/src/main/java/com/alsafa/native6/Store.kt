@@ -290,6 +290,14 @@ class Store(val helper:StoreDb) {
         val search=query.trim()
         return rows("SELECT * FROM repairs WHERE (?='all' OR status=?) AND (instr(lower(customer),lower(?))>0 OR instr(lower(phone),lower(?))>0 OR instr(lower(watch),lower(?))>0 OR instr(lower(problem),lower(?))>0 OR instr(lower(id),lower(?))>0) ORDER BY date DESC,id DESC",status,status,search,search,search,search,search)
     }
+    fun repairDetail(id:String):Map<String,String> =
+        rows("SELECT * FROM repairs WHERE id=?",id).single()
+    fun repairInvoice(repairId:String):Map<String,String>? {
+        val repair=repairDetail(repairId)
+        val invoiceId=repair["invoice_id"].orEmpty()
+        if(invoiceId.isBlank())return null
+        return rows("SELECT * FROM invoices WHERE id=?",invoiceId).singleOrNull()
+    }
     fun repairStatusCounts():Map<String,Long> =
         listOf("received","in_progress","ready","delivered").associateWith{status->scalar("SELECT count(*) FROM repairs WHERE status=?",status)}
     fun receiveRepair(customer:String,phone:String,watch:String,problem:String,command:String=id()):String=transaction {require(customer.isNotBlank()&&watch.isNotBlank());insert("repairs","id" to command,"customer" to customer,"phone" to phone,"watch" to watch,"problem" to problem,"status" to "received","date" to today());event(command,"REPAIR_RECEIVED",today(),"استلام صيانة $customer");command}
