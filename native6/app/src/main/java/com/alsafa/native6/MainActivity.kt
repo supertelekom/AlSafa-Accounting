@@ -166,6 +166,32 @@ class MainActivity:Activity() {
         text("تقييم التكلفة وسعر البيع حسب عملة كل منتج، دون خلط العملات. هامش الربح المتوقع ليس ربحاً محققاً.",size=15f)
         val threshold=field("تنبيه عندما تكون الكمية أقل من أو تساوي",body,"2",true)
         val output=column();body.addView(output)
+        button("فحص فروقات المخزون"){
+            try{
+                output.removeAllViews()
+                var total=0
+                Currency.entries.forEach{currency->
+                    listOf("watch" to "الساعات","part" to "قطع الصيانة").forEach{(kind,title)->
+                        val discrepancies=store.inventoryDiscrepancies(currency,kind)
+                        if(discrepancies.isNotEmpty()){
+                            text("فروقات $title · ${currency.name} · ${discrepancies.size} صنف",output,size=20f)
+                            discrepancies.forEach{row->
+                                total++
+                                text(row.getValue("name")+" · "+row.getValue("barcode")+
+                                    "\nكمية فعلية "+row.getValue("actual_qty")+
+                                    " · حسب الحركات "+row.getValue("ledger_qty")+
+                                    " · فرق "+row.getValue("qty_difference"),output)
+                                text("قيمة فعلية "+money(row.getValue("actual_value").toLong(),currency)+
+                                    " · حسب الحركات "+money(row.getValue("ledger_value").toLong(),currency)+
+                                    " · فرق "+money(row.getValue("value_difference").toLong(),currency),output)
+                            }
+                        }
+                    }
+                }
+                if(total==0)text("جميع كميات وقيم المخزون تطابق سجل الحركات.",output)
+                else text("هذا كشف تدقيق فقط؛ لم تُعدّل أي كميات أو قيود.",output)
+            }catch(e:Exception){error(e)}
+        }
         button("عرض تقييم المخزون"){
             try{
                 val limit=threshold.text.toString().trim().toLong()
