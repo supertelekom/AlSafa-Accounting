@@ -392,4 +392,20 @@ class LegacySnapshotImportTest {
         } finally { helper.close();context.deleteDatabase(name) }
     }
 
+    @Test fun duplicateOpeningIsRejected() {
+        val context=RuntimeEnvironment.getApplication<Context>()
+        val name="opening-once-test.db"
+        context.deleteDatabase(name)
+        val helper=StoreDb(context,name)
+        try {
+            val store=Store(helper)
+            store.cash("opening","drawer",Currency.USD,5000L,"Initial")
+            var rejected=false
+            try { store.cash("opening","drawer",Currency.USD,5000L,"Again") }
+            catch (_:IllegalArgumentException) { rejected=true }
+            assertTrue(rejected)
+            assertEquals(5000L,store.balance("drawer",Currency.USD))
+        } finally { helper.close();context.deleteDatabase(name) }
+    }
+
 }
