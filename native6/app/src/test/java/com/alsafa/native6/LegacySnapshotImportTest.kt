@@ -424,4 +424,21 @@ class LegacySnapshotImportTest {
         } finally { helper.close();context.deleteDatabase(name) }
     }
 
+    @Test fun supplierLedgerBreakdownIsCurrencyScoped() {
+        val context=RuntimeEnvironment.getApplication<Context>()
+        val name="supplier-ledger-breakdown-test.db"
+        context.deleteDatabase(name)
+        val helper=StoreDb(context,name)
+        try {
+            val store=Store(helper)
+            val supplier=store.addSupplier("Supplier","")
+            store.supplierOpening(supplier,Currency.USD,5000L)
+            store.supplierOpening(supplier,Currency.TRY,9000L)
+            assertEquals(1,store.supplierLedgerBreakdown(supplier,Currency.USD).size)
+            assertEquals(1,store.supplierLedgerBreakdown(supplier,Currency.TRY).size)
+            assertEquals(5000L,store.supplierDue(supplier,Currency.USD))
+            assertEquals(9000L,store.supplierDue(supplier,Currency.TRY))
+        } finally { helper.close();context.deleteDatabase(name) }
+    }
+
 }
