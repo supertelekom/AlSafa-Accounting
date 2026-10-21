@@ -347,3 +347,10 @@ Inspected the user's original **AlSafa Backup v2**, exported 2026-10-18 (approxi
 - Native 6 provides a date-scoped cash statement per vault for USD/TRY/SYP, showing the prior-day carried ledger balance, that day's cash inflows/outflows, dated journal movements, and the resulting end-of-day ledger balance.
 - Daily statements reconcile their event-linked cash postings against the ending balance. Recorded physical closing counts are retrieved by date separately; viewing statements does not post any transactions.
 - Unit test assertions cover carried balances from one day to the next, absence of future-day entries, currency isolation, and dated closing lookup. The Android build and test suite have not been verified in CI.
+
+## Tablet repair work queue
+
+- Repairs now have local search by customer, phone, watch, fault and repair ID, with status filtering and counts for received/in-progress/ready/delivered.
+- Filtered search results provide read-only repair details and linked invoice number when available. Repair intake can be reviewed for one chosen calendar month.
+- Received/in-progress/ready repair action buttons remain available independently of the filtered search; no financial posting occurs during search or inspection.
+- Regression test exercises intake, search, status transitions and month scoping. Android build and test execution are not verified.
