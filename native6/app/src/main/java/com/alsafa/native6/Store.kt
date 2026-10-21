@@ -574,8 +574,8 @@ class Store(val helper:StoreDb) {
     }
     fun supplierDue(supplier:String,c:Currency) = -scalar("SELECT coalesce(sum(amount),0) FROM journal WHERE account=? AND currency=?","payable:$supplier",c.name)
     fun purchase(supplier:String,items:List<SaleItem>,c:Currency,paid:Long,v:String,date:String=today(),command:String=id()):String=transaction {
-        require(scalar("SELECT count(*) FROM suppliers WHERE id=?",supplier)==1L);require(items.isNotEmpty()&&items.map{it.productId}.distinct().size==items.size)
-        require(items.all{it.qty>0&&it.unitPrice>=0});val total=items.fold(0L){a,i->add(a,mul(i.qty,i.unitPrice))};require(total>0&&paid in 0..total)
+        require(scalar("SELECT count(*) FROM suppliers WHERE id=?",supplier)==1L){"المورد غير موجود"};require(items.isNotEmpty()&&items.map{it.productId}.distinct().size==items.size){"فاتورة الشراء فارغة أو تحتوي أصنافاً مكررة"}
+        require(items.all{it.qty>0&&it.unitPrice>=0}){"كمية الشراء أو سعر الوحدة غير صالح"};val total=items.fold(0L){a,i->add(a,mul(i.qty,i.unitPrice))};require(total>0&&paid in 0..total){"إجمالي الشراء أو الدفعة غير صالح"}
         event(command,"PURCHASE",date,"شراء مورد $supplier");insert("invoices","id" to command,"number" to nextNumber(),"kind" to "purchase","party" to supplier,"phone" to "","currency" to c.name,"total" to total,"cost" to total,"notes" to "")
         items.forEachIndexed {i,line->val p=product(line.productId);require(p.currency==c);val value=mul(line.qty,line.unitPrice);val next=add(p.stock,line.qty);val avg=proportional(add(p.value,value),1,next)
             insert("invoice_lines","invoice_id" to command,"line" to i,"product_id" to p.id,"name" to p.name,"qty" to line.qty,"net" to value,"cost" to value);stock(command,i,p,line.qty,value);db.execSQL("UPDATE products SET cost=? WHERE id=?",arrayOf(avg,p.id)) }
