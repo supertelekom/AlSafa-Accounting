@@ -241,6 +241,18 @@ object LegacyReconciliation {
             lines += "ربط دفعات فواتير الشراء: مراجع صحيحة $matched، فواتير مفقودة $missing، عملة مختلفة $crossCurrency"
             lines += "المدفوع المسجل بالفاتورة قد يشمل دفعات لاحقة؛ يمنع خصمها مرة ثانية عند الترحيل."
         }
+        // The same historical purchase ID cannot safely identify two invoices.
+        purchaseRows?.let { purchases ->
+            val byId=HashMap<String,Int>()
+            var blank=0
+            for(i in 0 until purchases.length()) {
+                val id=purchases.optJSONObject(i)?.optString("id").orEmpty()
+                if(id.isBlank()) blank++ else byId[id]=(byId[id] ?: 0)+1
+            }
+            val repeated=byId.values.count { it>1 }
+            if(blank>0 || repeated>0)
+                lines += "تحذير: فواتير شراء بلا معرف $blank، ومعرفات غير فريدة $repeated؛ يجب الحفاظ على سجل المصدر دون الدمج بحسب رقم الفاتورة."
+        }
         data.optJSONArray("sales")?.let { sales ->
             val unpaid=sortedMapOf<String,BigDecimal>()
             var invalid=0
