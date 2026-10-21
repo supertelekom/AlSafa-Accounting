@@ -506,7 +506,9 @@ class Store(val helper:StoreDb) {
         val closing=supplierMonthClosing(supplier,c,month)
         val charges=supplierMonthCharges(supplier,c,month)
         val payments=supplierMonthPayments(supplier,c,month)
-        return closing==Math.addExact(opening,Math.subtractExact(charges,payments))
+        val entries=supplierLedgerMonth(supplier,c,month)
+        val last=entries.lastOrNull()?.get("remaining")?.toLongOrNull() ?: if(entries.isEmpty()) opening else throw IllegalStateException("رصيد كشف المورد غير صالح")
+        return closing==Math.addExact(opening,Math.subtractExact(charges,payments)) && last==closing
     }
     /** Each payment is shown in the month of its own posting, never allocated to old debt dates. */
     fun supplierPaymentsMonth(supplier:String,c:Currency,month:String):List<Map<String,String>> {
