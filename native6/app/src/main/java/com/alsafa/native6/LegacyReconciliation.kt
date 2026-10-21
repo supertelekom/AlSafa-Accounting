@@ -263,6 +263,25 @@ object LegacyReconciliation {
             if(duplicate>0 || missingId>0)
                 lines += "تحذير: دفعات شراء بمعرف مكرر $duplicate، ودون معرف $missingId؛ يجب تدقيق مصدر الدفعة قبل الترحيل."
         }
+        // Never infer a conversion rate for a historical purchase settlement.
+        if(purchaseRows!=null && laterRows!=null) {
+            val currencyById=HashMap<String,String>()
+            for(i in 0 until purchaseRows.length()) {
+                val row=purchaseRows.optJSONObject(i) ?: continue
+                val id=row.optString("id")
+                if(id.isNotBlank()) currencyById[id]=row.optString("currency")
+            }
+            var unresolved=0
+            for(i in 0 until laterRows.length()) {
+                val row=laterRows.optJSONObject(i) ?: continue
+                if(row.optString("referenceType")!="purchase") continue
+                val invoiceCurrency=currencyById[row.optString("referenceId")] ?: continue
+                val paymentCurrency=row.optString("paymentCurrency").ifBlank {row.optString("currency")}
+                if(paymentCurrency.isNotBlank() && paymentCurrency!=invoiceCurrency &&
+                    (!row.has("rateSnapshot") || row.isNull("rateSnapshot"))) unresolved++
+            }
+            if(unresolved>0) lines += "تحذير: $unresolved دفعة شراء بعملة مختلفة دون سعر صرف تاريخي موثق؛ لا تُحوّل تلقائيًا."
+        }
         // The same historical purchase ID cannot safely identify two invoices.
         purchaseRows?.let { purchases ->
             val byId=HashMap<String,Int>()
