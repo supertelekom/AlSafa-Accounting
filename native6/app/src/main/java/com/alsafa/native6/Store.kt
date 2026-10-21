@@ -279,6 +279,13 @@ class Store(val helper:StoreDb) {
         return rows("SELECT j.currency,j.account,sum(j.amount) amount FROM journal j JOIN events e ON e.id=j.event_id WHERE e.date>=? AND e.date<=? GROUP BY j.currency,j.account ORDER BY j.currency,j.account",from.toString(),until.toString())
     }
     fun monthReport(month:String):List<Map<String,String>> {java.time.YearMonth.parse(month);return rows("SELECT j.currency,j.account,sum(j.amount) amount FROM journal j JOIN events e ON e.id=j.event_id WHERE substr(e.date,1,7)=? GROUP BY j.currency,j.account ORDER BY j.currency,j.account",month)}
+    fun repairList(query:String="",status:String="all"):List<Map<String,String>> {
+        require(status in setOf("all","received","in_progress","ready","delivered")){"حالة الصيانة غير صالحة"}
+        val search=query.trim()
+        return rows("SELECT * FROM repairs WHERE (?='all' OR status=?) AND (instr(lower(customer),lower(?))>0 OR instr(lower(phone),lower(?))>0 OR instr(lower(watch),lower(?))>0 OR instr(lower(problem),lower(?))>0 OR instr(lower(id),lower(?))>0) ORDER BY date DESC,id DESC",status,status,search,search,search,search,search)
+    }
+    fun repairStatusCounts():Map<String,Long> =
+        listOf("received","in_progress","ready","delivered").associateWith{status->scalar("SELECT count(*) FROM repairs WHERE status=?",status)}
     fun receiveRepair(customer:String,phone:String,watch:String,problem:String,command:String=id()):String=transaction {require(customer.isNotBlank()&&watch.isNotBlank());insert("repairs","id" to command,"customer" to customer,"phone" to phone,"watch" to watch,"problem" to problem,"status" to "received","date" to today());event(command,"REPAIR_RECEIVED",today(),"استلام صيانة $customer");command}
     fun startRepair(id:String)=transaction { require(rows("SELECT status FROM repairs WHERE id=?",id).single().getValue("status")=="received"); db.execSQL("UPDATE repairs SET status=? WHERE id=?",arrayOf("in_progress",id)); event(id(),"REPAIR_STARTED",today(),"بدء العمل على الصيانة") }
     fun repairReady(id:String)=transaction {require(rows("SELECT status FROM repairs WHERE id=?",id).single().getValue("status") in setOf("received","in_progress")){"الصيانة ليست في حالة تسمح بالتجهيز"};db.execSQL("UPDATE repairs SET status='ready' WHERE id=?",arrayOf(id));event(id(),"REPAIR_READY",today(),"جاهزة $id")}
