@@ -453,9 +453,9 @@ class Store(val helper:StoreDb) {
         require(reason.isNotBlank()){"سبب إلغاء الفاتورة مطلوب"}
         val inv=invoice(invoiceId)
         require(inv.kind=="sale" && inv.status=="posted"){"إلغاء المبيع متاح للفواتير النشطة فقط"}
-        val remaining=rows("SELECT l.line,l.qty-coalesce((SELECT sum(r.qty) FROM returns r WHERE r.invoice_id=l.invoice_id AND r.line=l.line),0) AS remaining FROM invoice_lines l WHERE l.invoice_id=?",invoiceId)
+        val remaining=rows("SELECT l.line,l.qty original_qty,l.qty-coalesce((SELECT sum(r.qty) FROM returns r WHERE r.invoice_id=l.invoice_id AND r.line=l.line),0) AS remaining FROM invoice_lines l WHERE l.invoice_id=?",invoiceId)
         require(remaining.isNotEmpty()){"فاتورة المبيع بلا أصناف"}
-        require(remaining.all{it.getValue("remaining").toLong()>=0L && it.getValue("remaining").toLong()<=scalar("SELECT qty FROM invoice_lines WHERE invoice_id=? AND line=?",invoiceId,it.getValue("line"))}){"مرتجعات الفاتورة غير متسقة مع الكميات الأصلية"}
+        require(remaining.all{it.getValue("original_qty").toLong()>0L && it.getValue("remaining").toLong() in 0L..it.getValue("original_qty").toLong()}){"مرتجعات الفاتورة غير متسقة مع الكميات الأصلية"}
         val quantities=remaining.filter{it.getValue("remaining").toLong()>0L}.associate{it.getValue("line").toInt() to it.getValue("remaining").toLong()}
         require(quantities.isNotEmpty()){"لا توجد أصناف متبقية للإلغاء"}
         returnSale(invoiceId,quantities,reason,date,command)
