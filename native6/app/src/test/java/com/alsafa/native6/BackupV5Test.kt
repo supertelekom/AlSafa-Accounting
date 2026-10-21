@@ -72,6 +72,28 @@ class BackupV5Test {
         }
     }
 
+    @Test fun schemaSixExportKeepsUnknownAutomaticCount() {
+        val context = RuntimeEnvironment.getApplication()
+        val name = "unknown-count-${Store.id()}.db"
+        val helper = StoreDb(context, name)
+        try {
+            val store = Store(helper)
+            store.transaction {
+                store.insert("events", "id" to "automatic-test", "kind" to "AUTO_CLOSING",
+                    "date" to "2026-10-18", "created" to 1L, "memo" to "Automatic")
+                store.insert("closings", "event_id" to "automatic-test", "vault" to "drawer",
+                    "currency" to "USD", "expected" to 1000L, "counted" to null)
+            }
+            val output = ByteArrayOutputStream()
+            Backup(context, store).export(output)
+            val data = JSONObject(Backup.ungzip(JSONObject(output.toString("UTF-8")).getString("data")))
+            assertTrue(data.getJSONArray("closings").getJSONObject(0).isNull("counted"))
+        } finally {
+            helper.close()
+            context.deleteDatabase(name)
+        }
+    }
+
     @Test fun versionFourSnapshotRestoresWithoutReviewTable() {
         val context = RuntimeEnvironment.getApplication()
         val sourceName = "backup-v4-source-${Store.id()}.db"
