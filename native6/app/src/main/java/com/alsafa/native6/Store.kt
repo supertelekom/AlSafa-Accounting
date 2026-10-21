@@ -249,6 +249,28 @@ class Store(val helper:StoreDb) {
         return rows("SELECT e.id event_id,e.date,e.kind,c.currency,c.expected,c.counted,(c.counted-c.expected) variance FROM closings c JOIN events e ON e.id=c.event_id WHERE c.vault=? AND e.date=? ORDER BY c.currency",v,day)
     }
     /** A late or backdated posting can change book cash after a physical closing. Flag it, never rewrite the original count. */
+    fun reviewAutomaticClosing(v:String,date:String,c:Currency,actual:Long,note:String):Long=transaction {
+        vault(v)
+        require(actual>=0L && note.isNotBlank()){"العد والبيان مطلوبان"}
+        val closedDate=LocalDate.parse(date)
+        require(closedDate.isBefore(LocalDate.now())){"المراجعة تخص إقفالاً سابقاً"}
+        val closing=closingForDay(v,closedDate.toString()).singleOrNull{it["currency"]==c.name && it["kind"]=="AUTO_CLOSING"}
+            ?:error("لا يوجد إقفال تلقائي لهذه الخزنة والعملة والتاريخ")
+        val closingId=closing.getValue("event_id")
+        require(scalar("SELECT count(*) FROM auto_closing_reviews WHERE closing_event_id=? AND currency=?",closingId,c.name)==0L){"تم تسجيل مراجعة لهذه العملة سابقاً"}
+        val expected=balance(v,c)
+        val difference=Math.subtractExact(actual,expected)
+        val command=id()
+        event(command,"AUTO_CLOSING_REVIEW",today(),"مراجعة إقفال $date - $note")
+        insert("auto_closing_reviews","event_id" to command,"closing_event_id" to closingId,"vault" to v,"currency" to c.name,"review_date" to today(),"book_balance" to expected,"actual_count" to actual,"note" to note)
+        difference
+    }
+    fun automaticClosingReviews(v:String,days:Int=30):List<Map<String,String>> {
+        vault(v)
+        require(days in 1..365)
+        val since=LocalDate.now().minusDays(days.toLong()).toString()
+        return rows("SELECT e.date closing_date,r.currency,r.review_date,r.book_balance,r.actual_count,(r.actual_count-r.book_balance) variance,r.note FROM auto_closing_reviews r JOIN events e ON e.id=r.closing_event_id WHERE r.vault=? AND e.date>=? ORDER BY r.review_date DESC,r.currency",v,since)
+    }
     fun automaticClosingsNeedingReview(v:String,days:Int=30):List<Map<String,String>> {
         vault(v)
         require(days in 1..365)
