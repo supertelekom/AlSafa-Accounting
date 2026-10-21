@@ -166,6 +166,25 @@ class MainActivity:Activity() {
         text("تقييم التكلفة وسعر البيع حسب عملة كل منتج، دون خلط العملات. هامش الربح المتوقع ليس ربحاً محققاً.",size=15f)
         val threshold=field("تنبيه عندما تكون الكمية أقل من أو تساوي",body,"2",true)
         val output=column();body.addView(output)
+        button("كشف قيود المخزون بين تاريخين"){
+            form("قيود المخزون","عرض"){box->
+                val from=field("من YYYY-MM-DD",box,YearMonth.now().atDay(1).toString())
+                val until=field("إلى YYYY-MM-DD",box,Store.today())
+                val currency=select("العملة",Currency.entries.map{it.name},box)
+                ({
+                    val c=Currency.entries[currency.selectedItemPosition]
+                    val entries=store.inventoryJournalEntries(c,from.text.toString().trim(),until.text.toString().trim())
+                    val total=entries.fold(0L){sum,row->Math.addExact(sum,row.getValue("amount").toLong())}
+                    AlertDialog.Builder(this).setTitle("قيود المخزون · ${c.name}")
+                        .setMessage("صافي الحركة "+money(total,c)+"\n"+
+                            (if(entries.isEmpty())"لا توجد قيود في الفترة" else entries.joinToString("\n"){row->
+                                row.getValue("date")+" · "+row.getValue("kind")+" · "+
+                                    money(row.getValue("amount").toLong(),c)+" · "+row.getValue("memo")
+                            }))
+                        .setPositiveButton("حسناً",null).show()
+                })
+            }
+        }
         button("مطابقة قيمة المخزون مع دفتر الأستاذ"){
             try{
                 output.removeAllViews()
