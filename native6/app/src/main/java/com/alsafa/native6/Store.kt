@@ -420,8 +420,10 @@ class Store(val helper:StoreDb) {
     }
     fun collect(invoiceId:String,amount:Long,v:String,date:String=today(),command:String=id())=transaction {collectInternal(invoiceId,amount,v,date,command)}
     fun returnSale(invoiceId:String,quantities:Map<Int,Long>,reason:String,date:String=today(),command:String=id()):String=transaction {
-        val inv=invoice(invoiceId);require(inv.kind=="sale" && inv.status=="posted" && reason.isNotBlank() && quantities.isNotEmpty())
-        val lines=rows("SELECT * FROM invoice_lines WHERE invoice_id=? ORDER BY line",invoiceId);require(quantities.keys.all { k->lines.any { it.getValue("line").toInt()==k } })
+        val inv=invoice(invoiceId);require(inv.kind=="sale" && inv.status=="posted"){"المرتجع متاح لفاتورة مبيع نشطة فقط"}
+        require(reason.isNotBlank() && quantities.isNotEmpty()){"حدد سبب الإرجاع والأصناف"}
+        val lines=rows("SELECT * FROM invoice_lines WHERE invoice_id=? ORDER BY line",invoiceId)
+        require(lines.isNotEmpty() && quantities.keys.all { k->lines.any { it.getValue("line").toInt()==k } }){"أصناف المرتجع غير موجودة في الفاتورة"}
         event(command,"SALE_RETURN",date,reason)
         var totalCredit=0L;var costCredit=0L
         for(line in lines) {
