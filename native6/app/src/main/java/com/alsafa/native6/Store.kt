@@ -246,7 +246,7 @@ class Store(val helper:StoreDb) {
     fun closingForDay(v:String,date:String):List<Map<String,String>> {
         vault(v)
         val day=LocalDate.parse(date).toString()
-        return rows("SELECT e.id event_id,e.date,c.currency,c.expected,c.counted,(c.counted-c.expected) variance FROM closings c JOIN events e ON e.id=c.event_id WHERE c.vault=? AND e.date=? ORDER BY c.currency",v,day)
+        return rows("SELECT e.id event_id,e.date,e.kind,c.currency,c.expected,c.counted,(c.counted-c.expected) variance FROM closings c JOIN events e ON e.id=c.event_id WHERE c.vault=? AND e.date=? ORDER BY c.currency",v,day)
     }
     /** A late or backdated posting can change book cash after a physical closing. Flag it, never rewrite the original count. */
     fun closingBookDrift(v:String,date:String,c:Currency):Long? {
@@ -258,12 +258,12 @@ class Store(val helper:StoreDb) {
         val first=java.time.YearMonth.parse(month).atDay(1).toString()
         val next=java.time.YearMonth.parse(month).plusMonths(1).atDay(1).toString()
         vault(v)
-        return rows("SELECT e.id event_id,e.date,c.currency,c.expected,c.counted,(c.counted-c.expected) variance FROM closings c JOIN events e ON e.id=c.event_id WHERE c.vault=? AND e.date>=? AND e.date<? ORDER BY e.date DESC,e.created DESC,c.currency",v,first,next)
+        return rows("SELECT e.id event_id,e.date,e.kind,c.currency,c.expected,c.counted,(c.counted-c.expected) variance FROM closings c JOIN events e ON e.id=c.event_id WHERE c.vault=? AND e.date>=? AND e.date<? ORDER BY e.date DESC,e.created DESC,c.currency",v,first,next)
     }
     fun closingHistory(v:String,limit:Int=60):List<Map<String,String>> {
         vault(v)
         require(limit in 1..365)
-        return rows("SELECT e.id event_id,e.date,c.currency,c.expected,c.counted,(c.counted-c.expected) variance FROM closings c JOIN events e ON e.id=c.event_id WHERE c.vault=? ORDER BY e.date DESC,e.created DESC,c.currency LIMIT ?",v,limit.toString())
+        return rows("SELECT e.id event_id,e.date,e.kind,c.currency,c.expected,c.counted,(c.counted-c.expected) variance FROM closings c JOIN events e ON e.id=c.event_id WHERE c.vault=? ORDER BY e.date DESC,e.created DESC,c.currency LIMIT ?",v,limit.toString())
     }
     fun closingPreview(v:String,counts:Map<Currency,Long>):Map<Currency,Pair<Long,Long>> {
         vault(v)
