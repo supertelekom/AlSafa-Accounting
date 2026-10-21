@@ -22,4 +22,7 @@ fun validatePosting(lines: List<Posting>) {
 }
 fun add(a: Long,b: Long) = Math.addExact(a,b)
 fun mul(a: Long,b: Long) = Math.multiplyExact(a,b)
-fun proportional(value: Long, quantity: Long, total: Long): Long = BigDecimal.valueOf(value).multiply(BigDecimal.valueOf(quantity)).divide(BigDecimal.valueOf(total),0,RoundingMode.HALF_UP).longValueExact()
+fun proportional(value: Long, quantity: Long, total: Long): Long {
+    require(value>=0L && quantity>=0L && total>0L && quantity<=total) { "نسبة محاسبية غير صالحة" }
+    return BigDecimal.valueOf(value).multiply(BigDecimal.valueOf(quantity)).divide(BigDecimal.valueOf(total),0,RoundingMode.HALF_UP).longValueExact()
+}
