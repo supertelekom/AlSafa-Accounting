@@ -605,6 +605,17 @@ class Store(val helper:StoreDb) {
                 "net_result" to Math.subtractExact(Math.subtractExact(revenue,cost),expense).toString())
         }
     }
+    fun operatingDayEventsReconcile(date:String,c:Currency):Boolean {
+        val events=operatingDayEventBreakdown(date,c)
+        val totals=operatingDailyRange(date,date,c).singleOrNull()
+        if(totals==null)return events.isEmpty()
+        return mapOf("revenue" to "revenue","cost_of_sales" to "cost_of_sales",
+            "operating_expenses" to "operating_expenses",
+            "drawings" to "drawings","net_result" to "net_result").all{(key,totalKey)->
+            events.fold(0L){sum,event->Math.addExact(sum,event.getValue(key).toLong())}==
+                totals.getValue(totalKey)
+        }
+    }
     fun operatingDayAuditReconciles(date:String,c:Currency):Boolean {
         val day=LocalDate.parse(date).toString()
         val entries=operatingDayAudit(day,c)
