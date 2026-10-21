@@ -242,4 +242,17 @@ class LegacyReconciliationTest {
         assertTrue(report.contains("دفعات شراء بمعرف مكرر 1، ودون معرف 1"))
     }
 
+    @Test fun crossCurrencyPurchasePaymentWithoutRateIsNotConverted() {
+        val purchases=JSONArray().put(JSONObject().put("id","p")
+            .put("currency","USD").put("supplierId","s").put("total",100).put("paid",20))
+        val payments=JSONArray().put(JSONObject().put("id","pay")
+            .put("referenceType","purchase").put("referenceId","p")
+            .put("currency","USD").put("paymentCurrency","TRY").put("paymentAmount",400))
+        val report=LegacyReconciliation.inspect(JSONObject()
+            .put("format","alsafa-accounting-backup")
+            .put("data",JSONObject().put("purchases",purchases).put("payments",payments)).toString())
+        assertTrue(report.contains("دفعة شراء بعملة مختلفة دون سعر صرف تاريخي موثق"))
+        assertTrue(report.contains("s | USD: 80"))
+    }
+
 }
