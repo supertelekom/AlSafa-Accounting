@@ -166,6 +166,21 @@ class MainActivity:Activity() {
         text("تقييم التكلفة وسعر البيع حسب عملة كل منتج، دون خلط العملات. هامش الربح المتوقع ليس ربحاً محققاً.",size=15f)
         val threshold=field("تنبيه عندما تكون الكمية أقل من أو تساوي",body,"2",true)
         val output=column();body.addView(output)
+        button("مطابقة قيمة المخزون مع دفتر الأستاذ"){
+            try{
+                output.removeAllViews()
+                Currency.entries.forEach{currency->
+                    val audit=store.inventoryJournalReconciliation(currency)
+                    text("العملة ${currency.name}",output,size=21f)
+                    text("قيمة المنتجات "+money(audit.getValue("stock_value"),currency),output)
+                    text("حساب المخزون في دفتر الأستاذ "+money(audit.getValue("journal_value"),currency),output)
+                    text("الفرق "+money(audit.getValue("difference"),currency),output)
+                    if(audit.getValue("difference")!=0L)
+                        text("تحذير: يجب مراجعة القيود والحركات قبل اعتماد الأرقام، ولا يتم التصحيح تلقائياً.",output)
+                    else text("متطابق",output)
+                }
+            }catch(e:Exception){error(e)}
+        }
         button("فحص فروقات المخزون"){
             try{
                 output.removeAllViews()
