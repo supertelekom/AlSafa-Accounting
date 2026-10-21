@@ -79,7 +79,7 @@ class MainActivity:Activity() {
         text("نسخة تطوير — حفظ محلي على التابلت",root,13f)
         if(page!="home")button("‹ الرئيسية",root){go("home")}
         val scroll=ScrollView(this);body=column();scroll.addView(body);root.addView(scroll,LinearLayout.LayoutParams(-1,0,1f))
-        when(page){"home"->home();"simple"->simple();"advanced"->advanced();"products"->products();"inventory"->inventoryDashboard();"sale"->sale();"invoices"->invoices();"vaults"->vaults();"suppliers"->suppliers();"repairs"->repairs();"reports"->reports();"period-reports"->periodReports();"partners"->partners();"backup"->backup();"legacy-audit"->legacyAudit();"legacy-history"->legacyHistory();"audit"->audit()}
+        when(page){"home"->home();"simple"->simple();"advanced"->advanced();"products"->products();"inventory"->inventoryDashboard();"stock-history"->selectedProduct?.let{stockHistory(it)};"sale"->sale();"invoices"->invoices();"vaults"->vaults();"suppliers"->suppliers();"repairs"->repairs();"reports"->reports();"period-reports"->periodReports();"partners"->partners();"backup"->backup();"legacy-audit"->legacyAudit();"legacy-history"->legacyHistory();"audit"->audit()}
     }
     private fun legacyHistory() {
         text("أرشيف العمليات القديمة — قراءة فقط",size=25f)
@@ -160,7 +160,7 @@ class MainActivity:Activity() {
     private fun simple(){text("العمل السريع",size=26f);button("مبيع"){go("sale")};button("استلام وتسليم صيانة"){go("repairs")};button("الفواتير وقبض الديون"){go("invoices")};button("الخزنات والإقفال اليومي"){go("vaults")}}
     private fun advanced(){text("الوضع الكامل",size=26f);listOf("مبيع" to "sale","المنتجات وقطع الصيانة" to "products","الفواتير والمرتجعات" to "invoices","استلام وتسليم صيانة" to "repairs","الخزنات والمصاريف والإقفال" to "vaults","الموردون والمشتريات" to "suppliers","تقرير شهر واحد" to "reports","تقرير بين تاريخين" to "period-reports","الشركاء ونسب الأرباح" to "partners","سجل العمليات" to "audit","النسخ الاحتياطي والاستعادة" to "backup","أرشيف الفواتير القديمة" to "legacy-history").forEach{(label,route)->button(label){go(route)}}}
     private fun products(){text("المنتجات وقطع الصيانة",size=25f);button("＋ إضافة منتج / قطعة"){productForm()};button("تقييم المخزون والتنبيهات"){go("inventory")};val query=field("بحث بالاسم أو الباركود أو REF",body);val list=column();body.addView(list)
-        fun show(){list.removeAllViews();store.products(query.text.toString()).forEach{p->button("${p.name}  ·  ${money(p.price,p.currency)}\nالمخزون ${p.stock}  ·  ${p.barcode}",list){productForm(p)}}};button("بحث"){show()};show()}
+        fun show(){list.removeAllViews();store.products(query.text.toString()).forEach{p->button("${p.name}  ·  ${money(p.price,p.currency)}\nالمخزون ${p.stock}  ·  ${p.barcode}",list){productForm(p)};button("سجل مخزون ${p.name}",list){selectedProduct=p;go("stock-history")}}};button("بحث"){show()};show()}
     private fun inventoryDashboard(){
         text("تقييم المخزون والتنبيهات",size=25f)
         text("تقييم التكلفة وسعر البيع حسب عملة كل منتج، دون خلط العملات. هامش الربح المتوقع ليس ربحاً محققاً.",size=15f)
@@ -186,6 +186,26 @@ class MainActivity:Activity() {
             }catch(e:Exception){error(e)}
         }
     }
+    private fun stockHistory(p:Product){
+        text("حركة المخزون · ${p.name}",size=25f)
+        text("الباركود: ${p.barcode} · العملة ${p.currency.name}",size=15f)
+        try{
+            val valid=store.productStockHistoryReconciles(p.id)
+            text(if(valid)"حركات المخزون تطابق الرصيد الحالي" else "تحذير: الحركات لا تطابق الرصيد الحالي")
+            val history=store.productStockHistory(p.id)
+            var qty=0L
+            var value=0L
+            history.forEach{row->
+                qty=Math.addExact(qty,row.getValue("quantity").toLong())
+                value=Math.addExact(value,row.getValue("value_delta").toLong())
+                text(row.getValue("date")+" · "+row.getValue("kind")+" · "+row.getValue("memo"))
+                text("حركة "+row.getValue("quantity")+" · قيمة "+money(row.getValue("value_delta").toLong(),p.currency)+
+                    " · الرصيد "+qty+" · القيمة "+money(value,p.currency))
+            }
+            if(history.isEmpty())text("لا توجد حركات مخزون مسجلة")
+        }catch(e:Exception){error(e)}
+    }
+    private var selectedProduct:Product?=null
     private fun productForm(p:Product?=null){form(if(p==null)"إضافة منتج" else "تعديل المنتج"){box->
         val name=field("الاسم",box,p?.name?:"");val barcode=field("الباركود",box,p?.barcode?:"");val curr=select("العملة",Currency.entries.map{it.name},box);curr.setSelection(p?.currency?.ordinal?:0);curr.isEnabled=p==null
         val price=field("سعر البيع",box,p?.let{Money(it.price,it.currency).display().substringBefore(' ')}?:"0",true)
