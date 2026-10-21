@@ -403,8 +403,7 @@ class Store(val helper:StoreDb) {
         val products=items.map { product(it.productId) };require(products.all {it.currency==currency}){"اختلاف عملة المنتج: يلزم تحويل مسجل قبل هذه العملية"}
         require(items.all {it.qty>0&&it.unitPrice>=0}){"الكمية والسعر غير صالحين"};val gross=items.fold(0L){a,i->add(a,mul(i.qty,i.unitPrice))};require(gross>0){"لا يمكن إنشاء فاتورة بإجمالي صفر"};require(discount>=0 && discount<gross){"الخصم غير صالح"}
         val total=Math.subtractExact(gross,discount);require(paid in 0..total){"المدفوع يتجاوز قيمة الفاتورة"};require(paid==total||party.isNotBlank()){"اسم العميل مطلوب للبيع الآجل"}
-        var allocated=0L;var grossAllocated=0L
-        val nets=items.map {item->grossAllocated=add(grossAllocated,mul(item.qty,item.unitPrice));val cumulative=proportional(total,grossAllocated,gross);val n=Math.subtractExact(cumulative,allocated);allocated=cumulative;n}
+        val nets=allocateInvoiceNet(items.map { mul(it.qty,it.unitPrice) },discount)
         val costs=items.indices.map {i->require(items[i].qty<=products[i].stock){"المخزون غير كافٍ"};proportional(products[i].value,items[i].qty,products[i].stock)}
         val cost=costs.fold(0L,::add)
         event(command,"SALE",date,"مبيع $party")
