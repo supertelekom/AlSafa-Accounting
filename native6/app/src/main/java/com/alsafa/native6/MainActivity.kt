@@ -175,6 +175,7 @@ class MainActivity:Activity() {
                     text("العملة ${currency.name}",output,size=21f)
                     listOf("watch" to "الساعات","part" to "قطع الصيانة").forEach{(kind,title)->
                         val summary=store.inventorySummary(currency,kind)
+                        require(store.inventoryValuationReconciles(currency,kind)){"تقييم المخزون لا يطابق الأرصدة المخزنة"}
                         text("$title · أصناف ${summary.getValue("products")} · قطع ${summary.getValue("quantity")}",output)
                         text("التكلفة ${money(summary.getValue("cost_value"),currency)} · قيمة البيع ${money(summary.getValue("retail_value"),currency)}",output)
                         text("هامش متوقع ${money(summary.getValue("potential_margin"),currency)} · نافد ${summary.getValue("out_of_stock")}",output)
