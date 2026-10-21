@@ -257,3 +257,9 @@ Inspected the user's original **AlSafa Backup v2**, exported 2026-10-18 (approxi
 - Native repair orders now support `received -> in_progress -> ready -> delivered` with explicit tablet work-start and ready actions. Direct `received -> ready` remains allowed for simple jobs.
 - Work-start and readiness transitions append audit events. Repeated start is rejected; legacy unknown statuses are not offered unsupported transitions.
 - Regression tests cover the receive/start/ready timeline and duplicate start. Repair parts consumption, returns, costs and migration of historical repair invoices remain incomplete. Android CI results have not been verified.
+
+## First-batch accounting integrity checks
+
+- Duplicate opening-cash posting for the same vault and currency is rejected. Different currencies and vaults can each have their own opening balance. This protects against accidentally doubling cash balances.
+- Added tests for unpaid repair delivery followed by partial collection, balanced repair invoice journal, counted-versus-book cash at daily close, duplicate opening rejection and distinct vault/currency openings.
+- These tests are committed but not independently run; do not treat them as passing or as validation of historical financial migration. Legacy supplier debts, partner withdrawals, multi-currency settlements and real-device acceptance remain release blockers.
