@@ -578,6 +578,10 @@ class LegacySnapshotImportTest {
             assertEquals(100L,preview.getValue(Currency.TRY).second)
             assertEquals(10000L,store.balance("drawer",Currency.USD))
             assertEquals(before,store.rows("SELECT count(*) count FROM events").single().getValue("count"))
+            assertTrue(!store.closingExists("drawer"))
+            store.closeDay("drawer",mapOf(Currency.USD to 9800L,Currency.TRY to 100L,Currency.SYP to 0L))
+            assertTrue(store.closingExists("drawer"))
+            assertEquals(10000L,store.balance("drawer",Currency.USD))
         } finally {helper.close();context.deleteDatabase(name)}
     }
 
