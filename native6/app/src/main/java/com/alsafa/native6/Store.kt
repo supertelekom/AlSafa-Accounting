@@ -464,8 +464,19 @@ class Store(val helper:StoreDb) {
         return last==supplierDue(supplier,c)
     }
     fun supplierLedgerMonth(supplier:String,c:Currency,month:String):List<Map<String,String>> {
-        java.time.YearMonth.parse(month)
-        return supplierLedgerWithBalances(supplier,c).filter { it.getValue("date").startsWith("$month-") }
+        require(scalar("SELECT count(*) FROM suppliers WHERE id=?",supplier)==1L){"المورد غير موجود"}
+        val period=java.time.YearMonth.parse(month)
+        val first=period.atDay(1).toString()
+        val next=period.plusMonths(1).atDay(1).toString()
+        var running=supplierMonthOpening(supplier,c,month)
+        return rows("""SELECT e.date,e.kind,e.id event_id,coalesce(sum(j.amount),0) amount
+            FROM journal j JOIN events e ON e.id=j.event_id
+            WHERE j.account=? AND j.currency=? AND e.date>=? AND e.date<?
+            GROUP BY e.id,e.date,e.kind
+            ORDER BY e.date,e.created,e.id""","payable:$supplier",c.name,first,next).map { entry ->
+            running=Math.subtractExact(running,entry.getValue("amount").toLong())
+            entry+("remaining" to running.toString())
+        }
     }
     fun supplierMonthOpening(supplier:String,c:Currency,month:String):Long {
         val start=java.time.YearMonth.parse(month).atDay(1).toString()
