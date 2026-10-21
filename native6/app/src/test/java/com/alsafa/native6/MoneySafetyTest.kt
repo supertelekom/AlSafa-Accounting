@@ -52,4 +52,27 @@ class MoneySafetyTest {
         assertThrows(IllegalArgumentException::class.java) { proportional(100L, -1L, 2L) }
     }
 
+    @Test fun allocatesInvoiceDiscountWithoutLosingMinorUnits() {
+        val lines = allocateInvoiceNet(listOf(101L, 101L, 101L), 1L)
+        assertEquals(302L, lines.sum())
+        assertEquals(3, lines.size)
+        assertEquals(listOf(0L, 200L, 0L), allocateInvoiceNet(listOf(0L, 250L, 0L), 50L))
+        assertEquals(listOf(5L, 5L), allocateInvoiceNet(listOf(5L, 5L), 0L))
+    }
+
+    @Test fun rejectsInvalidInvoiceDiscounts() {
+        assertThrows(IllegalArgumentException::class.java) {
+            allocateInvoiceNet(listOf(0L, 0L), 0L)
+        }
+        assertThrows(IllegalArgumentException::class.java) {
+            allocateInvoiceNet(listOf(5L), 5L)
+        }
+        assertThrows(IllegalArgumentException::class.java) {
+            allocateInvoiceNet(listOf(-1L, 5L), 0L)
+        }
+        assertThrows(ArithmeticException::class.java) {
+            allocateInvoiceNet(listOf(Long.MAX_VALUE, 1L), 0L)
+        }
+    }
+
 }
