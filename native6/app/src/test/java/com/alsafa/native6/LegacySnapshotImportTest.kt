@@ -605,6 +605,7 @@ class LegacySnapshotImportTest {
             assertEquals(-200L,store.reviewAutomaticClosing("drawer",yesterday,Currency.USD,9800L,"Cash count"))
             assertEquals(9800L,store.automaticClosingReviews("drawer").single{it["currency"]=="USD"}["actual_count"]?.toLong())
             assertEquals(0,store.automaticClosingsNeedingReview("drawer").count{it["currency"]=="USD"})
+            assertEquals(2,store.pendingAutomaticReviewCount("drawer"))
             assertEquals(10000L,store.balance("drawer",Currency.USD))
             assertTrue(runCatching{store.reviewAutomaticClosing("drawer",yesterday,Currency.USD,9800L,"Duplicate")}.isFailure)
         } finally {helper.close();context.deleteDatabase(name)}
