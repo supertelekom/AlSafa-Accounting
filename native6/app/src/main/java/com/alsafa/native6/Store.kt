@@ -225,6 +225,32 @@ class Store(val helper:StoreDb) {
             FROM products WHERE price<0 OR cost<0""")
         return issues
     }
+    /** Compare the inventory valuation to the inventory account without any mutations. */
+    fun inventoryAccountingIssues():List<Map<String,String>> =
+        Currency.entries.mapNotNull{currency->
+            val totals=inventoryJournalReconciliation(currency)
+            val difference=totals.getValue("difference")
+            if(difference==0L)null
+            else mapOf("category" to "INVENTORY_LEDGER",
+                "reference" to currency.name,
+                "detail" to "فرق قيمة المخزون عن دفتر الأستاذ: "+difference)
+        }
+
+    /** Run database foreign-key and SQLite integrity checks independently of journal checks. */
+    fun sqliteIntegrityIssues():List<Map<String,String>> {
+        val issues=mutableListOf<Map<String,String>>()
+        rows("PRAGMA integrity_check").forEach{result->
+            val message=result.values.firstOrNull()?:""
+            if(message!="ok")issues.add(mapOf("category" to "SQLITE_INTEGRITY",
+                "reference" to "database","detail" to message))
+        }
+        rows("PRAGMA foreign_key_check").forEach{result->
+            issues.add(mapOf("category" to "FOREIGN_KEY",
+                "reference" to (result["table"]?:"unknown"),
+                "detail" to result.toString()))
+        }
+        return issues
+    }
     fun unbalancedEvents(c:Currency,start:String,end:String):List<Map<String,String>> {
         val from=LocalDate.parse(start)
         val until=LocalDate.parse(end)
