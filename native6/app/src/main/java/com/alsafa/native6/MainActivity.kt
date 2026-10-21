@@ -224,7 +224,7 @@ class MainActivity:Activity() {
                         val closing=store.vaultDayClosing(vault,currency,selected)
                         val incoming=store.vaultDayInflows(vault,currency,selected)
                         val outgoing=store.vaultDayOutflows(vault,currency,selected)
-                        val header="${currency.name}: سابق ${money(opening,currency)} · داخل ${money(incoming,currency)} · خارج ${money(outgoing,currency)} · نهائي ${money(closing,currency)}"
+                        val header="${currency.name}: سابق ${money(opening,currency)} · داخل ${money(incoming,currency)} · خارج ${money(outgoing,currency)} · نهائي ${money(closing,currency)}"+(if(counted[currency.name]?.get("kind")=="AUTO_CLOSING")" · إقفال تلقائي غير معدود" else "")
                         listOf(header)+listOfNotNull(counted[currency.name]?.get("counted")?.let{"العد الفعلي المسجل: "+money(it.toLong(),currency)})+store.vaultDayEntries(vault,currency,selected).map{row->
                             row.getValue("kind")+" · "+money(row.getValue("amount").toLong(),currency)
                         }
