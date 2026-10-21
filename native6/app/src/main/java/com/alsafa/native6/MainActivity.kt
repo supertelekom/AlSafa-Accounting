@@ -223,11 +223,13 @@ class MainActivity:Activity() {
                     val entries=store.vaultMonthEntries(vault,currency,selected)
                     val opening=store.vaultMonthOpening(vault,currency,selected)
                     val closing=store.vaultMonthClosing(vault,currency,selected)
+                    val inflows=store.vaultMonthInflows(vault,currency,selected)
+                    val outflows=store.vaultMonthOutflows(vault,currency,selected)
                     val detail=entries.joinToString("\n"){ row ->
                         "${row.getValue("date")} · ${row.getValue("kind")} · ${money(row.getValue("amount").toLong(),currency)}"
                     }
                     AlertDialog.Builder(this).setTitle("كشف $vault · ${currency.name} · $selected")
-                        .setMessage("سابق: ${money(opening,currency)}\nنهائي: ${money(closing,currency)}\n"+(if(entries.isEmpty())"لا توجد حركات" else detail))
+                        .setMessage("سابق: ${money(opening,currency)}\nداخل: ${money(inflows,currency)}\nخارج: ${money(outflows,currency)}\nنهائي: ${money(closing,currency)}\n"+(if(entries.isEmpty())"لا توجد حركات" else detail))
                         .setPositiveButton("حسناً",null).show()
                 })
             }
