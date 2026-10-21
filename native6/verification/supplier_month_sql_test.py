@@ -20,4 +20,11 @@ db.execute("INSERT INTO journal VALUES(?,?,?,?)",("late","payable:s1","USD",-150
 monthly=db.execute("SELECT coalesce(sum(j.amount),0) FROM journal j JOIN events e ON e.id=j.event_id WHERE j.account=? AND j.currency=? AND e.date>=? AND e.date<?",args).fetchone()[0]
 assert monthly==-4500
 assert opening-monthly==14500
-print("PASS supplier monthly ledger SQL including backdated posting")
+# Foreign suppliers and other currencies must not alter this supplier's USD ledger.
+db.execute("INSERT INTO events VALUES(?,?,?,?)",("other","2026-10-09",100,"PURCHASE"))
+db.execute("INSERT INTO journal VALUES(?,?,?,?)",("other","payable:s2","USD",-90000))
+db.execute("INSERT INTO events VALUES(?,?,?,?)",("try","2026-10-10",101,"PURCHASE"))
+db.execute("INSERT INTO journal VALUES(?,?,?,?)",("try","payable:s1","TRY",-50000))
+isolated=db.execute("SELECT coalesce(sum(j.amount),0) FROM journal j JOIN events e ON e.id=j.event_id WHERE j.account=? AND j.currency=? AND e.date>=? AND e.date<?",args).fetchone()[0]
+assert isolated==-4500
+print("PASS supplier monthly ledger SQL including backdated posting, supplier and currency isolation")
