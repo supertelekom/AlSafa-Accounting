@@ -257,6 +257,9 @@ class MainActivity:Activity() {
                 val curr=Currency.entries[currency.selectedItemPosition]
                 val lines=store.partnerBalanceSummary(selected.toString(),first.toString(),curr)
                 result.removeAllViews()
+                text("تقرير ${selected} · ${curr.name}",result,20f)
+                text("الأرباح والسحوبات تخص الشهر المختار فقط، والأرصدة السابقة منفصلة.",result,15f)
+                if(lines.isEmpty()) text("لا توجد حسابات شركاء مسجلة لهذا التقرير.",result,15f)
                 lines.forEach { line->
                     val name=partners.firstOrNull { it["id"]==line.partnerId }?.get("name")?:line.partnerId
                     text(name,result,20f)
