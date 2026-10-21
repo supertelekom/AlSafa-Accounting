@@ -433,6 +433,7 @@ class Store(val helper:StoreDb) {
             require(q>0 && previous>=0 && previous<=original && q<=Math.subtractExact(original,previous)){"كمية المرتجع تتجاوز الكمية المتبقية"}
             val priorValue=scalar("SELECT coalesce(sum(credit),0) FROM returns WHERE invoice_id=? AND line=?",invoiceId,index.toString())
             val priorCost=scalar("SELECT coalesce(sum(cost),0) FROM returns WHERE invoice_id=? AND line=?",invoiceId,index.toString())
+            require(priorValue>=0L && priorValue<=line.getValue("net").toLong() && priorCost>=0L && priorCost<=line.getValue("cost").toLong()){"القيم المرتجعة سابقاً غير متسقة مع الفاتورة"}
             val value=Math.subtractExact(proportional(line.getValue("net").toLong(),Math.addExact(previous,q),original),priorValue)
             val cost=Math.subtractExact(proportional(line.getValue("cost").toLong(),Math.addExact(previous,q),original),priorCost)
             require(value>=0L && cost>=0L){"قيمة مرتجع غير صالحة؛ راجع سجل المرتجعات السابق"}
