@@ -341,3 +341,9 @@ Inspected the user's original **AlSafa Backup v2**, exported 2026-10-18 (approxi
 - Local SQLite exposes read-only per-vault daily closing history, including event IDs, dates, currencies, expected book cash, counted cash and original variance.
 - Tablet closing history can be filtered to a single selected month, preventing mixed-period reporting. This is independent of journal balance changes and does not post count differences as adjustments.
 - Regression assertions cover USD/TRY variances and selected-month isolation. Android build and tests are not yet verified.
+
+## Daily vault ledger and carried balances
+
+- Native 6 provides a date-scoped cash statement per vault for USD/TRY/SYP, showing the prior-day carried ledger balance, that day's cash inflows/outflows, dated journal movements, and the resulting end-of-day ledger balance.
+- Daily statements reconcile their event-linked cash postings against the ending balance. Recorded physical closing counts are retrieved by date separately; viewing statements does not post any transactions.
+- Unit test assertions cover carried balances from one day to the next, absence of future-day entries, currency isolation, and dated closing lookup. The Android build and test suite have not been verified in CI.
