@@ -295,3 +295,10 @@ Inspected the user's original **AlSafa Backup v2**, exported 2026-10-18 (approxi
 - Supplier month control totals now separate new liabilities from repayments, and check opening + charges - payments = closing. The tablet refuses to present an inconsistent monthly statement.
 - Regression checks cover three consecutive months and ensure a November settlement cannot change the October closing balance.
 - These invariants apply to posted Native 6 journal transactions, not archived historical v3.9.353 supplier balances. Compilation and automated test success have not been verified.
+
+## Legacy supplier payment deduplication audit
+
+- Read-only legacy reconciliation now matches `supplierLedger` payments carrying `recoveredFromCashTransactionId` against original cash transaction IDs. It reports linked, missing, repeated recovery references, duplicate cash IDs and mismatched amount/currency.
+- Flags opening-debt ledger payments exceeding the corresponding opening debt. These findings require review; no historical payment is automatically posted or deducted from Native 6 vaults.
+- Regression tests cover matching recovered payment, missing/duplicate references, overpayment, currency mismatch and duplicate cash IDs.
+- Tests remain unverified in CI; historical supplier and purchase debt migration remains blocked until reconciliation is complete.
