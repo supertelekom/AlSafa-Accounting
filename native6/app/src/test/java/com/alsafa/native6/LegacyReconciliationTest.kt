@@ -231,4 +231,15 @@ class LegacyReconciliationTest {
         assertTrue(report.contains("مراجع صحيحة 0"))
     }
 
+    @Test fun purchasePaymentIdentifiersRequireReviewWhenRepeatedOrBlank() {
+        val payments=JSONArray()
+            .put(JSONObject().put("id","same").put("referenceType","purchase").put("referenceId","p"))
+            .put(JSONObject().put("id","same").put("referenceType","purchase").put("referenceId","p"))
+            .put(JSONObject().put("id","").put("referenceType","purchase").put("referenceId","p"))
+        val report=LegacyReconciliation.inspect(JSONObject()
+            .put("format","alsafa-accounting-backup")
+            .put("data",JSONObject().put("payments",payments)).toString())
+        assertTrue(report.contains("دفعات شراء بمعرف مكرر 1، ودون معرف 1"))
+    }
+
 }
