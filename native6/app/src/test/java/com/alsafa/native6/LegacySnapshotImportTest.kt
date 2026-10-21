@@ -495,4 +495,23 @@ class LegacySnapshotImportTest {
         } finally { helper.close();context.deleteDatabase(name) }
     }
 
+    @Test fun dateRangeReportSeparatesDaysAndCurrencies() {
+        val context=RuntimeEnvironment.getApplication<Context>()
+        val name="period-report-test.db"
+        context.deleteDatabase(name)
+        val helper=StoreDb(context,name)
+        try {
+            val store=Store(helper)
+            store.cash("opening","drawer",Currency.USD,10000L,"Initial","2026-10-01")
+            store.cash("expense","drawer",Currency.USD,1000L,"Rent","2026-10-03")
+            store.cash("opening","drawer",Currency.TRY,20000L,"Initial","2026-10-01")
+            store.cash("expense","drawer",Currency.TRY,2500L,"Utilities","2026-10-05")
+            val early=store.periodReport("2026-10-01","2026-10-03")
+            assertEquals("1000",early.single { it["currency"]=="USD" && it["account"]=="expense:general" }["amount"])
+            assertTrue(early.none { it["currency"]=="TRY" && it["account"]=="expense:general" })
+            val full=store.periodReport("2026-10-01","2026-10-05")
+            assertEquals("2500",full.single { it["currency"]=="TRY" && it["account"]=="expense:general" }["amount"])
+        } finally { helper.close();context.deleteDatabase(name) }
+    }
+
 }
