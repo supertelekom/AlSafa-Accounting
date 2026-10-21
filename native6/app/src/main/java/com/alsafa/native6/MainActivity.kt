@@ -177,7 +177,7 @@ class MainActivity:Activity() {
                     .setMessage("المنتج: ${p.name}\nالكمية المسجلة: ${p.stock}\nالكمية الفعلية: $counted\nالفرق: ${counted-p.stock}\nالسبب: $why")
                     .setNegativeButton("تراجع",null)
                     .setPositiveButton("تأكيد وحفظ"){_,_->
-                        work{store.adjustStockCount(p.id,counted,why)}
+                        work{store.adjustStockCount(p.id,counted,why,expectedStock=p.stock)}
                     }.show()
             })
         }
