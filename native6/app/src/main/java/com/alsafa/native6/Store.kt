@@ -275,7 +275,7 @@ class Store(val helper:StoreDb) {
         vault(v)
         require(days in 1..365)
         val since=LocalDate.now().minusDays(days.toLong()).toString()
-        return rows("SELECT e.date,e.id event_id,c.currency,c.expected FROM closings c JOIN events e ON e.id=c.event_id WHERE c.vault=? AND e.kind='AUTO_CLOSING' AND e.date>=? ORDER BY e.date DESC,c.currency",v,since)
+        return rows("SELECT e.date,e.id event_id,c.currency,c.expected FROM closings c JOIN events e ON e.id=c.event_id LEFT JOIN auto_closing_reviews r ON r.closing_event_id=e.id AND r.currency=c.currency WHERE c.vault=? AND e.kind='AUTO_CLOSING' AND e.date>=? AND r.event_id IS NULL ORDER BY e.date DESC,c.currency",v,since)
     }
     fun closingBookDrift(v:String,date:String,c:Currency):Long? {
         val day=LocalDate.parse(date).toString()
