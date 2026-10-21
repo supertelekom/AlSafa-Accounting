@@ -424,6 +424,7 @@ class Store(val helper:StoreDb) {
         require(reason.isNotBlank() && quantities.isNotEmpty()){"حدد سبب الإرجاع والأصناف"}
         val lines=rows("SELECT * FROM invoice_lines WHERE invoice_id=? ORDER BY line",invoiceId)
         require(lines.isNotEmpty() && quantities.keys.all { k->lines.any { it.getValue("line").toInt()==k } }){"أصناف المرتجع غير موجودة في الفاتورة"}
+        require(quantities.values.all { it>0L }){"كل كمية مرتجعة يجب أن تكون موجبة"}
         event(command,"SALE_RETURN",date,reason)
         var totalCredit=0L;var costCredit=0L
         for(line in lines) {
