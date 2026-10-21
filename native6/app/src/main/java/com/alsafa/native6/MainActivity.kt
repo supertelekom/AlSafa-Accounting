@@ -378,6 +378,28 @@ class MainActivity:Activity() {
         val start=field("من YYYY-MM-DD",body,YearMonth.now().atDay(1).toString())
         val end=field("إلى YYYY-MM-DD",body,Store.today())
         val result=column();body.addView(result)
+        button("عرض تفصيل الأرباح اليومي"){
+            try {
+                val from=start.text.toString().trim()
+                val until=end.text.toString().trim()
+                result.removeAllViews()
+                Currency.entries.forEach{currency->
+                    require(store.operatingDailyReconciles(from,until,currency)){"مجموع الأرباح اليومية لا يطابق تقرير الفترة"}
+                    val days=store.operatingDailyRange(from,until,currency)
+                    text("تفصيل ${currency.name} · ${days.size} يوم بحركات",result)
+                    if(days.isEmpty())text("لا توجد قيود إيرادات أو مصاريف أو سحوبات خلال الفترة",result)
+                    days.forEach{day->
+                        val date=day.getValue("date_epoch").toString()
+                        val formatted=date.substring(0,4)+"-"+date.substring(4,6)+"-"+date.substring(6,8)
+                        text(formatted+" · إيراد "+money(day.getValue("revenue"),currency)+
+                            " · تكلفة "+money(day.getValue("cost_of_sales"),currency)+
+                            " · مصاريف "+money(day.getValue("operating_expenses"),currency)+
+                            " · صافي "+money(day.getValue("net_result"),currency)+
+                            " · سحوبات "+money(day.getValue("drawings"),currency),result)
+                    }
+                }
+            }catch(e:Exception){error(e)}
+        }
         button("احتساب الفترة"){
             try {
                 val from=start.text.toString().trim()
