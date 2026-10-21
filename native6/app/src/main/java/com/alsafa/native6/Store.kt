@@ -432,6 +432,7 @@ class Store(val helper:StoreDb) {
             val priorCost=scalar("SELECT coalesce(sum(cost),0) FROM returns WHERE invoice_id=? AND line=?",invoiceId,index.toString())
             val value=Math.subtractExact(proportional(line.getValue("net").toLong(),Math.addExact(previous,q),original),priorValue)
             val cost=Math.subtractExact(proportional(line.getValue("cost").toLong(),Math.addExact(previous,q),original),priorCost)
+            require(value>=0L && cost>=0L){"قيمة مرتجع غير صالحة؛ راجع سجل المرتجعات السابق"}
             insert("returns","event_id" to command,"invoice_id" to invoiceId,"line" to index,"qty" to q,"credit" to value,"cost" to cost)
             stock(command,index,product(line.getValue("product_id")),q,cost);totalCredit=add(totalCredit,value);costCredit=add(costCredit,cost)
         }
