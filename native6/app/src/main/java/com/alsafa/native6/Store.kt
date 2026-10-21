@@ -303,6 +303,26 @@ class Store(val helper:StoreDb) {
         db.execSQL("UPDATE products SET name=?,barcode=?,price=? WHERE id=?",arrayOf(name.trim(),barcode.trim(),price,id));event(id(),"PRODUCT_EDIT",today(),"تعديل وصف المنتج $id")
     }
     fun invoices()=rows("SELECT * FROM invoices ORDER BY number DESC").map { Invoice(it.getValue("id"),it.getValue("number").toLong(),it.getValue("kind"),it.getValue("party"),Currency.valueOf(it.getValue("currency")),it.getValue("total").toLong(),it.getValue("status")) }
+    fun searchInvoices(query:String="",kind:String="all",status:String="all",limit:Int=200):List<Invoice> {
+        require(kind in setOf("all","sale","purchase","repair"))
+        require(status in setOf("all","posted","cancelled"))
+        require(limit in 1..1000)
+        val needle=query.trim()
+        val conditions=mutableListOf<String>()
+        val args=mutableListOf<String>()
+        if(needle.isNotEmpty()){
+            conditions.add("(CAST(number AS TEXT) LIKE ? OR party LIKE ? OR phone LIKE ? OR id=?)")
+            repeat(3){args.add("%$needle%")}
+            args.add(needle)
+        }
+        if(kind!="all"){conditions.add("kind=?");args.add(kind)}
+        if(status!="all"){conditions.add("status=?");args.add(status)}
+        val where=if(conditions.isEmpty())"" else " WHERE "+conditions.joinToString(" AND ")
+        val result=rows("SELECT * FROM invoices"+where+" ORDER BY number DESC LIMIT $limit",*args.toTypedArray())
+        return result.map{Invoice(it.getValue("id"),it.getValue("number").toLong(),
+            it.getValue("kind"),it.getValue("party"),Currency.valueOf(it.getValue("currency")),
+            it.getValue("total").toLong(),it.getValue("status"))}
+    }
     fun invoice(id:String)=invoices().first { it.id==id }
     fun paid(id:String)=scalar("SELECT coalesce(sum(amount),0) FROM receipts WHERE invoice_id=?",id)
     fun credit(id:String)=scalar("SELECT coalesce(sum(credit),0) FROM returns WHERE invoice_id=?",id)
