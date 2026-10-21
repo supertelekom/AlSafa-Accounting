@@ -178,6 +178,19 @@ class Store(val helper:StoreDb) {
     fun supplierMonthPayments(supplier:String,c:Currency,month:String):Long = supplierLedgerMonth(supplier,c,month).filter { it.getValue("amount").toLong()>0L }.fold(0L) { total,row -> add(total,row.getValue("amount").toLong()) }
     fun supplierMonthMovement(supplier:String,c:Currency,month:String):Long = add(supplierMonthClosing(supplier,c,month),-supplierMonthOpening(supplier,c,month))
     fun supplierMonthReconciles(supplier:String,c:Currency,month:String):Boolean = supplierMonthClosing(supplier,c,month)==add(supplierMonthOpening(supplier,c,month),supplierMonthMovement(supplier,c,month)) && supplierMonthMovement(supplier,c,month)==add(supplierMonthCharges(supplier,c,month),-supplierMonthPayments(supplier,c,month))
+    /** Historic supplier debt and payments remain in their original transaction months. */
+    fun supplierStatement(supplier:String,c:Currency,month:String):Map<String,Long> {
+        val selected=java.time.YearMonth.parse(month).toString()
+        require(scalar("SELECT count(*) FROM suppliers WHERE id=?",supplier)==1L){"المورد غير موجود"}
+        val opening=supplierMonthOpening(supplier,c,selected)
+        val charges=supplierMonthCharges(supplier,c,selected)
+        val payments=supplierMonthPayments(supplier,c,selected)
+        val closing=supplierMonthClosing(supplier,c,selected)
+        require(closing==Math.subtractExact(Math.addExact(opening,charges),payments)){"كشف المورد غير متوازن"}
+        return mapOf("opening" to opening,"charges" to charges,
+            "payments" to payments,"closing" to closing,
+            "historical_debt" to opening,"current_month_net" to Math.subtractExact(charges,payments))
+    }
     fun supplierDue(supplier:String,c:Currency) = -scalar("SELECT coalesce(sum(amount),0) FROM journal WHERE account=? AND currency=?","payable:$supplier",c.name)
     fun purchase(supplier:String,items:List<SaleItem>,c:Currency,paid:Long,v:String,date:String=today(),command:String=id()):String=transaction {
         require(scalar("SELECT count(*) FROM suppliers WHERE id=?",supplier)==1L);require(items.isNotEmpty()&&items.map{it.productId}.distinct().size==items.size)
