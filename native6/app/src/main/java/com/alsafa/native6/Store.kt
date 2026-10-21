@@ -318,6 +318,7 @@ class Store(val helper:StoreDb) {
         val result=mutableMapOf(
             "date" to day,"currency" to c.name,"kind" to closing.getValue("kind"),
             "book_at_closing" to bookAtClosing.toString(),
+            "physical_count_status" to if(closing["kind"]=="AUTO_CLOSING") "not_counted_at_close" else "counted",
             "book_day_end_now" to bookAtDayEnd.toString(),
             "late_posting_drift" to Math.subtractExact(bookAtDayEnd,bookAtClosing).toString(),
             "status" to if(closing["kind"]=="AUTO_CLOSING") if(reviewed==null)"pending" else "reviewed" else "manual"
