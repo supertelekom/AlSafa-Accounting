@@ -380,11 +380,11 @@ class Store(val helper:StoreDb) {
     }
     fun paid(id:String)=scalar("SELECT coalesce(sum(amount),0) FROM receipts WHERE invoice_id=?",id)
     fun credit(id:String)=scalar("SELECT coalesce(sum(credit),0) FROM returns WHERE invoice_id=?",id)
-    fun due(id:String):Long {val inv=invoice(id);if(inv.kind=="purchase")return 0L;return maxOf(0,inv.total-credit(id)-paid(id))}
+    fun due(id:String):Long {val inv=invoice(id);if(inv.kind=="purchase")return 0L;return maxOf(0L,Math.subtractExact(Math.subtractExact(inv.total,credit(id)),paid(id)))}
     fun refundable(id:String):Long {
         val inv=invoice(id)
         if(inv.kind!="sale" && inv.kind!="repair") return 0L
-        return maxOf(0,paid(id)-(inv.total-credit(id))-scalar("SELECT coalesce(sum(amount),0) FROM refunds WHERE invoice_id=?",id))
+        return maxOf(0L,Math.subtractExact(Math.subtractExact(paid(id),Math.subtractExact(inv.total,credit(id))),scalar("SELECT coalesce(sum(amount),0) FROM refunds WHERE invoice_id=?",id)))
     }
     private fun nextNumber():Long {
         val existing=scalar("SELECT coalesce(max(number),0) FROM invoices")
@@ -470,9 +470,9 @@ class Store(val helper:StoreDb) {
         return Math.negateExact(scalar("SELECT coalesce(sum(j.amount),0) FROM journal j JOIN events e ON e.id=j.event_id WHERE j.account=? AND j.currency=? AND e.date<?","payable:$supplier",c.name,start))
     }
     fun supplierMonthClosing(supplier:String,c:Currency,month:String):Long = supplierMonthOpening(supplier,c,java.time.YearMonth.parse(month).plusMonths(1).toString())
-    fun supplierMonthCharges(supplier:String,c:Currency,month:String):Long = supplierLedgerMonth(supplier,c,month).filter { it.getValue("amount").toLong()<0L }.fold(0L) { total,row -> add(total,-row.getValue("amount").toLong()) }
+    fun supplierMonthCharges(supplier:String,c:Currency,month:String):Long = supplierLedgerMonth(supplier,c,month).filter { it.getValue("amount").toLong()<0L }.fold(0L) { total,row -> add(total,Math.negateExact(row.getValue("amount").toLong())) }
     fun supplierMonthPayments(supplier:String,c:Currency,month:String):Long = supplierLedgerMonth(supplier,c,month).filter { it.getValue("amount").toLong()>0L }.fold(0L) { total,row -> add(total,row.getValue("amount").toLong()) }
-    fun supplierMonthMovement(supplier:String,c:Currency,month:String):Long = add(supplierMonthClosing(supplier,c,month),-supplierMonthOpening(supplier,c,month))
+    fun supplierMonthMovement(supplier:String,c:Currency,month:String):Long = Math.subtractExact(supplierMonthClosing(supplier,c,month),supplierMonthOpening(supplier,c,month))
     fun supplierMonthReconciles(supplier:String,c:Currency,month:String):Boolean = supplierMonthClosing(supplier,c,month)==add(supplierMonthOpening(supplier,c,month),supplierMonthMovement(supplier,c,month)) && supplierMonthMovement(supplier,c,month)==add(supplierMonthCharges(supplier,c,month),-supplierMonthPayments(supplier,c,month))
     /** Each payment is shown in the month of its own posting, never allocated to old debt dates. */
     fun supplierPaymentsMonth(supplier:String,c:Currency,month:String):List<Map<String,String>> {
