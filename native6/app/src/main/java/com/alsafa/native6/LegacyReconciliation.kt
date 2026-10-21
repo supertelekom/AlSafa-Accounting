@@ -97,6 +97,9 @@ object LegacyReconciliation {
                 lines += "$key: افتتاحي ${due.toPlainString()}، مدفوع ${settled.toPlainString()}، الفرق ${due.subtract(settled).toPlainString()}"
             }
             if(unsupported>0) lines += "قيود مورد غير مصنفة: $unsupported"
+            val overpaid=(opening.keys+paid.keys).count { key -> (paid[key] ?: BigDecimal.ZERO) > (opening[key] ?: BigDecimal.ZERO) }
+            if(overpaid>0) lines += "تحذير: $overpaid حساب مورد تجاوزت دفعات سجل الدين الافتتاحي فيه قيمة الدين؛ يلزم تدقيق قبل الترحيل."
+
         }
         // A recovered supplier payment is often also present as a cash transaction.
         // Report the shared identity; never treat the two records as two payments.
