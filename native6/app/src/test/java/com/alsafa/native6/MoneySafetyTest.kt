@@ -75,4 +75,22 @@ class MoneySafetyTest {
         }
     }
 
+    @Test fun partialReturnsReconcileExactlyToOriginalLineValue() {
+        for (quantity in 1L..30L) {
+            for (net in 0L..200L) {
+                var returned = 0L
+                var credited = 0L
+                repeat(quantity.toInt()) {
+                    val next = returned + 1L
+                    val cumulative = proportional(net, next, quantity)
+                    val credit = Math.subtractExact(cumulative, credited)
+                    org.junit.Assert.assertTrue("Negative return credit", credit >= 0L)
+                    credited = Math.addExact(credited, credit)
+                    returned = next
+                }
+                assertEquals(net, credited)
+            }
+        }
+    }
+
 }
