@@ -495,6 +495,7 @@ class Store(val helper:StoreDb) {
         }
     }
     fun supplierMonthOpening(supplier:String,c:Currency,month:String):Long {
+        require(scalar("SELECT count(*) FROM suppliers WHERE id=?",supplier)==1L){"المورد غير موجود"}
         val start=java.time.YearMonth.parse(month).atDay(1).toString()
         return Math.negateExact(scalar("SELECT coalesce(sum(j.amount),0) FROM journal j JOIN events e ON e.id=j.event_id WHERE j.account=? AND j.currency=? AND e.date<?","payable:$supplier",c.name,start))
     }
