@@ -283,7 +283,27 @@ class MainActivity:Activity() {
         }}}}
     private fun chooseProduct(action:(Product)->Unit){val box=column();val search=field("الاسم أو الباركود",box);val results=column();box.addView(results);val sc=ScrollView(this);sc.addView(box);val dialog=AlertDialog.Builder(this).setTitle("اختيار منتج").setView(sc).setNegativeButton("رجوع",null).create()
         fun show(){results.removeAllViews();store.products(search.text.toString()).take(100).forEach{p->button("${p.name} · ${p.stock}",results){dialog.dismiss();action(p)}}};button("بحث",box){show()};show();dialog.show()}
-    private fun invoices(){text("الفواتير والمرتجعات",size=25f);store.invoices().forEach{inv->button("#${inv.number} · ${label(inv.kind)} · ${inv.party}\n${money(inv.total,inv.currency)} · ${label(inv.status)}"){invoiceDetail(inv)}}}
+    private fun invoices(){
+        text("الفواتير والمرتجعات",size=25f)
+        val query=field("رقم الفاتورة أو اسم العميل أو الهاتف",body)
+        val kinds=listOf("all","sale","purchase","repair")
+        val statuses=listOf("all","posted","cancelled")
+        val kind=select("نوع الفاتورة",listOf("الكل","مبيع","شراء","صيانة"),body)
+        val status=select("حالة الفاتورة",listOf("الكل","مرحلة","ملغاة"),body)
+        val output=column();body.addView(output)
+        fun show(){
+            output.removeAllViews()
+            val results=store.searchInvoices(query.text.toString(),kinds[kind.selectedItemPosition],
+                statuses[status.selectedItemPosition])
+            text("النتائج: ${results.size} (الحد الأقصى 200)",output)
+            results.forEach{inv->
+                button("#${inv.number} · ${label(inv.kind)} · ${inv.party}"+
+                    "\n${money(inv.total,inv.currency)} · ${label(inv.status)}",output){invoiceDetail(inv)}
+            }
+        }
+        button("بحث في الفواتير"){try{show()}catch(e:Exception){error(e)}}
+        show()
+    }
     private fun invoiceDetail(inv:Invoice){val box=column();text("الإجمالي ${money(inv.total,inv.currency)}",box);if(inv.kind!="purchase"){text("المتبقي ${money(store.due(inv.id),inv.currency)}",box);text("مستحق الرد ${money(store.refundable(inv.id),inv.currency)}",box)}
         val sc=ScrollView(this);sc.addView(box);val dialog=AlertDialog.Builder(this).setTitle("فاتورة #${inv.number}").setView(sc).setNegativeButton("رجوع",null).create()
         button("حفظ فاتورة PDF",box){pdfInvoice=inv.id;startActivityForResult(Intent(Intent.ACTION_CREATE_DOCUMENT).apply{addCategory(Intent.CATEGORY_OPENABLE);type="application/pdf";putExtra(Intent.EXTRA_TITLE,"AlSafa-${inv.number}.pdf")},104)}
