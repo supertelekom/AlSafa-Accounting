@@ -154,4 +154,17 @@ class LegacyReconciliationTest {
         assertTrue(report.contains("لا تطابق مبلغ أو عملة حركة الخزنة"))
     }
 
+    @Test fun duplicateCashTransactionIdentifiersBlockBlindSupplierMatching() {
+        val cash=JSONArray()
+            .put(JSONObject().put("id","cash-1").put("currency","USD").put("amount",520))
+            .put(JSONObject().put("id","cash-1").put("currency","USD").put("amount",520))
+        val ledger=JSONArray().put(JSONObject().put("kind","payment")
+            .put("currency","USD").put("amount",520)
+            .put("recoveredFromCashTransactionId","cash-1"))
+        val data=JSONObject().put("cashTransactions",cash).put("supplierLedger",ledger)
+        val report=LegacyReconciliation.inspect(JSONObject()
+            .put("format","alsafa-accounting-backup").put("data",data).toString())
+        assertTrue(report.contains("معرف حركة خزنة مكرر"))
+    }
+
 }
