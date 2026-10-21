@@ -109,7 +109,7 @@ class Store(val helper:StoreDb) {
         insert("refunds","event_id" to command,"invoice_id" to invoiceId,"amount" to amount,"vault" to v);post(command,listOf(Posting("refund:$invoiceId",inv.currency,amount),Posting("cash:$v",inv.currency,-amount)))
     }
     fun addSupplier(name:String,phone:String):String=transaction { require(name.isNotBlank());val id=id();insert("suppliers","id" to id,"name" to name,"phone" to phone);id }
-    fun supplierLedgerBreakdown(supplier:String,c:Currency):List<Map<String,String>> = rows("SELECT e.date,e.kind,coalesce(sum(j.amount),0) amount FROM journal j JOIN events e ON e.id=j.event_id WHERE j.account=? AND j.currency=? GROUP BY e.id,e.date,e.kind ORDER BY e.date,e.created,e.id","payable:$supplier",c.name)
+    fun supplierLedgerBreakdown(supplier:String,c:Currency):List<Map<String,String>> = rows("SELECT e.date,e.kind,e.id event_id,coalesce(sum(j.amount),0) amount FROM journal j JOIN events e ON e.id=j.event_id WHERE j.account=? AND j.currency=? GROUP BY e.id,e.date,e.kind ORDER BY e.date,e.created,e.id","payable:$supplier",c.name)
     fun supplierLedgerWithBalances(supplier:String,c:Currency):List<Map<String,String>> {
         var running=0L
         return supplierLedgerBreakdown(supplier,c).map { entry ->
