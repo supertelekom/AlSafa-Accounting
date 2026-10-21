@@ -288,6 +288,30 @@ class Store(val helper:StoreDb) {
             ORDER BY e.date,e.created,e.id,j.line""",
             account,c.name,from.toString(),until.toString())
     }
+    /** Physical stocktake correction, preserving the original movement and double-entry audit trail. */
+    fun adjustStockCount(productId:String,counted:Long,reason:String,
+                         date:String=today(),command:String=id()):String=transaction {
+        require(counted>=0){"الكمية الفعلية لا يمكن أن تكون سالبة"}
+        val note=reason.trim()
+        require(note.length in 5..500){"يرجى كتابة سبب واضح للتسوية"}
+        LocalDate.parse(date)
+        val p=product(productId)
+        require(counted!=p.stock){"لا يوجد فرق في الكمية"}
+        val delta=Math.subtractExact(counted,p.stock)
+        val valueDelta=if(delta<0){
+            require(p.stock>0)
+            -proportional(p.value,-delta,p.stock)
+        }else mul(p.cost,delta)
+        require(delta<0 || p.cost>0){"حدد تكلفة صحيحة للمنتج قبل إثبات زيادة الجرد"}
+        event(command,"STOCKTAKE",date,"جرد ${p.name}: ${p.stock} إلى $counted · $note")
+        stock(command,0,p,delta,valueDelta)
+        if(valueDelta!=0L){
+            val offset=if(valueDelta<0)"expense:inventory_loss" else "equity:stocktake_surplus"
+            post(command,listOf(Posting("inventory",p.currency,valueDelta),
+                Posting(offset,p.currency,-valueDelta)))
+        }
+        command
+    }
     fun product(id:String)=toProduct(rows("SELECT * FROM products WHERE id=?",id).single())
     fun addProduct(name:String,barcode:String,currency:Currency,price:Long,cost:Long,quantity:Long,kind:String="watch",details:String="{}",command:String=id()):String=transaction {
         require(name.isNotBlank() && price>=0 && cost>=0 && quantity>=0);require(kind in listOf("watch","part"));JSONObject(details)
