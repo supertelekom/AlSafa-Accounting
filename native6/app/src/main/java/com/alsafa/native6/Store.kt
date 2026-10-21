@@ -249,6 +249,12 @@ class Store(val helper:StoreDb) {
         return rows("SELECT e.id event_id,e.date,e.kind,c.currency,c.expected,c.counted,(c.counted-c.expected) variance FROM closings c JOIN events e ON e.id=c.event_id WHERE c.vault=? AND e.date=? ORDER BY c.currency",v,day)
     }
     /** A late or backdated posting can change book cash after a physical closing. Flag it, never rewrite the original count. */
+    fun automaticClosingsNeedingReview(v:String,days:Int=30):List<Map<String,String>> {
+        vault(v)
+        require(days in 1..365)
+        val since=LocalDate.now().minusDays(days.toLong()).toString()
+        return rows("SELECT e.date,e.id event_id,c.currency,c.expected FROM closings c JOIN events e ON e.id=c.event_id WHERE c.vault=? AND e.kind='AUTO_CLOSING' AND e.date>=? ORDER BY e.date DESC,c.currency",v,since)
+    }
     fun closingBookDrift(v:String,date:String,c:Currency):Long? {
         val day=LocalDate.parse(date).toString()
         val row=closingForDay(v,day).firstOrNull{it.getValue("currency")==c.name}?:return null
