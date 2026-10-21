@@ -661,6 +661,8 @@ class LegacySnapshotImportTest {
             assertEquals(2,store.automaticClosingsNeedingReview("drawer").size)
             assertEquals(1,store.automaticClosingReviews("drawer").size)
             assertEquals("-300",store.automaticClosingReviews("drawer").single()["variance"])
+            assertEquals("-300",store.automaticClosingReviewForDay("drawer",yesterday,Currency.USD)?.get("variance"))
+            assertEquals(null,store.automaticClosingReviewForDay("drawer",yesterday,Currency.TRY))
             assertEquals(300L,store.automaticReviewSummary("drawer",Currency.USD).getValue("shortages"))
             assertEquals(0L,store.automaticReviewSummary("drawer",Currency.USD).getValue("surpluses"))
             assertEquals(-300L,store.automaticReviewSummary("drawer",Currency.USD).getValue("net"))
