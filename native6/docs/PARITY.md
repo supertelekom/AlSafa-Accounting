@@ -269,3 +269,10 @@ Inspected the user's original **AlSafa Backup v2**, exported 2026-10-18 (approxi
 - Added a read-only supplier ledger breakdown grouped by accounting event, date and kind, filtered to one currency. Tablet supplier screen now exposes the dated ledger lines without modifying any postings.
 - Added regression coverage for independent USD and TRY opening supplier liabilities. Historical v3.9.353 supplier ledger and purchase payment migration still requires reconciliation and is not represented by this native ledger report.
 - CI and APK build have not been verified.
+
+## Supplier running balance and reconciliation
+
+- Native supplier account statements now show each posting's date, event type, signed payable movement and the outstanding balance after that posting, calculated separately by supplier and currency.
+- `supplierLedgerConsistent` compares the statement's final running liability with the payable control account; regression test exercises an opening USD liability and a partial cash payment.
+- The calculation applies only to posted Native 6 journal entries. Historical supplier settlements in legacy archives are not yet active postings and cannot be treated as migrated.
+- Tests and APK compilation still require a verified Android CI run.
