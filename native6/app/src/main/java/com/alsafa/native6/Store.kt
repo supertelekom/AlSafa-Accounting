@@ -567,6 +567,16 @@ class Store(val helper:StoreDb) {
                 "net_result" to Math.subtractExact(Math.subtractExact(revenue,cost),expense))
         }
     }
+    /** Source journal entries behind a particular day's operating result. */
+    fun operatingDayAudit(date:String,c:Currency):List<Map<String,String>> {
+        val day=LocalDate.parse(date).toString()
+        return rows("""SELECT e.date,e.id event_id,e.kind,e.memo,j.account,j.amount
+            FROM journal j JOIN events e ON e.id=j.event_id
+            WHERE e.date=? AND j.currency=?
+              AND (j.account LIKE 'revenue:%' OR j.account LIKE 'expense:%'
+                   OR j.account LIKE 'equity:withdrawal:%')
+            ORDER BY e.created,e.id,j.account""",day,c.name)
+    }
     fun operatingDailyReconciles(start:String,end:String,c:Currency):Boolean {
         val daily=operatingDailyRange(start,end,c)
         val summary=operatingResultRange(start,end,c)
