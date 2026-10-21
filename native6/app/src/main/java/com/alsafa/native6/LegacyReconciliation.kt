@@ -206,7 +206,7 @@ object LegacyReconciliation {
                 val row=purchases.optJSONObject(i) ?: continue
                 val id=row.optString("id")
                 if(id.isNotBlank() && !ids.add(id)) duplicateIds++
-                if(supplierIds.isNotEmpty() && row.optString("supplierId") !in supplierIds) missingSupplier++
+                if(data.has("suppliers") && row.optString("supplierId") !in supplierIds) missingSupplier++
                 val total=row.optString("total").toBigDecimalOrNull()
                 val paid=row.optString("paid").toBigDecimalOrNull()
                 if(total==null || paid==null || total.signum()<0 || paid.signum()<0 || paid>total) invalidPaid++
