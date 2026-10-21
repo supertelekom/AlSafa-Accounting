@@ -220,25 +220,32 @@ object LegacyReconciliation {
         val laterRows=data.optJSONArray("payments")
         if(purchaseRows!=null && laterRows!=null) {
             val purchasesById=HashMap<String,Pair<String,BigDecimal>>()
+            val ambiguousIds=HashSet<String>()
             for(i in 0 until purchaseRows.length()) {
                 val row=purchaseRows.optJSONObject(i) ?: continue
                 val id=row.optString("id")
                 val paid=row.optString("paid").toBigDecimalOrNull() ?: continue
-                if(id.isNotBlank()) purchasesById[id]=row.optString("currency") to paid
+                if(id.isNotBlank()) {
+                    if(purchasesById.containsKey(id)) ambiguousIds.add(id)
+                    purchasesById[id]=row.optString("currency") to paid
+                }
             }
             var matched=0
             var missing=0
             var crossCurrency=0
+            var ambiguous=0
             for(i in 0 until laterRows.length()) {
                 val row=laterRows.optJSONObject(i) ?: continue
                 if(row.optString("referenceType")!="purchase") continue
                 val purchase=purchasesById[row.optString("referenceId")]
                 if(purchase==null) { missing++;continue }
+                if(row.optString("referenceId") in ambiguousIds) {ambiguous++;continue}
                 matched++
                 val paymentCurrency=row.optString("paymentCurrency").ifBlank { row.optString("currency") }
                 if(paymentCurrency.isNotBlank() && paymentCurrency!=purchase.first) crossCurrency++
             }
             lines += "ربط دفعات فواتير الشراء: مراجع صحيحة $matched، فواتير مفقودة $missing، عملة مختلفة $crossCurrency"
+            if(ambiguous>0) lines += "تحذير: $ambiguous دفعة مرتبطة بمعرف فاتورة شراء مكرر؛ لا يمكن تحديد الفاتورة المقصودة."
             lines += "المدفوع المسجل بالفاتورة قد يشمل دفعات لاحقة؛ يمنع خصمها مرة ثانية عند الترحيل."
         }
         // The same historical purchase ID cannot safely identify two invoices.
