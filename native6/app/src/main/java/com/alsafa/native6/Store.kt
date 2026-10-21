@@ -298,6 +298,11 @@ class Store(val helper:StoreDb) {
         if(invoiceId.isBlank())return null
         return rows("SELECT * FROM invoices WHERE id=?",invoiceId).singleOrNull()
     }
+    fun repairReceivedMonth(month:String):List<Map<String,String>> {
+        val start=java.time.YearMonth.parse(month).atDay(1).toString()
+        val end=java.time.YearMonth.parse(month).plusMonths(1).atDay(1).toString()
+        return rows("SELECT * FROM repairs WHERE date>=? AND date<? ORDER BY date DESC,id DESC",start,end)
+    }
     fun repairStatusCounts():Map<String,Long> =
         listOf("received","in_progress","ready","delivered").associateWith{status->scalar("SELECT count(*) FROM repairs WHERE status=?",status)}
     fun receiveRepair(customer:String,phone:String,watch:String,problem:String,command:String=id()):String=transaction {require(customer.isNotBlank()&&watch.isNotBlank());insert("repairs","id" to command,"customer" to customer,"phone" to phone,"watch" to watch,"problem" to problem,"status" to "received","date" to today());event(command,"REPAIR_RECEIVED",today(),"استلام صيانة $customer");command}
