@@ -49,7 +49,7 @@ class BackupV5Test {
                 original.insert("events", "id" to "closing-1", "kind" to "AUTO_CLOSING",
                     "date" to "2026-10-18", "created" to 1L, "memo" to "Automatic")
                 original.insert("closings", "event_id" to "closing-1", "vault" to "drawer",
-                    "currency" to "USD", "expected" to 1000L, "counted" to 1000L)
+                    "currency" to "USD", "expected" to 1000L, "counted" to null)
                 original.insert("events", "id" to "review-1", "kind" to "AUTO_CLOSING_REVIEW",
                     "date" to "2026-10-19", "created" to 2L, "memo" to "Physical recount")
                 original.insert("auto_closing_reviews", "event_id" to "review-1",
