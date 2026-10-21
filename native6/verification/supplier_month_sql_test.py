@@ -27,4 +27,10 @@ db.execute("INSERT INTO events VALUES(?,?,?,?)",("try","2026-10-10",101,"PURCHAS
 db.execute("INSERT INTO journal VALUES(?,?,?,?)",("try","payable:s1","TRY",-50000))
 isolated=db.execute("SELECT coalesce(sum(j.amount),0) FROM journal j JOIN events e ON e.id=j.event_id WHERE j.account=? AND j.currency=? AND e.date>=? AND e.date<?",args).fetchone()[0]
 assert isolated==-4500
-print("PASS supplier monthly ledger SQL including backdated posting, supplier and currency isolation")
+# A zero-movement month must retain its opening and closing balance.
+december=("payable:s1","USD","2026-12-01","2027-01-01")
+no_entries=db.execute("SELECT count(*) FROM journal j JOIN events e ON e.id=j.event_id WHERE j.account=? AND j.currency=? AND e.date>=? AND e.date<?",december).fetchone()[0]
+dec_open=-db.execute("SELECT coalesce(sum(j.amount),0) FROM journal j JOIN events e ON e.id=j.event_id WHERE j.account=? AND j.currency=? AND e.date<?",december[:3]).fetchone()[0]
+dec_close=-db.execute("SELECT coalesce(sum(j.amount),0) FROM journal j JOIN events e ON e.id=j.event_id WHERE j.account=? AND j.currency=? AND e.date<?",("payable:s1","USD","2027-01-01")).fetchone()[0]
+assert no_entries==0 and dec_open==dec_close==11500
+print("PASS supplier monthly ledger SQL: backdating, isolation, empty month")
