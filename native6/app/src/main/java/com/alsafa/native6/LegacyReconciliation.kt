@@ -105,15 +105,17 @@ object LegacyReconciliation {
         // Report the shared identity; never treat the two records as two payments.
         data.optJSONArray("supplierLedger")?.let { ledger ->
             val cashIds=HashSet<String>()
+            val cashById=HashMap<String,JSONObject>()
             data.optJSONArray("cashTransactions")?.let { transactions ->
                 for(i in 0 until transactions.length()) {
                     val id=transactions.optJSONObject(i)?.optString("id").orEmpty()
-                    if(id.isNotBlank()) cashIds.add(id)
+                    if(id.isNotBlank()) { cashIds.add(id); cashById[id]=transactions.optJSONObject(i)!! }
                 }
             }
             var linked=0
             var missing=0
             var duplicate=0
+            var inconsistent=0
             val seen=HashSet<String>()
             for(i in 0 until ledger.length()) {
                 val row=ledger.optJSONObject(i) ?: continue
@@ -121,9 +123,16 @@ object LegacyReconciliation {
                 val cashId=row.optString("recoveredFromCashTransactionId")
                 if(cashId.isBlank()) continue
                 if(!seen.add(cashId)) duplicate++
-                if(cashId in cashIds) linked++ else missing++
+                if(cashId in cashIds) {
+                    linked++
+                    val original=cashById[cashId]!!
+                    val amount=row.optString("amount").toBigDecimalOrNull()
+                    val cashAmount=original.optString("amount").toBigDecimalOrNull()
+                    if(amount==null || cashAmount==null || amount.abs()!=cashAmount.abs() || row.optString("currency")!=original.optString("currency")) inconsistent++
+                } else missing++
             }
             lines += "مدفوعات المورد المستعادة من حركات الخزنة: مرتبطة $linked، مرجع نقدي مفقود $missing، مرجع مستعاد مكرر $duplicate"
+            if(inconsistent>0) lines += "تحذير: $inconsistent دفعة مورد مستعادة لا تطابق مبلغ أو عملة حركة الخزنة."
             if(linked>0 || missing>0 || duplicate>0)
                 lines += "هذه المدفوعات ليست حركات دفع جديدة؛ يمنع إعادة خصمها من الخزنة أثناء الترحيل."
         }
