@@ -377,7 +377,11 @@ class Store(val helper:StoreDb) {
     fun paid(id:String)=scalar("SELECT coalesce(sum(amount),0) FROM receipts WHERE invoice_id=?",id)
     fun credit(id:String)=scalar("SELECT coalesce(sum(credit),0) FROM returns WHERE invoice_id=?",id)
     fun due(id:String):Long {val inv=invoice(id);return maxOf(0,inv.total-credit(id)-paid(id))}
-    fun refundable(id:String)=maxOf(0,paid(id)-(invoice(id).total-credit(id))-scalar("SELECT coalesce(sum(amount),0) FROM refunds WHERE invoice_id=?",id))
+    fun refundable(id:String):Long {
+        val inv=invoice(id)
+        if(inv.kind!="sale" && inv.kind!="repair") return 0L
+        return maxOf(0,paid(id)-(inv.total-credit(id))-scalar("SELECT coalesce(sum(amount),0) FROM refunds WHERE invoice_id=?",id))
+    }
     private fun nextNumber():Long {
         val existing=scalar("SELECT coalesce(max(number),0) FROM invoices")
         val raw=rows("SELECT payload FROM legacy_records WHERE category=? AND legacy_id=?","configuration","settings").firstOrNull()?.get("payload")
