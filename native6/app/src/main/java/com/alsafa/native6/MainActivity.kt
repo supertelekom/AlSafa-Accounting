@@ -221,7 +221,9 @@ class MainActivity:Activity() {
                         require(store.vaultDayReconciles(vault,currency,selected)){"حركة اليوم لا تطابق الرصيد"}
                         val opening=store.vaultDayOpening(vault,currency,selected)
                         val closing=store.vaultDayClosing(vault,currency,selected)
-                        val header="${currency.name}: سابق ${money(opening,currency)} · نهائي ${money(closing,currency)}"
+                        val incoming=store.vaultDayInflows(vault,currency,selected)
+                        val outgoing=store.vaultDayOutflows(vault,currency,selected)
+                        val header="${currency.name}: سابق ${money(opening,currency)} · داخل ${money(incoming,currency)} · خارج ${money(outgoing,currency)} · نهائي ${money(closing,currency)}"
                         listOf(header)+store.vaultDayEntries(vault,currency,selected).map{row->
                             row.getValue("kind")+" · "+money(row.getValue("amount").toLong(),currency)
                         }
