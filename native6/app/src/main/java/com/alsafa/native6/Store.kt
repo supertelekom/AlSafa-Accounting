@@ -46,6 +46,30 @@ class Store(val helper:StoreDb) {
         val next=java.time.YearMonth.parse(month).plusMonths(1).atDay(1).toString()
         return rows("SELECT e.id event_id,e.date,e.kind,e.memo,coalesce(sum(j.amount),0) amount FROM journal j JOIN events e ON e.id=j.event_id WHERE j.account=? AND j.currency=? AND e.date>=? AND e.date<? GROUP BY e.id,e.date,e.kind,e.memo ORDER BY e.date,e.created,e.id","cash:$v",c.name,first,next)
     }
+    /** Inclusive cash statement: previous carry, dated movements and closing, in one currency. */
+    fun vaultStatementRange(v:String,c:Currency,from:String,to:String):Map<String,Long> {
+        vault(v)
+        val start=LocalDate.parse(from)
+        val end=LocalDate.parse(to)
+        require(!start.isAfter(end)){"تاريخ البداية بعد تاريخ النهاية"}
+        require(java.time.temporal.ChronoUnit.DAYS.between(start,end)<=366){"الفترة تتجاوز سنة"}
+        val opening=vaultDayOpening(v,c,start.toString())
+        val entries=rows("""SELECT e.id event_id,coalesce(sum(j.amount),0) amount
+            FROM journal j JOIN events e ON e.id=j.event_id
+            WHERE j.account=? AND j.currency=? AND e.date>=? AND e.date<=?
+            GROUP BY e.id""","cash:$v",c.name,start.toString(),end.toString())
+        var incoming=0L
+        var outgoing=0L
+        entries.forEach { entry ->
+            val amount=entry.getValue("amount").toLong()
+            if(amount>0L) incoming=add(incoming,amount)
+            if(amount<0L) outgoing=add(outgoing,Math.negateExact(amount))
+        }
+        val closing=add(opening,Math.subtractExact(incoming,outgoing))
+        check(closing==vaultDayClosing(v,c,end.toString())){"رصيد الخزنة لا يطابق حركات الفترة"}
+        return mapOf("opening" to opening,"inflows" to incoming,"outflows" to outgoing,
+            "closing" to closing,"movements" to entries.size.toLong())
+    }
     fun vaultDayOpening(v:String,c:Currency,date:String):Long {
         vault(v)
         val day=LocalDate.parse(date).toString()
