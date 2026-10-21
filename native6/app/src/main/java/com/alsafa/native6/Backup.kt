@@ -132,6 +132,19 @@ class Backup(private val context:Context,private val store:Store) {
             JOIN events e ON e.id=d.event_id
             WHERE e.kind<>'WITHDRAWAL'
         """).isEmpty()){"ربط سحب بحدث محاسبي غير صالح"}
+        // A physical cash count exists only when someone actually counted it.
+        // Automatic book snapshots must never masquerade as reconciled cash.
+        require(target.rows("""SELECT c.event_id FROM closings c
+            JOIN events e ON e.id=c.event_id
+            WHERE (e.kind='AUTO_CLOSING' AND c.counted IS NOT NULL)
+               OR (e.kind='CLOSING' AND c.counted IS NULL)
+               OR e.kind NOT IN ('AUTO_CLOSING','CLOSING')
+        """).isEmpty()){"الإقفال يحتوي عدّاً نقدياً غير متوافق مع نوع الحدث"}
+        require(target.rows("""SELECT e.id FROM events e
+            JOIN closings c ON c.event_id=e.id
+            GROUP BY e.id,c.vault
+            HAVING count(*)<>3 OR count(DISTINCT c.currency)<>3
+        """).isEmpty()){"الإقفال يجب أن يسجل العملات الثلاث لكل خزنة"}
         // A cash recount is evidence only, never a ledger adjustment. Verify its
         // immutable event, source closing, vault/currency and review date.
         require(target.rows("""SELECT r.event_id FROM auto_closing_reviews r
