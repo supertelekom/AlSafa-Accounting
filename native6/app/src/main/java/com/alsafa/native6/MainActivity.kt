@@ -380,16 +380,17 @@ class MainActivity:Activity() {
         val result=column();body.addView(result)
         button("احتساب الفترة"){
             try {
-                val rows=store.periodReport(start.text.toString().trim(),end.text.toString().trim())
+                val from=start.text.toString().trim()
+                val until=end.text.toString().trim()
                 result.removeAllViews()
                 Currency.entries.forEach { currency ->
-                    val entries=rows.filter {it.getValue("currency")==currency.name}
-                    val revenue=-entries.filter {it.getValue("account").startsWith("revenue:")}.sumOf {it.getValue("amount").toLong()}
-                    val expenses=entries.filter {it.getValue("account").startsWith("expense:")}.sumOf {it.getValue("amount").toLong()}
-                    text("${currency.name} · إيرادات ${money(revenue,currency)}",result)
-                    text("مصاريف ${money(expenses,currency)} · صافي ${money(revenue-expenses,currency)}",result)
-                    val drawings=entries.filter {it.getValue("account").startsWith("equity:withdrawal:")}.sumOf {it.getValue("amount").toLong()}
-                    text("سحوبات الشركاء في الفترة: ${money(drawings,currency)} (لا تخصم ثانية من الربح)",result)
+                    val report=store.operatingResultRange(from,until,currency)
+                    text("${currency.name} · الإيرادات ${money(report.getValue("revenue"),currency)}",result)
+                    text("تكلفة البضاعة المباعة ${money(report.getValue("cost_of_sales"),currency)}",result)
+                    text("مجمل الربح ${money(report.getValue("gross_profit"),currency)}",result)
+                    text("المصاريف التشغيلية ${money(report.getValue("operating_expenses"),currency)}",result)
+                    text("صافي النتيجة ${money(report.getValue("net_result"),currency)}",result)
+                    text("سحوبات الشركاء ${money(report.getValue("partner_drawings"),currency)} · لا تُخصم مرة ثانية من الربح",result)
                 }
             } catch(e:Exception){error(e)}
         }
