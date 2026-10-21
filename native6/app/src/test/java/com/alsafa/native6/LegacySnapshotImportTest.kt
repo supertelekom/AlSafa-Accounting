@@ -457,6 +457,7 @@ class LegacySnapshotImportTest {
             assertEquals("5000",entries[0]["remaining"])
             assertEquals("3000",entries[1]["remaining"])
             assertEquals(3000L,store.supplierDue(supplier,Currency.USD))
+            assertTrue(store.supplierLedgerConsistent(supplier,Currency.USD))
             assertEquals(1000L,store.balance("drawer",Currency.USD))
         } finally { helper.close();context.deleteDatabase(name) }
     }
