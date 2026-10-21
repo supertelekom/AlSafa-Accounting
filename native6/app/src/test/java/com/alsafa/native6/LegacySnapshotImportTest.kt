@@ -642,6 +642,7 @@ class LegacySnapshotImportTest {
         try {
             val store=Store(helper)
             val yesterday=java.time.LocalDate.now().minusDays(1).toString()
+            assertTrue(!store.autoCloseDay("drawer",yesterday))
             store.cash("opening","drawer",Currency.USD,10000L,"Opening",yesterday)
             assertTrue(store.autoCloseDay("drawer",yesterday))
             assertTrue(!store.autoCloseDay("drawer",yesterday))
