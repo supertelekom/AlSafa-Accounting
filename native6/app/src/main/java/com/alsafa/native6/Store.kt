@@ -178,6 +178,24 @@ class Store(val helper:StoreDb) {
     fun supplierMonthPayments(supplier:String,c:Currency,month:String):Long = supplierLedgerMonth(supplier,c,month).filter { it.getValue("amount").toLong()>0L }.fold(0L) { total,row -> add(total,row.getValue("amount").toLong()) }
     fun supplierMonthMovement(supplier:String,c:Currency,month:String):Long = add(supplierMonthClosing(supplier,c,month),-supplierMonthOpening(supplier,c,month))
     fun supplierMonthReconciles(supplier:String,c:Currency,month:String):Boolean = supplierMonthClosing(supplier,c,month)==add(supplierMonthOpening(supplier,c,month),supplierMonthMovement(supplier,c,month)) && supplierMonthMovement(supplier,c,month)==add(supplierMonthCharges(supplier,c,month),-supplierMonthPayments(supplier,c,month))
+    /** Each payment is shown in the month of its own posting, never allocated to old debt dates. */
+    fun supplierPaymentsMonth(supplier:String,c:Currency,month:String):List<Map<String,String>> {
+        val period=java.time.YearMonth.parse(month)
+        val first=period.atDay(1).toString()
+        val next=period.plusMonths(1).atDay(1).toString()
+        require(scalar("SELECT count(*) FROM suppliers WHERE id=?",supplier)==1L){"المورد غير موجود"}
+        return rows("""SELECT e.id event_id,e.date,e.memo,j.amount
+            FROM journal j JOIN events e ON e.id=j.event_id
+            WHERE j.account=? AND j.currency=? AND e.kind='SUPPLIER_PAYMENT'
+              AND e.date>=? AND e.date<?
+            ORDER BY e.date,e.created,e.id""","payable:$supplier",c.name,first,next)
+    }
+    fun supplierPaymentTotalMonth(supplier:String,c:Currency,month:String):Long =
+        supplierPaymentsMonth(supplier,c,month).fold(0L){sum,row->
+            val amount=row.getValue("amount").toLong()
+            require(amount>0L){"دفعة مورد بقيمة غير صالحة"}
+            Math.addExact(sum,amount)
+        }
     /** Historic supplier debt and payments remain in their original transaction months. */
     fun supplierStatement(supplier:String,c:Currency,month:String):Map<String,Long> {
         val selected=java.time.YearMonth.parse(month).toString()
