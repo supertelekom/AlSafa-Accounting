@@ -58,6 +58,21 @@ class Backup(private val context:Context,private val store:Store) {
         }
         if(root.getInt("schema") in 1..2) data.put("legacy_records",JSONArray())
         if(root.getInt("schema") in 1..4) data.put("auto_closing_reviews",JSONArray())
+        // Legacy snapshots stored an invented physical count for automatic closings.
+        // Convert only those records to unknown; preserve genuine manual counts.
+        if(root.getInt("schema")<=5) {
+            val kinds=mutableMapOf<String,String>()
+            val events=data.getJSONArray("events")
+            for(i in 0 until events.length()) {
+                val e=events.getJSONObject(i)
+                kinds[e.getString("id")]=e.getString("kind")
+            }
+            val closings=data.getJSONArray("closings")
+            for(i in 0 until closings.length()) {
+                val c=closings.getJSONObject(i)
+                if(kinds[c.getString("event_id")]=="AUTO_CLOSING") c.put("counted",JSONObject.NULL)
+            }
+        }
         require(data.keys().asSequence().toSet()==tables.toSet()){"جداول النسخة غير مكتملة"}
         // Validate in a disposable database, then restore atomically only into an empty database.
         val name="validate-${Store.id()}.db";val helper=StoreDb(context,name);val staging=Store(helper)
