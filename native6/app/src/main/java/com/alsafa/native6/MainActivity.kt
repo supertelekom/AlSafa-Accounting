@@ -210,6 +210,27 @@ class MainActivity:Activity() {
                 })
             }
         }
+        button("كشف خزنة ليوم محدد"){
+            form("كشف الحركة اليومية","عرض"){box->
+                val v=select("الخزنة",vaultNames,box)
+                val day=field("التاريخ YYYY-MM-DD",box,Store.today())
+                ({
+                    val vault=Store.vaults[v.selectedItemPosition]
+                    val selected=java.time.LocalDate.parse(day.text.toString().trim()).toString()
+                    val lines=Currency.entries.flatMap{currency->
+                        require(store.vaultDayReconciles(vault,currency,selected)){"حركة اليوم لا تطابق الرصيد"}
+                        val opening=store.vaultDayOpening(vault,currency,selected)
+                        val closing=store.vaultDayClosing(vault,currency,selected)
+                        val header="${currency.name}: سابق ${money(opening,currency)} · نهائي ${money(closing,currency)}"
+                        listOf(header)+store.vaultDayEntries(vault,currency,selected).map{row->
+                            row.getValue("kind")+" · "+money(row.getValue("amount").toLong(),currency)
+                        }
+                    }
+                    AlertDialog.Builder(this).setTitle("حركة $vault · $selected")
+                        .setMessage(lines.joinToString("\n")).setPositiveButton("حسناً",null).show()
+                })
+            }
+        }
         button("تفاصيل حركات خزنة خلال شهر"){
             form("تفاصيل الخزنة","عرض"){box->
                 val v=select("الخزنة",vaultNames,box)
