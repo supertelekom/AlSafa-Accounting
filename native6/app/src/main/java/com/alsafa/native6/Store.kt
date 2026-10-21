@@ -211,6 +211,18 @@ class Store(val helper:StoreDb) {
             FROM products WHERE stock<0 OR value<0""")
         check("DUPLICATE_BARCODE","""SELECT barcode reference, 'باركود مكرر' detail
             FROM products WHERE trim(barcode)<>'' GROUP BY barcode HAVING count(*)>1""")
+        check("DUPLICATE_STOCK_LINE","""SELECT event_id || ':' || line reference,
+            'رقم حركة مخزون مكرر ضمن العملية' detail
+            FROM stock_moves GROUP BY event_id,line HAVING count(*)>1""")
+        check("DUPLICATE_JOURNAL_LINE","""SELECT event_id || ':' || line reference,
+            'رقم سطر قيد مكرر ضمن العملية' detail
+            FROM journal GROUP BY event_id,line HAVING count(*)>1""")
+        check("UNKNOWN_CURRENCY","""SELECT id reference, 'عملة منتج غير مدعومة' detail
+            FROM products WHERE currency NOT IN ('USD','SYP','TRY')""")
+        check("INVALID_PRODUCT_KIND","""SELECT id reference, 'نوع منتج غير مدعوم' detail
+            FROM products WHERE kind NOT IN ('watch','part')""")
+        check("INVALID_PRODUCT_PRICE","""SELECT id reference, 'سعر بيع أو تكلفة سالبة' detail
+            FROM products WHERE price<0 OR cost<0""")
         return issues
     }
     fun unbalancedEvents(c:Currency,start:String,end:String):List<Map<String,String>> {
