@@ -213,6 +213,31 @@ class Store(val helper:StoreDb) {
         event(command,"SUPPLIER_OPENING",date,"دين سابق للمورد $supplier")
         post(command,listOf(Posting("equity:opening",c,amount),Posting("payable:$supplier",c,-amount)))
     }
+    /** Automatic close records a book snapshot, not a physical cash count. */
+    fun autoCloseDay(v:String,date:String):Boolean=transaction {
+        vault(v)
+        val day=LocalDate.parse(date)
+        require(day.isBefore(LocalDate.now())){"الإقفال التلقائي للأيام السابقة فقط"}
+        if(closingExists(v,day.toString())) return@transaction false
+        val command=id()
+        event(command,"AUTO_CLOSING",day.toString(),"إقفال دفتري تلقائي - العد الفعلي غير مؤكد")
+        Currency.entries.forEach { c ->
+            val expected=vaultDayClosing(v,c,day.toString())
+            insert("closings","event_id" to command,"vault" to v,"currency" to c.name,"expected" to expected,"counted" to expected)
+        }
+        true
+    }
+    fun autoCloseMissingDays(v:String,lookbackDays:Int=7):Int {
+        require(lookbackDays in 1..31)
+        vault(v)
+        val todayDate=LocalDate.now()
+        var created=0
+        for(offset in lookbackDays downTo 1) {
+            val date=todayDate.minusDays(offset.toLong()).toString()
+            if(autoCloseDay(v,date)) created++
+        }
+        return created
+    }
     fun closingExists(v:String,date:String=today()):Boolean {
         vault(v)
         val day=LocalDate.parse(date).toString()
