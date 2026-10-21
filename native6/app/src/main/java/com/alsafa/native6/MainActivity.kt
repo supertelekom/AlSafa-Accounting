@@ -192,7 +192,7 @@ class MainActivity:Activity() {
     private fun returnForm(inv:Invoice){val lines=store.rows("SELECT * FROM invoice_lines WHERE invoice_id=? ORDER BY line",inv.id);form("استلام مرتجع جزئي"){box->val fields=lines.associate{r->r.getValue("line").toInt() to field("${r.getValue("name")} — كمية مرتجعة",box,"0",true)};val reason=field("السبب",box);
         {val q=fields.mapValues{it.value.text.toString().toLong()}.filterValues{it>0};val why=reason.text.toString();require(q.isNotEmpty()&&why.isNotBlank());work{store.returnSale(inv.id,q,why)}}}}
     private fun paymentForm(title:String,c:Currency,max:Long,action:(Long,String)->Unit){form(title){box->val n=field("المبلغ ${c.name} · المتبقي ${money(max,c)}",box,"0",true);val v=select("الخزنة",vaultNames,box);{val amount=amount(n,c);val vault=Store.vaults[v.selectedItemPosition];work{action(amount,vault)}}}}
-    private fun vaults(){text("الخزنات",size=25f);button("سجل مراجعات الإقفال التلقائي"){
+    private fun vaults(){text("الخزنات",size=25f);Store.vaults.forEach{v->text("مراجعات معلقة: "+store.pendingAutomaticReviewCount(v))};button("سجل مراجعات الإقفال التلقائي"){
             val lines=Store.vaults.flatMap{v->store.automaticClosingReviews(v).map{row->
                 val unit=Currency.valueOf(row.getValue("currency"))
                 v+" · إقفال "+row.getValue("closing_date")+" · مراجعة "+row.getValue("review_date")+" · "+unit.name+" · متوقع "+money(row.getValue("book_balance").toLong(),unit)+" · معدود "+money(row.getValue("actual_count").toLong(),unit)+" · فرق "+money(row.getValue("variance").toLong(),unit)+" · "+row.getValue("note")
