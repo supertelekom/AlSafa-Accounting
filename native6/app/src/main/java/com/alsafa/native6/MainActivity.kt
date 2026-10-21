@@ -278,7 +278,11 @@ class MainActivity:Activity() {
             val states=listOf("all","received","in_progress","ready","delivered")
             val matches=store.repairList(search.text.toString(),states[status.selectedItemPosition])
             text("عدد النتائج: ${matches.size}",results,16f)
-            matches.forEach{row->text(row.getValue("date")+" · "+row.getValue("customer")+" · "+row.getValue("watch")+" · "+label(row.getValue("status")),results)}
+            matches.forEach{row->
+                val id=row.getValue("id")
+                text(row.getValue("date")+" · "+row.getValue("customer")+" · "+row.getValue("watch")+" · "+label(row.getValue("status")),results)
+                button("تفاصيل الصيانة"){val detail=store.repairDetail(id);val invoice=store.repairInvoice(id);val info="العميل: "+detail.getValue("customer")+"\nالهاتف: "+detail.getValue("phone")+"\nالساعة: "+detail.getValue("watch")+"\nالمشكلة: "+detail.getValue("problem")+"\nالحالة: "+label(detail.getValue("status"))+"\nالفاتورة: "+(invoice?.get("number")?:"لا توجد");AlertDialog.Builder(this).setTitle("تفاصيل الصيانة").setMessage(info).setPositiveButton("حسناً",null).show()}
+            }
         }
         val counts=store.repairStatusCounts()
         text("مستلمة: ${counts.getValue("received")} · قيد العمل: ${counts.getValue("in_progress")} · جاهزة: ${counts.getValue("ready")} · مسلّمة: ${counts.getValue("delivered")}",size=15f)
