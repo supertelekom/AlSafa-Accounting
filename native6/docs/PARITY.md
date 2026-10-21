@@ -302,3 +302,10 @@ Inspected the user's original **AlSafa Backup v2**, exported 2026-10-18 (approxi
 - Flags opening-debt ledger payments exceeding the corresponding opening debt. These findings require review; no historical payment is automatically posted or deducted from Native 6 vaults.
 - Regression tests cover matching recovered payment, missing/duplicate references, overpayment, currency mismatch and duplicate cash IDs.
 - Tests remain unverified in CI; historical supplier and purchase debt migration remains blocked until reconciliation is complete.
+
+## Historical purchase liabilities audit
+
+- Legacy reconciliation now audits purchase invoice IDs, supplier references and `total/paid` validity, including an explicitly empty supplier directory.
+- Separately reconciles subsequent payments referring to purchase invoices; it never subtracts later payments a second time from an invoice's already stored `paid` field. Cross-currency payment references are counted for review, without inventing FX rates.
+- Duplicate or blank purchase IDs are flagged rather than used as unique migration keys. Regression tests cover duplicate IDs, unknown suppliers, overpaid invoices, repeated payments and missing IDs.
+- No historical supplier balances or cash payments are posted by these read-only audits. Build/test execution remains unverified.
