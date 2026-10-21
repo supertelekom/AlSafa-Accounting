@@ -223,6 +223,12 @@ class Store(val helper:StoreDb) {
         val day=LocalDate.parse(date).toString()
         return rows("SELECT e.id event_id,e.date,c.currency,c.expected,c.counted,(c.counted-c.expected) variance FROM closings c JOIN events e ON e.id=c.event_id WHERE c.vault=? AND e.date=? ORDER BY c.currency",v,day)
     }
+    /** A late or backdated posting can change book cash after a physical closing. Flag it, never rewrite the original count. */
+    fun closingBookDrift(v:String,date:String,c:Currency):Long? {
+        val day=LocalDate.parse(date).toString()
+        val row=closingForDay(v,day).firstOrNull{it.getValue("currency")==c.name}?:return null
+        return Math.subtractExact(vaultDayClosing(v,c,day),row.getValue("expected").toLong())
+    }
     fun closingHistoryMonth(v:String,month:String):List<Map<String,String>> {
         val first=java.time.YearMonth.parse(month).atDay(1).toString()
         val next=java.time.YearMonth.parse(month).plusMonths(1).atDay(1).toString()
