@@ -508,6 +508,29 @@ class Store(val helper:StoreDb) {
         require(java.time.temporal.ChronoUnit.DAYS.between(from,until)<=366){"الفترة تتجاوز سنة"}
         return rows("SELECT j.currency,j.account,sum(j.amount) amount FROM journal j JOIN events e ON e.id=j.event_id WHERE e.date>=? AND e.date<=? GROUP BY j.currency,j.account ORDER BY j.currency,j.account",from.toString(),until.toString())
     }
+    /** A ledger-based operating result, never mixing currencies or treating drawings as expenses. */
+    fun operatingResultRange(start:String,end:String,c:Currency):Map<String,Long> {
+        val lines=periodReport(start,end).filter{it["currency"]==c.name}
+        var revenue=0L
+        var cost=0L
+        var expenses=0L
+        var drawings=0L
+        lines.forEach{row->
+            val account=row.getValue("account")
+            val amount=row.getValue("amount").toLong()
+            when {
+                account.startsWith("revenue:") -> revenue=Math.subtractExact(revenue,amount)
+                account.startsWith("expense:") && account.contains("cost") -> cost=Math.addExact(cost,amount)
+                account.startsWith("expense:") -> expenses=Math.addExact(expenses,amount)
+                account.startsWith("equity:withdrawal:") -> drawings=Math.addExact(drawings,amount)
+            }
+        }
+        val gross=Math.subtractExact(revenue,cost)
+        val net=Math.subtractExact(gross,expenses)
+        return mapOf("revenue" to revenue,"cost_of_sales" to cost,
+            "gross_profit" to gross,"operating_expenses" to expenses,
+            "net_result" to net,"partner_drawings" to drawings)
+    }
     fun monthReport(month:String):List<Map<String,String>> {java.time.YearMonth.parse(month);return rows("SELECT j.currency,j.account,sum(j.amount) amount FROM journal j JOIN events e ON e.id=j.event_id WHERE substr(e.date,1,7)=? GROUP BY j.currency,j.account ORDER BY j.currency,j.account",month)}
     fun repairList(query:String="",status:String="all"):List<Map<String,String>> {
         require(status in setOf("all","received","in_progress","ready","delivered")){"حالة الصيانة غير صالحة"}
