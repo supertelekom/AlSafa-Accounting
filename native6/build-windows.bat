@@ -37,9 +37,12 @@ if not exist "%ANDROID_HOME%\platforms\android-34\android.jar" (
   exit /b 1
 )
 echo Android SDK: %ANDROID_HOME%
-call gradlew.bat --no-daemon :app:assembleDebug :app:testDebugUnitTest
-if errorlevel 1 (
-  echo BUILD FAILED. Read errors above; no APK should be deployed.
+echo Building... output will be saved to build-output.log
+call gradlew.bat --no-daemon --console=plain :app:assembleDebug :app:testDebugUnitTest > build-output.log 2>&1
+set "BUILD_EXIT=%ERRORLEVEL%"
+type build-output.log
+if not "%BUILD_EXIT%"=="0" (
+  echo BUILD FAILED. Send native6\build-output.log for diagnosis; no APK should be deployed.
   exit /b 1
 )
 echo.
