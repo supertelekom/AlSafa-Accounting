@@ -198,6 +198,11 @@ class Store(val helper:StoreDb) {
         val day=LocalDate.parse(date).toString()
         return scalar("SELECT count(*) FROM closings c JOIN events e ON e.id=c.event_id WHERE c.vault=? AND e.date=?",v,day)>0L
     }
+    fun closingHistory(v:String,limit:Int=60):List<Map<String,String>> {
+        vault(v)
+        require(limit in 1..365)
+        return rows("SELECT e.id event_id,e.date,c.currency,c.expected,c.counted,(c.counted-c.expected) variance FROM closings c JOIN events e ON e.id=c.event_id WHERE c.vault=? ORDER BY e.date DESC,e.created DESC,c.currency LIMIT ?",v,limit.toString())
+    }
     fun closingPreview(v:String,counts:Map<Currency,Long>):Map<Currency,Pair<Long,Long>> {
         vault(v)
         require(counts.keys==Currency.entries.toSet() && counts.values.all{it>=0}){"يجب إدخال العد لكل العملات"}
