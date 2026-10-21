@@ -364,7 +364,29 @@ class MainActivity:Activity() {
     private fun returnForm(inv:Invoice){val lines=store.rows("SELECT * FROM invoice_lines WHERE invoice_id=? ORDER BY line",inv.id);form("استلام مرتجع جزئي"){box->val fields=lines.associate{r->r.getValue("line").toInt() to field("${r.getValue("name")} — كمية مرتجعة",box,"0",true)};val reason=field("السبب",box);
         {val q=fields.mapValues{it.value.text.toString().toLong()}.filterValues{it>0};val why=reason.text.toString();require(q.isNotEmpty()&&why.isNotBlank());work{store.returnSale(inv.id,q,why)}}}}
     private fun paymentForm(title:String,c:Currency,max:Long,action:(Long,String)->Unit){form(title){box->val n=field("المبلغ ${c.name} · المتبقي ${money(max,c)}",box,"0",true);val v=select("الخزنة",vaultNames,box);{val amount=amount(n,c);val vault=Store.vaults[v.selectedItemPosition];work{action(amount,vault)}}}}
-    private fun vaults(){text("الخزنات",size=25f);Store.vaults.forEach{v->text(v+" · إقفالات تحتاج عدّاً: "+store.pendingAutomaticReviewCount(v))};button("الفروقات الفعلية التي تحتاج تحقيقاً"){val lines=Store.vaults.flatMap{v->store.automaticReviewExceptions(v).map{row->v+" · "+row.getValue("closing_date")+" · "+row.getValue("currency")+" · فرق "+row.getValue("variance")+" · "+row.getValue("note")}};AlertDialog.Builder(this).setTitle("فروقات لم تسوَّ محاسبياً").setMessage(if(lines.isEmpty())"لا توجد فروقات مراجعة" else lines.joinToString("\n")).setPositiveButton("حسناً",null).show()};button("تدقيق إقفال حسب اليوم والعملة"){
+    private fun vaults(){text("الخزنات",size=25f);
+        button("كشف خزنة بين تاريخين"){
+            form("كشف الخزنة للفترة","عرض"){box->
+                val v=select("الخزنة",vaultNames,box)
+                val currency=select("العملة",Currency.entries.map{it.name},box)
+                val first=field("من YYYY-MM-DD",box,java.time.LocalDate.now().withDayOfMonth(1).toString())
+                val last=field("إلى YYYY-MM-DD",box,Store.today())
+                ({
+                    val vault=Store.vaults[v.selectedItemPosition]
+                    val unit=Currency.entries[currency.selectedItemPosition]
+                    val data=store.vaultStatementRange(vault,unit,first.text.toString().trim(),last.text.toString().trim())
+                    val lines=listOf(
+                        "الرصيد المرحّل: "+money(data.getValue("opening"),unit),
+                        "المقبوضات: "+money(data.getValue("inflows"),unit),
+                        "المدفوعات: "+money(data.getValue("outflows"),unit),
+                        "الرصيد الختامي: "+money(data.getValue("closing"),unit),
+                        "عدد الحركات: "+data.getValue("movements")
+                    ).joinToString("\\n")
+                    AlertDialog.Builder(this).setTitle("كشف "+vault+" · "+unit.name).setMessage(lines).setPositiveButton("حسناً",null).show()
+                })
+            }
+        }
+Store.vaults.forEach{v->text(v+" · إقفالات تحتاج عدّاً: "+store.pendingAutomaticReviewCount(v))};button("الفروقات الفعلية التي تحتاج تحقيقاً"){val lines=Store.vaults.flatMap{v->store.automaticReviewExceptions(v).map{row->v+" · "+row.getValue("closing_date")+" · "+row.getValue("currency")+" · فرق "+row.getValue("variance")+" · "+row.getValue("note")}};AlertDialog.Builder(this).setTitle("فروقات لم تسوَّ محاسبياً").setMessage(if(lines.isEmpty())"لا توجد فروقات مراجعة" else lines.joinToString("\n")).setPositiveButton("حسناً",null).show()};button("تدقيق إقفال حسب اليوم والعملة"){
             form("تدقيق إقفال","عرض"){box->
                 val v=select("الخزنة",vaultNames,box)
                 val day=field("التاريخ YYYY-MM-DD",box,java.time.LocalDate.now().minusDays(1).toString())
