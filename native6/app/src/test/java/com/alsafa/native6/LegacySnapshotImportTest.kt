@@ -562,4 +562,23 @@ class LegacySnapshotImportTest {
         } finally {helper.close();context.deleteDatabase(name)}
     }
 
+    @Test fun dailyClosingPreviewDoesNotPostOrAlterBalances() {
+        val context=RuntimeEnvironment.getApplication<Context>()
+        val name="closing-preview-test.db"
+        context.deleteDatabase(name)
+        val helper=StoreDb(context,name)
+        try {
+            val store=Store(helper)
+            store.cash("opening","drawer",Currency.USD,10000L,"Opening")
+            val before=store.rows("SELECT count(*) count FROM events").single().getValue("count")
+            val preview=store.closingPreview("drawer",mapOf(
+                Currency.USD to 9800L,Currency.TRY to 100L,Currency.SYP to 0L))
+            assertEquals(10000L,preview.getValue(Currency.USD).first)
+            assertEquals(-200L,preview.getValue(Currency.USD).second)
+            assertEquals(100L,preview.getValue(Currency.TRY).second)
+            assertEquals(10000L,store.balance("drawer",Currency.USD))
+            assertEquals(before,store.rows("SELECT count(*) count FROM events").single().getValue("count"))
+        } finally {helper.close();context.deleteDatabase(name)}
+    }
+
 }
