@@ -361,3 +361,11 @@ Inspected the user's original **AlSafa Backup v2**, exported 2026-10-18 (approxi
 - Automatic closings have event kind `AUTO_CLOSING`; they capture the ledger balance at the end of the selected date and never post cash or add it again. The ledger itself carries forward into the next day, so existing prior balances and new sales remain combined exactly once.
 - Because no one counted the cash, automatic closings are visibly labelled unverified. The stored `counted` field is a technical placeholder equal to book cash; **it is not a physical count, and zero difference must not be represented as verified**. A review list shows these dates and any late-posting drift. Differences against actual physical cash must be checked at the next manual count.
 - Tests added for idempotence, three currencies, and no duplicate cash posting. Build and test execution remain unverified. A durable acknowledgement/physical recount record for each missed day is not implemented yet.
+
+## Physical recount review of missed automatic closings (SQLite v5)
+
+- An additive v4→v5 migration creates an immutable `auto_closing_reviews` table. The previous ledger, closing rows, and legacy archive are not rewritten. Reviews link to the original automatic closing event and are unique per currency.
+- The vault screen lets the operator select the missed closing date, vault, currency, enter **cash physically present at the time of review**, and a note. It shows current book cash and the difference before requiring confirmation.
+- A next-day recount compares physical cash against **the current book balance at review time**, not against the old closing-day balance, because intervening sales and payments may have changed cash. The original closing-day snapshot remains unchanged and can be compared separately to the historical ledger for late-posting drift.
+- A reviewed currency leaves the pending queue; its immutable review stays in the audit history. No adjustment entry is posted automatically, so any confirmed cash discrepancy requires a separate, explicitly approved accounting adjustment workflow (not yet implemented).
+- Robolectric assertions added for review persistence, no double-counting, partial per-currency completion, and duplicate rejection. Build/tests not executed successfully yet.
