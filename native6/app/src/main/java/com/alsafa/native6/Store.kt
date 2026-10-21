@@ -448,7 +448,7 @@ class Store(val helper:StoreDb) {
     fun supplierLedgerWithBalances(supplier:String,c:Currency):List<Map<String,String>> {
         var running=0L
         return supplierLedgerBreakdown(supplier,c).map { entry ->
-            running=add(running,-entry.getValue("amount").toLong())
+            running=add(running,Math.negateExact(entry.getValue("amount").toLong()))
             entry+("remaining" to running.toString())
         }
     }
@@ -463,7 +463,7 @@ class Store(val helper:StoreDb) {
     }
     fun supplierMonthOpening(supplier:String,c:Currency,month:String):Long {
         val start=java.time.YearMonth.parse(month).atDay(1).toString()
-        return -scalar("SELECT coalesce(sum(j.amount),0) FROM journal j JOIN events e ON e.id=j.event_id WHERE j.account=? AND j.currency=? AND e.date<?","payable:$supplier",c.name,start)
+        return Math.negateExact(scalar("SELECT coalesce(sum(j.amount),0) FROM journal j JOIN events e ON e.id=j.event_id WHERE j.account=? AND j.currency=? AND e.date<?","payable:$supplier",c.name,start))
     }
     fun supplierMonthClosing(supplier:String,c:Currency,month:String):Long = supplierMonthOpening(supplier,c,java.time.YearMonth.parse(month).plusMonths(1).toString())
     fun supplierMonthCharges(supplier:String,c:Currency,month:String):Long = supplierLedgerMonth(supplier,c,month).filter { it.getValue("amount").toLong()<0L }.fold(0L) { total,row -> add(total,-row.getValue("amount").toLong()) }
