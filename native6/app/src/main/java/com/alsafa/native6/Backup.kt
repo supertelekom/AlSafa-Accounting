@@ -117,6 +117,25 @@ class Backup(private val context:Context,private val store:Store) {
             JOIN events e ON e.id=d.event_id
             WHERE e.kind<>'WITHDRAWAL'
         """).isEmpty()){"ربط سحب بحدث محاسبي غير صالح"}
+        // A cash recount is evidence only, never a ledger adjustment. Verify its
+        // immutable event, source closing, vault/currency and review date.
+        require(target.rows("""SELECT r.event_id FROM auto_closing_reviews r
+            JOIN events review_event ON review_event.id=r.event_id
+            JOIN events closing_event ON closing_event.id=r.closing_event_id
+            LEFT JOIN closings c ON c.event_id=r.closing_event_id
+                AND c.vault=r.vault AND c.currency=r.currency
+            WHERE review_event.kind<>'AUTO_CLOSING_REVIEW'
+                OR closing_event.kind<>'AUTO_CLOSING'
+                OR review_event.date<>r.review_date
+                OR r.review_date<=closing_event.date
+                OR c.event_id IS NULL
+        """).isEmpty()){"مراجعة إقفال مرتبطة بحدث أو خزنة أو تاريخ غير صالح"}
+        require(target.rows("""SELECT r.event_id FROM auto_closing_reviews r
+            JOIN journal j ON j.event_id=r.event_id
+        """).isEmpty()){"مراجعة العد النقدي لا يجوز أن تنشئ قيداً مالياً"}
+        require(target.rows("""SELECT r.event_id FROM auto_closing_reviews r
+            GROUP BY r.event_id HAVING count(*)<>1
+        """).isEmpty()){"حدث مراجعة مكرر لأكثر من إقفال"}
         // The journal primary key (event_id,line) already enforces line uniqueness.
         require(target.rows("""SELECT j.event_id FROM journal j
             LEFT JOIN events e ON e.id=j.event_id
