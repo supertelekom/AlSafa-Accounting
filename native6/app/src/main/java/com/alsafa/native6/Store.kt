@@ -191,6 +191,20 @@ class Store(val helper:StoreDb) {
         }
         return opening==0L && debit==credit && closing==0L
     }
+    fun accountBalances(c:Currency):List<Map<String,String>> =
+        rows("SELECT account,coalesce(sum(amount),0) balance FROM journal WHERE currency=? GROUP BY account ORDER BY account",c.name)
+    fun accountEntries(account:String,c:Currency,start:String,end:String):List<Map<String,String>> {
+        require(account.isNotBlank())
+        val from=LocalDate.parse(start)
+        val until=LocalDate.parse(end)
+        require(!from.isAfter(until))
+        require(java.time.temporal.ChronoUnit.DAYS.between(from,until)<=366)
+        return rows("""SELECT e.date,e.kind,e.memo,e.id event_id,j.amount
+            FROM journal j JOIN events e ON e.id=j.event_id
+            WHERE j.account=? AND j.currency=? AND e.date>=? AND e.date<=?
+            ORDER BY e.date,e.created,e.id,j.line""",
+            account,c.name,from.toString(),until.toString())
+    }
     fun product(id:String)=toProduct(rows("SELECT * FROM products WHERE id=?",id).single())
     fun addProduct(name:String,barcode:String,currency:Currency,price:Long,cost:Long,quantity:Long,kind:String="watch",details:String="{}",command:String=id()):String=transaction {
         require(name.isNotBlank() && price>=0 && cost>=0 && quantity>=0);require(kind in listOf("watch","part"));JSONObject(details)
