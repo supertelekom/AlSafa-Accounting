@@ -193,6 +193,11 @@ class Store(val helper:StoreDb) {
         event(command,"SUPPLIER_OPENING",date,"دين سابق للمورد $supplier")
         post(command,listOf(Posting("equity:opening",c,amount),Posting("payable:$supplier",c,-amount)))
     }
+    fun closingPreview(v:String,counts:Map<Currency,Long>):Map<Currency,Pair<Long,Long>> {
+        vault(v)
+        require(counts.keys==Currency.entries.toSet() && counts.values.all{it>=0}){"يجب إدخال العد لكل العملات"}
+        return counts.mapValues { (currency,counted) -> val expected=balance(v,currency); expected to Math.subtractExact(counted,expected) }
+    }
     fun closeDay(v:String,counts:Map<Currency,Long>,date:String=today(),command:String=id())=transaction {
         vault(v);require(counts.keys==Currency.entries.toSet()&&counts.values.all{it>=0});require(scalar("SELECT count(*) FROM closings c JOIN events e ON e.id=c.event_id WHERE c.vault=? AND e.date=?",v,date)==0L){"اليوم مقفل لهذه الخزنة"}
         require(date==today()){"الإقفال متاح لليوم الحالي فقط"};event(command,"CLOSING",date,"إقفال $v")
