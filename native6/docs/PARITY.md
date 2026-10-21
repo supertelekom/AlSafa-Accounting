@@ -369,3 +369,11 @@ Inspected the user's original **AlSafa Backup v2**, exported 2026-10-18 (approxi
 - A next-day recount compares physical cash against **the current book balance at review time**, not against the old closing-day balance, because intervening sales and payments may have changed cash. The original closing-day snapshot remains unchanged and can be compared separately to the historical ledger for late-posting drift.
 - A reviewed currency leaves the pending queue; its immutable review stays in the audit history. No adjustment entry is posted automatically, so any confirmed cash discrepancy requires a separate, explicitly approved accounting adjustment workflow (not yet implemented).
 - Robolectric assertions added for review persistence, no double-counting, partial per-currency completion, and duplicate rejection. Build/tests not executed successfully yet.
+
+## Next-day physical cash review (SQLite schema v5)
+
+- Adds append-only `auto_closing_reviews` linked to the missed day's `AUTO_CLOSING` event, storing vault, currency, actual physical count, book balance at review time, note and review date. It does not adjust or duplicate cash journal postings.
+- Tablet UI supports confirmation before saving a physical recount, a dated review audit history, and per-vault pending-review counters. The follow-up queue excludes each reviewed currency independently.
+- Automatic backfill now skips dates before a vault has any recorded cash journal history. Book carry-forward remains a ledger calculation, not a new cash posting.
+- Review differences are calculated against the **current book balance when cash is counted**, not claimed as a verified historical count for the missed day. A discrepancy requires explicit accounting investigation and a separately authorized correction.
+- Additive SQLite v4-to-v5 migration; Android build and test suite are not yet verified.
