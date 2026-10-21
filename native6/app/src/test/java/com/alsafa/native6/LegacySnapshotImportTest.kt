@@ -474,6 +474,7 @@ class LegacySnapshotImportTest {
             store.cash("opening","drawer",Currency.USD,5000L,"Initial","2026-09-15")
             store.paySupplier(supplier,Currency.USD,2500L,"drawer","2026-10-20")
             val october=store.supplierLedgerMonth(supplier,Currency.USD,"2026-10")
+            assertEquals(10000L,store.supplierMonthOpening(supplier,Currency.USD,"2026-10"))
             assertEquals(1,october.size)
             assertEquals("7500",october.single()["remaining"])
             assertEquals("SUPPLIER_PAYMENT",october.single()["kind"])
