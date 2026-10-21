@@ -251,3 +251,9 @@ Inspected the user's original **AlSafa Backup v2**, exported 2026-10-18 (approxi
 - Product edits reject missing IDs rather than emitting a misleading audit event.
 - Product search trims leading and trailing query whitespace.
 - Added regression tests for whitespace-equivalent duplicate barcodes and nonexistent-product edit rollback. Build/test results are not yet verified.
+
+## Repair workflow hardening
+
+- Native repair orders now support `received -> in_progress -> ready -> delivered` with explicit tablet work-start and ready actions. Direct `received -> ready` remains allowed for simple jobs.
+- Work-start and readiness transitions append audit events. Repeated start is rejected; legacy unknown statuses are not offered unsupported transitions.
+- Regression tests cover the receive/start/ready timeline and duplicate start. Repair parts consumption, returns, costs and migration of historical repair invoices remain incomplete. Android CI results have not been verified.
