@@ -14,5 +14,15 @@ fun main() {
         }
         check(proportional(value, total, total) == value)
     }
-    println("PASS: 100000 randomized proportional allocation scenarios")
+    repeat(100_000) {
+        val size = random.nextInt(1, 20)
+        val lines = List(size) { random.nextLong(0L, 1_000_000L) }
+        val gross = lines.sum()
+        if (gross == 0L) return@repeat
+        val discount = random.nextLong(0L, gross)
+        val net = allocateInvoiceNet(lines, discount)
+        check(net.size == size && net.all { it >= 0L })
+        check(net.sum() == gross - discount)
+    }
+    println("PASS: 100000 proportional + 100000 invoice-discount allocation scenarios")
 }
