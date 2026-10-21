@@ -192,6 +192,27 @@ class Store(val helper:StoreDb) {
         return opening==0L && debit==credit && closing==0L
     }
     /** Validate that every posted event balances independently in each currency. */
+    /** Structural integrity checks; read-only and safe for live store data. */
+    fun accountingIntegrityIssues():List<Map<String,String>> {
+        val issues=mutableListOf<Map<String,String>>()
+        fun check(category:String,sql:String) {
+            rows(sql).forEach{row->issues.add(row+("category" to category))}
+        }
+        check("ORPHAN_JOURNAL","""SELECT j.event_id reference, 'قيد بلا عملية أصلية' detail
+            FROM journal j LEFT JOIN events e ON e.id=j.event_id
+            WHERE e.id IS NULL GROUP BY j.event_id""")
+        check("ORPHAN_STOCK","""SELECT s.event_id reference, 'حركة مخزون بلا عملية أصلية' detail
+            FROM stock_moves s LEFT JOIN events e ON e.id=s.event_id
+            WHERE e.id IS NULL GROUP BY s.event_id""")
+        check("MISSING_PRODUCT","""SELECT s.product_id reference, 'حركة مخزون لمنتج غير موجود' detail
+            FROM stock_moves s LEFT JOIN products p ON p.id=s.product_id
+            WHERE p.id IS NULL GROUP BY s.product_id""")
+        check("NEGATIVE_STOCK","""SELECT id reference, 'كمية أو قيمة مخزون سالبة' detail
+            FROM products WHERE stock<0 OR value<0""")
+        check("DUPLICATE_BARCODE","""SELECT barcode reference, 'باركود مكرر' detail
+            FROM products WHERE trim(barcode)<>'' GROUP BY barcode HAVING count(*)>1""")
+        return issues
+    }
     fun unbalancedEvents(c:Currency,start:String,end:String):List<Map<String,String>> {
         val from=LocalDate.parse(start)
         val until=LocalDate.parse(end)
