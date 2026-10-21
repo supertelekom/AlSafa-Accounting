@@ -155,6 +155,42 @@ class Store(val helper:StoreDb) {
                 AND e.date>=? AND e.date<=?
             ORDER BY e.date,e.created,e.id""",c.name,from,until)
     }
+    /** Trial balance of posted journal entries for one currency and an inclusive date range. */
+    fun trialBalanceRange(start:String,end:String,c:Currency):List<Map<String,String>> {
+        val from=LocalDate.parse(start)
+        val until=LocalDate.parse(end)
+        require(!from.isAfter(until)){"بداية الفترة بعد نهايتها"}
+        require(java.time.temporal.ChronoUnit.DAYS.between(from,until)<=366){"الفترة تتجاوز سنة"}
+        return rows("""SELECT j.account,
+            coalesce(sum(CASE WHEN e.date<? THEN j.amount ELSE 0 END),0) opening,
+            coalesce(sum(CASE WHEN e.date>=? AND e.date<=? AND j.amount>0 THEN j.amount ELSE 0 END),0) debits,
+            coalesce(sum(CASE WHEN e.date>=? AND e.date<=? AND j.amount<0 THEN -j.amount ELSE 0 END),0) credits,
+            coalesce(sum(CASE WHEN e.date<=? THEN j.amount ELSE 0 END),0) closing
+            FROM journal j JOIN events e ON e.id=j.event_id
+            WHERE j.currency=? AND e.date<=?
+            GROUP BY j.account ORDER BY j.account""",
+            from.toString(),from.toString(),until.toString(),from.toString(),
+            until.toString(),until.toString(),c.name,until.toString())
+    }
+    fun trialBalanceReconciles(start:String,end:String,c:Currency):Boolean {
+        val lines=trialBalanceRange(start,end,c)
+        var opening=0L
+        var debit=0L
+        var credit=0L
+        var closing=0L
+        lines.forEach{row->
+            val old=row.getValue("opening").toLong()
+            val dr=row.getValue("debits").toLong()
+            val cr=row.getValue("credits").toLong()
+            val next=row.getValue("closing").toLong()
+            if(Math.subtractExact(Math.addExact(old,dr),cr)!=next)return false
+            opening=Math.addExact(opening,old)
+            debit=Math.addExact(debit,dr)
+            credit=Math.addExact(credit,cr)
+            closing=Math.addExact(closing,next)
+        }
+        return opening==0L && debit==credit && closing==0L
+    }
     fun product(id:String)=toProduct(rows("SELECT * FROM products WHERE id=?",id).single())
     fun addProduct(name:String,barcode:String,currency:Currency,price:Long,cost:Long,quantity:Long,kind:String="watch",details:String="{}",command:String=id()):String=transaction {
         require(name.isNotBlank() && price>=0 && cost>=0 && quantity>=0);require(kind in listOf("watch","part"));JSONObject(details)
