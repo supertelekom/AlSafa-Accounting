@@ -116,6 +116,24 @@ class Store(val helper:StoreDb) {
         val value=movements.fold(0L){sum,row->Math.addExact(sum,row.getValue("value_delta").toLong())}
         return p.stock==qty && p.value==value
     }
+    /** Read-only discrepancy report: never silently changes inventory or financial journals. */
+    fun inventoryDiscrepancies(c:Currency,kind:String="all"):List<Map<String,String>> {
+        require(kind in setOf("all","watch","part"))
+        return products().filter{it.currency==c && (kind=="all"||it.kind==kind)}
+            .mapNotNull{p->
+                val history=productStockHistory(p.id)
+                val expectedQty=history.fold(0L){sum,row->
+                    Math.addExact(sum,row.getValue("quantity").toLong())}
+                val expectedValue=history.fold(0L){sum,row->
+                    Math.addExact(sum,row.getValue("value_delta").toLong())}
+                if(p.stock==expectedQty && p.value==expectedValue)null
+                else mapOf("id" to p.id,"name" to p.name,"barcode" to p.barcode,
+                    "actual_qty" to p.stock.toString(),"ledger_qty" to expectedQty.toString(),
+                    "actual_value" to p.value.toString(),"ledger_value" to expectedValue.toString(),
+                    "qty_difference" to Math.subtractExact(p.stock,expectedQty).toString(),
+                    "value_difference" to Math.subtractExact(p.value,expectedValue).toString())
+            }
+    }
     fun product(id:String)=toProduct(rows("SELECT * FROM products WHERE id=?",id).single())
     fun addProduct(name:String,barcode:String,currency:Currency,price:Long,cost:Long,quantity:Long,kind:String="watch",details:String="{}",command:String=id()):String=transaction {
         require(name.isNotBlank() && price>=0 && cost>=0 && quantity>=0);require(kind in listOf("watch","part"));JSONObject(details)
