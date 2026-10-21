@@ -514,4 +514,22 @@ class LegacySnapshotImportTest {
         } finally { helper.close();context.deleteDatabase(name) }
     }
 
+    @Test fun periodReportRejectsReversedAndExcessiveDateRanges() {
+        val context=RuntimeEnvironment.getApplication<Context>()
+        val name="period-report-validation-test.db"
+        context.deleteDatabase(name)
+        val helper=StoreDb(context,name)
+        try {
+            val store=Store(helper)
+            var reversed=false
+            try {store.periodReport("2026-10-20","2026-10-01")}
+            catch (_:IllegalArgumentException) {reversed=true}
+            assertTrue(reversed)
+            var tooLong=false
+            try {store.periodReport("2025-01-01","2026-10-01")}
+            catch (_:IllegalArgumentException) {tooLong=true}
+            assertTrue(tooLong)
+        } finally {helper.close();context.deleteDatabase(name)}
+    }
+
 }
