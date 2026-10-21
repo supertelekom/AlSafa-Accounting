@@ -196,6 +196,46 @@ class Store(val helper:StoreDb) {
             require(amount>0L){"دفعة مورد بقيمة غير صالحة"}
             Math.addExact(sum,amount)
         }
+    /** Inclusive date-range supplier statement, retaining historical debt before the first day. */
+    fun supplierStatementRange(supplier:String,c:Currency,from:String,to:String):Map<String,Long> {
+        val start=LocalDate.parse(from).toString()
+        val end=LocalDate.parse(to).toString()
+        require(start<=end){"تاريخ البداية بعد تاريخ النهاية"}
+        require(scalar("SELECT count(*) FROM suppliers WHERE id=?",supplier)==1L){"المورد غير موجود"}
+        val opening=-scalar("""SELECT coalesce(sum(j.amount),0) FROM journal j
+            JOIN events e ON e.id=j.event_id
+            WHERE j.account=? AND j.currency=? AND e.date<?""","payable:$supplier",c.name,start)
+        val movements=rows("""SELECT e.kind,coalesce(sum(j.amount),0) amount
+            FROM journal j JOIN events e ON e.id=j.event_id
+            WHERE j.account=? AND j.currency=? AND e.date>=? AND e.date<=?
+            GROUP BY e.kind""","payable:$supplier",c.name,start,end)
+        var charges=0L
+        var payments=0L
+        movements.forEach { row ->
+            val amount=row.getValue("amount").toLong()
+            if(amount<0L) charges=Math.subtractExact(charges,amount)
+            else payments=Math.addExact(payments,amount)
+        }
+        val closing=Math.subtractExact(Math.addExact(opening,charges),payments)
+        val verified=-scalar("""SELECT coalesce(sum(j.amount),0) FROM journal j
+            JOIN events e ON e.id=j.event_id
+            WHERE j.account=? AND j.currency=? AND e.date<=?""","payable:$supplier",c.name,end)
+        require(closing==verified){"كشف المورد للفترة غير متوازن"}
+        return mapOf("opening" to opening,"charges" to charges,
+            "payments" to payments,"closing" to closing)
+    }
+    fun supplierEntriesRange(supplier:String,c:Currency,from:String,to:String):List<Map<String,String>> {
+        val start=LocalDate.parse(from).toString()
+        val end=LocalDate.parse(to).toString()
+        require(start<=end){"تاريخ البداية بعد تاريخ النهاية"}
+        require(scalar("SELECT count(*) FROM suppliers WHERE id=?",supplier)==1L){"المورد غير موجود"}
+        return rows("""SELECT e.date,e.kind,e.memo,e.id event_id,
+            coalesce(sum(j.amount),0) amount
+            FROM journal j JOIN events e ON e.id=j.event_id
+            WHERE j.account=? AND j.currency=? AND e.date>=? AND e.date<=?
+            GROUP BY e.id,e.date,e.kind,e.memo
+            ORDER BY e.date,e.created,e.id""","payable:$supplier",c.name,start,end)
+    }
     /** Breakdown of supplier obligations: opening debts, purchases, and cash settlements. */
     fun supplierMonthCategories(supplier:String,c:Currency,month:String):Map<String,Long> {
         val period=java.time.YearMonth.parse(month)
