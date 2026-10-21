@@ -39,4 +39,17 @@ class MoneySafetyTest {
         assertThrows(ArithmeticException::class.java) { add(Long.MAX_VALUE, 1) }
         assertThrows(ArithmeticException::class.java) { mul(Long.MAX_VALUE, 2) }
     }
+    @Test fun proportionalAllocationPreservesExactFullValue() {
+        assertEquals(101L, proportional(101L, 3L, 3L))
+        assertEquals(34L, proportional(101L, 1L, 3L))
+        assertEquals(0L, proportional(101L, 0L, 3L))
+    }
+
+    @Test fun rejectsInvalidProportionalAllocation() {
+        assertThrows(IllegalArgumentException::class.java) { proportional(100L, 4L, 3L) }
+        assertThrows(IllegalArgumentException::class.java) { proportional(100L, 1L, 0L) }
+        assertThrows(IllegalArgumentException::class.java) { proportional(-1L, 1L, 2L) }
+        assertThrows(IllegalArgumentException::class.java) { proportional(100L, -1L, 2L) }
+    }
+
 }
