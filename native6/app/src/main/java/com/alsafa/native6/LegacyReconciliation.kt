@@ -248,6 +248,21 @@ object LegacyReconciliation {
             if(ambiguous>0) lines += "تحذير: $ambiguous دفعة مرتبطة بمعرف فاتورة شراء مكرر؛ لا يمكن تحديد الفاتورة المقصودة."
             lines += "المدفوع المسجل بالفاتورة قد يشمل دفعات لاحقة؛ يمنع خصمها مرة ثانية عند الترحيل."
         }
+        // Payments may be duplicated in the backup export. Count their identifiers
+        // separately without silently assigning duplicate records to invoices.
+        laterRows?.let { payments ->
+            val seen=HashSet<String>()
+            var duplicate=0
+            var missingId=0
+            for(i in 0 until payments.length()) {
+                val row=payments.optJSONObject(i) ?: continue
+                if(row.optString("referenceType")!="purchase") continue
+                val id=row.optString("id")
+                if(id.isBlank()) missingId++ else if(!seen.add(id)) duplicate++
+            }
+            if(duplicate>0 || missingId>0)
+                lines += "تحذير: دفعات شراء بمعرف مكرر $duplicate، ودون معرف $missingId؛ يجب تدقيق مصدر الدفعة قبل الترحيل."
+        }
         // The same historical purchase ID cannot safely identify two invoices.
         purchaseRows?.let { purchases ->
             val byId=HashMap<String,Int>()
