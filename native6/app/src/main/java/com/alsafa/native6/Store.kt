@@ -376,7 +376,7 @@ class Store(val helper:StoreDb) {
     }
     fun paid(id:String)=scalar("SELECT coalesce(sum(amount),0) FROM receipts WHERE invoice_id=?",id)
     fun credit(id:String)=scalar("SELECT coalesce(sum(credit),0) FROM returns WHERE invoice_id=?",id)
-    fun due(id:String):Long {val inv=invoice(id);return maxOf(0,inv.total-credit(id)-paid(id))}
+    fun due(id:String):Long {val inv=invoice(id);if(inv.kind=="purchase")return 0L;return maxOf(0,inv.total-credit(id)-paid(id))}
     fun refundable(id:String):Long {
         val inv=invoice(id)
         if(inv.kind!="sale" && inv.kind!="repair") return 0L
@@ -408,11 +408,11 @@ class Store(val helper:StoreDb) {
         if(paid>0) collectInternal(command,paid,vault,date,"$command-receipt");command
     }
     private fun collectInternal(invoiceId:String,amount:Long,v:String,date:String,command:String) {
-        val inv=invoice(invoiceId);require(inv.status=="posted" && amount>0 && amount<=due(invoiceId)){"الدفعة تتجاوز المتبقي أو الفاتورة ملغاة"};vault(v)
+        val inv=invoice(invoiceId);require(inv.kind=="sale" || inv.kind=="repair"){"القبض متاح لفواتير المبيع والصيانة فقط"};require(inv.status=="posted" && amount>0 && amount<=due(invoiceId)){"الدفعة تتجاوز المتبقي أو الفاتورة ملغاة"};vault(v)
         event(command,"RECEIPT",date,"قبض فاتورة ${inv.number}");insert("receipts","event_id" to command,"invoice_id" to invoiceId,"amount" to amount,"vault" to v)
         post(command,listOf(Posting("cash:$v",inv.currency,amount),Posting("receivable:$invoiceId",inv.currency,-amount)))
     }
-    fun collect(invoiceId:String,amount:Long,v:String,date:String=today(),command:String=id())=transaction {require(invoice(invoiceId).kind!="purchase");collectInternal(invoiceId,amount,v,date,command)}
+    fun collect(invoiceId:String,amount:Long,v:String,date:String=today(),command:String=id())=transaction {collectInternal(invoiceId,amount,v,date,command)}
     fun returnSale(invoiceId:String,quantities:Map<Int,Long>,reason:String,date:String=today(),command:String=id()):String=transaction {
         val inv=invoice(invoiceId);require(inv.kind=="sale" && inv.status=="posted" && reason.isNotBlank() && quantities.isNotEmpty())
         val lines=rows("SELECT * FROM invoice_lines WHERE invoice_id=? ORDER BY line",invoiceId);require(quantities.keys.all { k->lines.any { it.getValue("line").toInt()==k } })
@@ -582,7 +582,7 @@ class Store(val helper:StoreDb) {
         post(command,listOf(Posting("inventory",c,total),Posting("payable:$supplier",c,-total)));if(paid>0) paySupplier(supplier,c,paid,v,date,"$command-payment");command
     }
     fun paySupplier(supplier:String,c:Currency,amount:Long,v:String,date:String=today(),command:String=id())=transaction {
-        require(amount>0 && amount<=supplierDue(supplier,c)){"الدفعة تتجاوز دين المورد"};enough(v,c,amount);event(command,"SUPPLIER_PAYMENT",date,"دفع للمورد $supplier");post(command,listOf(Posting("payable:$supplier",c,amount),Posting("cash:$v",c,-amount)))
+        require(scalar("SELECT count(*) FROM suppliers WHERE id=?",supplier)==1L){"المورد غير موجود"};require(amount>0 && amount<=supplierDue(supplier,c)){"الدفعة تتجاوز دين المورد"};enough(v,c,amount);event(command,"SUPPLIER_PAYMENT",date,"دفع للمورد $supplier");post(command,listOf(Posting("payable:$supplier",c,amount),Posting("cash:$v",c,-amount)))
     }
     fun cash(kind:String,v:String,c:Currency,amount:Long,note:String,date:String=today(),destination:String="",command:String=id())=transaction {
         require(amount>0&&note.isNotBlank());vault(v);val lines=when(kind) {
