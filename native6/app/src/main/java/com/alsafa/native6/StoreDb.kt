@@ -4,7 +4,7 @@ import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 
-class StoreDb(context: Context, name: String = "alsafa_native6.db") : SQLiteOpenHelper(context,name,null,4) {
+class StoreDb(context: Context, name: String = "alsafa_native6.db") : SQLiteOpenHelper(context,name,null,5) {
     override fun onConfigure(db: SQLiteDatabase) { db.setForeignKeyConstraintsEnabled(true); db.execSQL("PRAGMA synchronous=FULL") }
     override fun onCreate(db: SQLiteDatabase) {
         schema.forEach(db::execSQL)
@@ -13,22 +13,28 @@ class StoreDb(context: Context, name: String = "alsafa_native6.db") : SQLiteOpen
         db.execSQL(legacyRecordsNoDelete)
         com.alsafa.native6.accounting.PartnerSchema.statements.forEach(db::execSQL)
         immutableTriggers.forEach(db::execSQL)
+        db.execSQL(autoClosingReviewsTable)
+        reviewTriggers.forEach(db::execSQL)
     }
     override fun onUpgrade(db: SQLiteDatabase,old: Int,new: Int) {
-        require(old in 1..3 && new == 4) {
+        require(old in 1..4 && new == 5) {
             "Unsupported migration $old → $new; database preserved"
         }
         if (old <= 2) {
             com.alsafa.native6.accounting.PartnerSchema.statements.forEach(db::execSQL)
         }
-        if (new == 4) {
+        if (old <= 3) {
             db.execSQL(legacyRecordsTable)
             db.execSQL(legacyRecordsNoUpdate)
             db.execSQL(legacyRecordsNoDelete)
             immutableTriggers.forEach(db::execSQL)
         }
+        db.execSQL(autoClosingReviewsTable)
+        reviewTriggers.forEach(db::execSQL)
     }
     companion object {
+        val autoClosingReviewsTable = "CREATE TABLE IF NOT EXISTS auto_closing_reviews(event_id TEXT NOT NULL REFERENCES events(id),closing_event_id TEXT NOT NULL REFERENCES events(id),vault TEXT NOT NULL,currency TEXT NOT NULL CHECK(currency IN ('USD','TRY','SYP')),review_date TEXT NOT NULL,book_balance INTEGER NOT NULL,actual_count INTEGER NOT NULL CHECK(actual_count>=0),note TEXT NOT NULL,PRIMARY KEY(closing_event_id,currency))"
+        val reviewTriggers = listOf("UPDATE","DELETE").map { action -> "CREATE TRIGGER IF NOT EXISTS auto_closing_reviews_"+action.lowercase()+" BEFORE "+action+" ON auto_closing_reviews BEGIN SELECT RAISE(ABORT,'Immutable cash review'); END" }
         val immutableTriggers = listOf("events","journal","stock_moves","invoice_lines","receipts","returns","refunds","closings").flatMap { table -> listOf("UPDATE","DELETE").map { action -> "CREATE TRIGGER IF NOT EXISTS "+table+"_"+action.lowercase()+" BEFORE "+action+" ON "+table+" BEGIN SELECT RAISE(ABORT,'Immutable accounting record'); END" } }
         val legacyRecordsNoUpdate = "CREATE TRIGGER legacy_records_no_update BEFORE UPDATE ON legacy_records BEGIN SELECT RAISE(ABORT,'Immutable legacy archive'); END"
         val legacyRecordsNoDelete = "CREATE TRIGGER legacy_records_no_delete BEFORE DELETE ON legacy_records BEGIN SELECT RAISE(ABORT,'Immutable legacy archive'); END"
