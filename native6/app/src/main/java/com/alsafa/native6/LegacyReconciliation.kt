@@ -215,6 +215,32 @@ object LegacyReconciliation {
             if(duplicateIds>0 || missingSupplier>0 || invalidPaid>0)
                 lines += "تحذير: فواتير شراء تحتاج مراجعة قبل اعتماد رصيد المورد التاريخي."
         }
+        // Payment references may point to purchases already containing a paid amount.
+        val purchaseRows=data.optJSONArray("purchases")
+        val laterRows=data.optJSONArray("payments")
+        if(purchaseRows!=null && laterRows!=null) {
+            val purchasesById=HashMap<String,Pair<String,BigDecimal>>()
+            for(i in 0 until purchaseRows.length()) {
+                val row=purchaseRows.optJSONObject(i) ?: continue
+                val id=row.optString("id")
+                val paid=row.optString("paid").toBigDecimalOrNull() ?: continue
+                if(id.isNotBlank()) purchasesById[id]=row.optString("currency") to paid
+            }
+            var matched=0
+            var missing=0
+            var crossCurrency=0
+            for(i in 0 until laterRows.length()) {
+                val row=laterRows.optJSONObject(i) ?: continue
+                if(row.optString("referenceType")!="purchase") continue
+                val purchase=purchasesById[row.optString("referenceId")]
+                if(purchase==null) { missing++;continue }
+                matched++
+                val paymentCurrency=row.optString("paymentCurrency").ifBlank { row.optString("currency") }
+                if(paymentCurrency.isNotBlank() && paymentCurrency!=purchase.first) crossCurrency++
+            }
+            lines += "ربط دفعات فواتير الشراء: مراجع صحيحة $matched، فواتير مفقودة $missing، عملة مختلفة $crossCurrency"
+            lines += "المدفوع المسجل بالفاتورة قد يشمل دفعات لاحقة؛ يمنع خصمها مرة ثانية عند الترحيل."
+        }
         data.optJSONArray("sales")?.let { sales ->
             val unpaid=sortedMapOf<String,BigDecimal>()
             var invalid=0
