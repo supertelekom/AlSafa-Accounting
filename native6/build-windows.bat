@@ -1,0 +1,48 @@
+@echo off
+setlocal
+cd /d "%~dp0"
+echo ============================================
+echo AlSafa Native 6 - Windows Debug APK
+echo ============================================
+if not exist "gradlew.bat" (
+  echo ERROR: Gradle wrapper is missing.
+  exit /b 1
+)
+if not exist "gradle\wrapper\gradle-wrapper.jar" (
+  echo ERROR: Gradle wrapper JAR is missing.
+  exit /b 1
+)
+if not defined JAVA_HOME (
+  if exist "%ProgramFiles%\Android\Android Studio\jbr\bin\java.exe" (
+    set "JAVA_HOME=%ProgramFiles%\Android\Android Studio\jbr"
+  )
+)
+if defined JAVA_HOME (
+  echo Using JDK: %JAVA_HOME%
+) else (
+  echo JAVA_HOME not set. Android Studio embedded JDK or JDK 17 is required.
+)
+if not defined ANDROID_HOME (
+  if exist "%LOCALAPPDATA%\Android\Sdk\platforms\android-34\android.jar" (
+    set "ANDROID_HOME=%LOCALAPPDATA%\Android\Sdk"
+  )
+)
+if not defined ANDROID_HOME (
+  echo ERROR: Android SDK 34 not found. Open Android Studio SDK Manager.
+  echo Install Android SDK Platform 34 and Android SDK Build-Tools.
+  exit /b 1
+)
+if not exist "%ANDROID_HOME%\platforms\android-34\android.jar" (
+  echo ERROR: Android SDK Platform 34 is missing from %ANDROID_HOME%
+  exit /b 1
+)
+echo Android SDK: %ANDROID_HOME%
+call gradlew.bat --no-daemon :app:assembleDebug :app:testDebugUnitTest
+if errorlevel 1 (
+  echo BUILD FAILED. Read errors above; no APK should be deployed.
+  exit /b 1
+)
+echo.
+echo BUILD AND UNIT TESTS PASSED.
+echo APK: %CD%\app\build\outputs\apk\debug\app-debug.apk
+exit /b 0
