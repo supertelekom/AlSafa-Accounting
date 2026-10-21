@@ -167,4 +167,18 @@ class LegacyReconciliationTest {
         assertTrue(report.contains("معرف حركة خزنة مكرر"))
     }
 
+    @Test fun purchaseDebtAuditFlagsDuplicateInvoiceAndMissingSupplier() {
+        val suppliers=JSONArray().put(JSONObject().put("id","known"))
+        val purchases=JSONArray()
+            .put(JSONObject().put("id","purchase-1").put("supplierId","known")
+                .put("currency","USD").put("total",100).put("paid",20))
+            .put(JSONObject().put("id","purchase-1").put("supplierId","missing")
+                .put("currency","USD").put("total",100).put("paid",120))
+        val data=JSONObject().put("suppliers",suppliers).put("purchases",purchases)
+        val report=LegacyReconciliation.inspect(JSONObject()
+            .put("format","alsafa-accounting-backup").put("data",data).toString())
+        assertTrue(report.contains("معرفات مكررة 1، مورد غير معروف 1، قيم مدفوعة غير صالحة 1"))
+        assertTrue(report.contains("فواتير شراء تحتاج مراجعة قبل اعتماد"))
+    }
+
 }
