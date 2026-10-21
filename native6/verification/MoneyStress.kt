@@ -24,5 +24,19 @@ fun main() {
         check(net.size == size && net.all { it >= 0L })
         check(net.sum() == gross - discount)
     }
-    println("PASS: 100000 proportional + 100000 invoice-discount allocation scenarios")
+    repeat(100_000) {
+        val originalQty = random.nextInt(1, 101).toLong()
+        val originalValue = random.nextLong(0L, 100_000L)
+        var returned = 0L
+        var credited = 0L
+        while (returned < originalQty) {
+            val quantity = random.nextLong(1L, originalQty - returned + 1L)
+            val increment = allocateReturnIncrement(originalValue, originalQty, returned, credited, quantity)
+            check(increment >= 0L)
+            credited = add(credited, increment)
+            returned = add(returned, quantity)
+        }
+        check(credited == originalValue)
+    }
+    println("PASS: 100000 proportional + 100000 invoice-discount + 100000 partial-return scenarios")
 }
