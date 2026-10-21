@@ -567,6 +567,14 @@ class Store(val helper:StoreDb) {
                 "net_result" to Math.subtractExact(Math.subtractExact(revenue,cost),expense))
         }
     }
+    fun operatingDailyReconciles(start:String,end:String,c:Currency):Boolean {
+        val daily=operatingDailyRange(start,end,c)
+        val summary=operatingResultRange(start,end,c)
+        return listOf("revenue","cost_of_sales","operating_expenses","net_result").all{key->
+            daily.fold(0L){total,day->Math.addExact(total,day.getValue(key))}==summary.getValue(key)
+        } && daily.fold(0L){total,day->Math.addExact(total,day.getValue("drawings"))}==
+            summary.getValue("partner_drawings")
+    }
     fun monthReport(month:String):List<Map<String,String>> {java.time.YearMonth.parse(month);return rows("SELECT j.currency,j.account,sum(j.amount) amount FROM journal j JOIN events e ON e.id=j.event_id WHERE substr(e.date,1,7)=? GROUP BY j.currency,j.account ORDER BY j.currency,j.account",month)}
     fun repairList(query:String="",status:String="all"):List<Map<String,String>> {
         require(status in setOf("all","received","in_progress","ready","delivered")){"حالة الصيانة غير صالحة"}
