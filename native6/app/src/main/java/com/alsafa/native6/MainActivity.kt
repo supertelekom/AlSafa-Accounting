@@ -192,7 +192,29 @@ class MainActivity:Activity() {
     private fun returnForm(inv:Invoice){val lines=store.rows("SELECT * FROM invoice_lines WHERE invoice_id=? ORDER BY line",inv.id);form("استلام مرتجع جزئي"){box->val fields=lines.associate{r->r.getValue("line").toInt() to field("${r.getValue("name")} — كمية مرتجعة",box,"0",true)};val reason=field("السبب",box);
         {val q=fields.mapValues{it.value.text.toString().toLong()}.filterValues{it>0};val why=reason.text.toString();require(q.isNotEmpty()&&why.isNotBlank());work{store.returnSale(inv.id,q,why)}}}}
     private fun paymentForm(title:String,c:Currency,max:Long,action:(Long,String)->Unit){form(title){box->val n=field("المبلغ ${c.name} · المتبقي ${money(max,c)}",box,"0",true);val v=select("الخزنة",vaultNames,box);{val amount=amount(n,c);val vault=Store.vaults[v.selectedItemPosition];work{action(amount,vault)}}}}
-    private fun vaults(){text("الخزنات",size=25f);button("عرض الإقفالات التلقائية التي تحتاج مراجعة"){val lines=Store.vaults.flatMap{v->store.automaticClosingsNeedingReview(v).map{row->v+" · "+row.getValue("date")+" · "+row.getValue("currency")+" · رصيد دفتري "+row.getValue("expected")+" · تغير لاحق "+(store.closingBookDrift(v,row.getValue("date"),Currency.valueOf(row.getValue("currency")))?:0L)}};AlertDialog.Builder(this).setTitle("إقفالات بلا عد فعلي").setMessage(if(lines.isEmpty())"لا توجد إقفالات تلقائية خلال آخر 30 يوماً" else lines.joinToString("\n")).setPositiveButton("حسناً",null).show()};button("إنشاء الإقفالات الدفترية الناقصة لآخر 7 أيام"){work{Store.vaults.sumOf{store.autoCloseMissingDays(it,7)}}};Store.vaults.forEachIndexed{i,v->text(vaultNames[i],size=22f);Currency.entries.forEach{c->text(money(store.balance(v,c),c))}}
+    private fun vaults(){text("الخزنات",size=25f);button("تسجيل العد الفعلي لإقفال تلقائي سابق"){
+            form("مراجعة إقفال تلقائي"){box->
+                val vault=select("الخزنة",vaultNames,box)
+                val day=field("تاريخ الإقفال YYYY-MM-DD",box,java.time.LocalDate.now().minusDays(1).toString())
+                val currency=select("العملة",Currency.entries.map{it.name},box)
+                val counted=field("المبلغ الموجود الآن فعلياً",box,"0",true)
+                val note=field("ملاحظة المراجعة",box,"عد فعلي في اليوم التالي")
+                ({
+                    val v=Store.vaults[vault.selectedItemPosition]
+                    val unit=Currency.entries[currency.selectedItemPosition]
+                    val value=amount(counted,unit)
+                    val selected=java.time.LocalDate.parse(day.text.toString().trim()).toString()
+                    val memo=note.text.toString().trim()
+                    val expected=store.balance(v,unit)
+                    AlertDialog.Builder(this).setTitle("تأكيد تسجيل العد")
+                        .setMessage("المتوقع الآن: "+money(expected,unit)+"\nالمعدود: "+money(value,unit)+"\nالفرق: "+money(Math.subtractExact(value,expected),unit)+"\nلن يتغير رصيد الخزنة تلقائياً.")
+                        .setNegativeButton("رجوع",null)
+                        .setPositiveButton("حفظ المراجعة"){_,_->work{store.reviewAutomaticClosing(v,selected,unit,value,memo)}}
+                        .show()
+                })
+            }
+        }
+        button("عرض الإقفالات التلقائية التي تحتاج مراجعة"){val lines=Store.vaults.flatMap{v->store.automaticClosingsNeedingReview(v).map{row->v+" · "+row.getValue("date")+" · "+row.getValue("currency")+" · رصيد دفتري "+row.getValue("expected")+" · تغير لاحق "+(store.closingBookDrift(v,row.getValue("date"),Currency.valueOf(row.getValue("currency")))?:0L)}};AlertDialog.Builder(this).setTitle("إقفالات بلا عد فعلي").setMessage(if(lines.isEmpty())"لا توجد إقفالات تلقائية خلال آخر 30 يوماً" else lines.joinToString("\n")).setPositiveButton("حسناً",null).show()};button("إنشاء الإقفالات الدفترية الناقصة لآخر 7 أيام"){work{Store.vaults.sumOf{store.autoCloseMissingDays(it,7)}}};Store.vaults.forEachIndexed{i,v->text(vaultNames[i],size=22f);Currency.entries.forEach{c->text(money(store.balance(v,c),c))}}
         button("كشف حركة الخزنات الشهري"){
             form("تقرير أرصدة الخزنات","عرض"){box->
                 val month=field("الشهر YYYY-MM",box,YearMonth.now().toString())
