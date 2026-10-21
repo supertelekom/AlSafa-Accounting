@@ -220,6 +220,7 @@ class MainActivity:Activity() {
                     val vault=Store.vaults[v.selectedItemPosition]
                     val currency=Currency.entries[c.selectedItemPosition]
                     require(store.vaultMonthEntriesReconcile(vault,currency,selected)){"حركات الخزنة لا تطابق صافي الشهر"}
+                    require(store.vaultMonthFlowReconciles(vault,currency,selected)){"إجمالي النقد الداخل والخارج لا يطابق صافي الشهر"}
                     val entries=store.vaultMonthEntries(vault,currency,selected)
                     val opening=store.vaultMonthOpening(vault,currency,selected)
                     val closing=store.vaultMonthClosing(vault,currency,selected)
