@@ -381,7 +381,7 @@ class MainActivity:Activity() {
                         "المدفوعات: "+money(data.getValue("outflows"),unit),
                         "الرصيد الختامي: "+money(data.getValue("closing"),unit),
                         "عدد الحركات: "+data.getValue("movements")
-                    ).joinToString("\\n")
+                    ).joinToString("\n")
                     AlertDialog.Builder(this).setTitle("كشف "+vault+" · "+unit.name).setMessage(lines).setPositiveButton("حسناً",null).show()
                 })
             }
