@@ -15,6 +15,7 @@ class StoreDb(context: Context, name: String = "alsafa_native6.db") : SQLiteOpen
         immutableTriggers.forEach(db::execSQL)
         db.execSQL(autoClosingReviewsTable)
         reviewTriggers.forEach(db::execSQL)
+        db.execSQL("CREATE TRIGGER IF NOT EXISTS closings_count_guard BEFORE INSERT ON closings BEGIN SELECT CASE WHEN (SELECT kind FROM events WHERE id=NEW.event_id)='AUTO_CLOSING' AND NEW.counted IS NOT NULL THEN RAISE(ABORT,'Automatic closing has no physical count') WHEN (SELECT kind FROM events WHERE id=NEW.event_id)='CLOSING' AND NEW.counted IS NULL THEN RAISE(ABORT,'Manual closing requires a count') END; END")
     }
     override fun onUpgrade(db: SQLiteDatabase,old: Int,new: Int) {
         require(old in 1..5 && new == 6) {
@@ -39,6 +40,7 @@ class StoreDb(context: Context, name: String = "alsafa_native6.db") : SQLiteOpen
         db.execSQL("DROP TABLE closings")
         db.execSQL("ALTER TABLE closings_v6 RENAME TO closings")
         immutableTriggers.filter { it.contains("closings_") }.forEach(db::execSQL)
+        db.execSQL("CREATE TRIGGER IF NOT EXISTS closings_count_guard BEFORE INSERT ON closings BEGIN SELECT CASE WHEN (SELECT kind FROM events WHERE id=NEW.event_id)='AUTO_CLOSING' AND NEW.counted IS NOT NULL THEN RAISE(ABORT,'Automatic closing has no physical count') WHEN (SELECT kind FROM events WHERE id=NEW.event_id)='CLOSING' AND NEW.counted IS NULL THEN RAISE(ABORT,'Manual closing requires a count') END; END")
     }
     companion object {
         val autoClosingReviewsTable = "CREATE TABLE IF NOT EXISTS auto_closing_reviews(event_id TEXT NOT NULL REFERENCES events(id),closing_event_id TEXT NOT NULL REFERENCES events(id),vault TEXT NOT NULL,currency TEXT NOT NULL CHECK(currency IN ('USD','TRY','SYP')),review_date TEXT NOT NULL,book_balance INTEGER NOT NULL,actual_count INTEGER NOT NULL CHECK(actual_count>=0),note TEXT NOT NULL,PRIMARY KEY(closing_event_id,currency))"
