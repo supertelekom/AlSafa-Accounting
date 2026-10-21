@@ -40,6 +40,22 @@ class Store(val helper:StoreDb) {
         val next=java.time.YearMonth.parse(month).plusMonths(1).atDay(1).toString()
         return rows("SELECT e.id event_id,e.date,e.kind,e.memo,coalesce(sum(j.amount),0) amount FROM journal j JOIN events e ON e.id=j.event_id WHERE j.account=? AND j.currency=? AND e.date>=? AND e.date<? GROUP BY e.id,e.date,e.kind,e.memo ORDER BY e.date,e.created,e.id","cash:$v",c.name,first,next)
     }
+    fun vaultDayOpening(v:String,c:Currency,date:String):Long {
+        vault(v)
+        val day=LocalDate.parse(date).toString()
+        return scalar("SELECT coalesce(sum(j.amount),0) FROM journal j JOIN events e ON e.id=j.event_id WHERE j.account=? AND j.currency=? AND e.date<?","cash:$v",c.name,day)
+    }
+    fun vaultDayClosing(v:String,c:Currency,date:String):Long {
+        val next=LocalDate.parse(date).plusDays(1).toString()
+        return vaultDayOpening(v,c,next)
+    }
+    fun vaultDayEntries(v:String,c:Currency,date:String):List<Map<String,String>> {
+        vault(v)
+        val day=LocalDate.parse(date).toString()
+        return rows("SELECT e.id event_id,e.date,e.kind,e.memo,coalesce(sum(j.amount),0) amount FROM journal j JOIN events e ON e.id=j.event_id WHERE j.account=? AND j.currency=? AND e.date=? GROUP BY e.id,e.date,e.kind,e.memo ORDER BY e.created,e.id","cash:$v",c.name,day)
+    }
+    fun vaultDayReconciles(v:String,c:Currency,date:String):Boolean =
+        vaultDayEntries(v,c,date).fold(vaultDayOpening(v,c,date)){total,row->add(total,row.getValue("amount").toLong())}==vaultDayClosing(v,c,date)
     fun vaultMonthInflows(v:String,c:Currency,month:String):Long = vaultMonthEntries(v,c,month).filter { it.getValue("amount").toLong()>0 }.sumOf { it.getValue("amount").toLong() }
     fun vaultMonthOutflows(v:String,c:Currency,month:String):Long = vaultMonthEntries(v,c,month).filter { it.getValue("amount").toLong()<0 }.sumOf { -it.getValue("amount").toLong() }
     fun vaultMonthFlowReconciles(v:String,c:Currency,month:String):Boolean = vaultMonthInflows(v,c,month)-vaultMonthOutflows(v,c,month)==vaultMonthMovement(v,c,month)
