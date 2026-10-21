@@ -218,4 +218,17 @@ class LegacyReconciliationTest {
         assertTrue(report.contains("مورد غير معروف 1"))
     }
 
+    @Test fun paymentCannotResolveToDuplicatedPurchaseIdentifier() {
+        val purchases=JSONArray()
+            .put(JSONObject().put("id","p").put("currency","USD").put("total",50).put("paid",0))
+            .put(JSONObject().put("id","p").put("currency","USD").put("total",70).put("paid",0))
+        val payments=JSONArray().put(JSONObject().put("referenceType","purchase")
+            .put("referenceId","p").put("currency","USD").put("amount",20))
+        val data=JSONObject().put("purchases",purchases).put("payments",payments)
+        val report=LegacyReconciliation.inspect(JSONObject()
+            .put("format","alsafa-accounting-backup").put("data",data).toString())
+        assertTrue(report.contains("1 دفعة مرتبطة بمعرف فاتورة شراء مكرر"))
+        assertTrue(report.contains("مراجع صحيحة 0"))
+    }
+
 }
