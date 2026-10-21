@@ -581,6 +581,10 @@ class LegacySnapshotImportTest {
             assertTrue(!store.closingExists("drawer"))
             store.closeDay("drawer",mapOf(Currency.USD to 9800L,Currency.TRY to 100L,Currency.SYP to 0L))
             assertTrue(store.closingExists("drawer"))
+            val history=store.closingHistory("drawer")
+            assertEquals(3,history.size)
+            assertEquals("-200",history.first {it["currency"]=="USD"}["variance"])
+            assertEquals("100",history.first {it["currency"]=="TRY"}["variance"])
             assertEquals(10000L,store.balance("drawer",Currency.USD))
         } finally {helper.close();context.deleteDatabase(name)}
     }
