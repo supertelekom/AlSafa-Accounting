@@ -106,10 +106,11 @@ object LegacyReconciliation {
         data.optJSONArray("supplierLedger")?.let { ledger ->
             val cashIds=HashSet<String>()
             val cashById=HashMap<String,JSONObject>()
+            var duplicateCashIds=0
             data.optJSONArray("cashTransactions")?.let { transactions ->
                 for(i in 0 until transactions.length()) {
                     val id=transactions.optJSONObject(i)?.optString("id").orEmpty()
-                    if(id.isNotBlank()) { cashIds.add(id); cashById[id]=transactions.optJSONObject(i)!! }
+                    if(id.isNotBlank()) { if(!cashIds.add(id)) duplicateCashIds++;cashById.putIfAbsent(id,transactions.optJSONObject(i)!!) }
                 }
             }
             var linked=0
@@ -133,6 +134,7 @@ object LegacyReconciliation {
             }
             lines += "مدفوعات المورد المستعادة من حركات الخزنة: مرتبطة $linked، مرجع نقدي مفقود $missing، مرجع مستعاد مكرر $duplicate"
             if(inconsistent>0) lines += "تحذير: $inconsistent دفعة مورد مستعادة لا تطابق مبلغ أو عملة حركة الخزنة."
+            if(duplicateCashIds>0) lines += "تحذير: $duplicateCashIds معرف حركة خزنة مكرر؛ لا يمكن اعتماد ربط المدفوعات دون مراجعة."
             if(linked>0 || missing>0 || duplicate>0)
                 lines += "هذه المدفوعات ليست حركات دفع جديدة؛ يمنع إعادة خصمها من الخزنة أثناء الترحيل."
         }
