@@ -61,14 +61,14 @@ class Store(val helper:StoreDb) {
         return rows("SELECT e.id event_id,e.date,e.kind,e.memo,coalesce(sum(j.amount),0) amount FROM journal j JOIN events e ON e.id=j.event_id WHERE j.account=? AND j.currency=? AND e.date=? GROUP BY e.id,e.date,e.kind,e.memo ORDER BY e.created,e.id","cash:$v",c.name,day)
     }
     fun vaultDayInflows(v:String,c:Currency,date:String):Long =
-        vaultDayEntries(v,c,date).filter{it.getValue("amount").toLong()>0}.sumOf{it.getValue("amount").toLong()}
+        vaultDayEntries(v,c,date).filter{it.getValue("amount").toLong()>0}.fold(0L){total,row->add(total,row.getValue("amount").toLong())}
     fun vaultDayOutflows(v:String,c:Currency,date:String):Long =
-        vaultDayEntries(v,c,date).filter{it.getValue("amount").toLong()<0}.sumOf{-it.getValue("amount").toLong()}
+        vaultDayEntries(v,c,date).filter{it.getValue("amount").toLong()<0}.fold(0L){total,row->add(total,Math.negateExact(row.getValue("amount").toLong()))}
     fun vaultDayReconciles(v:String,c:Currency,date:String):Boolean =
         vaultDayEntries(v,c,date).fold(vaultDayOpening(v,c,date)){total,row->add(total,row.getValue("amount").toLong())}==vaultDayClosing(v,c,date)
-    fun vaultMonthInflows(v:String,c:Currency,month:String):Long = vaultMonthEntries(v,c,month).filter { it.getValue("amount").toLong()>0 }.sumOf { it.getValue("amount").toLong() }
-    fun vaultMonthOutflows(v:String,c:Currency,month:String):Long = vaultMonthEntries(v,c,month).filter { it.getValue("amount").toLong()<0 }.sumOf { -it.getValue("amount").toLong() }
-    fun vaultMonthFlowReconciles(v:String,c:Currency,month:String):Boolean = vaultMonthInflows(v,c,month)-vaultMonthOutflows(v,c,month)==vaultMonthMovement(v,c,month)
+    fun vaultMonthInflows(v:String,c:Currency,month:String):Long = vaultMonthEntries(v,c,month).filter { it.getValue("amount").toLong()>0 }.fold(0L) { total,row -> add(total,row.getValue("amount").toLong()) }
+    fun vaultMonthOutflows(v:String,c:Currency,month:String):Long = vaultMonthEntries(v,c,month).filter { it.getValue("amount").toLong()<0 }.fold(0L) { total,row -> add(total,Math.negateExact(row.getValue("amount").toLong())) }
+    fun vaultMonthFlowReconciles(v:String,c:Currency,month:String):Boolean = Math.subtractExact(vaultMonthInflows(v,c,month),vaultMonthOutflows(v,c,month))==vaultMonthMovement(v,c,month)
     fun vaultMonthEntriesReconcile(v:String,c:Currency,month:String):Boolean =
         vaultMonthEntries(v,c,month).fold(0L) { sum,row -> add(sum,row.getValue("amount").toLong()) }==vaultMonthMovement(v,c,month)
     fun vaultMonthReconciles(v:String,c:Currency,month:String):Boolean =
