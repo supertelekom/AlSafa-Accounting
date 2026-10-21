@@ -202,6 +202,13 @@ class Store(val helper:StoreDb) {
     fun partnerMonthReport(month:String,currency:Currency):List<com.alsafa.native6.accounting.PartnerMonthLine> =
         com.alsafa.native6.accounting.PartnerReportReader(db)
             .monthlyFromPostedJournal(java.time.YearMonth.parse(month),currency.name)
+    fun periodReport(start:String,end:String):List<Map<String,String>> {
+        val from=java.time.LocalDate.parse(start)
+        val until=java.time.LocalDate.parse(end)
+        require(!from.isAfter(until)){"بداية الفترة بعد نهايتها"}
+        require(java.time.temporal.ChronoUnit.DAYS.between(from,until)<=366){"الفترة تتجاوز سنة"}
+        return rows("SELECT j.currency,j.account,sum(j.amount) amount FROM journal j JOIN events e ON e.id=j.event_id WHERE e.date>=? AND e.date<=? GROUP BY j.currency,j.account ORDER BY j.currency,j.account",from.toString(),until.toString())
+    }
     fun monthReport(month:String):List<Map<String,String>> {java.time.YearMonth.parse(month);return rows("SELECT j.currency,j.account,sum(j.amount) amount FROM journal j JOIN events e ON e.id=j.event_id WHERE substr(e.date,1,7)=? GROUP BY j.currency,j.account ORDER BY j.currency,j.account",month)}
     fun receiveRepair(customer:String,phone:String,watch:String,problem:String,command:String=id()):String=transaction {require(customer.isNotBlank()&&watch.isNotBlank());insert("repairs","id" to command,"customer" to customer,"phone" to phone,"watch" to watch,"problem" to problem,"status" to "received","date" to today());event(command,"REPAIR_RECEIVED",today(),"استلام صيانة $customer");command}
     fun startRepair(id:String)=transaction { require(rows("SELECT status FROM repairs WHERE id=?",id).single().getValue("status")=="received"); db.execSQL("UPDATE repairs SET status=? WHERE id=?",arrayOf("in_progress",id)); event(id(),"REPAIR_STARTED",today(),"بدء العمل على الصيانة") }
