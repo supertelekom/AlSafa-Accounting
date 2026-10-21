@@ -276,3 +276,10 @@ Inspected the user's original **AlSafa Backup v2**, exported 2026-10-18 (approxi
 - `supplierLedgerConsistent` compares the statement's final running liability with the payable control account; regression test exercises an opening USD liability and a partial cash payment.
 - The calculation applies only to posted Native 6 journal entries. Historical supplier settlements in legacy archives are not yet active postings and cannot be treated as migrated.
 - Tests and APK compilation still require a verified Android CI run.
+
+## Supplier statement month isolation
+
+- Supplier account entries now expose their immutable accounting event ID for transaction traceability.
+- Added `supplierLedgerMonth` to select only movements in a requested calendar month while retaining each row's running balance from the entire previous ledger history. A regression test covers September debt and an October partial payment.
+- The tablet supplier statement continues to show full history until a month selector is implemented; do not claim that monthly filtering is exposed in the UI.
+- Legacy archive liabilities are not included in posted supplier statements; historical migration remains blocked pending verified reconciliation.
