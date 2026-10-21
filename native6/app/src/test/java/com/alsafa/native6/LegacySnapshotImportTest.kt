@@ -337,4 +337,20 @@ class LegacySnapshotImportTest {
         } finally { helper.close();context.deleteDatabase(name) }
     }
 
+    @Test fun startingRepairTwiceDoesNotCreateDuplicateEvents() {
+        val context=RuntimeEnvironment.getApplication<Context>()
+        val name="repair-double-start-test.db"
+        context.deleteDatabase(name)
+        val helper=StoreDb(context,name)
+        try {
+            val store=Store(helper)
+            val id=store.receiveRepair("Customer","","Watch","Battery")
+            store.startRepair(id)
+            var rejected=false
+            try { store.startRepair(id) } catch (_:IllegalArgumentException) { rejected=true }
+            assertTrue(rejected)
+            assertEquals(1L,store.scalar("SELECT count(*) FROM events WHERE kind=?","REPAIR_STARTED"))
+        } finally { helper.close();context.deleteDatabase(name) }
+    }
+
 }
