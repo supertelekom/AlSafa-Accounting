@@ -24,6 +24,18 @@ class Store(val helper:StoreDb) {
     }
     private fun vault(v:String) { require(v in vaults){"خزنة غير صالحة"} }
     fun balance(v:String,c:Currency)=scalar("SELECT coalesce(sum(amount),0) FROM journal WHERE account=? AND currency=?","cash:$v",c.name)
+    /** Book cash balance at the start of a month, never mixed across currencies. */
+    fun vaultMonthOpening(v:String,c:Currency,month:String):Long {
+        vault(v)
+        val start=java.time.YearMonth.parse(month).atDay(1).toString()
+        return scalar("SELECT coalesce(sum(j.amount),0) FROM journal j JOIN events e ON e.id=j.event_id WHERE j.account=? AND j.currency=? AND e.date<?","cash:$v",c.name,start)
+    }
+    fun vaultMonthClosing(v:String,c:Currency,month:String):Long =
+        vaultMonthOpening(v,c,java.time.YearMonth.parse(month).plusMonths(1).toString())
+    fun vaultMonthMovement(v:String,c:Currency,month:String):Long =
+        add(vaultMonthClosing(v,c,month),-vaultMonthOpening(v,c,month))
+    fun vaultMonthReconciles(v:String,c:Currency,month:String):Boolean =
+        vaultMonthClosing(v,c,month)==add(vaultMonthOpening(v,c,month),vaultMonthMovement(v,c,month))
     private fun enough(v:String,c:Currency,amount:Long) { vault(v);require(amount>=0 && balance(v,c)>=amount){"رصيد الخزنة غير كافٍ"} }
     private fun toProduct(r:Map<String,String>)=Product(r.getValue("id"),r.getValue("name"),r.getValue("barcode"),Currency.valueOf(r.getValue("currency")),r.getValue("price").toLong(),r.getValue("cost").toLong(),r.getValue("stock").toLong(),r.getValue("kind"),r.getValue("value").toLong())
     fun products(query:String="")=rows("SELECT * FROM products WHERE archived=0 AND (instr(lower(name),lower(?))>0 OR instr(lower(barcode),lower(?))>0 OR instr(lower(model),lower(?))>0) ORDER BY name",query.trim(),query.trim(),query.trim()).map(::toProduct)
