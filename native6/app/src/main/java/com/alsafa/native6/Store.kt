@@ -306,6 +306,24 @@ class Store(val helper:StoreDb) {
         return mapOf("reviews" to reviews.size.toLong(),"shortages" to shortages,"surpluses" to surpluses,
             "net" to Math.subtractExact(surpluses,shortages))
     }
+    fun automaticClosingAudit(v:String,date:String,c:Currency):Map<String,String> {
+        vault(v)
+        val day=LocalDate.parse(date).toString()
+        val closing=closingForDay(v,day).firstOrNull{it["currency"]==c.name}
+            ?:error("لا يوجد إقفال لهذا اليوم")
+        val reviewed=automaticClosingReviewForDay(v,day,c)
+        val bookAtClosing=closing.getValue("expected").toLong()
+        val bookAtDayEnd=vaultDayClosing(v,c,day)
+        val result=mutableMapOf(
+            "date" to day,"currency" to c.name,"kind" to closing.getValue("kind"),
+            "book_at_closing" to bookAtClosing.toString(),
+            "book_day_end_now" to bookAtDayEnd.toString(),
+            "late_posting_drift" to Math.subtractExact(bookAtDayEnd,bookAtClosing).toString(),
+            "status" to if(closing["kind"]=="AUTO_CLOSING") if(reviewed==null)"pending" else "reviewed" else "manual"
+        )
+        if(reviewed!=null) result.putAll(reviewed)
+        return result
+    }
     fun automaticClosingReviewForDay(v:String,date:String,c:Currency):Map<String,String>? {
         vault(v)
         val day=LocalDate.parse(date).toString()
