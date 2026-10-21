@@ -81,7 +81,7 @@ class Store(val helper:StoreDb) {
         items.forEach{p->
             require(p.stock>=0L && p.cost>=0L && p.price>=0L){"بيانات مخزون غير صالحة"}
             quantity=Math.addExact(quantity,p.stock)
-            costValue=Math.addExact(costValue,Math.multiplyExact(p.stock,p.cost))
+            costValue=Math.addExact(costValue,p.value)
             sellingValue=Math.addExact(sellingValue,Math.multiplyExact(p.stock,p.price))
             if(p.stock==0L)zero=Math.addExact(zero,1L)
         }
@@ -94,6 +94,27 @@ class Store(val helper:StoreDb) {
         require(threshold>=0L && kind in setOf("all","watch","part"))
         return products().filter{it.currency==c && (kind=="all"||it.kind==kind) && it.stock<=threshold}
             .sortedWith(compareBy<Product>{it.stock}.thenBy{it.name})
+    }
+    /** The stored inventory valuation is authoritative; unit cost is rounded for display only. */
+    fun inventoryValuationReconciles(c:Currency,kind:String="all"):Boolean {
+        val summary=inventorySummary(c,kind)
+        val actual=products().filter{it.currency==c && (kind=="all"||it.kind==kind)}
+            .fold(0L){sum,p->Math.addExact(sum,p.value)}
+        return summary.getValue("cost_value")==actual
+    }
+    fun productStockHistory(productId:String):List<Map<String,String>> {
+        product(productId)
+        return rows("""SELECT e.date,e.kind,e.memo,e.id event_id,
+            m.quantity,m.value_delta,m.line
+            FROM stock_moves m JOIN events e ON e.id=m.event_id
+            WHERE m.product_id=? ORDER BY e.date,e.created,e.id,m.line""",productId)
+    }
+    fun productStockHistoryReconciles(productId:String):Boolean {
+        val p=product(productId)
+        val movements=productStockHistory(productId)
+        val qty=movements.fold(0L){sum,row->Math.addExact(sum,row.getValue("quantity").toLong())}
+        val value=movements.fold(0L){sum,row->Math.addExact(sum,row.getValue("value_delta").toLong())}
+        return p.stock==qty && p.value==value
     }
     fun product(id:String)=toProduct(rows("SELECT * FROM products WHERE id=?",id).single())
     fun addProduct(name:String,barcode:String,currency:Currency,price:Long,cost:Long,quantity:Long,kind:String="watch",details:String="{}",command:String=id()):String=transaction {
