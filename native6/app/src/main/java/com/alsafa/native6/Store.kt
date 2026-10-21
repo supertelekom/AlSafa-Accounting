@@ -274,6 +274,7 @@ class Store(val helper:StoreDb) {
         require(day.isBefore(LocalDate.now()))
         val closing=closingForDay(v,day.toString()).singleOrNull{it["currency"]==c.name && it["kind"]=="AUTO_CLOSING"}?:error("Missing automatic closing")
         val book=balance(v,c)
+        require(scalar("SELECT count(*) FROM auto_closing_reviews WHERE closing_event_id=? AND currency=?",closing.getValue("event_id"),c.name)==0L)
         return mapOf("book_at_close" to closing.getValue("expected").toLong(),"book_now" to book,"actual_now" to actual,"variance_now" to Math.subtractExact(actual,book))
     }
 
