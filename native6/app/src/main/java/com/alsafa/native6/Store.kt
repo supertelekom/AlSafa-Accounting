@@ -577,6 +577,34 @@ class Store(val helper:StoreDb) {
                    OR j.account LIKE 'equity:withdrawal:%')
             ORDER BY e.created,e.id,j.account""",day,c.name)
     }
+    /** Audit each source event rather than mixing separate sales, refunds and expenses. */
+    fun operatingDayEventBreakdown(date:String,c:Currency):List<Map<String,String>> {
+        val day=LocalDate.parse(date).toString()
+        val postings=operatingDayAudit(day,c)
+        return postings.groupBy{it.getValue("event_id")}.map{(eventId,entries)->
+            var revenue=0L
+            var cost=0L
+            var expense=0L
+            var drawings=0L
+            entries.forEach{entry->
+                val account=entry.getValue("account")
+                val amount=entry.getValue("amount").toLong()
+                when {
+                    account.startsWith("revenue:") -> revenue=Math.subtractExact(revenue,amount)
+                    account=="expense:cogs" -> cost=Math.addExact(cost,amount)
+                    account.startsWith("expense:") -> expense=Math.addExact(expense,amount)
+                    account.startsWith("equity:withdrawal:") -> drawings=Math.addExact(drawings,amount)
+                }
+            }
+            mapOf("event_id" to eventId,"date" to day,
+                "kind" to entries.first().getValue("kind"),
+                "memo" to entries.first().getValue("memo"),
+                "revenue" to revenue.toString(),"cost_of_sales" to cost.toString(),
+                "operating_expenses" to expense.toString(),
+                "drawings" to drawings.toString(),
+                "net_result" to Math.subtractExact(Math.subtractExact(revenue,cost),expense).toString())
+        }
+    }
     fun operatingDayAuditReconciles(date:String,c:Currency):Boolean {
         val day=LocalDate.parse(date).toString()
         val entries=operatingDayAudit(day,c)
