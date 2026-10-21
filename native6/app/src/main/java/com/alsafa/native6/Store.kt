@@ -472,8 +472,23 @@ class Store(val helper:StoreDb) {
         return Math.negateExact(scalar("SELECT coalesce(sum(j.amount),0) FROM journal j JOIN events e ON e.id=j.event_id WHERE j.account=? AND j.currency=? AND e.date<?","payable:$supplier",c.name,start))
     }
     fun supplierMonthClosing(supplier:String,c:Currency,month:String):Long = supplierMonthOpening(supplier,c,java.time.YearMonth.parse(month).plusMonths(1).toString())
-    fun supplierMonthCharges(supplier:String,c:Currency,month:String):Long = supplierLedgerMonth(supplier,c,month).filter { it.getValue("amount").toLong()<0L }.fold(0L) { total,row -> add(total,Math.negateExact(row.getValue("amount").toLong())) }
-    fun supplierMonthPayments(supplier:String,c:Currency,month:String):Long = supplierLedgerMonth(supplier,c,month).filter { it.getValue("amount").toLong()>0L }.fold(0L) { total,row -> add(total,row.getValue("amount").toLong()) }
+    private fun supplierMonthAmount(supplier:String,c:Currency,month:String,positive:Boolean):Long {
+        require(scalar("SELECT count(*) FROM suppliers WHERE id=?",supplier)==1L){"المورد غير موجود"}
+        val period=java.time.YearMonth.parse(month)
+        val first=period.atDay(1).toString()
+        val next=period.plusMonths(1).atDay(1).toString()
+        val sign=if(positive) ">0" else "<0"
+        val movements=rows("""SELECT coalesce(sum(j.amount),0) amount FROM journal j
+            JOIN events e ON e.id=j.event_id
+            WHERE j.account=? AND j.currency=? AND e.date>=? AND e.date<? 
+            GROUP BY e.id HAVING sum(j.amount)$sign""","payable:$supplier",c.name,first,next)
+        return movements.fold(0L){total,row->
+            val value=row.getValue("amount").toLong()
+            add(total,if(positive) value else Math.negateExact(value))
+        }
+    }
+    fun supplierMonthCharges(supplier:String,c:Currency,month:String):Long = supplierMonthAmount(supplier,c,month,false)
+    fun supplierMonthPayments(supplier:String,c:Currency,month:String):Long = supplierMonthAmount(supplier,c,month,true)
     fun supplierMonthMovement(supplier:String,c:Currency,month:String):Long = Math.subtractExact(supplierMonthClosing(supplier,c,month),supplierMonthOpening(supplier,c,month))
     fun supplierMonthReconciles(supplier:String,c:Currency,month:String):Boolean {
         val opening=supplierMonthOpening(supplier,c,month)
