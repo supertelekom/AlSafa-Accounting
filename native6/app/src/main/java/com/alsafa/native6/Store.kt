@@ -40,6 +40,8 @@ class Store(val helper:StoreDb) {
         val next=java.time.YearMonth.parse(month).plusMonths(1).atDay(1).toString()
         return rows("SELECT e.id event_id,e.date,e.kind,e.memo,coalesce(sum(j.amount),0) amount FROM journal j JOIN events e ON e.id=j.event_id WHERE j.account=? AND j.currency=? AND e.date>=? AND e.date<? GROUP BY e.id,e.date,e.kind,e.memo ORDER BY e.date,e.created,e.id","cash:$v",c.name,first,next)
     }
+    fun vaultMonthEntriesReconcile(v:String,c:Currency,month:String):Boolean =
+        vaultMonthEntries(v,c,month).fold(0L) { sum,row -> add(sum,row.getValue("amount").toLong()) }==vaultMonthMovement(v,c,month)
     fun vaultMonthReconciles(v:String,c:Currency,month:String):Boolean =
         vaultMonthClosing(v,c,month)==add(vaultMonthOpening(v,c,month),vaultMonthMovement(v,c,month))
     private fun enough(v:String,c:Currency,amount:Long) { vault(v);require(amount>=0 && balance(v,c)>=amount){"رصيد الخزنة غير كافٍ"} }
