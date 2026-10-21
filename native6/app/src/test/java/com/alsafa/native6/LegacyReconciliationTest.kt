@@ -101,4 +101,33 @@ class LegacyReconciliationTest {
         assertTrue(report.contains("2026-10 | father | USD: 8"))
     }
 
+    @Test fun recoveredSupplierPaymentIsNotTreatedAsNewCashOutflow() {
+        val ledger=JSONArray()
+            .put(JSONObject().put("supplierId","supplier-1").put("currency","USD")
+                .put("kind","opening-debt").put("amount",520))
+            .put(JSONObject().put("supplierId","supplier-1").put("currency","USD")
+                .put("kind","payment").put("amount",520)
+                .put("recoveredFromCashTransactionId","cash-1"))
+        val data=JSONObject().put("supplierLedger",ledger)
+            .put("cashTransactions",JSONArray().put(JSONObject()
+                .put("id","cash-1").put("currency","USD").put("amount",520)))
+        val report=LegacyReconciliation.inspect(JSONObject()
+            .put("format","alsafa-accounting-backup").put("data",data).toString())
+        assertTrue(report.contains("مرتبطة 1، مرجع نقدي مفقود 0، مرجع مستعاد مكرر 0"))
+        assertTrue(report.contains("يمنع إعادة خصمها من الخزنة"))
+        assertTrue(report.contains("الفرق 0"))
+    }
+    @Test fun missingAndDuplicateRecoveredSupplierCashReferencesAreFlagged() {
+        val ledger=JSONArray()
+            .put(JSONObject().put("kind","payment")
+                .put("recoveredFromCashTransactionId","cash-missing"))
+            .put(JSONObject().put("kind","payment")
+                .put("recoveredFromCashTransactionId","cash-missing"))
+        val data=JSONObject().put("supplierLedger",ledger)
+            .put("cashTransactions",JSONArray())
+        val report=LegacyReconciliation.inspect(JSONObject()
+            .put("format","alsafa-accounting-backup").put("data",data).toString())
+        assertTrue(report.contains("مرتبطة 0، مرجع نقدي مفقود 2، مرجع مستعاد مكرر 1"))
+    }
+
 }
