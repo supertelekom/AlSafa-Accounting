@@ -196,7 +196,7 @@ class MainActivity:Activity() {
         button("كشف حركة الخزنات الشهري"){
             form("تقرير أرصدة الخزنات","عرض"){box->
                 val month=field("الشهر YYYY-MM",box,YearMonth.now().toString())
-                {
+                ({
                     val selected=YearMonth.parse(month.text.toString().trim()).toString()
                     val lines=Store.vaults.flatMap { v ->
                         Currency.entries.map { currency ->
@@ -207,7 +207,7 @@ class MainActivity:Activity() {
                     AlertDialog.Builder(this).setTitle("أرصدة الخزنات · $selected")
                         .setMessage(lines.joinToString("\n"))
                         .setPositiveButton("حسناً",null).show()
-                }
+                })
             }
         }
         button("إضافة رصيد / مصروف / سحب / نقل"){form("حركة مالية"){box->val type=select("نوع العملية",listOf("رصيد افتتاحي","مصروف","سحب شريك","نقل بين الخزنات"),box);val v=select("الخزنة",vaultNames,box);val c=select("العملة",Currency.entries.map{it.name},box);val n=field("المبلغ",box,"0",true);val dest=select("إلى خزنة (للنقل)",vaultNames,box);val partner=field("اسم الشريك (للسحب)",box);val note=field("البيان",box);val date=field("تاريخ الحركة YYYY-MM-DD",box,Store.today());
