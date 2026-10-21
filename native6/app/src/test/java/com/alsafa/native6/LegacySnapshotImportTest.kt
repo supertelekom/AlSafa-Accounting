@@ -594,6 +594,8 @@ class LegacySnapshotImportTest {
             assertTrue(store.closingExists("drawer"))
             val history=store.closingHistory("drawer")
             assertEquals(3,history.size)
+            assertEquals(3,store.closingForDay("drawer",Store.today()).size)
+            assertEquals(0,store.closingForDay("drawer","2025-01-01").size)
             assertEquals(3,store.closingHistoryMonth("drawer",java.time.YearMonth.now().toString()).size)
             assertEquals(0,store.closingHistoryMonth("drawer","2025-01").size)
             assertEquals("-200",history.first {it["currency"]=="USD"}["variance"])
