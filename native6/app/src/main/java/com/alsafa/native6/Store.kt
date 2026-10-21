@@ -577,6 +577,31 @@ class Store(val helper:StoreDb) {
                    OR j.account LIKE 'equity:withdrawal:%')
             ORDER BY e.created,e.id,j.account""",day,c.name)
     }
+    fun operatingDayAuditReconciles(date:String,c:Currency):Boolean {
+        val day=LocalDate.parse(date).toString()
+        val entries=operatingDayAudit(day,c)
+        val totals=operatingDailyRange(day,day,c).singleOrNull()
+        if(totals==null)return entries.isEmpty()
+        var revenue=0L
+        var cost=0L
+        var expenses=0L
+        var drawings=0L
+        entries.forEach{row->
+            val account=row.getValue("account")
+            val amount=row.getValue("amount").toLong()
+            when {
+                account.startsWith("revenue:") -> revenue=Math.subtractExact(revenue,amount)
+                account=="expense:cogs" -> cost=Math.addExact(cost,amount)
+                account.startsWith("expense:") -> expenses=Math.addExact(expenses,amount)
+                account.startsWith("equity:withdrawal:") -> drawings=Math.addExact(drawings,amount)
+            }
+        }
+        return revenue==totals.getValue("revenue") &&
+            cost==totals.getValue("cost_of_sales") &&
+            expenses==totals.getValue("operating_expenses") &&
+            drawings==totals.getValue("drawings") &&
+            Math.subtractExact(Math.subtractExact(revenue,cost),expenses)==totals.getValue("net_result")
+    }
     fun operatingDailyReconciles(start:String,end:String,c:Currency):Boolean {
         val daily=operatingDailyRange(start,end,c)
         val summary=operatingResultRange(start,end,c)
