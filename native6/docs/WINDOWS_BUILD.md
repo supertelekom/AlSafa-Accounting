@@ -15,7 +15,7 @@
 
 ## When the build fails
 
-- Copy the **first error** and approximately 30 lines around it from **Build Output** or the command window. Avoid sharing credentials, keystores, or customer records.
+- The Windows build script saves all Gradle output to `native6/build-output.log`. On failure, share this log after checking it contains no credentials, keystores, or customer records. The first error and its surrounding lines are especially useful.
 - If Gradle cannot download dependencies, check internet/proxy in Android Studio; the wrapper downloads Gradle 8.9 from services.gradle.org, while Android plugins and SDK use Google/Maven repositories.
 - If JDK is missing, select **Settings → Build, Execution, Deployment → Build Tools → Gradle → Gradle JDK** and use the bundled JDK. The batch script tries Android Studio's bundled JDK automatically.
 - If `SDK location not found`, set `ANDROID_HOME` to `%LOCALAPPDATA%\Android\Sdk` or create a local `local.properties` with `sdk.dir=C:\\Users\\YOUR_USER\\AppData\\Local\\Android\\Sdk`. Do not commit `local.properties`.
