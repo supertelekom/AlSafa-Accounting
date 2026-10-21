@@ -400,7 +400,7 @@ class Store(val helper:StoreDb) {
         require(items.isNotEmpty() && items.map {it.productId}.distinct().size==items.size){"الصنف مكرر"};vault(vault)
         val products=items.map { product(it.productId) };require(products.all {it.currency==currency}){"اختلاف عملة المنتج: يلزم تحويل مسجل قبل هذه العملية"}
         require(items.all {it.qty>0&&it.unitPrice>=0}){"الكمية والسعر غير صالحين"};val gross=items.fold(0L){a,i->add(a,mul(i.qty,i.unitPrice))};require(gross>0){"لا يمكن إنشاء فاتورة بإجمالي صفر"};require(discount>=0 && discount<gross){"الخصم غير صالح"}
-        val total=gross-discount;require(paid in 0..total);require(paid==total||party.isNotBlank()){"اسم العميل مطلوب للبيع الآجل"}
+        val total=Math.subtractExact(gross,discount);require(paid in 0..total){"المدفوع يتجاوز قيمة الفاتورة"};require(paid==total||party.isNotBlank()){"اسم العميل مطلوب للبيع الآجل"}
         var allocated=0L;var grossAllocated=0L
         val nets=items.map {item->grossAllocated=add(grossAllocated,mul(item.qty,item.unitPrice));val cumulative=proportional(total,grossAllocated,gross);val n=cumulative-allocated;allocated=cumulative;n}
         val costs=items.indices.map {i->require(items[i].qty<=products[i].stock){"المخزون غير كافٍ"};proportional(products[i].value,items[i].qty,products[i].stock)}
@@ -428,14 +428,14 @@ class Store(val helper:StoreDb) {
             require(q>0&&q<=original-previous){"كمية المرتجع تتجاوز الكمية المتبقية"}
             val priorValue=scalar("SELECT coalesce(sum(credit),0) FROM returns WHERE invoice_id=? AND line=?",invoiceId,index.toString())
             val priorCost=scalar("SELECT coalesce(sum(cost),0) FROM returns WHERE invoice_id=? AND line=?",invoiceId,index.toString())
-            val value=proportional(line.getValue("net").toLong(),previous+q,original)-priorValue
-            val cost=proportional(line.getValue("cost").toLong(),previous+q,original)-priorCost
+            val value=Math.subtractExact(proportional(line.getValue("net").toLong(),Math.addExact(previous,q),original),priorValue)
+            val cost=Math.subtractExact(proportional(line.getValue("cost").toLong(),Math.addExact(previous,q),original),priorCost)
             insert("returns","event_id" to command,"invoice_id" to invoiceId,"line" to index,"qty" to q,"credit" to value,"cost" to cost)
             stock(command,index,product(line.getValue("product_id")),q,cost);totalCredit=add(totalCredit,value);costCredit=add(costCredit,cost)
         }
         // Credit applied against debt first; excess is a refund liability, never an automatic cash withdrawal.
-        val previousDue=maxOf(0,inv.total-(credit(invoiceId)-totalCredit)-paid(invoiceId));val debtReduction=minOf(previousDue,totalCredit)
-        post(command,listOf(Posting("revenue:returns",inv.currency,totalCredit),Posting("receivable:$invoiceId",inv.currency,-debtReduction),Posting("refund:$invoiceId",inv.currency,-(totalCredit-debtReduction)),Posting("inventory",inv.currency,costCredit),Posting("expense:cogs",inv.currency,-costCredit)))
+        val previousCredit=Math.subtractExact(credit(invoiceId),totalCredit);val previousDue=maxOf(0L,Math.subtractExact(Math.subtractExact(inv.total,previousCredit),paid(invoiceId)));val debtReduction=minOf(previousDue,totalCredit)
+        post(command,listOf(Posting("revenue:returns",inv.currency,totalCredit),Posting("receivable:$invoiceId",inv.currency,-debtReduction),Posting("refund:$invoiceId",inv.currency,Math.negateExact(Math.subtractExact(totalCredit,debtReduction))),Posting("inventory",inv.currency,costCredit),Posting("expense:cogs",inv.currency,-costCredit)))
         if(scalar("SELECT coalesce(sum(qty),0) FROM returns WHERE invoice_id=?",invoiceId)==scalar("SELECT sum(qty) FROM invoice_lines WHERE invoice_id=?",invoiceId))db.execSQL("UPDATE invoices SET status='cancelled' WHERE id=?",arrayOf(invoiceId))
         command
     }
