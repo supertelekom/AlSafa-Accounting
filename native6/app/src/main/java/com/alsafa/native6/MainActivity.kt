@@ -217,6 +217,7 @@ class MainActivity:Activity() {
                 ({
                     val vault=Store.vaults[v.selectedItemPosition]
                     val selected=java.time.LocalDate.parse(day.text.toString().trim()).toString()
+                    val counted=store.closingForDay(vault,selected).associateBy{it.getValue("currency")}
                     val lines=Currency.entries.flatMap{currency->
                         require(store.vaultDayReconciles(vault,currency,selected)){"حركة اليوم لا تطابق الرصيد"}
                         val opening=store.vaultDayOpening(vault,currency,selected)
