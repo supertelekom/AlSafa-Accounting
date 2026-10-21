@@ -14,4 +14,10 @@ assert opening==10000 and balance==13000 and len(rows)==3
 for sign,expected in [("<0",7000),(">0",4000)]:
  values=db.execute("SELECT coalesce(sum(j.amount),0) amount FROM journal j JOIN events e ON e.id=j.event_id WHERE j.account=? AND j.currency=? AND e.date>=? AND e.date<? GROUP BY e.id HAVING sum(j.amount)"+sign,args).fetchall()
  assert sum(abs(v[0]) for v in values)==expected
-print("PASS supplier monthly ledger SQL")
+# A backdated purchase belongs to its transaction month, not its creation month.
+db.execute("INSERT INTO events VALUES(?,?,?,?)",("late","2026-10-08",99,"PURCHASE"))
+db.execute("INSERT INTO journal VALUES(?,?,?,?)",("late","payable:s1","USD",-1500))
+monthly=db.execute("SELECT coalesce(sum(j.amount),0) FROM journal j JOIN events e ON e.id=j.event_id WHERE j.account=? AND j.currency=? AND e.date>=? AND e.date<?",args).fetchone()[0]
+assert monthly==-4500
+assert opening-monthly==14500
+print("PASS supplier monthly ledger SQL including backdated posting")
