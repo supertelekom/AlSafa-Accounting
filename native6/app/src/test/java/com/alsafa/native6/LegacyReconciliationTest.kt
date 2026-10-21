@@ -130,4 +130,16 @@ class LegacyReconciliationTest {
         assertTrue(report.contains("مرتبطة 0، مرجع نقدي مفقود 2، مرجع مستعاد مكرر 1"))
     }
 
+    @Test fun supplierOpeningOverpaymentRequiresReviewBeforeMigration() {
+        val ledger=JSONArray()
+            .put(JSONObject().put("supplierId","s").put("currency","USD")
+                .put("kind","opening-debt").put("amount",100))
+            .put(JSONObject().put("supplierId","s").put("currency","USD")
+                .put("kind","payment").put("amount",150))
+        val data=JSONObject().put("supplierLedger",ledger)
+        val report=LegacyReconciliation.inspect(JSONObject()
+            .put("format","alsafa-accounting-backup").put("data",data).toString())
+        assertTrue(report.contains("تجاوزت دفعات سجل الدين الافتتاحي"))
+    }
+
 }
