@@ -280,6 +280,9 @@ class Store(val helper:StoreDb) {
 
         automaticClosingsNeedingReview(v,days).size
 
+    fun automaticReviewExceptions(v:String,days:Int=30):List<Map<String,String>> =
+        automaticClosingReviews(v,days).filter{it.getValue("variance").toLong()!=0L}
+
     fun automaticReviewDifference(v:String,c:Currency,days:Int=30):Long {
         return automaticClosingReviews(v,days)
             .filter{it["currency"]==c.name}
