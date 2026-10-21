@@ -291,6 +291,21 @@ class Store(val helper:StoreDb) {
             .filter{it["currency"]==c.name}
             .fold(0L){sum,row->Math.addExact(sum,row.getValue("variance").toLong())}
     }
+    /** Review gaps are never journal postings; keep the original physical discrepancy visible. */
+    fun automaticReviewSummary(v:String,c:Currency,days:Int=30):Map<String,Long> {
+        vault(v)
+        require(days in 1..365)
+        val reviews=automaticClosingReviews(v,days).filter{it["currency"]==c.name}
+        var shortages=0L
+        var surpluses=0L
+        reviews.forEach{row->
+            val variance=row.getValue("variance").toLong()
+            if(variance<0L) shortages=Math.addExact(shortages,Math.negateExact(variance))
+            if(variance>0L) surpluses=Math.addExact(surpluses,variance)
+        }
+        return mapOf("reviews" to reviews.size.toLong(),"shortages" to shortages,"surpluses" to surpluses,
+            "net" to Math.subtractExact(surpluses,shortages))
+    }
     fun automaticClosingReviews(v:String,days:Int=30):List<Map<String,String>> {
         vault(v)
         require(days in 1..365)
