@@ -520,7 +520,7 @@ class Store(val helper:StoreDb) {
             val amount=row.getValue("amount").toLong()
             when {
                 account.startsWith("revenue:") -> revenue=Math.subtractExact(revenue,amount)
-                account.startsWith("expense:") && account.contains("cost") -> cost=Math.addExact(cost,amount)
+                account=="expense:cogs" -> cost=Math.addExact(cost,amount)
                 account.startsWith("expense:") -> expenses=Math.addExact(expenses,amount)
                 account.startsWith("equity:withdrawal:") -> drawings=Math.addExact(drawings,amount)
             }
