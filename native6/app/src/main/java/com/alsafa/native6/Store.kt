@@ -39,7 +39,7 @@ class Store(val helper:StoreDb) {
     fun vaultMonthClosing(v:String,c:Currency,month:String):Long =
         vaultMonthOpening(v,c,java.time.YearMonth.parse(month).plusMonths(1).toString())
     fun vaultMonthMovement(v:String,c:Currency,month:String):Long =
-        add(vaultMonthClosing(v,c,month),-vaultMonthOpening(v,c,month))
+        Math.subtractExact(vaultMonthClosing(v,c,month),vaultMonthOpening(v,c,month))
     fun vaultMonthEntries(v:String,c:Currency,month:String):List<Map<String,String>> {
         vault(v)
         val first=java.time.YearMonth.parse(month).atDay(1).toString()
@@ -455,7 +455,7 @@ class Store(val helper:StoreDb) {
         require(inv.kind=="sale" && inv.status=="posted"){"إلغاء المبيع متاح للفواتير النشطة فقط"}
         val remaining=rows("SELECT l.line,l.qty-coalesce((SELECT sum(r.qty) FROM returns r WHERE r.invoice_id=l.invoice_id AND r.line=l.line),0) AS remaining FROM invoice_lines l WHERE l.invoice_id=?",invoiceId)
         require(remaining.isNotEmpty()){"فاتورة المبيع بلا أصناف"}
-        require(remaining.all{it.getValue("remaining").toLong()>=0L}){"مرتجعات الفاتورة تتجاوز الكميات الأصلية"}
+        require(remaining.all{it.getValue("remaining").toLong()>=0L && it.getValue("remaining").toLong()<=scalar("SELECT qty FROM invoice_lines WHERE invoice_id=? AND line=?",invoiceId,it.getValue("line"))}){"مرتجعات الفاتورة غير متسقة مع الكميات الأصلية"}
         val quantities=remaining.filter{it.getValue("remaining").toLong()>0L}.associate{it.getValue("line").toInt() to it.getValue("remaining").toLong()}
         require(quantities.isNotEmpty()){"لا توجد أصناف متبقية للإلغاء"}
         returnSale(invoiceId,quantities,reason,date,command)
