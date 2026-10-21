@@ -312,6 +312,26 @@ class Store(val helper:StoreDb) {
         }
         command
     }
+    /** Stocktake history remains immutable; all counts are recorded as dated events. */
+    fun stocktakeHistory(start:String,end:String):List<Map<String,String>> {
+        val from=LocalDate.parse(start)
+        val until=LocalDate.parse(end)
+        require(!from.isAfter(until)){"بداية الفترة بعد نهايتها"}
+        require(java.time.temporal.ChronoUnit.DAYS.between(from,until)<=366)
+        return rows("""SELECT e.date,e.id event_id,e.memo,p.name product_name,
+            p.currency,s.quantity quantity_delta,s.value_delta
+            FROM events e JOIN stock_moves s ON s.event_id=e.id
+            JOIN products p ON p.id=s.product_id
+            WHERE e.kind='STOCKTAKE' AND e.date>=? AND e.date<=?
+            ORDER BY e.date DESC,e.created DESC,e.id""",from.toString(),until.toString())
+    }
+    fun stocktakeHistoryReconciles(start:String,end:String):Boolean =
+        stocktakeHistory(start,end).all{row->
+            val movement=scalar("""SELECT coalesce(sum(amount),0) FROM journal
+                WHERE event_id=? AND account='inventory' AND currency=?""",
+                row.getValue("event_id"),row.getValue("currency"))
+            movement==row.getValue("value_delta").toLong()
+        }
     fun product(id:String)=toProduct(rows("SELECT * FROM products WHERE id=?",id).single())
     fun addProduct(name:String,barcode:String,currency:Currency,price:Long,cost:Long,quantity:Long,kind:String="watch",details:String="{}",command:String=id()):String=transaction {
         require(name.isNotBlank() && price>=0 && cost>=0 && quantity>=0);require(kind in listOf("watch","part"));JSONObject(details)
