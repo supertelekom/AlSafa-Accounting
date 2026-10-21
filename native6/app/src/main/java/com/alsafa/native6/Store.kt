@@ -615,7 +615,7 @@ class Store(val helper:StoreDb) {
         }
         true
     }
-    fun autoCloseMissingDays(v:String,lookbackDays:Int=7):Int {
+    fun autoCloseMissingDays(v:String,lookbackDays:Int=31):Int {
         require(lookbackDays in 1..31)
         vault(v)
         val todayDate=LocalDate.now()
