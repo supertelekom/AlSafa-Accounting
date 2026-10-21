@@ -25,7 +25,7 @@ class Store(val helper:StoreDb) {
     private fun event(id:String,kind:String,date:String,memo:String) { LocalDate.parse(date); require(memo.isNotBlank());insert("events","id" to id,"kind" to kind,"date" to date,"created" to System.currentTimeMillis(),"memo" to memo) }
     private fun post(id:String,lines:List<Posting>) { val nonzero=lines.filter { it.amount!=0L }; if(nonzero.isEmpty())return;validatePosting(nonzero);nonzero.forEachIndexed { i,p->insert("journal","event_id" to id,"line" to i,"account" to p.account,"currency" to p.currency.name,"amount" to p.amount) } }
     private fun stock(id:String,line:Int,p:Product,delta:Long,valueDelta:Long) {
-        val current=product(p.id);val next=add(current.stock,delta);val nextValue=add(current.value,valueDelta);require(nextValue>=0);require(next>=0){"المخزون غير كافٍ"}
+        val current=product(p.id);val next=add(current.stock,delta);val nextValue=add(current.value,valueDelta);require(nextValue>=0){"قيمة المخزون لا يمكن أن تصبح سالبة"};require(next>=0){"المخزون غير كافٍ"};require(next>0L || nextValue==0L){"لا يمكن إبقاء قيمة مخزون مع كمية صفرية"}
         db.execSQL("UPDATE products SET stock=?,value=?,cost=? WHERE id=?",arrayOf(next,nextValue,if(next>0) proportional(nextValue,1,next) else p.cost,p.id));insert("stock_moves","event_id" to id,"line" to line,"product_id" to p.id,"quantity" to delta,"value_delta" to valueDelta)
     }
     private fun vault(v:String) { require(v in vaults){"خزنة غير صالحة"} }
@@ -446,7 +446,7 @@ class Store(val helper:StoreDb) {
         returnSale(invoiceId,quantities,reason,date,command)
     }
     fun refund(invoiceId:String,amount:Long,v:String,date:String=today(),command:String=id())=transaction {
-        val inv=invoice(invoiceId);require(inv.kind=="sale" || inv.kind=="repair"){"رد العميل متاح لفواتير المبيع والصيانة فقط"};require(amount>0&&amount<=refundable(invoiceId));enough(v,inv.currency,amount);event(command,"REFUND",date,"رد مبلغ فاتورة ${inv.number}")
+        val inv=invoice(invoiceId);require(inv.kind=="sale" || inv.kind=="repair"){"رد العميل متاح لفواتير المبيع والصيانة فقط"};require(amount>0&&amount<=refundable(invoiceId)){"المبلغ المطلوب رده يتجاوز الرصيد المستحق للعميل"};enough(v,inv.currency,amount);event(command,"REFUND",date,"رد مبلغ فاتورة ${inv.number}")
         insert("refunds","event_id" to command,"invoice_id" to invoiceId,"amount" to amount,"vault" to v);post(command,listOf(Posting("refund:$invoiceId",inv.currency,amount),Posting("cash:$v",inv.currency,-amount)))
     }
     fun addSupplier(name:String,phone:String):String=transaction { require(name.isNotBlank());val id=id();insert("suppliers","id" to id,"name" to name,"phone" to phone);id }
@@ -475,7 +475,7 @@ class Store(val helper:StoreDb) {
     fun supplierMonthCharges(supplier:String,c:Currency,month:String):Long = supplierLedgerMonth(supplier,c,month).filter { it.getValue("amount").toLong()<0L }.fold(0L) { total,row -> add(total,Math.negateExact(row.getValue("amount").toLong())) }
     fun supplierMonthPayments(supplier:String,c:Currency,month:String):Long = supplierLedgerMonth(supplier,c,month).filter { it.getValue("amount").toLong()>0L }.fold(0L) { total,row -> add(total,row.getValue("amount").toLong()) }
     fun supplierMonthMovement(supplier:String,c:Currency,month:String):Long = Math.subtractExact(supplierMonthClosing(supplier,c,month),supplierMonthOpening(supplier,c,month))
-    fun supplierMonthReconciles(supplier:String,c:Currency,month:String):Boolean = supplierMonthClosing(supplier,c,month)==add(supplierMonthOpening(supplier,c,month),supplierMonthMovement(supplier,c,month)) && supplierMonthMovement(supplier,c,month)==add(supplierMonthCharges(supplier,c,month),-supplierMonthPayments(supplier,c,month))
+    fun supplierMonthReconciles(supplier:String,c:Currency,month:String):Boolean = supplierMonthClosing(supplier,c,month)==add(supplierMonthOpening(supplier,c,month),supplierMonthMovement(supplier,c,month)) && supplierMonthMovement(supplier,c,month)==Math.subtractExact(supplierMonthCharges(supplier,c,month),supplierMonthPayments(supplier,c,month))
     /** Each payment is shown in the month of its own posting, never allocated to old debt dates. */
     fun supplierPaymentsMonth(supplier:String,c:Currency,month:String):List<Map<String,String>> {
         val period=java.time.YearMonth.parse(month)
