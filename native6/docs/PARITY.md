@@ -384,3 +384,10 @@ Inspected the user's original **AlSafa Backup v2**, exported 2026-10-18 (approxi
 - Reviewed, nonzero differences are separately discoverable through `automaticReviewExceptions` and an investigation list on the vault page. These are audit exceptions, not automatic cash adjustment journal entries.
 - A matching physical recount does not imply that an earlier missed day was physically counted. Current balances can include later activity, and backdated entries can alter historical book balances. Investigations remain outstanding until an explicit resolution workflow is implemented.
 - Source and test assertions were updated; Android compilation and tests have not yet been executed successfully.
+
+## Closing review audit improvements
+
+- Reviewed physical cash counts can be retrieved by exact vault/date/currency and shown on the corresponding historical day statement.
+- Shortages and surpluses are presented separately as well as net variance, avoiding concealment of distinct cash discrepancies through netting.
+- The closing audit exposes the original book snapshot, the current recalculated book end-of-day, any subsequent backdated posting drift, and whether a physical review remains pending. Reviewing does not silently post an adjustment or settle a discrepancy.
+- Added Robolectric assertions for per-date lookups, status, and shortage totals; test execution and Android APK build remain unverified.
