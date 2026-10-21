@@ -290,12 +290,13 @@ class Store(val helper:StoreDb) {
     }
     /** Physical stocktake correction, preserving the original movement and double-entry audit trail. */
     fun adjustStockCount(productId:String,counted:Long,reason:String,
-                         date:String=today(),command:String=id()):String=transaction {
+                         date:String=today(),command:String=id(),expectedStock:Long?=null):String=transaction {
         require(counted>=0){"الكمية الفعلية لا يمكن أن تكون سالبة"}
         val note=reason.trim()
         require(note.length in 5..500){"يرجى كتابة سبب واضح للتسوية"}
         LocalDate.parse(date)
         val p=product(productId)
+        require(expectedStock==null || p.stock==expectedStock){"تغير المخزون منذ فتح شاشة الجرد؛ أعد فتح المنتج وعدّه مجدداً"}
         require(counted!=p.stock){"لا يوجد فرق في الكمية"}
         val delta=Math.subtractExact(counted,p.stock)
         val valueDelta=if(delta<0){
