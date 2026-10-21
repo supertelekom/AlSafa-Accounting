@@ -627,4 +627,24 @@ class LegacySnapshotImportTest {
         } finally {helper.close();context.deleteDatabase(name)}
     }
 
+    @Test fun automaticClosingCarriesBookBalanceWithoutClaimingPhysicalCount() {
+        val context=RuntimeEnvironment.getApplication<Context>()
+        val name="automatic-closing-test.db"
+        context.deleteDatabase(name)
+        val helper=StoreDb(context,name)
+        try {
+            val store=Store(helper)
+            val yesterday=java.time.LocalDate.now().minusDays(1).toString()
+            store.cash("opening","drawer",Currency.USD,10000L,"Opening",yesterday)
+            assertTrue(store.autoCloseDay("drawer",yesterday))
+            assertTrue(!store.autoCloseDay("drawer",yesterday))
+            val rows=store.closingForDay("drawer",yesterday)
+            assertEquals(3,rows.size)
+            assertTrue(rows.all{it["kind"]=="AUTO_CLOSING"})
+            assertEquals(10000L,store.vaultDayClosing("drawer",Currency.USD,yesterday))
+            assertEquals(10000L,store.vaultDayOpening("drawer",Currency.USD,Store.today()))
+            assertEquals(10000L,store.balance("drawer",Currency.USD))
+        } finally {helper.close();context.deleteDatabase(name)}
+    }
+
 }
