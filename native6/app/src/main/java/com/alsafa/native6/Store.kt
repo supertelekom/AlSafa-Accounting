@@ -191,6 +191,30 @@ class Store(val helper:StoreDb) {
         }
         return opening==0L && debit==credit && closing==0L
     }
+    /** Validate that every posted event balances independently in each currency. */
+    fun unbalancedEvents(c:Currency,start:String,end:String):List<Map<String,String>> {
+        val from=LocalDate.parse(start)
+        val until=LocalDate.parse(end)
+        require(!from.isAfter(until))
+        require(java.time.temporal.ChronoUnit.DAYS.between(from,until)<=366)
+        return rows("""SELECT e.id event_id,e.date,e.kind,e.memo,
+            coalesce(sum(j.amount),0) difference,
+            count(j.line) line_count
+            FROM events e JOIN journal j ON j.event_id=e.id
+            WHERE j.currency=? AND e.date>=? AND e.date<=?
+            GROUP BY e.id,e.date,e.kind,e.memo
+            HAVING coalesce(sum(j.amount),0)<>0
+            ORDER BY e.date,e.created,e.id""",c.name,from.toString(),until.toString())
+    }
+    fun journalIntegritySummary(c:Currency,start:String,end:String):Map<String,Long> {
+        val lines=trialBalanceRange(start,end,c)
+        val debits=lines.fold(0L){sum,row->Math.addExact(sum,row.getValue("debits").toLong())}
+        val credits=lines.fold(0L){sum,row->Math.addExact(sum,row.getValue("credits").toLong())}
+        val unbalanced=unbalancedEvents(c,start,end).size.toLong()
+        return mapOf("debits" to debits,"credits" to credits,
+            "difference" to Math.subtractExact(debits,credits),
+            "unbalanced_events" to unbalanced)
+    }
     fun accountBalances(c:Currency):List<Map<String,String>> =
         rows("SELECT account,coalesce(sum(amount),0) balance FROM journal WHERE currency=? GROUP BY account ORDER BY account",c.name)
     fun accountEntries(account:String,c:Currency,start:String,end:String):List<Map<String,String>> {
