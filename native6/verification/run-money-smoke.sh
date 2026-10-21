@@ -10,3 +10,4 @@ java -jar "$OUT/money-stress.jar"
 
 python3 "$ROOT/verification/supplier_month_sql_test.py"
 python3 "$ROOT/verification/return_integrity_sql_test.py"
+python3 "$ROOT/verification/stocktake_reconciliation_test.py"
