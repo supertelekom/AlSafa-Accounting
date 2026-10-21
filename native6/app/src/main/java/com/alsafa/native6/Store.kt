@@ -475,7 +475,13 @@ class Store(val helper:StoreDb) {
     fun supplierMonthCharges(supplier:String,c:Currency,month:String):Long = supplierLedgerMonth(supplier,c,month).filter { it.getValue("amount").toLong()<0L }.fold(0L) { total,row -> add(total,Math.negateExact(row.getValue("amount").toLong())) }
     fun supplierMonthPayments(supplier:String,c:Currency,month:String):Long = supplierLedgerMonth(supplier,c,month).filter { it.getValue("amount").toLong()>0L }.fold(0L) { total,row -> add(total,row.getValue("amount").toLong()) }
     fun supplierMonthMovement(supplier:String,c:Currency,month:String):Long = Math.subtractExact(supplierMonthClosing(supplier,c,month),supplierMonthOpening(supplier,c,month))
-    fun supplierMonthReconciles(supplier:String,c:Currency,month:String):Boolean = supplierMonthClosing(supplier,c,month)==add(supplierMonthOpening(supplier,c,month),supplierMonthMovement(supplier,c,month)) && supplierMonthMovement(supplier,c,month)==Math.subtractExact(supplierMonthCharges(supplier,c,month),supplierMonthPayments(supplier,c,month))
+    fun supplierMonthReconciles(supplier:String,c:Currency,month:String):Boolean {
+        val opening=supplierMonthOpening(supplier,c,month)
+        val closing=supplierMonthClosing(supplier,c,month)
+        val charges=supplierMonthCharges(supplier,c,month)
+        val payments=supplierMonthPayments(supplier,c,month)
+        return closing==Math.addExact(opening,Math.subtractExact(charges,payments))
+    }
     /** Each payment is shown in the month of its own posting, never allocated to old debt dates. */
     fun supplierPaymentsMonth(supplier:String,c:Currency,month:String):List<Map<String,String>> {
         val period=java.time.YearMonth.parse(month)
