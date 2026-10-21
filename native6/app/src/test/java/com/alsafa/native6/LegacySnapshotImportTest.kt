@@ -661,6 +661,9 @@ class LegacySnapshotImportTest {
             assertEquals(2,store.automaticClosingsNeedingReview("drawer").size)
             assertEquals(1,store.automaticClosingReviews("drawer").size)
             assertEquals("-300",store.automaticClosingReviews("drawer").single()["variance"])
+            assertEquals(300L,store.automaticReviewSummary("drawer",Currency.USD).getValue("shortages"))
+            assertEquals(0L,store.automaticReviewSummary("drawer",Currency.USD).getValue("surpluses"))
+            assertEquals(-300L,store.automaticReviewSummary("drawer",Currency.USD).getValue("net"))
             var duplicateRejected=false
             try {store.reviewAutomaticClosing("drawer",yesterday,Currency.USD,9500L,"Duplicate")} catch(_:IllegalArgumentException){duplicateRejected=true}
             assertTrue(duplicateRejected)
