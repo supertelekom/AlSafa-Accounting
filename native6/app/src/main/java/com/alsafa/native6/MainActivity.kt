@@ -378,6 +378,26 @@ class MainActivity:Activity() {
         val start=field("من YYYY-MM-DD",body,YearMonth.now().atDay(1).toString())
         val end=field("إلى YYYY-MM-DD",body,Store.today())
         val result=column();body.addView(result)
+        button("تدقيق قيود أرباح يوم محدد"){
+            form("تدقيق الأرباح اليومية","عرض"){box->
+                val day=field("التاريخ YYYY-MM-DD",box,Store.today())
+                val currency=select("العملة",Currency.entries.map{it.name},box)
+                ({
+                    val date=java.time.LocalDate.parse(day.text.toString().trim()).toString()
+                    val unit=Currency.entries[currency.selectedItemPosition]
+                    require(store.operatingDayAuditReconciles(date,unit)){"قيود اليوم لا تطابق التقرير"}
+                    val entries=store.operatingDayAudit(date,unit)
+                    AlertDialog.Builder(this).setTitle("تدقيق $date · ${unit.name}")
+                        .setMessage(if(entries.isEmpty())"لا توجد قيود ربح أو مصاريف أو سحوبات" else
+                            entries.joinToString("\n"){row->
+                                row.getValue("kind")+" · "+row.getValue("account")+
+                                    " · "+money(row.getValue("amount").toLong(),unit)+
+                                    " · "+row.getValue("memo")
+                            })
+                        .setPositiveButton("حسناً",null).show()
+                })
+            }
+        }
         button("عرض تفصيل الأرباح اليومي"){
             try {
                 val from=start.text.toString().trim()
