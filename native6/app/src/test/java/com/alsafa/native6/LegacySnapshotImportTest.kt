@@ -376,4 +376,20 @@ class LegacySnapshotImportTest {
         } finally { helper.close();context.deleteDatabase(name) }
     }
 
+    @Test fun dailyClosePreservesCashBalances() {
+        val context=RuntimeEnvironment.getApplication<Context>()
+        val name="close-cash-test.db"
+        context.deleteDatabase(name)
+        val helper=StoreDb(context,name)
+        try {
+            val store=Store(helper)
+            store.cash("opening","drawer",Currency.USD,10000L,"Opening")
+            store.closeDay("drawer",mapOf(Currency.USD to 9900L,
+                Currency.TRY to 0L,Currency.SYP to 0L))
+            assertEquals(10000L,store.balance("drawer",Currency.USD))
+            assertEquals(10000L,store.scalar("SELECT expected FROM closings WHERE currency=?","USD"))
+            assertEquals(9900L,store.scalar("SELECT counted FROM closings WHERE currency=?","USD"))
+        } finally { helper.close();context.deleteDatabase(name) }
+    }
+
 }
