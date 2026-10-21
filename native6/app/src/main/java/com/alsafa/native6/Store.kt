@@ -14,10 +14,12 @@ class Store(val helper:StoreDb) {
     companion object { fun id()=UUID.randomUUID().toString(); fun today()=LocalDate.now().toString(); val vaults=listOf("drawer","external","sham","bank") }
     @Synchronized fun <T> transaction(block:()->T):T { if(db.inTransaction()) return block(); db.beginTransaction();try { val result=block(); db.setTransactionSuccessful();return result } finally { db.endTransaction() } }
     fun rows(sql:String,vararg args:String):List<Map<String,String>> = db.rawQuery(sql,args).use { c -> buildList { while(c.moveToNext()) add(c.columnNames.indices.associate { c.getColumnName(it) to (c.getString(it)?:"") }) } }
-    fun scalar(sql:String,vararg args:String):Long {
-        val row=rows(sql,*args).firstOrNull() ?: return 0L
-        val raw=row.values.firstOrNull() ?: return 0L
-        return raw.toLongOrNull() ?: throw IllegalStateException("قيمة عددية غير صالحة في قاعدة البيانات")
+    fun scalar(sql:String,vararg args:String):Long = db.rawQuery(sql,args).use { cursor ->
+        if(!cursor.moveToFirst() || cursor.isNull(0)) 0L
+        else {
+            val raw=cursor.getString(0)
+            raw.toLongOrNull() ?: throw IllegalStateException("قيمة عددية غير صالحة في قاعدة البيانات")
+        }
     }
     fun insert(table:String,vararg fields:Pair<String,Any?>) { val values=ContentValues();fields.forEach { (k,v)->when(v) { null->values.putNull(k);is Long->values.put(k,v);is Int->values.put(k,v);else->values.put(k,v.toString()) } };db.insertOrThrow(table,null,values) }
     private fun event(id:String,kind:String,date:String,memo:String) { LocalDate.parse(date); require(memo.isNotBlank());insert("events","id" to id,"kind" to kind,"date" to date,"created" to System.currentTimeMillis(),"memo" to memo) }
