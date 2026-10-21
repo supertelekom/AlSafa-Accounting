@@ -408,4 +408,20 @@ class LegacySnapshotImportTest {
         } finally { helper.close();context.deleteDatabase(name) }
     }
 
+    @Test fun separateVaultCurrencyOpeningsAreValid() {
+        val context=RuntimeEnvironment.getApplication<Context>()
+        val name="currency-openings-test.db"
+        context.deleteDatabase(name)
+        val helper=StoreDb(context,name)
+        try {
+            val store=Store(helper)
+            store.cash("opening","drawer",Currency.USD,5000L,"USD")
+            store.cash("opening","drawer",Currency.TRY,20000L,"TRY")
+            store.cash("opening","external",Currency.USD,3000L,"External")
+            assertEquals(5000L,store.balance("drawer",Currency.USD))
+            assertEquals(20000L,store.balance("drawer",Currency.TRY))
+            assertEquals(3000L,store.balance("external",Currency.USD))
+        } finally { helper.close();context.deleteDatabase(name) }
+    }
+
 }
