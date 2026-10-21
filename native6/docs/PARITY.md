@@ -315,3 +315,10 @@ Inspected the user's original **AlSafa Backup v2**, exported 2026-10-18 (approxi
 - Later purchase payments referencing duplicate purchase IDs are now marked ambiguous instead of matched to an arbitrary invoice. Duplicate or blank purchase payment IDs are reported.
 - Cross-currency purchase settlements lacking a historical `rateSnapshot` are flagged; no inferred FX conversion is posted. The audit remains read-only, retaining source invoice paid fields without a second deduction.
 - Regression cases added for duplicate purchase IDs, duplicate payment IDs and cross-currency purchase settlement without FX evidence. CI/build results remain unverified.
+
+## Native 6 monthly vault ledger
+
+- Local SQLite now supports historical month opening, movement and closing book balances separately for drawer/external/sham/bank and USD/TRY/SYP.
+- Tablet vault screen has a month summary for all vaults and a filtered detailed transaction list for one vault/currency/month.
+- Detailed event-linked journal cash movements must reconcile to the selected month's book balance delta before display. No currency conversion is inferred and viewing reports never posts journal entries.
+- Regression test covers September opening, October expense, November expense and currency/vault separation. CI and APK builds remain unverified.
