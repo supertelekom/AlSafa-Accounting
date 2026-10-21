@@ -335,3 +335,9 @@ Inspected the user's original **AlSafa Backup v2**, exported 2026-10-18 (approxi
 - Daily closing displays a read-only confirmation preview for all USD/TRY/SYP balances: expected, physically counted and variance. A user must confirm before saving; a same-day duplicate is rejected.
 - Cash count differences are not posted as adjustments to the ledger. A regression test checks that preview leaves events and book balances untouched and that confirmed closing preserves book cash.
 - Changes are source-only until Android build and Robolectric test execution is verified.
+
+## Historical daily closing audit
+
+- Local SQLite exposes read-only per-vault daily closing history, including event IDs, dates, currencies, expected book cash, counted cash and original variance.
+- Tablet closing history can be filtered to a single selected month, preventing mixed-period reporting. This is independent of journal balance changes and does not post count differences as adjustments.
+- Regression assertions cover USD/TRY variances and selected-month isolation. Android build and tests are not yet verified.
