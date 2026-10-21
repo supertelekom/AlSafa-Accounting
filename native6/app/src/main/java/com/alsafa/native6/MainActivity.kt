@@ -28,7 +28,7 @@ class MainActivity:Activity() {
     private val ink=Color.rgb(62,52,41)
     private val gold=Color.rgb(169,121,41)
     private val vaultNames=listOf("درج المحل","الصندوق الخارجي","شام كاش","البنك")
-    override fun onCreate(state:Bundle?) {super.onCreate(state);store=Store(StoreDb(this));font=try { Typeface.createFromAsset(assets,"Tajawal-Medium.ttf") } catch (_:Exception) { Typeface.DEFAULT };page=state?.getString("page")?:"home";pdfInvoice=state?.getString("pdfInvoice");safeRender()}
+    override fun onCreate(state:Bundle?) {super.onCreate(state);store=Store(StoreDb(this));font=try { Typeface.createFromAsset(assets,"Tajawal-Medium.ttf") } catch (_:Exception) { Typeface.DEFAULT };page=state?.getString("page")?:"home";pdfInvoice=state?.getString("pdfInvoice");safeRender();io.execute{try{Store.vaults.forEach{store.autoCloseMissingDays(it,7)}}catch(_:Exception){}}}
     private fun dp(n:Int)=(n*resources.displayMetrics.density).toInt()
     private fun style(v:TextView){v.typeface=font;v.setTextColor(ink);v.textSize=18f;v.setPadding(dp(12),dp(10),dp(12),dp(10))}
     private fun background(color:Int=Color.rgb(255,253,249))=GradientDrawable().apply{setColor(color);cornerRadius=dp(14).toFloat();setStroke(dp(1),Color.rgb(234,223,206))}
