@@ -205,15 +205,15 @@ class Store(val helper:StoreDb) {
         val opening=-scalar("""SELECT coalesce(sum(j.amount),0) FROM journal j
             JOIN events e ON e.id=j.event_id
             WHERE j.account=? AND j.currency=? AND e.date<?""","payable:$supplier",c.name,start)
-        val movements=rows("""SELECT e.kind,coalesce(sum(j.amount),0) amount
-            FROM journal j JOIN events e ON e.id=j.event_id
-            WHERE j.account=? AND j.currency=? AND e.date>=? AND e.date<=?
-            GROUP BY e.kind""","payable:$supplier",c.name,start,end)
+        val movements=rows("""SELECT j.amount FROM journal j
+            JOIN events e ON e.id=j.event_id
+            WHERE j.account=? AND j.currency=? AND e.date>=? AND e.date<=?""",
+            "payable:$supplier",c.name,start,end)
         var charges=0L
         var payments=0L
         movements.forEach { row ->
             val amount=row.getValue("amount").toLong()
-            if(amount<0L) charges=Math.subtractExact(charges,amount)
+            if(amount<0L) charges=Math.addExact(charges,Math.negateExact(amount))
             else payments=Math.addExact(payments,amount)
         }
         val closing=Math.subtractExact(Math.addExact(opening,charges),payments)
