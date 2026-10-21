@@ -255,7 +255,7 @@ class MainActivity:Activity() {
                         val incoming=store.vaultDayInflows(vault,currency,selected)
                         val outgoing=store.vaultDayOutflows(vault,currency,selected)
                         val header="${currency.name}: سابق ${money(opening,currency)} · داخل ${money(incoming,currency)} · خارج ${money(outgoing,currency)} · نهائي ${money(closing,currency)}"+(if(counted[currency.name]?.get("kind")=="AUTO_CLOSING")" · إقفال تلقائي غير معدود" else "")
-                        listOf(header)+listOfNotNull(counted[currency.name]?.takeIf{it["kind"]!="AUTO_CLOSING"}?.get("counted")?.let{"العد الفعلي المسجل: "+money(it.toLong(),currency)})+store.vaultDayEntries(vault,currency,selected).map{row->
+                        listOf(header)+listOfNotNull(reviews[currency]?.let{"مراجعة "+it.getValue("review_date")+" · معدود "+money(it.getValue("actual_count").toLong(),currency)+" · فرق "+money(it.getValue("variance").toLong(),currency)})+listOfNotNull(counted[currency.name]?.takeIf{it["kind"]!="AUTO_CLOSING"}?.get("counted")?.let{"العد الفعلي المسجل: "+money(it.toLong(),currency)})+store.vaultDayEntries(vault,currency,selected).map{row->
                             row.getValue("kind")+" · "+money(row.getValue("amount").toLong(),currency)
                         }
                     }
