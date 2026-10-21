@@ -79,7 +79,7 @@ class MainActivity:Activity() {
         text("نسخة تطوير — حفظ محلي على التابلت",root,13f)
         if(page!="home")button("‹ الرئيسية",root){go("home")}
         val scroll=ScrollView(this);body=column();scroll.addView(body);root.addView(scroll,LinearLayout.LayoutParams(-1,0,1f))
-        when(page){"home"->home();"simple"->simple();"advanced"->advanced();"products"->products();"inventory"->inventoryDashboard();"stock-history"->selectedProduct?.let{stockHistory(it)};"sale"->sale();"invoices"->invoices();"vaults"->vaults();"suppliers"->suppliers();"repairs"->repairs();"reports"->reports();"period-reports"->periodReports();"trial-balance"->trialBalanceScreen();"account-ledger"->accountLedgerScreen();"journal-integrity"->journalIntegrityScreen();"structural-audit"->structuralAuditScreen();"partners"->partners();"backup"->backup();"legacy-audit"->legacyAudit();"legacy-history"->legacyHistory();"audit"->audit()}
+        when(page){"home"->home();"simple"->simple();"advanced"->advanced();"products"->products();"inventory"->inventoryDashboard();"stock-history"->selectedProduct?.let{stockHistory(it)};"stocktake-history"->stocktakeHistoryScreen();"sale"->sale();"invoices"->invoices();"vaults"->vaults();"suppliers"->suppliers();"repairs"->repairs();"reports"->reports();"period-reports"->periodReports();"trial-balance"->trialBalanceScreen();"account-ledger"->accountLedgerScreen();"journal-integrity"->journalIntegrityScreen();"structural-audit"->structuralAuditScreen();"partners"->partners();"backup"->backup();"legacy-audit"->legacyAudit();"legacy-history"->legacyHistory();"audit"->audit()}
     }
     private fun legacyHistory() {
         text("أرشيف العمليات القديمة — قراءة فقط",size=25f)
@@ -159,7 +159,7 @@ class MainActivity:Activity() {
     private fun home(){text("ALSAFA WATCHES",size=16f);text("كيف تريد أن تبدأ؟",size=28f);button("⚡ الوضع المبسط · بيع وصيانة وتسليم سريع"){go("simple")};button("◆ الوضع الكامل · الإدارة والمخزون والحسابات"){go("advanced")}}
     private fun simple(){text("العمل السريع",size=26f);button("مبيع"){go("sale")};button("استلام وتسليم صيانة"){go("repairs")};button("الفواتير وقبض الديون"){go("invoices")};button("الخزنات والإقفال اليومي"){go("vaults")}}
     private fun advanced(){text("الوضع الكامل",size=26f);listOf("مبيع" to "sale","المنتجات وقطع الصيانة" to "products","الفواتير والمرتجعات" to "invoices","استلام وتسليم صيانة" to "repairs","الخزنات والمصاريف والإقفال" to "vaults","الموردون والمشتريات" to "suppliers","تقرير شهر واحد" to "reports","تقرير بين تاريخين" to "period-reports","الشركاء ونسب الأرباح" to "partners","سجل العمليات" to "audit","النسخ الاحتياطي والاستعادة" to "backup","أرشيف الفواتير القديمة" to "legacy-history").forEach{(label,route)->button(label){go(route)}}}
-    private fun products(){text("المنتجات وقطع الصيانة",size=25f);button("＋ إضافة منتج / قطعة"){productForm()};button("تقييم المخزون والتنبيهات"){go("inventory")};val query=field("بحث بالاسم أو الباركود أو REF",body);val list=column();body.addView(list)
+    private fun products(){text("المنتجات وقطع الصيانة",size=25f);button("＋ إضافة منتج / قطعة"){productForm()};button("تقييم المخزون والتنبيهات"){go("inventory")};button("سجل تسويات الجرد"){go("stocktake-history")};val query=field("بحث بالاسم أو الباركود أو REF",body);val list=column();body.addView(list)
         fun show(){list.removeAllViews();store.products(query.text.toString()).forEach{p->button("${p.name}  ·  ${money(p.price,p.currency)}\nالمخزون ${p.stock}  ·  ${p.barcode}",list){productForm(p)};button("سجل مخزون ${p.name}",list){selectedProduct=p;go("stock-history")};button("جرد فعلي ${p.name}",list){stocktakeForm(p)}}};button("بحث"){show()};show()}
     private fun stocktakeForm(p:Product){
         form("جرد فعلي · ${p.name}","حفظ تسوية الجرد"){box->
@@ -180,6 +180,31 @@ class MainActivity:Activity() {
                         work{store.adjustStockCount(p.id,counted,why)}
                     }.show()
             })
+        }
+    }
+    private fun stocktakeHistoryScreen(){
+        text("سجل تسويات الجرد",size=25f)
+        val from=field("من YYYY-MM-DD",body,YearMonth.now().atDay(1).toString())
+        val until=field("إلى YYYY-MM-DD",body,Store.today())
+        val output=column();body.addView(output)
+        button("عرض تسويات الجرد"){
+            try{
+                output.removeAllViews()
+                val start=from.text.toString().trim()
+                val end=until.text.toString().trim()
+                val entries=store.stocktakeHistory(start,end)
+                val reconciles=store.stocktakeHistoryReconciles(start,end)
+                text(if(reconciles)"قيود الجرد مطابقة لحركات المخزون"
+                    else "تحذير: بعض قيود الجرد لا تطابق حركة المخزون",output,size=20f)
+                if(entries.isEmpty())text("لا توجد تسويات جرد في الفترة",output)
+                entries.forEach{row->
+                    val c=Currency.valueOf(row.getValue("currency"))
+                    text(row.getValue("date")+" · "+row.getValue("product_name"),output)
+                    text("فرق الكمية "+row.getValue("quantity_delta")+
+                        " · فرق القيمة "+money(row.getValue("value_delta").toLong(),c),output)
+                    text(row.getValue("memo"),output)
+                }
+            }catch(e:Exception){error(e)}
         }
     }
     private fun inventoryDashboard(){
