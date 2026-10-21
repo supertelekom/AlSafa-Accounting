@@ -333,13 +333,14 @@ class Store(val helper:StoreDb) {
             WHERE e.kind='STOCKTAKE' AND e.date>=? AND e.date<=?
             ORDER BY e.date DESC,e.created DESC,e.id""",from.toString(),until.toString())
     }
-    fun stocktakeHistoryReconciles(start:String,end:String):Boolean =
-        stocktakeHistory(start,end).all{row->
-            val movement=scalar("""SELECT coalesce(sum(amount),0) FROM journal
-                WHERE event_id=? AND account='inventory' AND currency=?""",
-                row.getValue("event_id"),row.getValue("currency"))
-            movement==row.getValue("value_delta").toLong()
-        }
+    fun stocktakeHistoryReconciles(start:String,end:String):Boolean {
+        return stocktakeHistory(start,end)
+            .groupBy { it.getValue("event_id") to it.getValue("currency") }
+            .all { (key,lines) ->
+                val delta=lines.fold(0L) { total,line -> add(total,line.getValue("value_delta").toLong()) }
+                delta==scalar("SELECT coalesce(sum(amount),0) FROM journal WHERE event_id=? AND account='inventory' AND currency=?",key.first,key.second)
+            }
+    }
     fun product(id:String)=toProduct(rows("SELECT * FROM products WHERE id=?",id).single())
     fun addProduct(name:String,barcode:String,currency:Currency,price:Long,cost:Long,quantity:Long,kind:String="watch",details:String="{}",command:String=id()):String=transaction {
         require(name.isNotBlank() && price>=0 && cost>=0 && quantity>=0);require(kind in listOf("watch","part"));JSONObject(details)
