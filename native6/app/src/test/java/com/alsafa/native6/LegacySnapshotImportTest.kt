@@ -353,4 +353,27 @@ class LegacySnapshotImportTest {
         } finally { helper.close();context.deleteDatabase(name) }
     }
 
+    @Test fun repairDeliveryCreatesBalancedReceivableAndNoPrematureCash() {
+        val context=RuntimeEnvironment.getApplication<Context>()
+        val name="repair-invoice-ledger-test.db"
+        context.deleteDatabase(name)
+        val helper=StoreDb(context,name)
+        try {
+            val store=Store(helper)
+            val repairId=store.receiveRepair("Customer","","Watch","Battery")
+            store.startRepair(repairId)
+            store.repairReady(repairId)
+            store.deliverRepair(repairId,Currency.USD,2500L,0L,"drawer")
+            val invoice=store.invoices().single()
+            assertEquals("repair",invoice.kind)
+            assertEquals(2500L,store.due(invoice.id))
+            assertEquals(0L,store.balance("drawer",Currency.USD))
+            assertEquals("delivered",store.rows("SELECT status FROM repairs WHERE id=?",repairId).single()["status"])
+            assertEquals(0L,store.scalar("SELECT coalesce(sum(amount),0) FROM journal WHERE event_id=?",invoice.id))
+            store.collect(invoice.id,1000L,"drawer")
+            assertEquals(1500L,store.due(invoice.id))
+            assertEquals(1000L,store.balance("drawer",Currency.USD))
+        } finally { helper.close();context.deleteDatabase(name) }
+    }
+
 }
