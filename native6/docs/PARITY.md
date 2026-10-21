@@ -354,3 +354,10 @@ Inspected the user's original **AlSafa Backup v2**, exported 2026-10-18 (approxi
 - Filtered search results provide read-only repair details and linked invoice number when available. Repair intake can be reviewed for one chosen calendar month.
 - Received/in-progress/ready repair action buttons remain available independently of the filtered search; no financial posting occurs during search or inspection.
 - Regression test exercises intake, search, status transitions and month scoping. Android build and test execution are not verified.
+
+## Missed daily closing and automatic carry-forward
+
+- At tablet app startup, Native 6 backfills missing daily book closings for the preceding seven days for each vault; the vault screen also provides a manual backfill action. Duplicate closing dates are skipped. This is app-start catch-up, not an Android alarm that can run while the device is powered off.
+- Automatic closings have event kind `AUTO_CLOSING`; they capture the ledger balance at the end of the selected date and never post cash or add it again. The ledger itself carries forward into the next day, so existing prior balances and new sales remain combined exactly once.
+- Because no one counted the cash, automatic closings are visibly labelled unverified. The stored `counted` field is a technical placeholder equal to book cash; **it is not a physical count, and zero difference must not be represented as verified**. A review list shows these dates and any late-posting drift. Differences against actual physical cash must be checked at the next manual count.
+- Tests added for idempotence, three currencies, and no duplicate cash posting. Build and test execution remain unverified. A durable acknowledgement/physical recount record for each missed day is not implemented yet.
