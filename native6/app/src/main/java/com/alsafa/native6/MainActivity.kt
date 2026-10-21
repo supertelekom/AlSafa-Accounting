@@ -21,7 +21,7 @@ class MainActivity:Activity() {
     private lateinit var font:Typeface
     private val io=Executors.newSingleThreadExecutor()
     private var page="home"
-    private var busy=false
+    @Volatile private var busy=false
     private var pdfInvoice:String?=null
     private val basket=mutableListOf<SaleItem>()
     private var basketCurrency=Currency.USD
