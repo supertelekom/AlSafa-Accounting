@@ -319,6 +319,8 @@ class Store(val helper:StoreDb) {
             "date" to day,"currency" to c.name,"kind" to closing.getValue("kind"),
             "book_at_closing" to bookAtClosing.toString(),
             "physical_count_status" to if(closing["kind"]=="AUTO_CLOSING") "not_counted_at_close" else "counted",
+            "physical_count_at_close" to (closing["counted"]?.takeIf { it.isNotBlank() } ?: "unknown"),
+            "physical_variance_at_close" to (closing["variance"]?.takeIf { it.isNotBlank() } ?: "unknown"),
             "book_day_end_now" to bookAtDayEnd.toString(),
             "late_posting_drift" to Math.subtractExact(bookAtDayEnd,bookAtClosing).toString(),
             "status" to if(closing["kind"]=="AUTO_CLOSING") if(reviewed==null)"pending" else "reviewed" else "manual"
