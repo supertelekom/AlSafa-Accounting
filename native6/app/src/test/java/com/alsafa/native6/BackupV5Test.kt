@@ -123,6 +123,42 @@ class BackupV5Test {
         }
     }
 
+    @Test fun automaticCloseCarriesBookBalanceAndReviewSurvivesRestore() {
+        val context = RuntimeEnvironment.getApplication()
+        val sourceName = "auto-flow-source-${Store.id()}.db"
+        val targetName = "auto-flow-target-${Store.id()}.db"
+        val source = StoreDb(context, sourceName)
+        val target = StoreDb(context, targetName)
+        try {
+            val store = Store(source)
+            val yesterday = java.time.LocalDate.now().minusDays(1).toString()
+            store.cash("opening", "drawer", Currency.USD, 5000L, "Opening cash", yesterday)
+            assertTrue(store.autoCloseDay("drawer", yesterday))
+            assertTrue(!store.autoCloseDay("drawer", yesterday))
+            assertEquals(3, store.automaticPendingReviewCount("drawer"))
+            assertTrue(store.closingForDay("drawer", yesterday).all {
+                it["kind"] == "AUTO_CLOSING" && it["counted"].isNullOrEmpty() && it["variance"].isNullOrEmpty()
+            })
+            assertEquals(5000L, store.vaultDayOpening("drawer", Currency.USD, Store.today()))
+            assertEquals(-300L, store.reviewAutomaticClosing("drawer", yesterday, Currency.USD, 4700L, "Physical count"))
+            assertEquals(5000L, store.balance("drawer", Currency.USD))
+            assertEquals(2, store.automaticPendingReviewCount("drawer"))
+            val output = ByteArrayOutputStream()
+            Backup(context, store).export(output)
+            val restored = Store(target)
+            Backup(context, restored).restore(ByteArrayInputStream(output.toByteArray()))
+            assertEquals(5000L, restored.balance("drawer", Currency.USD))
+            assertEquals(-300L, restored.automaticClosingReviewForDay("drawer", yesterday, Currency.USD)!!.getValue("variance").toLong())
+            assertEquals(2, restored.automaticPendingReviewCount("drawer"))
+            assertTrue(restored.closingForDay("drawer", yesterday).all { it["counted"].isNullOrEmpty() })
+        } finally {
+            source.close()
+            target.close()
+            context.deleteDatabase(sourceName)
+            context.deleteDatabase(targetName)
+        }
+    }
+
     @Test fun versionFourSnapshotRestoresWithoutReviewTable() {
         val context = RuntimeEnvironment.getApplication()
         val sourceName = "backup-v4-source-${Store.id()}.db"
