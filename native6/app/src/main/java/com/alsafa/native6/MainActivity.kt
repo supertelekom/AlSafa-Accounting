@@ -240,6 +240,8 @@ class MainActivity:Activity() {
                     val expenses=entries.filter {it.getValue("account").startsWith("expense:")}.sumOf {it.getValue("amount").toLong()}
                     text("${currency.name} · إيرادات ${money(revenue,currency)}",result)
                     text("مصاريف ${money(expenses,currency)} · صافي ${money(revenue-expenses,currency)}",result)
+                    val drawings=entries.filter {it.getValue("account").startsWith("equity:withdrawal:")}.sumOf {it.getValue("amount").toLong()}
+                    text("سحوبات الشركاء في الفترة: ${money(drawings,currency)} (لا تخصم ثانية من الربح)",result)
                 }
             } catch(e:Exception){error(e)}
         }
