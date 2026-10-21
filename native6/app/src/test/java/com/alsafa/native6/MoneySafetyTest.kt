@@ -82,14 +82,27 @@ class MoneySafetyTest {
                 var credited = 0L
                 repeat(quantity.toInt()) {
                     val next = returned + 1L
-                    val cumulative = proportional(net, next, quantity)
-                    val credit = Math.subtractExact(cumulative, credited)
+                    val credit = allocateReturnIncrement(net, quantity, returned, credited, 1L)
                     org.junit.Assert.assertTrue("Negative return credit", credit >= 0L)
                     credited = Math.addExact(credited, credit)
                     returned = next
                 }
                 assertEquals(net, credited)
             }
+        }
+    }
+
+    @Test fun returnAllocationRejectsCorruptHistoryAndExcessQuantity() {
+        assertEquals(67L, allocateReturnIncrement(101L, 3L, 1L, 34L, 2L))
+        assertEquals(0L, allocateReturnIncrement(0L, 3L, 1L, 0L, 2L))
+        assertThrows(IllegalArgumentException::class.java) {
+            allocateReturnIncrement(100L, 2L, 1L, 90L, 1L)
+        }
+        assertThrows(IllegalArgumentException::class.java) {
+            allocateReturnIncrement(100L, 2L, 1L, 0L, 1L)
+        }
+        assertThrows(IllegalArgumentException::class.java) {
+            allocateReturnIncrement(100L, 2L, 2L, 100L, 1L)
         }
     }
 
