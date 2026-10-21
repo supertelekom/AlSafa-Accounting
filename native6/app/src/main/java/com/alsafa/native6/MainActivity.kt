@@ -207,6 +207,26 @@ class MainActivity:Activity() {
     }
     private fun reports(){text("تقرير شهر واحد",size=25f);val month=field("الشهر YYYY-MM",body,YearMonth.now().toString());val result=column();body.addView(result);button("عرض"){try{val rows=store.monthReport(month.text.toString());result.removeAllViews();Currency.entries.forEach{c->val selected=rows.filter{it.getValue("currency")==c.name};val revenue=-selected.filter{it.getValue("account").startsWith("revenue:")}.sumOf{it.getValue("amount").toLong()};val expense=selected.filter{it.getValue("account").startsWith("expense:")}.sumOf{it.getValue("amount").toLong()};text("${c.name} · صافي الربح الدفتري ${money(revenue-expense,c)}",result);selected.filter{it.getValue("account").startsWith("equity:withdrawal:")}.forEach{text("سحب ${it.getValue("account").substringAfterLast(':')} في الشهر: ${money(it.getValue("amount").toLong(),c)}",result)}}}catch(e:Exception){error(e)}}}
 
+    private fun periodReports(){
+        text("تقرير الأرباح بين تاريخين",size=25f)
+        text("كل عملة مستقلة، والنتيجة من قيود Native 6 فقط؛ لا تشمل الأرشيف القديم.",size=15f)
+        val start=field("من YYYY-MM-DD",body,YearMonth.now().atDay(1).toString())
+        val end=field("إلى YYYY-MM-DD",body,Store.today())
+        val result=column();body.addView(result)
+        button("احتساب الفترة"){
+            try {
+                val rows=store.periodReport(start.text.toString().trim(),end.text.toString().trim())
+                result.removeAllViews()
+                Currency.entries.forEach { currency ->
+                    val entries=rows.filter {it.getValue("currency")==currency.name}
+                    val revenue=-entries.filter {it.getValue("account").startsWith("revenue:")}.sumOf {it.getValue("amount").toLong()}
+                    val expenses=entries.filter {it.getValue("account").startsWith("expense:")}.sumOf {it.getValue("amount").toLong()}
+                    text("${currency.name} · إيرادات ${money(revenue,currency)}",result)
+                    text("مصاريف ${money(expenses,currency)} · صافي ${money(revenue-expenses,currency)}",result)
+                }
+            } catch(e:Exception){error(e)}
+        }
+    }
     private fun partners(){
         text("الشركاء ونسب الأرباح",size=25f)
         text("النسب تُسجل بتاريخ سريانها، ولا تُعدّل قيود الأشهر السابقة.",size=15f)
