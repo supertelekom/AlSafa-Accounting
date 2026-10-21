@@ -306,7 +306,12 @@ class Store(val helper:StoreDb) {
         return mapOf("reviews" to reviews.size.toLong(),"shortages" to shortages,"surpluses" to surpluses,
             "net" to Math.subtractExact(surpluses,shortages))
     }
-    fun automaticClosingReviews(v:String,days:Int=30):List<Map<String,String>> {
+    fun automaticClosingReviewForDay(v:String,date:String,c:Currency):Map<String,String>? {
+        vault(v)
+        val day=LocalDate.parse(date).toString()
+        return rows("SELECT r.review_date,r.book_balance,r.actual_count,(r.actual_count-r.book_balance) variance,r.note FROM auto_closing_reviews r JOIN events e ON e.id=r.closing_event_id WHERE r.vault=? AND e.date=? AND r.currency=?",v,day,c.name).singleOrNull()
+    }
+
         vault(v)
         require(days in 1..365)
         val since=LocalDate.now().minusDays(days.toLong()).toString()
