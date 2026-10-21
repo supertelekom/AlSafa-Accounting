@@ -219,6 +219,8 @@ class Store(val helper:StoreDb) {
         val day=LocalDate.parse(date)
         require(day.isBefore(LocalDate.now())){"الإقفال التلقائي للأيام السابقة فقط"}
         if(closingExists(v,day.toString())) return@transaction false
+        val hasHistory=scalar("SELECT count(*) FROM journal j JOIN events e ON e.id=j.event_id WHERE j.account=? AND e.date<=?","cash:$v",day.toString())>0L
+        if(!hasHistory) return@transaction false
         val command=id()
         event(command,"AUTO_CLOSING",day.toString(),"إقفال دفتري تلقائي - العد الفعلي غير مؤكد")
         Currency.entries.forEach { c ->
