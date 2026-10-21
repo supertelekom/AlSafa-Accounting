@@ -320,4 +320,21 @@ class LegacySnapshotImportTest {
         } finally { helper.close();context.deleteDatabase(name) }
     }
 
+    @Test fun repairWorkProgressionKeepsSingleAuditableTimeline() {
+        val context=RuntimeEnvironment.getApplication<Context>()
+        val name="repair-work-progression-test.db"
+        context.deleteDatabase(name)
+        val helper=StoreDb(context,name)
+        try {
+            val store=Store(helper)
+            val id=store.receiveRepair("Customer","","Watch","Battery")
+            store.startRepair(id)
+            assertEquals("in_progress",store.rows("SELECT status FROM repairs WHERE id=?",id).single()["status"])
+            store.repairReady(id)
+            assertEquals("ready",store.rows("SELECT status FROM repairs WHERE id=?",id).single()["status"])
+            assertEquals(3L,store.scalar("SELECT count(*) FROM events WHERE kind LIKE 'REPAIR_%'"))
+            assertEquals(0L,store.scalar("SELECT count(*) FROM invoices"))
+        } finally { helper.close();context.deleteDatabase(name) }
+    }
+
 }
