@@ -687,18 +687,27 @@ class Store(val helper:StoreDb) {
         true
     }
     fun autoCloseMissingDays(v:String,lookbackDays:Int=31):Int {
-        require(lookbackDays in 1..31)
+        require(lookbackDays in 1..365){"فترة الاستدراك بين يوم و365 يوماً"}
         vault(v)
         val todayDate=LocalDate.now()
+        val earliest=todayDate.minusDays(lookbackDays.toLong()).toString()
+        // Never invent closings before the vault's first actual cash movement.
+        val firstActivity=rows("""SELECT min(e.date) first_date FROM journal j
+            JOIN events e ON e.id=j.event_id
+            WHERE j.account=? AND e.date<?""","cash:$v",todayDate.toString())
+            .firstOrNull()?.get("first_date")?.takeIf { it.isNotBlank() }
+            ?:return 0
+        val firstDay=maxOf(earliest,firstActivity)
         var created=0
         val failures=mutableListOf<String>()
-        for(offset in lookbackDays downTo 1) {
-            val date=todayDate.minusDays(offset.toLong()).toString()
+        var day=LocalDate.parse(firstDay)
+        while(day.isBefore(todayDate)) {
             try {
-                if(autoCloseDay(v,date)) created++
+                if(autoCloseDay(v,day.toString())) created++
             } catch(e:Exception) {
-                failures.add("$date: ${e.message ?: "خطأ غير معروف"}")
+                failures.add("$day: ${e.message ?: "خطأ غير معروف"}")
             }
+            day=day.plusDays(1)
         }
         if(failures.isNotEmpty()) throw IllegalStateException("تم استدراك $created إقفال، وتعذرت ${failures.size} أيام: ${failures.joinToString("; ")}")
         return created
