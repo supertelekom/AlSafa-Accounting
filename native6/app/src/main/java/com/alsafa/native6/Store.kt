@@ -262,7 +262,6 @@ class Store(val helper:StoreDb) {
         require(scalar("SELECT count(*) FROM auto_closing_reviews WHERE closing_event_id=? AND currency=?",closingId,c.name)==0L){"تم تسجيل مراجعة لهذه العملة سابقاً"}
         val expected=balance(v,c)
         val difference=Math.subtractExact(actual,expected)
-        require(closedDate.isBefore(LocalDate.now()))
         val command=id()
         event(command,"AUTO_CLOSING_REVIEW",today(),"مراجعة إقفال $date - $note")
         insert("auto_closing_reviews","event_id" to command,"closing_event_id" to closingId,"vault" to v,"currency" to c.name,"review_date" to today(),"book_balance" to expected,"actual_count" to actual,"note" to note)
