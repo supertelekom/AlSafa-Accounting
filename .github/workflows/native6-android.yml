@@ -27,8 +27,10 @@ jobs:
       - uses: android-actions/setup-android@v3
       - name: Install Android SDK 34
         run: sdkmanager 'platforms;android-34' 'build-tools;34.0.0'
-      - name: Unit tests and debug APK
-        run: gradle --no-daemon :app:testDebugUnitTest :app:assembleDebug
+      - name: Build installable debug APK
+        run: gradle --no-daemon :app:assembleDebug
+      - name: Unit tests
+        run: gradle --no-daemon :app:testDebugUnitTest
       - name: Upload unit test reports
         uses: actions/upload-artifact@v4
         if: always()
@@ -40,7 +42,7 @@ jobs:
           if-no-files-found: ignore
           retention-days: 7
       - uses: actions/upload-artifact@v4
-        if: success()
+        if: always()
         with:
           name: alsafa-native6-debug
           path: native6/app/build/outputs/apk/debug/*.apk
