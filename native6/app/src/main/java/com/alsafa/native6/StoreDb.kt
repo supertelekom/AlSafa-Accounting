@@ -34,6 +34,8 @@ class StoreDb(context: Context, name: String = "alsafa_native6.db") : SQLiteOpen
         // Migrate physical counts without losing original closing events.
         db.execSQL("CREATE TABLE closings_v6(event_id TEXT NOT NULL REFERENCES events(id),vault TEXT NOT NULL,currency TEXT NOT NULL,expected INTEGER NOT NULL,counted INTEGER CHECK(counted>=0),PRIMARY KEY(event_id,currency))")
         db.execSQL("INSERT INTO closings_v6 SELECT c.event_id,c.vault,c.currency,c.expected,CASE WHEN e.kind='AUTO_CLOSING' THEN NULL ELSE c.counted END FROM closings c JOIN events e ON e.id=c.event_id")
+        db.execSQL("DROP TRIGGER IF EXISTS closings_update")
+        db.execSQL("DROP TRIGGER IF EXISTS closings_delete")
         db.execSQL("DROP TABLE closings")
         db.execSQL("ALTER TABLE closings_v6 RENAME TO closings")
         immutableTriggers.filter { it.contains("closings_") }.forEach(db::execSQL)
