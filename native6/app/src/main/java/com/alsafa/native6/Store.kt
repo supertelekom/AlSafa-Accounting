@@ -123,7 +123,7 @@ class Store(val helper:StoreDb) {
     }
     fun cash(kind:String,v:String,c:Currency,amount:Long,note:String,date:String=today(),destination:String="",command:String=id())=transaction {
         require(amount>0&&note.isNotBlank());vault(v);val lines=when(kind) {
-            "opening"->listOf(Posting("cash:$v",c,amount),Posting("equity:opening",c,-amount))
+            "opening"->{require(scalar("SELECT count(*) FROM journal j JOIN events e ON e.id=j.event_id WHERE e.kind=? AND j.account=? AND j.currency=?","OPENING","cash:$v",c.name)==0L);listOf(Posting("cash:$v",c,amount),Posting("equity:opening",c,-amount))}
             "expense"->{enough(v,c,amount);listOf(Posting("expense:operating",c,amount),Posting("cash:$v",c,-amount))}
             "withdrawal"->{require(destination.isNotBlank());enough(v,c,amount);listOf(Posting("equity:withdrawal:$destination",c,amount),Posting("cash:$v",c,-amount))}
             "transfer"->{vault(destination);require(v!=destination);enough(v,c,amount);listOf(Posting("cash:$destination",c,amount),Posting("cash:$v",c,-amount))}
