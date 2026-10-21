@@ -604,4 +604,27 @@ class LegacySnapshotImportTest {
         } finally {helper.close();context.deleteDatabase(name)}
     }
 
+    @Test fun repairSearchAndStatusFiltersAreLocalAndReadOnly() {
+        val context=RuntimeEnvironment.getApplication<Context>()
+        val name="repair-filter-test.db"
+        context.deleteDatabase(name)
+        val helper=StoreDb(context,name)
+        try {
+            val store=Store(helper)
+            val repair=store.receiveRepair("Ahmad","0991234567","Casio","Battery")
+            assertEquals(1,store.repairList("099123").size)
+            assertEquals(1,store.repairList("casio","received").size)
+            assertEquals(0,store.repairList("casio","ready").size)
+            assertEquals(1L,store.repairStatusCounts().getValue("received"))
+            assertEquals("Ahmad",store.repairDetail(repair)["customer"])
+            assertEquals(null,store.repairInvoice(repair))
+            assertEquals(1,store.repairReceivedMonth(java.time.YearMonth.now().toString()).size)
+            store.startRepair(repair)
+            assertEquals(1,store.repairList("battery","in_progress").size)
+            store.repairReady(repair)
+            assertEquals(1,store.repairList("Casio","ready").size)
+            assertEquals(0,store.repairList("Casio","received").size)
+        } finally {helper.close();context.deleteDatabase(name)}
+    }
+
 }
