@@ -73,7 +73,7 @@ class Store(val helper:StoreDb) {
     /** Inventory valuation by original product currency; no fictitious cross-currency sum. */
     fun inventorySummary(c:Currency,kind:String="all"):Map<String,Long> {
         require(kind in setOf("all","watch","part"))
-        val items=products().filter{it.currency==c && (kind=="all"||it.kind==kind)}
+        val items=rows("SELECT * FROM products WHERE currency=? AND (archived=0 OR stock>0)",c.name).map(::toProduct).filter{kind=="all"||it.kind==kind}
         var quantity=0L
         var costValue=0L
         var sellingValue=0L
@@ -98,7 +98,7 @@ class Store(val helper:StoreDb) {
     /** The stored inventory valuation is authoritative; unit cost is rounded for display only. */
     fun inventoryValuationReconciles(c:Currency,kind:String="all"):Boolean {
         val summary=inventorySummary(c,kind)
-        val actual=products().filter{it.currency==c && (kind=="all"||it.kind==kind)}
+        val actual=rows("SELECT * FROM products WHERE currency=? AND (archived=0 OR stock>0)",c.name).map(::toProduct).filter{kind=="all"||it.kind==kind}
             .fold(0L){sum,p->Math.addExact(sum,p.value)}
         return summary.getValue("cost_value")==actual
     }
