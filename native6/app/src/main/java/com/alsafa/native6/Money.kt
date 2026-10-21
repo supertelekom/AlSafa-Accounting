@@ -52,6 +52,7 @@ fun allocateReturnIncrement(originalValue: Long, originalQty: Long, previouslyRe
     require(originalValue >= 0L && originalQty > 0L && previouslyReturnedQty in 0L..originalQty &&
         previouslyCredited in 0L..originalValue && returnQty > 0L &&
         returnQty <= Math.subtractExact(originalQty, previouslyReturnedQty)) { "كمية أو قيمة المرتجع غير صالحة" }
+    require(previouslyCredited == proportional(originalValue, previouslyReturnedQty, originalQty)) { "القيمة المرتجعة سابقاً لا تطابق الكمية المسجلة" }
     val newCumulative = proportional(originalValue, Math.addExact(previouslyReturnedQty, returnQty), originalQty)
     require(previouslyCredited <= newCumulative) { "رصيد المرتجع السابق يتجاوز الاستحقاق" }
     return Math.subtractExact(newCumulative, previouslyCredited)
