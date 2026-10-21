@@ -628,10 +628,16 @@ class Store(val helper:StoreDb) {
         vault(v)
         val todayDate=LocalDate.now()
         var created=0
+        val failures=mutableListOf<String>()
         for(offset in lookbackDays downTo 1) {
             val date=todayDate.minusDays(offset.toLong()).toString()
-            if(autoCloseDay(v,date)) created++
+            try {
+                if(autoCloseDay(v,date)) created++
+            } catch(e:Exception) {
+                failures.add("$date: ${e.message ?: "خطأ غير معروف"}")
+            }
         }
+        if(failures.isNotEmpty()) throw IllegalStateException("تم استدراك $created إقفال، وتعذرت ${failures.size} أيام: ${failures.joinToString("; ")}")
         return created
     }
     fun closingExists(v:String,date:String=today()):Boolean {
