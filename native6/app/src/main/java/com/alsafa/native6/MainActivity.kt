@@ -378,6 +378,29 @@ class MainActivity:Activity() {
         val start=field("من YYYY-MM-DD",body,YearMonth.now().atDay(1).toString())
         val end=field("إلى YYYY-MM-DD",body,Store.today())
         val result=column();body.addView(result)
+        button("تفصيل ربح كل عملية في يوم محدد"){
+            form("ربح العمليات اليومية","عرض"){box->
+                val day=field("التاريخ YYYY-MM-DD",box,Store.today())
+                val currency=select("العملة",Currency.entries.map{it.name},box)
+                ({
+                    val date=java.time.LocalDate.parse(day.text.toString().trim()).toString()
+                    val unit=Currency.entries[currency.selectedItemPosition]
+                    require(store.operatingDayEventsReconcile(date,unit)){"تفصيل العمليات لا يطابق الربح اليومي"}
+                    val entries=store.operatingDayEventBreakdown(date,unit)
+                    AlertDialog.Builder(this).setTitle("ربح كل عملية · $date · ${unit.name}")
+                        .setMessage(if(entries.isEmpty())"لا توجد عمليات ربح أو مصاريف أو سحوبات" else
+                            entries.joinToString("\n\n"){row->
+                                row.getValue("kind")+" · "+row.getValue("memo")+
+                                    "\nإيراد "+money(row.getValue("revenue").toLong(),unit)+
+                                    " · تكلفة "+money(row.getValue("cost_of_sales").toLong(),unit)+
+                                    " · مصاريف "+money(row.getValue("operating_expenses").toLong(),unit)+
+                                    " · صافي "+money(row.getValue("net_result").toLong(),unit)+
+                                    " · سحوبات "+money(row.getValue("drawings").toLong(),unit)
+                            })
+                        .setPositiveButton("حسناً",null).show()
+                })
+            }
+        }
         button("تدقيق قيود أرباح يوم محدد"){
             form("تدقيق الأرباح اليومية","عرض"){box->
                 val day=field("التاريخ YYYY-MM-DD",box,Store.today())
