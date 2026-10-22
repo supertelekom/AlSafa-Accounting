@@ -1363,6 +1363,12 @@ class Store(val helper:StoreDb) {
     fun repairDebtStatusCurrencies():Set<String> = repairDebtStatusTotals().map{it.getValue("currency")}.toSet()
     /** Flag impossible receipt totals instead of hiding overpayments in a zero due balance. */
     /** Find receipts with a date earlier than the repair delivery invoice. */
+    /** Identify negative or zero repair receipt amounts from damaged or imported data. */
+    fun repairReceiptAmountIssues():List<Map<String,String>> =
+        rows("""SELECT r.event_id reference,i.number invoice_number,i.party customer,
+            i.currency,r.amount
+            FROM receipts r JOIN invoices i ON i.id=r.invoice_id
+            WHERE i.kind='repair' AND r.amount<=0""")
     fun repairReceiptDateIssues():List<Map<String,String>> =
         rows("""SELECT r.event_id reference,i.number invoice_number,i.party customer,
             payment.date payment_date,issued.date delivery_date
