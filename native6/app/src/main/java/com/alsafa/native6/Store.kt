@@ -659,6 +659,24 @@ class Store(val helper:StoreDb) {
         return Math.negateExact(scalar("SELECT coalesce(sum(amount),0) FROM journal WHERE account=? AND currency=?",
             "refund:$invoiceId",inv.currency.name))
     }
+    /** Read-only chronological audit of refund liabilities by invoice and currency. */
+    fun negativeRefundLiabilityDays():List<Map<String,String>> {
+        val entries=rows("""SELECT substr(j.account,8) invoice_id,j.currency,e.date,
+            coalesce(sum(j.amount),0) movement
+            FROM journal j JOIN events e ON e.id=j.event_id
+            WHERE j.account LIKE 'refund:%'
+            GROUP BY j.account,j.currency,e.date
+            ORDER BY j.account,j.currency,e.date""")
+        val balances=mutableMapOf<Pair<String,String>,Long>()
+        val issues=mutableListOf<Map<String,String>>()
+        entries.forEach { row ->
+            val key=row.getValue("invoice_id") to row.getValue("currency")
+            val liability=Math.subtractExact(balances[key]?:0L,row.getValue("movement").toLong())
+            balances[key]=liability
+            if(liability<0L) issues.add(row+("liability" to liability.toString()))
+        }
+        return issues
+    }
     fun refundLiabilityIssues():List<Map<String,String>> {
         val issues=mutableListOf<Map<String,String>>()
         rows("SELECT id,number,kind,currency,total FROM invoices WHERE kind IN ('sale','repair') ORDER BY number").forEach { row ->
