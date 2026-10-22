@@ -681,6 +681,21 @@ Store.vaults.forEach{v->text(v+" · إقفالات تحتاج عدّاً: "+stor
                     .setMessage(details).setPositiveButton("حسناً",null).show()
             }catch(e:Exception){error(e)}
         }
+        button("مطابقة إيراد فواتير الصيانة"){
+            form("مطابقة الإيرادات","عرض"){box->
+                val month=field("الشهر YYYY-MM",box,YearMonth.now().toString())
+                ({
+                    val lines=store.repairMonthRevenueVariance(month.text.toString().trim())
+                    val report=if(lines.isEmpty())"لا توجد فواتير صيانة مرحلة في الشهر."
+                    else lines.joinToString("\n"){row->
+                        val c=Currency.valueOf(row.getValue("currency"))
+                        c.name+" · الفرق "+money(row.getValue("difference").toLong(),c)
+                    }
+                    AlertDialog.Builder(this).setTitle("مطابقة إيرادات الصيانة")
+                        .setMessage(report).setPositiveButton("حسناً",null).show()
+                })
+            }
+        }
         button("حالات فواتير الصيانة خلال شهر"){
             form("حالات الفواتير","عرض"){box->
                 val month=field("الشهر YYYY-MM",box,YearMonth.now().toString())
