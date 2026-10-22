@@ -535,7 +535,7 @@ class Store(val helper:StoreDb) {
         val first=period.atDay(1).toString()
         val next=period.plusMonths(1).atDay(1).toString()
         var running=supplierMonthOpening(supplier,c,month)
-        return rows("""SELECT e.date,e.kind,e.id event_id,coalesce(sum(j.amount),0) amount
+        val entries=rows("""SELECT e.date,e.kind,e.id event_id,coalesce(sum(j.amount),0) amount
             FROM journal j JOIN events e ON e.id=j.event_id
             WHERE j.account=? AND j.currency=? AND e.date>=? AND e.date<?
             GROUP BY e.id,e.date,e.kind
