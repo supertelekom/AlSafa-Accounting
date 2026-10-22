@@ -1348,6 +1348,13 @@ class Store(val helper:StoreDb) {
         require(minDays>=0L){"عدد الأيام غير صالح"}
         return repairDebtAgeDays(asOf).filter{it.getValue("age_days").toLong()>=minDays}
     }
+    /** Current repair debt with original invoice amount and collected-to-date. */
+    fun repairDebtCollectionProgress():List<Map<String,String>> =
+        repairOutstandingAll().map{row->
+            val total=row.getValue("total").toLong()
+            val outstanding=row.getValue("outstanding").toLong()
+            row+mapOf("collected" to Math.subtractExact(total,outstanding).toString())
+        }
     fun repairDebtAgeDays(asOf:String=today()):List<Map<String,String>> {
         val date=LocalDate.parse(asOf)
         return repairOutstandingAll().map{row->
