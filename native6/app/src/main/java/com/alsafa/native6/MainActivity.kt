@@ -379,6 +379,25 @@ class MainActivity:Activity() {
         {val q=fields.mapValues{it.value.text.toString().toLong()}.filterValues{it>0};val why=reason.text.toString();require(q.isNotEmpty()&&why.isNotBlank());work{store.returnSale(inv.id,q,why)}}}}
     private fun paymentForm(title:String,c:Currency,max:Long,action:(Long,String,String)->Unit){form(title){box->val n=field("المبلغ ${c.name} · المتبقي ${money(max,c)}",box,"0",true);val v=select("الخزنة",vaultNames,box);val received=field("تاريخ حركة النقود الفعلي YYYY-MM-DD",box,Store.today());{val amount=amount(n,c);val vault=Store.vaults[v.selectedItemPosition];val actualDate=java.time.LocalDate.parse(received.text.toString().trim()).toString();work{action(amount,vault,actualDate)}}}}
     private fun vaults(){text("الخزنات",size=25f);
+        button("مراجعة تغير الأرصدة بعد الإقفالات السابقة"){
+            form("مراجعة الإقفالات","عرض"){box->
+                val v=select("الخزنة",vaultNames,box)
+                val month=field("الشهر YYYY-MM",box,YearMonth.now().toString())
+                ({
+                    val vault=Store.vaults[v.selectedItemPosition]
+                    val lines=store.closingDriftMonth(vault,month.text.toString().trim())
+                    val changed=lines.filter{it.getValue("book_drift").toLong()!=0L}
+                    val details=if(changed.isEmpty())"لا توجد فروقات دفترية مكتشفة في إقفالات الشهر."
+                    else changed.joinToString("\n"){row->
+                        val c=Currency.valueOf(row.getValue("currency"))
+                        row.getValue("date")+" · "+c.name+
+                        " · فرق "+money(row.getValue("book_drift").toLong(),c)
+                    }
+                    AlertDialog.Builder(this).setTitle("مراجعة "+vault)
+                        .setMessage(details).setPositiveButton("حسناً",null).show()
+                })
+            }
+        }
         button("كشف خزنة بين تاريخين"){
             form("كشف الخزنة للفترة","عرض"){box->
                 val v=select("الخزنة",vaultNames,box)
