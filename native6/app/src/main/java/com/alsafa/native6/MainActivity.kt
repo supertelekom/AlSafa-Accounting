@@ -611,7 +611,7 @@ Store.vaults.forEach{v->text(v+" · إقفالات تحتاج عدّاً: "+stor
         }
         button("جميع ديون الصيانة المفتوحة"){
             try{
-                val entries=store.repairOutstandingAll()
+                val entries=store.repairOutstandingAll();val totals=store.repairOutstandingCurrencies().sorted().joinToString("\n"){code->val c=Currency.valueOf(code);code+" · "+money(store.repairOutstandingTotal(c),c)}
                 val details=if(entries.isEmpty())"لا توجد ذمم صيانة مفتوحة."
                 else entries.joinToString("\n"){row->
                     val c=Currency.valueOf(row.getValue("currency"))
@@ -620,7 +620,7 @@ Store.vaults.forEach{v->text(v+" · إقفالات تحتاج عدّاً: "+stor
                         " · "+money(row.getValue("outstanding").toLong(),c)
                 }
                 AlertDialog.Builder(this).setTitle("ديون الصيانة · جميع الأشهر")
-                    .setMessage(details).setPositiveButton("حسناً",null).show()
+                    .setMessage(totals+"\n\n"+details).setPositiveButton("حسناً",null).show()
             }catch(e:Exception){error(e)}
         }
         button("ذمم الصيانة غير المحصلة"){
