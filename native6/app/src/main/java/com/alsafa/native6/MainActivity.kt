@@ -626,6 +626,22 @@ Store.vaults.forEach{v->text(v+" · إقفالات تحتاج عدّاً: "+stor
                 })
             }
         }
+        button("ديون الصيانة حسب مدة التأخير"){
+            form("أعمار ديون الصيانة","عرض"){box->
+                val days=field("الحد الأدنى للأيام",box,"30",true)
+                ({
+                    val entries=store.repairOverdueDays(days.text.toString().toLong())
+                    val details=if(entries.isEmpty())"لا توجد ديون بهذه المدة."
+                    else entries.joinToString("\n"){row->
+                        val c=Currency.valueOf(row.getValue("currency"))
+                        row.getValue("customer")+" · "+row.getValue("age_days")+
+                            " يوم · "+money(row.getValue("outstanding").toLong(),c)
+                    }
+                    AlertDialog.Builder(this).setTitle("ديون الصيانة حسب العمر")
+                        .setMessage(details).setPositiveButton("حسناً",null).show()
+                })
+            }
+        }
         button("ديون الصيانة حسب شهر التسليم"){
             try{
                 val entries=store.repairDebtByDeliveryMonth()
