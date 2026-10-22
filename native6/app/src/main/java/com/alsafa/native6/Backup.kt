@@ -159,6 +159,16 @@ class Backup(private val context:Context,private val store:Store) {
         require(target.rows("""SELECT r.event_id FROM auto_closing_reviews r
             GROUP BY r.event_id HAVING count(*)<>1
         """).isEmpty()){"حدث مراجعة مكرر لأكثر من إقفال"}
+        // A repair delivery invoice must be attached to exactly one repair.
+        require(target.rows("""SELECT i.id FROM invoices i
+            LEFT JOIN repairs r ON r.invoice_id=i.id
+            WHERE i.kind='repair' AND i.status='posted'
+            GROUP BY i.id HAVING count(r.id)<>1
+        """).isEmpty()){"فاتورة صيانة مرحلة دون سجل صيانة واحد مطابق"}
+        require(target.rows("""SELECT r.id FROM repairs r
+            JOIN invoices i ON i.id=r.invoice_id
+            WHERE i.kind<>'repair'
+        """).isEmpty()){"سجل صيانة مرتبط بفاتورة من نوع آخر"}
         // The journal primary key (event_id,line) already enforces line uniqueness.
         require(target.rows("""SELECT j.event_id FROM journal j
             LEFT JOIN events e ON e.id=j.event_id
