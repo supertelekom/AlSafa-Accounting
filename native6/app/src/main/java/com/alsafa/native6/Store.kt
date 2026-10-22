@@ -1236,6 +1236,23 @@ class Store(val helper:StoreDb) {
     fun repairDetail(id:String):Map<String,String> =
         rows("SELECT * FROM repairs WHERE id=?",id).single()
     /** Net repair margin is invoice revenue minus consumed parts, not collected cash. */
+    /** Delivered repair margins grouped by invoice delivery month and currency. */
+    fun repairProfitMonth(month:String):List<Map<String,String>> {
+        val period=java.time.YearMonth.parse(month)
+        val repairs=rows("""SELECT r.id repair_id,r.customer,i.currency,i.total,i.cost,i.id invoice_id
+            FROM repairs r JOIN invoices i ON i.id=r.invoice_id
+            JOIN events e ON e.id=i.id
+            WHERE i.kind='repair' AND e.date>=? AND e.date<?
+            ORDER BY e.date,r.id""",period.atDay(1).toString(),
+            period.plusMonths(1).atDay(1).toString())
+        return repairs.map { row ->
+            val profit=repairProfit(row.getValue("repair_id"))
+                ?:error("فاتورة الصيانة مفقودة")
+            row+mapOf("margin" to profit.getValue("margin"),
+                "collected" to profit.getValue("collected"),
+                "outstanding" to profit.getValue("outstanding"))
+        }
+    }
     fun repairProfit(repairId:String):Map<String,String>? {
         val invoice=repairInvoice(repairId)?:return null
         val c=Currency.valueOf(invoice.getValue("currency"))
