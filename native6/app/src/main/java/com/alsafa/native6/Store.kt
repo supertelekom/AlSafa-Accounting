@@ -1324,6 +1324,18 @@ class Store(val helper:StoreDb) {
             period.atDay(1).toString(),period.plusMonths(1).atDay(1).toString())
     }
     fun repairProfitMonthCostVariance(month:String):List<Map<String,String>> = repairProfitMonth(month).filter{it.getValue("cost")!=it.getValue("parts_cost")}
+    /** Group unpaid repair balances by invoice currency and delivery month. */
+    fun repairDebtByDeliveryMonth():List<Map<String,String>> =
+        repairOutstandingAll().groupBy{row->
+            row.getValue("delivery_date").take(7) to row.getValue("currency")
+        }.map{(key,items)->
+            mapOf("month" to key.first,"currency" to key.second,
+                "invoice_count" to items.size.toString(),
+                "outstanding" to items.fold(0L){sum,row->
+                    Math.addExact(sum,row.getValue("outstanding").toLong())
+                }.toString())
+        }.sortedWith(compareBy<Map<String,String>>{it.getValue("month")}
+            .thenBy{it.getValue("currency")})
     fun repairProfitMonthTotals(month:String):List<Map<String,String>> =
         repairProfitMonth(month).groupBy{it.getValue("currency")}.map { (currency,lines) ->
             fun total(key:String)=lines.fold(0L){sum,row->Math.addExact(sum,row.getValue(key).toLong())}
