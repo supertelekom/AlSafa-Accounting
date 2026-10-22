@@ -1504,6 +1504,10 @@ class Store(val helper:StoreDb) {
     /** Flag repair invoices whose receipt and credit totals exceed the invoice. */
     /** The total of cash receipts by date must agree with the receipt ledger. */
     /** Compare repair receipts with cash postings on their actual transaction dates. */
+    fun repairCashJournalMonthIssues(month:String):List<Map<String,String>> =
+        repairCashJournalMonth(month).filter{
+            it.getValue("receipt_total").toLong()!=it.getValue("cash_posted").toLong()
+        }
     fun repairCashJournalMonth(month:String):List<Map<String,String>> {
         val period=java.time.YearMonth.parse(month)
         return rows("""SELECT i.currency,r.vault,
