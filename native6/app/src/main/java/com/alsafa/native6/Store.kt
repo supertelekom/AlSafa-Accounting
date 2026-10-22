@@ -161,6 +161,15 @@ class Store(val helper:StoreDb) {
         }
         return issues
     }
+    /** Orphan payable accounts are reported even when their balances are nonnegative. */
+    fun orphanSupplierAccounts():List<Map<String,String>> =
+        rows("""SELECT substr(j.account,9) supplier_id,j.currency,
+            coalesce(sum(j.amount),0) journal_balance,
+            count(DISTINCT j.event_id) event_count
+            FROM journal j LEFT JOIN suppliers s ON s.id=substr(j.account,9)
+            WHERE j.account LIKE 'payable:%' AND s.id IS NULL
+            GROUP BY j.account,j.currency
+            ORDER BY j.account,j.currency""")
     /** Read-only supplier debt audit: payments must not make daily payable balances negative. */
     fun negativeSupplierDebtDays():List<Map<String,String>> {
         val entries=rows("""SELECT substr(j.account,9) supplier_id,
