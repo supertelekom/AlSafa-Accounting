@@ -344,6 +344,19 @@ class MainActivity:Activity() {
                 })
             }
         }
+        button("ملخص التحصيل الشهري"){
+            form("تحصيلات الشهر","عرض"){box->
+                val month=field("الشهر YYYY-MM",box,YearMonth.now().toString())
+                ({
+                    val totals=store.customerReceiptsMonthTotals(month.text.toString().trim())
+                    val details=if(totals.isEmpty())"لا توجد تحصيلات" else totals.joinToString("\n"){r->
+                        val c=Currency.valueOf(r.getValue("currency"))
+                        r.getValue("vault")+" · "+money(r.getValue("amount").toLong(),c)
+                    }
+                    AlertDialog.Builder(this).setTitle("تحصيلات الشهر").setMessage(details).setPositiveButton("حسناً",null).show()
+                })
+            }
+        }
         val query=field("رقم الفاتورة أو اسم العميل أو الهاتف",body)
         val kinds=listOf("all","sale","purchase","repair")
         val statuses=listOf("all","posted","cancelled")
