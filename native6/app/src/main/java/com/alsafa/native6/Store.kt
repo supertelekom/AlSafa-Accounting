@@ -1268,6 +1268,7 @@ class Store(val helper:StoreDb) {
                 AND issued.date<?
             GROUP BY i.currency,r.vault""",first,next,first)
     }
+    fun repairOutstandingTotal(currency:Currency):Long = repairOutstandingAll().filter{it.getValue("currency")==currency.name}.fold(0L){sum,row->Math.addExact(sum,row.getValue("outstanding").toLong())}
     fun repairOutstandingCurrencies():Set<String> = repairOutstandingAll().map{it.getValue("currency")}.toSet()
     fun repairOutstandingAll():List<Map<String,String>> =
         rows("""SELECT r.id repair_id,r.customer,r.phone,i.number invoice_number,
