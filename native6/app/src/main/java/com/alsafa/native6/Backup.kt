@@ -184,6 +184,12 @@ class Backup(private val context:Context,private val store:Store) {
             JOIN events issued ON issued.id=t.invoice_id
             WHERE returned.date<issued.date OR returned.kind<>'SALE_RETURN'
         """).isEmpty()){"مرتجع بتاريخ يسبق الفاتورة أو حدث غير صالح"}
+        require(target.rows("""SELECT r.event_id FROM receipts r
+            JOIN invoices i ON i.id=r.invoice_id
+            WHERE (SELECT coalesce(sum(j.amount),0) FROM journal j
+                WHERE j.event_id=r.event_id AND j.account='cash:'||r.vault
+                AND j.currency=i.currency)<>r.amount
+        """).isEmpty()){"مقبوضات لا تطابق دفتر النقد"}
         // Receipt chronology must follow invoice issuance, including backdated entries.
         require(target.rows("""SELECT r.event_id FROM receipts r
             JOIN events payment ON payment.id=r.event_id
