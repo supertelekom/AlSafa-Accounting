@@ -1253,6 +1253,17 @@ class Store(val helper:StoreDb) {
                 "outstanding" to profit.getValue("outstanding"))
         }
     }
+    /** Collected-to-date is not the same as cash collected during the selected month. */
+    fun repairCashReceivedMonth(month:String):List<Map<String,String>> {
+        val period=java.time.YearMonth.parse(month)
+        return rows("""SELECT i.currency,r.vault,count(*) receipt_count,
+            coalesce(sum(r.amount),0) amount
+            FROM receipts r JOIN invoices i ON i.id=r.invoice_id
+            JOIN events e ON e.id=r.event_id
+            WHERE i.kind='repair' AND e.date>=? AND e.date<?
+            GROUP BY i.currency,r.vault ORDER BY i.currency,r.vault""",
+            period.atDay(1).toString(),period.plusMonths(1).atDay(1).toString())
+    }
     fun repairProfitMonthTotals(month:String):List<Map<String,String>> =
         repairProfitMonth(month).groupBy{it.getValue("currency")}.map { (currency,lines) ->
             fun total(key:String)=lines.fold(0L){sum,row->Math.addExact(sum,row.getValue(key).toLong())}
