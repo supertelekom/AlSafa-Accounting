@@ -681,6 +681,14 @@ Store.vaults.forEach{v->text(v+" · إقفالات تحتاج عدّاً: "+stor
                     .setMessage(details).setPositiveButton("حسناً",null).show()
             }catch(e:Exception){error(e)}
         }
+        button("عدد فروقات مقبوضات الصيانة لهذا الشهر"){
+            val month=YearMonth.now().toString()
+            val issues=store.repairReceiptMonthReconciliation(month)
+                .count{it.getValue("difference").toLong()!=0L}
+            AlertDialog.Builder(this).setTitle("مطابقة المقبوضات")
+                .setMessage("عدد فروقات الشهر الحالي: $issues")
+                .setPositiveButton("حسناً",null).show()
+        }
         button("فحص تخصيص ذمم الصيانة"){
             val issues=store.repairReceivableOverAllocation()
             val report=if(issues.isEmpty())"لا توجد فواتير تتجاوز فيها الدفعات والاعتمادات قيمة الفاتورة."
