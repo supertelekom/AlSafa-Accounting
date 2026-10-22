@@ -1550,8 +1550,7 @@ class Store(val helper:StoreDb) {
             coalesce((SELECT sum(f.amount) FROM refunds f WHERE f.invoice_id=i.id),0) refunded
             FROM invoices i WHERE i.kind='repair' AND i.status='posted'""")
             .filter{row->
-                Math.addExact(row.getValue("received").toLong(),
-                    Math.subtractExact(row.getValue("credited").toLong(),row.getValue("refunded").toLong()))>row.getValue("total").toLong()
+                row.getValue("refunded").toLong()>row.getValue("received").toLong()
             }
     fun repairDebtBalanceIssues():List<Map<String,String>> =
         repairOutstandingAll().mapNotNull{row->
