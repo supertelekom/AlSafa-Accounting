@@ -286,6 +286,22 @@ class Store(val helper:StoreDb) {
             WHERE i.kind<>'repair'""")
         check("REPAIR_FUTURE_INTAKE","""SELECT id reference, 'تاريخ استلام الصيانة في المستقبل' detail
             FROM repairs WHERE date>date('now','localtime')""")
+        check("RECEIPT_BEFORE_INVOICE","""SELECT r.event_id reference, 'تحصيل مؤرخ قبل الفاتورة' detail
+            FROM receipts r JOIN events payment ON payment.id=r.event_id
+            JOIN events original ON original.id=r.invoice_id
+            WHERE payment.date<original.date""")
+        check("REFUND_BEFORE_INVOICE","""SELECT r.event_id reference, 'رد مبلغ مؤرخ قبل الفاتورة' detail
+            FROM refunds r JOIN events payment ON payment.id=r.event_id
+            JOIN events original ON original.id=r.invoice_id
+            WHERE payment.date<original.date""")
+        check("RETURN_BEFORE_INVOICE","""SELECT r.event_id reference, 'مرتجع مؤرخ قبل الفاتورة' detail
+            FROM returns r JOIN events returned ON returned.id=r.event_id
+            JOIN events original ON original.id=r.invoice_id
+            WHERE returned.date<original.date GROUP BY r.event_id""")
+        check("FUTURE_FINANCIAL_EVENT","""SELECT id reference, 'عملية مالية مؤرخة في المستقبل' detail
+            FROM events WHERE date>date('now','localtime') AND kind IN
+            ('SALE','SALE_RETURN','RECEIPT','REFUND','PURCHASE','SUPPLIER_PAYMENT',
+             'SUPPLIER_OPENING','CURRENCY_EXCHANGE','OPENING','EXPENSE','WITHDRAWAL','TRANSFER')""")
         return issues
     }
     /** Compare the inventory valuation to the inventory account without any mutations. */
