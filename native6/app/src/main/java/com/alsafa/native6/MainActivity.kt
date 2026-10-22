@@ -965,6 +965,24 @@ button("＋ مورد"){form("مورد جديد"){box->val n=field("الاسم",b
         };if(r.getValue("status")=="received")button("بدء الصيانة"){work{store.startRepair(id)}};if(r.getValue("status") in setOf("received","in_progress"))button("جاهزة للاستلام"){work{store.repairReady(id)}};if(r.getValue("status")=="ready")button("تسليم وفاتورة أجرة عمل"){form("تسليم الصيانة"){box->val c=select("العملة",Currency.entries.map{it.name},box);val n=field("أجرة العمل",box,"0",true);val paid=field("المدفوع",box,"0",true);val v=select("خزنة القبض",vaultNames,box);val delivered=field("تاريخ تسليم الساعة YYYY-MM-DD",box,Store.today());val received=field("تاريخ قبض الأجرة الفعلي YYYY-MM-DD",box,Store.today());{val curr=Currency.entries[c.selectedItemPosition];val value=amount(n,curr);val pay=amount(paid,curr);val vault=Store.vaults[v.selectedItemPosition];val deliveryDate=java.time.LocalDate.parse(delivered.text.toString().trim()).toString();val receiptDate=java.time.LocalDate.parse(received.text.toString().trim()).toString();work{store.deliverRepair(id,curr,value,pay,vault,deliveryDate=deliveryDate,receiptDate=receiptDate)}}}}}
     }
     private fun reports(){text("تقرير شهر واحد",size=25f);
+        button("مطابقة التزامات رد الأموال للعملاء"){
+            try {
+                val issues=store.refundLiabilityIssues()
+                val details=if(issues.isEmpty()) "لا توجد فروقات بين التزامات الاسترداد والقيود المسجلة."
+                else issues.take(100).joinToString("\n"){row->
+                    val c=Currency.valueOf(row.getValue("currency"))
+                    "فاتورة "+row.getValue("number")+" · "+c.name+
+                        " · التزام دفتري "+money(row.getValue("ledger_liability").toLong(),c)+
+                        " · المتوقع "+money(row.getValue("expected_liability").toLong(),c)
+                } + if(issues.size>100) "\n... توجد نتائج إضافية" else ""
+                AlertDialog.Builder(this).setTitle("مطابقة رد الأموال")
+                    .setMessage(details).setPositiveButton("حسناً",null).show()
+            } catch(e:Exception) {
+                AlertDialog.Builder(this).setMessage(e.message ?: "تعذر تدقيق التزامات الاسترداد")
+                    .setPositiveButton("حسناً",null).show()
+            }
+        }
+
         button("تدقيق أرصدة ذمم العملاء"){
             try {
                 val issues=store.customerReceivableIssues()
