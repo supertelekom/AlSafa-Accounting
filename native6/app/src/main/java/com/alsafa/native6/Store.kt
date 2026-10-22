@@ -637,6 +637,22 @@ class Store(val helper:StoreDb) {
         require(minimum>=0L){"توجد ذمة سالبة في يوم لاحق؛ راجع تسلسل القبض والمرتجعات"}
         return minimum
     }
+    /** Read-only audit of invoice receivables against the posted journal. */
+    fun customerReceivableIssues():List<Map<String,String>> =
+        rows("""SELECT i.id invoice_id,i.number,i.currency,i.kind,
+            coalesce((SELECT sum(j.amount) FROM journal j
+                WHERE j.account='receivable:'||i.id AND j.currency=i.currency),0) ledger_due,
+            max(0,i.total
+                -coalesce((SELECT sum(r.credit) FROM returns r WHERE r.invoice_id=i.id),0)
+                -coalesce((SELECT sum(p.amount) FROM receipts p WHERE p.invoice_id=i.id),0)) expected_due
+            FROM invoices i
+            WHERE i.kind IN ('sale','repair')
+            AND coalesce((SELECT sum(j.amount) FROM journal j
+                WHERE j.account='receivable:'||i.id AND j.currency=i.currency),0)
+                <>max(0,i.total
+                -coalesce((SELECT sum(r.credit) FROM returns r WHERE r.invoice_id=i.id),0)
+                -coalesce((SELECT sum(p.amount) FROM receipts p WHERE p.invoice_id=i.id),0))
+            ORDER BY i.number""")
     fun paid(id:String)=scalar("SELECT coalesce(sum(amount),0) FROM receipts WHERE invoice_id=?",id)
     fun credit(id:String)=scalar("SELECT coalesce(sum(credit),0) FROM returns WHERE invoice_id=?",id)
     fun due(id:String):Long {val inv=invoice(id);if(inv.kind=="purchase")return 0L;val returned=credit(id);val received=paid(id);require(returned in 0..inv.total && received>=0L){"رصيد الفاتورة غير متسق"};return Math.subtractExact(Math.subtractExact(inv.total,returned),received).coerceAtLeast(0L)}
