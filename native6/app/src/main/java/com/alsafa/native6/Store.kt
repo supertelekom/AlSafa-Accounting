@@ -1503,6 +1503,20 @@ class Store(val helper:StoreDb) {
     /** Cross-check open repair balances against actual receipts and credit notes. */
     /** Flag repair invoices whose receipt and credit totals exceed the invoice. */
     /** The total of cash receipts by date must agree with the receipt ledger. */
+    /** Compare repair receipts with cash postings on their actual transaction dates. */
+    fun repairCashJournalMonth(month:String):List<Map<String,String>> {
+        val period=java.time.YearMonth.parse(month)
+        return rows("""SELECT i.currency,r.vault,
+            coalesce(sum(r.amount),0) receipt_total,
+            coalesce(sum((SELECT coalesce(sum(j.amount),0) FROM journal j
+                WHERE j.event_id=r.event_id AND j.account='cash:'||r.vault
+                  AND j.currency=i.currency)),0) cash_posted
+            FROM receipts r JOIN invoices i ON i.id=r.invoice_id
+            JOIN events e ON e.id=r.event_id
+            WHERE i.kind='repair' AND e.date>=? AND e.date<?
+            GROUP BY i.currency,r.vault ORDER BY i.currency,r.vault""",
+            period.atDay(1).toString(),period.plusMonths(1).atDay(1).toString())
+    }
     fun repairReceiptMonthReconciliation(month:String):List<Map<String,String>> {
         val entries=repairCashReceivedMonthDetails(month)
         val summary=repairCashReceivedMonth(month)
