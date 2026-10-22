@@ -684,7 +684,7 @@ Store.vaults.forEach{v->text(v+" · إقفالات تحتاج عدّاً: "+stor
         button("فواتير صيانة دون سجل مرتبط"){
             val missingLinks=store.repairMissingInvoiceLinks().size;val duplicates=store.repairDuplicateInvoiceLinks().size;val wrong=store.repairWrongInvoiceLinks().size;val count=store.repairInvoiceLinkIssues().size
             AlertDialog.Builder(this).setTitle("مطابقة ربط الصيانة")
-                .setMessage("فواتير مرحلة دون سجل صيانة: $count\nروابط مكررة: $duplicates\nروابط لنوع فاتورة خاطئ: $wrong")
+                .setMessage("فواتير مرحلة دون سجل صيانة: $count\nروابط مكررة: $duplicates\nروابط لنوع فاتورة خاطئ: $wrong\nروابط لفواتير مفقودة: $missingLinks")
                 .setPositiveButton("حسناً",null).show()
         }
         button("مطابقة إيراد فواتير الصيانة"){
