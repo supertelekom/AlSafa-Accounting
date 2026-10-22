@@ -473,7 +473,7 @@ class Store(val helper:StoreDb) {
         if(paid>0) collectInternal(command,paid,vault,date,"$command-receipt");command
     }
     private fun collectInternal(invoiceId:String,amount:Long,v:String,date:String,command:String) {
-        val inv=invoice(invoiceId);require(inv.kind=="sale" || inv.kind=="repair"){"القبض متاح لفواتير المبيع والصيانة فقط"};require(inv.status=="posted" && amount>0 && amount<=due(invoiceId)){"الدفعة تتجاوز المتبقي أو الفاتورة ملغاة"};vault(v)
+        val inv=invoice(invoiceId);require(inv.kind=="sale" || inv.kind=="repair"){"القبض متاح لفواتير المبيع والصيانة فقط"};require(inv.status=="posted" && amount>0 && amount<=due(invoiceId)){"الدفعة تتجاوز المتبقي أو الفاتورة ملغاة"};require(!LocalDate.parse(date).isAfter(LocalDate.now())){"تاريخ التحصيل في المستقبل"};require(!LocalDate.parse(date).isBefore(LocalDate.parse(rows("SELECT date FROM events WHERE id=?",invoiceId).single().getValue("date"))){"تاريخ التحصيل يسبق الفاتورة"};vault(v)
         event(command,"RECEIPT",date,"قبض فاتورة ${inv.number}");insert("receipts","event_id" to command,"invoice_id" to invoiceId,"amount" to amount,"vault" to v)
         post(command,listOf(Posting("cash:$v",inv.currency,amount),Posting("receivable:$invoiceId",inv.currency,-amount)))
     }
@@ -745,7 +745,7 @@ class Store(val helper:StoreDb) {
     }
     fun purchase(supplier:String,items:List<SaleItem>,c:Currency,paid:Long,v:String,date:String=today(),command:String=id()):String=transaction {
         require(scalar("SELECT count(*) FROM suppliers WHERE id=?",supplier)==1L){"المورد غير موجود"};require(items.isNotEmpty()&&items.map{it.productId}.distinct().size==items.size){"فاتورة الشراء فارغة أو تحتوي أصنافاً مكررة"}
-        require(items.all{it.qty>0&&it.unitPrice>=0}){"كمية الشراء أو سعر الوحدة غير صالح"};val total=items.fold(0L){a,i->add(a,mul(i.qty,i.unitPrice))};require(total>0&&paid in 0..total){"إجمالي الشراء أو الدفعة غير صالح"};require(!LocalDate.parse(date).isAfter(LocalDate.now())){"لا يمكن تسجيل شراء بتاريخ مستقبلي"}
+        require(items.all{it.qty>0&&it.unitPrice>=0}){"كمية الشراء أو سعر الوحدة غير صالح"};require(items.all{product(it.productId).currency==c}){"عملة صنف الشراء مختلفة"};val total=items.fold(0L){a,i->add(a,mul(i.qty,i.unitPrice))};require(total>0&&paid in 0..total){"إجمالي الشراء أو الدفعة غير صالح"};require(!LocalDate.parse(date).isAfter(LocalDate.now())){"لا يمكن تسجيل شراء بتاريخ مستقبلي"}
         event(command,"PURCHASE",date,"شراء مورد $supplier");insert("invoices","id" to command,"number" to nextNumber(),"kind" to "purchase","party" to supplier,"phone" to "","currency" to c.name,"total" to total,"cost" to total,"notes" to "")
         items.forEachIndexed {i,line->val p=product(line.productId);require(p.currency==c);val value=mul(line.qty,line.unitPrice);val next=add(p.stock,line.qty);val avg=proportional(add(p.value,value),1,next)
             insert("invoice_lines","invoice_id" to command,"line" to i,"product_id" to p.id,"name" to p.name,"qty" to line.qty,"net" to value,"cost" to value);stock(command,i,p,line.qty,value);db.execSQL("UPDATE products SET cost=? WHERE id=?",arrayOf(avg,p.id)) }
@@ -755,7 +755,7 @@ class Store(val helper:StoreDb) {
         require(scalar("SELECT count(*) FROM suppliers WHERE id=?",supplier)==1L){"المورد غير موجود"};require(!LocalDate.parse(date).isAfter(LocalDate.now())){"لا يمكن تسجيل دفعة مورد بتاريخ مستقبلي"};require(amount>0 && amount<=supplierAvailableOn(supplier,c,date)){"الدفعة تتجاوز الدين المتاح بتاريخها أو في أحد الأيام التالية"};enough(v,c,amount);event(command,"SUPPLIER_PAYMENT",date,"دفع للمورد $supplier");post(command,listOf(Posting("payable:$supplier",c,amount),Posting("cash:$v",c,-amount)))
     }
     fun cash(kind:String,v:String,c:Currency,amount:Long,note:String,date:String=today(),destination:String="",command:String=id())=transaction {
-        require(amount>0&&note.isNotBlank());vault(v);val lines=when(kind) {
+        require(amount>0&&note.isNotBlank());require(!LocalDate.parse(date).isAfter(LocalDate.now())){"تاريخ حركة الخزنة في المستقبل"};vault(v);val lines=when(kind) {
             "opening"->{require(scalar("SELECT count(*) FROM journal j JOIN events e ON e.id=j.event_id WHERE e.kind=? AND j.account=? AND j.currency=?","OPENING","cash:$v",c.name)==0L);listOf(Posting("cash:$v",c,amount),Posting("equity:opening",c,-amount))}
             "expense"->{enough(v,c,amount);listOf(Posting("expense:operating",c,amount),Posting("cash:$v",c,-amount))}
             "withdrawal"->{require(destination.isNotBlank());enough(v,c,amount);listOf(Posting("equity:withdrawal:$destination",c,amount),Posting("cash:$v",c,-amount))}
@@ -767,7 +767,7 @@ class Store(val helper:StoreDb) {
         }
     }
     fun exchange(source:String,from:Currency,spent:Long,destination:String,to:Currency,received:Long,date:String=today(),command:String=id())=transaction {
-        require(from!=to&&spent>0&&received>0);enough(source,from,spent);vault(destination)
+        require(from!=to&&spent>0&&received>0);require(!LocalDate.parse(date).isAfter(LocalDate.now())){"تاريخ الصرف في المستقبل"};enough(source,from,spent);vault(destination)
         event(command,"CURRENCY_EXCHANGE",date,"صرف ${Money(spent,from).display()} مقابل ${Money(received,to).display()}")
         post(command,listOf(Posting("cash:$source",from,-spent),Posting("fx:clearing",from,spent),Posting("cash:$destination",to,received),Posting("fx:clearing",to,-received)))
     }
