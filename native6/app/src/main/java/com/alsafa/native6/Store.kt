@@ -532,7 +532,7 @@ class Store(val helper:StoreDb) {
     }
     fun paid(id:String)=scalar("SELECT coalesce(sum(amount),0) FROM receipts WHERE invoice_id=?",id)
     fun credit(id:String)=scalar("SELECT coalesce(sum(credit),0) FROM returns WHERE invoice_id=?",id)
-    fun due(id:String):Long {val inv=invoice(id);if(inv.kind=="purchase")return 0L;val returned=credit(id);val received=paid(id);require(returned in 0..inv.total && received>=0L){"رصيد الفاتورة غير متسق"};return maxOf(0L,Math.subtractExact(Math.subtractExact(inv.total,returned),received))}
+    fun due(id:String):Long {val inv=invoice(id);if(inv.kind=="purchase")return 0L;val returned=credit(id);val received=paid(id);require(returned in 0..inv.total && received>=0L){"رصيد الفاتورة غير متسق"};return Math.subtractExact(Math.subtractExact(inv.total,returned),received).also{require(it>=0L){"المقبوضات تتجاوز المتبقي بعد المرتجعات"}}}
     fun refundable(id:String):Long {
         val inv=invoice(id)
         if(inv.kind!="sale" && inv.kind!="repair") return 0L
