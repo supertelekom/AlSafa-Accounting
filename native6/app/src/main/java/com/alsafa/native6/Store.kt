@@ -556,6 +556,7 @@ class Store(val helper:StoreDb) {
         require(items.all {it.qty>0&&it.unitPrice>=0}){"الكمية والسعر غير صالحين"};val gross=items.fold(0L){a,i->add(a,mul(i.qty,i.unitPrice))};require(gross>0){"لا يمكن إنشاء فاتورة بإجمالي صفر"};require(discount>=0 && discount<gross){"الخصم غير صالح"}
         val total=Math.subtractExact(gross,discount);require(paid in 0..total){"المدفوع يتجاوز قيمة الفاتورة"};require(paid==total||party.isNotBlank()){"اسم العميل مطلوب للبيع الآجل"}
         require(!LocalDate.parse(date).isAfter(LocalDate.now())){"لا يمكن تسجيل مبيع بتاريخ مستقبلي"}
+        if(paid>0L) require(!LocalDate.parse(receiptDate).isAfter(LocalDate.now()) && !LocalDate.parse(receiptDate).isBefore(LocalDate.parse(date))){"تاريخ قبض البيع يجب أن يكون من تاريخ الفاتورة وحتى اليوم"}
         val nets=allocateInvoiceNet(items.map { mul(it.qty,it.unitPrice) },discount)
         val costs=items.indices.map {i->require(items[i].qty<=products[i].stock){"المخزون غير كافٍ"};proportional(products[i].value,items[i].qty,products[i].stock)}
         val cost=costs.fold(0L,::add)
