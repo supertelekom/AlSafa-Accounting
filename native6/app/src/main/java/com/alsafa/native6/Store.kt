@@ -1251,6 +1251,28 @@ class Store(val helper:StoreDb) {
     fun receiveRepair(customer:String,phone:String,watch:String,problem:String,date:String=today(),command:String=id()):String=transaction {require(customer.isNotBlank()&&watch.isNotBlank());require(!LocalDate.parse(date).isAfter(LocalDate.now())){"تاريخ استلام الصيانة في المستقبل"};insert("repairs","id" to command,"customer" to customer,"phone" to phone,"watch" to watch,"problem" to problem,"status" to "received","date" to date);event(command,"REPAIR_RECEIVED",date,"استلام صيانة $customer");command}
     fun startRepair(id:String)=transaction { val repair=repairDetail(id);require(repair.getValue("status")=="received");require(!LocalDate.parse(repair.getValue("date")).isAfter(LocalDate.now())){"تاريخ الاستلام في المستقبل"}; db.execSQL("UPDATE repairs SET status=? WHERE id=?",arrayOf("in_progress",id)); event(id(),"REPAIR_STARTED",today(),"بدء العمل على الصيانة") }
     fun repairReady(id:String)=transaction {val repair=repairDetail(id);require(repair.getValue("status") in setOf("received","in_progress")){"الصيانة ليست في حالة تسمح بالتجهيز"};require(!LocalDate.parse(repair.getValue("date")).isAfter(LocalDate.now())){"تاريخ الاستلام في المستقبل"};db.execSQL("UPDATE repairs SET status='ready' WHERE id=?",arrayOf(id));event(id(),"REPAIR_READY",today(),"جاهزة $id")}
+    /** Charge an installed repair part to repair COGS on the actual installation date. */
+    fun useRepairPart(repairId:String,productId:String,quantity:Long,date:String=today(),command:String=id()):String=transaction {
+        val repair=repairDetail(repairId)
+        require(repair.getValue("status") in setOf("received","in_progress","ready")){"الصيانة مسلمة ولا يمكن استهلاك قطع إضافية"}
+        val day=LocalDate.parse(date)
+        require(!day.isAfter(LocalDate.now()) && !day.isBefore(LocalDate.parse(repair.getValue("date")))){"تاريخ استخدام القطعة غير صالح"}
+        val part=product(productId)
+        require(part.kind=="part" && quantity>0 && quantity<=part.stock){"اختر قطعة صيانة متوفرة بكمية صحيحة"}
+        val cost=proportional(part.value,quantity,part.stock)
+        event(command,"REPAIR_PART",day.toString(),"REPAIR_PART:$repairId")
+        stock(command,0,part,-quantity,-cost)
+        post(command,listOf(Posting("expense:repair_parts",part.currency,cost),Posting("inventory",part.currency,-cost)))
+        command
+    }
+    fun repairPartsUsed(repairId:String):List<Map<String,String>> {
+        repairDetail(repairId)
+        return rows("""SELECT e.date,s.product_id,p.name,p.currency,s.quantity,s.value_delta
+            FROM stock_moves s JOIN events e ON e.id=s.event_id
+            JOIN products p ON p.id=s.product_id
+            WHERE e.kind='REPAIR_PART' AND e.memo=?
+            ORDER BY e.date,e.created,e.id""","REPAIR_PART:$repairId")
+    }
     fun deliverRepair(repairId:String,c:Currency,total:Long,paid:Long,v:String,command:String=id(),deliveryDate:String=today(),receiptDate:String=deliveryDate)=transaction {
         val repair=rows("SELECT * FROM repairs WHERE id=?",repairId).single();require(repair.getValue("status")=="ready"&&total>0&&paid in 0..total);require(!LocalDate.parse(repair.getValue("date")).isAfter(LocalDate.now())){"تاريخ الاستلام في المستقبل"};require(!LocalDate.parse(deliveryDate).isAfter(LocalDate.now())){"تاريخ التسليم في المستقبل"};require(!LocalDate.parse(deliveryDate).isBefore(LocalDate.parse(repair.getValue("date")))){"التسليم يسبق استلام الساعة"};if(paid>0){require(!LocalDate.parse(receiptDate).isAfter(LocalDate.now())){"تاريخ قبض الأجرة في المستقبل"};require(!LocalDate.parse(receiptDate).isBefore(LocalDate.parse(deliveryDate))){"تاريخ قبض الأجرة يسبق التسليم"}}
         event(command,"REPAIR_DELIVERY",deliveryDate,"تسليم صيانة ${repair.getValue("customer")}");insert("invoices","id" to command,"number" to nextNumber(),"kind" to "repair","party" to repair.getValue("customer"),"phone" to repair.getValue("phone"),"currency" to c.name,"total" to total,"cost" to 0,"notes" to repair.getValue("watch"))
