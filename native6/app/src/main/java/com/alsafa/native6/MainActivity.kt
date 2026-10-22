@@ -681,6 +681,18 @@ Store.vaults.forEach{v->text(v+" · إقفالات تحتاج عدّاً: "+stor
                     .setMessage(details).setPositiveButton("حسناً",null).show()
             }catch(e:Exception){error(e)}
         }
+        button("مطابقة قبض الصيانة مع قيود النقد"){
+            val issues=store.repairCashJournalMonthIssues(YearMonth.now().toString())
+            val report=if(issues.isEmpty())"لا توجد فروقات في الشهر الحالي."
+            else issues.joinToString("\n"){row->
+                val c=Currency.valueOf(row.getValue("currency"))
+                row.getValue("vault")+" · "+c.name+" · "+
+                    money(row.getValue("receipt_total").toLong()-
+                        row.getValue("cash_posted").toLong(),c)
+            }
+            AlertDialog.Builder(this).setTitle("مطابقة القبض مع دفتر النقد")
+                .setMessage(report).setPositiveButton("حسناً",null).show()
+        }
         button("عدد فروقات مقبوضات الصيانة لهذا الشهر"){
             val month=YearMonth.now().toString()
             val issues=store.repairReceiptMonthReconciliation(month)
