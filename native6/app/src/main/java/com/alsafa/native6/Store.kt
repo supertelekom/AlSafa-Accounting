@@ -1366,6 +1366,17 @@ class Store(val helper:StoreDb) {
     /** Identify negative or zero repair receipt amounts from damaged or imported data. */
     /** Receipts should have a matching cash debit and receivable credit. */
     /** Payments are immutable; identify receipt rows lacking their event record. */
+    /** A receipt must belong to a posted repair invoice, never a cancelled invoice. */
+    fun repairCancelledInvoiceReceiptIssues():List<Map<String,String>> =
+        rows("""SELECT r.event_id reference,i.id invoice_id,i.number invoice_number,
+            i.status,i.currency,r.amount,r.vault
+            FROM receipts r JOIN invoices i ON i.id=r.invoice_id
+            WHERE i.kind='repair' AND i.status<>'posted'""")
+    /** Detect receipts whose invoice was deleted or never imported. */
+    fun repairMissingInvoiceReceiptIssues():List<Map<String,String>> =
+        rows("""SELECT r.event_id reference,r.invoice_id,r.amount,r.vault
+            FROM receipts r LEFT JOIN invoices i ON i.id=r.invoice_id
+            WHERE i.id IS NULL""")
     fun repairOrphanReceiptIssues():List<Map<String,String>> =
         rows("""SELECT r.event_id reference,r.invoice_id,r.amount,r.vault
             FROM receipts r JOIN invoices i ON i.id=r.invoice_id
