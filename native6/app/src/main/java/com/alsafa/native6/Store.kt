@@ -1546,7 +1546,8 @@ class Store(val helper:StoreDb) {
     fun repairReceivableOverAllocation():List<Map<String,String>> =
         rows("""SELECT i.id invoice_id,i.number invoice_number,i.currency,i.total,
             coalesce((SELECT sum(r.amount) FROM receipts r WHERE r.invoice_id=i.id),0) received,
-            coalesce((SELECT sum(t.credit) FROM returns t WHERE t.invoice_id=i.id),0) credited
+            coalesce((SELECT sum(t.credit) FROM returns t WHERE t.invoice_id=i.id),0) credited,
+            coalesce((SELECT sum(f.amount) FROM refunds f WHERE f.invoice_id=i.id),0) refunded
             FROM invoices i WHERE i.kind='repair' AND i.status='posted'""")
             .filter{row->
                 Math.addExact(row.getValue("received").toLong(),
