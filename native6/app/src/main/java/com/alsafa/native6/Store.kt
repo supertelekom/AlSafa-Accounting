@@ -1359,6 +1359,7 @@ class Store(val helper:StoreDb) {
                     }.toString())
             }.sortedWith(compareBy<Map<String,String>>{it.getValue("customer")}
                 .thenBy{it.getValue("currency")})
+    fun repairDebtPartiallyPaid():List<Map<String,String>> = repairDebtCollectionProgress().filter{it.getValue("collected").toLong()>0L}
     fun repairDebtCollectionProgress():List<Map<String,String>> =
         repairOutstandingAll().map{row->
             val total=row.getValue("total").toLong()
