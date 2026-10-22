@@ -30,4 +30,9 @@ assert available("2026-10-03")==2000
 assert available("2026-10-08")==14000
 assert available("2026-10-10")==14000
 assert available("2026-09-30")==0
+db.execute("INSERT INTO events VALUES(?,?)",("other","2026-10-04"))
+db.execute("INSERT INTO journal VALUES(?,?,?,?)",("other","payable:another","USD",-900000))
+db.execute("INSERT INTO journal VALUES(?,?,?,?)",("other","payable:s","TRY",-700000))
+assert available("2026-10-02")==2000
+assert available("2026-10-08")==14000
 print("PASS supplier payment capacity respects intermediate daily balances")
