@@ -681,6 +681,12 @@ Store.vaults.forEach{v->text(v+" · إقفالات تحتاج عدّاً: "+stor
                     .setMessage(details).setPositiveButton("حسناً",null).show()
             }catch(e:Exception){error(e)}
         }
+        button("عدد فواتير الصيانة غير المرحلة"){
+            val count=store.repairCancelledInvoices().size
+            AlertDialog.Builder(this).setTitle("فواتير غير مرحلة")
+                .setMessage("عدد الفواتير: $count")
+                .setPositiveButton("حسناً",null).show()
+        }
         button("تدقيق قبض فواتير الصيانة"){
             val all=store.repairReceiptAuditCount();val duplicate=store.repairDuplicateReceiptEventIssues();val cancelled=store.repairCancelledInvoiceReceiptIssues();val missing=store.repairMissingInvoiceReceiptIssues();val orphan=store.repairOrphanReceiptIssues();val over=store.repairOverpaymentIssues()
             val dates=store.repairReceiptDateIssues()
