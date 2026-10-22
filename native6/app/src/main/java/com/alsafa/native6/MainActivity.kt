@@ -681,6 +681,18 @@ Store.vaults.forEach{v->text(v+" · إقفالات تحتاج عدّاً: "+stor
                     .setMessage(details).setPositiveButton("حسناً",null).show()
             }catch(e:Exception){error(e)}
         }
+        button("المدفوع والمتبقي من فواتير الصيانة"){
+            val lines=store.repairDebtCollectionProgress()
+            val report=if(lines.isEmpty())"لا توجد فواتير صيانة غير مسددة."
+            else lines.joinToString("\n"){row->
+                val c=Currency.valueOf(row.getValue("currency"))
+                "#"+row.getValue("invoice_number")+" · "+row.getValue("customer")+
+                    " · مدفوع "+money(row.getValue("collected").toLong(),c)+
+                    " · متبقٍ "+money(row.getValue("outstanding").toLong(),c)
+            }
+            AlertDialog.Builder(this).setTitle("تحصيل فواتير الصيانة")
+                .setMessage(report).setPositiveButton("حسناً",null).show()
+        }
         button("جميع ديون الصيانة المفتوحة"){
             try{
                 val entries=store.repairOutstandingAll();val totals=store.repairOutstandingCurrencies().sorted().joinToString("\n"){code->val c=Currency.valueOf(code);code+" · "+money(store.repairOutstandingTotal(c),c)}
