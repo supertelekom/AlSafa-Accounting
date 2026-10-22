@@ -697,7 +697,7 @@ Store.vaults.forEach{v->text(v+" · إقفالات تحتاج عدّاً: "+stor
             val classified=store.repairDebtStatusCount();val partial=store.repairDebtPartiallyPaid().size
             val unpaid=store.repairDebtNeverPaid().size
             AlertDialog.Builder(this).setTitle("حالة السداد")
-                .setMessage("فواتير مدفوعة جزئياً: $partial\nفواتير دون أي دفعة: $unpaid")
+                .setMessage("إجمالي الفواتير المصنفة: $classified\nفواتير مدفوعة جزئياً: $partial\nفواتير دون أي دفعة: $unpaid")
                 .setPositiveButton("حسناً",null).show()
         }
         button("المدفوع والمتبقي من فواتير الصيانة"){
