@@ -276,6 +276,16 @@ class Store(val helper:StoreDb) {
             FROM products WHERE kind NOT IN ('watch','part')""")
         check("INVALID_PRODUCT_PRICE","""SELECT id reference, 'سعر بيع أو تكلفة سالبة' detail
             FROM products WHERE price<0 OR cost<0""")
+        check("REPAIR_MISSING_INVOICE","""SELECT r.id reference, 'صيانة مسلمة دون فاتورة مرتبطة' detail
+            FROM repairs r LEFT JOIN invoices i ON i.id=r.invoice_id
+            WHERE r.status='delivered' AND (r.invoice_id IS NULL OR i.id IS NULL)""")
+        check("REPAIR_PREMATURE_INVOICE","""SELECT r.id reference, 'فاتورة مرتبطة بصيانة لم تسلم' detail
+            FROM repairs r WHERE r.status<>'delivered' AND r.invoice_id IS NOT NULL""")
+        check("REPAIR_INVALID_INVOICE","""SELECT r.id reference, 'فاتورة الصيانة المرتبطة ليست من نوع صيانة' detail
+            FROM repairs r JOIN invoices i ON i.id=r.invoice_id
+            WHERE i.kind<>'repair'""")
+        check("REPAIR_FUTURE_INTAKE","""SELECT id reference, 'تاريخ استلام الصيانة في المستقبل' detail
+            FROM repairs WHERE date>date('now','localtime')""")
         return issues
     }
     /** Compare the inventory valuation to the inventory account without any mutations. */
