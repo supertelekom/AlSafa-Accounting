@@ -626,6 +626,19 @@ Store.vaults.forEach{v->text(v+" · إقفالات تحتاج عدّاً: "+stor
                 })
             }
         }
+        button("ملخص أعمار ديون الصيانة"){
+            try{
+                val lines=store.repairDebtAgingTotals()
+                val details=if(lines.isEmpty())"لا توجد ديون صيانة مفتوحة."
+                else lines.joinToString("\n"){row->
+                    val c=Currency.valueOf(row.getValue("currency"))
+                    row.getValue("age_band")+" يوم · "+row.getValue("invoice_count")+
+                        " فواتير · "+money(row.getValue("outstanding").toLong(),c)
+                }
+                AlertDialog.Builder(this).setTitle("شرائح أعمار الديون")
+                    .setMessage(details).setPositiveButton("حسناً",null).show()
+            }catch(e:Exception){error(e)}
+        }
         button("ديون الصيانة حسب مدة التأخير"){
             form("أعمار ديون الصيانة","عرض"){box->
                 val days=field("الحد الأدنى للأيام",box,"30",true)
