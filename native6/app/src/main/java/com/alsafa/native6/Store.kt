@@ -139,9 +139,17 @@ class Store(val helper:StoreDb) {
         require(minimum>=0L){"يوجد رصيد خزنة سالب في تاريخ لاحق؛ راجع تسلسل الحركات"}
         return minimum
     }
+    /** Reject a backdated debit when the day's closing balance would become negative. */
+    private fun validateHistoricalVaultOutflow(v:String,c:Currency,amount:Long,date:String) {
+        require(amount>=0L && amount<=vaultAvailableOn(v,c,date)){"المبلغ يتجاوز رصيد الخزنة المتاح في تاريخ الحركة أو في الأيام التالية"}
+    }
     private fun enoughOn(v:String,c:Currency,amount:Long,date:String) {
         require(amount>=0L && amount<=vaultAvailableOn(v,c,date)){"المبلغ يتجاوز الرصيد المتاح في تاريخ الحركة أو في يوم لاحق"}
     }
+
+    /** Date-sensitive balance guard also covers backdated receipt reversals. */
+    fun vaultOutflowAllowed(v:String,c:Currency,amount:Long,date:String):Boolean =
+        amount>=0L && amount<=vaultAvailableOn(v,c,date)
 
     private fun toProduct(r:Map<String,String>)=Product(r.getValue("id"),r.getValue("name"),r.getValue("barcode"),Currency.valueOf(r.getValue("currency")),r.getValue("price").toLong(),r.getValue("cost").toLong(),r.getValue("stock").toLong(),r.getValue("kind"),r.getValue("value").toLong())
     fun products(query:String="")=rows("SELECT * FROM products WHERE archived=0 AND (instr(lower(name),lower(?))>0 OR instr(lower(barcode),lower(?))>0 OR instr(lower(model),lower(?))>0) ORDER BY name",query.trim(),query.trim(),query.trim()).map(::toProduct)
@@ -645,7 +653,7 @@ class Store(val helper:StoreDb) {
         returnSale(invoiceId,quantities,reason,date,command)
     }
     fun refund(invoiceId:String,amount:Long,v:String,date:String=today(),command:String=id())=transaction {
-        val inv=invoice(invoiceId);require(inv.kind=="sale" || inv.kind=="repair"){"رد العميل متاح لفواتير المبيع والصيانة فقط"};require(amount>0&&amount<=refundable(invoiceId)){"المبلغ المطلوب رده يتجاوز الرصيد المستحق للعميل"};require(!LocalDate.parse(date).isAfter(LocalDate.now())){"تاريخ رد المبلغ في المستقبل"};require(!LocalDate.parse(date).isBefore(LocalDate.parse(rows("SELECT date FROM events WHERE id=?",invoiceId).single().getValue("date"))){"تاريخ رد المبلغ يسبق الفاتورة"};require(rows("SELECT count(*) n FROM returns r JOIN events e ON e.id=r.event_id WHERE r.invoice_id=? AND e.date>?",invoiceId,date).single().getValue("n").toLong()==0L){"رد الأموال لا يجوز أن يسبق تاريخ المرتجع الذي أنشأ الاستحقاق"};enoughOn(v,inv.currency,amount,date);event(command,"REFUND",date,"رد مبلغ فاتورة ${inv.number}")
+        val inv=invoice(invoiceId);require(inv.kind=="sale" || inv.kind=="repair"){"رد العميل متاح لفواتير المبيع والصيانة فقط"};require(amount>0&&amount<=refundable(invoiceId)){"المبلغ المطلوب رده يتجاوز الرصيد المستحق للعميل"};require(!LocalDate.parse(date).isAfter(LocalDate.now())){"تاريخ رد المبلغ في المستقبل"};require(!LocalDate.parse(date).isBefore(LocalDate.parse(rows("SELECT date FROM events WHERE id=?",invoiceId).single().getValue("date"))){"تاريخ رد المبلغ يسبق الفاتورة"};require(rows("SELECT count(*) n FROM returns r JOIN events e ON e.id=r.event_id WHERE r.invoice_id=? AND e.date>?",invoiceId,date).single().getValue("n").toLong()==0L){"رد الأموال لا يجوز أن يسبق تاريخ المرتجع الذي أنشأ الاستحقاق"};validateHistoricalVaultOutflow(v,inv.currency,amount,date);event(command,"REFUND",date,"رد مبلغ فاتورة ${inv.number}")
         insert("refunds","event_id" to command,"invoice_id" to invoiceId,"amount" to amount,"vault" to v);post(command,listOf(Posting("refund:$invoiceId",inv.currency,amount),Posting("cash:$v",inv.currency,-amount)))
     }
     fun addSupplier(name:String,phone:String):String=transaction { require(name.isNotBlank());val id=id();insert("suppliers","id" to id,"name" to name,"phone" to phone);id }
@@ -876,14 +884,14 @@ class Store(val helper:StoreDb) {
         post(command,listOf(Posting("inventory",c,total),Posting("payable:$supplier",c,-total)));if(paid>0) paySupplier(supplier,c,paid,v,paymentDate,"$command-payment");command
     }
     fun paySupplier(supplier:String,c:Currency,amount:Long,v:String,date:String=today(),command:String=id())=transaction {
-        require(scalar("SELECT count(*) FROM suppliers WHERE id=?",supplier)==1L){"المورد غير موجود"};require(!LocalDate.parse(date).isAfter(LocalDate.now())){"لا يمكن تسجيل دفعة مورد بتاريخ مستقبلي"};require(amount>0 && amount<=supplierAvailableOn(supplier,c,date)){"الدفعة تتجاوز الدين المتاح بتاريخها أو في أحد الأيام التالية"};enoughOn(v,c,amount,date);event(command,"SUPPLIER_PAYMENT",date,"دفع للمورد $supplier");post(command,listOf(Posting("payable:$supplier",c,amount),Posting("cash:$v",c,-amount)))
+        require(scalar("SELECT count(*) FROM suppliers WHERE id=?",supplier)==1L){"المورد غير موجود"};require(!LocalDate.parse(date).isAfter(LocalDate.now())){"لا يمكن تسجيل دفعة مورد بتاريخ مستقبلي"};require(amount>0 && amount<=supplierAvailableOn(supplier,c,date)){"الدفعة تتجاوز الدين المتاح بتاريخها أو في أحد الأيام التالية"};validateHistoricalVaultOutflow(v,c,amount,date);event(command,"SUPPLIER_PAYMENT",date,"دفع للمورد $supplier");post(command,listOf(Posting("payable:$supplier",c,amount),Posting("cash:$v",c,-amount)))
     }
     fun cash(kind:String,v:String,c:Currency,amount:Long,note:String,date:String=today(),destination:String="",command:String=id())=transaction {
         require(amount>0&&note.isNotBlank());require(!LocalDate.parse(date).isAfter(LocalDate.now())){"تاريخ حركة الخزنة في المستقبل"};vault(v);val lines=when(kind) {
             "opening"->{require(scalar("SELECT count(*) FROM journal j JOIN events e ON e.id=j.event_id WHERE e.kind=? AND j.account=? AND j.currency=?","OPENING","cash:$v",c.name)==0L);listOf(Posting("cash:$v",c,amount),Posting("equity:opening",c,-amount))}
-            "expense"->{enoughOn(v,c,amount,date);listOf(Posting("expense:operating",c,amount),Posting("cash:$v",c,-amount))}
-            "withdrawal"->{require(destination.isNotBlank());enoughOn(v,c,amount,date);listOf(Posting("equity:withdrawal:$destination",c,amount),Posting("cash:$v",c,-amount))}
-            "transfer"->{vault(destination);require(v!=destination);enoughOn(v,c,amount,date);listOf(Posting("cash:$destination",c,amount),Posting("cash:$v",c,-amount))}
+            "expense"->{validateHistoricalVaultOutflow(v,c,amount,date);listOf(Posting("expense:operating",c,amount),Posting("cash:$v",c,-amount))}
+            "withdrawal"->{require(destination.isNotBlank());validateHistoricalVaultOutflow(v,c,amount,date);listOf(Posting("equity:withdrawal:$destination",c,amount),Posting("cash:$v",c,-amount))}
+            "transfer"->{vault(destination);require(v!=destination);validateHistoricalVaultOutflow(v,c,amount,date);listOf(Posting("cash:$destination",c,amount),Posting("cash:$v",c,-amount))}
             else->error("نوع الحركة غير صالح")
         };event(command,kind.uppercase(),date,note);post(command,lines)
         if (kind=="withdrawal" && scalar("SELECT count(*) FROM partner_members WHERE id=?",destination)==1L) {
@@ -891,7 +899,7 @@ class Store(val helper:StoreDb) {
         }
     }
     fun exchange(source:String,from:Currency,spent:Long,destination:String,to:Currency,received:Long,date:String=today(),command:String=id())=transaction {
-        require(from!=to&&spent>0&&received>0);require(!LocalDate.parse(date).isAfter(LocalDate.now())){"تاريخ الصرف في المستقبل"};enoughOn(source,from,spent,date);vault(destination)
+        require(from!=to&&spent>0&&received>0);require(!LocalDate.parse(date).isAfter(LocalDate.now())){"تاريخ الصرف في المستقبل"};validateHistoricalVaultOutflow(source,from,spent,date);vault(destination)
         event(command,"CURRENCY_EXCHANGE",date,"صرف ${Money(spent,from).display()} مقابل ${Money(received,to).display()}")
         post(command,listOf(Posting("cash:$source",from,-spent),Posting("fx:clearing",from,spent),Posting("cash:$destination",to,received),Posting("fx:clearing",to,-received)))
     }
