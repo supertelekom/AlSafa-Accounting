@@ -686,6 +686,7 @@ Store.vaults.forEach{v->text(v+" · إقفالات تحتاج عدّاً: "+stor
                 })
             }
         }
+        button("فروقات تكلفة قطع الصيانة"){form("مراجعة التكلفة","عرض"){box->val m=field("الشهر YYYY-MM",box,YearMonth.now().toString());({val issues=store.repairProfitMonthCostVariance(m.text.toString().trim());AlertDialog.Builder(this).setTitle("فروقات التكلفة").setMessage(if(issues.isEmpty())"لا توجد فروقات" else issues.joinToString("\n"){it.getValue("customer")+" · مسجل "+it.getValue("cost")+" · فعلي "+it.getValue("parts_cost")+" "+it.getValue("currency")}).setPositiveButton("حسناً",null).show()})}}
         button("تقرير ربح الصيانة حسب شهر التسليم"){
             form("ربح الصيانة","عرض"){box->
                 val month=field("الشهر YYYY-MM",box,YearMonth.now().toString())
