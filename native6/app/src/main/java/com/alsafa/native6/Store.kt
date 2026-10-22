@@ -1361,6 +1361,14 @@ class Store(val helper:StoreDb) {
                 .thenBy{it.getValue("currency")})
     fun repairDebtStatusCount():Int = repairDebtStatusTotals().sumOf{it.getValue("invoice_count").toInt()}
     fun repairDebtStatusCurrencies():Set<String> = repairDebtStatusTotals().map{it.getValue("currency")}.toSet()
+    /** Flag impossible receipt totals instead of hiding overpayments in a zero due balance. */
+    fun repairOverpaymentIssues():List<Map<String,String>> =
+        rows("""SELECT i.id invoice_id,i.number invoice_number,i.party customer,
+            i.currency,i.total,coalesce(sum(r.amount),0) collected
+            FROM invoices i LEFT JOIN receipts r ON r.invoice_id=i.id
+            WHERE i.kind='repair'
+            GROUP BY i.id,i.number,i.party,i.currency,i.total
+            HAVING coalesce(sum(r.amount),0)>i.total""")
     fun repairDebtStatusTotals():List<Map<String,String>> =
         repairDebtCollectionProgress().groupBy{row->
             (if(row.getValue("collected").toLong()>0L)"partial" else "unpaid") to
