@@ -659,6 +659,23 @@ class Store(val helper:StoreDb) {
         return Math.negateExact(scalar("SELECT coalesce(sum(amount),0) FROM journal WHERE account=? AND currency=?",
             "refund:$invoiceId",inv.currency.name))
     }
+    fun refundLiabilityIssues():List<Map<String,String>> {
+        val issues=mutableListOf<Map<String,String>>()
+        rows("SELECT id,number,kind,currency,total FROM invoices WHERE kind IN ('sale','repair') ORDER BY number").forEach { row ->
+            val invoiceId=row.getValue("id")
+            val total=row.getValue("total").toLong()
+            val returned=credit(invoiceId)
+            val received=paid(invoiceId)
+            val refunded=scalar("SELECT coalesce(sum(amount),0) FROM refunds WHERE invoice_id=?",invoiceId)
+            val expected=Math.subtractExact(maxOf(0L,Math.subtractExact(received,
+                Math.subtractExact(total,returned))),refunded)
+            val ledger=refundLiability(invoiceId)
+            if(expected!=ledger || ledger<0L)
+                issues.add(row+mapOf("expected_liability" to expected.toString(),
+                    "ledger_liability" to ledger.toString()))
+        }
+        return issues
+    }
     fun paid(id:String)=scalar("SELECT coalesce(sum(amount),0) FROM receipts WHERE invoice_id=?",id)
     fun credit(id:String)=scalar("SELECT coalesce(sum(credit),0) FROM returns WHERE invoice_id=?",id)
     fun due(id:String):Long {val inv=invoice(id);if(inv.kind=="purchase")return 0L;val returned=credit(id);val received=paid(id);require(returned in 0..inv.total && received>=0L){"رصيد الفاتورة غير متسق"};return Math.subtractExact(Math.subtractExact(inv.total,returned),received).coerceAtLeast(0L)}
