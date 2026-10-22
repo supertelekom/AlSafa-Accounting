@@ -1364,6 +1364,22 @@ class Store(val helper:StoreDb) {
     /** Flag impossible receipt totals instead of hiding overpayments in a zero due balance. */
     /** Find receipts with a date earlier than the repair delivery invoice. */
     /** Identify negative or zero repair receipt amounts from damaged or imported data. */
+    /** Receipts should have a matching cash debit and receivable credit. */
+    fun repairReceiptJournalIssues():List<Map<String,String>> =
+        rows("""SELECT r.event_id reference,i.number invoice_number,i.currency,
+            r.vault,r.amount,
+            coalesce((SELECT sum(j.amount) FROM journal j
+                WHERE j.event_id=r.event_id AND j.account='cash:'||r.vault
+                  AND j.currency=i.currency),0) cash_posted,
+            coalesce((SELECT sum(j.amount) FROM journal j
+                WHERE j.event_id=r.event_id AND j.account='receivable:'||i.id
+                  AND j.currency=i.currency),0) receivable_posted
+            FROM receipts r JOIN invoices i ON i.id=r.invoice_id
+            WHERE i.kind='repair'""").filter{row->
+            val amount=row.getValue("amount").toLong()
+            row.getValue("cash_posted").toLong()!=amount ||
+                row.getValue("receivable_posted").toLong()!=Math.negateExact(amount)
+        }
     fun repairReceiptAmountIssues():List<Map<String,String>> =
         rows("""SELECT r.event_id reference,i.number invoice_number,i.party customer,
             i.currency,r.amount
