@@ -1502,6 +1502,27 @@ class Store(val helper:StoreDb) {
     /** Collection means actual receipts, not invoice total minus remaining balance. */
     /** Cross-check open repair balances against actual receipts and credit notes. */
     /** Flag repair invoices whose receipt and credit totals exceed the invoice. */
+    /** The total of cash receipts by date must agree with the receipt ledger. */
+    fun repairReceiptMonthReconciliation(month:String):List<Map<String,String>> {
+        val entries=repairCashReceivedMonthDetails(month)
+        val summary=repairCashReceivedMonth(month)
+        val keys=(entries.map{it.getValue("currency") to it.getValue("vault")}+
+            summary.map{it.getValue("currency") to it.getValue("vault")}).toSet()
+        return keys.map{key->
+            val detail=entries.filter{it.getValue("currency")==key.first &&
+                it.getValue("vault")==key.second}.fold(0L){sum,row->
+                Math.addExact(sum,row.getValue("amount").toLong())
+            }
+            val total=summary.filter{it.getValue("currency")==key.first &&
+                it.getValue("vault")==key.second}.fold(0L){sum,row->
+                Math.addExact(sum,row.getValue("amount").toLong())
+            }
+            mapOf("currency" to key.first,"vault" to key.second,
+                "detail_total" to detail.toString(),"summary_total" to total.toString(),
+                "difference" to Math.subtractExact(total,detail).toString())
+        }.sortedWith(compareBy<Map<String,String>>{it.getValue("currency")}
+            .thenBy{it.getValue("vault")})
+    }
     fun repairReceivableOverAllocation():List<Map<String,String>> =
         rows("""SELECT i.id invoice_id,i.number invoice_number,i.currency,i.total,
             coalesce((SELECT sum(r.amount) FROM receipts r WHERE r.invoice_id=i.id),0) received,
