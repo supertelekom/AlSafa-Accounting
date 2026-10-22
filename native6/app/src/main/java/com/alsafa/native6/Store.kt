@@ -620,6 +620,17 @@ class Store(val helper:StoreDb) {
         return mapOf("opening" to opening,"charges" to charges,
             "payments" to payments,"closing" to closing)
     }
+    /** Date-scoped supplier ledger with running unpaid debt; historical carry stays separate. */
+    fun supplierStatementEntries(supplier:String,c:Currency,from:String,to:String):List<Map<String,String>> {
+        val statement=supplierStatementRange(supplier,c,from,to)
+        var remaining=statement.getValue("opening")
+        val entries=supplierEntriesRange(supplier,c,from,to).map { row ->
+            remaining=Math.subtractExact(remaining,row.getValue("amount").toLong())
+            row+("remaining" to remaining.toString())
+        }
+        check(remaining==statement.getValue("closing")){"الرصيد الجاري للمورد لا يطابق الرصيد الختامي"}
+        return entries
+    }
     fun supplierEntriesRange(supplier:String,c:Currency,from:String,to:String):List<Map<String,String>> {
         val start=LocalDate.parse(from).toString()
         val end=LocalDate.parse(to).toString()
