@@ -529,14 +529,13 @@ Store.vaults.forEach{v->text(v+" · إقفالات تحتاج عدّاً: "+stor
                     val start=java.time.LocalDate.parse(from.text.toString().trim()).toString()
                     val end=java.time.LocalDate.parse(to.text.toString().trim()).toString()
                     val summary=store.supplierStatementRange(id,c,start,end)
-                    val entries=store.supplierEntriesRange(id,c,start,end)
-                    var remaining=summary.getValue("opening")
+                    val entries=store.supplierStatementEntries(id,c,start,end)
                     val details=entries.map{entry->
                         val amount=entry.getValue("amount").toLong()
-                        remaining=Math.subtractExact(remaining,amount)
-                        entry.getValue("date")+" · "+entry.getValue("kind")+" · "+money(-amount,c)+" · المتبقي "+money(remaining,c)
+                        val debtChange=Math.negateExact(amount)
+                        entry.getValue("date")+" · "+entry.getValue("kind")+" · "+money(debtChange,c)+
+                            " · المتبقي "+money(entry.getValue("remaining").toLong(),c)
                     }
-                    require(remaining==summary.getValue("closing")){"كشف الفترة غير متوازن"}
                     AlertDialog.Builder(this).setTitle("كشف مورد ${c.name} · $start إلى $end")
                         .setMessage("الرصيد السابق: "+money(summary.getValue("opening"),c)+
                             "\nديون خلال الفترة: "+money(summary.getValue("charges"),c)+
