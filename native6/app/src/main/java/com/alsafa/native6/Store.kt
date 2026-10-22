@@ -1501,6 +1501,16 @@ class Store(val helper:StoreDb) {
     fun repairDebtPartiallyPaid():List<Map<String,String>> = repairDebtCollectionProgress().filter{it.getValue("collected").toLong()>0L}
     /** Collection means actual receipts, not invoice total minus remaining balance. */
     /** Cross-check open repair balances against actual receipts and credit notes. */
+    /** Flag repair invoices whose receipt and credit totals exceed the invoice. */
+    fun repairReceivableOverAllocation():List<Map<String,String>> =
+        rows("""SELECT i.id invoice_id,i.number invoice_number,i.currency,i.total,
+            coalesce((SELECT sum(r.amount) FROM receipts r WHERE r.invoice_id=i.id),0) received,
+            coalesce((SELECT sum(t.credit) FROM returns t WHERE t.invoice_id=i.id),0) credited
+            FROM invoices i WHERE i.kind='repair' AND i.status='posted'""")
+            .filter{row->
+                Math.addExact(row.getValue("received").toLong(),
+                    row.getValue("credited").toLong())>row.getValue("total").toLong()
+            }
     fun repairDebtBalanceIssues():List<Map<String,String>> =
         repairOutstandingAll().mapNotNull{row->
             val invoiceId=row.getValue("invoice_id")
