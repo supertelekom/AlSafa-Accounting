@@ -720,7 +720,7 @@ class Store(val helper:StoreDb) {
         post(command,listOf(Posting("inventory",c,total),Posting("payable:$supplier",c,-total)));if(paid>0) paySupplier(supplier,c,paid,v,date,"$command-payment");command
     }
     fun paySupplier(supplier:String,c:Currency,amount:Long,v:String,date:String=today(),command:String=id())=transaction {
-        require(scalar("SELECT count(*) FROM suppliers WHERE id=?",supplier)==1L){"المورد غير موجود"};require(amount>0 && amount<=supplierDue(supplier,c)){"الدفعة تتجاوز دين المورد"};require(!LocalDate.parse(date).isAfter(LocalDate.now())){"لا يمكن تسجيل دفعة مورد بتاريخ مستقبلي"};enough(v,c,amount);event(command,"SUPPLIER_PAYMENT",date,"دفع للمورد $supplier");post(command,listOf(Posting("payable:$supplier",c,amount),Posting("cash:$v",c,-amount)))
+        require(scalar("SELECT count(*) FROM suppliers WHERE id=?",supplier)==1L){"المورد غير موجود"};require(!LocalDate.parse(date).isAfter(LocalDate.now())){"لا يمكن تسجيل دفعة مورد بتاريخ مستقبلي"};require(amount>0 && amount<=supplierDueOn(supplier,c,date)){"الدفعة تتجاوز دين المورد في تاريخها"};enough(v,c,amount);event(command,"SUPPLIER_PAYMENT",date,"دفع للمورد $supplier");post(command,listOf(Posting("payable:$supplier",c,amount),Posting("cash:$v",c,-amount)))
     }
     fun cash(kind:String,v:String,c:Currency,amount:Long,note:String,date:String=today(),destination:String="",command:String=id())=transaction {
         require(amount>0&&note.isNotBlank());vault(v);val lines=when(kind) {
