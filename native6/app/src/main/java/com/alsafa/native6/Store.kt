@@ -1500,6 +1500,16 @@ class Store(val helper:StoreDb) {
     fun repairDebtNeverPaid():List<Map<String,String>> = repairDebtCollectionProgress().filter{it.getValue("collected").toLong()==0L}
     fun repairDebtPartiallyPaid():List<Map<String,String>> = repairDebtCollectionProgress().filter{it.getValue("collected").toLong()>0L}
     /** Collection means actual receipts, not invoice total minus remaining balance. */
+    /** Cross-check open repair balances against actual receipts and credit notes. */
+    fun repairDebtBalanceIssues():List<Map<String,String>> =
+        repairOutstandingAll().mapNotNull{row->
+            val invoiceId=row.getValue("invoice_id")
+            val expected=Math.subtractExact(
+                Math.subtractExact(row.getValue("total").toLong(),credit(invoiceId)),
+                paid(invoiceId))
+            val actual=row.getValue("outstanding").toLong()
+            if(expected==actual)null else row+mapOf("expected" to expected.toString())
+        }
     fun repairDebtCollectionProgress():List<Map<String,String>> =
         repairOutstandingAll().map{row->
             val invoiceId=row.getValue("invoice_id")
