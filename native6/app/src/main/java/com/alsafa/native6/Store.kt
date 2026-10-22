@@ -163,11 +163,13 @@ class Store(val helper:StoreDb) {
     }
     /** Read-only supplier debt audit: payments must not make daily payable balances negative. */
     fun negativeSupplierDebtDays():List<Map<String,String>> {
-        val entries=rows("""SELECT substr(j.account,9) supplier_id,j.currency,e.date,
+        val entries=rows("""SELECT substr(j.account,9) supplier_id,
+            coalesce(s.name,'مورد غير معروف') supplier_name,j.currency,e.date,
             coalesce(sum(j.amount),0) movement
             FROM journal j JOIN events e ON e.id=j.event_id
+            LEFT JOIN suppliers s ON s.id=substr(j.account,9)
             WHERE j.account LIKE 'payable:%'
-            GROUP BY j.account,j.currency,e.date
+            GROUP BY j.account,s.name,j.currency,e.date
             ORDER BY j.account,j.currency,e.date""")
         val balances=mutableMapOf<Pair<String,String>,Long>()
         val issues=mutableListOf<Map<String,String>>()
