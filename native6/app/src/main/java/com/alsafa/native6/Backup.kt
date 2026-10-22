@@ -165,7 +165,7 @@ class Backup(private val context:Context,private val store:Store) {
                 coalesce((SELECT sum(r.amount) FROM receipts r
                     WHERE r.invoice_id=i.id),0)+
                 coalesce((SELECT sum(t.credit) FROM returns t
-                    WHERE t.invoice_id=i.id),0)>i.total
+                    WHERE t.invoice_id=i.id),0)-coalesce((SELECT sum(f.amount) FROM refunds f WHERE f.invoice_id=i.id),0)>i.total
         """).isEmpty()){"مجموع المقبوضات والمرتجعات يتجاوز قيمة فاتورة"}
         // Receipt chronology must follow invoice issuance, including backdated entries.
         require(target.rows("""SELECT r.event_id FROM receipts r
