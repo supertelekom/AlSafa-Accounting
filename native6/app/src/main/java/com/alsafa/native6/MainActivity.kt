@@ -392,6 +392,20 @@ class MainActivity:Activity() {
         {val q=fields.mapValues{it.value.text.toString().toLong()}.filterValues{it>0};val why=reason.text.toString();require(q.isNotEmpty()&&why.isNotBlank());work{store.returnSale(inv.id,q,why)}}}}
     private fun paymentForm(title:String,c:Currency,max:Long,action:(Long,String,String)->Unit){form(title){box->val n=field("المبلغ ${c.name} · المتبقي ${money(max,c)}",box,"0",true);val v=select("الخزنة",vaultNames,box);val received=field("تاريخ حركة النقود الفعلي YYYY-MM-DD",box,Store.today());{val amount=amount(n,c);val vault=Store.vaults[v.selectedItemPosition];val actualDate=java.time.LocalDate.parse(received.text.toString().trim()).toString();work{action(amount,vault,actualDate)}}}}
     private fun vaults(){text("الخزنات",size=25f);
+        button("تدقيق الأيام ذات الرصيد السالب"){
+            try {
+                val issues=store.negativeVaultDays()
+                val detail=if(issues.isEmpty()) "لا توجد أيام برصيد دفتري سالب في سجلات الخزنات."
+                else issues.take(100).joinToString("\\n"){ row ->
+                    val currency=Currency.valueOf(row.getValue("currency"))
+                    row.getValue("date")+" · "+row.getValue("vault")+" · "+currency.name+
+                        " · "+money(row.getValue("closing_balance").toLong(),currency)
+                } + if(issues.size>100) "\\n... توجد "+(issues.size-100)+" نتيجة إضافية" else ""
+                AlertDialog.Builder(this).setTitle("تدقيق أرصدة الخزنات")
+                    .setMessage(detail).setPositiveButton("حسناً",null).show()
+            } catch(e:Exception) { AlertDialog.Builder(this).setMessage(e.message ?: "تعذر فحص الأرصدة").setPositiveButton("حسناً",null).show() }
+        }
+
         button("مراجعة تغير الأرصدة بعد الإقفالات السابقة"){
             form("مراجعة الإقفالات","عرض"){box->
                 val v=select("الخزنة",vaultNames,box)
