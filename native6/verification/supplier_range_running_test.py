@@ -7,11 +7,11 @@ db.executemany("INSERT INTO events VALUES(?,?,?,?)",[
  ("old","2026-09-20",1,"SUPPLIER_OPENING"),
  ("buy","2026-10-02",2,"PURCHASE"),
  ("pay","2026-10-03",3,"SUPPLIER_PAYMENT"),
- ("other","2026-10-03",4,"SUPPLIER_PAYMENT"),
+ ("other","2026-10-03",4,"SUPPLIER_OPENING"),
  ("nov","2026-11-01",5,"SUPPLIER_PAYMENT")])
 db.executemany("INSERT INTO journal VALUES(?,?,?,?)",[
  ("old","payable:one","USD",-10000),("buy","payable:one","USD",-5000),
- ("pay","payable:one","USD",3000),("other","payable:two","USD",1000),
+ ("pay","payable:one","USD",3000),("other","payable:two","USD",-1000),
  ("nov","payable:one","USD",2000)])
 def statement(supplier,currency,start,end):
     acc="payable:"+supplier
@@ -35,6 +35,6 @@ assert statement("one","USD","2026-10-03","2026-10-03")==(
 assert statement("one","USD","2026-10-04","2026-10-31")==(
  12000,[],12000)
 assert statement("two","USD","2026-10-01","2026-10-31")==(
- 0,[("other","2026-10-03",-1000)],-1000)
+ 0,[("other","2026-10-03",1000)],1000)
 
 print("PASS supplier running debt: historic carry, actual payment dates, supplier and currency isolation")
