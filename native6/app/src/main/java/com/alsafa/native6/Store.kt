@@ -1294,6 +1294,7 @@ class Store(val helper:StoreDb) {
             WHERE i.kind='repair' AND e.date=?
             ORDER BY e.created,r.event_id""",day)
     }
+    fun repairCashReceivedTotal(month:String,currency:Currency):Long = repairCashReceivedMonth(month).filter{it.getValue("currency")==currency.name}.fold(0L){sum,row->Math.addExact(sum,row.getValue("amount").toLong())}
     fun repairCashReceivedMonth(month:String):List<Map<String,String>> {
         val period=java.time.YearMonth.parse(month)
         return rows("""SELECT i.currency,r.vault,count(*) receipt_count,
