@@ -143,6 +143,24 @@ class Store(val helper:StoreDb) {
     private fun validateHistoricalVaultOutflow(v:String,c:Currency,amount:Long,date:String) {
         require(amount>=0L && amount<=vaultAvailableOn(v,c,date)){"المبلغ يتجاوز رصيد الخزنة المتاح في تاريخ الحركة أو في الأيام التالية"}
     }
+    /** Read-only audit: negative end-of-day balances grouped by vault, currency and day. */
+    fun negativeVaultDays():List<Map<String,String>> {
+        val entries=rows("""SELECT substr(j.account,6) vault,j.currency,e.date,
+            coalesce(sum(j.amount),0) movement
+            FROM journal j JOIN events e ON e.id=j.event_id
+            WHERE j.account LIKE 'cash:%'
+            GROUP BY j.account,j.currency,e.date
+            ORDER BY j.account,j.currency,e.date""")
+        val balances=mutableMapOf<Pair<String,String>,Long>()
+        val issues=mutableListOf<Map<String,String>>()
+        entries.forEach { row ->
+            val key=row.getValue("vault") to row.getValue("currency")
+            val balance=Math.addExact(balances[key]?:0L,row.getValue("movement").toLong())
+            balances[key]=balance
+            if(balance<0L) issues.add(row+("closing_balance" to balance.toString()))
+        }
+        return issues
+    }
     private fun enoughOn(v:String,c:Currency,amount:Long,date:String) {
         require(amount>=0L && amount<=vaultAvailableOn(v,c,date)){"المبلغ يتجاوز الرصيد المتاح في تاريخ الحركة أو في يوم لاحق"}
     }
