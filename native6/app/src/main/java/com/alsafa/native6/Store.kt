@@ -705,6 +705,22 @@ class Store(val helper:StoreDb) {
         require(due>=0L){"دين المورد في التاريخ المحدد سالب؛ تحقق من تواريخ الدفعات"}
         return due
     }
+    /** Maximum backdated payment without creating a negative debt on any later day. */
+    fun supplierAvailableOn(supplier:String,c:Currency,date:String):Long {
+        val day=LocalDate.parse(date).toString()
+        var balance=supplierDueOn(supplier,c,day)
+        var minimum=balance
+        val later=rows("""SELECT e.date,coalesce(sum(j.amount),0) amount
+            FROM journal j JOIN events e ON e.id=j.event_id
+            WHERE j.account=? AND j.currency=? AND e.date>?
+            GROUP BY e.date ORDER BY e.date""","payable:$supplier",c.name,day)
+        later.forEach { row ->
+            balance=Math.subtractExact(balance,row.getValue("amount").toLong())
+            minimum=minOf(minimum,balance)
+        }
+        require(minimum>=0L){"يوجد رصيد مورد سالب في يوم لاحق؛ راجع تسلسل الدفعات"}
+        return minimum
+    }
     fun supplierDue(supplier:String,c:Currency):Long {
         require(scalar("SELECT count(*) FROM suppliers WHERE id=?",supplier)==1L){"المورد غير موجود"}
         val remaining=Math.negateExact(scalar("SELECT coalesce(sum(amount),0) FROM journal WHERE account=? AND currency=?","payable:$supplier",c.name))
