@@ -692,7 +692,7 @@ Store.vaults.forEach{v->text(v+" · إقفالات تحتاج عدّاً: "+stor
                         c.name+" · الفرق "+money(row.getValue("difference").toLong(),c)
                     }
                     AlertDialog.Builder(this).setTitle("مطابقة إيرادات الصيانة")
-                        .setMessage(report).setPositiveButton("حسناً",null).show()
+                        .setMessage("عدد العملات ذات الفروقات: ${issues.size}\n"+report).setPositiveButton("حسناً",null).show()
                 })
             }
         }
