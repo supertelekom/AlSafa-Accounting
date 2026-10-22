@@ -681,6 +681,22 @@ Store.vaults.forEach{v->text(v+" · إقفالات تحتاج عدّاً: "+stor
                     .setMessage(details).setPositiveButton("حسناً",null).show()
             }catch(e:Exception){error(e)}
         }
+        button("حالات فواتير الصيانة خلال شهر"){
+            form("حالات الفواتير","عرض"){box->
+                val month=field("الشهر YYYY-MM",box,YearMonth.now().toString())
+                ({
+                    val entries=store.repairInvoiceStatusMonth(month.text.toString().trim())
+                    val report=if(entries.isEmpty())"لا توجد فواتير في هذا الشهر."
+                    else entries.joinToString("\n"){row->
+                        val c=Currency.valueOf(row.getValue("currency"))
+                        row.getValue("status")+" · "+row.getValue("invoice_count")+
+                            " فواتير · "+money(row.getValue("invoice_total").toLong(),c)
+                    }
+                    AlertDialog.Builder(this).setTitle("حالات فواتير الصيانة")
+                        .setMessage(report).setPositiveButton("حسناً",null).show()
+                })
+            }
+        }
         button("عدد فواتير الصيانة غير المرحلة"){
             val count=store.repairCancelledInvoices().size
             AlertDialog.Builder(this).setTitle("فواتير غير مرحلة")
