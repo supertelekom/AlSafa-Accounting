@@ -1323,6 +1323,7 @@ class Store(val helper:StoreDb) {
             GROUP BY i.currency,r.vault ORDER BY i.currency,r.vault""",
             period.atDay(1).toString(),period.plusMonths(1).atDay(1).toString())
     }
+    fun repairProfitMonthCostVariance(month:String):List<Map<String,String>> = repairProfitMonth(month).filter{it.getValue("cost")!=it.getValue("parts_cost")}
     fun repairProfitMonthTotals(month:String):List<Map<String,String>> =
         repairProfitMonth(month).groupBy{it.getValue("currency")}.map { (currency,lines) ->
             fun total(key:String)=lines.fold(0L){sum,row->Math.addExact(sum,row.getValue(key).toLong())}
