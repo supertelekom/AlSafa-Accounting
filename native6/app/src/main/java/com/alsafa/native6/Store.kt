@@ -1255,6 +1255,11 @@ class Store(val helper:StoreDb) {
     }
     /** Collected-to-date is not the same as cash collected during the selected month. */
     /** Cash receipts for repair invoices, attributed exclusively to the payment day. */
+    /** Month-specific repair debt: invoice date defines the cohort, cash is up to now. */
+    fun repairOutstandingMonth(month:String):List<Map<String,String>> =
+        repairProfitMonth(month).filter{it.getValue("outstanding").toLong()>0L}
+            .sortedWith(compareBy<Map<String,String>>{it.getValue("currency")}
+                .thenByDescending{it.getValue("outstanding").toLong()})
     fun repairCashReceivedDay(date:String):List<Map<String,String>> {
         val day=LocalDate.parse(date).toString()
         return rows("""SELECT e.date receipt_date,i.number invoice_number,i.party customer,
