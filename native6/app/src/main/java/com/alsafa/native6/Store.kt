@@ -1392,6 +1392,9 @@ class Store(val helper:StoreDb) {
     fun repairReceiptAuditClean():Boolean = repairReceiptAuditCount()==0
     /** Detect cancelled repair invoices retained in the invoice register. */
     /** Reconcile posted repair invoice revenue against the profit report's revenue. */
+    fun repairInvoiceLinkAuditCount():Int =
+        repairInvoiceLinkIssues().size+repairDuplicateInvoiceLinks().size+
+            repairWrongInvoiceLinks().size+repairMissingInvoiceLinks().size
     fun repairMissingInvoiceLinks():List<Map<String,String>> =
         rows("""SELECT r.id repair_id,r.customer,r.invoice_id
             FROM repairs r LEFT JOIN invoices i ON i.id=r.invoice_id
