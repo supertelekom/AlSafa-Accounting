@@ -1265,6 +1265,21 @@ class Store(val helper:StoreDb) {
         post(command,listOf(Posting("expense:repair_parts",part.currency,cost),Posting("inventory",part.currency,-cost)))
         command
     }
+    fun repairPartsAccountingIssues():List<Map<String,String>> =
+        rows("""SELECT e.id reference,e.memo repair_reference,p.currency,s.value_delta,
+            coalesce((SELECT sum(j.amount) FROM journal j WHERE j.event_id=e.id
+                AND j.account='expense:repair_parts' AND j.currency=p.currency),0) expense_posted,
+            coalesce((SELECT sum(j.amount) FROM journal j WHERE j.event_id=e.id
+                AND j.account='inventory' AND j.currency=p.currency),0) inventory_posted
+            FROM events e JOIN stock_moves s ON s.event_id=e.id
+            JOIN products p ON p.id=s.product_id WHERE e.kind='REPAIR_PART'""").filter { row ->
+            val delta=row.getValue("value_delta").toLong()
+            row.getValue("expense_posted").toLong()!=Math.negateExact(delta) ||
+                row.getValue("inventory_posted").toLong()!=delta
+        }.map { row ->
+            row+mapOf("category" to "REPAIR_PART_ACCOUNTING_MISMATCH",
+                "detail" to "تكلفة قطعة الصيانة لا تطابق قيد المخزون والمصروف")
+        }
     fun repairPartsUsed(repairId:String):List<Map<String,String>> {
         repairDetail(repairId)
         return rows("""SELECT e.date,s.product_id,p.name,p.currency,s.quantity,s.value_delta
