@@ -598,9 +598,9 @@ class Store(val helper:StoreDb) {
         val end=LocalDate.parse(to).toString()
         require(start<=end){"تاريخ البداية بعد تاريخ النهاية"}
         require(scalar("SELECT count(*) FROM suppliers WHERE id=?",supplier)==1L){"المورد غير موجود"}
-        val opening=-scalar("""SELECT coalesce(sum(j.amount),0) FROM journal j
+        val opening=Math.negateExact(scalar("""SELECT coalesce(sum(j.amount),0) FROM journal j
             JOIN events e ON e.id=j.event_id
-            WHERE j.account=? AND j.currency=? AND e.date<?""","payable:$supplier",c.name,start)
+            WHERE j.account=? AND j.currency=? AND e.date<?""","payable:$supplier",c.name,start))
         val movements=rows("""SELECT j.amount FROM journal j
             JOIN events e ON e.id=j.event_id
             WHERE j.account=? AND j.currency=? AND e.date>=? AND e.date<=?""",
@@ -613,9 +613,9 @@ class Store(val helper:StoreDb) {
             else payments=Math.addExact(payments,amount)
         }
         val closing=Math.subtractExact(Math.addExact(opening,charges),payments)
-        val verified=-scalar("""SELECT coalesce(sum(j.amount),0) FROM journal j
+        val verified=Math.negateExact(scalar("""SELECT coalesce(sum(j.amount),0) FROM journal j
             JOIN events e ON e.id=j.event_id
-            WHERE j.account=? AND j.currency=? AND e.date<=?""","payable:$supplier",c.name,end)
+            WHERE j.account=? AND j.currency=? AND e.date<=?""","payable:$supplier",c.name,end))
         require(closing==verified){"كشف المورد للفترة غير متوازن"}
         return mapOf("opening" to opening,"charges" to charges,
             "payments" to payments,"closing" to closing)
