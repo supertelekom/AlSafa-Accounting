@@ -1390,7 +1390,7 @@ class Store(val helper:StoreDb) {
             LEFT JOIN events e ON e.id=r.event_id
             WHERE i.kind='repair' AND e.id IS NULL""")
     fun repairReceiptAuditClean():Boolean = repairReceiptAuditCount()==0
-    fun repairReceiptAuditCount():Int = repairOverpaymentIssues().size+repairReceiptDateIssues().size+repairReceiptAmountIssues().size+repairReceiptJournalIssues().size+repairOrphanReceiptIssues().size+repairCancelledInvoiceReceiptIssues().size+repairMissingInvoiceReceiptIssues().size
+    fun repairReceiptAuditCount():Int = repairOverpaymentIssues().size+repairReceiptDateIssues().size+repairReceiptAmountIssues().size+repairReceiptJournalIssues().size+repairOrphanReceiptIssues().size+repairCancelledInvoiceReceiptIssues().size+repairMissingInvoiceReceiptIssues().size+repairDuplicateReceiptEventIssues().size
     fun repairReceiptJournalIssues():List<Map<String,String>> =
         rows("""SELECT r.event_id reference,i.number invoice_number,i.currency,
             r.vault,r.amount,
