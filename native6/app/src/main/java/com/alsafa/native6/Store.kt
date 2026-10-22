@@ -632,20 +632,19 @@ class Store(val helper:StoreDb) {
         val day=LocalDate.parse(date).toString()
         var running=invoiceDueOn(invoiceId,day)
         var minimum=running
-        val later=rows("""SELECT e.date,
-            coalesce(sum(CASE WHEN r.event_id IS NOT NULL THEN -r.amount ELSE 0 END),0) receipts,
-            coalesce(sum(CASE WHEN t.event_id IS NOT NULL THEN -t.credit ELSE 0 END),0) returns_credit,
-            coalesce(sum(CASE WHEN f.event_id IS NOT NULL THEN f.amount ELSE 0 END),0) refunds
-            FROM events e
-            LEFT JOIN receipts r ON r.event_id=e.id AND r.invoice_id=?
-            LEFT JOIN returns t ON t.event_id=e.id AND t.invoice_id=?
-            LEFT JOIN refunds f ON f.event_id=e.id AND f.invoice_id=?
-            WHERE e.date>? AND (r.event_id IS NOT NULL OR t.event_id IS NOT NULL OR f.event_id IS NOT NULL)
-            GROUP BY e.date ORDER BY e.date""",invoiceId,invoiceId,invoiceId,day)
+        val later=rows("""SELECT movement_date date,coalesce(sum(delta),0) delta FROM (
+                SELECT e.date movement_date,-r.amount delta FROM receipts r
+                JOIN events e ON e.id=r.event_id WHERE r.invoice_id=? AND e.date>?
+                UNION ALL
+                SELECT e.date movement_date,-r.credit delta FROM returns r
+                JOIN events e ON e.id=r.event_id WHERE r.invoice_id=? AND e.date>?
+                UNION ALL
+                SELECT e.date movement_date,r.amount delta FROM refunds r
+                JOIN events e ON e.id=r.event_id WHERE r.invoice_id=? AND e.date>?
+            ) GROUP BY movement_date ORDER BY movement_date""",
+            invoiceId,day,invoiceId,day,invoiceId,day)
         later.forEach { row ->
-            running=Math.addExact(running,row.getValue("receipts").toLong())
-            running=Math.addExact(running,row.getValue("returns_credit").toLong())
-            running=Math.addExact(running,row.getValue("refunds").toLong())
+            running=Math.addExact(running,row.getValue("delta").toLong())
             minimum=minOf(minimum,running)
         }
         return minimum.coerceAtLeast(0L)
