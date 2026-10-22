@@ -701,13 +701,13 @@ Store.vaults.forEach{v->text(v+" · إقفالات تحتاج عدّاً: "+stor
                 .setMessage("عدد فروقات الشهر الحالي: $issues")
                 .setPositiveButton("حسناً",null).show()
         }
-        button("فحص تخصيص ذمم الصيانة"){
+        button("فحص رد مبالغ الصيانة الزائدة"){
             val issues=store.repairReceivableOverAllocation()
-            val report=if(issues.isEmpty())"لا توجد فواتير تتجاوز فيها الدفعات والاعتمادات قيمة الفاتورة."
+            val report=if(issues.isEmpty())"لا توجد مبالغ معادة تتجاوز إجمالي المقبوضات."
             else issues.joinToString("\n"){row->
                 "فاتورة "+row.getValue("invoice_number")+" · "+row.getValue("currency")
             }
-            AlertDialog.Builder(this).setTitle("فحص تخصيص الذمم")
+            AlertDialog.Builder(this).setTitle("فحص مبالغ الرد")
                 .setMessage(report).setPositiveButton("حسناً",null).show()
         }
         button("فواتير صيانة دون سجل مرتبط"){
