@@ -454,6 +454,20 @@ class Store(val helper:StoreDb) {
         return Invoice(row.getValue("id"),row.getValue("number").toLong(),row.getValue("kind"),row.getValue("party"),Currency.valueOf(row.getValue("currency")),row.getValue("total").toLong(),row.getValue("status"))
     }
     /** Cash receipt register uses the date money was physically received, not invoice date. */
+    /** Verify the receipts subledger against the cash journal, without modifying either. */
+    fun customerReceiptJournalIssues():List<Map<String,String>> {
+        val result=mutableListOf<Map<String,String>>()
+        rows("""SELECT r.event_id reference,e.date,r.vault,i.currency,r.amount,
+            coalesce((SELECT sum(j.amount) FROM journal j WHERE j.event_id=r.event_id
+                AND j.account='cash:'||r.vault AND j.currency=i.currency),0) posted_cash
+            FROM receipts r JOIN events e ON e.id=r.event_id
+            JOIN invoices i ON i.id=r.invoice_id""").forEach { row ->
+            if(row.getValue("amount").toLong()!=row.getValue("posted_cash").toLong())
+                result.add(row+mapOf("category" to "RECEIPT_CASH_MISMATCH",
+                    "detail" to "قبض الفاتورة لا يطابق قيد الخزنة"))
+        }
+        return result
+    }
     fun customerReceiptTotalForDay(date:String,c:Currency,v:String):Long {
         vault(v)
         val day=LocalDate.parse(date).toString()
