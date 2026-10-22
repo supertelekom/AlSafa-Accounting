@@ -37,7 +37,7 @@ class Backup(private val context:Context,private val store:Store) {
             }
         }
         fun sha(bytes:ByteArray)=MessageDigest.getInstance("SHA-256").digest(bytes).joinToString(""){"%02x".format(it)}
-        fun read(input:InputStream):ByteArray {val out=java.io.ByteArrayOutputStream();val buffer=ByteArray(8192);while(true){val n=input.read(buffer);if(n<0)break;require(out.size()+n<=MAX_BYTES){"حجم الملف أكبر من الحد المدعوم"};out.write(buffer,0,n)};return out.toByteArray()}
+        fun read(input:InputStream):ByteArray {val out=java.io.ByteArrayOutputStream();val buffer=ByteArray(8192);while(true){val n=input.read(buffer);if(n<0)break;require(out.size().toLong()+n.toLong()<=MAX_BYTES.toLong()){ "حجم الملف أكبر من الحد المدعوم" };out.write(buffer,0,n)};return out.toByteArray()}
     }
     fun export(output:OutputStream) {
         val data=store.transaction {validate(store);val obj=JSONObject();tables.forEach { table ->val list=JSONArray();store.db.rawQuery("SELECT * FROM $table",null).use{c->while(c.moveToNext()){val row=JSONObject();c.columnNames.forEachIndexed{i,n->row.put(n,when(c.getType(i)){android.database.Cursor.FIELD_TYPE_NULL->JSONObject.NULL;android.database.Cursor.FIELD_TYPE_INTEGER->c.getLong(i);else->c.getString(i)})};list.put(row)}};obj.put(table,list)};obj.toString()}
