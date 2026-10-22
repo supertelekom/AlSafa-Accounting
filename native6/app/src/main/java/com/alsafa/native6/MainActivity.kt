@@ -382,7 +382,22 @@ class MainActivity:Activity() {
                         "الرصيد الختامي: "+money(data.getValue("closing"),unit),
                         "عدد الحركات: "+data.getValue("movements")
                     ).joinToString("\n")
-                    AlertDialog.Builder(this).setTitle("كشف "+vault+" · "+unit.name).setMessage(lines).setPositiveButton("حسناً",null).show()
+                    AlertDialog.Builder(this).setTitle("كشف "+vault+" · "+unit.name).setMessage(lines)
+                        .setNeutralButton("تفاصيل الحركات"){_,_->
+                            try {
+                                val entries=store.vaultStatementEntries(vault,unit,first.text.toString().trim(),last.text.toString().trim())
+                                val details=entries.take(200).joinToString("\n\n"){entry->
+                                    val delta=entry.getValue("amount").toLong()
+                                    entry.getValue("date")+" · "+entry.getValue("memo")+"\n"+
+                                        (if(delta>=0) "مقبوض " else "مدفوع ")+money(if(delta>=0) delta else Math.negateExact(delta),unit)+
+                                        "\nالرصيد بعد الحركة: "+money(entry.getValue("running_balance").toLong(),unit)
+                                }
+                                val more=if(entries.size>200) "\n\nتُعرض أول 200 حركة من أصل "+entries.size+"؛ قلّص الفترة لعرض الباقي." else ""
+                                AlertDialog.Builder(this).setTitle("حركات "+vault+" · "+unit.name)
+                                    .setMessage(if(entries.isEmpty()) "لا توجد حركات في الفترة" else details+more)
+                                    .setPositiveButton("حسناً",null).show()
+                            } catch(e:Exception){error(e)}
+                        }.setPositiveButton("حسناً",null).show()
                 })
             }
         }
