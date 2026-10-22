@@ -708,6 +708,7 @@ class Store(val helper:StoreDb) {
     /** Maximum backdated payment without creating a negative debt on any later day. */
     fun supplierAvailableOn(supplier:String,c:Currency,date:String):Long {
         val day=LocalDate.parse(date).toString()
+        require(!LocalDate.parse(day).isAfter(LocalDate.now())){"تاريخ الدفعة في المستقبل"}
         var balance=supplierDueOn(supplier,c,day)
         var minimum=balance
         val later=rows("""SELECT e.date,coalesce(sum(j.amount),0) amount
