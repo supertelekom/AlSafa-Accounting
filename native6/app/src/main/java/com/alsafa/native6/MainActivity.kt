@@ -687,7 +687,7 @@ Store.vaults.forEach{v->text(v+" · إقفالات تحتاج عدّاً: "+stor
             val amounts=store.repairReceiptAmountIssues();val journal=store.repairReceiptJournalIssues()
             val message="تجاوز قيمة الفاتورة: ${over.size}\n"+
                 "قبض قبل التسليم: ${dates.size}\n"+
-                "مبالغ قبض غير صالحة: ${amounts.size}"
+                "مبالغ قبض غير صالحة: ${amounts.size}\n"+"قيود قبض غير متطابقة: ${journal.size}"
             AlertDialog.Builder(this).setTitle("تدقيق المقبوضات")
                 .setMessage(message).setPositiveButton("حسناً",null).show()
         }
