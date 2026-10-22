@@ -597,6 +597,7 @@ class Store(val helper:StoreDb) {
         val start=LocalDate.parse(from).toString()
         val end=LocalDate.parse(to).toString()
         require(start<=end){"تاريخ البداية بعد تاريخ النهاية"}
+        require(java.time.temporal.ChronoUnit.DAYS.between(LocalDate.parse(start),LocalDate.parse(end))<=366){"الفترة تتجاوز سنة"}
         require(scalar("SELECT count(*) FROM suppliers WHERE id=?",supplier)==1L){"المورد غير موجود"}
         val opening=Math.negateExact(scalar("""SELECT coalesce(sum(j.amount),0) FROM journal j
             JOIN events e ON e.id=j.event_id
