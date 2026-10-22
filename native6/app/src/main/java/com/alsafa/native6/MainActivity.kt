@@ -655,6 +655,19 @@ Store.vaults.forEach{v->text(v+" · إقفالات تحتاج عدّاً: "+stor
                 })
             }
         }
+        button("ديون الصيانة حسب العميل"){
+            try{
+                val lines=store.repairDebtByCustomer()
+                val details=if(lines.isEmpty())"لا توجد ديون صيانة مفتوحة."
+                else lines.joinToString("\n"){row->
+                    val c=Currency.valueOf(row.getValue("currency"))
+                    row.getValue("customer")+" · "+row.getValue("invoice_count")+
+                        " فواتير · "+money(row.getValue("outstanding").toLong(),c)
+                }
+                AlertDialog.Builder(this).setTitle("ديون العملاء للصيانة")
+                    .setMessage(details).setPositiveButton("حسناً",null).show()
+            }catch(e:Exception){error(e)}
+        }
         button("ديون الصيانة حسب شهر التسليم"){
             try{
                 val entries=store.repairDebtByDeliveryMonth()
