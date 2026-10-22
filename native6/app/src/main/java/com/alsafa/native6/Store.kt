@@ -1327,7 +1327,7 @@ class Store(val helper:StoreDb) {
         repairProfitMonth(month).groupBy{it.getValue("currency")}.map { (currency,lines) ->
             fun total(key:String)=lines.fold(0L){sum,row->Math.addExact(sum,row.getValue(key).toLong())}
             mapOf("currency" to currency,"repair_count" to lines.size.toString(),
-                "revenue" to total("total").toString(),"parts_cost" to total("cost").toString(),
+                "revenue" to total("total").toString(),"parts_cost" to total("parts_cost").toString(),
                 "margin" to total("margin").toString(),
                 "collected_to_date" to total("collected").toString(),
                 "outstanding" to total("outstanding").toString())
