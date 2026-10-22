@@ -185,6 +185,11 @@ class Backup(private val context:Context,private val store:Store) {
                 coalesce((SELECT sum(f.amount) FROM refunds f WHERE f.invoice_id=i.id),0)>
                 coalesce((SELECT sum(r.amount) FROM receipts r WHERE r.invoice_id=i.id),0)
         """).isEmpty()){"مبالغ رد العملاء تتجاوز المقبوضات الأصلية"}
+        require(target.rows("""SELECT t.event_id FROM returns t
+            JOIN events returned ON returned.id=t.event_id
+            JOIN events issued ON issued.id=t.invoice_id
+            WHERE returned.date<issued.date OR returned.kind<>'SALE_RETURN'
+        """).isEmpty()){"مرتجع بتاريخ يسبق الفاتورة أو حدث غير صالح"}
         // Receipt chronology must follow invoice issuance, including backdated entries.
         require(target.rows("""SELECT r.event_id FROM receipts r
             JOIN events payment ON payment.id=r.event_id
