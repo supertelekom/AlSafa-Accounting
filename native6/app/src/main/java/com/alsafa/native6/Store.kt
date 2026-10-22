@@ -161,6 +161,24 @@ class Store(val helper:StoreDb) {
         }
         return issues
     }
+    /** Read-only supplier debt audit: payments must not make daily payable balances negative. */
+    fun negativeSupplierDebtDays():List<Map<String,String>> {
+        val entries=rows("""SELECT substr(j.account,9) supplier_id,j.currency,e.date,
+            coalesce(sum(j.amount),0) movement
+            FROM journal j JOIN events e ON e.id=j.event_id
+            WHERE j.account LIKE 'payable:%'
+            GROUP BY j.account,j.currency,e.date
+            ORDER BY j.account,j.currency,e.date""")
+        val balances=mutableMapOf<Pair<String,String>,Long>()
+        val issues=mutableListOf<Map<String,String>>()
+        entries.forEach { row ->
+            val key=row.getValue("supplier_id") to row.getValue("currency")
+            val payable=Math.subtractExact(balances[key]?:0L,row.getValue("movement").toLong())
+            balances[key]=payable
+            if(payable<0L) issues.add(row+("remaining_debt" to payable.toString()))
+        }
+        return issues
+    }
     private fun enoughOn(v:String,c:Currency,amount:Long,date:String) {
         require(amount>=0L && amount<=vaultAvailableOn(v,c,date)){"المبلغ يتجاوز الرصيد المتاح في تاريخ الحركة أو في يوم لاحق"}
     }
