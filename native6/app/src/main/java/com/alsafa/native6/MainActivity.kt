@@ -681,6 +681,15 @@ Store.vaults.forEach{v->text(v+" · إقفالات تحتاج عدّاً: "+stor
                     .setMessage(details).setPositiveButton("حسناً",null).show()
             }catch(e:Exception){error(e)}
         }
+        button("فحص تخصيص ذمم الصيانة"){
+            val issues=store.repairReceivableOverAllocation()
+            val report=if(issues.isEmpty())"لا توجد فواتير تتجاوز فيها الدفعات والاعتمادات قيمة الفاتورة."
+            else issues.joinToString("\n"){row->
+                "فاتورة "+row.getValue("invoice_number")+" · "+row.getValue("currency")
+            }
+            AlertDialog.Builder(this).setTitle("فحص تخصيص الذمم")
+                .setMessage(report).setPositiveButton("حسناً",null).show()
+        }
         button("فواتير صيانة دون سجل مرتبط"){
             val totalLinks=store.repairInvoiceLinkAuditCount();val missingLinks=store.repairMissingInvoiceLinks().size;val duplicates=store.repairDuplicateInvoiceLinks().size;val wrong=store.repairWrongInvoiceLinks().size;val count=store.repairInvoiceLinkIssues().size
             AlertDialog.Builder(this).setTitle("مطابقة ربط الصيانة")
