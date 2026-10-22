@@ -1254,6 +1254,16 @@ class Store(val helper:StoreDb) {
         }
     }
     /** Collected-to-date is not the same as cash collected during the selected month. */
+    /** Cash receipts for repair invoices, attributed exclusively to the payment day. */
+    fun repairCashReceivedDay(date:String):List<Map<String,String>> {
+        val day=LocalDate.parse(date).toString()
+        return rows("""SELECT e.date receipt_date,i.number invoice_number,i.party customer,
+            i.currency,r.vault,r.amount,r.invoice_id,r.event_id
+            FROM receipts r JOIN invoices i ON i.id=r.invoice_id
+            JOIN events e ON e.id=r.event_id
+            WHERE i.kind='repair' AND e.date=?
+            ORDER BY e.created,r.event_id""",day)
+    }
     fun repairCashReceivedMonth(month:String):List<Map<String,String>> {
         val period=java.time.YearMonth.parse(month)
         return rows("""SELECT i.currency,r.vault,count(*) receipt_count,
