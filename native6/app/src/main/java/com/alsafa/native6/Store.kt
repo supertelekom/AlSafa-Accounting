@@ -454,6 +454,14 @@ class Store(val helper:StoreDb) {
         return Invoice(row.getValue("id"),row.getValue("number").toLong(),row.getValue("kind"),row.getValue("party"),Currency.valueOf(row.getValue("currency")),row.getValue("total").toLong(),row.getValue("status"))
     }
     /** Cash receipt register uses the date money was physically received, not invoice date. */
+    fun customerReceiptTotalForDay(date:String,c:Currency,v:String):Long {
+        vault(v)
+        val day=LocalDate.parse(date).toString()
+        return scalar("""SELECT coalesce(sum(r.amount),0) FROM receipts r
+            JOIN events e ON e.id=r.event_id
+            JOIN invoices i ON i.id=r.invoice_id
+            WHERE e.date=? AND i.currency=? AND r.vault=?""",day,c.name,v)
+    }
     fun customerReceiptsMonthTotals(month:String):List<Map<String,String>> {
         val period=java.time.YearMonth.parse(month)
         return rows("""SELECT i.currency,r.vault,coalesce(sum(r.amount),0) amount,
