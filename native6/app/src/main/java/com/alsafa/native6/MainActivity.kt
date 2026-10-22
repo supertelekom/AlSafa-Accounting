@@ -646,7 +646,7 @@ Store.vaults.forEach{v->text(v+" · إقفالات تحتاج عدّاً: "+stor
         button("تشغيل الفحص"){
             try{
                 output.removeAllViews()
-                val issues=store.accountingIntegrityIssues()+store.sqliteIntegrityIssues()+store.inventoryAccountingIssues()+store.customerReceiptJournalIssues()+store.customerReceivableJournalIssues()+store.customerReceiptDateIssues()
+                val issues=store.accountingIntegrityIssues()+store.sqliteIntegrityIssues()+store.inventoryAccountingIssues()+store.customerReceiptJournalIssues()+store.customerReceivableJournalIssues()+store.customerReceiptDateIssues()+store.repairPartsAccountingIssues()
                 if(issues.isEmpty())text("لم تُكتشف مخالفات ضمن الفحوص المحددة.",output)
                 else{
                     text("عدد المخالفات: ${issues.size}",output,size=21f)
