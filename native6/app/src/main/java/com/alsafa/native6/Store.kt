@@ -1499,11 +1499,11 @@ class Store(val helper:StoreDb) {
     fun repairDebtPartiallyPaidCurrencies():Set<String> = repairDebtPartiallyPaid().map{it.getValue("currency")}.toSet()
     fun repairDebtNeverPaid():List<Map<String,String>> = repairDebtCollectionProgress().filter{it.getValue("collected").toLong()==0L}
     fun repairDebtPartiallyPaid():List<Map<String,String>> = repairDebtCollectionProgress().filter{it.getValue("collected").toLong()>0L}
+    /** Collection means actual receipts, not invoice total minus remaining balance. */
     fun repairDebtCollectionProgress():List<Map<String,String>> =
         repairOutstandingAll().map{row->
-            val total=row.getValue("total").toLong()
-            val outstanding=row.getValue("outstanding").toLong()
-            row+mapOf("collected" to Math.subtractExact(total,outstanding).toString())
+            val invoiceId=row.getValue("invoice_id")
+            row+mapOf("collected" to paid(invoiceId).toString())
         }
     fun repairDebtAgeDays(asOf:String=today()):List<Map<String,String>> {
         val date=LocalDate.parse(asOf)
