@@ -70,6 +70,28 @@ class Store(val helper:StoreDb) {
         return mapOf("opening" to opening,"inflows" to incoming,"outflows" to outgoing,
             "closing" to closing,"movements" to entries.size.toLong())
     }
+    /** Chronological cash statement; each transaction belongs to its real posting date. */
+    fun vaultStatementEntries(v:String,c:Currency,from:String,to:String):List<Map<String,String>> {
+        vault(v)
+        val start=LocalDate.parse(from)
+        val end=LocalDate.parse(to)
+        require(!start.isAfter(end)){"تاريخ البداية بعد تاريخ النهاية"}
+        require(java.time.temporal.ChronoUnit.DAYS.between(start,end)<=366){"الفترة تتجاوز سنة"}
+        var running=vaultDayOpening(v,c,start.toString())
+        return rows("""SELECT e.date,e.kind,e.memo,e.id event_id,coalesce(sum(j.amount),0) amount
+            FROM journal j JOIN events e ON e.id=j.event_id
+            WHERE j.account=? AND j.currency=? AND e.date>=? AND e.date<=?
+            GROUP BY e.id,e.date,e.kind,e.memo
+            ORDER BY e.date,e.created,e.id""",
+            "cash:$v",c.name,start.toString(),end.toString()).map { row ->
+            running=add(running,row.getValue("amount").toLong())
+            row+("running_balance" to running.toString())
+        }.also { lines ->
+            val closing=vaultDayClosing(v,c,end.toString())
+            check(running==closing){"تسلسل كشف الخزنة لا يطابق الرصيد الختامي"}
+            check(lines.size.toLong()==vaultStatementRange(v,c,from,to).getValue("movements")){"عدد حركات كشف الخزنة غير متطابق"}
+        }
+    }
     fun vaultDayOpening(v:String,c:Currency,date:String):Long {
         vault(v)
         val day=LocalDate.parse(date).toString()
