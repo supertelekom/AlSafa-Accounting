@@ -1390,6 +1390,13 @@ class Store(val helper:StoreDb) {
             LEFT JOIN events e ON e.id=r.event_id
             WHERE i.kind='repair' AND e.id IS NULL""")
     fun repairReceiptAuditClean():Boolean = repairReceiptAuditCount()==0
+    /** Detect cancelled repair invoices retained in the invoice register. */
+    fun repairCancelledInvoices():List<Map<String,String>> =
+        rows("""SELECT i.id invoice_id,i.number invoice_number,i.party customer,
+            i.currency,i.total,i.status,e.date delivery_date
+            FROM invoices i JOIN events e ON e.id=i.id
+            WHERE i.kind='repair' AND i.status<>'posted'
+            ORDER BY e.date,i.number""")
     fun repairReceiptAuditCount():Int = repairOverpaymentIssues().size+repairReceiptDateIssues().size+repairReceiptAmountIssues().size+repairReceiptJournalIssues().size+repairOrphanReceiptIssues().size+repairCancelledInvoiceReceiptIssues().size+repairMissingInvoiceReceiptIssues().size+repairDuplicateReceiptEventIssues().size
     fun repairReceiptJournalIssues():List<Map<String,String>> =
         rows("""SELECT r.event_id reference,i.number invoice_number,i.currency,
