@@ -1349,6 +1349,16 @@ class Store(val helper:StoreDb) {
         return repairDebtAgeDays(asOf).filter{it.getValue("age_days").toLong()>=minDays}
     }
     /** Current repair debt with original invoice amount and collected-to-date. */
+    fun repairDebtByCustomer():List<Map<String,String>> =
+        repairOutstandingAll().groupBy{it.getValue("customer") to it.getValue("currency")}
+            .map{(key,items)->
+                mapOf("customer" to key.first,"currency" to key.second,
+                    "invoice_count" to items.size.toString(),
+                    "outstanding" to items.fold(0L){sum,row->
+                        Math.addExact(sum,row.getValue("outstanding").toLong())
+                    }.toString())
+            }.sortedWith(compareBy<Map<String,String>>{it.getValue("customer")}
+                .thenBy{it.getValue("currency")})
     fun repairDebtCollectionProgress():List<Map<String,String>> =
         repairOutstandingAll().map{row->
             val total=row.getValue("total").toLong()
