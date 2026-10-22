@@ -1256,6 +1256,17 @@ class Store(val helper:StoreDb) {
     /** Collected-to-date is not the same as cash collected during the selected month. */
     /** Cash receipts for repair invoices, attributed exclusively to the payment day. */
     /** Month-specific repair debt: invoice date defines the cohort, cash is up to now. */
+    /** Outstanding repair balances across all delivery months, without mixing currencies. */
+    fun repairOutstandingAll():List<Map<String,String>> =
+        rows("""SELECT r.id repair_id,r.customer,r.phone,i.number invoice_number,
+            i.currency,i.total,i.id invoice_id,e.date delivery_date
+            FROM repairs r JOIN invoices i ON i.id=r.invoice_id
+            JOIN events e ON e.id=i.id
+            WHERE i.kind='repair' AND i.status='posted'
+            ORDER BY e.date,r.id""").mapNotNull { row ->
+            val outstanding=due(row.getValue("invoice_id"))
+            if(outstanding<=0L)null else row+mapOf("outstanding" to outstanding.toString())
+        }
     fun repairOutstandingMonth(month:String):List<Map<String,String>> =
         repairProfitMonth(month).filter{it.getValue("outstanding").toLong()>0L}
             .sortedWith(compareBy<Map<String,String>>{it.getValue("currency")}
