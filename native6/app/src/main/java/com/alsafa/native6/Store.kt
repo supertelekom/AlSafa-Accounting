@@ -1359,6 +1359,7 @@ class Store(val helper:StoreDb) {
                     }.toString())
             }.sortedWith(compareBy<Map<String,String>>{it.getValue("customer")}
                 .thenBy{it.getValue("currency")})
+    fun repairDebtStatusCurrencies():Set<String> = repairDebtStatusTotals().map{it.getValue("currency")}.toSet()
     fun repairDebtStatusTotals():List<Map<String,String>> =
         repairDebtCollectionProgress().groupBy{row->
             (if(row.getValue("collected").toLong()>0L)"partial" else "unpaid") to
