@@ -176,6 +176,10 @@ class Backup(private val context:Context,private val store:Store) {
             JOIN invoices i ON i.id=f.invoice_id
             WHERE i.kind NOT IN ('sale','repair')
         """).isEmpty()){"رد أموال مرتبط بفاتورة ليست مبيعاً أو صيانة"}
+        require(target.rows("""SELECT r.invoice_id FROM receipts r
+            JOIN invoices i ON i.id=r.invoice_id
+            WHERE i.kind NOT IN ('sale','repair')
+        """).isEmpty()){"قبض عميل مرتبط بفاتورة شراء"}
         // Receipt chronology must follow invoice issuance, including backdated entries.
         require(target.rows("""SELECT r.event_id FROM receipts r
             JOIN events payment ON payment.id=r.event_id
