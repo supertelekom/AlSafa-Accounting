@@ -1257,6 +1257,17 @@ class Store(val helper:StoreDb) {
     /** Cash receipts for repair invoices, attributed exclusively to the payment day. */
     /** Month-specific repair debt: invoice date defines the cohort, cash is up to now. */
     /** Outstanding repair balances across all delivery months, without mixing currencies. */
+    fun repairOldDebtCollectedMonth(month:String):List<Map<String,String>> {
+        val first=java.time.YearMonth.parse(month).atDay(1).toString()
+        val next=java.time.YearMonth.parse(month).plusMonths(1).atDay(1).toString()
+        return rows("""SELECT i.currency,r.vault,sum(r.amount) amount,count(*) receipt_count
+            FROM receipts r JOIN invoices i ON i.id=r.invoice_id
+            JOIN events payment ON payment.id=r.event_id
+            JOIN events issued ON issued.id=i.id
+            WHERE i.kind='repair' AND payment.date>=? AND payment.date<?
+                AND issued.date<?
+            GROUP BY i.currency,r.vault""",first,next,first)
+    }
     fun repairOutstandingAll():List<Map<String,String>> =
         rows("""SELECT r.id repair_id,r.customer,r.phone,i.number invoice_number,
             i.currency,i.total,i.id invoice_id,e.date delivery_date
