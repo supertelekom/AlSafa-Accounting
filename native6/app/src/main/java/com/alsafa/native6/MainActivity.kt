@@ -685,7 +685,7 @@ Store.vaults.forEach{v->text(v+" · إقفالات تحتاج عدّاً: "+stor
             form("مطابقة الإيرادات","عرض"){box->
                 val month=field("الشهر YYYY-MM",box,YearMonth.now().toString())
                 ({
-                    val lines=store.repairMonthRevenueVariance(month.text.toString().trim())
+                    val lines=store.repairMonthRevenueVariance(month.text.toString().trim());val issues=store.repairMonthRevenueIssues(month.text.toString().trim())
                     val report=if(lines.isEmpty())"لا توجد فواتير صيانة مرحلة في الشهر."
                     else lines.joinToString("\n"){row->
                         val c=Currency.valueOf(row.getValue("currency"))
