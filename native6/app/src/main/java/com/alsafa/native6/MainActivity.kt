@@ -695,7 +695,7 @@ Store.vaults.forEach{v->text(v+" · إقفالات تحتاج عدّاً: "+stor
                     else entries.joinToString("\n"){row->
                         val c=Currency.valueOf(row.getValue("currency"))
                         row.getValue("customer")+" · أجرة "+money(row.getValue("total").toLong(),c)+
-                            " · تكلفة "+money(row.getValue("cost").toLong(),c)+
+                            " · تكلفة "+money(row.getValue("parts_cost").toLong(),c)+
                             " · هامش "+money(row.getValue("margin").toLong(),c)
                     }
                     AlertDialog.Builder(this).setTitle("ربح الصيانة")
