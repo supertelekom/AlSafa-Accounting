@@ -515,11 +515,14 @@ class Store(val helper:StoreDb) {
     fun addSupplier(name:String,phone:String):String=transaction { require(name.isNotBlank());val id=id();insert("suppliers","id" to id,"name" to name,"phone" to phone);id }
     fun supplierLedgerBreakdown(supplier:String,c:Currency):List<Map<String,String>> = rows("SELECT e.date,e.kind,e.id event_id,coalesce(sum(j.amount),0) amount FROM journal j JOIN events e ON e.id=j.event_id WHERE j.account=? AND j.currency=? GROUP BY e.id,e.date,e.kind ORDER BY e.date,e.created,e.id","payable:$supplier",c.name)
     fun supplierLedgerWithBalances(supplier:String,c:Currency):List<Map<String,String>> {
+        require(scalar("SELECT count(*) FROM suppliers WHERE id=?",supplier)==1L){"المورد غير موجود"}
         var running=0L
-        return supplierLedgerBreakdown(supplier,c).map { entry ->
-            running=add(running,Math.negateExact(entry.getValue("amount").toLong()))
+        val entries=supplierLedgerBreakdown(supplier,c).map { entry ->
+            running=Math.subtractExact(running,entry.getValue("amount").toLong())
             entry+("remaining" to running.toString())
         }
+        check(running==supplierDue(supplier,c)){"كشف المورد الكامل لا يطابق رصيد الدين"}
+        return entries
     }
     fun supplierLedgerConsistent(supplier:String,c:Currency):Boolean {
         val entries=supplierLedgerWithBalances(supplier,c)
