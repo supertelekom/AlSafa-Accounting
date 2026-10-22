@@ -1253,6 +1253,19 @@ class Store(val helper:StoreDb) {
                 "outstanding" to profit.getValue("outstanding"))
         }
     }
+    /** Detect disagreement between frozen invoice cost and its installed parts history. */
+    fun repairInvoiceCostIssues():List<Map<String,String>> =
+        rows("""SELECT r.id reference,i.id invoice_id,i.cost recorded_cost,
+            coalesce((SELECT -sum(s.value_delta) FROM stock_moves s
+                JOIN events e ON e.id=s.event_id
+                WHERE e.kind='REPAIR_PART' AND e.memo='REPAIR_PART:'||r.id),0) parts_cost
+            FROM repairs r JOIN invoices i ON i.id=r.invoice_id
+            WHERE i.kind='repair'""").filter { row ->
+            row.getValue("recorded_cost").toLong()!=row.getValue("parts_cost").toLong()
+        }.map { row ->
+            row+mapOf("category" to "REPAIR_INVOICE_COST_MISMATCH",
+                "detail" to "تكلفة قطع الصيانة لا تطابق التكلفة المثبتة في الفاتورة")
+        }
     fun repairProfit(repairId:String):Map<String,String>? {
         val invoice=repairInvoice(repairId)?:return null
         val c=Currency.valueOf(invoice.getValue("currency"))
