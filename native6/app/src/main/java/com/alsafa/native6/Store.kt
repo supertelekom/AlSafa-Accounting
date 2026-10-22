@@ -455,6 +455,18 @@ class Store(val helper:StoreDb) {
     }
     /** Cash receipt register uses the date money was physically received, not invoice date. */
     /** Verify the receipts subledger against the cash journal, without modifying either. */
+    /** A receipt must credit the same invoice receivable as it debits the selected cash vault. */
+    fun customerReceivableJournalIssues():List<Map<String,String>> =
+        rows("""SELECT r.event_id reference,r.invoice_id,i.currency,r.amount,
+            coalesce((SELECT sum(j.amount) FROM journal j
+                WHERE j.event_id=r.event_id AND j.account='receivable:'||r.invoice_id
+                AND j.currency=i.currency),0) receivable_posted
+            FROM receipts r JOIN invoices i ON i.id=r.invoice_id""").filter { row ->
+            row.getValue("receivable_posted").toLong()!=Math.negateExact(row.getValue("amount").toLong())
+        }.map { row ->
+            row+mapOf("category" to "RECEIPT_RECEIVABLE_MISMATCH",
+                "detail" to "التحصيل لا يطابق قيد ذمم الفاتورة")
+        }
     fun customerReceiptJournalIssues():List<Map<String,String>> {
         val result=mutableListOf<Map<String,String>>()
         rows("""SELECT r.event_id reference,e.date,r.vault,i.currency,r.amount,
