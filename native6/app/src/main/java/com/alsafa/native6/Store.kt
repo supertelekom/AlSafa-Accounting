@@ -702,7 +702,7 @@ class Store(val helper:StoreDb) {
             JOIN events e ON e.id=j.event_id
             WHERE j.account=? AND j.currency=? AND e.date<=?""",
             "payable:$supplier",c.name,day))
-        require(due>=0L){"دين المورد في التاريخ المحدد سالب"}
+        require(due>=0L){"دين المورد في التاريخ المحدد سالب؛ تحقق من تواريخ الدفعات"}
         return due
     }
     fun supplierDue(supplier:String,c:Currency):Long {
