@@ -587,7 +587,7 @@ Store.vaults.forEach{v->text(v+" · إقفالات تحتاج عدّاً: "+stor
                 val detail=if(issues.isEmpty()) "لا توجد أيام يظهر فيها دين مورد سالب."
                 else issues.take(100).joinToString("\n"){row->
                     val currency=Currency.valueOf(row.getValue("currency"))
-                    row.getValue("date")+" · المورد "+row.getValue("supplier_id")+
+                    row.getValue("date")+" · "+row.getValue("supplier_name")+
                         " · "+money(row.getValue("remaining_debt").toLong(),currency)
                 } + if(issues.size>100) "\n... توجد "+(issues.size-100)+" نتيجة إضافية" else ""
                 AlertDialog.Builder(this).setTitle("تدقيق ديون الموردين")
