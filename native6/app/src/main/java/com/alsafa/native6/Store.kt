@@ -608,43 +608,34 @@ class Store(val helper:StoreDb) {
             FROM receipts r JOIN events e ON e.id=r.event_id
             WHERE r.invoice_id=? ORDER BY e.date,e.created,e.id""",invoiceId)
     }
-    /** Date-based receivable balance, without mixing future receipts or returns. */
+    /** Posted receivable account is authoritative: excess returns create refund liabilities, not negative customer debts. */
     fun invoiceDueOn(invoiceId:String,date:String):Long {
         val inv=invoice(invoiceId)
         require(inv.kind=="sale" || inv.kind=="repair"){"الذمة تخص فواتير البيع والصيانة"}
         val day=LocalDate.parse(date).toString()
         val invoiceDay=rows("SELECT date FROM events WHERE id=?",invoiceId).single().getValue("date")
         require(day>=invoiceDay){"التاريخ يسبق الفاتورة"}
-        val receipts=scalar("""SELECT coalesce(sum(r.amount),0) FROM receipts r
-            JOIN events e ON e.id=r.event_id
-            WHERE r.invoice_id=? AND e.date<=?""",invoiceId,day)
-        val returns=scalar("""SELECT coalesce(sum(r.credit),0) FROM returns r
-            JOIN events e ON e.id=r.event_id
-            WHERE r.invoice_id=? AND e.date<=?""",invoiceId,day)
-        val refunds=scalar("""SELECT coalesce(sum(r.amount),0) FROM refunds r
-            JOIN events e ON e.id=r.event_id
-            WHERE r.invoice_id=? AND e.date<=?""",invoiceId,day)
-        require(returns in 0L..inv.total && receipts>=0L && refunds>=0L){"حركات الذمة غير متسقة"}
-        return Math.subtractExact(Math.subtractExact(inv.total,returns),receipts).coerceAtLeast(0L)
+        return scalar("""SELECT coalesce(sum(j.amount),0) FROM journal j
+            JOIN events e ON e.id=j.event_id
+            WHERE j.account=? AND j.currency=? AND e.date<=?""",
+            "receivable:$invoiceId",inv.currency.name,day)
     }
-    /** Do not let a backdated receipt over-collect at any later dated state. */
+    /** Minimum historical receivable across this date and all later dates. */
     fun invoiceCollectibleOn(invoiceId:String,date:String):Long {
+        val inv=invoice(invoiceId)
         val day=LocalDate.parse(date).toString()
         var running=invoiceDueOn(invoiceId,day)
         var minimum=running
-        val later=rows("""SELECT movement_date date,coalesce(sum(delta),0) delta FROM (
-                SELECT e.date movement_date,-r.amount delta FROM receipts r
-                JOIN events e ON e.id=r.event_id WHERE r.invoice_id=? AND e.date>?
-                UNION ALL
-                SELECT e.date movement_date,-r.credit delta FROM returns r
-                JOIN events e ON e.id=r.event_id WHERE r.invoice_id=? AND e.date>?
-            ) GROUP BY movement_date ORDER BY movement_date""",
-            invoiceId,day,invoiceId,day)
-        later.forEach { row ->
+        rows("""SELECT e.date,coalesce(sum(j.amount),0) delta FROM journal j
+            JOIN events e ON e.id=j.event_id
+            WHERE j.account=? AND j.currency=? AND e.date>?
+            GROUP BY e.date ORDER BY e.date""",
+            "receivable:$invoiceId",inv.currency.name,day).forEach { row ->
             running=Math.addExact(running,row.getValue("delta").toLong())
             minimum=minOf(minimum,running)
         }
-        return minimum.coerceAtLeast(0L)
+        require(minimum>=0L){"توجد ذمة سالبة في يوم لاحق؛ راجع تسلسل القبض والمرتجعات"}
+        return minimum
     }
     fun paid(id:String)=scalar("SELECT coalesce(sum(amount),0) FROM receipts WHERE invoice_id=?",id)
     fun credit(id:String)=scalar("SELECT coalesce(sum(credit),0) FROM returns WHERE invoice_id=?",id)
