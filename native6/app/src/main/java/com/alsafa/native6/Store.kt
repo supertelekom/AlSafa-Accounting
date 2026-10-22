@@ -456,6 +456,14 @@ class Store(val helper:StoreDb) {
     /** Cash receipt register uses the date money was physically received, not invoice date. */
     /** Verify the receipts subledger against the cash journal, without modifying either. */
     /** A receipt must credit the same invoice receivable as it debits the selected cash vault. */
+    fun customerReceiptDateIssues():List<Map<String,String>> =
+        rows("""SELECT r.event_id reference,e.date receipt_date,original.date invoice_date
+            FROM receipts r JOIN events e ON e.id=r.event_id
+            JOIN events original ON original.id=r.invoice_id
+            WHERE e.date<original.date OR e.date>date('now','localtime')""").map { row ->
+            row+mapOf("category" to "RECEIPT_DATE_INCONSISTENT",
+                "detail" to "تاريخ القبض يسبق الفاتورة أو يقع في المستقبل")
+        }
     fun customerReceivableJournalIssues():List<Map<String,String>> =
         rows("""SELECT r.event_id reference,r.invoice_id,i.currency,r.amount,
             coalesce((SELECT sum(j.amount) FROM journal j
