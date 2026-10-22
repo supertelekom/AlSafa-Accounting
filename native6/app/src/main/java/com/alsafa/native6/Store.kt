@@ -1286,6 +1286,17 @@ class Store(val helper:StoreDb) {
         repairProfitMonth(month).filter{it.getValue("outstanding").toLong()>0L}
             .sortedWith(compareBy<Map<String,String>>{it.getValue("currency")}
                 .thenByDescending{it.getValue("outstanding").toLong()})
+    fun repairCashReceivedMonthDetails(month:String):List<Map<String,String>> {
+        val start=java.time.YearMonth.parse(month).atDay(1).toString()
+        val end=java.time.YearMonth.parse(month).plusMonths(1).atDay(1).toString()
+        return rows("""SELECT payment.date receipt_date,issued.date delivery_date,
+            i.number invoice_number,i.party customer,i.currency,r.vault,r.amount
+            FROM receipts r JOIN invoices i ON i.id=r.invoice_id
+            JOIN events payment ON payment.id=r.event_id
+            JOIN events issued ON issued.id=i.id
+            WHERE i.kind='repair' AND payment.date>=? AND payment.date<?
+            ORDER BY payment.date,payment.created""",start,end)
+    }
     fun repairCashReceivedDay(date:String):List<Map<String,String>> {
         val day=LocalDate.parse(date).toString()
         return rows("""SELECT e.date receipt_date,i.number invoice_number,i.party customer,
