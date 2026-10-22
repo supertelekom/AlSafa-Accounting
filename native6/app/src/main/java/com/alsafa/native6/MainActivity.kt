@@ -352,6 +352,7 @@ class MainActivity:Activity() {
     }
     private fun invoiceDetail(inv:Invoice){val box=column();text("الإجمالي ${money(inv.total,inv.currency)}",box);if(inv.kind!="purchase"){text("المتبقي ${money(store.due(inv.id),inv.currency)}",box);text("مستحق الرد ${money(store.refundable(inv.id),inv.currency)}",box)}
         val sc=ScrollView(this);sc.addView(box);val dialog=AlertDialog.Builder(this).setTitle("فاتورة #${inv.number}").setView(sc).setNegativeButton("رجوع",null).create()
+        button("سجل قبض النقود وتواريخه",box){val receipts=store.invoiceReceiptHistory(inv.id);AlertDialog.Builder(this).setTitle("القبض الفعلي · فاتورة #${inv.number}").setMessage(if(receipts.isEmpty())"لم يتم تحصيل أي مبلغ حتى الآن." else receipts.joinToString("\n"){row->row.getValue("actual_date")+" · "+money(row.getValue("amount").toLong(),inv.currency)+" · "+row.getValue("vault")}).setPositiveButton("حسناً",null).show()}
         button("حفظ فاتورة PDF",box){pdfInvoice=inv.id;startActivityForResult(Intent(Intent.ACTION_CREATE_DOCUMENT).apply{addCategory(Intent.CATEGORY_OPENABLE);type="application/pdf";putExtra(Intent.EXTRA_TITLE,"AlSafa-${inv.number}.pdf")},104)}
         if(inv.kind!="purchase"&&store.due(inv.id)>0)button("قبض دفعة",box){dialog.dismiss();paymentForm("قبض دين",inv.currency,store.due(inv.id)){n,v,date->store.collect(inv.id,n,v,date)}}
         if(inv.kind=="sale"&&inv.status=="posted"){
