@@ -159,6 +159,14 @@ class Backup(private val context:Context,private val store:Store) {
         require(target.rows("""SELECT r.event_id FROM auto_closing_reviews r
             GROUP BY r.event_id HAVING count(*)<>1
         """).isEmpty()){"حدث مراجعة مكرر لأكثر من إقفال"}
+        // Receipts must never exceed the invoice after credited returns.
+        require(target.rows("""SELECT i.id FROM invoices i
+            WHERE i.kind IN ('sale','repair') AND
+                coalesce((SELECT sum(r.amount) FROM receipts r
+                    WHERE r.invoice_id=i.id),0)+
+                coalesce((SELECT sum(t.credit) FROM returns t
+                    WHERE t.invoice_id=i.id),0)>i.total
+        """).isEmpty()){"مجموع المقبوضات والمرتجعات يتجاوز قيمة فاتورة"}
         // Receipt chronology must follow invoice issuance, including backdated entries.
         require(target.rows("""SELECT r.event_id FROM receipts r
             JOIN events payment ON payment.id=r.event_id
