@@ -1326,6 +1326,10 @@ class Store(val helper:StoreDb) {
     fun repairProfitMonthCostVariance(month:String):List<Map<String,String>> = repairProfitMonth(month).filter{it.getValue("cost")!=it.getValue("parts_cost")}
     /** Group unpaid repair balances by invoice currency and delivery month. */
     /** Debt age is measured from the actual repair delivery date. */
+    fun repairOverdueDays(minDays:Long,asOf:String=today()):List<Map<String,String>> {
+        require(minDays>=0L){"عدد الأيام غير صالح"}
+        return repairDebtAgeDays(asOf).filter{it.getValue("age_days").toLong()>=minDays}
+    }
     fun repairDebtAgeDays(asOf:String=today()):List<Map<String,String>> {
         val date=LocalDate.parse(asOf)
         return repairOutstandingAll().map{row->
