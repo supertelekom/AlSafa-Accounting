@@ -681,6 +681,18 @@ Store.vaults.forEach{v->text(v+" · إقفالات تحتاج عدّاً: "+stor
                     .setMessage(details).setPositiveButton("حسناً",null).show()
             }catch(e:Exception){error(e)}
         }
+        button("أرصدة ديون الصيانة حسب حالة السداد"){
+            val lines=store.repairDebtStatusTotals()
+            val report=if(lines.isEmpty())"لا توجد ديون صيانة مفتوحة."
+            else lines.joinToString("\n"){row->
+                val c=Currency.valueOf(row.getValue("currency"))
+                (if(row.getValue("status")=="partial")"مدفوع جزئياً" else "غير مدفوع")+
+                    " · "+row.getValue("invoice_count")+" فواتير · "+
+                    money(row.getValue("outstanding").toLong(),c)
+            }
+            AlertDialog.Builder(this).setTitle("أرصدة الذمم حسب حالة السداد")
+                .setMessage(report).setPositiveButton("حسناً",null).show()
+        }
         button("ملخص حالة سداد ديون الصيانة"){
             val partial=store.repairDebtPartiallyPaid().size
             val unpaid=store.repairDebtNeverPaid().size
