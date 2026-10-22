@@ -1257,6 +1257,7 @@ class Store(val helper:StoreDb) {
     /** Cash receipts for repair invoices, attributed exclusively to the payment day. */
     /** Month-specific repair debt: invoice date defines the cohort, cash is up to now. */
     /** Outstanding repair balances across all delivery months, without mixing currencies. */
+    fun repairCurrentMonthCollectedTotal(month:String,currency:Currency):Long = Math.subtractExact(repairCashReceivedTotal(month,currency),repairOldDebtCollectedTotal(month,currency))
     fun repairOldDebtCollectedTotal(month:String,currency:Currency):Long = repairOldDebtCollectedMonth(month).filter{it.getValue("currency")==currency.name}.fold(0L){sum,row->Math.addExact(sum,row.getValue("amount").toLong())}
     fun repairOldDebtCollectedMonth(month:String):List<Map<String,String>> {
         val first=java.time.YearMonth.parse(month).atDay(1).toString()
