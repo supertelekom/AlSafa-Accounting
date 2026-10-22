@@ -1551,7 +1551,7 @@ class Store(val helper:StoreDb) {
             FROM invoices i WHERE i.kind='repair' AND i.status='posted'""")
             .filter{row->
                 Math.addExact(row.getValue("received").toLong(),
-                    row.getValue("credited").toLong())>row.getValue("total").toLong()
+                    Math.subtractExact(row.getValue("credited").toLong(),row.getValue("refunded").toLong()))>row.getValue("total").toLong()
             }
     fun repairDebtBalanceIssues():List<Map<String,String>> =
         repairOutstandingAll().mapNotNull{row->
