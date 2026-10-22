@@ -625,7 +625,7 @@ class Store(val helper:StoreDb) {
             JOIN events e ON e.id=r.event_id
             WHERE r.invoice_id=? AND e.date<=?""",invoiceId,day)
         require(returns in 0L..inv.total && receipts>=0L && refunds>=0L){"حركات الذمة غير متسقة"}
-        return Math.addExact(Math.subtractExact(Math.subtractExact(inv.total,returns),receipts),refunds)
+        return Math.subtractExact(Math.subtractExact(inv.total,returns),receipts).coerceAtLeast(0L)
     }
     /** Do not let a backdated receipt over-collect at any later dated state. */
     fun invoiceCollectibleOn(invoiceId:String,date:String):Long {
@@ -638,11 +638,8 @@ class Store(val helper:StoreDb) {
                 UNION ALL
                 SELECT e.date movement_date,-r.credit delta FROM returns r
                 JOIN events e ON e.id=r.event_id WHERE r.invoice_id=? AND e.date>?
-                UNION ALL
-                SELECT e.date movement_date,r.amount delta FROM refunds r
-                JOIN events e ON e.id=r.event_id WHERE r.invoice_id=? AND e.date>?
             ) GROUP BY movement_date ORDER BY movement_date""",
-            invoiceId,day,invoiceId,day,invoiceId,day)
+            invoiceId,day,invoiceId,day)
         later.forEach { row ->
             running=Math.addExact(running,row.getValue("delta").toLong())
             minimum=minOf(minimum,running)
@@ -651,7 +648,7 @@ class Store(val helper:StoreDb) {
     }
     fun paid(id:String)=scalar("SELECT coalesce(sum(amount),0) FROM receipts WHERE invoice_id=?",id)
     fun credit(id:String)=scalar("SELECT coalesce(sum(credit),0) FROM returns WHERE invoice_id=?",id)
-    fun due(id:String):Long {val inv=invoice(id);if(inv.kind=="purchase")return 0L;val returned=credit(id);val received=paid(id);require(returned in 0..inv.total && received>=0L){"رصيد الفاتورة غير متسق"};return Math.addExact(Math.subtractExact(Math.subtractExact(inv.total,returned),received),scalar("SELECT coalesce(sum(amount),0) FROM refunds WHERE invoice_id=?",id)).coerceAtLeast(0L)}
+    fun due(id:String):Long {val inv=invoice(id);if(inv.kind=="purchase")return 0L;val returned=credit(id);val received=paid(id);require(returned in 0..inv.total && received>=0L){"رصيد الفاتورة غير متسق"};return Math.subtractExact(Math.subtractExact(inv.total,returned),received).coerceAtLeast(0L)}
     fun refundable(id:String):Long {
         val inv=invoice(id)
         if(inv.kind!="sale" && inv.kind!="repair") return 0L
