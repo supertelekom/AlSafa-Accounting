@@ -1248,7 +1248,7 @@ class Store(val helper:StoreDb) {
         return repairs.map { row ->
             val profit=repairProfit(row.getValue("repair_id"))
                 ?:error("فاتورة الصيانة مفقودة")
-            row+mapOf("margin" to profit.getValue("margin"),
+            row+mapOf("parts_cost" to profit.getValue("parts_cost"),"margin" to profit.getValue("margin"),
                 "collected" to profit.getValue("collected"),
                 "outstanding" to profit.getValue("outstanding"))
         }
