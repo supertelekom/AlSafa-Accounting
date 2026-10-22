@@ -475,6 +475,7 @@ class Store(val helper:StoreDb) {
         require(lines.isNotEmpty() && quantities.keys.all { k->lines.any { it.getValue("line").toInt()==k } }){"أصناف المرتجع غير موجودة في الفاتورة"}
         require(quantities.values.all { it>0L }){"كل كمية مرتجعة يجب أن تكون موجبة"}
         require(!LocalDate.parse(date).isAfter(LocalDate.now())){"لا يمكن تسجيل مرتجع بتاريخ مستقبلي"}
+        require(date>=rows("SELECT date FROM events WHERE id=?",invoiceId).single().getValue("date")){"تاريخ المرتجع يسبق تاريخ فاتورة البيع"}
         event(command,"SALE_RETURN",date,reason)
         var totalCredit=0L;var costCredit=0L
         for(line in lines) {
