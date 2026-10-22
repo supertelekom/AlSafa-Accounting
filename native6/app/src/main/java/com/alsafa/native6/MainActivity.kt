@@ -681,6 +681,16 @@ Store.vaults.forEach{v->text(v+" · إقفالات تحتاج عدّاً: "+stor
                     .setMessage(details).setPositiveButton("حسناً",null).show()
             }catch(e:Exception){error(e)}
         }
+        button("تدقيق قبض فواتير الصيانة"){
+            val over=store.repairOverpaymentIssues()
+            val dates=store.repairReceiptDateIssues()
+            val amounts=store.repairReceiptAmountIssues()
+            val message="تجاوز قيمة الفاتورة: ${over.size}\n"+
+                "قبض قبل التسليم: ${dates.size}\n"+
+                "مبالغ قبض غير صالحة: ${amounts.size}"
+            AlertDialog.Builder(this).setTitle("تدقيق المقبوضات")
+                .setMessage(message).setPositiveButton("حسناً",null).show()
+        }
         button("أرصدة ديون الصيانة حسب حالة السداد"){
             val lines=store.repairDebtStatusTotals()
             val report=if(lines.isEmpty())"لا توجد ديون صيانة مفتوحة."
