@@ -1365,6 +1365,12 @@ class Store(val helper:StoreDb) {
     /** Find receipts with a date earlier than the repair delivery invoice. */
     /** Identify negative or zero repair receipt amounts from damaged or imported data. */
     /** Receipts should have a matching cash debit and receivable credit. */
+    /** Payments are immutable; identify receipt rows lacking their event record. */
+    fun repairOrphanReceiptIssues():List<Map<String,String>> =
+        rows("""SELECT r.event_id reference,r.invoice_id,r.amount,r.vault
+            FROM receipts r JOIN invoices i ON i.id=r.invoice_id
+            LEFT JOIN events e ON e.id=r.event_id
+            WHERE i.kind='repair' AND e.id IS NULL""")
     fun repairReceiptAuditClean():Boolean = repairReceiptAuditCount()==0
     fun repairReceiptAuditCount():Int = repairOverpaymentIssues().size+repairReceiptDateIssues().size+repairReceiptAmountIssues().size+repairReceiptJournalIssues().size
     fun repairReceiptJournalIssues():List<Map<String,String>> =
