@@ -172,6 +172,10 @@ class Backup(private val context:Context,private val store:Store) {
             JOIN events invoice_event ON invoice_event.id=f.invoice_id
             WHERE refund_event.date<invoice_event.date OR refund_event.kind<>'REFUND'
         """).isEmpty()){"رد أموال بتاريخ يسبق الفاتورة أو حدث غير صالح"}
+        require(target.rows("""SELECT f.invoice_id FROM refunds f
+            JOIN invoices i ON i.id=f.invoice_id
+            WHERE i.kind NOT IN ('sale','repair')
+        """).isEmpty()){"رد أموال مرتبط بفاتورة ليست مبيعاً أو صيانة"}
         // Receipt chronology must follow invoice issuance, including backdated entries.
         require(target.rows("""SELECT r.event_id FROM receipts r
             JOIN events payment ON payment.id=r.event_id
