@@ -543,6 +543,8 @@ class Store(val helper:StoreDb) {
             running=Math.subtractExact(running,entry.getValue("amount").toLong())
             entry+("remaining" to running.toString())
         }
+        check(running==supplierMonthClosing(supplier,c,month)){"كشف المورد الشهري لا يطابق رصيد نهاية الشهر"}
+        return entries
     }
     fun supplierMonthOpening(supplier:String,c:Currency,month:String):Long {
         require(scalar("SELECT count(*) FROM suppliers WHERE id=?",supplier)==1L){"المورد غير موجود"}
