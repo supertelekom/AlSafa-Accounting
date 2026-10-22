@@ -608,6 +608,48 @@ class Store(val helper:StoreDb) {
             FROM receipts r JOIN events e ON e.id=r.event_id
             WHERE r.invoice_id=? ORDER BY e.date,e.created,e.id""",invoiceId)
     }
+    /** Date-based receivable balance, without mixing future receipts or returns. */
+    fun invoiceDueOn(invoiceId:String,date:String):Long {
+        val inv=invoice(invoiceId)
+        require(inv.kind=="sale" || inv.kind=="repair"){"الذمة تخص فواتير البيع والصيانة"}
+        val day=LocalDate.parse(date).toString()
+        val invoiceDay=rows("SELECT date FROM events WHERE id=?",invoiceId).single().getValue("date")
+        require(day>=invoiceDay){"التاريخ يسبق الفاتورة"}
+        val receipts=scalar("""SELECT coalesce(sum(r.amount),0) FROM receipts r
+            JOIN events e ON e.id=r.event_id
+            WHERE r.invoice_id=? AND e.date<=?""",invoiceId,day)
+        val returns=scalar("""SELECT coalesce(sum(r.credit),0) FROM returns r
+            JOIN events e ON e.id=r.event_id
+            WHERE r.invoice_id=? AND e.date<=?""",invoiceId,day)
+        val refunds=scalar("""SELECT coalesce(sum(r.amount),0) FROM refunds r
+            JOIN events e ON e.id=r.event_id
+            WHERE r.invoice_id=? AND e.date<=?""",invoiceId,day)
+        require(returns in 0L..inv.total && receipts>=0L && refunds>=0L){"حركات الذمة غير متسقة"}
+        return Math.addExact(Math.subtractExact(Math.subtractExact(inv.total,returns),receipts),refunds)
+    }
+    /** Do not let a backdated receipt over-collect at any later dated state. */
+    fun invoiceCollectibleOn(invoiceId:String,date:String):Long {
+        val day=LocalDate.parse(date).toString()
+        var running=invoiceDueOn(invoiceId,day)
+        var minimum=running
+        val later=rows("""SELECT e.date,
+            coalesce(sum(CASE WHEN r.event_id IS NOT NULL THEN -r.amount ELSE 0 END),0) receipts,
+            coalesce(sum(CASE WHEN t.event_id IS NOT NULL THEN -t.credit ELSE 0 END),0) returns_credit,
+            coalesce(sum(CASE WHEN f.event_id IS NOT NULL THEN f.amount ELSE 0 END),0) refunds
+            FROM events e
+            LEFT JOIN receipts r ON r.event_id=e.id AND r.invoice_id=?
+            LEFT JOIN returns t ON t.event_id=e.id AND t.invoice_id=?
+            LEFT JOIN refunds f ON f.event_id=e.id AND f.invoice_id=?
+            WHERE e.date>? AND (r.event_id IS NOT NULL OR t.event_id IS NOT NULL OR f.event_id IS NOT NULL)
+            GROUP BY e.date ORDER BY e.date""",invoiceId,invoiceId,invoiceId,day)
+        later.forEach { row ->
+            running=Math.addExact(running,row.getValue("receipts").toLong())
+            running=Math.addExact(running,row.getValue("returns_credit").toLong())
+            running=Math.addExact(running,row.getValue("refunds").toLong())
+            minimum=minOf(minimum,running)
+        }
+        return minimum.coerceAtLeast(0L)
+    }
     fun paid(id:String)=scalar("SELECT coalesce(sum(amount),0) FROM receipts WHERE invoice_id=?",id)
     fun credit(id:String)=scalar("SELECT coalesce(sum(credit),0) FROM returns WHERE invoice_id=?",id)
     fun due(id:String):Long {val inv=invoice(id);if(inv.kind=="purchase")return 0L;val returned=credit(id);val received=paid(id);require(returned in 0..inv.total && received>=0L){"رصيد الفاتورة غير متسق"};return Math.addExact(Math.subtractExact(Math.subtractExact(inv.total,returned),received),scalar("SELECT coalesce(sum(amount),0) FROM refunds WHERE invoice_id=?",id)).coerceAtLeast(0L)}
