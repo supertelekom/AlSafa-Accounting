@@ -1558,7 +1558,7 @@ class Store(val helper:StoreDb) {
             val invoiceId=row.getValue("invoice_id")
             val expected=Math.subtractExact(
                 Math.subtractExact(row.getValue("total").toLong(),credit(invoiceId)),
-                paid(invoiceId))
+                Math.subtractExact(paid(invoiceId),scalar("SELECT coalesce(sum(amount),0) FROM refunds WHERE invoice_id=?",invoiceId)))
             val actual=row.getValue("outstanding").toLong()
             if(expected==actual)null else row+mapOf("expected" to expected.toString())
         }
