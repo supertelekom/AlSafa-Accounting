@@ -730,6 +730,7 @@ class Store(val helper:StoreDb) {
     }
     fun supplierOpening(supplier:String,c:Currency,amount:Long,date:String=today(),command:String=id())=transaction {
         require(amount>0&&scalar("SELECT count(*) FROM suppliers WHERE id=?",supplier)==1L)
+        require(!LocalDate.parse(date).isAfter(LocalDate.now())){"لا يمكن تسجيل دين افتتاحي بتاريخ مستقبلي"}
         require(scalar("SELECT count(*) FROM journal j JOIN events e ON e.id=j.event_id WHERE e.kind='SUPPLIER_OPENING' AND j.account=? AND j.currency=?","payable:$supplier",c.name)==0L){"الرصيد الافتتاحي مسجل سابقاً"}
         event(command,"SUPPLIER_OPENING",date,"دين سابق للمورد $supplier")
         post(command,listOf(Posting("equity:opening",c,amount),Posting("payable:$supplier",c,-amount)))
