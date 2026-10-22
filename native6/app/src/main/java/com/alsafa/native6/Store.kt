@@ -653,6 +653,12 @@ class Store(val helper:StoreDb) {
                 -coalesce((SELECT sum(r.credit) FROM returns r WHERE r.invoice_id=i.id),0)
                 -coalesce((SELECT sum(p.amount) FROM receipts p WHERE p.invoice_id=i.id),0))
             ORDER BY i.number""")
+    fun refundLiability(invoiceId:String):Long {
+        val inv=invoice(invoiceId)
+        require(inv.kind=="sale" || inv.kind=="repair")
+        return Math.negateExact(scalar("SELECT coalesce(sum(amount),0) FROM journal WHERE account=? AND currency=?",
+            "refund:$invoiceId",inv.currency.name))
+    }
     fun paid(id:String)=scalar("SELECT coalesce(sum(amount),0) FROM receipts WHERE invoice_id=?",id)
     fun credit(id:String)=scalar("SELECT coalesce(sum(credit),0) FROM returns WHERE invoice_id=?",id)
     fun due(id:String):Long {val inv=invoice(id);if(inv.kind=="purchase")return 0L;val returned=credit(id);val received=paid(id);require(returned in 0..inv.total && received>=0L){"رصيد الفاتورة غير متسق"};return Math.subtractExact(Math.subtractExact(inv.total,returned),received).coerceAtLeast(0L)}
