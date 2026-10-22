@@ -1391,6 +1391,15 @@ class Store(val helper:StoreDb) {
             WHERE i.kind='repair' AND e.id IS NULL""")
     fun repairReceiptAuditClean():Boolean = repairReceiptAuditCount()==0
     /** Detect cancelled repair invoices retained in the invoice register. */
+    fun repairInvoiceStatusMonth(month:String):List<Map<String,String>> {
+        val period=java.time.YearMonth.parse(month)
+        return rows("""SELECT i.status,i.currency,count(*) invoice_count,
+            coalesce(sum(i.total),0) invoice_total
+            FROM invoices i JOIN events e ON e.id=i.id
+            WHERE i.kind='repair' AND e.date>=? AND e.date<?
+            GROUP BY i.status,i.currency ORDER BY i.status,i.currency""",
+            period.atDay(1).toString(),period.plusMonths(1).atDay(1).toString())
+    }
     fun repairCancelledInvoices():List<Map<String,String>> =
         rows("""SELECT i.id invoice_id,i.number invoice_number,i.party customer,
             i.currency,i.total,i.status,e.date delivery_date
