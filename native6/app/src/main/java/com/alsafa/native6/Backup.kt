@@ -30,7 +30,7 @@ class Backup(private val context:Context,private val store:Store) {
                 while(true) {
                     val n=input.read(buffer)
                     if(n<0) break
-                    require(out.size().toLong()+n<=MAX_EXPANDED_BYTES){"النسخة المضغوطة تتجاوز الحجم الآمن بعد فك الضغط"}
+                    require(out.size().toLong()+n.toLong()<=MAX_EXPANDED_BYTES.toLong()){"النسخة المضغوطة تتجاوز الحجم الآمن بعد فك الضغط"}
                     out.write(buffer,0,n)
                 }
                 return out.toString("UTF-8")
