@@ -580,7 +580,24 @@ Store.vaults.forEach{v->text(v+" · إقفالات تحتاج عدّاً: "+stor
         button("سجل إقفالات خزنة"){form("سجل الإقفال","عرض"){box->val v=select("الخزنة",vaultNames,box);val month=field("الشهر YYYY-MM",box,YearMonth.now().toString());({val vault=Store.vaults[v.selectedItemPosition];val selected=YearMonth.parse(month.text.toString().trim()).toString();val lines=store.closingHistoryMonth(vault,selected);AlertDialog.Builder(this).setTitle("سجل إقفالات $vault").setMessage(if(lines.isEmpty())"لا توجد إقفالات" else lines.joinToString("\n"){row->val currency=Currency.valueOf(row.getValue("currency"));row.getValue("date")+" · "+(if(row["kind"]=="AUTO_CLOSING")"تلقائي / يحتاج مراجعة" else "يدوي")+" · "+currency.name+" · متوقع "+money(row.getValue("expected").toLong(),currency)+(if(row["kind"]=="AUTO_CLOSING")" · لا يوجد عد فعلي أو فرق مؤكد" else " · معدود "+money(row.getValue("counted").toLong(),currency)+" · فرق "+money(row.getValue("variance").toLong(),currency))}).setPositiveButton("حسناً",null).show()})}}
         store.rows("SELECT e.date,c.* FROM closings c JOIN events e ON e.id=c.event_id ORDER BY e.created DESC LIMIT 30").forEach{r->val c=Currency.valueOf(r.getValue("currency"));text("${r.getValue("date")} · ${r.getValue("vault")} · ${c.name}\nمتوقع ${money(r.getValue("expected").toLong(),c)} · "+(if(r["counted"].isNullOrBlank()) "إقفال تلقائي · لم يجرِ عد فعلي" else "معدود ${money(r.getValue("counted").toLong(),c)} · فرق ${money(Math.subtractExact(r.getValue("counted").toLong(),r.getValue("expected").toLong()),c)}"))}
     }
-    private fun suppliers(){text("الموردون",size=25f);button("＋ مورد"){form("مورد جديد"){box->val n=field("الاسم",box);val p=field("الهاتف",box);{val name=n.text.toString();val phone=p.text.toString();work{store.addSupplier(name,phone)}}}}
+    private fun suppliers(){text("الموردون",size=25f);
+        button("تدقيق أيام ديون الموردين السالبة"){
+            try {
+                val issues=store.negativeSupplierDebtDays()
+                val detail=if(issues.isEmpty()) "لا توجد أيام يظهر فيها دين مورد سالب."
+                else issues.take(100).joinToString("\n"){row->
+                    val currency=Currency.valueOf(row.getValue("currency"))
+                    row.getValue("date")+" · المورد "+row.getValue("supplier_id")+
+                        " · "+money(row.getValue("remaining_debt").toLong(),currency)
+                } + if(issues.size>100) "\n... توجد "+(issues.size-100)+" نتيجة إضافية" else ""
+                AlertDialog.Builder(this).setTitle("تدقيق ديون الموردين")
+                    .setMessage(detail).setPositiveButton("حسناً",null).show()
+            } catch(e:Exception) {
+                AlertDialog.Builder(this).setMessage(e.message ?: "تعذر تدقيق ديون الموردين")
+                    .setPositiveButton("حسناً",null).show()
+            }
+        }
+button("＋ مورد"){form("مورد جديد"){box->val n=field("الاسم",box);val p=field("الهاتف",box);{val name=n.text.toString();val phone=p.text.toString();work{store.addSupplier(name,phone)}}}}
         store.rows("SELECT * FROM suppliers ORDER BY name").forEach{r->val id=r.getValue("id");text(r.getValue("name"),size=22f);button("تسجيل دين سابق للمورد"){form("رصيد المورد الافتتاحي"){box->val c=select("العملة",Currency.entries.map{it.name},box);val n=field("الدين السابق",box,"0",true);val day=field("تاريخ الدين YYYY-MM-DD",box,Store.today());{val currency=Currency.entries[c.selectedItemPosition];val amount=amount(n,currency);val date=java.time.LocalDate.parse(day.text.toString().trim()).toString();work{store.supplierOpening(id,currency,amount,date)}}}};Currency.entries.forEach{c->val due=store.supplierDue(id,c);button("كشف المورد الكامل ${c.name}"){val lines=store.supplierLedgerWithBalances(id,c);AlertDialog.Builder(this).setTitle("كشف المورد · كامل السجل").setMessage(lines.joinToString("\n"){it.getValue("date")+" : "+it.getValue("kind")+" : "+money(Math.negateExact(it.getValue("amount").toLong()),c)+" · المتبقي "+money(it.getValue("remaining").toLong(),c)}).setPositiveButton("حسناً",null).show()};button("رصيد المورد بتاريخ محدد ${c.name}"){form("دين المورد بتاريخ","عرض"){box->val day=field("التاريخ YYYY-MM-DD",box,Store.today());{val date=day.text.toString().trim();val balance=store.supplierDueOn(id,c,date);val available=if(!java.time.LocalDate.parse(date).isAfter(java.time.LocalDate.now())) store.supplierAvailableOn(id,c,date) else 0L;AlertDialog.Builder(this).setTitle("رصيد المورد · "+date+" · "+c.name).setMessage("الدين في نهاية اليوم: "+money(balance,c)+"\nالحد المتاح لدفعة مؤرخة بهذا اليوم: "+money(available,c)).setPositiveButton("حسناً",null).show()}}};button("كشف مورد بين تاريخين ${c.name}") {
             form("كشف المورد حسب الفترة","عرض"){box->
                 val from=field("من YYYY-MM-DD",box,java.time.LocalDate.now().withDayOfMonth(1).toString())
