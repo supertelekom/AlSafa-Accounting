@@ -396,11 +396,11 @@ class MainActivity:Activity() {
             try {
                 val issues=store.negativeVaultDays()
                 val detail=if(issues.isEmpty()) "لا توجد أيام برصيد دفتري سالب في سجلات الخزنات."
-                else issues.take(100).joinToString("\\n"){ row ->
+                else issues.take(100).joinToString("\n"){ row ->
                     val currency=Currency.valueOf(row.getValue("currency"))
                     row.getValue("date")+" · "+row.getValue("vault")+" · "+currency.name+
                         " · "+money(row.getValue("closing_balance").toLong(),currency)
-                } + if(issues.size>100) "\\n... توجد "+(issues.size-100)+" نتيجة إضافية" else ""
+                } + if(issues.size>100) "\n... توجد "+(issues.size-100)+" نتيجة إضافية" else ""
                 AlertDialog.Builder(this).setTitle("تدقيق أرصدة الخزنات")
                     .setMessage(detail).setPositiveButton("حسناً",null).show()
             } catch(e:Exception) { AlertDialog.Builder(this).setMessage(e.message ?: "تعذر فحص الأرصدة").setPositiveButton("حسناً",null).show() }
