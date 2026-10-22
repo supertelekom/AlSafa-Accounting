@@ -30,4 +30,11 @@ assert statement("one","USD","2026-10-01","2026-10-31")==(
 assert statement("one","USD","2026-11-01","2026-11-30")==(
  12000,[("nov","2026-11-01",10000)],10000)
 assert statement("one","TRY","2026-10-01","2026-10-31")==(0,[],0)
+assert statement("one","USD","2026-10-03","2026-10-03")==(
+ 15000,[("pay","2026-10-03",12000)],12000)
+assert statement("one","USD","2026-10-04","2026-10-31")==(
+ 12000,[],12000)
+assert statement("two","USD","2026-10-01","2026-10-31")==(
+ 0,[("other","2026-10-03",-1000)],-1000)
+
 print("PASS supplier running debt: historic carry, actual payment dates, supplier and currency isolation")
