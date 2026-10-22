@@ -1235,6 +1235,19 @@ class Store(val helper:StoreDb) {
     }
     fun repairDetail(id:String):Map<String,String> =
         rows("SELECT * FROM repairs WHERE id=?",id).single()
+    /** Net repair margin is invoice revenue minus consumed parts, not collected cash. */
+    fun repairProfit(repairId:String):Map<String,String>? {
+        val invoice=repairInvoice(repairId)?:return null
+        val c=Currency.valueOf(invoice.getValue("currency"))
+        val parts=repairPartsUsed(repairId)
+        require(parts.all{it.getValue("currency")==c.name}){"اختلاف عملة قطع الصيانة"}
+        val cost=parts.fold(0L){sum,row->Math.addExact(sum,Math.negateExact(row.getValue("value_delta").toLong()))}
+        val revenue=invoice.getValue("total").toLong()
+        return mapOf("currency" to c.name,"revenue" to revenue.toString(),
+            "parts_cost" to cost.toString(),"margin" to Math.subtractExact(revenue,cost).toString(),
+            "collected" to paid(invoice.getValue("id")).toString(),
+            "outstanding" to due(invoice.getValue("id")).toString())
+    }
     fun repairInvoice(repairId:String):Map<String,String>? {
         val repair=repairDetail(repairId)
         val invoiceId=repair["invoice_id"].orEmpty()
