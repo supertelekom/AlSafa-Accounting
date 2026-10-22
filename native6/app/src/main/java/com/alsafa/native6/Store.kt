@@ -633,6 +633,7 @@ class Store(val helper:StoreDb) {
         var remaining=statement.getValue("opening")
         val entries=supplierEntriesRange(supplier,c,from,to).map { row ->
             remaining=Math.subtractExact(remaining,row.getValue("amount").toLong())
+            check(remaining>=0L){"دين المورد سالب خلال الفترة"}
             row+("remaining" to remaining.toString())
         }
         check(remaining==statement.getValue("closing")){"الرصيد الجاري للمورد لا يطابق الرصيد الختامي"}
