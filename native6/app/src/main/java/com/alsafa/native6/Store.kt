@@ -694,6 +694,17 @@ class Store(val helper:StoreDb) {
             "payments" to payments,"closing" to closing,
             "historical_debt" to opening,"current_month_net" to Math.subtractExact(charges,payments)) + categories
     }
+    /** Debt balance at a historical date, excluding all later postings. */
+    fun supplierDueOn(supplier:String,c:Currency,date:String):Long {
+        require(scalar("SELECT count(*) FROM suppliers WHERE id=?",supplier)==1L){"المورد غير موجود"}
+        val day=LocalDate.parse(date).toString()
+        val due=Math.negateExact(scalar("""SELECT coalesce(sum(j.amount),0) FROM journal j
+            JOIN events e ON e.id=j.event_id
+            WHERE j.account=? AND j.currency=? AND e.date<=?""",
+            "payable:$supplier",c.name,day))
+        require(due>=0L){"دين المورد في التاريخ المحدد سالب"}
+        return due
+    }
     fun supplierDue(supplier:String,c:Currency):Long {
         require(scalar("SELECT count(*) FROM suppliers WHERE id=?",supplier)==1L){"المورد غير موجود"}
         val remaining=Math.negateExact(scalar("SELECT coalesce(sum(amount),0) FROM journal WHERE account=? AND currency=?","payable:$supplier",c.name))
