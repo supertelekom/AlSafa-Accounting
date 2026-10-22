@@ -732,6 +732,10 @@ class Store(val helper:StoreDb) {
         // Refunds settle a return liability. Do not insert a return before an already posted refund.
         val latestRefund=rows("SELECT max(e.date) latest FROM refunds f JOIN events e ON e.id=f.event_id WHERE f.invoice_id=?",invoiceId).firstOrNull()?.get("latest").orEmpty()
         require(latestRefund.isBlank() || date>=latestRefund){"تاريخ المرتجع يسبق رد أموال مسجلاً لنفس الفاتورة"}
+        // Return allocation reads all posted receipts. A return cannot be inserted before a
+        // later receipt without changing the historical receivable/refund allocation.
+        require(scalar("""SELECT count(*) FROM receipts r JOIN events e ON e.id=r.event_id
+            WHERE r.invoice_id=? AND e.date>?""",invoiceId,date)==0L){"تاريخ المرتجع يسبق قبضاً مسجلاً لاحقاً؛ راجع تسلسل ذمة العميل"}
         event(command,"SALE_RETURN",date,reason)
         var totalCredit=0L;var costCredit=0L
         for(line in lines) {
