@@ -1289,6 +1289,7 @@ class Store(val helper:StoreDb) {
     fun repairOldDebtReceiptCount(month:String):Int = repairCashReceivedMonthDetails(month).count{it.getValue("delivery_date")<java.time.YearMonth.parse(month).atDay(1).toString()}
     fun repairReceiptCurrentMonthCount(month:String):Int = repairCashReceiptCount(month)-repairOldDebtReceiptCount(month)
     fun repairCashReceiptCount(month:String):Int = repairCashReceivedMonthDetails(month).size
+    fun repairReceiptCurrencies(month:String):Set<String> = repairCashReceivedMonthDetails(month).map{it.getValue("currency")}.toSet()
     fun repairReceiptVaults(month:String):Set<String> = repairCashReceivedMonthDetails(month).map{it.getValue("vault")}.toSet()
     fun repairCashReceivedMonthDetails(month:String):List<Map<String,String>> {
         val start=java.time.YearMonth.parse(month).atDay(1).toString()
