@@ -681,6 +681,12 @@ Store.vaults.forEach{v->text(v+" · إقفالات تحتاج عدّاً: "+stor
                     .setMessage(details).setPositiveButton("حسناً",null).show()
             }catch(e:Exception){error(e)}
         }
+        button("فواتير صيانة دون سجل مرتبط"){
+            val count=store.repairInvoiceLinkIssues().size
+            AlertDialog.Builder(this).setTitle("مطابقة ربط الصيانة")
+                .setMessage("فواتير مرحلة دون سجل صيانة: $count")
+                .setPositiveButton("حسناً",null).show()
+        }
         button("مطابقة إيراد فواتير الصيانة"){
             form("مطابقة الإيرادات","عرض"){box->
                 val month=field("الشهر YYYY-MM",box,YearMonth.now().toString())
