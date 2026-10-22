@@ -623,6 +623,7 @@ class Store(val helper:StoreDb) {
             JOIN events e ON e.id=j.event_id
             WHERE j.account=? AND j.currency=? AND e.date<=?""","payable:$supplier",c.name,end))
         require(closing==verified){"كشف المورد للفترة غير متوازن"}
+        require(opening>=0L&&closing>=0L){"كشف المورد يحتوي رصيد دين سالب؛ راجع تواريخ الحركات"}
         return mapOf("opening" to opening,"charges" to charges,
             "payments" to payments,"closing" to closing)
     }
