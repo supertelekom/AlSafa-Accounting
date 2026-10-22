@@ -1373,6 +1373,13 @@ class Store(val helper:StoreDb) {
             FROM receipts r JOIN invoices i ON i.id=r.invoice_id
             WHERE i.kind='repair' AND i.status<>'posted'""")
     /** Detect receipts whose invoice was deleted or never imported. */
+    /** Detect more than one receipt row referencing the same event. */
+    fun repairDuplicateReceiptEventIssues():List<Map<String,String>> =
+        rows("""SELECT r.event_id reference,count(*) receipt_count,
+            sum(r.amount) amount
+            FROM receipts r JOIN invoices i ON i.id=r.invoice_id
+            WHERE i.kind='repair'
+            GROUP BY r.event_id HAVING count(*)>1""")
     fun repairMissingInvoiceReceiptIssues():List<Map<String,String>> =
         rows("""SELECT r.event_id reference,r.invoice_id,r.amount,r.vault
             FROM receipts r LEFT JOIN invoices i ON i.id=r.invoice_id
