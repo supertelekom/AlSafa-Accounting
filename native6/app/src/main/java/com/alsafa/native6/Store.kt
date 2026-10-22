@@ -453,6 +453,25 @@ class Store(val helper:StoreDb) {
             ?: throw IllegalArgumentException("الفاتورة غير موجودة")
         return Invoice(row.getValue("id"),row.getValue("number").toLong(),row.getValue("kind"),row.getValue("party"),Currency.valueOf(row.getValue("currency")),row.getValue("total").toLong(),row.getValue("status"))
     }
+    /** Cash receipt register uses the date money was physically received, not invoice date. */
+    fun customerReceiptsForDay(date:String):List<Map<String,String>> {
+        val day=LocalDate.parse(date).toString()
+        require(!LocalDate.parse(day).isAfter(LocalDate.now())){"تاريخ التقرير في المستقبل"}
+        return rows("""SELECT e.date actual_date,i.number invoice_number,i.kind invoice_kind,
+            i.party customer,i.currency,r.amount,r.vault,r.invoice_id
+            FROM receipts r JOIN events e ON e.id=r.event_id
+            JOIN invoices i ON i.id=r.invoice_id
+            WHERE e.date=? ORDER BY e.created,e.id""",day)
+    }
+    fun customerReceiptsForMonth(month:String):List<Map<String,String>> {
+        val period=java.time.YearMonth.parse(month)
+        return rows("""SELECT e.date actual_date,i.number invoice_number,i.kind invoice_kind,
+            i.party customer,i.currency,r.amount,r.vault,r.invoice_id
+            FROM receipts r JOIN events e ON e.id=r.event_id
+            JOIN invoices i ON i.id=r.invoice_id
+            WHERE e.date>=? AND e.date<? ORDER BY e.date,e.created,e.id""",
+            period.atDay(1).toString(),period.plusMonths(1).atDay(1).toString())
+    }
     fun invoiceReceiptHistory(invoiceId:String):List<Map<String,String>> {
         require(scalar("SELECT count(*) FROM invoices WHERE id=?",invoiceId)==1L){"الفاتورة غير موجودة"}
         return rows("""SELECT e.date actual_date,r.amount,r.vault,e.id event_id
