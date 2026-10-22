@@ -765,13 +765,13 @@ class Store(val helper:StoreDb) {
         require(remaining>=0L){"رصيد المورد سالب؛ راجع المدفوعات والمشتريات"}
         return remaining
     }
-    fun purchase(supplier:String,items:List<SaleItem>,c:Currency,paid:Long,v:String,date:String=today(),command:String=id()):String=transaction {
+    fun purchase(supplier:String,items:List<SaleItem>,c:Currency,paid:Long,v:String,date:String=today(),command:String=id(),paymentDate:String=date):String=transaction {
         require(scalar("SELECT count(*) FROM suppliers WHERE id=?",supplier)==1L){"المورد غير موجود"};require(items.isNotEmpty()&&items.map{it.productId}.distinct().size==items.size){"فاتورة الشراء فارغة أو تحتوي أصنافاً مكررة"}
         require(items.all{it.qty>0&&it.unitPrice>=0}){"كمية الشراء أو سعر الوحدة غير صالح"};require(items.all{product(it.productId).currency==c}){"عملة صنف الشراء مختلفة"};val total=items.fold(0L){a,i->add(a,mul(i.qty,i.unitPrice))};require(total>0&&paid in 0..total){"إجمالي الشراء أو الدفعة غير صالح"};require(!LocalDate.parse(date).isAfter(LocalDate.now())){"لا يمكن تسجيل شراء بتاريخ مستقبلي"}
         event(command,"PURCHASE",date,"شراء مورد $supplier");insert("invoices","id" to command,"number" to nextNumber(),"kind" to "purchase","party" to supplier,"phone" to "","currency" to c.name,"total" to total,"cost" to total,"notes" to "")
         items.forEachIndexed {i,line->val p=product(line.productId);require(p.currency==c);val value=mul(line.qty,line.unitPrice);val next=add(p.stock,line.qty);val avg=proportional(add(p.value,value),1,next)
             insert("invoice_lines","invoice_id" to command,"line" to i,"product_id" to p.id,"name" to p.name,"qty" to line.qty,"net" to value,"cost" to value);stock(command,i,p,line.qty,value);db.execSQL("UPDATE products SET cost=? WHERE id=?",arrayOf(avg,p.id)) }
-        post(command,listOf(Posting("inventory",c,total),Posting("payable:$supplier",c,-total)));if(paid>0) paySupplier(supplier,c,paid,v,date,"$command-payment");command
+        post(command,listOf(Posting("inventory",c,total),Posting("payable:$supplier",c,-total)));if(paid>0) paySupplier(supplier,c,paid,v,paymentDate,"$command-payment");command
     }
     fun paySupplier(supplier:String,c:Currency,amount:Long,v:String,date:String=today(),command:String=id())=transaction {
         require(scalar("SELECT count(*) FROM suppliers WHERE id=?",supplier)==1L){"المورد غير موجود"};require(!LocalDate.parse(date).isAfter(LocalDate.now())){"لا يمكن تسجيل دفعة مورد بتاريخ مستقبلي"};require(amount>0 && amount<=supplierAvailableOn(supplier,c,date)){"الدفعة تتجاوز الدين المتاح بتاريخها أو في أحد الأيام التالية"};enough(v,c,amount);event(command,"SUPPLIER_PAYMENT",date,"دفع للمورد $supplier");post(command,listOf(Posting("payable:$supplier",c,amount),Posting("cash:$v",c,-amount)))
