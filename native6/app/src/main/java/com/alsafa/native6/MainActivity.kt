@@ -331,6 +331,19 @@ class MainActivity:Activity() {
         fun show(){results.removeAllViews();store.products(search.text.toString()).filter{!inStockOnly || it.stock>0}.take(100).forEach{p->button("${p.name} · ${p.stock}",results){dialog.dismiss();action(p)}}};button("بحث",box){show()};show();dialog.show()}
     private fun invoices(){
         text("الفواتير والمرتجعات",size=25f)
+        button("كشف تحصيلات العملاء الفعلية"){
+            form("كشف التحصيل","عرض"){box->
+                val date=field("اليوم YYYY-MM-DD",box,Store.today())
+                ({
+                    val receipts=store.customerReceiptsForDay(date.text.toString().trim())
+                    val details=if(receipts.isEmpty())"لا توجد تحصيلات" else receipts.joinToString("\n"){r->
+                        r.getValue("actual_date")+" · #"+r.getValue("invoice_number")+" · "+
+                        r.getValue("customer")+" · "+money(r.getValue("amount").toLong(),Currency.valueOf(r.getValue("currency")))+" · "+r.getValue("vault")
+                    }
+                    AlertDialog.Builder(this).setTitle("مقبوضات العملاء").setMessage(details).setPositiveButton("حسناً",null).show()
+                })
+            }
+        }
         val query=field("رقم الفاتورة أو اسم العميل أو الهاتف",body)
         val kinds=listOf("all","sale","purchase","repair")
         val statuses=listOf("all","posted","cancelled")
