@@ -1254,6 +1254,19 @@ class Store(val helper:StoreDb) {
         }
     }
     /** Detect disagreement between frozen invoice cost and its installed parts history. */
+    /** Parts installed after the repair delivery date violate the inventory chronology. */
+    fun repairPartDateIssues():List<Map<String,String>> =
+        rows("""SELECT e.id reference,r.id repair_id,e.date installed_date,
+            received.date received_date,delivered.date delivered_date
+            FROM events e JOIN repairs r ON e.memo='REPAIR_PART:'||r.id
+            JOIN events received ON received.id=r.id
+            LEFT JOIN events delivered ON delivered.id=r.invoice_id
+            WHERE e.kind='REPAIR_PART'
+              AND (e.date<received.date OR
+                (delivered.id IS NOT NULL AND e.date>delivered.date))""").map { row ->
+            row+mapOf("category" to "REPAIR_PART_DATE_MISMATCH",
+                "detail" to "تركيب القطعة خارج فترة الصيانة المسجلة")
+        }
     fun repairInvoiceCostIssues():List<Map<String,String>> =
         rows("""SELECT r.id reference,i.id invoice_id,i.cost recorded_cost,
             coalesce((SELECT -sum(s.value_delta) FROM stock_moves s
