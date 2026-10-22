@@ -511,7 +511,7 @@ class Store(val helper:StoreDb) {
         command
     }
     fun cancelSale(invoiceId:String,reason:String,date:String=today(),command:String=id()):String=transaction {
-        require(reason.isNotBlank()){"سبب إلغاء الفاتورة مطلوب"}
+        require(reason.isNotBlank()){"سبب إلغاء الفاتورة مطلوب"};require(!LocalDate.parse(date).isAfter(LocalDate.now())){"تاريخ الإلغاء في المستقبل"}
         val inv=invoice(invoiceId)
         require(inv.kind=="sale" && inv.status=="posted"){"إلغاء المبيع متاح للفواتير النشطة فقط"}
         val remaining=rows("SELECT l.line,l.qty original_qty,l.qty-coalesce((SELECT sum(r.qty) FROM returns r WHERE r.invoice_id=l.invoice_id AND r.line=l.line),0) AS remaining FROM invoice_lines l WHERE l.invoice_id=?",invoiceId)
@@ -522,7 +522,7 @@ class Store(val helper:StoreDb) {
         returnSale(invoiceId,quantities,reason,date,command)
     }
     fun refund(invoiceId:String,amount:Long,v:String,date:String=today(),command:String=id())=transaction {
-        val inv=invoice(invoiceId);require(inv.kind=="sale" || inv.kind=="repair"){"رد العميل متاح لفواتير المبيع والصيانة فقط"};require(amount>0&&amount<=refundable(invoiceId)){"المبلغ المطلوب رده يتجاوز الرصيد المستحق للعميل"};enough(v,inv.currency,amount);event(command,"REFUND",date,"رد مبلغ فاتورة ${inv.number}")
+        val inv=invoice(invoiceId);require(inv.kind=="sale" || inv.kind=="repair"){"رد العميل متاح لفواتير المبيع والصيانة فقط"};require(amount>0&&amount<=refundable(invoiceId)){"المبلغ المطلوب رده يتجاوز الرصيد المستحق للعميل"};require(!LocalDate.parse(date).isAfter(LocalDate.now())){"تاريخ رد المبلغ في المستقبل"};require(!LocalDate.parse(date).isBefore(LocalDate.parse(rows("SELECT date FROM events WHERE id=?",invoiceId).single().getValue("date"))){"تاريخ رد المبلغ يسبق الفاتورة"};enough(v,inv.currency,amount);event(command,"REFUND",date,"رد مبلغ فاتورة ${inv.number}")
         insert("refunds","event_id" to command,"invoice_id" to invoiceId,"amount" to amount,"vault" to v);post(command,listOf(Posting("refund:$invoiceId",inv.currency,amount),Posting("cash:$v",inv.currency,-amount)))
     }
     fun addSupplier(name:String,phone:String):String=transaction { require(name.isNotBlank());val id=id();insert("suppliers","id" to id,"name" to name,"phone" to phone);id }
@@ -1152,7 +1152,7 @@ class Store(val helper:StoreDb) {
     fun startRepair(id:String)=transaction { require(rows("SELECT status FROM repairs WHERE id=?",id).single().getValue("status")=="received"); db.execSQL("UPDATE repairs SET status=? WHERE id=?",arrayOf("in_progress",id)); event(id(),"REPAIR_STARTED",today(),"بدء العمل على الصيانة") }
     fun repairReady(id:String)=transaction {require(rows("SELECT status FROM repairs WHERE id=?",id).single().getValue("status") in setOf("received","in_progress")){"الصيانة ليست في حالة تسمح بالتجهيز"};db.execSQL("UPDATE repairs SET status='ready' WHERE id=?",arrayOf(id));event(id(),"REPAIR_READY",today(),"جاهزة $id")}
     fun deliverRepair(repairId:String,c:Currency,total:Long,paid:Long,v:String,command:String=id())=transaction {
-        val repair=rows("SELECT * FROM repairs WHERE id=?",repairId).single();require(repair.getValue("status")=="ready"&&total>0&&paid in 0..total)
+        val repair=rows("SELECT * FROM repairs WHERE id=?",repairId).single();require(repair.getValue("status")=="ready"&&total>0&&paid in 0..total);require(!LocalDate.parse(repair.getValue("date")).isAfter(LocalDate.now())){"تاريخ الاستلام في المستقبل"}
         event(command,"REPAIR_DELIVERY",today(),"تسليم صيانة ${repair.getValue("customer")}");insert("invoices","id" to command,"number" to nextNumber(),"kind" to "repair","party" to repair.getValue("customer"),"phone" to repair.getValue("phone"),"currency" to c.name,"total" to total,"cost" to 0,"notes" to repair.getValue("watch"))
         post(command,listOf(Posting("receivable:$command",c,total),Posting("revenue:repair",c,-total)));if(paid>0)collectInternal(command,paid,v,today(),"$command-receipt");db.execSQL("UPDATE repairs SET status='delivered',invoice_id=? WHERE id=?",arrayOf(command,repairId))
     }
