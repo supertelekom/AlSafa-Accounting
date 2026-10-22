@@ -1391,6 +1391,21 @@ class Store(val helper:StoreDb) {
             WHERE i.kind='repair' AND e.id IS NULL""")
     fun repairReceiptAuditClean():Boolean = repairReceiptAuditCount()==0
     /** Detect cancelled repair invoices retained in the invoice register. */
+    /** Reconcile posted repair invoice revenue against the profit report's revenue. */
+    fun repairMonthRevenueVariance(month:String):List<Map<String,String>> {
+        val invoices=repairPostedInvoiceMonthTotals(month)
+        val profits=repairProfitMonthTotals(month)
+        return (invoices.map{it.getValue("currency")}+
+            profits.map{it.getValue("currency")}).toSet().sorted().map{code->
+            val billed=invoices.filter{it.getValue("currency")==code}
+                .fold(0L){sum,row->Math.addExact(sum,row.getValue("invoice_total").toLong())}
+            val reported=profits.filter{it.getValue("currency")==code}
+                .fold(0L){sum,row->Math.addExact(sum,row.getValue("revenue").toLong())}
+            mapOf("currency" to code,"invoiced" to billed.toString(),
+                "reported" to reported.toString(),
+                "difference" to Math.subtractExact(billed,reported).toString())
+        }
+    }
     fun repairPostedInvoiceMonthTotals(month:String):List<Map<String,String>> =
         repairInvoiceStatusMonth(month).filter{it.getValue("status")=="posted"}
     fun repairInvoiceStatusMonth(month:String):List<Map<String,String>> {
