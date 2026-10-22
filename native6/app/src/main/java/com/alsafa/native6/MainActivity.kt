@@ -598,8 +598,8 @@ Store.vaults.forEach{v->text(v+" · إقفالات تحتاج عدّاً: "+stor
             form("ربح الصيانة","عرض"){box->
                 val month=field("الشهر YYYY-MM",box,YearMonth.now().toString())
                 ({
-                    val entries=store.repairProfitMonth(month.text.toString().trim())
-                    val detail=if(entries.isEmpty())"لا توجد صيانات مسلمة خلال الشهر."
+                    val selected=month.text.toString().trim();val entries=store.repairProfitMonth(selected);val totals=store.repairProfitMonthTotals(selected)
+                    val summary=totals.joinToString("\n"){r->val c=Currency.valueOf(r.getValue("currency"));c.name+" · "+r.getValue("repair_count")+" صيانة · ربح "+money(r.getValue("margin").toLong(),c)};val detail=if(entries.isEmpty())"لا توجد صيانات مسلمة خلال الشهر."
                     else entries.joinToString("\n"){row->
                         val c=Currency.valueOf(row.getValue("currency"))
                         row.getValue("customer")+" · أجرة "+money(row.getValue("total").toLong(),c)+
@@ -607,7 +607,7 @@ Store.vaults.forEach{v->text(v+" · إقفالات تحتاج عدّاً: "+stor
                             " · هامش "+money(row.getValue("margin").toLong(),c)
                     }
                     AlertDialog.Builder(this).setTitle("ربح الصيانة")
-                        .setMessage(detail).setPositiveButton("حسناً",null).show()
+                        .setMessage(summary+"\n\n"+detail).setPositiveButton("حسناً",null).show()
                 })
             }
         }
