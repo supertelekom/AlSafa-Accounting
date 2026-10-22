@@ -567,7 +567,7 @@ class Store(val helper:StoreDb) {
         if(paid>0) collectInternal(command,paid,vault,receiptDate,"$command-receipt");command
     }
     private fun collectInternal(invoiceId:String,amount:Long,v:String,date:String,command:String) {
-        val inv=invoice(invoiceId);require(inv.kind=="sale" || inv.kind=="repair"){"القبض متاح لفواتير المبيع والصيانة فقط"};require(inv.status=="posted" && amount>0 && amount<=due(invoiceId)){"الدفعة تتجاوز المتبقي أو الفاتورة ملغاة"};require(!LocalDate.parse(date).isAfter(LocalDate.now())){"تاريخ التحصيل في المستقبل"};require(!LocalDate.parse(date).isBefore(LocalDate.parse(rows("SELECT date FROM events WHERE id=?",invoiceId).single().getValue("date"))){"تاريخ التحصيل يسبق الفاتورة"};vault(v)
+        val inv=invoice(invoiceId);require(inv.kind=="sale" || inv.kind=="repair"){"القبض متاح لفواتير المبيع والصيانة فقط"};require(inv.status=="posted" && amount>0 && amount<=due(invoiceId)){"الدفعة تتجاوز المتبقي أو الفاتورة ملغاة"};require(!LocalDate.parse(date).isAfter(LocalDate.now())){"تاريخ التحصيل في المستقبل"};require(!LocalDate.parse(date).isBefore(LocalDate.parse(rows("SELECT date FROM events WHERE id=?",invoiceId).single().getValue("date"))){"تاريخ التحصيل يسبق الفاتورة"};require(rows("SELECT count(*) n FROM returns r JOIN events e ON e.id=r.event_id WHERE r.invoice_id=? AND e.date>?",invoiceId,date).single().getValue("n").toLong()==0L){"تاريخ القبض يسبق مرتجعاً سبق تسجيله؛ راجع تسلسل الذمة"};vault(v)
         event(command,"RECEIPT",date,"قبض فاتورة ${inv.number}");insert("receipts","event_id" to command,"invoice_id" to invoiceId,"amount" to amount,"vault" to v)
         post(command,listOf(Posting("cash:$v",inv.currency,amount),Posting("receivable:$invoiceId",inv.currency,-amount)))
     }
