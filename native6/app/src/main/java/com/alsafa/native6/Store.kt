@@ -1242,7 +1242,7 @@ class Store(val helper:StoreDb) {
         val repairs=rows("""SELECT r.id repair_id,r.customer,i.currency,i.total,i.cost,i.id invoice_id
             FROM repairs r JOIN invoices i ON i.id=r.invoice_id
             JOIN events e ON e.id=i.id
-            WHERE i.kind='repair' AND e.date>=? AND e.date<?
+            WHERE i.kind='repair' AND i.status='posted' AND e.date>=? AND e.date<?
             ORDER BY e.date,r.id""",period.atDay(1).toString(),
             period.plusMonths(1).atDay(1).toString())
         return repairs.map { row ->
