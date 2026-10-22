@@ -684,7 +684,7 @@ Store.vaults.forEach{v->text(v+" · إقفالات تحتاج عدّاً: "+stor
         button("تدقيق قبض فواتير الصيانة"){
             val over=store.repairOverpaymentIssues()
             val dates=store.repairReceiptDateIssues()
-            val amounts=store.repairReceiptAmountIssues()
+            val amounts=store.repairReceiptAmountIssues();val journal=store.repairReceiptJournalIssues()
             val message="تجاوز قيمة الفاتورة: ${over.size}\n"+
                 "قبض قبل التسليم: ${dates.size}\n"+
                 "مبالغ قبض غير صالحة: ${amounts.size}"
