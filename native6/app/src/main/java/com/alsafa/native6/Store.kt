@@ -580,6 +580,12 @@ class Store(val helper:StoreDb) {
         require(quantities.values.all { it>0L }){"كل كمية مرتجعة يجب أن تكون موجبة"}
         require(!LocalDate.parse(date).isAfter(LocalDate.now())){"لا يمكن تسجيل مرتجع بتاريخ مستقبلي"}
         require(!LocalDate.parse(date).isBefore(LocalDate.parse(rows("SELECT date FROM events WHERE id=?",invoiceId).single().getValue("date"))){"تاريخ المرتجع يسبق تاريخ فاتورة البيع"}
+        // Incremental return allocation depends on prior returns; never backdate a later installment.
+        val latestReturn=rows("SELECT max(e.date) latest FROM returns r JOIN events e ON e.id=r.event_id WHERE r.invoice_id=?",invoiceId).firstOrNull()?.get("latest").orEmpty()
+        require(latestReturn.isBlank() || date>=latestReturn){"تاريخ المرتجع يسبق مرتجعاً مسجلاً سابقاً لنفس الفاتورة"}
+        // Refunds settle a return liability. Do not insert a return before an already posted refund.
+        val latestRefund=rows("SELECT max(e.date) latest FROM refunds f JOIN events e ON e.id=f.event_id WHERE f.invoice_id=?",invoiceId).firstOrNull()?.get("latest").orEmpty()
+        require(latestRefund.isBlank() || date>=latestRefund){"تاريخ المرتجع يسبق رد أموال مسجلاً لنفس الفاتورة"}
         event(command,"SALE_RETURN",date,reason)
         var totalCredit=0L;var costCredit=0L
         for(line in lines) {
@@ -616,7 +622,7 @@ class Store(val helper:StoreDb) {
         returnSale(invoiceId,quantities,reason,date,command)
     }
     fun refund(invoiceId:String,amount:Long,v:String,date:String=today(),command:String=id())=transaction {
-        val inv=invoice(invoiceId);require(inv.kind=="sale" || inv.kind=="repair"){"رد العميل متاح لفواتير المبيع والصيانة فقط"};require(amount>0&&amount<=refundable(invoiceId)){"المبلغ المطلوب رده يتجاوز الرصيد المستحق للعميل"};require(!LocalDate.parse(date).isAfter(LocalDate.now())){"تاريخ رد المبلغ في المستقبل"};require(!LocalDate.parse(date).isBefore(LocalDate.parse(rows("SELECT date FROM events WHERE id=?",invoiceId).single().getValue("date"))){"تاريخ رد المبلغ يسبق الفاتورة"};enough(v,inv.currency,amount);event(command,"REFUND",date,"رد مبلغ فاتورة ${inv.number}")
+        val inv=invoice(invoiceId);require(inv.kind=="sale" || inv.kind=="repair"){"رد العميل متاح لفواتير المبيع والصيانة فقط"};require(amount>0&&amount<=refundable(invoiceId)){"المبلغ المطلوب رده يتجاوز الرصيد المستحق للعميل"};require(!LocalDate.parse(date).isAfter(LocalDate.now())){"تاريخ رد المبلغ في المستقبل"};require(!LocalDate.parse(date).isBefore(LocalDate.parse(rows("SELECT date FROM events WHERE id=?",invoiceId).single().getValue("date"))){"تاريخ رد المبلغ يسبق الفاتورة"};require(rows("SELECT count(*) n FROM returns r JOIN events e ON e.id=r.event_id WHERE r.invoice_id=? AND e.date>?",invoiceId,date).single().getValue("n").toLong()==0L){"رد الأموال لا يجوز أن يسبق تاريخ المرتجع الذي أنشأ الاستحقاق"};enough(v,inv.currency,amount);event(command,"REFUND",date,"رد مبلغ فاتورة ${inv.number}")
         insert("refunds","event_id" to command,"invoice_id" to invoiceId,"amount" to amount,"vault" to v);post(command,listOf(Posting("refund:$invoiceId",inv.currency,amount),Posting("cash:$v",inv.currency,-amount)))
     }
     fun addSupplier(name:String,phone:String):String=transaction { require(name.isNotBlank());val id=id();insert("suppliers","id" to id,"name" to name,"phone" to phone);id }
