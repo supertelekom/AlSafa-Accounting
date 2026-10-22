@@ -159,6 +159,12 @@ class Backup(private val context:Context,private val store:Store) {
         require(target.rows("""SELECT r.event_id FROM auto_closing_reviews r
             GROUP BY r.event_id HAVING count(*)<>1
         """).isEmpty()){"حدث مراجعة مكرر لأكثر من إقفال"}
+        // Receipt chronology must follow invoice issuance, including backdated entries.
+        require(target.rows("""SELECT r.event_id FROM receipts r
+            JOIN events payment ON payment.id=r.event_id
+            JOIN events issued ON issued.id=r.invoice_id
+            WHERE payment.date<issued.date OR payment.kind<>'RECEIPT'
+        """).isEmpty()){"قبض مسجل قبل تاريخ الفاتورة أو بحدث غير صالح"}
         // A repair delivery invoice must be attached to exactly one repair.
         require(target.rows("""SELECT i.id FROM invoices i
             LEFT JOIN repairs r ON r.invoice_id=i.id
