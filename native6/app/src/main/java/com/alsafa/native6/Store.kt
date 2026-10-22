@@ -1392,6 +1392,8 @@ class Store(val helper:StoreDb) {
     fun repairReceiptAuditClean():Boolean = repairReceiptAuditCount()==0
     /** Detect cancelled repair invoices retained in the invoice register. */
     /** Reconcile posted repair invoice revenue against the profit report's revenue. */
+    fun repairMonthRevenueIssues(month:String):List<Map<String,String>> =
+        repairMonthRevenueVariance(month).filter{it.getValue("difference").toLong()!=0L}
     fun repairMonthRevenueVariance(month:String):List<Map<String,String>> {
         val invoices=repairPostedInvoiceMonthTotals(month)
         val profits=repairProfitMonthTotals(month)
