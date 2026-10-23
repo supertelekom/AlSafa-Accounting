@@ -46,7 +46,7 @@ class Backup(private val context:Context,private val store:Store) {
         output.write(result);output.flush()
     }
     fun restore(input:InputStream) {
-        val root=JSONObject(String(read(input),Charsets.UTF_8));require(root.getString("format")=="alsafa-native6-backup"&&root.getInt("schema") in 1..6){"نوع النسخة غير مدعوم"}
+        val root=JSONObject(String(read(input),Charsets.UTF_8));require(root.getString("format")=="alsafa-native6-backup"&&root.getInt("schema") in 1..7){"نوع النسخة غير مدعوم"}
         val text=if(root.getInt("schema")>=4) {
             require(root.getString("encoding")=="gzip-base64"){"نوع ضغط غير مدعوم"}
             ungzip(root.getString("data"))
