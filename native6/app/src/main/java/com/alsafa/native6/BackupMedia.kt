@@ -59,6 +59,7 @@ object BackupMedia {
             pending.add(dest to bytes)
         }
         require(dir.isDirectory || dir.mkdirs()) { "تعذر إنشاء مجلد الصور" }
+        require(dir.canonicalFile.parentFile==context.filesDir.canonicalFile) { "تغير مسار الصور أثناء الاستعادة" }
         val created=mutableListOf<File>()
         try {
             for((dest,bytes) in pending) {
