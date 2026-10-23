@@ -912,6 +912,8 @@ button("＋ مورد"){form("مورد جديد"){box->val n=field("الاسم",b
     }
     private fun repairs(){text("الصيانة",size=25f);button("استلام صيانة"){
             intakePhotoPath=null
+            intakePhotoPreview=null
+            intakePhotoStatus=null
             form("استلام الساعة"){box->
                 val n=field("العميل",box)
                 val p=field("الهاتف",box)
