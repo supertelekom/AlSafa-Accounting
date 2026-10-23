@@ -411,6 +411,25 @@ class MainActivity:Activity() {
         {val q=fields.mapValues{it.value.text.toString().toLong()}.filterValues{it>0};val why=reason.text.toString();require(q.isNotEmpty()&&why.isNotBlank());work{store.returnSale(inv.id,q,why)}}}}
     private fun paymentForm(title:String,c:Currency,max:Long,action:(Long,String,String)->Unit){form(title){box->val n=field("المبلغ ${c.name} · المتبقي ${money(max,c)}",box,"0",true);val v=select("الخزنة",vaultNames,box);val received=field("تاريخ حركة النقود الفعلي YYYY-MM-DD",box,Store.today());{val amount=amount(n,c);val vault=Store.vaults[v.selectedItemPosition];val actualDate=java.time.LocalDate.parse(received.text.toString().trim()).toString();work{action(amount,vault,actualDate)}}}}
     private fun vaults(){text("الخزنات",size=25f);
+        button("تدقيق فروقات الإقفال لجميع الخزنات"){
+            form("تدقيق الإقفالات الشهري","عرض"){box->
+                val month=field("الشهر YYYY-MM",box,YearMonth.now().toString())
+                ({
+                    val selected=YearMonth.parse(month.text.toString().trim()).toString()
+                    val issues=store.allClosingDriftIssues(selected)
+                    val detail=if(issues.isEmpty()) "لا توجد فروقات بين الإقفالات المحفوظة والرصيد الدفتري لنهاية أيامها."
+                    else issues.take(100).joinToString("\n"){row->
+                        val currency=Currency.valueOf(row.getValue("currency"))
+                        val vaultName=vaultNames.getOrElse(Store.vaults.indexOf(row.getValue("vault"))) { row.getValue("vault") }
+                        row.getValue("date")+" · "+vaultName+" · "+currency.name+
+                            " · الفرق "+money(row.getValue("book_drift").toLong(),currency)
+                    } + if(issues.size>100) "\n... توجد نتائج إضافية" else ""
+                    AlertDialog.Builder(this).setTitle("فروقات إقفالات "+selected)
+                        .setMessage(detail).setPositiveButton("حسناً",null).show()
+                })
+            }
+        }
+
         button("تدقيق الأيام ذات الرصيد السالب"){
             try {
                 val issues=store.negativeVaultDays()
