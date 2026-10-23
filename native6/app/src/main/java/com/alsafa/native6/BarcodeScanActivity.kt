@@ -1,72 +1,147 @@
 package com.alsafa.native6
 
-import androidx.activity.ComponentActivity
+import android.Manifest
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Bundle
-import com.google.zxing.BarcodeFormat
 import android.view.Gravity
+import android.view.ViewGroup
 import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.TextView
-import com.journeyapps.barcodescanner.ScanContract
-import com.journeyapps.barcodescanner.ScanOptions
+import androidx.activity.ComponentActivity
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.camera.core.Camera
+import androidx.camera.core.CameraSelector
+import androidx.camera.core.ImageAnalysis
+import androidx.camera.core.Preview
+import androidx.camera.lifecycle.ProcessCameraProvider
+import androidx.camera.view.PreviewView
+import androidx.core.content.ContextCompat
+import com.google.mlkit.vision.barcode.BarcodeScanning
+import com.google.mlkit.vision.barcode.common.Barcode
+import com.google.mlkit.vision.barcode.BarcodeScannerOptions
+import com.google.mlkit.vision.common.InputImage
+import java.util.concurrent.Executors
+import java.util.concurrent.atomic.AtomicBoolean
 
-/**
- * Real camera barcode scanner (ZXing embedded; no network or Firebase).
- * Callers receive the decoded barcode only after a successful scan.
- */
+/** Offline, native live barcode reader. No external scanning app or cloud service. */
 class BarcodeScanActivity : ComponentActivity() {
     companion object {
         const val EXTRA_BARCODE = "com.alsafa.native6.BARCODE"
     }
 
-    private val scanner = registerForActivityResult(ScanContract()) { result ->
-        val code = result.contents?.trim()
-        if (!code.isNullOrEmpty()) {
-            setResult(RESULT_OK, Intent().putExtra(EXTRA_BARCODE, code))
-            finish()
-        } else {
-            findViewById<TextView>(1001)?.text = "لم يُقرأ باركود. حاول مرة أخرى."
-        }
+    private val executor = Executors.newSingleThreadExecutor()
+    private val processing = AtomicBoolean(false)
+    private val finished = AtomicBoolean(false)
+    private val scanner = BarcodeScanning.getClient(
+        BarcodeScannerOptions.Builder().setBarcodeFormats(
+            Barcode.FORMAT_EAN_13, Barcode.FORMAT_EAN_8,
+            Barcode.FORMAT_UPC_A, Barcode.FORMAT_UPC_E,
+            Barcode.FORMAT_CODE_128, Barcode.FORMAT_CODE_39,
+            Barcode.FORMAT_ITF, Barcode.FORMAT_QR_CODE,
+            Barcode.FORMAT_DATA_MATRIX
+        ).build()
+    )
+    private lateinit var preview: PreviewView
+    private lateinit var status: TextView
+    private lateinit var torchButton: Button
+    private var camera: Camera? = null
+    private var torchOn = false
+
+    private val requestCamera = registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        if (granted) startCamera() else status.text = "تحتاج قراءة الباركود إلى السماح بالكاميرا"
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val box = LinearLayout(this).apply {
+        val root = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            gravity = Gravity.CENTER
-            setPadding(28, 28, 28, 28)
+            gravity = Gravity.CENTER_HORIZONTAL
+            setPadding(16, 20, 16, 16)
         }
-        box.addView(TextView(this).apply {
-            id = 1001
-            text = "وجّه الكاميرا إلى باركود المنتج أو قطعة الصيانة"
-            textSize = 22f
+        status = TextView(this).apply {
+            text = "وجّه الكاميرا نحو باركود الساعة"
+            textSize = 21f
             gravity = Gravity.CENTER
-        })
-        box.addView(Button(this).apply {
-            text = "بدء قراءة الباركود"
-            setOnClickListener { launchScan() }
-        })
-        box.addView(Button(this).apply {
+        }
+        root.addView(status)
+        preview = PreviewView(this).apply {
+            implementationMode = PreviewView.ImplementationMode.COMPATIBLE
+            scaleType = PreviewView.ScaleType.FILL_CENTER
+        }
+        root.addView(preview, LinearLayout.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f
+        ))
+        torchButton = Button(this).apply {
+            text = "تشغيل الإضاءة"
+            isEnabled = false
+            setOnClickListener {
+                torchOn = !torchOn
+                camera?.cameraControl?.enableTorch(torchOn)
+                text = if (torchOn) "إطفاء الإضاءة" else "تشغيل الإضاءة"
+            }
+        }
+        root.addView(torchButton)
+        root.addView(Button(this).apply {
             text = "إلغاء"
             setOnClickListener { finish() }
         })
-        setContentView(box)
-        if (savedInstanceState == null) launchScan()
+        setContentView(root)
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
+            startCamera()
+        } else requestCamera.launch(Manifest.permission.CAMERA)
     }
 
-    private fun launchScan() {
-        scanner.launch(ScanOptions().apply {
-            setDesiredBarcodeFormats(listOf(
-                BarcodeFormat.EAN_13.name, BarcodeFormat.EAN_8.name,
-                BarcodeFormat.UPC_A.name, BarcodeFormat.UPC_E.name,
-                BarcodeFormat.CODE_128.name, BarcodeFormat.CODE_39.name,
-                BarcodeFormat.ITF.name, BarcodeFormat.QR_CODE.name,
-                BarcodeFormat.DATA_MATRIX.name
-            ))
-            setPrompt("ضع الباركود داخل الإطار")
-            setBeepEnabled(true)
-            setOrientationLocked(false)
-        })
+    private fun startCamera() {
+        val future = ProcessCameraProvider.getInstance(this)
+        future.addListener({
+            try {
+                if (isFinishing || isDestroyed) return@addListener
+                val provider = future.get()
+                val livePreview = Preview.Builder().build().also {
+                    it.surfaceProvider = preview.surfaceProvider
+                }
+                val analysis = ImageAnalysis.Builder()
+                    .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+                    .build()
+                analysis.setAnalyzer(executor) { frame ->
+                    if (finished.get() || !processing.compareAndSet(false, true)) {
+                        frame.close()
+                    } else {
+                        val mediaImage = frame.image
+                        if (mediaImage == null) {
+                            processing.set(false)
+                            frame.close()
+                        } else {
+                            val input = InputImage.fromMediaImage(mediaImage, frame.imageInfo.rotationDegrees)
+                            scanner.process(input)
+                                .addOnSuccessListener { codes ->
+                                    val value = codes.firstNotNullOfOrNull { it.rawValue?.trim()?.takeIf(String::isNotEmpty) }
+                                    if (value != null && finished.compareAndSet(false, true)) {
+                                        setResult(RESULT_OK, Intent().putExtra(EXTRA_BARCODE, value))
+                                        finish()
+                                    }
+                                }
+                                .addOnCompleteListener {
+                                    processing.set(false)
+                                    frame.close()
+                                }
+                        }
+                    }
+                }
+                provider.unbindAll()
+                camera = provider.bindToLifecycle(this, CameraSelector.DEFAULT_BACK_CAMERA, livePreview, analysis)
+                torchButton.isEnabled = camera?.cameraInfo?.hasFlashUnit() == true
+            } catch (e: Exception) {
+                status.text = "تعذر تشغيل الماسح: ${e.message}"
+            }
+        }, ContextCompat.getMainExecutor(this))
+    }
+
+    override fun onDestroy() {
+        scanner.close()
+        executor.shutdown()
+        super.onDestroy()
     }
 }
