@@ -92,7 +92,17 @@ class MediaCaptureActivity : Activity() {
                 GALLERY -> {
                     val uri = data?.data ?: error("لم يتم اختيار صورة")
                     contentResolver.openInputStream(uri).use { stream ->
-                        BitmapFactory.decodeStream(stream, null, BitmapFactory.Options().apply { inSampleSize = 2 }) ?: error("تعذر قراءة الصورة")
+                        val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+                        contentResolver.openInputStream(uri).use { boundsStream ->
+                            BitmapFactory.decodeStream(boundsStream, null, bounds)
+                        }
+                        var sample = 1
+                        while (maxOf(bounds.outWidth, bounds.outHeight) / (sample * 2) >= 1600) {
+                            sample *= 2
+                        }
+                        BitmapFactory.decodeStream(stream, null, BitmapFactory.Options().apply {
+                            inSampleSize = sample
+                        }) ?: error("تعذر قراءة الصورة")
                     }
                 }
                 else -> return
