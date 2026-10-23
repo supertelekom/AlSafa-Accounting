@@ -70,4 +70,15 @@ class BackupMediaTest {
         assertEquals(false,File(activity.filesDir,"images/$second").exists())
     }
 
+    @Test fun malformedBase64PaddingIsRejectedBeforeWriting() {
+        val activity=Robolectric.buildActivity(Activity::class.java).setup().get()
+        val name="${UUID.randomUUID()}.jpg"
+        val entries=JSONArray().put(JSONObject().put("name",name)
+            .put("sha256","invalid").put("base64","AQ=I"))
+        assertThrows(IllegalArgumentException::class.java) {
+            BackupMedia.restore(activity,entries)
+        }
+        assertEquals(false,File(activity.filesDir,"images/$name").exists())
+    }
+
 }
