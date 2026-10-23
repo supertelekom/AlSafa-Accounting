@@ -40,6 +40,7 @@ open class MainActivity:Activity() {
     private var photoRepairId:String?=null
     private var intakePhotoPath:String?=null
     private var intakePhotoStatus:TextView?=null
+    private var intakePhotoPreview:ImageView?=null
     private val ink=Color.rgb(62,52,41)
     private val gold=Color.rgb(169,121,41)
     private val vaultNames=listOf("درج المحل","الصندوق الخارجي","شام كاش","البنك")
