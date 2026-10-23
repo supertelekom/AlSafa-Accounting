@@ -11,12 +11,14 @@ object CustomerChat {
         val digits=input.filter { it in '0'..'9' }
         require(digits.isNotEmpty()) { "أدخل رقم هاتف العميل" }
         val result=when {
-            digits.startsWith("00963") -> digits.drop(2)
-            digits.startsWith("963") -> digits
+            digits.startsWith("00963") && digits.length==14 -> digits.drop(2)
+            digits.startsWith("963") && digits.length==12 -> digits
             digits.startsWith("09") && digits.length==10 -> "963"+digits.drop(1)
-            digits.startsWith("05") && digits.length==10 -> "90"+digits.drop(1)
             digits.startsWith("9") && digits.length==9 -> "963"+digits
-            digits.startsWith("00") -> digits.drop(2)
+            digits.startsWith("0090") && digits.length==14 -> digits.drop(2)
+            digits.startsWith("90") && digits.length==12 -> digits
+            digits.startsWith("05") && digits.length==11 -> "90"+digits.drop(1)
+            digits.startsWith("00") && digits.length in 10..17 -> digits.drop(2)
             else -> digits
         }
         require(result.length in 8..15 && result.first()!='0') { "رقم الهاتف غير صالح" }
