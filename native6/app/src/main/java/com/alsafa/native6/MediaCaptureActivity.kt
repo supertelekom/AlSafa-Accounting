@@ -114,6 +114,7 @@ class MediaCaptureActivity : Activity() {
                     val bounds=BitmapFactory.Options().apply { inJustDecodeBounds=true }
                     BitmapFactory.decodeFile(source.absolutePath,bounds)
                     var sample=1
+                    require(bounds.outWidth>0 && bounds.outHeight>0) { "ملف الصورة تالف" }
                     while(maxOf(bounds.outWidth,bounds.outHeight)/(sample*2)>=1600)sample*=2
                     BitmapFactory.decodeFile(source.absolutePath,BitmapFactory.Options().apply { inSampleSize=sample })
                         ?: error("تعذر قراءة صورة الكاميرا")
