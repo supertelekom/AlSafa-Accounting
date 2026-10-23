@@ -61,7 +61,8 @@ class TabletDashboardActivity : Activity() {
         }
 
     private fun open(page: String) {
-        startActivity(Intent(this, SectionActivity::class.java).putExtra(MainActivity.EXTRA_PAGE, page))
+        if (page == "camera") startActivity(Intent(this, MediaCaptureActivity::class.java))
+        else startActivity(Intent(this, SectionActivity::class.java).putExtra(MainActivity.EXTRA_PAGE, page))
     }
 
     private fun tile(label: String, detail: String, symbol: String, action: () -> Unit): View {
@@ -136,7 +137,8 @@ class TabletDashboardActivity : Activity() {
                     Triple("المبيع", "فاتورة جديدة", "sale"),
                     Triple("الصيانة", "استلام وتسليم", "repairs"),
                     Triple("المنتجات", "الأصناف والمخزون", "products"),
-                    Triple("الإقفال اليومي", "الخزنات والأرصدة", "vaults")
+                    Triple("الإقفال اليومي", "الخزنات والأرصدة", "vaults"),
+                    Triple("الكاميرا والمعرض", "حفظ صور محلية", "camera")
                 ))
             }
             "simple" -> {
