@@ -1,9 +1,9 @@
 package com.alsafa.native6
 
-import android.app.Activity
 import androidx.activity.ComponentActivity
 import android.content.Intent
 import android.os.Bundle
+import com.google.zxing.BarcodeFormat
 import android.view.Gravity
 import android.widget.Button
 import android.widget.LinearLayout
@@ -57,9 +57,15 @@ class BarcodeScanActivity : ComponentActivity() {
 
     private fun launchScan() {
         scanner.launch(ScanOptions().apply {
-            setDesiredBarcodeFormats(ScanOptions.ALL_CODE_TYPES)
+            setDesiredBarcodeFormats(listOf(
+                BarcodeFormat.EAN_13.name, BarcodeFormat.EAN_8.name,
+                BarcodeFormat.UPC_A.name, BarcodeFormat.UPC_E.name,
+                BarcodeFormat.CODE_128.name, BarcodeFormat.CODE_39.name,
+                BarcodeFormat.ITF.name, BarcodeFormat.QR_CODE.name,
+                BarcodeFormat.DATA_MATRIX.name
+            ))
             setPrompt("ضع الباركود داخل الإطار")
-            setBeepEnabled(false)
+            setBeepEnabled(true)
             setOrientationLocked(false)
         })
     }
