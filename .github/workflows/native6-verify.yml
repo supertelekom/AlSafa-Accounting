@@ -24,9 +24,12 @@ jobs:
         run: yes | sdkmanager --licenses >/dev/null || true
       - name: Install Android SDK
         run: sdkmanager 'platforms;android-34' 'build-tools;34.0.0'
-      - name: Unit tests and debug APK
+      - name: Compile debug APK
         working-directory: native6
-        run: bash ./gradlew --no-daemon :app:testDebugUnitTest :app:assembleDebug
+        run: bash ./gradlew --no-daemon --console=plain :app:assembleDebug
+      - name: Accounting unit tests
+        working-directory: native6
+        run: bash ./gradlew --no-daemon --console=plain :app:testDebugUnitTest
       - name: Upload debug APK
         if: success()
         uses: actions/upload-artifact@v4
