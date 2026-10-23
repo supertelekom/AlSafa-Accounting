@@ -91,9 +91,45 @@ class MainActivity:Activity() {
     }
     private fun render(){
         val root=column();root.setBackgroundColor(Color.rgb(248,243,235));setContentView(root)
-        text("الصفا للساعات   |   Native 6",root,24f).setTextColor(gold)
-        text("نسخة تطوير — حفظ محلي على التابلت",root,13f)
-        if(page!="home")button("‹ رجوع",root){backPage()}
+        if(page=="home") {
+            text("الصفا للساعات",root,24f).setTextColor(gold)
+            text("نسخة تطوير — حفظ محلي على التابلت",root,13f)
+        } else {
+            val titles=mapOf(
+                "simple" to "الوضع المبسط","advanced" to "الوضع الكامل",
+                "products" to "المنتجات وقطع الصيانة","inventory" to "المخزون",
+                "stock-history" to "حركات المخزون","stocktake-history" to "سجل الجرد",
+                "sale" to "المبيع","invoices" to "الفواتير",
+                "vaults" to "الخزنات والإقفال","suppliers" to "الموردون والمشتريات",
+                "repairs" to "الصيانة","reports" to "التقارير الشهرية",
+                "period-reports" to "تقارير الفترة","trial-balance" to "ميزان المراجعة",
+                "account-ledger" to "دفتر الحساب","journal-integrity" to "تدقيق القيود",
+                "structural-audit" to "التدقيق المحاسبي","partners" to "الشركاء",
+                "backup" to "النسخ الاحتياطي","legacy-audit" to "تدقيق الأرشيف",
+                "legacy-history" to "الأرشيف القديم","audit" to "سجل العمليات"
+            )
+            val header=LinearLayout(this).apply {
+                orientation=LinearLayout.HORIZONTAL
+                layoutDirection=View.LAYOUT_DIRECTION_RTL
+                gravity=Gravity.CENTER_VERTICAL
+            }
+            root.addView(header,LinearLayout.LayoutParams(-1,dp(66)))
+            val back=Button(this).also {
+                style(it);it.text="رجوع";it.isAllCaps=false;it.background=background()
+                header.addView(it,LinearLayout.LayoutParams(dp(100),dp(56)))
+                it.setOnClickListener { if(!busy)backPage() }
+            }
+            text(titles[page] ?: "الصفا للساعات",header,22f).apply {
+                setTextColor(gold)
+                gravity=Gravity.CENTER_VERTICAL
+                layoutParams=LinearLayout.LayoutParams(0,dp(60),1f)
+            }
+            Button(this).also {
+                style(it);it.text="الرئيسية";it.isAllCaps=false;it.background=background()
+                header.addView(it,LinearLayout.LayoutParams(dp(116),dp(56)))
+                it.setOnClickListener { if(!busy)homePage() }
+            }
+        }
         val scroll=ScrollView(this);body=column();scroll.addView(body);root.addView(scroll,LinearLayout.LayoutParams(-1,0,1f))
         when(page){"home"->home();"simple"->simple();"advanced"->advanced();"products"->products();"inventory"->inventoryDashboard();"stock-history"->selectedProduct?.let{stockHistory(it)};"stocktake-history"->stocktakeHistoryScreen();"sale"->sale();"invoices"->invoices();"vaults"->vaults();"suppliers"->suppliers();"repairs"->repairs();"reports"->reports();"period-reports"->periodReports();"trial-balance"->trialBalanceScreen();"account-ledger"->accountLedgerScreen();"journal-integrity"->journalIntegrityScreen();"structural-audit"->structuralAuditScreen();"partners"->partners();"backup"->backup();"legacy-audit"->legacyAudit();"legacy-history"->legacyHistory();"audit"->audit()}
     }
