@@ -631,12 +631,16 @@ class Store(val helper:StoreDb) {
             "receivable:$invoiceId","refund:$invoiceId")
         var due=0L
         var liability=0L
-        return movements.map { row ->
+        val history=movements.map { row ->
             due=Math.addExact(due,row.getValue("receivable_delta").toLong())
             liability=Math.addExact(liability,row.getValue("refund_delta").toLong())
             row+mapOf("receivable_balance" to due.toString(),
                 "refund_liability" to liability.toString())
         }
+        check(due==scalar("SELECT coalesce(sum(amount),0) FROM journal WHERE account=? AND currency=?",
+            "receivable:$invoiceId",inv.currency.name)){"كشف الفاتورة لا يطابق رصيد ذمة العميل"}
+        check(liability==refundLiability(invoiceId)){"كشف الفاتورة لا يطابق التزام الاسترداد"}
+        return history
     }
     fun invoiceDueOn(invoiceId:String,date:String):Long {
         val inv=invoice(invoiceId)
