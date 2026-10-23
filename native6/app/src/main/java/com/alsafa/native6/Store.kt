@@ -885,7 +885,7 @@ class Store(val helper:StoreDb) {
         }
         // Reject inconsistent accumulated returns before creating a receivable or refund liability.
         require(credit(invoiceId) in 0L..inv.total){"إجمالي المرتجعات غير متسق مع قيمة الفاتورة"}
-        require(scalar("SELECT coalesce(sum(cost),0) FROM returns WHERE invoice_id=?",invoiceId) in 0L..inv.cost){"تكلفة المرتجعات غير متسقة مع تكلفة الفاتورة"}
+        require(scalar("SELECT coalesce(sum(cost),0) FROM returns WHERE invoice_id=?",invoiceId) in 0L..scalar("SELECT cost FROM invoices WHERE id=?",invoiceId)){"تكلفة المرتجعات غير متسقة مع تكلفة الفاتورة"}
         // Credit applied against debt first; excess is a refund liability, never an automatic cash withdrawal.
         val previousCredit=Math.subtractExact(credit(invoiceId),totalCredit);val previousDue=maxOf(0L,Math.subtractExact(Math.subtractExact(inv.total,previousCredit),paid(invoiceId)));val debtReduction=minOf(previousDue,totalCredit)
         post(command,listOf(Posting("revenue:returns",inv.currency,totalCredit),Posting("receivable:$invoiceId",inv.currency,-debtReduction),Posting("refund:$invoiceId",inv.currency,Math.negateExact(Math.subtractExact(totalCredit,debtReduction))),Posting("inventory",inv.currency,costCredit),Posting("expense:cogs",inv.currency,-costCredit)))
