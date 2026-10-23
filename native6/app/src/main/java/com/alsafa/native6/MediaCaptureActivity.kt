@@ -48,6 +48,7 @@ class MediaCaptureActivity : Activity() {
             text = "فتح الكاميرا"
             setOnClickListener {
                 try {
+                    pendingCameraPath?.let { File(it).delete() }
                     val dir=File(cacheDir,"camera").apply { mkdirs() }
                     val output=File(dir,"${UUID.randomUUID()}.jpg")
                     pendingCameraPath=output.absolutePath
