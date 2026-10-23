@@ -15,7 +15,11 @@ import java.util.concurrent.Executors
 import java.time.YearMonth
 
 /** Android Views only. Palette, terminology and mode chooser taken from v3.9.353. */
-class MainActivity:Activity() {
+open class MainActivity:Activity() {
+    companion object {
+        const val EXTRA_PAGE="com.alsafa.native6.PAGE"
+        const val EXTRA_PRODUCT_ID="com.alsafa.native6.PRODUCT_ID"
+    }
     private lateinit var store:Store
     private lateinit var body:LinearLayout
     private lateinit var font:Typeface
@@ -29,7 +33,7 @@ class MainActivity:Activity() {
     private val ink=Color.rgb(62,52,41)
     private val gold=Color.rgb(169,121,41)
     private val vaultNames=listOf("درج المحل","الصندوق الخارجي","شام كاش","البنك")
-    override fun onCreate(state:Bundle?) {super.onCreate(state);store=Store(StoreDb(this));font=try { Typeface.createFromAsset(assets,"Tajawal-Medium.ttf") } catch (_:Exception) { Typeface.DEFAULT };page=state?.getString("page")?:"home";state?.getStringArrayList("pageHistory")?.forEach { pageHistory.addLast(it) };pdfInvoice=state?.getString("pdfInvoice");safeRender();io.execute{Store.vaults.forEach{vault->try{store.autoCloseMissingDays(vault,31)}catch(e:Exception){runOnUiThread{if(!isFinishing&&!isDestroyed)Toast.makeText(this,"تعذر الإقفال التلقائي للصندوق $vault: ${e.message}",Toast.LENGTH_LONG).show()}}};runOnUiThread{if(!isFinishing&&!isDestroyed && page=="vaults")safeRender()}}}
+    override fun onCreate(state:Bundle?) {super.onCreate(state);store=Store(StoreDb(this));font=try { Typeface.createFromAsset(assets,"Tajawal-Medium.ttf") } catch (_:Exception) { Typeface.DEFAULT };page=state?.getString("page")?:intent.getStringExtra(EXTRA_PAGE)?:"home";state?.getStringArrayList("pageHistory")?.forEach { pageHistory.addLast(it) };if(page=="stock-history")intent.getStringExtra(EXTRA_PRODUCT_ID)?.let { productId -> selectedProduct=try { store.product(productId) } catch (_:Exception) { null } };pdfInvoice=state?.getString("pdfInvoice");safeRender();if(this !is SectionActivity)io.execute{Store.vaults.forEach{vault->try{store.autoCloseMissingDays(vault,31)}catch(e:Exception){runOnUiThread{if(!isFinishing&&!isDestroyed)Toast.makeText(this,"تعذر الإقفال التلقائي للصندوق $vault: ${e.message}",Toast.LENGTH_LONG).show()}}};runOnUiThread{if(!isFinishing&&!isDestroyed && page=="vaults")safeRender()}}}
     private fun dp(n:Int)=(n*resources.displayMetrics.density).toInt()
     private fun style(v:TextView){v.typeface=font;v.setTextColor(ink);v.textSize=18f;v.setPadding(dp(12),dp(10),dp(12),dp(10))}
     private fun background(color:Int=Color.rgb(255,253,249))=GradientDrawable().apply{setColor(color);cornerRadius=dp(14).toFloat();setStroke(dp(1),Color.rgb(234,223,206))}
@@ -47,21 +51,23 @@ class MainActivity:Activity() {
     }
     private fun error(e:Exception){AlertDialog.Builder(this).setTitle("لم تُحفظ العملية").setMessage(e.message?:"حدث خطأ").setPositiveButton("حسناً",null).show()}
     private fun work(task:()->Unit){if(busy)return;busy=true;try{io.execute{try{task();runOnUiThread{busy=false;if(!isFinishing&&!isDestroyed){Toast.makeText(this,"اكتملت العملية",Toast.LENGTH_SHORT).show();safeRender()}}}catch(e:Exception){runOnUiThread{busy=false;if(!isFinishing&&!isDestroyed)error(e)}}}}catch(e:java.util.concurrent.RejectedExecutionException){busy=false;if(!isFinishing&&!isDestroyed)error(e)}}
-    /** Navigate to a full screen and retain the previous screen for Back. */
+    /** Every destination is a separate native Activity instance and owns its content. */
     private fun go(value:String){
         if(value==page)return
-        pageHistory.addLast(page)
-        page=value
-        safeRender()
+        val next=Intent(this,SectionActivity::class.java).putExtra(EXTRA_PAGE,value)
+        if(value=="stock-history")selectedProduct?.let { next.putExtra(EXTRA_PRODUCT_ID,it.id) }
+        startActivity(next)
     }
-    private fun backPage(){
-        page=if(pageHistory.isEmpty()) "home" else pageHistory.removeLast()
-        safeRender()
-    }
+    private fun backPage(){ finish() }
     private fun homePage(){
-        pageHistory.clear()
-        page="home"
-        safeRender()
+        if(this is SectionActivity) {
+            startActivity(Intent(this,MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP))
+            finish()
+        } else {
+            pageHistory.clear()
+            page="home"
+            safeRender()
+        }
     }
     private fun label(value:String)=mapOf("sale" to "مبيع", "purchase" to "شراء", "repair" to "صيانة", "posted" to "مسجلة", "cancelled" to "ملغاة", "received" to "مستلمة", "in_progress" to "قيد الصيانة", "legacy_unknown" to "حالة قديمة تحتاج مراجعة", "ready" to "جاهزة", "delivered" to "تم التسليم")[value]?:value
     private fun money(n:Long,c:Currency)=Money(n,c).display()
@@ -71,7 +77,7 @@ class MainActivity:Activity() {
         super.onDestroy()
     }
     override fun onSaveInstanceState(out:Bundle){out.putString("page",page);out.putStringArrayList("pageHistory",ArrayList(pageHistory));out.putString("pdfInvoice",pdfInvoice);super.onSaveInstanceState(out)}
-    override fun onBackPressed(){if(page!="home")backPage() else super.onBackPressed()}
+    override fun onBackPressed(){if(this is SectionActivity)finish() else super.onBackPressed()}
     private fun safeRender() {
         try { render() } catch (e: Exception) {
             page="home"
