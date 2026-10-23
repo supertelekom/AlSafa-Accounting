@@ -248,4 +248,13 @@ class ReceivableAccountingTest {
         assertTrue(store.refundLiabilityIssues().isEmpty())
     }
 
+    @Test fun invoiceStatementAuditPassesForPaidAndCreditSales() {
+        val credit=invoice(0L)
+        val paid=invoice(10000L)
+        store.collect(credit,4000L,"drawer")
+        store.returnSale(paid,mapOf(0 to 1L),"Returned")
+        store.refund(paid,3000L,"drawer")
+        assertTrue(store.invoiceStatementIssues().isEmpty())
+    }
+
 }
