@@ -14,5 +14,6 @@ class CustomerChatTest {
     @Test fun invalidPhoneRejected() {
         assertThrows(IllegalArgumentException::class.java) { CustomerChat.normalizedNumber("") }
         assertThrows(IllegalArgumentException::class.java) { CustomerChat.normalizedNumber("123") }
+        assertThrows(IllegalArgumentException::class.java) { CustomerChat.normalizedNumber("0912abc345678") }
     }
 }
