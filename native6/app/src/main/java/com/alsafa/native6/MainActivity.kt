@@ -92,15 +92,22 @@ open class MainActivity:Activity() {
     @Deprecated("Deprecated in Java")
     override fun onActivityResult(requestCode:Int,resultCode:Int,data:Intent?){
         super.onActivityResult(requestCode,resultCode,data)
-        if(requestCode==65 && resultCode==RESULT_OK){
-            val code=data?.getStringExtra(BarcodeScanActivity.EXTRA_BARCODE)?.trim().orEmpty()
-            if(code.isNotEmpty()){
-                val matches=store.products(code).filter { it.barcode==code }
-                if(matches.size==1) productForm(matches.first())
-                else AlertDialog.Builder(this).setTitle("نتيجة مسح الباركود")
-                    .setMessage(if(matches.isEmpty()) "لم يُعثر على منتج بالباركود: $code" else "عُثر على أكثر من منتج بالباركود: $code")
-                    .setPositiveButton("حسنًا",null).show()
-            }
+        if(resultCode!=RESULT_OK || requestCode !in listOf(65,66))return
+        val code=data?.getStringExtra(BarcodeScanActivity.EXTRA_BARCODE)?.trim().orEmpty()
+        if(code.isEmpty())return
+        val matches=store.products(code).filter { it.barcode==code }
+        when {
+            matches.size>1 -> AlertDialog.Builder(this).setTitle("باركود مكرر")
+                .setMessage("يوجد أكثر من صنف بنفس الباركود: $code. يرجى تصحيح البيانات.")
+                .setPositiveButton("حسنًا",null).show()
+            matches.isEmpty() -> AlertDialog.Builder(this).setTitle("لم يُعثر على الصنف")
+                .setMessage("الباركود: $code")
+                .setPositiveButton("حسنًا",null).show()
+            requestCode==65 -> productForm(matches.first())
+            matches.first().stock<=0 -> AlertDialog.Builder(this).setTitle("نفاد المخزون")
+                .setMessage("الصنف ${matches.first().name} غير متوفر في المخزون.")
+                .setPositiveButton("حسنًا",null).show()
+            else -> addSaleProduct(matches.first())
         }
     }
     private fun label(value:String)=mapOf("sale" to "مبيع", "purchase" to "شراء", "repair" to "صيانة", "posted" to "مسجلة", "cancelled" to "ملغاة", "received" to "مستلمة", "in_progress" to "قيد الصيانة", "legacy_unknown" to "حالة قديمة تحتاج مراجعة", "ready" to "جاهزة", "delivered" to "تم التسليم")[value]?:value
@@ -426,8 +433,26 @@ open class MainActivity:Activity() {
         {val c=Currency.entries[curr.selectedItemPosition];val n=name.text.toString();val b=barcode.text.toString();val value=amount(price,c);val costValue=cost?.let{amount(it,c)}?:0;val q=qty?.text?.toString()?.toLong()?:0
             work{if(p==null)store.addProduct(n,b,c,value,costValue,q,if(kind?.selectedItemPosition==1)"part" else "watch")else store.editProduct(p.id,n,b,value)} }
     }}
-    private fun sale(){text("فاتورة مبيعات",size=25f);button("＋ اختيار منتج"){chooseProduct(inStockOnly=true){p->form("إضافة ${p.name}"){box->val qty=field("الكمية",box,"1",true);val price=field("سعر الوحدة ${p.currency}",box,Money(p.price,p.currency).display().substringBefore(' '),true);
-            {val q=qty.text.toString().toLong();require(q>0){"الكمية يجب أن تكون موجبة"};require(q<=store.product(p.id).stock){"الكمية المطلوبة أكبر من المخزون المتاح"};require(basket.isEmpty()||basketCurrency==p.currency){"اختر أصنافاً بنفس العملة"};require(basket.none{it.productId==p.id}){"الصنف موجود في السلة"};basketCurrency=p.currency;basket.add(SaleItem(p.id,q,amount(price,p.currency)));render()}}}}
+    private fun addSaleProduct(p:Product){
+        form("إضافة ${p.name}"){box->
+            val qty=field("الكمية",box,"1",true)
+            val price=field("سعر الوحدة ${p.currency}",box,Money(p.price,p.currency).display().substringBefore(' '),true)
+            ({
+                val q=qty.text.toString().toLong()
+                require(q>0){"الكمية يجب أن تكون موجبة"}
+                require(q<=store.product(p.id).stock){"الكمية المطلوبة أكبر من المخزون المتاح"}
+                require(basket.isEmpty()||basketCurrency==p.currency){"اختر أصنافاً بنفس العملة"}
+                require(basket.none{it.productId==p.id}){"الصنف موجود في السلة"}
+                basketCurrency=p.currency
+                basket.add(SaleItem(p.id,q,amount(price,p.currency)))
+                render()
+            })
+        }
+    }
+    private fun sale(){
+        text("فاتورة مبيعات",size=25f)
+        button("＋ اختيار منتج"){chooseProduct(inStockOnly=true){p->addSaleProduct(p)}}
+        button("▣ مسح باركود لإضافة صنف"){startActivityForResult(Intent(this,BarcodeScanActivity::class.java),66)}
         basket.toList().forEach{line->button("${store.product(line.productId).name} × ${line.qty} · ${money(mul(line.qty,line.unitPrice),basketCurrency)}  [إزالة]"){basket.remove(line);render()}}
         if(basket.isNotEmpty()){val total=basket.fold(0L){a,i->add(a,mul(i.qty,i.unitPrice))};text("الإجمالي ${money(total,basketCurrency)}");button("إتمام الفاتورة"){form("حفظ فاتورة مبيعات"){box->val customer=field("العميل",box);val phone=field("الهاتف",box);val discount=field("الخصم ${basketCurrency.name}",box,"0",true);val paid=field("المدفوع ${basketCurrency.name}",box,Money(total,basketCurrency).display().substringBefore(' '),true);val vault=select("يُقبض في",vaultNames,box);val invoiceDate=field("تاريخ فاتورة البيع YYYY-MM-DD",box,Store.today());val receiptDate=field("تاريخ استلام النقود الفعلي YYYY-MM-DD (إذا دُفع مبلغ)",box,Store.today());text("للمبيعات الأونلاين غير المحصلة: اجعل المدفوع صفراً، ثم سجّل القبض من الفاتورة عند وصول النقود.",box);
             {val customerText=customer.text.toString();val phoneText=phone.text.toString();val d=amount(discount,basketCurrency);val pay=amount(paid,basketCurrency);val v=Store.vaults[vault.selectedItemPosition];val items=basket.toList();val c=basketCurrency;val gross=items.fold(0L){sum,item->Math.addExact(sum,Math.multiplyExact(item.qty,item.unitPrice))};require(gross>0 && d>=0 && d<gross){"الإجمالي أو الخصم غير صالح"};require(pay>=0 && pay<=gross-d){"المدفوع يتجاوز المبلغ المستحق بعد الخصم"};require(pay==gross-d || customerText.isNotBlank()){"اسم العميل مطلوب عند وجود مبلغ آجل"};items.forEach{item->require(item.qty<=store.product(item.productId).stock){"تغير مخزون أحد الأصناف؛ راجع السلة"}};val issued=java.time.LocalDate.parse(invoiceDate.text.toString().trim()).toString();val collected=java.time.LocalDate.parse(receiptDate.text.toString().trim()).toString();work{store.sale(items,customerText,phoneText,c,pay,v,d,date=issued,receiptDate=collected);runOnUiThread{basket.clear();page="invoices"}}}
