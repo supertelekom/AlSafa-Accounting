@@ -941,19 +941,6 @@ class Store(val helper:StoreDb) {
         check(running==supplierMonthClosing(supplier,c,month)){"كشف المورد الشهري لا يطابق رصيد نهاية الشهر"}
         return entries
     }
-    /** A supplier's month is isolated: previous debt is carry-in, not a new purchase. */
-    fun supplierMonthStatement(supplier:String,c:Currency,month:String):Map<String,Long> {
-        val opening=supplierMonthOpening(supplier,c,month)
-        val charges=supplierMonthCharges(supplier,c,month)
-        val payments=supplierMonthPayments(supplier,c,month)
-        val closing=supplierMonthClosing(supplier,c,month)
-        check(Math.subtractExact(Math.addExact(opening,charges),payments)==closing) {
-            "كشف المورد الشهري لا يطابق رصيد الدين"
-        }
-        check(opening>=0L && closing>=0L){"رصيد المورد الشهري سالب"}
-        return mapOf("opening" to opening,"purchases" to charges,
-            "payments" to payments,"closing" to closing)
-    }
     fun supplierMonthOpening(supplier:String,c:Currency,month:String):Long {
         require(scalar("SELECT count(*) FROM suppliers WHERE id=?",supplier)==1L){"المورد غير موجود"}
         val start=java.time.YearMonth.parse(month).atDay(1).toString()
