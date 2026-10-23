@@ -609,6 +609,28 @@ class Store(val helper:StoreDb) {
             WHERE r.invoice_id=? ORDER BY e.date,e.created,e.id""",invoiceId)
     }
     /** Posted receivable account is authoritative: excess returns create refund liabilities, not negative customer debts. */
+    /** Immutable financial history of one invoice, with separate running receivable and refund liability. */
+    fun invoiceFinancialHistory(invoiceId:String):List<Map<String,String>> {
+        val inv=invoice(invoiceId)
+        require(inv.kind=="sale" || inv.kind=="repair"){"كشف الحركات متاح للبيع والصيانة"}
+        val movements=rows("""SELECT e.date,e.kind,e.id event_id,e.memo,
+            coalesce(sum(CASE WHEN j.account=? THEN j.amount ELSE 0 END),0) receivable_delta,
+            coalesce(sum(CASE WHEN j.account=? THEN -j.amount ELSE 0 END),0) refund_delta
+            FROM journal j JOIN events e ON e.id=j.event_id
+            WHERE j.currency=? AND j.account IN (?,?)
+            GROUP BY e.id,e.date,e.kind,e.memo,e.created
+            ORDER BY e.date,e.created,e.id""",
+            "receivable:$invoiceId","refund:$invoiceId",inv.currency.name,
+            "receivable:$invoiceId","refund:$invoiceId")
+        var due=0L
+        var liability=0L
+        return movements.map { row ->
+            due=Math.addExact(due,row.getValue("receivable_delta").toLong())
+            liability=Math.addExact(liability,row.getValue("refund_delta").toLong())
+            row+mapOf("receivable_balance" to due.toString(),
+                "refund_liability" to liability.toString())
+        }
+    }
     fun invoiceDueOn(invoiceId:String,date:String):Long {
         val inv=invoice(invoiceId)
         require(inv.kind=="sale" || inv.kind=="repair"){"الذمة تخص فواتير البيع والصيانة"}
