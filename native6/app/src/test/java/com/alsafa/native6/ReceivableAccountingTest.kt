@@ -136,4 +136,15 @@ class ReceivableAccountingTest {
         assertTrue(store.negativeReceivableDays().isEmpty())
     }
 
+    @Test fun successfulSettlementHasNoChronologicalAuditFindings() {
+        val id=invoice(10000L)
+        store.returnSale(id,mapOf(0 to 1L),"Returned")
+        store.refund(id,2500L,"drawer")
+        assertTrue(store.negativeVaultDays().isEmpty())
+        assertTrue(store.negativeReceivableDays().isEmpty())
+        assertTrue(store.negativeRefundLiabilityDays().isEmpty())
+        assertTrue(store.customerReceivableIssues().isEmpty())
+        assertTrue(store.refundLiabilityIssues().isEmpty())
+    }
+
 }
