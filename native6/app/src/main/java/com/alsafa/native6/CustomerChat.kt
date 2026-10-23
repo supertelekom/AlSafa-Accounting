@@ -10,6 +10,12 @@ object CustomerChat {
         require(input.all { it in '0'..'9' || it in "+ -()" }) { "رقم الهاتف يحتوي على رموز غير صالحة" }
         val digits=input.filter { it in '0'..'9' }
         require(digits.isNotEmpty()) { "أدخل رقم هاتف العميل" }
+        require(!digits.startsWith("00963") || digits.length==14) { "رقم سوري غير مكتمل" }
+        require(!digits.startsWith("963") || digits.length==12) { "رقم سوري غير مكتمل" }
+        require(!digits.startsWith("0090") || digits.length==14) { "رقم تركي غير مكتمل" }
+        require(!digits.startsWith("90") || digits.length==12) { "رقم تركي غير مكتمل" }
+        require(!digits.startsWith("05") || digits.length==11) { "رقم تركي غير مكتمل" }
+        require(!digits.startsWith("09") || digits.length==10) { "رقم سوري غير مكتمل" }
         val result=when {
             digits.startsWith("00963") && digits.length==14 -> digits.drop(2)
             digits.startsWith("963") && digits.length==12 -> digits
