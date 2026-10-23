@@ -9,7 +9,9 @@ import java.io.File
 object BackupMediaPaths {
     fun rebase(context:Context,data:JSONObject,media:JSONArray?=null) {
         val available=mutableSetOf<String>()
-        if(media!=null) for(i in 0 until media.length()) available.add(media.getJSONObject(i).getString("name"))
+        if(media!=null) for(i in 0 until media.length()) {
+            require(available.add(media.getJSONObject(i).getString("name"))) { "اسم صورة مكرر في النسخة" }
+        }
         val imageDir=File(context.filesDir,"images").canonicalFile
         for(table in listOf("products","repairs")) {
             val records=data.getJSONArray(table)
