@@ -559,8 +559,8 @@ class Store(val helper:StoreDb) {
                     last.getValue("refund_liability").toLong()<0L) {
                     issues.add(row+("issue" to "رصيد ذمة أو استرداد سالب"))
                 }
-            } catch(e:IllegalStateException) {
-                issues.add(row+("issue" to (e.message ?: "اختلاف في كشف الفاتورة")))
+            } catch(e:RuntimeException) {
+                issues.add(row+("issue" to (e.message ?: "تعذر قراءة كشف الفاتورة")))
             }
         }
         return issues
