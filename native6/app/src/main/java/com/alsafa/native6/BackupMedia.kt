@@ -34,6 +34,7 @@ object BackupMedia {
         val pending=mutableListOf<Pair<File,ByteArray>>()
         var total=0L
         val names=mutableSetOf<String>()
+        require(entries.length()<=10000) { "عدد الصور في النسخة كبير جداً" }
         for(i in 0 until entries.length()) {
             val row=entries.getJSONObject(i)
             val name=row.getString("name")
