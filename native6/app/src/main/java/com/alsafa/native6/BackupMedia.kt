@@ -64,6 +64,7 @@ object BackupMedia {
             require(encoded.length%4==0 && encoded.isNotEmpty() &&
                 encoded.dropLast(padding).all { (it in 'A'..'Z') || (it in 'a'..'z') || (it in '0'..'9') || it=='+' || it=='/' } &&
                 encoded.takeLast(padding).all { it=='=' }) { "ترميز الصورة غير صالح" }
+            require(padding<=2 && (padding==0 || encoded.length>=4)) { "حشو Base64 غير صالح" }
             val decodedSize=encoded.length.toLong()/4L*3L-padding
             require(decodedSize in 1..MAX_FILE) { "حجم الصورة غير صالح" }
             total+=decodedSize
