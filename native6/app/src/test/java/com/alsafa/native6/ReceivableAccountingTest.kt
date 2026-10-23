@@ -233,4 +233,19 @@ class ReceivableAccountingTest {
         assertEquals(before,store.scalar("SELECT count(*) FROM journal"))
     }
 
+    @Test fun invoiceHistoryBalancesMatchJournalAfterMultipleMovements() {
+        val product=store.addProduct("Multi-movement watch","",Currency.USD,10000L,5000L,4L)
+        val id=store.sale(listOf(SaleItem(product,2L,10000L)),"Customer","",
+            Currency.USD,0L,"drawer")
+        store.collect(id,15000L,"drawer")
+        store.returnSale(id,mapOf(0 to 1L),"One returned")
+        store.refund(id,2000L,"drawer")
+        val last=store.invoiceFinancialHistory(id).last()
+        assertEquals(0L,last.getValue("receivable_balance").toLong())
+        assertEquals(3000L,last.getValue("refund_liability").toLong())
+        assertEquals(store.refundLiability(id),last.getValue("refund_liability").toLong())
+        assertTrue(store.customerReceivableIssues().isEmpty())
+        assertTrue(store.refundLiabilityIssues().isEmpty())
+    }
+
 }
