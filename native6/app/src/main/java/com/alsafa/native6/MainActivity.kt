@@ -25,7 +25,6 @@ open class MainActivity:Activity() {
     private lateinit var font:Typeface
     private val io=Executors.newSingleThreadExecutor()
     private var page="home"
-    private val pageHistory=ArrayDeque<String>()
     @Volatile private var busy=false
     private var pdfInvoice:String?=null
     private val basket=mutableListOf<SaleItem>()
@@ -33,7 +32,7 @@ open class MainActivity:Activity() {
     private val ink=Color.rgb(62,52,41)
     private val gold=Color.rgb(169,121,41)
     private val vaultNames=listOf("درج المحل","الصندوق الخارجي","شام كاش","البنك")
-    override fun onCreate(state:Bundle?) {super.onCreate(state);store=Store(StoreDb(this));font=try { Typeface.createFromAsset(assets,"Tajawal-Medium.ttf") } catch (_:Exception) { Typeface.DEFAULT };page=state?.getString("page")?:intent.getStringExtra(EXTRA_PAGE)?:"home";state?.getStringArrayList("pageHistory")?.forEach { pageHistory.addLast(it) };if(page=="stock-history")intent.getStringExtra(EXTRA_PRODUCT_ID)?.let { productId -> selectedProduct=try { store.product(productId) } catch (_:Exception) { null } };pdfInvoice=state?.getString("pdfInvoice");safeRender();if(this !is SectionActivity)io.execute{Store.vaults.forEach{vault->try{store.autoCloseMissingDays(vault,31)}catch(e:Exception){runOnUiThread{if(!isFinishing&&!isDestroyed)Toast.makeText(this,"تعذر الإقفال التلقائي للصندوق $vault: ${e.message}",Toast.LENGTH_LONG).show()}}};runOnUiThread{if(!isFinishing&&!isDestroyed && page=="vaults")safeRender()}}}
+    override fun onCreate(state:Bundle?) {super.onCreate(state);store=Store(StoreDb(this));font=try { Typeface.createFromAsset(assets,"Tajawal-Medium.ttf") } catch (_:Exception) { Typeface.DEFAULT };page=state?.getString("page")?:intent.getStringExtra(EXTRA_PAGE)?:"home";if(page=="stock-history")intent.getStringExtra(EXTRA_PRODUCT_ID)?.let { productId -> selectedProduct=try { store.product(productId) } catch (_:Exception) { null } };pdfInvoice=state?.getString("pdfInvoice");safeRender();if(this !is SectionActivity)io.execute{Store.vaults.forEach{vault->try{store.autoCloseMissingDays(vault,31)}catch(e:Exception){runOnUiThread{if(!isFinishing&&!isDestroyed)Toast.makeText(this,"تعذر الإقفال التلقائي للصندوق $vault: ${e.message}",Toast.LENGTH_LONG).show()}}};runOnUiThread{if(!isFinishing&&!isDestroyed && page=="vaults")safeRender()}}}
     private fun dp(n:Int)=(n*resources.displayMetrics.density).toInt()
     private fun style(v:TextView){v.typeface=font;v.setTextColor(ink);v.textSize=18f;v.setPadding(dp(12),dp(10),dp(12),dp(10))}
     private fun background(color:Int=Color.rgb(255,253,249))=GradientDrawable().apply{setColor(color);cornerRadius=dp(14).toFloat();setStroke(dp(1),Color.rgb(234,223,206))}
@@ -64,7 +63,6 @@ open class MainActivity:Activity() {
             startActivity(Intent(this,MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP))
             finish()
         } else {
-            pageHistory.clear()
             page="home"
             safeRender()
         }
@@ -76,7 +74,7 @@ open class MainActivity:Activity() {
         io.shutdown()
         super.onDestroy()
     }
-    override fun onSaveInstanceState(out:Bundle){out.putString("page",page);out.putStringArrayList("pageHistory",ArrayList(pageHistory));out.putString("pdfInvoice",pdfInvoice);super.onSaveInstanceState(out)}
+    override fun onSaveInstanceState(out:Bundle){out.putString("page",page);out.putString("pdfInvoice",pdfInvoice);super.onSaveInstanceState(out)}
     override fun onBackPressed(){if(this is SectionActivity)finish() else super.onBackPressed()}
     private fun safeRender() {
         try { render() } catch (e: Exception) {
