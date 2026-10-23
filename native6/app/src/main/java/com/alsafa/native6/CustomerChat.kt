@@ -14,6 +14,7 @@ object CustomerChat {
             digits.startsWith("00963") -> digits.drop(2)
             digits.startsWith("963") -> digits
             digits.startsWith("09") && digits.length==10 -> "963"+digits.drop(1)
+            digits.startsWith("05") && digits.length==10 -> "90"+digits.drop(1)
             digits.startsWith("9") && digits.length==9 -> "963"+digits
             digits.startsWith("00") -> digits.drop(2)
             else -> digits
