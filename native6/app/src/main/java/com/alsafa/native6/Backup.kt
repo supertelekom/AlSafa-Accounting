@@ -43,14 +43,14 @@ class Backup(private val context:Context,private val store:Store) {
         val data=store.transaction {validate(store);val obj=JSONObject();tables.forEach { table ->val list=JSONArray();store.db.rawQuery("SELECT * FROM $table",null).use{c->while(c.moveToNext()){val row=JSONObject();c.columnNames.forEachIndexed{i,n->row.put(n,when(c.getType(i)){android.database.Cursor.FIELD_TYPE_NULL->JSONObject.NULL;android.database.Cursor.FIELD_TYPE_INTEGER->c.getLong(i);else->c.getString(i)})};list.put(row)}};obj.put(table,list)};obj.toString()}
         val media=BackupMedia.collect(context)
         BackupMediaPaths.rebase(context,JSONObject(data),media)
-        val result=JSONObject().put("format","alsafa-native6-backup").put("media",media).put("media_sha256",sha(media.toString().toByteArray(Charsets.UTF_8))).put("schema",7).put("encoding","gzip-base64").put("sha256",sha(data.toByteArray(Charsets.UTF_8))).put("data",gzip(data)).toString().toByteArray(Charsets.UTF_8)
+        val result=JSONObject().put("format","alsafa-native6-backup").put("media",media).put("media_sha256",sha(media.toString().toByteArray(Charsets.UTF_8))).put("schema",8).put("encoding","gzip-base64").put("sha256",sha(data.toByteArray(Charsets.UTF_8))).put("data",gzip(data)).toString().toByteArray(Charsets.UTF_8)
         require(result.size<=MAX_BYTES){"حجم النسخة أكبر من الحد المدعوم للاستعادة؛ لم يُكتب ملف ناقص"}
         output.write(result);output.flush()
     }
     fun restore(input:InputStream) {
-        val root=JSONObject(String(read(input),Charsets.UTF_8));require(root.getString("format")=="alsafa-native6-backup"&&root.getInt("schema") in 1..7){"نوع النسخة غير مدعوم"}
+        val root=JSONObject(String(read(input),Charsets.UTF_8));require(root.getString("format")=="alsafa-native6-backup"&&root.getInt("schema") in 1..8){"نوع النسخة غير مدعوم"}
         if(root.getInt("schema")>=7) require(root.optJSONArray("media")!=null) { "النسخة لا تحتوي على فهرس الصور" }
-        if(root.getInt("schema")>=7) require(sha(root.getJSONArray("media").toString().toByteArray(Charsets.UTF_8))==root.getString("media_sha256")) { "فشل التحقق من فهرس الصور" }
+        if(root.getInt("schema")>=8) require(sha(root.getJSONArray("media").toString().toByteArray(Charsets.UTF_8))==root.getString("media_sha256")) { "فشل التحقق من فهرس الصور" }
         val text=if(root.getInt("schema")>=4) {
             require(root.getString("encoding")=="gzip-base64"){"نوع ضغط غير مدعوم"}
             ungzip(root.getString("data"))
