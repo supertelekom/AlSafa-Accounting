@@ -22,8 +22,9 @@ object CustomerChat {
     }
     fun open(activity:Activity,phone:String,message:String="") {
         val number=normalizedNumber(phone)
-        val url=Uri.parse("https://wa.me/$number").buildUpon()
-            .appendQueryParameter("text",message).build()
+        val builder=Uri.parse("https://wa.me/$number").buildUpon()
+        if(message.isNotBlank())builder.appendQueryParameter("text",message)
+        val url=builder.build()
         activity.startActivity(Intent(Intent.ACTION_VIEW,url))
     }
 }
