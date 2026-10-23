@@ -105,4 +105,35 @@ class ReceivableAccountingTest {
         assertTrue(store.negativeRefundLiabilityDays().isEmpty())
     }
 
+    @Test fun rejectedRefundDoesNotCreateLedgerOrCashMovement() {
+        val id=invoice(10000L)
+        store.returnSale(id,mapOf(0 to 1L),"Returned")
+        val cashBefore=store.balance("drawer",Currency.USD)
+        val refundsBefore=store.scalar("SELECT count(*) FROM refunds WHERE invoice_id=?",id)
+        try {
+            store.refund(id,10001L,"drawer")
+            fail("Invalid refund must be rejected")
+        } catch (_:IllegalArgumentException) { }
+        assertEquals(cashBefore,store.balance("drawer",Currency.USD))
+        assertEquals(refundsBefore,store.scalar("SELECT count(*) FROM refunds WHERE invoice_id=?",id))
+        assertEquals(10000L,store.refundLiability(id))
+    }
+
+    @Test fun rejectedBackdatedCollectionDoesNotChangeReceivable() {
+        val product=store.addProduct("Credit watch","",Currency.USD,10000L,5000L,2L)
+        val invoiceDay=java.time.LocalDate.now().minusDays(3).toString()
+        val receiptDay=java.time.LocalDate.now().minusDays(1).toString()
+        val id=store.sale(listOf(SaleItem(product,1L,10000L)),"Customer","",
+            Currency.USD,0L,"drawer",date=invoiceDay)
+        store.collect(id,7000L,"drawer",date=receiptDay)
+        val cashBefore=store.balance("drawer",Currency.USD)
+        try {
+            store.collect(id,4000L,"drawer",date=invoiceDay)
+            fail("Collection must not overdraw future receivable")
+        } catch (_:IllegalArgumentException) { }
+        assertEquals(3000L,store.due(id))
+        assertEquals(cashBefore,store.balance("drawer",Currency.USD))
+        assertTrue(store.negativeReceivableDays().isEmpty())
+    }
+
 }
