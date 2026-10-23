@@ -42,4 +42,14 @@ class BackupMediaPathsTest {
         }
     }
 
+    @Test fun duplicateMediaNamesAreRejected() {
+        val activity=Robolectric.buildActivity(Activity::class.java).setup().get()
+        val name="${UUID.randomUUID()}.jpg"
+        val media=JSONArray().put(JSONObject().put("name",name)).put(JSONObject().put("name",name))
+        val data=JSONObject().put("products",JSONArray()).put("repairs",JSONArray())
+        assertThrows(IllegalArgumentException::class.java) {
+            BackupMediaPaths.rebase(activity,data,media)
+        }
+    }
+
 }
