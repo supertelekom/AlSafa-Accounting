@@ -36,7 +36,7 @@ object BackupMedia {
         for(i in 0 until entries.length()) {
             val row=entries.getJSONObject(i)
             val name=row.getString("name")
-            require(name.matches(Regex("[a-fA-F0-9-]{36}\\.jpg")) && names.add(name)) { "اسم صورة غير صالح أو مكرر" }
+            require(name.endsWith(".jpg") && name.removeSuffix(".jpg").matches(Regex("[a-fA-F0-9-]{36}")) && names.add(name)) { "اسم صورة غير صالح أو مكرر" }
             val dest=File(dir,name).canonicalFile
             require(dest.parentFile==dir && !dest.exists()) { "الصورة موجودة مسبقاً؛ لن تُستبدل" }
             val bytes=Base64.decode(row.getString("base64"),Base64.DEFAULT)
