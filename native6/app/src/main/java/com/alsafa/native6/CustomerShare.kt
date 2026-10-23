@@ -14,6 +14,7 @@ object CustomerShare {
         val parent=file.canonicalFile.parentFile
         require(parent==allowedPhoto || parent==allowedInvoice) { "المشاركة من مجلد غير مسموح" }
         require(mime in setOf("image/jpeg","application/pdf"))
+        require((mime=="image/jpeg" && parent==allowedPhoto) || (mime=="application/pdf" && parent==allowedInvoice))
         val uri=FileProvider.getUriForFile(activity,activity.packageName+".share",file)
         val intent=Intent(Intent.ACTION_SEND).apply {
             type=mime
