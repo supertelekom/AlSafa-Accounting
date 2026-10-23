@@ -147,4 +147,33 @@ class ReceivableAccountingTest {
         assertTrue(store.refundLiabilityIssues().isEmpty())
     }
 
+    @Test fun partiallyPaidReturnReducesDebtBeforeCreatingRefundLiability() {
+        val product=store.addProduct("Partial watch","",Currency.USD,10000L,5000L,3L)
+        val id=store.sale(listOf(SaleItem(product,2L,10000L)),"Customer","",
+            Currency.USD,15000L,"drawer")
+        assertEquals(5000L,store.due(id))
+        store.returnSale(id,mapOf(0 to 1L),"Partial return")
+        assertEquals(0L,store.due(id))
+        assertEquals(5000L,store.refundLiability(id))
+        assertEquals(5000L,store.refundable(id))
+        store.refund(id,5000L,"drawer")
+        assertEquals(0L,store.refundLiability(id))
+        assertTrue(store.customerReceivableIssues().isEmpty())
+        assertTrue(store.refundLiabilityIssues().isEmpty())
+        assertTrue(store.negativeReceivableDays().isEmpty())
+        assertTrue(store.negativeRefundLiabilityDays().isEmpty())
+    }
+
+    @Test fun creditSaleCollectionThenReturnAllocatesBetweenDebtAndRefund() {
+        val product=store.addProduct("Mixed watch","",Currency.USD,10000L,5000L,3L)
+        val id=store.sale(listOf(SaleItem(product,2L,10000L)),"Customer","",
+            Currency.USD,0L,"drawer")
+        store.collect(id,15000L,"drawer")
+        store.returnSale(id,mapOf(0 to 1L),"One returned")
+        assertEquals(0L,store.due(id))
+        assertEquals(5000L,store.refundLiability(id))
+        assertTrue(store.negativeReceivableDays().isEmpty())
+        assertTrue(store.refundLiabilityIssues().isEmpty())
+    }
+
 }
