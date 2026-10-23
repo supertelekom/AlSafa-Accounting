@@ -94,4 +94,17 @@ class SupplierChronologyTest {
         assertTrue(store.negativeSupplierDebtDays().isEmpty())
     }
 
+    @Test fun supplierMonthAuditIsReadOnlyAndHandlesAllCurrencies() {
+        val supplier=store.addSupplier("Audit supplier","")
+        val day=LocalDate.now().minusDays(1).toString()
+        store.supplierOpening(supplier,Currency.USD,9000L,day)
+        store.supplierOpening(supplier,Currency.TRY,15000L,day)
+        val countBefore=store.scalar("SELECT count(*) FROM journal")
+        val month=java.time.YearMonth.now().toString()
+        assertTrue(store.supplierMonthIssues(month).isEmpty())
+        assertEquals(countBefore,store.scalar("SELECT count(*) FROM journal"))
+        assertEquals(9000L,store.supplierDue(supplier,Currency.USD))
+        assertEquals(15000L,store.supplierDue(supplier,Currency.TRY))
+    }
+
 }
