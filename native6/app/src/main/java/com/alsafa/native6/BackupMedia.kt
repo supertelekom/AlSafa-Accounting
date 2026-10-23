@@ -60,7 +60,8 @@ object BackupMedia {
             require(dest.parentFile==dir && !dest.exists()) { "الصورة موجودة مسبقاً؛ لن تُستبدل" }
             val encoded=row.getString("base64")
             require(encoded.length<=((MAX_FILE+2)/3*4).toInt()+8) { "حجم الصورة المشفرة أكبر من الحد" }
-            val bytes=Base64.decode(encoded,Base64.DEFAULT)
+            require(encoded.length%4==0 && encoded.all { it.isLetterOrDigit() || it=='+' || it=='/' || it=='=' }) { "ترميز الصورة غير صالح" }
+            val bytes=Base64.decode(encoded,Base64.NO_WRAP)
             total+=bytes.size.toLong()
             require(bytes.isNotEmpty() && bytes.size<=MAX_FILE && total<=MAX_TOTAL) { "حجم الصور غير صالح" }
             require(validJpeg(bytes)) { "محتوى الصورة ليس JPEG صالحاً" }
