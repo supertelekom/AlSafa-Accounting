@@ -6,7 +6,6 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.os.Bundle
 import android.provider.MediaStore
-import androidx.core.content.FileProvider
 import android.view.Gravity
 import android.widget.Button
 import android.widget.ImageView
