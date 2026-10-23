@@ -11,6 +11,13 @@ object BackupMedia {
     private const val MAX_FILE=12L*1024*1024
     private const val MAX_TOTAL=80L*1024*1024
 
+    /** Reject files that have a JPG name but are not actually JPEG images. */
+    private fun validJpeg(bytes:ByteArray):Boolean =
+        bytes.size>=4 && (bytes[0].toInt() and 255)==0xFF &&
+            (bytes[1].toInt() and 255)==0xD8 &&
+            (bytes[bytes.lastIndex-1].toInt() and 255)==0xFF &&
+            (bytes[bytes.lastIndex].toInt() and 255)==0xD9
+
     fun collect(context:Context):JSONArray {
         val root=File(context.filesDir,"images").canonicalFile
         val result=JSONArray()
@@ -30,7 +37,7 @@ object BackupMedia {
             require(total<=MAX_TOTAL) { "حجم الصور يتجاوز حد النسخة الاحتياطية" }
             val bytes=file.readBytes()
             require(bytes.size.toLong()==file.length() && bytes.size.toLong()<=MAX_FILE) { "تغير حجم الصورة أثناء النسخ" }
-            require(bytes.isNotEmpty()) { "الصورة فارغة" }
+            require(validJpeg(bytes)) { "ملف الصورة ليس JPEG صالحاً" }
             result.put(JSONObject().put("name",file.name).put("sha256",Backup.sha(bytes))
                 .put("base64",Base64.encodeToString(bytes,Base64.NO_WRAP)))
         }
@@ -56,6 +63,7 @@ object BackupMedia {
             val bytes=Base64.decode(encoded,Base64.DEFAULT)
             total+=bytes.size.toLong()
             require(bytes.isNotEmpty() && bytes.size<=MAX_FILE && total<=MAX_TOTAL) { "حجم الصور غير صالح" }
+            require(validJpeg(bytes)) { "محتوى الصورة ليس JPEG صالحاً" }
             require(Backup.sha(bytes)==row.getString("sha256")) { "صورة تالفة في النسخة الاحتياطية" }
             pending.add(dest to bytes)
         }
