@@ -599,6 +599,7 @@ open class MainActivity:Activity() {
         io.execute {
             try {
                 val folder=java.io.File(cacheDir,"shared_invoices").apply { mkdirs() }
+                folder.listFiles()?.filter { it.isFile && it.lastModified()<System.currentTimeMillis()-7L*24*60*60*1000 }?.forEach { it.delete() }
                 val file=java.io.File(folder,"AlSafa-${inv.number}-${java.util.UUID.randomUUID()}.pdf")
                 file.outputStream().use { InvoicePdf(this,store).write(inv.id,it) }
                 runOnUiThread {
