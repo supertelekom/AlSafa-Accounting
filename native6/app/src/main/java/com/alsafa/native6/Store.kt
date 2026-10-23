@@ -531,6 +531,26 @@ class Store(val helper:StoreDb) {
             ?: throw IllegalArgumentException("الفاتورة غير موجودة")
         return Invoice(row.getValue("id"),row.getValue("number").toLong(),row.getValue("kind"),row.getValue("party"),Currency.valueOf(row.getValue("currency")),row.getValue("total").toLong(),row.getValue("status"))
     }
+    /** Verify every invoice has a journal-backed financial statement that reconciles. */
+    fun invoiceStatementIssues():List<Map<String,String>> {
+        val issues=mutableListOf<Map<String,String>>()
+        rows("SELECT id,number,kind,currency FROM invoices WHERE kind IN ('sale','repair') ORDER BY number").forEach { row ->
+            val invoiceId=row.getValue("id")
+            try {
+                val history=invoiceFinancialHistory(invoiceId)
+                val last=history.lastOrNull()
+                if(last==null) {
+                    issues.add(row+("issue" to "لا توجد قيود مالية للفاتورة"))
+                } else if(last.getValue("receivable_balance").toLong()<0L ||
+                    last.getValue("refund_liability").toLong()<0L) {
+                    issues.add(row+("issue" to "رصيد ذمة أو استرداد سالب"))
+                }
+            } catch(e:IllegalStateException) {
+                issues.add(row+("issue" to (e.message ?: "اختلاف في كشف الفاتورة")))
+            }
+        }
+        return issues
+    }
     fun invoiceByNumber(number:Long):Invoice {
         require(number>0L){"رقم الفاتورة غير صالح"}
         val id=rows("SELECT id FROM invoices WHERE number=?",number.toString())
