@@ -1243,7 +1243,7 @@ button("＋ مورد"){form("مورد جديد"){box->val n=field("الاسم",b
                 val id=row.getValue("id")
                 button("فتح واتساب العميل",results){
                     try {
-                        CustomerChat.open(this,row.getValue("phone"),"مرحباً، معكم الصفا للساعات بخصوص صيانة الساعة.")
+                        CustomerChat.open(this,row.getValue("phone"),"مرحباً، معكم الصفا للساعات. بخصوص صيانة ساعتكم: "+row.getValue("watch")+"، الحالة الحالية: "+label(row.getValue("status"))+".")
                     }catch(e:Exception){error(e)}
                 }
                 button("مشاركة فاتورة الصيانة PDF",results){
