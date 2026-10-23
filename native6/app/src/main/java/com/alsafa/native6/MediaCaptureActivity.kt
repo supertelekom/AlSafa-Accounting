@@ -59,7 +59,11 @@ class MediaCaptureActivity : Activity() {
                         clipData=android.content.ClipData.newUri(contentResolver,"AlSafa camera",uri)
                     }
                     startActivityForResult(intent,CAMERA)
-                } catch (e: Exception) { status.text = "تعذر فتح الكاميرا: ${e.message}" }
+                } catch (e: Exception) {
+                    pendingCameraPath?.let { File(it).delete() }
+                    pendingCameraPath=null
+                    status.text = "تعذر فتح الكاميرا: ${e.message}"
+                }
             }
         })
         layout.addView(Button(this).apply {
