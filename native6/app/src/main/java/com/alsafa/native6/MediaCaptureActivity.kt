@@ -146,6 +146,7 @@ class MediaCaptureActivity : Activity() {
             imagePath = output.absolutePath
             show(output.absolutePath)
         } catch (e: Exception) {
+            if(requestCode==CAMERA) { pendingCameraPath?.let { File(it).delete() }; pendingCameraPath=null }
             status.text = "تعذر حفظ الصورة: ${e.message}"
         }
     }
