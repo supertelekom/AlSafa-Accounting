@@ -36,6 +36,7 @@ open class MainActivity:Activity() {
     private var barcodeTarget:EditText?=null
     private var chooserBarcodeField:EditText?=null
     private var chooserRefresh:(()->Unit)?=null
+    private var photoProductId:String?=null
     private val ink=Color.rgb(62,52,41)
     private val gold=Color.rgb(169,121,41)
     private val vaultNames=listOf("درج المحل","الصندوق الخارجي","شام كاش","البنك")
@@ -95,6 +96,15 @@ open class MainActivity:Activity() {
     @Deprecated("Deprecated in Java")
     override fun onActivityResult(requestCode:Int,resultCode:Int,data:Intent?){
         super.onActivityResult(requestCode,resultCode,data)
+        if(requestCode==69){
+            val path=data?.getStringExtra(MediaCaptureActivity.EXTRA_RESULT_PATH)
+            val productId=photoProductId
+            photoProductId=null
+            if(resultCode==RESULT_OK && !path.isNullOrBlank() && productId!=null){
+                work{store.setProductImage(productId,path)}
+            }
+            return
+        }
         if(resultCode!=RESULT_OK || requestCode !in listOf(65,66,67,68))return
         val code=data?.getStringExtra(BarcodeScanActivity.EXTRA_BARCODE)?.trim().orEmpty()
         if(code.isEmpty())return
@@ -431,6 +441,22 @@ open class MainActivity:Activity() {
     }
     private var selectedProduct:Product?=null
     private fun productForm(p:Product?=null){form(if(p==null)"إضافة منتج" else "تعديل المنتج"){box->
+        if(p!=null){
+            val photo=store.productImage(p.id)
+            if(photo!=null && java.io.File(photo).isFile){
+                val thumbnail=android.widget.ImageView(this).apply {
+                    setImageBitmap(android.graphics.BitmapFactory.decodeFile(photo))
+                    adjustViewBounds=true
+                    maxHeight=300
+                }
+                box.addView(thumbnail)
+            }
+            button("تصوير أو اختيار صورة للمنتج",box){
+                photoProductId=p.id
+                startActivityForResult(Intent(this,MediaCaptureActivity::class.java),69)
+            }
+        } else text("احفظ المنتج أولاً، ثم افتحه لإضافة صورته.",box,14f)
+
         val name=field("الاسم",box,p?.name?:"");val barcode=field("الباركود",box,p?.barcode?:"");button("▣ قراءة الباركود بالكاميرا",box){barcodeTarget=barcode;startActivityForResult(Intent(this,BarcodeScanActivity::class.java),67)};val curr=select("العملة",Currency.entries.map{it.name},box);curr.setSelection(p?.currency?.ordinal?:0);curr.isEnabled=p==null
         val price=field("سعر البيع",box,p?.let{Money(it.price,it.currency).display().substringBefore(' ')}?:"0",true)
         val cost=if(p==null)field("التكلفة",box,"0",true)else null;val qty=if(p==null)field("رصيد افتتاحي",box,"0",true)else null
