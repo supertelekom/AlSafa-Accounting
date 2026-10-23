@@ -33,6 +33,7 @@ open class MainActivity:Activity() {
     private var contentScroll:ScrollView?=null
     private val visibleInputs=mutableListOf<EditText>()
     private var savedInputs:ArrayList<String>?=null
+    private var barcodeTarget:EditText?=null
     private val ink=Color.rgb(62,52,41)
     private val gold=Color.rgb(169,121,41)
     private val vaultNames=listOf("درج المحل","الصندوق الخارجي","شام كاش","البنك")
@@ -92,9 +93,10 @@ open class MainActivity:Activity() {
     @Deprecated("Deprecated in Java")
     override fun onActivityResult(requestCode:Int,resultCode:Int,data:Intent?){
         super.onActivityResult(requestCode,resultCode,data)
-        if(resultCode!=RESULT_OK || requestCode !in listOf(65,66))return
+        if(resultCode!=RESULT_OK || requestCode !in listOf(65,66,67))return
         val code=data?.getStringExtra(BarcodeScanActivity.EXTRA_BARCODE)?.trim().orEmpty()
         if(code.isEmpty())return
+        if(requestCode==67){barcodeTarget?.setText(code);barcodeTarget=null;return}
         val matches=store.products(code).filter { it.barcode==code }
         when {
             matches.size>1 -> AlertDialog.Builder(this).setTitle("باركود مكرر")
@@ -426,7 +428,7 @@ open class MainActivity:Activity() {
     }
     private var selectedProduct:Product?=null
     private fun productForm(p:Product?=null){form(if(p==null)"إضافة منتج" else "تعديل المنتج"){box->
-        val name=field("الاسم",box,p?.name?:"");val barcode=field("الباركود",box,p?.barcode?:"");val curr=select("العملة",Currency.entries.map{it.name},box);curr.setSelection(p?.currency?.ordinal?:0);curr.isEnabled=p==null
+        val name=field("الاسم",box,p?.name?:"");val barcode=field("الباركود",box,p?.barcode?:"");button("▣ قراءة الباركود بالكاميرا",box){barcodeTarget=barcode;startActivityForResult(Intent(this,BarcodeScanActivity::class.java),67)};val curr=select("العملة",Currency.entries.map{it.name},box);curr.setSelection(p?.currency?.ordinal?:0);curr.isEnabled=p==null
         val price=field("سعر البيع",box,p?.let{Money(it.price,it.currency).display().substringBefore(' ')}?:"0",true)
         val cost=if(p==null)field("التكلفة",box,"0",true)else null;val qty=if(p==null)field("رصيد افتتاحي",box,"0",true)else null
         val kind=if(p==null)select("النوع",listOf("ساعة","قطعة صيانة"),box)else null;
