@@ -23,5 +23,6 @@ class CustomerChatTest {
         assertThrows(IllegalArgumentException::class.java) { CustomerChat.normalizedNumber("00963 912 34") }
         assertThrows(IllegalArgumentException::class.java) { CustomerChat.normalizedNumber("0532 123 45") }
         assertThrows(IllegalArgumentException::class.java) { CustomerChat.normalizedNumber("091234567") }
+        assertThrows(IllegalArgumentException::class.java) { CustomerChat.normalizedNumber("0912-345-67X") }
     }
 }
