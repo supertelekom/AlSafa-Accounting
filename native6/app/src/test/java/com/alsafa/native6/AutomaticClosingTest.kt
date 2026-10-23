@@ -67,4 +67,14 @@ class AutomaticClosingTest {
             fail("Second review must be rejected")
         } catch (_:IllegalArgumentException) { }
     }
+    @Test fun automaticCloseNeverClosesTodayOrInventsHistory() {
+        assertFalse(store.autoCloseDay("drawer",LocalDate.now().minusDays(1).toString()))
+        assertEquals(0,store.autoCloseMissingDays("drawer",31))
+        try {
+            store.autoCloseDay("drawer",LocalDate.now().toString())
+            fail("Automatic close is restricted to completed days")
+        } catch (_:IllegalArgumentException) { }
+        assertEquals(0L,store.scalar("SELECT count(*) FROM closings"))
+    }
+
 }
