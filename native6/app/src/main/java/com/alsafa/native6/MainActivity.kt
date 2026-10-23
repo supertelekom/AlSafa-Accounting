@@ -481,6 +481,12 @@ open class MainActivity:Activity() {
                 }
                 box.addView(thumbnail)
             }
+            button("إرسال صورة المنتج عبر واتساب",box){
+                try {
+                    val path=store.productImage(p.id) ?: error("لا توجد صورة لهذا المنتج")
+                    CustomerShare.send(this,java.io.File(path),"image/jpeg","الصفا للساعات - ${p.name}")
+                }catch(e:Exception){error(e)}
+            }
             button("تصوير أو اختيار صورة للمنتج",box){
                 photoProductId=p.id
                 startActivityForResult(Intent(this,MediaCaptureActivity::class.java),69)
