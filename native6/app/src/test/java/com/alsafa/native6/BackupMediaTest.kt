@@ -42,4 +42,16 @@ class BackupMediaTest {
             BackupMedia.restore(activity,entries)
         }
     }
+    @Test fun rejectsPhotoWithFakeJpegExtension() {
+        val activity=Robolectric.buildActivity(Activity::class.java).setup().get()
+        val dir=File(activity.filesDir,"images").apply { mkdirs() }
+        val file=File(dir,"${UUID.randomUUID()}.jpg")
+        file.writeText("not a jpeg")
+        try {
+            assertThrows(IllegalArgumentException::class.java) {
+                BackupMedia.collect(activity)
+            }
+        } finally { file.delete() }
+    }
+
 }
