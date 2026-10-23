@@ -294,4 +294,20 @@ class ReceivableAccountingTest {
         assertEquals(Currency.USD.name,issues.single().getValue("invoice_currency"))
     }
 
+    @Test fun invoiceAuditReportsCorruptInvoiceWithoutSkippingOtherInvoices() {
+        val first=invoice(0L)
+        val second=invoice(0L)
+        val eventId=java.util.UUID.randomUUID().toString()
+        store.db.execSQL("INSERT INTO events(id,kind,date,created,memo) VALUES(?,?,?,?,?)",
+            arrayOf(eventId,"TEST_AUDIT",Store.today(),System.currentTimeMillis(),"Corrupt ledger fixture"))
+        store.db.execSQL("INSERT INTO journal(event_id,line,account,currency,amount) VALUES(?,?,?,?,?)",
+            arrayOf(eventId,0,"receivable:$first",Currency.USD.name,-20000L))
+        store.db.execSQL("INSERT INTO journal(event_id,line,account,currency,amount) VALUES(?,?,?,?,?)",
+            arrayOf(eventId,1,"equity:audit-fixture",Currency.USD.name,20000L))
+        val issues=store.invoiceStatementIssues()
+        assertEquals(1,issues.size)
+        assertEquals(first,issues.single().getValue("id"))
+        assertTrue(store.invoiceFinancialHistory(second).isNotEmpty())
+    }
+
 }
