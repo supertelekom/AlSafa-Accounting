@@ -21,6 +21,7 @@ class MainActivity:Activity() {
     private lateinit var font:Typeface
     private val io=Executors.newSingleThreadExecutor()
     private var page="home"
+    private val pageHistory=ArrayDeque<String>()
     @Volatile private var busy=false
     private var pdfInvoice:String?=null
     private val basket=mutableListOf<SaleItem>()
@@ -28,7 +29,7 @@ class MainActivity:Activity() {
     private val ink=Color.rgb(62,52,41)
     private val gold=Color.rgb(169,121,41)
     private val vaultNames=listOf("درج المحل","الصندوق الخارجي","شام كاش","البنك")
-    override fun onCreate(state:Bundle?) {super.onCreate(state);store=Store(StoreDb(this));font=try { Typeface.createFromAsset(assets,"Tajawal-Medium.ttf") } catch (_:Exception) { Typeface.DEFAULT };page=state?.getString("page")?:"home";pdfInvoice=state?.getString("pdfInvoice");safeRender();io.execute{Store.vaults.forEach{vault->try{store.autoCloseMissingDays(vault,31)}catch(e:Exception){runOnUiThread{if(!isFinishing&&!isDestroyed)Toast.makeText(this,"تعذر الإقفال التلقائي للصندوق $vault: ${e.message}",Toast.LENGTH_LONG).show()}}};runOnUiThread{if(!isFinishing&&!isDestroyed && page=="vaults")safeRender()}}}
+    override fun onCreate(state:Bundle?) {super.onCreate(state);store=Store(StoreDb(this));font=try { Typeface.createFromAsset(assets,"Tajawal-Medium.ttf") } catch (_:Exception) { Typeface.DEFAULT };page=state?.getString("page")?:"home";state?.getStringArrayList("pageHistory")?.forEach { pageHistory.addLast(it) };pdfInvoice=state?.getString("pdfInvoice");safeRender();io.execute{Store.vaults.forEach{vault->try{store.autoCloseMissingDays(vault,31)}catch(e:Exception){runOnUiThread{if(!isFinishing&&!isDestroyed)Toast.makeText(this,"تعذر الإقفال التلقائي للصندوق $vault: ${e.message}",Toast.LENGTH_LONG).show()}}};runOnUiThread{if(!isFinishing&&!isDestroyed && page=="vaults")safeRender()}}}
     private fun dp(n:Int)=(n*resources.displayMetrics.density).toInt()
     private fun style(v:TextView){v.typeface=font;v.setTextColor(ink);v.textSize=18f;v.setPadding(dp(12),dp(10),dp(12),dp(10))}
     private fun background(color:Int=Color.rgb(255,253,249))=GradientDrawable().apply{setColor(color);cornerRadius=dp(14).toFloat();setStroke(dp(1),Color.rgb(234,223,206))}
@@ -46,7 +47,22 @@ class MainActivity:Activity() {
     }
     private fun error(e:Exception){AlertDialog.Builder(this).setTitle("لم تُحفظ العملية").setMessage(e.message?:"حدث خطأ").setPositiveButton("حسناً",null).show()}
     private fun work(task:()->Unit){if(busy)return;busy=true;try{io.execute{try{task();runOnUiThread{busy=false;if(!isFinishing&&!isDestroyed){Toast.makeText(this,"اكتملت العملية",Toast.LENGTH_SHORT).show();safeRender()}}}catch(e:Exception){runOnUiThread{busy=false;if(!isFinishing&&!isDestroyed)error(e)}}}}catch(e:java.util.concurrent.RejectedExecutionException){busy=false;if(!isFinishing&&!isDestroyed)error(e)}}
-    private fun go(value:String){page=value;safeRender()}
+    /** Navigate to a full screen and retain the previous screen for Back. */
+    private fun go(value:String){
+        if(value==page)return
+        pageHistory.addLast(page)
+        page=value
+        safeRender()
+    }
+    private fun backPage(){
+        page=if(pageHistory.isEmpty()) "home" else pageHistory.removeLast()
+        safeRender()
+    }
+    private fun homePage(){
+        pageHistory.clear()
+        page="home"
+        safeRender()
+    }
     private fun label(value:String)=mapOf("sale" to "مبيع", "purchase" to "شراء", "repair" to "صيانة", "posted" to "مسجلة", "cancelled" to "ملغاة", "received" to "مستلمة", "in_progress" to "قيد الصيانة", "legacy_unknown" to "حالة قديمة تحتاج مراجعة", "ready" to "جاهزة", "delivered" to "تم التسليم")[value]?:value
     private fun money(n:Long,c:Currency)=Money(n,c).display()
     private fun amount(e:EditText,c:Currency)=Money.parse(e.text.toString(),c).minor
@@ -54,8 +70,8 @@ class MainActivity:Activity() {
         io.shutdown()
         super.onDestroy()
     }
-    override fun onSaveInstanceState(out:Bundle){out.putString("page",page);out.putString("pdfInvoice",pdfInvoice);super.onSaveInstanceState(out)}
-    override fun onBackPressed(){if(page!="home")go("home")else super.onBackPressed()}
+    override fun onSaveInstanceState(out:Bundle){out.putString("page",page);out.putStringArrayList("pageHistory",ArrayList(pageHistory));out.putString("pdfInvoice",pdfInvoice);super.onSaveInstanceState(out)}
+    override fun onBackPressed(){if(page!="home")backPage() else super.onBackPressed()}
     private fun safeRender() {
         try { render() } catch (e: Exception) {
             page="home"
@@ -63,7 +79,7 @@ class MainActivity:Activity() {
             setContentView(root)
             text("تعذر فتح الشاشة المطلوبة",root,22f)
             text(e.message ?: "حدث خطأ أثناء قراءة البيانات المحلية",root,15f)
-            button("العودة إلى الرئيسية",root) { page="home";safeRender() }
+            button("العودة إلى الرئيسية",root) { homePage() }
             button("تصدير نسخة احتياطية",root) {
                 startActivityForResult(Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
                     addCategory(Intent.CATEGORY_OPENABLE)
@@ -77,7 +93,7 @@ class MainActivity:Activity() {
         val root=column();root.setBackgroundColor(Color.rgb(248,243,235));setContentView(root)
         text("الصفا للساعات   |   Native 6",root,24f).setTextColor(gold)
         text("نسخة تطوير — حفظ محلي على التابلت",root,13f)
-        if(page!="home")button("‹ الرئيسية",root){go("home")}
+        if(page!="home")button("‹ رجوع",root){backPage()}
         val scroll=ScrollView(this);body=column();scroll.addView(body);root.addView(scroll,LinearLayout.LayoutParams(-1,0,1f))
         when(page){"home"->home();"simple"->simple();"advanced"->advanced();"products"->products();"inventory"->inventoryDashboard();"stock-history"->selectedProduct?.let{stockHistory(it)};"stocktake-history"->stocktakeHistoryScreen();"sale"->sale();"invoices"->invoices();"vaults"->vaults();"suppliers"->suppliers();"repairs"->repairs();"reports"->reports();"period-reports"->periodReports();"trial-balance"->trialBalanceScreen();"account-ledger"->accountLedgerScreen();"journal-integrity"->journalIntegrityScreen();"structural-audit"->structuralAuditScreen();"partners"->partners();"backup"->backup();"legacy-audit"->legacyAudit();"legacy-history"->legacyHistory();"audit"->audit()}
     }
