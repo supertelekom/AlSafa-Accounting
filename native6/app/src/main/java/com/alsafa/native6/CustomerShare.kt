@@ -13,6 +13,7 @@ object CustomerShare {
         val allowedInvoice=File(activity.cacheDir,"shared_invoices").canonicalFile
         val parent=file.canonicalFile.parentFile
         require(parent==allowedPhoto || parent==allowedInvoice) { "المشاركة من مجلد غير مسموح" }
+        require(mime in setOf("image/jpeg","application/pdf"))
         val uri=FileProvider.getUriForFile(activity,activity.packageName+".share",file)
         val intent=Intent(Intent.ACTION_SEND).apply {
             type=mime
