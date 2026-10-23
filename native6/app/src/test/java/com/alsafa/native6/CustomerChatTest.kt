@@ -13,6 +13,8 @@ class CustomerChatTest {
     }
     @Test fun turkishLocalNumber() {
         assertEquals("905321234567",CustomerChat.normalizedNumber("0532 123 45 67"))
+        assertEquals("905321234567",CustomerChat.normalizedNumber("+90 532 123 45 67"))
+        assertEquals("905321234567",CustomerChat.normalizedNumber("0090 532 123 45 67"))
     }
     @Test fun invalidPhoneRejected() {
         assertThrows(IllegalArgumentException::class.java) { CustomerChat.normalizedNumber("") }
