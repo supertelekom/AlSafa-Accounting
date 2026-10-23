@@ -93,4 +93,27 @@ class AutomaticClosingTest {
         assertEquals(12000L,store.vaultDayClosing("drawer",Currency.USD,day))
     }
 
+    @Test fun consolidatedClosingDriftAuditFindsOnlyAffectedVaultAndCurrency() {
+        val day=LocalDate.now().minusDays(2).toString()
+        val month=java.time.YearMonth.parse(day.substring(0,7)).toString()
+        store.cash("opening","drawer",Currency.USD,10000L,"Opening",date=day)
+        store.cash("opening","external",Currency.USD,5000L,"External opening",date=day)
+        assertTrue(store.autoCloseDay("drawer",day))
+        assertTrue(store.autoCloseDay("external",day))
+        assertTrue(store.allClosingDriftIssues(month).isEmpty())
+        val journalBefore=store.scalar("SELECT count(*) FROM journal")
+        store.cash("transfer","external",Currency.USD,2000L,"Late transfer",
+            date=day,destination="drawer")
+        val afterTransfer=store.scalar("SELECT count(*) FROM journal")
+        assertTrue(afterTransfer>journalBefore)
+        val issues=store.allClosingDriftIssues(month)
+        assertEquals(2,issues.size)
+        assertEquals(2000L,issues.single { it.getValue("vault")=="drawer" }
+            .getValue("book_drift").toLong())
+        assertEquals(-2000L,issues.single { it.getValue("vault")=="external" }
+            .getValue("book_drift").toLong())
+        assertTrue(issues.all { it.getValue("currency")=="USD" })
+        assertEquals(afterTransfer,store.scalar("SELECT count(*) FROM journal"))
+    }
+
 }
