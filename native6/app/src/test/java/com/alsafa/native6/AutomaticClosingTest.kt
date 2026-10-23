@@ -126,6 +126,11 @@ class AutomaticClosingTest {
         assertEquals(snapshot,store.closingForDay("drawer",old)
             .single { it.getValue("currency")=="USD" }.getValue("expected").toLong())
         assertEquals(-1500L,store.closingBookDrift("drawer",old,Currency.USD))
+        val issues=store.allClosingDriftIssues(java.time.YearMonth.parse(old.substring(0,7)).toString())
+        assertEquals(1,issues.size)
+        assertEquals("drawer",issues.single().getValue("vault"))
+        assertEquals("USD",issues.single().getValue("currency"))
+        assertEquals("-1500",issues.single().getValue("book_drift"))
         assertEquals(8500L,store.vaultDayClosing("drawer",Currency.USD,old))
         assertEquals(8500L,store.balance("drawer",Currency.USD))
     }
