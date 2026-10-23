@@ -210,4 +210,27 @@ class ReceivableAccountingTest {
         assertEquals(0L,store.scalar("SELECT count(*) FROM returns WHERE invoice_id=?",id))
     }
 
+    @Test fun invoiceHistorySeparatesDebtFromRefundLiability() {
+        val id=invoice(10000L)
+        store.returnSale(id,mapOf(0 to 1L),"Returned")
+        val history=store.invoiceFinancialHistory(id)
+        assertTrue(history.isNotEmpty())
+        val afterReturn=history.last()
+        assertEquals(0L,afterReturn.getValue("receivable_balance").toLong())
+        assertEquals(10000L,afterReturn.getValue("refund_liability").toLong())
+        store.refund(id,3000L,"drawer")
+        val afterRefund=store.invoiceFinancialHistory(id).last()
+        assertEquals(0L,afterRefund.getValue("receivable_balance").toLong())
+        assertEquals(7000L,afterRefund.getValue("refund_liability").toLong())
+    }
+
+    @Test fun invoiceHistoryIsReadOnly() {
+        val id=invoice(0L)
+        val before=store.scalar("SELECT count(*) FROM journal")
+        val first=store.invoiceFinancialHistory(id)
+        val second=store.invoiceFinancialHistory(id)
+        assertEquals(first,second)
+        assertEquals(before,store.scalar("SELECT count(*) FROM journal"))
+    }
+
 }
