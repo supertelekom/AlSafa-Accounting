@@ -331,6 +331,26 @@ class MainActivity:Activity() {
         fun show(){results.removeAllViews();store.products(search.text.toString()).filter{!inStockOnly || it.stock>0}.take(100).forEach{p->button("${p.name} · ${p.stock}",results){dialog.dismiss();action(p)}}};button("بحث",box){show()};show();dialog.show()}
     private fun invoices(){
         text("الفواتير والمرتجعات",size=25f)
+        button("كشف الحركات المالية لفاتورة"){
+            form("كشف الفاتورة","عرض"){box->
+                val number=field("رقم الفاتورة",box)
+                ({
+                    val n=number.text.toString().trim().toLong()
+                    val invoice=store.invoices().singleOrNull { it.number==n }
+                        ?: throw IllegalArgumentException("رقم الفاتورة غير موجود")
+                    val entries=store.invoiceFinancialHistory(invoice.id)
+                    val details=if(entries.isEmpty()) "لا توجد حركات مالية."
+                    else entries.joinToString("\n\n"){row->
+                        row.getValue("date")+" · "+row.getValue("kind")+
+                            "\n"+row.getValue("memo")+
+                            "\nالدين: "+money(row.getValue("receivable_balance").toLong(),invoice.currency)+
+                            " · الاسترداد: "+money(row.getValue("refund_liability").toLong(),invoice.currency)
+                    }
+                    AlertDialog.Builder(this).setTitle("كشف فاتورة #"+n)
+                        .setMessage(details).setPositiveButton("حسناً",null).show()
+                })
+            }
+        }
         button("كشف تحصيلات العملاء الفعلية"){
             form("كشف التحصيل","عرض"){box->
                 val date=field("اليوم YYYY-MM-DD",box,Store.today())
