@@ -81,4 +81,17 @@ class SupplierChronologyTest {
         assertTrue(store.supplierMonthReconciles(supplier,Currency.USD,current.toString()))
     }
 
+    @Test fun supplierDebtAndPaymentsAreIsolatedByCurrency() {
+        val supplier=store.addSupplier("Currency supplier","")
+        val day=LocalDate.now().minusDays(2).toString()
+        store.supplierOpening(supplier,Currency.USD,10000L,day)
+        store.supplierOpening(supplier,Currency.TRY,25000L,day)
+        store.cash("opening","drawer",Currency.USD,15000L,"USD cash",date=day)
+        store.paySupplier(supplier,Currency.USD,4000L,"drawer")
+        assertEquals(6000L,store.supplierDue(supplier,Currency.USD))
+        assertEquals(25000L,store.supplierDue(supplier,Currency.TRY))
+        assertEquals(0L,store.supplierDue(supplier,Currency.SYP))
+        assertTrue(store.negativeSupplierDebtDays().isEmpty())
+    }
+
 }
