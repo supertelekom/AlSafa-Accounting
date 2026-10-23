@@ -1347,14 +1347,6 @@ class Store(val helper:StoreDb) {
         }.sortedWith(compareBy<Map<String,String>> { it.getValue("date") }
             .thenBy { it.getValue("vault") }.thenBy { it.getValue("currency") })
     }
-    /** Read-only audit of old closing snapshots changed by late backdated postings. */
-    fun closingDriftIssues(v:String,month:String):List<Map<String,String>> {
-        vault(v)
-        val selected=java.time.YearMonth.parse(month).toString()
-        return closingDriftMonth(v,selected).filter { row ->
-            row.getValue("book_drift").toLong()!=0L
-        }
-    }
     fun closingBookDrift(v:String,date:String,c:Currency):Long? {
         val day=LocalDate.parse(date).toString()
         val row=closingForDay(v,day).firstOrNull{it.getValue("currency")==c.name}?:return null
