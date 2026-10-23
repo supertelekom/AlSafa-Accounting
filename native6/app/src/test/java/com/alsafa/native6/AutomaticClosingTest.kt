@@ -33,7 +33,7 @@ class AutomaticClosingTest {
         val usd=lines.single { it.getValue("currency")=="USD" }
         assertEquals("AUTO_CLOSING",usd.getValue("kind"))
         assertEquals(10000L,usd.getValue("expected").toLong())
-        assertNull(usd["counted"])
+        assertEquals("",usd["counted"])
         assertEquals(10000L,store.balance("drawer",Currency.USD))
         assertEquals(0L,store.balance("drawer",Currency.TRY))
     }
@@ -49,7 +49,7 @@ class AutomaticClosingTest {
         assertEquals(10000L,lines.single { it.getValue("currency")=="USD" }.getValue("expected").toLong())
         assertEquals(20000L,lines.single { it.getValue("currency")=="TRY" }.getValue("expected").toLong())
         assertEquals(0L,lines.single { it.getValue("currency")=="SYP" }.getValue("expected").toLong())
-        assertTrue(lines.all { it["counted"]==null })
+        assertTrue(lines.all { it["counted"].isNullOrEmpty() })
     }
 
     @Test fun reviewOfAutomaticCloseRecordsDifferenceWithoutChangingCash() {
