@@ -48,10 +48,10 @@ object BackupMedia {
     fun restore(context:Context,entries:JSONArray):List<File> {
         val dir=File(context.filesDir,"images").canonicalFile
         require(dir.parentFile==context.filesDir.canonicalFile) { "مسار استعادة الصور غير آمن" }
-        val pending=mutableListOf<Pair<File,ByteArray>>()
         var total=0L
         val names=mutableSetOf<String>()
         require(entries.length()<=10000) { "عدد الصور في النسخة كبير جداً" }
+        // Validate metadata first without keeping every decoded image in memory.
         for(i in 0 until entries.length()) {
             val row=entries.getJSONObject(i)
             val name=row.getString("name")
@@ -61,19 +61,23 @@ object BackupMedia {
             val encoded=row.getString("base64")
             require(encoded.length<=((MAX_FILE+2)/3*4).toInt()+8) { "حجم الصورة المشفرة أكبر من الحد" }
             require(encoded.length%4==0 && encoded.all { (it in 'A'..'Z' || it in 'a'..'z' || it in '0'..'9') || it=='+' || it=='/' || it=='=' }) { "ترميز الصورة غير صالح" }
-            val bytes=Base64.decode(encoded,Base64.NO_WRAP)
-            total+=bytes.size.toLong()
-            require(bytes.isNotEmpty() && bytes.size<=MAX_FILE && total<=MAX_TOTAL) { "حجم الصور غير صالح" }
-            require(validJpeg(bytes)) { "محتوى الصورة ليس JPEG صالحاً" }
-            require(Backup.sha(bytes)==row.getString("sha256")) { "صورة تالفة في النسخة الاحتياطية" }
-            pending.add(dest to bytes)
+            total+=encoded.length.toLong()/4L*3L
+            require(total<=MAX_TOTAL+entries.length()*2L) { "حجم الصور يتجاوز الحد" }
         }
         require(dir.isDirectory || dir.mkdirs()) { "تعذر إنشاء مجلد الصور" }
         require(dir.canonicalFile.parentFile==context.filesDir.canonicalFile) { "تغير مسار الصور أثناء الاستعادة" }
         val created=mutableListOf<File>()
+        var decodedTotal=0L
         try {
-            for((dest,bytes) in pending) {
-                require(dest.canonicalFile.parentFile==dir.canonicalFile) { "مسار صورة غير آمن" }
+            for(i in 0 until entries.length()) {
+                val row=entries.getJSONObject(i)
+                val dest=File(dir,row.getString("name")).canonicalFile
+                require(dest.parentFile==dir.canonicalFile && !dest.exists()) { "مسار صورة غير آمن" }
+                val bytes=Base64.decode(row.getString("base64"),Base64.NO_WRAP)
+                decodedTotal+=bytes.size.toLong()
+                require(bytes.isNotEmpty() && bytes.size<=MAX_FILE && decodedTotal<=MAX_TOTAL) { "حجم الصور غير صالح" }
+                require(validJpeg(bytes)) { "محتوى الصورة ليس JPEG صالحاً" }
+                require(Backup.sha(bytes)==row.getString("sha256")) { "صورة تالفة في النسخة الاحتياطية" }
                 require(dest.createNewFile()) { "تعذر إنشاء ملف الصورة" }
                 created.add(dest)
                 dest.outputStream().use { it.write(bytes) }
