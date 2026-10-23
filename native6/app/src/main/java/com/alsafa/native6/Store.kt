@@ -532,6 +532,20 @@ class Store(val helper:StoreDb) {
         return Invoice(row.getValue("id"),row.getValue("number").toLong(),row.getValue("kind"),row.getValue("party"),Currency.valueOf(row.getValue("currency")),row.getValue("total").toLong(),row.getValue("status"))
     }
     /** Verify every invoice has a journal-backed financial statement that reconciles. */
+    /** Detect journal balances assigned to missing invoices or the wrong invoice currency. */
+    fun invoiceAccountReferenceIssues():List<Map<String,String>> =
+        rows("""SELECT j.account,j.currency,
+            substr(j.account,instr(j.account,':')+1) invoice_id,
+            coalesce(i.number,0) invoice_number,
+            coalesce(i.currency,'') invoice_currency,
+            count(*) entry_count,
+            coalesce(sum(j.amount),0) balance
+            FROM journal j
+            LEFT JOIN invoices i ON i.id=substr(j.account,instr(j.account,':')+1)
+            WHERE (j.account LIKE 'receivable:%' OR j.account LIKE 'refund:%')
+              AND (i.id IS NULL OR i.currency<>j.currency OR i.kind NOT IN ('sale','repair'))
+            GROUP BY j.account,j.currency,i.number,i.currency
+            ORDER BY j.account,j.currency""")
     fun invoiceStatementIssues():List<Map<String,String>> {
         val issues=mutableListOf<Map<String,String>>()
         rows("SELECT id,number,kind,currency FROM invoices WHERE kind IN ('sale','repair') ORDER BY number").forEach { row ->
