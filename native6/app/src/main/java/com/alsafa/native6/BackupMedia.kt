@@ -18,6 +18,7 @@ object BackupMedia {
         var total=0L
         root.listFiles()?.filter { it.isFile && it.extension.lowercase()=="jpg" }?.sortedBy { it.name }?.forEach { file ->
             require(file.canonicalFile.parentFile==root && file.length()<=MAX_FILE) { "ملف صورة غير صالح للنسخ" }
+            require(file.name.removeSuffix(".jpg").matches(Regex("[a-fA-F0-9-]{36}"))) { "اسم صورة غير صالح" }
             total+=file.length()
             require(total<=MAX_TOTAL) { "حجم الصور يتجاوز حد النسخة الاحتياطية" }
             val bytes=file.readBytes()
