@@ -500,6 +500,19 @@ class Store(val helper:StoreDb) {
         event(command,"OPENING_STOCK",today(),"رصيد افتتاحي: $name")
         if(quantity>0) { val value=mul(cost,quantity);stock(command,0,product(command),quantity,value);post(command,listOf(Posting("inventory",currency,value),Posting("equity:opening",currency,-value))) };command
     }
+    /** Image references are local metadata, never stock movements or accounting entries. */
+    fun productImage(id:String):String? {
+        val raw=rows("SELECT details FROM products WHERE id=?",id).singleOrNull()?.get("details") ?: return null
+        return JSONObject(raw).optString("imagePath").takeIf { it.isNotBlank() }
+    }
+    fun setProductImage(id:String,path:String) = transaction {
+        require(path.isNotBlank() && path.length<=1024){"مسار الصورة غير صالح"}
+        val raw=rows("SELECT details FROM products WHERE id=?",id).singleOrNull()?.get("details")
+            ?: error("المنتج غير موجود")
+        val details=JSONObject(raw).put("imagePath",path)
+        db.execSQL("UPDATE products SET details=? WHERE id=?",arrayOf(details.toString(),id))
+        event(id(),"PRODUCT_IMAGE",today(),"تحديث صورة المنتج $id")
+    }
     fun editProduct(id:String,name:String,barcode:String,price:Long) = transaction {
         require(scalar("SELECT count(*) FROM products WHERE id=?",id)==1L){"المنتج غير موجود"}
         require(name.isNotBlank() && price>=0 && barcode.trim().length<=128);require(barcode.isBlank() || scalar("SELECT count(*) FROM products WHERE barcode=? AND id<>?",barcode.trim(),id)==0L){"الباركود مكرر"}
