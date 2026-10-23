@@ -82,11 +82,25 @@ open class MainActivity:Activity() {
     private fun backPage(){ finish() }
     private fun homePage(){
         if(this is SectionActivity) {
-            startActivity(Intent(this,MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP))
+            startActivity(Intent(this,TabletDashboardActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP))
             finish()
         } else {
             page="home"
             safeRender()
+        }
+    }
+    @Deprecated("Deprecated in Java")
+    override fun onActivityResult(requestCode:Int,resultCode:Int,data:Intent?){
+        super.onActivityResult(requestCode,resultCode,data)
+        if(requestCode==65 && resultCode==RESULT_OK){
+            val code=data?.getStringExtra(BarcodeScanActivity.EXTRA_BARCODE)?.trim().orEmpty()
+            if(code.isNotEmpty()){
+                val matches=store.products(code).filter { it.barcode==code }
+                if(matches.size==1) productForm(matches.first())
+                else AlertDialog.Builder(this).setTitle("نتيجة مسح الباركود")
+                    .setMessage(if(matches.isEmpty()) "لم يُعثر على منتج بالباركود: $code" else "عُثر على أكثر من منتج بالباركود: $code")
+                    .setPositiveButton("حسنًا",null).show()
+            }
         }
     }
     private fun label(value:String)=mapOf("sale" to "مبيع", "purchase" to "شراء", "repair" to "صيانة", "posted" to "مسجلة", "cancelled" to "ملغاة", "received" to "مستلمة", "in_progress" to "قيد الصيانة", "legacy_unknown" to "حالة قديمة تحتاج مراجعة", "ready" to "جاهزة", "delivered" to "تم التسليم")[value]?:value
@@ -250,7 +264,7 @@ open class MainActivity:Activity() {
     private fun home(){text("ALSAFA WATCHES",size=16f);text("كيف تريد أن تبدأ؟",size=28f);button("⚡ الوضع المبسط · بيع وصيانة وتسليم سريع"){go("simple")};button("◆ الوضع الكامل · الإدارة والمخزون والحسابات"){go("advanced")}}
     private fun simple(){text("العمل السريع",size=26f);button("مبيع"){go("sale")};button("استلام وتسليم صيانة"){go("repairs")};button("الفواتير وقبض الديون"){go("invoices")};button("الخزنات والإقفال اليومي"){go("vaults")}}
     private fun advanced(){text("الوضع الكامل",size=26f);listOf("مبيع" to "sale","المنتجات وقطع الصيانة" to "products","الفواتير والمرتجعات" to "invoices","استلام وتسليم صيانة" to "repairs","الخزنات والمصاريف والإقفال" to "vaults","الموردون والمشتريات" to "suppliers","تقرير شهر واحد" to "reports","تقرير بين تاريخين" to "period-reports","الشركاء ونسب الأرباح" to "partners","سجل العمليات" to "audit","النسخ الاحتياطي والاستعادة" to "backup","أرشيف الفواتير القديمة" to "legacy-history").forEach{(label,route)->button(label){go(route)}}}
-    private fun products(){text("المنتجات وقطع الصيانة",size=25f);button("＋ إضافة منتج / قطعة"){productForm()};button("تقييم المخزون والتنبيهات"){go("inventory")};button("سجل تسويات الجرد"){go("stocktake-history")};val query=field("بحث بالاسم أو الباركود أو REF",body);val list=column();body.addView(list)
+    private fun products(){text("المنتجات وقطع الصيانة",size=25f);button("＋ إضافة منتج / قطعة"){productForm()};button("▣ مسح باركود للبحث"){startActivityForResult(Intent(this,BarcodeScanActivity::class.java), 65)};button("تقييم المخزون والتنبيهات"){go("inventory")};button("سجل تسويات الجرد"){go("stocktake-history")};val query=field("بحث بالاسم أو الباركود أو REF",body);val list=column();body.addView(list)
         fun show(){list.removeAllViews();store.products(query.text.toString()).forEach{p->button("${p.name}  ·  ${money(p.price,p.currency)}\nالمخزون ${p.stock}  ·  ${p.barcode}",list){productForm(p)};button("سجل مخزون ${p.name}",list){selectedProduct=p;go("stock-history")};button("جرد فعلي ${p.name}",list){stocktakeForm(p)}}};button("بحث"){show()};show()}
     private fun stocktakeForm(p:Product){
         form("جرد فعلي · ${p.name}","حفظ تسوية الجرد"){box->
