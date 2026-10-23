@@ -127,19 +127,26 @@ class BarcodeScanActivity : ComponentActivity() {
                             processing.set(false)
                             frame.close()
                         } else {
-                            val input = InputImage.fromMediaImage(mediaImage, frame.imageInfo.rotationDegrees)
-                            scanner.process(input)
-                                .addOnSuccessListener { codes ->
-                                    val value = codes.firstNotNullOfOrNull { it.rawValue?.trim()?.takeIf(String::isNotEmpty) }
-                                    if (value != null && finished.compareAndSet(false, true)) {
-                                        setResult(RESULT_OK, Intent().putExtra(EXTRA_BARCODE, value))
-                                        finish()
+                            try {
+                                val input = InputImage.fromMediaImage(mediaImage, frame.imageInfo.rotationDegrees)
+                                scanner.process(input)
+                                    .addOnSuccessListener { codes ->
+                                        val value = codes.firstNotNullOfOrNull {
+                                            it.rawValue?.trim()?.takeIf(String::isNotEmpty)
+                                        }
+                                        if (value != null && finished.compareAndSet(false, true) && !isFinishing) {
+                                            setResult(RESULT_OK, Intent().putExtra(EXTRA_BARCODE, value))
+                                            finish()
+                                        }
                                     }
-                                }
-                                .addOnCompleteListener {
-                                    processing.set(false)
-                                    frame.close()
-                                }
+                                    .addOnCompleteListener {
+                                        processing.set(false)
+                                        frame.close()
+                                    }
+                            } catch (_: Exception) {
+                                processing.set(false)
+                                frame.close()
+                            }
                         }
                     }
                 }
