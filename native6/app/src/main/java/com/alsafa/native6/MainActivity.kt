@@ -1244,6 +1244,13 @@ button("＋ مورد"){form("مورد جديد"){box->val n=field("الاسم",b
                         CustomerChat.open(this,row.getValue("phone"),"مرحباً، معكم الصفا للساعات بخصوص صيانة الساعة.")
                     }catch(e:Exception){error(e)}
                 }
+                button("مشاركة فاتورة الصيانة PDF",results){
+                    try {
+                        val invoice=store.repairInvoice(id)
+                        if(invoice==null)throw IllegalStateException("لم تُنشأ فاتورة لهذا الطلب بعد")
+                        shareInvoicePdf(invoice)
+                    }catch(e:Exception){error(e)}
+                }
                 button("إرسال صورة الصيانة عبر واتساب",results){
                     try {
                         val path=store.repairImage(id) ?: throw IllegalStateException("لا توجد صورة لهذا الطلب")
