@@ -334,4 +334,27 @@ class ReceivableAccountingTest {
         assertTrue(issues.single().getValue("issue").contains(day))
     }
 
+    @Test fun refundOnlyMovesCashInOriginalInvoiceCurrency() {
+        val id=invoice(10000L)
+        store.returnSale(id,mapOf(0 to 1L),"Returned")
+        val usdBefore=store.balance("drawer",Currency.USD)
+        val tryBefore=store.balance("drawer",Currency.TRY)
+        val sypBefore=store.balance("drawer",Currency.SYP)
+        store.refund(id,2500L,"drawer")
+        assertEquals(usdBefore-2500L,store.balance("drawer",Currency.USD))
+        assertEquals(tryBefore,store.balance("drawer",Currency.TRY))
+        assertEquals(sypBefore,store.balance("drawer",Currency.SYP))
+        assertEquals(7500L,store.refundLiability(id))
+    }
+
+    @Test fun invoiceNumberLookupMatchesOriginalInvoice() {
+        val id=invoice(0L)
+        val number=store.invoice(id).number
+        assertEquals(id,store.invoiceByNumber(number).id)
+        try {
+            store.invoiceByNumber(0L)
+            fail("Invalid invoice number should fail")
+        } catch (_:IllegalArgumentException) { }
+    }
+
 }
