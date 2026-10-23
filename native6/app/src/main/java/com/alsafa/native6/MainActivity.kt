@@ -29,10 +29,21 @@ open class MainActivity:Activity() {
     private var pdfInvoice:String?=null
     private val basket=mutableListOf<SaleItem>()
     private var basketCurrency=Currency.USD
+    private var lastScrollY=0
+    private var contentScroll:ScrollView?=null
     private val ink=Color.rgb(62,52,41)
     private val gold=Color.rgb(169,121,41)
     private val vaultNames=listOf("درج المحل","الصندوق الخارجي","شام كاش","البنك")
-    override fun onCreate(state:Bundle?) {super.onCreate(state);store=Store(StoreDb(this));font=try { Typeface.createFromAsset(assets,"Tajawal-Medium.ttf") } catch (_:Exception) { Typeface.DEFAULT };page=state?.getString("page")?:intent.getStringExtra(EXTRA_PAGE)?:"home";if(page=="stock-history")intent.getStringExtra(EXTRA_PRODUCT_ID)?.let { productId -> selectedProduct=try { store.product(productId) } catch (_:Exception) { null } };pdfInvoice=state?.getString("pdfInvoice");safeRender();if(this !is SectionActivity)io.execute{Store.vaults.forEach{vault->try{store.autoCloseMissingDays(vault,31)}catch(e:Exception){runOnUiThread{if(!isFinishing&&!isDestroyed)Toast.makeText(this,"تعذر الإقفال التلقائي للصندوق $vault: ${e.message}",Toast.LENGTH_LONG).show()}}};runOnUiThread{if(!isFinishing&&!isDestroyed && page=="vaults")safeRender()}}}
+    override fun onCreate(state:Bundle?) {super.onCreate(state);store=Store(StoreDb(this));font=try { Typeface.createFromAsset(assets,"Tajawal-Medium.ttf") } catch (_:Exception) { Typeface.DEFAULT };page=state?.getString("page")?:intent.getStringExtra(EXTRA_PAGE)?:"home";if(page=="stock-history")intent.getStringExtra(EXTRA_PRODUCT_ID)?.let { productId -> selectedProduct=try { store.product(productId) } catch (_:Exception) { null } };pdfInvoice=state?.getString("pdfInvoice");state?.let { saved ->
+        basketCurrency=try { Currency.valueOf(saved.getString("basketCurrency")?:"USD") } catch (_:Exception) { Currency.USD }
+        val ids=saved.getStringArrayList("basketProductIds")
+        val quantities=saved.getLongArray("basketQuantities")
+        val prices=saved.getLongArray("basketUnitPrices")
+        if(ids!=null && quantities!=null && prices!=null && ids.size==quantities.size && ids.size==prices.size) {
+            ids.indices.forEach { i -> basket.add(SaleItem(ids[i],quantities[i],prices[i])) }
+        }
+        lastScrollY=saved.getInt("contentScrollY",0)
+    };safeRender();contentScroll?.post { contentScroll?.scrollTo(0,lastScrollY) };if(this !is SectionActivity)io.execute{Store.vaults.forEach{vault->try{store.autoCloseMissingDays(vault,31)}catch(e:Exception){runOnUiThread{if(!isFinishing&&!isDestroyed)Toast.makeText(this,"تعذر الإقفال التلقائي للصندوق $vault: ${e.message}",Toast.LENGTH_LONG).show()}}};runOnUiThread{if(!isFinishing&&!isDestroyed && page=="vaults")safeRender()}}}
     private fun dp(n:Int)=(n*resources.displayMetrics.density).toInt()
     private fun style(v:TextView){v.typeface=font;v.setTextColor(ink);v.textSize=18f;v.setPadding(dp(12),dp(10),dp(12),dp(10))}
     private fun background(color:Int=Color.rgb(255,253,249))=GradientDrawable().apply{setColor(color);cornerRadius=dp(14).toFloat();setStroke(dp(1),Color.rgb(234,223,206))}
@@ -74,7 +85,16 @@ open class MainActivity:Activity() {
         io.shutdown()
         super.onDestroy()
     }
-    override fun onSaveInstanceState(out:Bundle){out.putString("page",page);out.putString("pdfInvoice",pdfInvoice);super.onSaveInstanceState(out)}
+    override fun onSaveInstanceState(out:Bundle){
+        out.putString("page",page)
+        out.putString("pdfInvoice",pdfInvoice)
+        out.putString("basketCurrency",basketCurrency.name)
+        out.putStringArrayList("basketProductIds",ArrayList(basket.map { it.productId }))
+        out.putLongArray("basketQuantities",basket.map { it.qty }.toLongArray())
+        out.putLongArray("basketUnitPrices",basket.map { it.unitPrice }.toLongArray())
+        out.putInt("contentScrollY",contentScroll?.scrollY?:0)
+        super.onSaveInstanceState(out)
+    }
     override fun onBackPressed(){if(this is SectionActivity)finish() else super.onBackPressed()}
     private fun safeRender() {
         try { render() } catch (e: Exception) {
@@ -134,7 +154,7 @@ open class MainActivity:Activity() {
                 it.setOnClickListener { if(!busy)homePage() }
             }
         }
-        val scroll=ScrollView(this);body=column();scroll.addView(body);root.addView(scroll,LinearLayout.LayoutParams(-1,0,1f))
+        val scroll=ScrollView(this);contentScroll=scroll;body=column();scroll.addView(body);root.addView(scroll,LinearLayout.LayoutParams(-1,0,1f))
         when(page){"home"->home();"simple"->simple();"advanced"->advanced();"products"->products();"inventory"->inventoryDashboard();"stock-history"->if(selectedProduct!=null)stockHistory(selectedProduct!!) else {text("لم يتم اختيار منتج لعرض حركاته.");button("العودة إلى المنتجات"){go("products")}};"stocktake-history"->stocktakeHistoryScreen();"sale"->sale();"invoices"->invoices();"vaults"->vaults();"suppliers"->suppliers();"repairs"->repairs();"reports"->reports();"period-reports"->periodReports();"trial-balance"->trialBalanceScreen();"account-ledger"->accountLedgerScreen();"journal-integrity"->journalIntegrityScreen();"structural-audit"->structuralAuditScreen();"partners"->partners();"backup"->backup();"legacy-audit"->legacyAudit();"legacy-history"->legacyHistory();"audit"->audit();else->{text("هذه الصفحة غير متاحة في النسخة الحالية.");button("العودة إلى الرئيسية"){homePage()}}}
     }
     private fun legacyHistory() {
