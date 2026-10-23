@@ -2,11 +2,14 @@ package com.alsafa.native6
 
 import android.content.Context
 import org.json.JSONObject
+import org.json.JSONArray
 import java.io.File
 
 /** Rebase app-private photo references when restoring on another Android device. */
 object BackupMediaPaths {
-    fun rebase(context:Context,data:JSONObject) {
+    fun rebase(context:Context,data:JSONObject,media:JSONArray?=null) {
+        val available=mutableSetOf<String>()
+        if(media!=null) for(i in 0 until media.length()) available.add(media.getJSONObject(i).getString("name"))
         val imageDir=File(context.filesDir,"images").canonicalFile
         for(table in listOf("products","repairs")) {
             val records=data.getJSONArray(table)
