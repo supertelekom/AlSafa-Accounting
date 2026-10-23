@@ -483,7 +483,7 @@ open class MainActivity:Activity() {
             }
             button("إرسال صورة المنتج عبر واتساب",box){
                 try {
-                    val path=store.productImage(p.id) ?: error("لا توجد صورة لهذا المنتج")
+                    val path=store.productImage(p.id) ?: throw IllegalStateException("لا توجد صورة لهذا المنتج")
                     CustomerShare.send(this,java.io.File(path),"image/jpeg","الصفا للساعات - ${p.name}")
                 }catch(e:Exception){error(e)}
             }
@@ -1237,7 +1237,7 @@ button("＋ مورد"){form("مورد جديد"){box->val n=field("الاسم",b
                 val id=row.getValue("id")
                 button("إرسال صورة الصيانة عبر واتساب",results){
                     try {
-                        val path=store.repairImage(id) ?: error("لا توجد صورة لهذا الطلب")
+                        val path=store.repairImage(id) ?: throw IllegalStateException("لا توجد صورة لهذا الطلب")
                         CustomerShare.send(this,java.io.File(path),"image/jpeg","صورة ساعة الصيانة - الصفا للساعات")
                     }catch(e:Exception){error(e)}
                 }
