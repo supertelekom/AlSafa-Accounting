@@ -35,6 +35,7 @@ object BackupMedia {
     /** Restore only to a fresh images directory; never overwrite an existing photo. */
     fun restore(context:Context,entries:JSONArray):List<File> {
         val dir=File(context.filesDir,"images").canonicalFile
+        require(dir.parentFile==context.filesDir.canonicalFile) { "مسار استعادة الصور غير آمن" }
         val pending=mutableListOf<Pair<File,ByteArray>>()
         var total=0L
         val names=mutableSetOf<String>()
