@@ -14,6 +14,7 @@ object BackupMedia {
     fun collect(context:Context):JSONArray {
         val root=File(context.filesDir,"images").canonicalFile
         val result=JSONArray()
+        require(root.parentFile==context.filesDir.canonicalFile) { "مجلد الصور خارج تخزين التطبيق" }
         require(root.isDirectory || !root.exists()) { "مسار مجلد الصور غير صالح" }
         var total=0L
         val files=if(root.exists()) requireNotNull(root.listFiles()) { "تعذر قراءة مجلد الصور" }.toList() else emptyList()
