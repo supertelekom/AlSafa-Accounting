@@ -1,6 +1,7 @@
 package com.alsafa.native6
 
 import android.app.Activity
+import android.app.AlertDialog
 import android.content.Intent
 import android.graphics.Color
 import android.graphics.Typeface
@@ -62,7 +63,23 @@ class TabletDashboardActivity : Activity() {
 
     private fun open(page: String) {
         if (page == "camera") startActivity(Intent(this, MediaCaptureActivity::class.java))
+        else if (page == "barcode") startActivityForResult(Intent(this, BarcodeScanActivity::class.java), 64)
         else startActivity(Intent(this, SectionActivity::class.java).putExtra(MainActivity.EXTRA_PAGE, page))
+    }
+
+    @Deprecated("Deprecated in Java")
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == 64 && resultCode == RESULT_OK) {
+            val barcode = data?.getStringExtra(BarcodeScanActivity.EXTRA_BARCODE).orEmpty()
+            if (barcode.isNotBlank()) AlertDialog.Builder(this)
+                .setTitle("تمت قراءة الباركود")
+                .setMessage(barcode)
+                .setPositiveButton("المنتجات") { _, _ -> open("products") }
+                .setNeutralButton("المبيع") { _, _ -> open("sale") }
+                .setNegativeButton("إغلاق", null)
+                .show()
+        }
     }
 
     private fun tile(label: String, detail: String, symbol: String, action: () -> Unit): View {
@@ -138,7 +155,8 @@ class TabletDashboardActivity : Activity() {
                     Triple("الصيانة", "استلام وتسليم", "repairs"),
                     Triple("المنتجات", "الأصناف والمخزون", "products"),
                     Triple("الإقفال اليومي", "الخزنات والأرصدة", "vaults"),
-                    Triple("الكاميرا والمعرض", "حفظ صور محلية", "camera")
+                    Triple("الكاميرا والمعرض", "حفظ صور محلية", "camera"),
+                    Triple("قارئ الباركود", "قراءة بكاميرا الجهاز", "barcode")
                 ))
             }
             "simple" -> {
