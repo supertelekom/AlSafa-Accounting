@@ -76,6 +76,7 @@ class Backup(private val context:Context,private val store:Store) {
         }
         require(data.keys().asSequence().toSet()==tables.toSet()){"جداول النسخة غير مكتملة"}
         // Validate in a disposable database, then restore atomically only into an empty database.
+        if(root.getInt("schema")>=7) BackupMediaPaths.rebase(context,data)
         val name="validate-${Store.id()}.db";val helper=StoreDb(context,name);val staging=Store(helper)
         try { load(staging,data);validate(staging);val photos=BackupMedia.restore(context,root.optJSONArray("media") ?: JSONArray());try { load(store,data) }catch(e:Exception){photos.forEach { it.delete() };throw e} }finally{helper.close();context.deleteDatabase(name)}
     }
