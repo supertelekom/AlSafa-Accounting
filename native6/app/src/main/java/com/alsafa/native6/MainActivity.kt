@@ -1181,7 +1181,20 @@ button("＋ مورد"){form("مورد جديد"){box->val n=field("الاسم",b
                     startActivityForResult(Intent(this,MediaCaptureActivity::class.java),70)
                 }
                 text(row.getValue("date")+" · "+row.getValue("customer")+" · "+row.getValue("watch")+" · "+label(row.getValue("status")),results)
-                button("تفاصيل الصيانة",results){val detail=store.repairDetail(id);val invoice=store.repairInvoice(id);val profit=store.repairProfit(id);val profitText=if(profit==null)"" else {val c=Currency.valueOf(profit.getValue("currency"));"\nأجرة الصيانة: "+money(profit.getValue("revenue").toLong(),c)+"\nتكلفة القطع: "+money(profit.getValue("parts_cost").toLong(),c)+"\nهامش الصيانة: "+money(profit.getValue("margin").toLong(),c)+"\nالمقبوض: "+money(profit.getValue("collected").toLong(),c)+"\nالمتبقي: "+money(profit.getValue("outstanding").toLong(),c)};val info="العميل: "+detail.getValue("customer")+"\nالهاتف: "+detail.getValue("phone")+"\nالساعة: "+detail.getValue("watch")+"\nالمشكلة: "+detail.getValue("problem")+"\nالحالة: "+label(detail.getValue("status"))+"\nالفاتورة: "+(invoice?.get("number")?:"لا توجد")+profitText;AlertDialog.Builder(this).setTitle("تفاصيل الصيانة").setMessage(info).setPositiveButton("حسناً",null).show()}
+                button("تفاصيل الصيانة",results){val detail=store.repairDetail(id);val invoice=store.repairInvoice(id);val profit=store.repairProfit(id);val profitText=if(profit==null)"" else {val c=Currency.valueOf(profit.getValue("currency"));"\nأجرة الصيانة: "+money(profit.getValue("revenue").toLong(),c)+"\nتكلفة القطع: "+money(profit.getValue("parts_cost").toLong(),c)+"\nهامش الصيانة: "+money(profit.getValue("margin").toLong(),c)+"\nالمقبوض: "+money(profit.getValue("collected").toLong(),c)+"\nالمتبقي: "+money(profit.getValue("outstanding").toLong(),c)};val info="العميل: "+detail.getValue("customer")+"\nالهاتف: "+detail.getValue("phone")+"\nالساعة: "+detail.getValue("watch")+"\nالمشكلة: "+detail.getValue("problem")+"\nالحالة: "+label(detail.getValue("status"))+"\nالفاتورة: "+(invoice?.get("number")?:"لا توجد")+profitText;AlertDialog.Builder(this).setTitle("تفاصيل الصيانة").setMessage(info)
+                    .setNeutralButton("عرض الصورة"){_,_->
+                        val path=store.repairImage(id)
+                        if(path==null || !java.io.File(path).isFile){
+                            Toast.makeText(this,"لا توجد صورة محفوظة لهذا الطلب",Toast.LENGTH_SHORT).show()
+                        }else{
+                            val view=android.widget.ImageView(this).apply {
+                                setImageBitmap(android.graphics.BitmapFactory.decodeFile(path))
+                                adjustViewBounds=true
+                            }
+                            AlertDialog.Builder(this).setTitle("صورة الصيانة").setView(view)
+                                .setPositiveButton("إغلاق",null).show()
+                        }
+                    }.setPositiveButton("حسناً",null).show()}
             }
         }
         val counts=store.repairStatusCounts()
