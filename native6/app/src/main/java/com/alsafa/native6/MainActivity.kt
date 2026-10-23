@@ -906,8 +906,7 @@ button("＋ مورد"){form("مورد جديد"){box->val n=field("الاسم",b
                     val received=java.time.LocalDate.parse(date.text.toString().trim()).toString()
                     val photo=intakePhotoPath
                     work{
-                        val id=store.receiveRepair(name,phone,watch,why,received)
-                        if(photo!=null)store.setRepairImage(id,photo)
+                        store.receiveRepair(name,phone,watch,why,received,imagePath=photo)
                         intakePhotoPath=null
                     }
                 })
