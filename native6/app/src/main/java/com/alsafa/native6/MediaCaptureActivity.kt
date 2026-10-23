@@ -98,9 +98,14 @@ class MediaCaptureActivity : Activity() {
         try {
             val bitmap: Bitmap = when (requestCode) {
                 CAMERA -> {
-                    @Suppress("DEPRECATION")
-                    (data?.extras?.get("data") as? Bitmap)
-                        ?: error("لم ترجع الكاميرا صورة")
+                    val source=File(pendingCameraPath ?: error("مسار الكاميرا غير متوفر"))
+                    require(source.isFile && source.length()>0) { "لم تحفظ الكاميرا الصورة" }
+                    val bounds=BitmapFactory.Options().apply { inJustDecodeBounds=true }
+                    BitmapFactory.decodeFile(source.absolutePath,bounds)
+                    var sample=1
+                    while(maxOf(bounds.outWidth,bounds.outHeight)/(sample*2)>=1600)sample*=2
+                    BitmapFactory.decodeFile(source.absolutePath,BitmapFactory.Options().apply { inSampleSize=sample })
+                        ?: error("تعذر قراءة صورة الكاميرا")
                 }
                 GALLERY -> {
                     val uri = data?.data ?: error("لم يتم اختيار صورة")
