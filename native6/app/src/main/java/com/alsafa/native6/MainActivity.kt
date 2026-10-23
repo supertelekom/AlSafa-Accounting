@@ -31,6 +31,8 @@ open class MainActivity:Activity() {
     private var basketCurrency=Currency.USD
     private var lastScrollY=0
     private var contentScroll:ScrollView?=null
+    private val visibleInputs=mutableListOf<EditText>()
+    private var savedInputs:ArrayList<String>?=null
     private val ink=Color.rgb(62,52,41)
     private val gold=Color.rgb(169,121,41)
     private val vaultNames=listOf("درج المحل","الصندوق الخارجي","شام كاش","البنك")
@@ -43,6 +45,7 @@ open class MainActivity:Activity() {
             ids.indices.forEach { i -> basket.add(SaleItem(ids[i],quantities[i],prices[i])) }
         }
         lastScrollY=saved.getInt("contentScrollY",0)
+        savedInputs=saved.getStringArrayList("visibleInputs")
     };safeRender();contentScroll?.post { contentScroll?.scrollTo(0,lastScrollY) };if(this !is SectionActivity)io.execute{Store.vaults.forEach{vault->try{store.autoCloseMissingDays(vault,31)}catch(e:Exception){runOnUiThread{if(!isFinishing&&!isDestroyed)Toast.makeText(this,"تعذر الإقفال التلقائي للصندوق $vault: ${e.message}",Toast.LENGTH_LONG).show()}}};runOnUiThread{if(!isFinishing&&!isDestroyed && page=="vaults")safeRender()}}}
     override fun onNewIntent(newIntent:Intent) {
         super.onNewIntent(newIntent)
@@ -58,7 +61,7 @@ open class MainActivity:Activity() {
     private fun column()=LinearLayout(this).apply{orientation=LinearLayout.VERTICAL;layoutDirection=View.LAYOUT_DIRECTION_RTL;setPadding(dp(12),dp(8),dp(12),dp(8))}
     private fun text(value:String,parent:LinearLayout=body,size:Float=18f)=TextView(this).also{style(it);it.textSize=size;it.text=value;parent.addView(it)}
     private fun button(label:String,parent:LinearLayout=body,action:()->Unit)=Button(this).also{style(it);it.text=label;it.isAllCaps=false;it.background=background();parent.addView(it,LinearLayout.LayoutParams(-1,dp(62)).apply{setMargins(0,dp(4),0,dp(4))});it.setOnClickListener{if(!busy)action()}}
-    private fun field(label:String,parent:LinearLayout,value:String="",numeric:Boolean=false):EditText {text(label,parent,15f);return EditText(this).also{style(it);it.setSingleLine();it.setText(value);if(numeric)it.inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL;parent.addView(it)}}
+    private fun field(label:String,parent:LinearLayout,value:String="",numeric:Boolean=false):EditText {text(label,parent,15f);return EditText(this).also{style(it);it.setSingleLine();if(numeric)it.inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL;val isScreen=::body.isInitialized && parent===body;val restored=if(isScreen)savedInputs?.getOrNull(visibleInputs.size) else null;it.setText(restored?:value);if(isScreen)visibleInputs.add(it);parent.addView(it)}}
     private fun select(label:String,items:List<String>,parent:LinearLayout):Spinner {text(label,parent,15f);return Spinner(this).also{it.adapter=ArrayAdapter(this,android.R.layout.simple_spinner_dropdown_item,items);parent.addView(it)}}
     private fun form(title:String,submit:String="حفظ",build:(LinearLayout)->(()->Unit)) {
         val layout=column();val action=build(layout);val scroll=ScrollView(this);scroll.addView(layout)
@@ -101,6 +104,7 @@ open class MainActivity:Activity() {
         out.putLongArray("basketQuantities",basket.map { it.qty }.toLongArray())
         out.putLongArray("basketUnitPrices",basket.map { it.unitPrice }.toLongArray())
         out.putInt("contentScrollY",contentScroll?.scrollY?:0)
+        out.putStringArrayList("visibleInputs",ArrayList(visibleInputs.map { it.text.toString() }))
         super.onSaveInstanceState(out)
     }
     override fun onBackPressed(){if(this is SectionActivity)finish() else super.onBackPressed()}
@@ -122,6 +126,7 @@ open class MainActivity:Activity() {
         }
     }
     private fun render(){
+        visibleInputs.clear()
         val root=column();root.setBackgroundColor(Color.rgb(248,243,235));setContentView(root)
         if(page=="home") {
             text("الصفا للساعات",root,24f).setTextColor(gold)
