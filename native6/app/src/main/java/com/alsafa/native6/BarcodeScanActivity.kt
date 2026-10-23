@@ -1,6 +1,7 @@
 package com.alsafa.native6
 
 import android.app.Activity
+import androidx.activity.ComponentActivity
 import android.content.Intent
 import android.os.Bundle
 import android.view.Gravity
@@ -14,7 +15,7 @@ import com.journeyapps.barcodescanner.ScanOptions
  * Real camera barcode scanner (ZXing embedded; no network or Firebase).
  * Callers receive the decoded barcode only after a successful scan.
  */
-class BarcodeScanActivity : Activity() {
+class BarcodeScanActivity : ComponentActivity() {
     companion object {
         const val EXTRA_BARCODE = "com.alsafa.native6.BARCODE"
     }
