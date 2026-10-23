@@ -35,6 +35,8 @@ object CustomerChat {
         val builder=Uri.parse("https://wa.me/$number").buildUpon()
         if(message.isNotBlank())builder.appendQueryParameter("text",message)
         val url=builder.build()
-        activity.startActivity(Intent(Intent.ACTION_VIEW,url))
+        val intent=Intent(Intent.ACTION_VIEW,url)
+        require(intent.resolveActivity(activity.packageManager)!=null) { "لا يوجد تطبيق متاح لفتح رابط واتساب" }
+        activity.startActivity(intent)
     }
 }
