@@ -1237,6 +1237,11 @@ button("＋ مورد"){form("مورد جديد"){box->val n=field("الاسم",b
             text("عدد النتائج: ${matches.size}",results,16f)
             matches.forEach{row->
                 val id=row.getValue("id")
+                button("فتح واتساب العميل",results){
+                    try {
+                        CustomerChat.open(this,row.getValue("phone"),"مرحباً، معكم الصفا للساعات بخصوص صيانة الساعة.")
+                    }catch(e:Exception){error(e)}
+                }
                 button("إرسال صورة الصيانة عبر واتساب",results){
                     try {
                         val path=store.repairImage(id) ?: throw IllegalStateException("لا توجد صورة لهذا الطلب")
