@@ -176,4 +176,38 @@ class ReceivableAccountingTest {
         assertTrue(store.refundLiabilityIssues().isEmpty())
     }
 
+    @Test fun duplicateReturnIsRejectedWithoutChangingStockOrLiability() {
+        val product=store.addProduct("Return-once watch","",Currency.USD,10000L,5000L,2L)
+        val id=store.sale(listOf(SaleItem(product,1L,10000L)),"Customer","",
+            Currency.USD,10000L,"drawer")
+        store.returnSale(id,mapOf(0 to 1L),"First return")
+        val stockBefore=store.product(product).stock
+        val liabilityBefore=store.refundLiability(id)
+        val countBefore=store.scalar("SELECT count(*) FROM returns WHERE invoice_id=?",id)
+        try {
+            store.returnSale(id,mapOf(0 to 1L),"Duplicate return")
+            fail("A returned item cannot be returned twice")
+        } catch (_:IllegalArgumentException) { }
+        assertEquals(stockBefore,store.product(product).stock)
+        assertEquals(liabilityBefore,store.refundLiability(id))
+        assertEquals(countBefore,store.scalar("SELECT count(*) FROM returns WHERE invoice_id=?",id))
+    }
+
+    @Test fun returnBeforeLaterReceiptIsRejected() {
+        val product=store.addProduct("Dated watch","",Currency.USD,10000L,5000L,2L)
+        val saleDay=java.time.LocalDate.now().minusDays(4).toString()
+        val returnDay=java.time.LocalDate.now().minusDays(3).toString()
+        val receiptDay=java.time.LocalDate.now().minusDays(2).toString()
+        val id=store.sale(listOf(SaleItem(product,1L,10000L)),"Customer","",
+            Currency.USD,0L,"drawer",date=saleDay)
+        store.collect(id,5000L,"drawer",date=receiptDay)
+        try {
+            store.returnSale(id,mapOf(0 to 1L),"Backdated return",date=returnDay)
+            fail("Return must not precede later receipt")
+        } catch (_:IllegalArgumentException) { }
+        assertEquals(5000L,store.due(id))
+        assertEquals(0L,store.refundLiability(id))
+        assertEquals(0L,store.scalar("SELECT count(*) FROM returns WHERE invoice_id=?",id))
+    }
+
 }
