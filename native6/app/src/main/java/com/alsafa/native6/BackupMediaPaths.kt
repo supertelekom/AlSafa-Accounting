@@ -26,6 +26,7 @@ object BackupMediaPaths {
                 require(name.endsWith(".jpg") && name.removeSuffix(".jpg").matches(Regex("[a-fA-F0-9-]{36}"))) {
                     "مسار صورة غير صالح في النسخة الاحتياطية"
                 }
+                if(media!=null) require(name in available) { "الصورة المشار إليها غير موجودة في النسخة الاحتياطية" }
                 val rebased=File(imageDir,name).canonicalFile
                 require(rebased.parentFile==imageDir) { "مسار الصورة خارج المجلد المسموح" }
                 details.put("imagePath",rebased.absolutePath)
