@@ -92,15 +92,20 @@ class MediaCaptureActivity : Activity() {
                 GALLERY -> {
                     val uri = data?.data ?: error("لم يتم اختيار صورة")
                     contentResolver.openInputStream(uri).use { stream ->
-                        BitmapFactory.decodeStream(stream) ?: error("تعذر قراءة الصورة")
+                        BitmapFactory.decodeStream(stream, null, BitmapFactory.Options().apply { inSampleSize = 2 }) ?: error("تعذر قراءة الصورة")
                     }
                 }
                 else -> return
             }
+            val maxSide = maxOf(bitmap.width, bitmap.height)
+            val outputBitmap = if (maxSide > 1600) {
+                val scale = 1600.0 / maxSide
+                Bitmap.createScaledBitmap(bitmap, (bitmap.width * scale).toInt().coerceAtLeast(1), (bitmap.height * scale).toInt().coerceAtLeast(1), true)
+            } else bitmap
             val directory = File(filesDir, "images").apply { mkdirs() }
             val output = File(directory, "${UUID.randomUUID()}.jpg")
             FileOutputStream(output).use { stream ->
-                require(bitmap.compress(Bitmap.CompressFormat.JPEG, 85, stream)) { "تعذر حفظ الصورة" }
+                require(outputBitmap.compress(Bitmap.CompressFormat.JPEG, 85, stream)) { "تعذر حفظ الصورة" }
             }
             imagePath = output.absolutePath
             show(output.absolutePath)
