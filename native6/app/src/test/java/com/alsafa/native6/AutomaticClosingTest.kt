@@ -77,4 +77,20 @@ class AutomaticClosingTest {
         assertEquals(0L,store.scalar("SELECT count(*) FROM closings"))
     }
 
+    @Test fun backdatedCashMovementFlagsClosingDriftWithoutChangingSnapshot() {
+        val day=LocalDate.now().minusDays(2).toString()
+        store.cash("opening","drawer",Currency.USD,10000L,"Opening",date=day)
+        assertTrue(store.autoCloseDay("drawer",day))
+        val original=store.closingForDay("drawer",day)
+            .single { it.getValue("currency")=="USD" }.getValue("expected").toLong()
+        store.cash("opening","external",Currency.USD,5000L,"Other vault",date=day)
+        store.cash("transfer","external",Currency.USD,2000L,"Late recorded transfer",
+            date=day,destination="drawer")
+        assertEquals(10000L,original)
+        assertEquals(10000L,store.closingForDay("drawer",day)
+            .single { it.getValue("currency")=="USD" }.getValue("expected").toLong())
+        assertEquals(2000L,store.closingBookDrift("drawer",day,Currency.USD))
+        assertEquals(12000L,store.vaultDayClosing("drawer",Currency.USD,day))
+    }
+
 }
