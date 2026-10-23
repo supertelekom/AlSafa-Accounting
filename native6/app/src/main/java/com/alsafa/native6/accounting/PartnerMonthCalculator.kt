@@ -39,6 +39,7 @@ object PartnerMonthCalculator {
         require(shares.all { it.partnerId.isNotBlank() && it.percentage >= BigDecimal.ZERO })
         require(shares.fold(BigDecimal.ZERO) { sum, s -> sum + s.percentage }.compareTo(BigDecimal("100")) == 0)
         require(withdrawals.all { it.amountMinor > 0 && it.partnerId in shares.map { s -> s.partnerId } })
+        require(withdrawals.all { it.currency in setOf("USD", "TRY", "SYP") })
         val total = BigDecimal.valueOf(distributableProfitMinor)
         val provisional = shares.map { s ->
             total.multiply(s.percentage).divide(BigDecimal("100"), 0, RoundingMode.DOWN).longValueExact()
