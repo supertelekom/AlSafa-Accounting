@@ -677,6 +677,29 @@ class Store(val helper:StoreDb) {
         }
         return issues
     }
+    /** Maximum refund safe on a historical date and all later ledger dates. */
+    fun refundableOn(invoiceId:String,date:String):Long {
+        val inv=invoice(invoiceId)
+        require(inv.kind=="sale" || inv.kind=="repair"){"الفاتورة غير قابلة للاسترداد"}
+        val day=LocalDate.parse(date).toString()
+        require(!LocalDate.parse(day).isAfter(LocalDate.now())){"تاريخ الاسترداد في المستقبل"}
+        val invoiceDay=rows("SELECT date FROM events WHERE id=?",invoiceId).single().getValue("date")
+        require(day>=invoiceDay){"تاريخ الاسترداد يسبق الفاتورة"}
+        val account="refund:$invoiceId"
+        var running=Math.negateExact(scalar("""SELECT coalesce(sum(j.amount),0)
+            FROM journal j JOIN events e ON e.id=j.event_id
+            WHERE j.account=? AND j.currency=? AND e.date<=?""",account,inv.currency.name,day))
+        var minimum=running
+        rows("""SELECT e.date,coalesce(sum(j.amount),0) movement
+            FROM journal j JOIN events e ON e.id=j.event_id
+            WHERE j.account=? AND j.currency=? AND e.date>?
+            GROUP BY e.date ORDER BY e.date""",account,inv.currency.name,day).forEach { row ->
+            running=Math.subtractExact(running,row.getValue("movement").toLong())
+            minimum=minOf(minimum,running)
+        }
+        require(minimum>=0L){"التزام استرداد سالب في يوم لاحق"}
+        return minimum
+    }
     fun refundLiabilityIssues():List<Map<String,String>> {
         val issues=mutableListOf<Map<String,String>>()
         rows("SELECT id,number,kind,currency,total FROM invoices WHERE kind IN ('sale','repair') ORDER BY number").forEach { row ->
@@ -790,7 +813,7 @@ class Store(val helper:StoreDb) {
         returnSale(invoiceId,quantities,reason,date,command)
     }
     fun refund(invoiceId:String,amount:Long,v:String,date:String=today(),command:String=id())=transaction {
-        val inv=invoice(invoiceId);require(inv.kind=="sale" || inv.kind=="repair"){"رد العميل متاح لفواتير المبيع والصيانة فقط"};require(amount>0&&amount<=refundable(invoiceId) && amount<=refundLiability(invoiceId)){"المبلغ المطلوب رده يتجاوز الرصيد المستحق للعميل"};require(!LocalDate.parse(date).isAfter(LocalDate.now())){"تاريخ رد المبلغ في المستقبل"};require(!LocalDate.parse(date).isBefore(LocalDate.parse(rows("SELECT date FROM events WHERE id=?",invoiceId).single().getValue("date"))){"تاريخ رد المبلغ يسبق الفاتورة"};require(rows("SELECT count(*) n FROM returns r JOIN events e ON e.id=r.event_id WHERE r.invoice_id=? AND e.date>?",invoiceId,date).single().getValue("n").toLong()==0L){"رد الأموال لا يجوز أن يسبق تاريخ المرتجع الذي أنشأ الاستحقاق"};validateHistoricalVaultOutflow(v,inv.currency,amount,date);event(command,"REFUND",date,"رد مبلغ فاتورة ${inv.number}")
+        val inv=invoice(invoiceId);require(inv.kind=="sale" || inv.kind=="repair"){"رد العميل متاح لفواتير المبيع والصيانة فقط"};require(amount>0&&amount<=refundable(invoiceId) && amount<=refundableOn(invoiceId,date)){"المبلغ المطلوب رده يتجاوز الرصيد المستحق للعميل"};require(!LocalDate.parse(date).isAfter(LocalDate.now())){"تاريخ رد المبلغ في المستقبل"};require(!LocalDate.parse(date).isBefore(LocalDate.parse(rows("SELECT date FROM events WHERE id=?",invoiceId).single().getValue("date"))){"تاريخ رد المبلغ يسبق الفاتورة"};require(rows("SELECT count(*) n FROM returns r JOIN events e ON e.id=r.event_id WHERE r.invoice_id=? AND e.date>?",invoiceId,date).single().getValue("n").toLong()==0L){"رد الأموال لا يجوز أن يسبق تاريخ المرتجع الذي أنشأ الاستحقاق"};validateHistoricalVaultOutflow(v,inv.currency,amount,date);event(command,"REFUND",date,"رد مبلغ فاتورة ${inv.number}")
         insert("refunds","event_id" to command,"invoice_id" to invoiceId,"amount" to amount,"vault" to v);post(command,listOf(Posting("refund:$invoiceId",inv.currency,amount),Posting("cash:$v",inv.currency,-amount)))
     }
     fun addSupplier(name:String,phone:String):String=transaction { require(name.isNotBlank());val id=id();insert("suppliers","id" to id,"name" to name,"phone" to phone);id }
