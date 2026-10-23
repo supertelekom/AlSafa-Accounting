@@ -29,6 +29,7 @@ class MediaCaptureActivity : Activity() {
     private lateinit var preview: ImageView
     private lateinit var status: TextView
     private var imagePath: String? = null
+    private var pendingCameraPath: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
