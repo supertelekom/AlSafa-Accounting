@@ -81,4 +81,22 @@ class BackupMediaTest {
         assertEquals(false,File(activity.filesDir,"images/$name").exists())
     }
 
+    @Test fun restoresTwoPhotosWithoutOverwritingExistingFiles() {
+        val activity=Robolectric.buildActivity(Activity::class.java).setup().get()
+        val bytes=byteArrayOf(0xFF.toByte(),0xD8.toByte(),4,5,0xFF.toByte(),0xD9.toByte())
+        val encoded=android.util.Base64.encodeToString(bytes,android.util.Base64.NO_WRAP)
+        val names=listOf("${UUID.randomUUID()}.jpg","${UUID.randomUUID()}.jpg")
+        val entries=JSONArray()
+        names.forEach { name ->
+            entries.put(JSONObject().put("name",name).put("sha256",Backup.sha(bytes)).put("base64",encoded))
+        }
+        try {
+            val created=BackupMedia.restore(activity,entries)
+            assertEquals(2,created.size)
+            names.forEach { name -> assertArrayEquals(bytes,File(activity.filesDir,"images/$name").readBytes()) }
+        } finally {
+            names.forEach { name -> File(activity.filesDir,"images/$name").delete() }
+        }
+    }
+
 }
