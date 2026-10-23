@@ -1,5 +1,7 @@
 # Legacy parity register
 
+**Blocking visual acceptance:** [DESIGN_PARITY_AR.md](DESIGN_PARITY_AR.md). Current Android button-list navigation is **not** a 1:1 recreation of the legacy tablet UI; do not mark design parity complete before side-by-side screenshots and interaction checks.
+
 Source: v3.9.353; 944 declared functions, 44 static navigation routes, 48 forms, 165 named fields. Static inventory covers the full file. Detailed semantic review has focused on sale, return, purchase, vault, backup and homepage paths; full business-rule audit is NOT finished.
 
 | Legacy route | Native 6 status |
