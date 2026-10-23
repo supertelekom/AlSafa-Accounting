@@ -27,7 +27,7 @@ object BackupMedia {
             total+=file.length()
             require(total<=MAX_TOTAL) { "حجم الصور يتجاوز حد النسخة الاحتياطية" }
             val bytes=file.readBytes()
-            require(bytes.size.toLong()==file.length()) { "تغير حجم الصورة أثناء النسخ" }
+            require(bytes.size.toLong()==file.length() && bytes.size.toLong()<=MAX_FILE) { "تغير حجم الصورة أثناء النسخ" }
             result.put(JSONObject().put("name",file.name).put("sha256",Backup.sha(bytes))
                 .put("base64",Base64.encodeToString(bytes,Base64.NO_WRAP)))
         }
