@@ -555,9 +555,15 @@ class Store(val helper:StoreDb) {
                 val last=history.lastOrNull()
                 if(last==null) {
                     issues.add(row+("issue" to "لا توجد قيود مالية للفاتورة"))
-                } else if(last.getValue("receivable_balance").toLong()<0L ||
-                    last.getValue("refund_liability").toLong()<0L) {
-                    issues.add(row+("issue" to "رصيد ذمة أو استرداد سالب"))
+                } else {
+                    val negative=history.firstOrNull { entry ->
+                        entry.getValue("receivable_balance").toLong()<0L ||
+                            entry.getValue("refund_liability").toLong()<0L
+                    }
+                    if(negative!=null) {
+                        issues.add(row+("issue" to
+                            ("رصيد ذمة أو استرداد سالب بتاريخ "+negative.getValue("date"))))
+                    }
                 }
             } catch(e:RuntimeException) {
                 issues.add(row+("issue" to (e.message ?: "تعذر قراءة كشف الفاتورة")))
