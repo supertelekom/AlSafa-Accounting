@@ -600,6 +600,22 @@ Store.vaults.forEach{v->text(v+" · إقفالات تحتاج عدّاً: "+stor
         store.rows("SELECT e.date,c.* FROM closings c JOIN events e ON e.id=c.event_id ORDER BY e.created DESC LIMIT 30").forEach{r->val c=Currency.valueOf(r.getValue("currency"));text("${r.getValue("date")} · ${r.getValue("vault")} · ${c.name}\nمتوقع ${money(r.getValue("expected").toLong(),c)} · "+(if(r["counted"].isNullOrBlank()) "إقفال تلقائي · لم يجرِ عد فعلي" else "معدود ${money(r.getValue("counted").toLong(),c)} · فرق ${money(Math.subtractExact(r.getValue("counted").toLong(),r.getValue("expected").toLong()),c)}"))}
     }
     private fun suppliers(){text("الموردون",size=25f);
+        button("تدقيق أرصدة الموردين لشهر محدد"){
+            form("مطابقة الموردين الشهرية","تدقيق"){box->
+                val month=field("الشهر YYYY-MM",box,YearMonth.now().toString())
+                ({
+                    val selected=month.text.toString().trim()
+                    val issues=store.supplierMonthIssues(selected)
+                    val details=if(issues.isEmpty()) "جميع كشوف الموردين مطابقة في الشهر المحدد."
+                    else issues.take(100).joinToString("\n"){row->
+                        row.getValue("name")+" · "+row.getValue("currency")+" · "+row.getValue("issue")
+                    } + if(issues.size>100) "\n... توجد نتائج إضافية" else ""
+                    AlertDialog.Builder(this).setTitle("تدقيق الموردين · "+selected)
+                        .setMessage(details).setPositiveButton("حسناً",null).show()
+                })
+            }
+        }
+
         button("كشف حسابات الموردين غير المرتبطة"){
             try {
                 val issues=store.orphanSupplierAccounts()
