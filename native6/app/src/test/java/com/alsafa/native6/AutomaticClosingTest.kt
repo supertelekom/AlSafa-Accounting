@@ -116,4 +116,28 @@ class AutomaticClosingTest {
         assertEquals(afterTransfer,store.scalar("SELECT count(*) FROM journal"))
     }
 
+    @Test fun lateBackdatedCashMovementFlagsOriginalClosingDriftWithoutRewritingSnapshot() {
+        val old=LocalDate.now().minusDays(3).toString()
+        store.cash("opening","drawer",Currency.USD,10000L,"Opening",date=old)
+        assertTrue(store.autoCloseDay("drawer",old))
+        val snapshot=store.closingForDay("drawer",old)
+            .single { it.getValue("currency")=="USD" }.getValue("expected").toLong()
+        store.cash("expense","drawer",Currency.USD,1500L,"Late-entered expense",date=old)
+        assertEquals(snapshot,store.closingForDay("drawer",old)
+            .single { it.getValue("currency")=="USD" }.getValue("expected").toLong())
+        assertEquals(-1500L,store.closingBookDrift("drawer",old,Currency.USD))
+        assertEquals(8500L,store.vaultDayClosing("drawer",Currency.USD,old))
+        assertEquals(8500L,store.balance("drawer",Currency.USD))
+    }
+
+    @Test fun autoCloseDoesNotDuplicateManualClosing() {
+        val old=LocalDate.now().minusDays(2).toString()
+        store.cash("opening","drawer",Currency.USD,10000L,"Opening",date=old)
+        assertTrue(store.autoCloseDay("drawer",old))
+        assertEquals(1L,store.scalar(
+            "SELECT count(DISTINCT c.event_id) FROM closings c JOIN events e ON e.id=c.event_id WHERE c.vault=? AND e.date=?",
+            "drawer",old))
+        assertEquals(0,store.autoCloseMissingDays("drawer",1))
+    }
+
 }
