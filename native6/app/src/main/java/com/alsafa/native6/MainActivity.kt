@@ -38,10 +38,12 @@ open class MainActivity:Activity() {
     private var chooserRefresh:(()->Unit)?=null
     private var photoProductId:String?=null
     private var photoRepairId:String?=null
+    private var intakePhotoPath:String?=null
+    private var intakePhotoStatus:TextView?=null
     private val ink=Color.rgb(62,52,41)
     private val gold=Color.rgb(169,121,41)
     private val vaultNames=listOf("درج المحل","الصندوق الخارجي","شام كاش","البنك")
-    override fun onCreate(state:Bundle?) {super.onCreate(state);store=Store(StoreDb(this));font=try { Typeface.createFromAsset(assets,"Tajawal-Medium.ttf") } catch (_:Exception) { Typeface.DEFAULT };page=state?.getString("page")?:intent.getStringExtra(EXTRA_PAGE)?:"home";if(page=="stock-history")intent.getStringExtra(EXTRA_PRODUCT_ID)?.let { productId -> selectedProduct=try { store.product(productId) } catch (_:Exception) { null } };pdfInvoice=state?.getString("pdfInvoice");photoProductId=state?.getString("photoProductId");photoRepairId=state?.getString("photoRepairId");state?.let { saved ->
+    override fun onCreate(state:Bundle?) {super.onCreate(state);store=Store(StoreDb(this));font=try { Typeface.createFromAsset(assets,"Tajawal-Medium.ttf") } catch (_:Exception) { Typeface.DEFAULT };page=state?.getString("page")?:intent.getStringExtra(EXTRA_PAGE)?:"home";if(page=="stock-history")intent.getStringExtra(EXTRA_PRODUCT_ID)?.let { productId -> selectedProduct=try { store.product(productId) } catch (_:Exception) { null } };pdfInvoice=state?.getString("pdfInvoice");photoProductId=state?.getString("photoProductId");photoRepairId=state?.getString("photoRepairId");intakePhotoPath=state?.getString("intakePhotoPath");state?.let { saved ->
         basketCurrency=try { Currency.valueOf(saved.getString("basketCurrency")?:"USD") } catch (_:Exception) { Currency.USD }
         val ids=saved.getStringArrayList("basketProductIds")
         val quantities=saved.getLongArray("basketQuantities")
@@ -97,6 +99,14 @@ open class MainActivity:Activity() {
     @Deprecated("Deprecated in Java")
     override fun onActivityResult(requestCode:Int,resultCode:Int,data:Intent?){
         super.onActivityResult(requestCode,resultCode,data)
+        if(requestCode==71){
+            val path=data?.getStringExtra(MediaCaptureActivity.EXTRA_RESULT_PATH)
+            if(resultCode==RESULT_OK && !path.isNullOrBlank()){
+                intakePhotoPath=path
+                intakePhotoStatus?.text="تم اختيار صورة الساعة"
+            }
+            return
+        }
         if(requestCode==70){
             val path=data?.getStringExtra(MediaCaptureActivity.EXTRA_RESULT_PATH)
             val id=photoRepairId
@@ -145,6 +155,7 @@ open class MainActivity:Activity() {
         out.putString("pdfInvoice",pdfInvoice)
         out.putString("photoProductId",photoProductId)
         out.putString("photoRepairId",photoRepairId)
+        out.putString("intakePhotoPath",intakePhotoPath)
         out.putString("basketCurrency",basketCurrency.name)
         out.putStringArrayList("basketProductIds",ArrayList(basket.map { it.productId }))
         out.putLongArray("basketQuantities",basket.map { it.qty }.toLongArray())
