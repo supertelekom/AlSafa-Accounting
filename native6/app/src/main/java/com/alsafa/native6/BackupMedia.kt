@@ -48,7 +48,9 @@ object BackupMedia {
             require(name.endsWith(".jpg") && name.removeSuffix(".jpg").matches(Regex("[a-fA-F0-9-]{36}")) && names.add(name)) { "اسم صورة غير صالح أو مكرر" }
             val dest=File(dir,name).canonicalFile
             require(dest.parentFile==dir && !dest.exists()) { "الصورة موجودة مسبقاً؛ لن تُستبدل" }
-            val bytes=Base64.decode(row.getString("base64"),Base64.DEFAULT)
+            val encoded=row.getString("base64")
+            require(encoded.length<=((MAX_FILE+2)/3*4).toInt()+8) { "حجم الصورة المشفرة أكبر من الحد" }
+            val bytes=Base64.decode(encoded,Base64.DEFAULT)
             total+=bytes.size
             require(bytes.isNotEmpty() && bytes.size<=MAX_FILE && total<=MAX_TOTAL) { "حجم الصور غير صالح" }
             require(Backup.sha(bytes)==row.getString("sha256")) { "صورة تالفة في النسخة الاحتياطية" }
