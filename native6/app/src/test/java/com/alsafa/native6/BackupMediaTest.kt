@@ -54,4 +54,20 @@ class BackupMediaTest {
         } finally { file.delete() }
     }
 
+    @Test fun failedSecondPhotoRollsBackFirstPhoto() {
+        val activity=Robolectric.buildActivity(Activity::class.java).setup().get()
+        val first="${UUID.randomUUID()}.jpg"
+        val second="${UUID.randomUUID()}.jpg"
+        val bytes=byteArrayOf(0xFF.toByte(),0xD8.toByte(),1,0xFF.toByte(),0xD9.toByte())
+        val encoded=android.util.Base64.encodeToString(bytes,android.util.Base64.NO_WRAP)
+        val entries=JSONArray()
+            .put(JSONObject().put("name",first).put("sha256",Backup.sha(bytes)).put("base64",encoded))
+            .put(JSONObject().put("name",second).put("sha256","invalid").put("base64",encoded))
+        assertThrows(IllegalArgumentException::class.java) {
+            BackupMedia.restore(activity,entries)
+        }
+        assertEquals(false,File(activity.filesDir,"images/$first").exists())
+        assertEquals(false,File(activity.filesDir,"images/$second").exists())
+    }
+
 }
