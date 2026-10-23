@@ -21,14 +21,9 @@ object CustomerShare {
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
             clipData=android.content.ClipData.newUri(activity.contentResolver,"AlSafa",uri)
         }
-        val whatsapp=Intent(intent).apply { setPackage("com.whatsapp") }
-        val whatsappBusiness=Intent(intent).apply { setPackage("com.whatsapp.w4b") }
-        val manager=activity.packageManager
-        val target=when {
-            whatsapp.resolveActivity(manager)!=null -> whatsapp
-            whatsappBusiness.resolveActivity(manager)!=null -> whatsappBusiness
-            else -> intent
-        }
-        activity.startActivity(Intent.createChooser(target,"مشاركة مع العميل"))
+        // The Android chooser exposes WhatsApp and WhatsApp Business when installed.
+        // Do not rely on package visibility checks, which can fail on Android 11+.
+        activity.startActivity(Intent.createChooser(intent,"مشاركة مع العميل"))
+
     }
 }
