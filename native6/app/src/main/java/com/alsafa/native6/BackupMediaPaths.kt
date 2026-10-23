@@ -18,6 +18,7 @@ object BackupMediaPaths {
                 val old=details.optString("imagePath")
                 if(old.isBlank()) continue
                 val file=File(old)
+                require(file.isAbsolute)
                 val name=file.name
                 require(name.endsWith(".jpg") && name.removeSuffix(".jpg").matches(Regex("[a-fA-F0-9-]{36}"))) {
                     "مسار صورة غير صالح في النسخة الاحتياطية"
