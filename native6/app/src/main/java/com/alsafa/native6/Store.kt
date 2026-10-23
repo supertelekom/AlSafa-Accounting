@@ -1337,6 +1337,16 @@ class Store(val helper:StoreDb) {
             val difference=Math.subtractExact(current,row.getValue("expected").toLong())
             row+mapOf("current_book" to current.toString(),"book_drift" to difference.toString())
         }
+    /** Cross-vault audit of closing snapshots altered by backdated cash movements. */
+    fun allClosingDriftIssues(month:String):List<Map<String,String>> {
+        val selected=java.time.YearMonth.parse(month).toString()
+        return vaults.flatMap { v ->
+            closingDriftMonth(v,selected)
+                .filter { it.getValue("book_drift").toLong()!=0L }
+                .map { it+("vault" to v) }
+        }.sortedWith(compareBy<Map<String,String>> { it.getValue("date") }
+            .thenBy { it.getValue("vault") }.thenBy { it.getValue("currency") })
+    }
     fun closingBookDrift(v:String,date:String,c:Currency):Long? {
         val day=LocalDate.parse(date).toString()
         val row=closingForDay(v,day).firstOrNull{it.getValue("currency")==c.name}?:return null
