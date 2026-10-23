@@ -32,4 +32,14 @@ class BackupMediaPathsTest {
             BackupMediaPaths.rebase(activity,data)
         }
     }
+    @Test fun missingReferencedPhotoIsRejected() {
+        val activity=Robolectric.buildActivity(Activity::class.java).setup().get()
+        val name="${UUID.randomUUID()}.jpg"
+        val record=JSONObject().put("details",JSONObject().put("imagePath","/data/user/0/old.app/files/images/$name").toString())
+        val data=JSONObject().put("products",JSONArray().put(record)).put("repairs",JSONArray())
+        assertThrows(IllegalArgumentException::class.java) {
+            BackupMediaPaths.rebase(activity,data,JSONArray())
+        }
+    }
+
 }
