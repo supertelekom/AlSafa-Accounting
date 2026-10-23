@@ -105,6 +105,7 @@ open class MainActivity:Activity() {
             if(resultCode==RESULT_OK && !path.isNullOrBlank()){
                 intakePhotoPath=path
                 intakePhotoStatus?.text="تم اختيار صورة الساعة"
+                intakePhotoPreview?.setImageBitmap(android.graphics.BitmapFactory.decodeFile(path))
             }
             return
         }
