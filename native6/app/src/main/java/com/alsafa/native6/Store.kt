@@ -1978,6 +1978,18 @@ class Store(val helper:StoreDb) {
     fun repairStatusCounts():Map<String,Long> =
         listOf("received","in_progress","ready","delivered").associateWith{status->scalar("SELECT count(*) FROM repairs WHERE status=?",status)}
     fun receiveRepair(customer:String,phone:String,watch:String,problem:String,date:String=today(),command:String=id()):String=transaction {require(customer.isNotBlank()&&watch.isNotBlank());require(!LocalDate.parse(date).isAfter(LocalDate.now())){"تاريخ استلام الصيانة في المستقبل"};insert("repairs","id" to command,"customer" to customer,"phone" to phone,"watch" to watch,"problem" to problem,"status" to "received","date" to date);event(command,"REPAIR_RECEIVED",date,"استلام صيانة $customer");command}
+    fun repairImage(id:String):String? {
+        val raw=rows("SELECT details FROM repairs WHERE id=?",id).singleOrNull()?.get("details") ?: return null
+        return JSONObject(raw).optString("imagePath").takeIf { it.isNotBlank() }
+    }
+    fun setRepairImage(id:String,path:String)=transaction {
+        require(path.isNotBlank() && path.length<=1024)
+        val raw=rows("SELECT details FROM repairs WHERE id=?",id).singleOrNull()?.get("details")
+            ?: error("Repair not found")
+        val details=JSONObject(raw).put("imagePath",path)
+        db.execSQL("UPDATE repairs SET details=? WHERE id=?",arrayOf(details.toString(),id))
+        event(id(),"REPAIR_IMAGE",today(),"Repair photo $id")
+    }
     fun startRepair(id:String)=transaction { val repair=repairDetail(id);require(repair.getValue("status")=="received");require(!LocalDate.parse(repair.getValue("date")).isAfter(LocalDate.now())){"تاريخ الاستلام في المستقبل"}; db.execSQL("UPDATE repairs SET status=? WHERE id=?",arrayOf("in_progress",id)); event(id(),"REPAIR_STARTED",today(),"بدء العمل على الصيانة") }
     fun repairReady(id:String)=transaction {val repair=repairDetail(id);require(repair.getValue("status") in setOf("received","in_progress")){"الصيانة ليست في حالة تسمح بالتجهيز"};require(!LocalDate.parse(repair.getValue("date")).isAfter(LocalDate.now())){"تاريخ الاستلام في المستقبل"};db.execSQL("UPDATE repairs SET status='ready' WHERE id=?",arrayOf(id));event(id(),"REPAIR_READY",today(),"جاهزة $id")}
     /** Charge an installed repair part to repair COGS on the actual installation date. */
