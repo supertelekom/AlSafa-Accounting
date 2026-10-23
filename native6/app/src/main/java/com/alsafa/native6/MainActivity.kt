@@ -336,8 +336,7 @@ class MainActivity:Activity() {
                 val number=field("رقم الفاتورة",box)
                 ({
                     val n=number.text.toString().trim().toLong()
-                    val invoice=store.invoices().singleOrNull { it.number==n }
-                        ?: throw IllegalArgumentException("رقم الفاتورة غير موجود")
+                    val invoice=store.invoiceByNumber(n)
                     val entries=store.invoiceFinancialHistory(invoice.id)
                     val details=if(entries.isEmpty()) "لا توجد حركات مالية."
                     else entries.joinToString("\n\n"){row->
