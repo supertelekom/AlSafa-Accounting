@@ -5,7 +5,6 @@ import android.util.Base64
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
-import java.security.MessageDigest
 
 /** App-private JPEG files are part of a complete local backup, not just their database paths. */
 object BackupMedia {
