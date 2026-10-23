@@ -97,6 +97,13 @@ open class MainActivity:Activity() {
     @Deprecated("Deprecated in Java")
     override fun onActivityResult(requestCode:Int,resultCode:Int,data:Intent?){
         super.onActivityResult(requestCode,resultCode,data)
+        if(requestCode==70){
+            val path=data?.getStringExtra(MediaCaptureActivity.EXTRA_RESULT_PATH)
+            val id=photoRepairId
+            photoRepairId=null
+            if(resultCode==RESULT_OK && !path.isNullOrBlank() && id!=null) work{store.setRepairImage(id,path)}
+            return
+        }
         if(requestCode==69){
             val path=data?.getStringExtra(MediaCaptureActivity.EXTRA_RESULT_PATH)
             val productId=photoProductId
