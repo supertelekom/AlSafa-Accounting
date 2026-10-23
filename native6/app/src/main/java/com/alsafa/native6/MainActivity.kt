@@ -40,7 +40,7 @@ open class MainActivity:Activity() {
     private val ink=Color.rgb(62,52,41)
     private val gold=Color.rgb(169,121,41)
     private val vaultNames=listOf("درج المحل","الصندوق الخارجي","شام كاش","البنك")
-    override fun onCreate(state:Bundle?) {super.onCreate(state);store=Store(StoreDb(this));font=try { Typeface.createFromAsset(assets,"Tajawal-Medium.ttf") } catch (_:Exception) { Typeface.DEFAULT };page=state?.getString("page")?:intent.getStringExtra(EXTRA_PAGE)?:"home";if(page=="stock-history")intent.getStringExtra(EXTRA_PRODUCT_ID)?.let { productId -> selectedProduct=try { store.product(productId) } catch (_:Exception) { null } };pdfInvoice=state?.getString("pdfInvoice");state?.let { saved ->
+    override fun onCreate(state:Bundle?) {super.onCreate(state);store=Store(StoreDb(this));font=try { Typeface.createFromAsset(assets,"Tajawal-Medium.ttf") } catch (_:Exception) { Typeface.DEFAULT };page=state?.getString("page")?:intent.getStringExtra(EXTRA_PAGE)?:"home";if(page=="stock-history")intent.getStringExtra(EXTRA_PRODUCT_ID)?.let { productId -> selectedProduct=try { store.product(productId) } catch (_:Exception) { null } };pdfInvoice=state?.getString("pdfInvoice");photoProductId=state?.getString("photoProductId");state?.let { saved ->
         basketCurrency=try { Currency.valueOf(saved.getString("basketCurrency")?:"USD") } catch (_:Exception) { Currency.USD }
         val ids=saved.getStringArrayList("basketProductIds")
         val quantities=saved.getLongArray("basketQuantities")
@@ -135,6 +135,7 @@ open class MainActivity:Activity() {
     override fun onSaveInstanceState(out:Bundle){
         out.putString("page",page)
         out.putString("pdfInvoice",pdfInvoice)
+        out.putString("photoProductId",photoProductId)
         out.putString("basketCurrency",basketCurrency.name)
         out.putStringArrayList("basketProductIds",ArrayList(basket.map { it.productId }))
         out.putLongArray("basketQuantities",basket.map { it.qty }.toLongArray())
