@@ -60,4 +60,32 @@ class ReceivableAccountingTest {
         } catch (_:IllegalArgumentException) { }
         assertEquals(10000L,store.refundLiability(id))
     }
+    @Test fun partialRefundKeepsOnlyRemainingLiability() {
+        val id=invoice(10000L)
+        store.returnSale(id,mapOf(0 to 1L),"Returned")
+        store.refund(id,4000L,"drawer")
+        assertEquals(6000L,store.refundLiability(id))
+        assertEquals(6000L,store.refundable(id))
+        assertEquals(0L,store.due(id))
+        assertTrue(store.refundLiabilityIssues().isEmpty())
+    }
+
+    @Test fun historicalRefundCannotOverdrawLaterRefundLiability() {
+        val product=store.addProduct("Backdated watch","",Currency.USD,10000L,5000L,2L)
+        val saleDay=java.time.LocalDate.now().minusDays(4).toString()
+        val returnDay=java.time.LocalDate.now().minusDays(3).toString()
+        val laterDay=java.time.LocalDate.now().minusDays(2).toString()
+        val id=store.sale(listOf(SaleItem(product,1L,10000L)),"Customer","",
+            Currency.USD,10000L,"drawer",date=saleDay,receiptDate=saleDay)
+        store.returnSale(id,mapOf(0 to 1L),"Returned",date=returnDay)
+        store.refund(id,4000L,"drawer",date=laterDay)
+        assertEquals(6000L,store.refundableOn(id,returnDay))
+        try {
+            store.refund(id,6001L,"drawer",date=returnDay)
+            fail("Backdated refund must respect the later refund")
+        } catch (_:IllegalArgumentException) { }
+        assertEquals(6000L,store.refundLiability(id))
+        assertTrue(store.negativeRefundLiabilityDays().isEmpty())
+    }
+
 }
