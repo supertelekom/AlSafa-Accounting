@@ -85,7 +85,11 @@ object BackupMedia {
                 require(Backup.sha(bytes)==row.getString("sha256")) { "صورة تالفة في النسخة الاحتياطية" }
                 require(dest.createNewFile()) { "تعذر إنشاء ملف الصورة" }
                 created.add(dest)
-                dest.outputStream().use { it.write(bytes) }
+                dest.outputStream().use { stream ->
+                    stream.write(bytes)
+                    stream.flush()
+                    (stream as java.io.FileOutputStream).fd.sync()
+                }
             }
         }catch(e:Exception) {
             created.forEach { it.delete() }
