@@ -58,4 +58,27 @@ class SupplierChronologyTest {
         assertEquals(3000L,store.supplierDue(supplier,Currency.USD))
         assertTrue(store.negativeSupplierDebtDays().isEmpty())
     }
+    @Test fun historicalSupplierDebtCarriesForwardWithoutBecomingCurrentMonthPurchase() {
+        val supplier=store.addSupplier("Previous-month supplier","")
+        val previous=java.time.YearMonth.now().minusMonths(1)
+        val current=java.time.YearMonth.now()
+        val debtDay=previous.atDay(10).toString()
+        val paymentDay=current.atDay(1).toString()
+        store.supplierOpening(supplier,Currency.USD,12000L,debtDay)
+        store.cash("opening","drawer",Currency.USD,20000L,"Cash before payment",date=debtDay)
+        store.paySupplier(supplier,Currency.USD,5000L,"drawer",date=paymentDay)
+        val oldStatement=store.supplierStatement(supplier,Currency.USD,previous.toString())
+        val currentStatement=store.supplierStatement(supplier,Currency.USD,current.toString())
+        assertEquals(12000L,oldStatement.getValue("new_opening_debt"))
+        assertEquals(0L,oldStatement.getValue("payments"))
+        assertEquals(12000L,oldStatement.getValue("closing"))
+        assertEquals(12000L,currentStatement.getValue("opening"))
+        assertEquals(0L,currentStatement.getValue("purchases"))
+        assertEquals(0L,currentStatement.getValue("new_opening_debt"))
+        assertEquals(5000L,currentStatement.getValue("payments"))
+        assertEquals(7000L,currentStatement.getValue("closing"))
+        assertEquals(7000L,store.supplierDue(supplier,Currency.USD))
+        assertTrue(store.supplierMonthReconciles(supplier,Currency.USD,current.toString()))
+    }
+
 }
