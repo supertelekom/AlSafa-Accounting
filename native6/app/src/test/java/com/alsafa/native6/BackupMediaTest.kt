@@ -19,7 +19,7 @@ class BackupMediaTest {
         val activity=Robolectric.buildActivity(Activity::class.java).setup().get()
         val dir=File(activity.filesDir,"images").apply { mkdirs() }
         val file=File(dir,"${UUID.randomUUID()}.jpg")
-        val original=byteArrayOf(1,2,3,4,5)
+        val original=byteArrayOf(0xFF.toByte(),0xD8.toByte(),1,2,3,0xFF.toByte(),0xD9.toByte())
         file.writeBytes(original)
         try {
             val archive=BackupMedia.collect(activity)
