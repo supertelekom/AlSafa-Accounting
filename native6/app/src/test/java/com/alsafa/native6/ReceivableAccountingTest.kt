@@ -310,4 +310,28 @@ class ReceivableAccountingTest {
         assertTrue(store.invoiceFinancialHistory(second).isNotEmpty())
     }
 
+    @Test fun auditDetectsTemporaryNegativeReceivableEvenWhenFinalBalanceRecovers() {
+        val id=invoice(0L)
+        val firstEvent=java.util.UUID.randomUUID().toString()
+        val secondEvent=java.util.UUID.randomUUID().toString()
+        val day=java.time.LocalDate.now().minusDays(2).toString()
+        val next=java.time.LocalDate.now().minusDays(1).toString()
+        store.db.execSQL("INSERT INTO events(id,kind,date,created,memo) VALUES(?,?,?,?,?)",
+            arrayOf(firstEvent,"TEST_AUDIT",day,1L,"Temporary debit mismatch"))
+        store.db.execSQL("INSERT INTO journal(event_id,line,account,currency,amount) VALUES(?,?,?,?,?)",
+            arrayOf(firstEvent,0,"receivable:$id",Currency.USD.name,-20000L))
+        store.db.execSQL("INSERT INTO journal(event_id,line,account,currency,amount) VALUES(?,?,?,?,?)",
+            arrayOf(firstEvent,1,"equity:audit-fixture",Currency.USD.name,20000L))
+        store.db.execSQL("INSERT INTO events(id,kind,date,created,memo) VALUES(?,?,?,?,?)",
+            arrayOf(secondEvent,"TEST_AUDIT",next,2L,"Restore balance"))
+        store.db.execSQL("INSERT INTO journal(event_id,line,account,currency,amount) VALUES(?,?,?,?,?)",
+            arrayOf(secondEvent,0,"receivable:$id",Currency.USD.name,20000L))
+        store.db.execSQL("INSERT INTO journal(event_id,line,account,currency,amount) VALUES(?,?,?,?,?)",
+            arrayOf(secondEvent,1,"equity:audit-fixture",Currency.USD.name,-20000L))
+        val issues=store.invoiceStatementIssues()
+        assertEquals(1,issues.size)
+        assertEquals(id,issues.single().getValue("id"))
+        assertTrue(issues.single().getValue("issue").contains(day))
+    }
+
 }
