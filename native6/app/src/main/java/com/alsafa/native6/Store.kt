@@ -1091,6 +1091,27 @@ class Store(val helper:StoreDb) {
             "payments" to payments,"closing" to closing,
             "historical_debt" to opening,"current_month_net" to Math.subtractExact(charges,payments)) + categories
     }
+    /** Inspect all supplier currencies in one selected month without mutating the ledger. */
+    fun supplierMonthIssues(month:String):List<Map<String,String>> {
+        val selected=java.time.YearMonth.parse(month).toString()
+        val issues=mutableListOf<Map<String,String>>()
+        rows("SELECT id,name FROM suppliers ORDER BY name,id").forEach { supplier ->
+            Currency.entries.forEach { currency ->
+                try {
+                    val statement=supplierStatement(supplier.getValue("id"),currency,selected)
+                    if(statement.getValue("opening")<0L || statement.getValue("closing")<0L ||
+                        !supplierMonthReconciles(supplier.getValue("id"),currency,selected)) {
+                        issues.add(supplier+mapOf("currency" to currency.name,
+                            "issue" to "رصيد المورد أو حركات الشهر غير متطابقة"))
+                    }
+                } catch(e:RuntimeException) {
+                    issues.add(supplier+mapOf("currency" to currency.name,
+                        "issue" to (e.message ?: "تعذر مطابقة المورد")))
+                }
+            }
+        }
+        return issues
+    }
     /** Debt balance at a historical date, excluding all later postings. */
     fun supplierDueOn(supplier:String,c:Currency,date:String):Long {
         require(scalar("SELECT count(*) FROM suppliers WHERE id=?",supplier)==1L){"المورد غير موجود"}
