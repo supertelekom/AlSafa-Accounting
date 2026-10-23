@@ -593,6 +593,22 @@ open class MainActivity:Activity() {
         button("بحث في الفواتير"){try{show()}catch(e:Exception){error(e)}}
         show()
     }
+    private fun shareInvoicePdf(inv:Invoice) {
+        if(busy)return
+        busy=true
+        io.execute {
+            try {
+                val folder=java.io.File(cacheDir,"shared_invoices").apply { mkdirs() }
+                val file=java.io.File(folder,"AlSafa-${inv.number}.pdf")
+                file.outputStream().use { InvoicePdf(this,store).write(inv.id,it) }
+                runOnUiThread {
+                    busy=false
+                    try { CustomerShare.send(this,file,"application/pdf","فاتورة الصفا رقم ${inv.number}") }
+                    catch(e:Exception){error(e)}
+                }
+            }catch(e:Exception){runOnUiThread{busy=false;error(e)}}
+        }
+    }
     private fun invoiceDetail(inv:Invoice){val box=column();text("الإجمالي ${money(inv.total,inv.currency)}",box);if(inv.kind!="purchase"){text("المتبقي ${money(store.due(inv.id),inv.currency)}",box);text("مستحق الرد ${money(store.refundable(inv.id),inv.currency)}",box)}
         val sc=ScrollView(this);sc.addView(box);val dialog=AlertDialog.Builder(this).setTitle("فاتورة #${inv.number}").setView(sc).setNegativeButton("رجوع",null).create()
         button("سجل قبض النقود وتواريخه",box){val receipts=store.invoiceReceiptHistory(inv.id);AlertDialog.Builder(this).setTitle("القبض الفعلي · فاتورة #${inv.number}").setMessage(if(receipts.isEmpty())"لم يتم تحصيل أي مبلغ حتى الآن." else receipts.joinToString("\n"){row->row.getValue("actual_date")+" · "+money(row.getValue("amount").toLong(),inv.currency)+" · "+row.getValue("vault")}).setPositiveButton("حسناً",null).show()}
