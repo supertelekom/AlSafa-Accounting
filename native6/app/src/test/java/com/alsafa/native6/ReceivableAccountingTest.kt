@@ -257,4 +257,41 @@ class ReceivableAccountingTest {
         assertTrue(store.invoiceStatementIssues().isEmpty())
     }
 
+    @Test fun validInvoicesHaveNoOrphanOrCurrencyMismatchedAccounts() {
+        val id=invoice(10000L)
+        store.returnSale(id,mapOf(0 to 1L),"Returned")
+        store.refund(id,1000L,"drawer")
+        assertTrue(store.invoiceAccountReferenceIssues().isEmpty())
+    }
+
+    @Test fun auditDetectsOrphanInvoiceReceivableAccount() {
+        val id=invoice(0L)
+        val eventId=java.util.UUID.randomUUID().toString()
+        store.db.execSQL("INSERT INTO events(id,kind,date,created,memo) VALUES(?,?,?,?,?)",
+            arrayOf(eventId,"TEST_AUDIT",Store.today(),System.currentTimeMillis(),"Audit fixture"))
+        store.db.execSQL("INSERT INTO journal(event_id,line,account,currency,amount) VALUES(?,?,?,?,?)",
+            arrayOf(eventId,0,"receivable:missing-invoice",Currency.USD.name,1L))
+        store.db.execSQL("INSERT INTO journal(event_id,line,account,currency,amount) VALUES(?,?,?,?,?)",
+            arrayOf(eventId,1,"equity:audit-fixture",Currency.USD.name,-1L))
+        val issues=store.invoiceAccountReferenceIssues()
+        assertEquals(1,issues.size)
+        assertEquals("receivable:missing-invoice",issues.single().getValue("account"))
+        assertEquals(10000L,store.due(id))
+    }
+
+    @Test fun auditDetectsInvoiceAccountInWrongCurrency() {
+        val id=invoice(0L)
+        val eventId=java.util.UUID.randomUUID().toString()
+        store.db.execSQL("INSERT INTO events(id,kind,date,created,memo) VALUES(?,?,?,?,?)",
+            arrayOf(eventId,"TEST_AUDIT",Store.today(),System.currentTimeMillis(),"Audit fixture"))
+        store.db.execSQL("INSERT INTO journal(event_id,line,account,currency,amount) VALUES(?,?,?,?,?)",
+            arrayOf(eventId,0,"receivable:$id",Currency.TRY.name,1L))
+        store.db.execSQL("INSERT INTO journal(event_id,line,account,currency,amount) VALUES(?,?,?,?,?)",
+            arrayOf(eventId,1,"equity:audit-fixture",Currency.TRY.name,-1L))
+        val issues=store.invoiceAccountReferenceIssues()
+        assertEquals(1,issues.size)
+        assertEquals(Currency.TRY.name,issues.single().getValue("currency"))
+        assertEquals(Currency.USD.name,issues.single().getValue("invoice_currency"))
+    }
+
 }
