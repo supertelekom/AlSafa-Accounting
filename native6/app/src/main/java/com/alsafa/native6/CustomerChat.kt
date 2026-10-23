@@ -7,6 +7,7 @@ import android.net.Uri
 /** Opens a customer's chat without automatically sending any message. */
 object CustomerChat {
     fun normalizedNumber(input:String):String {
+        require(input.all { it in '0'..'9' || it in "+ -()" }) { "رقم الهاتف يحتوي على رموز غير صالحة" }
         val digits=input.filter { it in '0'..'9' }
         require(digits.isNotEmpty()) { "أدخل رقم هاتف العميل" }
         val result=when {
