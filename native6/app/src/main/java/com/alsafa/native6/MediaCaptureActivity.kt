@@ -34,6 +34,7 @@ class MediaCaptureActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         imagePath = savedInstanceState?.getString("imagePath")
+        pendingCameraPath = savedInstanceState?.getString("pendingCameraPath")
         val layout = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             gravity = Gravity.CENTER_HORIZONTAL
@@ -77,6 +78,7 @@ class MediaCaptureActivity : Activity() {
 
     override fun onSaveInstanceState(outState: Bundle) {
         outState.putString("imagePath", imagePath)
+        outState.putString("pendingCameraPath", pendingCameraPath)
         super.onSaveInstanceState(outState)
     }
 
