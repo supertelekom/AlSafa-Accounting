@@ -48,6 +48,7 @@ class BarcodeScanActivity : ComponentActivity() {
     private lateinit var torchButton: Button
     private var camera: Camera? = null
     private var torchOn = false
+    private var zoomed = false
 
     private val requestCamera = registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
         if (granted) startCamera() else status.text = "تحتاج قراءة الباركود إلى السماح بالكاميرا"
@@ -83,6 +84,18 @@ class BarcodeScanActivity : ComponentActivity() {
             }
         }
         root.addView(torchButton)
+        root.addView(Button(this).apply {
+            text = "تقريب ×2"
+            setOnClickListener {
+                val active = camera ?: return@setOnClickListener
+                val state = active.cameraInfo.zoomState.value ?: return@setOnClickListener
+                val desired = if (zoomed) 1f else 2f
+                val ratio = desired.coerceIn(state.minZoomRatio, state.maxZoomRatio)
+                active.cameraControl.setZoomRatio(ratio)
+                zoomed = !zoomed
+                text = if (zoomed) "إلغاء التقريب" else "تقريب ×2"
+            }
+        })
         root.addView(Button(this).apply {
             text = "إلغاء"
             setOnClickListener { finish() }
