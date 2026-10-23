@@ -34,6 +34,8 @@ open class MainActivity:Activity() {
     private val visibleInputs=mutableListOf<EditText>()
     private var savedInputs:ArrayList<String>?=null
     private var barcodeTarget:EditText?=null
+    private var chooserBarcodeField:EditText?=null
+    private var chooserRefresh:(()->Unit)?=null
     private val ink=Color.rgb(62,52,41)
     private val gold=Color.rgb(169,121,41)
     private val vaultNames=listOf("درج المحل","الصندوق الخارجي","شام كاش","البنك")
@@ -93,10 +95,11 @@ open class MainActivity:Activity() {
     @Deprecated("Deprecated in Java")
     override fun onActivityResult(requestCode:Int,resultCode:Int,data:Intent?){
         super.onActivityResult(requestCode,resultCode,data)
-        if(resultCode!=RESULT_OK || requestCode !in listOf(65,66,67))return
+        if(resultCode!=RESULT_OK || requestCode !in listOf(65,66,67,68))return
         val code=data?.getStringExtra(BarcodeScanActivity.EXTRA_BARCODE)?.trim().orEmpty()
         if(code.isEmpty())return
         if(requestCode==67){barcodeTarget?.setText(code);barcodeTarget=null;return}
+        if(requestCode==68){chooserBarcodeField?.setText(code);chooserRefresh?.invoke();return}
         val matches=store.products(code).filter { it.barcode==code }
         when {
             matches.size>1 -> AlertDialog.Builder(this).setTitle("باركود مكرر")
@@ -460,7 +463,7 @@ open class MainActivity:Activity() {
             {val customerText=customer.text.toString();val phoneText=phone.text.toString();val d=amount(discount,basketCurrency);val pay=amount(paid,basketCurrency);val v=Store.vaults[vault.selectedItemPosition];val items=basket.toList();val c=basketCurrency;val gross=items.fold(0L){sum,item->Math.addExact(sum,Math.multiplyExact(item.qty,item.unitPrice))};require(gross>0 && d>=0 && d<gross){"الإجمالي أو الخصم غير صالح"};require(pay>=0 && pay<=gross-d){"المدفوع يتجاوز المبلغ المستحق بعد الخصم"};require(pay==gross-d || customerText.isNotBlank()){"اسم العميل مطلوب عند وجود مبلغ آجل"};items.forEach{item->require(item.qty<=store.product(item.productId).stock){"تغير مخزون أحد الأصناف؛ راجع السلة"}};val issued=java.time.LocalDate.parse(invoiceDate.text.toString().trim()).toString();val collected=java.time.LocalDate.parse(receiptDate.text.toString().trim()).toString();work{store.sale(items,customerText,phoneText,c,pay,v,d,date=issued,receiptDate=collected);runOnUiThread{basket.clear();page="invoices"}}}
         }}}}
     private fun chooseProduct(inStockOnly:Boolean=false,action:(Product)->Unit){val box=column();val search=field("الاسم أو الباركود",box);val results=column();box.addView(results);val sc=ScrollView(this);sc.addView(box);val dialog=AlertDialog.Builder(this).setTitle("اختيار منتج").setView(sc).setNegativeButton("رجوع",null).create()
-        fun show(){results.removeAllViews();store.products(search.text.toString()).filter{!inStockOnly || it.stock>0}.take(100).forEach{p->button("${p.name} · ${p.stock}",results){dialog.dismiss();action(p)}}};button("بحث",box){show()};show();dialog.show()}
+        fun show(){results.removeAllViews();store.products(search.text.toString()).filter{!inStockOnly || it.stock>0}.take(100).forEach{p->button("${p.name} · ${p.stock}",results){dialog.dismiss();action(p)}}};button("بحث",box){show()};button("▣ مسح باركود",box){chooserBarcodeField=search;chooserRefresh={show()};startActivityForResult(Intent(this,BarcodeScanActivity::class.java),68)};dialog.setOnDismissListener{chooserBarcodeField=null;chooserRefresh=null};show();dialog.show()}
     private fun invoices(){
         text("الفواتير والمرتجعات",size=25f)
         button("كشف الحركات المالية لفاتورة"){
