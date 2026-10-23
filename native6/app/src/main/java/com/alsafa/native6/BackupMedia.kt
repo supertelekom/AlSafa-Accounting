@@ -14,6 +14,7 @@ object BackupMedia {
     fun collect(context:Context):JSONArray {
         val root=File(context.filesDir,"images").canonicalFile
         val result=JSONArray()
+        require(root.isDirectory || !root.exists()) { "مسار مجلد الصور غير صالح" }
         var total=0L
         root.listFiles()?.filter { it.isFile && it.extension.lowercase()=="jpg" }?.sortedBy { it.name }?.forEach { file ->
             require(file.canonicalFile.parentFile==root && file.length()<=MAX_FILE) { "ملف صورة غير صالح للنسخ" }
