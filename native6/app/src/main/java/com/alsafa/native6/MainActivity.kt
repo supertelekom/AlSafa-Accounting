@@ -918,6 +918,7 @@ button("＋ مورد"){form("مورد جديد"){box->val n=field("الاسم",b
                 val problem=field("المشكلة",box)
                 val date=field("تاريخ الاستلام YYYY-MM-DD",box,Store.today())
                 intakePhotoStatus=TextView(this).also { it.text="لم تُضف صورة";box.addView(it) }
+                intakePhotoPreview=ImageView(this).also { it.adjustViewBounds=true;it.maxHeight=260;box.addView(it) }
                 button("تصوير الساعة أو اختيار صورة",box){
                     startActivityForResult(Intent(this,MediaCaptureActivity::class.java),71)
                 }
