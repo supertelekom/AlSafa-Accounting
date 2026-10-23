@@ -886,7 +886,33 @@ button("＋ مورد"){form("مورد جديد"){box->val n=field("الاسم",b
             }
         };button("كشف شهر محدد ${c.name}"){form("كشف المورد الشهري","عرض"){box->val month=field("الشهر YYYY-MM",box,YearMonth.now().toString());{val selected=month.text.toString().trim();val lines=store.supplierLedgerMonth(id,c,selected);val statement=store.supplierStatement(id,c,selected);val datedPayments=store.supplierPaymentsMonth(id,c,selected);val verifiedPayments=store.supplierPaymentTotalMonth(id,c,selected);val opening=statement.getValue("opening");val closing=statement.getValue("closing");val movement=statement.getValue("current_month_net");val charges=statement.getValue("charges");val payments=statement.getValue("payments");AlertDialog.Builder(this).setTitle("كشف ${c.name} · $selected").setMessage("الرصيد السابق (من أشهر سابقة): "+money(opening,c)+"\nديون افتتاحية أضيفت هذا الشهر: "+money(statement.getValue("new_opening_debt"),c)+"\nمشتريات هذا الشهر: "+money(statement.getValue("purchases"),c)+"\nتغيرات دين أخرى: "+money(statement.getValue("other_debt_changes"),c)+"\nديون مضافة: "+money(charges,c)+"\nدفعات المورد: "+money(payments,c)+"\nصافي حركة الشهر: "+money(movement,c)+"\nرصيد نهاية الشهر: "+money(closing,c)+"\nالدفعات المؤرخة للمورد: "+money(verifiedPayments,c)+"\n"+(if(datedPayments.isEmpty())"لا توجد دفعات خلال الشهر" else datedPayments.joinToString("\n"){x->x.getValue("date")+" · دفعة "+money(x.getValue("amount").toLong(),c)})+"\n"+(if(lines.isEmpty())"لا توجد حركات في الشهر المحدد" else lines.joinToString("\n"){x->x.getValue("date")+" · "+x.getValue("kind")+" · "+money(Math.negateExact(x.getValue("amount").toLong()),c)+" · المتبقي "+money(x.getValue("remaining").toLong(),c)})).setPositiveButton("حسناً",null).show()}}};button("${c.name} · الدين ${money(due,c)} · دفع"){form("دفع للمورد"){box->val n=field("المبلغ ${c.name} · الدين ${money(due,c)}",box,"0",true);val day=field("تاريخ الدفع YYYY-MM-DD",box,Store.today());val v=select("خزنة الدفع",vaultNames,box);{val paid=amount(n,c);val date=java.time.LocalDate.parse(day.text.toString().trim()).toString();require(!java.time.LocalDate.parse(date).isAfter(java.time.LocalDate.now())){"تاريخ الدفع في المستقبل"};val permitted=store.supplierAvailableOn(id,c,date);require(paid>0L&&paid<=permitted){"الحد المتاح في هذا التاريخ: "+money(permitted,c)};val vault=Store.vaults[v.selectedItemPosition];work{store.paySupplier(id,c,paid,vault,date)}}}}};button("شراء بضاعة من ${r.getValue("name")}"){chooseProduct{p->form("شراء ${p.name}"){box->val qty=field("الكمية",box,"1",true);val cost=field("كلفة الوحدة ${p.currency}",box,"0",true);val paid=field("المدفوع",box,"0",true);val date=field("تاريخ الشراء YYYY-MM-DD",box,Store.today());val paymentDay=field("تاريخ دفع النقود الفعلي YYYY-MM-DD",box,Store.today());val v=select("خزنة الدفع",vaultNames,box);{val q=qty.text.toString().toLong();val value=amount(cost,p.currency);val pay=amount(paid,p.currency);val vault=Store.vaults[v.selectedItemPosition];val purchaseDate=java.time.LocalDate.parse(date.text.toString().trim()).toString();require(!java.time.LocalDate.parse(purchaseDate).isAfter(java.time.LocalDate.now())){"تاريخ الشراء في المستقبل"};val actualPayment=java.time.LocalDate.parse(paymentDay.text.toString().trim()).toString();work{store.purchase(id,listOf(SaleItem(p.id,q,value)),p.currency,pay,vault,purchaseDate,paymentDate=actualPayment)}}}}}}
     }
-    private fun repairs(){text("الصيانة",size=25f);button("استلام صيانة"){form("استلام الساعة"){box->val n=field("العميل",box);val p=field("الهاتف",box);val w=field("الساعة",box);val problem=field("المشكلة",box);val date=field("تاريخ الاستلام YYYY-MM-DD",box,Store.today());{val name=n.text.toString();val phone=p.text.toString();val watch=w.text.toString();val why=problem.text.toString();val received=java.time.LocalDate.parse(date.text.toString().trim()).toString();work{store.receiveRepair(name,phone,watch,why,received)}}}}
+    private fun repairs(){text("الصيانة",size=25f);button("استلام صيانة"){
+            intakePhotoPath=null
+            form("استلام الساعة"){box->
+                val n=field("العميل",box)
+                val p=field("الهاتف",box)
+                val w=field("الساعة",box)
+                val problem=field("المشكلة",box)
+                val date=field("تاريخ الاستلام YYYY-MM-DD",box,Store.today())
+                intakePhotoStatus=TextView(this).also { it.text="لم تُضف صورة";box.addView(it) }
+                button("تصوير الساعة أو اختيار صورة",box){
+                    startActivityForResult(Intent(this,MediaCaptureActivity::class.java),71)
+                }
+                ({
+                    val name=n.text.toString()
+                    val phone=p.text.toString()
+                    val watch=w.text.toString()
+                    val why=problem.text.toString()
+                    val received=java.time.LocalDate.parse(date.text.toString().trim()).toString()
+                    val photo=intakePhotoPath
+                    work{
+                        val id=store.receiveRepair(name,phone,watch,why,received)
+                        if(photo!=null)store.setRepairImage(id,photo)
+                        intakePhotoPath=null
+                    }
+                })
+            }
+        }
         button("كشف تفصيلي لمقبوضات الصيانة الشهرية"){form("كشف الدفعات","عرض"){box->val m=field("الشهر YYYY-MM",box,YearMonth.now().toString());({val rows=store.repairCashReceivedMonthDetails(m.text.toString().trim());val details=rows.joinToString("\n"){it.getValue("receipt_date")+" (تسليم "+it.getValue("delivery_date")+") · #"+it.getValue("invoice_number")+" · "+it.getValue("customer")+" · "+money(it.getValue("amount").toLong(),Currency.valueOf(it.getValue("currency")))+" · "+it.getValue("vault")};AlertDialog.Builder(this).setTitle("الدفعات الفعلية").setMessage(details.ifBlank{"لا توجد دفعات"}).setPositiveButton("حسناً",null).show()})}}
         button("عدد دفعات الصيانة الشهرية"){form("عدد الدفعات","عرض"){box->val m=field("الشهر YYYY-MM",box,YearMonth.now().toString());({val selected=m.text.toString().trim();val count=store.repairCashReceiptCount(selected);val old=store.repairOldDebtReceiptCount(selected);val current=store.repairReceiptCurrentMonthCount(selected);AlertDialog.Builder(this).setTitle("دفعات الصيانة").setMessage("عدد عمليات القبض: $count · فواتير الشهر: $current · ديون قديمة: $old").setPositiveButton("حسناً",null).show()})}}
         button("مقارنة تحصيل الصيانة الحالي والقديم"){
