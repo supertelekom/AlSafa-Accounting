@@ -336,7 +336,15 @@ open class MainActivity:Activity() {
                 if(entries.isEmpty())text("لا توجد تسويات جرد في الفترة",output)
                 entries.forEach{row->
                     val c=Currency.valueOf(row.getValue("currency"))
-                    text(row.getValue("date")+" · "+row.getValue("product_name"),output)
+                    val repairPhoto=store.repairImage(id)
+                if(repairPhoto!=null && java.io.File(repairPhoto).isFile){
+                    results.addView(android.widget.ImageView(this).apply {
+                        setImageBitmap(android.graphics.BitmapFactory.decodeFile(repairPhoto))
+                        adjustViewBounds=true
+                        maxHeight=240
+                    })
+                }
+                text(row.getValue("date")+" · "+row.getValue("product_name"),output)
                     text("فرق الكمية "+row.getValue("quantity_delta")+
                         " · فرق القيمة "+money(row.getValue("value_delta").toLong(),c),output)
                     text(row.getValue("memo"),output)
