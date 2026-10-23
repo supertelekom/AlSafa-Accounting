@@ -590,7 +590,7 @@ open class MainActivity:Activity() {
                 })
             }
         }
-Store.vaults.forEach{v->text(v+" · إقفالات تحتاج عدّاً: "+store.pendingAutomaticReviewCount(v))};button("الفروقات الفعلية التي تحتاج تحقيقاً"){val lines=Store.vaults.flatMap{v->store.automaticReviewExceptions(v).map{row->v+" · "+row.getValue("closing_date")+" · "+row.getValue("currency")+" · فرق "+row.getValue("variance")+" · "+row.getValue("note")}};AlertDialog.Builder(this).setTitle("فروقات لم تسوَّ محاسبياً").setMessage(if(lines.isEmpty())"لا توجد فروقات مراجعة" else lines.joinToString("\n")).setPositiveButton("حسناً",null).show()};button("تدقيق إقفال حسب اليوم والعملة"){
+Store.vaults.forEach{v->text(v+" · إقفالات تحتاج عدّاً: "+store.automaticPendingReviewCount(v))};button("الفروقات الفعلية التي تحتاج تحقيقاً"){val lines=Store.vaults.flatMap{v->store.automaticReviewExceptions(v).map{row->v+" · "+row.getValue("closing_date")+" · "+row.getValue("currency")+" · فرق "+row.getValue("variance")+" · "+row.getValue("note")}};AlertDialog.Builder(this).setTitle("فروقات لم تسوَّ محاسبياً").setMessage(if(lines.isEmpty())"لا توجد فروقات مراجعة" else lines.joinToString("\n")).setPositiveButton("حسناً",null).show()};button("تدقيق إقفال حسب اليوم والعملة"){
             form("تدقيق إقفال","عرض"){box->
                 val v=select("الخزنة",vaultNames,box)
                 val day=field("التاريخ YYYY-MM-DD",box,java.time.LocalDate.now().minusDays(1).toString())
