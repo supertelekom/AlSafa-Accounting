@@ -1,5 +1,7 @@
 # AlSafa Native 6
 
+**إلزامي قبل اعتماد النسخة:** [مطابقة تصميم التطبيق القديم 1:1](docs/DESIGN_PARITY_AR.md). Native Android UI only; the current generic button layout is not visually equivalent to v3.9.353.
+
 Kotlin / Android SDK, tablet only, offline SQLite. Independent application ID and database; never opens the legacy or Native 5 database. No network permission, synchronization, Firebase, or WebView.
 
 Reference: v3.9.353 PHONE-SUPPLIER-PAYMENT-RECOVERY source archive. `docs/legacy-inventory.json` inventories every declared function and static route/form/field in main.js; it is a migration checklist, not a claim that all features are implemented. Native5 a2ae1a1 accounting principles reviewed: exact minor units, per-currency balanced immutable journals, atomic inventory/posting, credit notes separated from refunds.
