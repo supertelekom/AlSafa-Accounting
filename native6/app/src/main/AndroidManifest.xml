@@ -3,6 +3,12 @@
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-feature android:name="android.hardware.camera" android:required="false" />
     <application android:icon="@drawable/alsafa_logo" android:label="الصفا Native 6 — تطوير" android:theme="@style/AppTheme" android:allowBackup="false" android:supportsRtl="true">
+        <provider android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.share"
+            android:exported="false" android:grantUriPermissions="true">
+            <meta-data android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/share_paths" />
+        </provider>
         <activity android:name=".BarcodeScanActivity" android:exported="false" />
         <activity android:name=".MediaCaptureActivity" android:exported="false" />
         <activity android:name=".SectionActivity" android:exported="false" android:windowSoftInputMode="adjustResize" />
