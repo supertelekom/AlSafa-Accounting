@@ -1,7 +1,6 @@
 package com.alsafa.native6
 
 import android.app.Activity
-import androidx.test.core.app.ApplicationProvider
 import org.junit.Assert.assertThrows
 import org.junit.Test
 import org.robolectric.Robolectric
