@@ -80,7 +80,7 @@ class Backup(private val context:Context,private val store:Store) {
         // Validate in a disposable database, then restore atomically only into an empty database.
         if(root.getInt("schema")>=7) BackupMediaPaths.rebase(context,data,root.getJSONArray("media"))
         val name="validate-${Store.id()}.db";val helper=StoreDb(context,name);val staging=Store(helper)
-        try { load(staging,data);validate(staging);val photos=BackupMedia.restore(context,root.optJSONArray("media") ?: JSONArray());try { load(store,data) }catch(e:Exception){photos.forEach { it.delete() };throw e} }finally{helper.close();context.deleteDatabase(name)}
+        try { load(staging,data);validate(staging);require(tables.all{store.scalar("SELECT count(*) FROM $it")==0L}) { "الاستعادة تتطلب قاعدة بيانات فارغة" };val photos=BackupMedia.restore(context,root.optJSONArray("media") ?: JSONArray());try { load(store,data) }catch(e:Exception){photos.forEach { it.delete() };throw e} }finally{helper.close();context.deleteDatabase(name)}
     }
     private fun load(target:Store,data:JSONObject)=target.transaction {
         require(tables.all{target.scalar("SELECT count(*) FROM $it")==0L}){"الاستعادة تتطلب قاعدة فارغة؛ لن تستبدل بيانات موجودة"}
