@@ -12,4 +12,6 @@ Implemented and pending work are listed in `docs/PARITY.md`; posting rules are d
 
 ## Windows / Android Studio
 
+**دليل عربي:** [`docs/START_WINDOWS_AR.md`](docs/START_WINDOWS_AR.md) — خطوات التثبيت والفتح والبناء على Windows 10.
+
 Open the `native6` directory in Android Studio. See [`docs/WINDOWS_BUILD.md`](docs/WINDOWS_BUILD.md) for SDK 34 setup and run `build-windows.bat` to assemble the debug APK and run local unit tests. No GitHub Actions required.
