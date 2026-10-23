@@ -44,7 +44,7 @@ object BackupMedia {
             require(Backup.sha(bytes)==row.getString("sha256")) { "صورة تالفة في النسخة الاحتياطية" }
             pending.add(dest to bytes)
         }
-        dir.mkdirs()
+        require(dir.isDirectory || dir.mkdirs()) { "تعذر إنشاء مجلد الصور" }
         val created=mutableListOf<File>()
         try {
             for((dest,bytes) in pending) {
