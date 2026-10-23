@@ -60,9 +60,14 @@ object BackupMedia {
             require(dest.parentFile==dir && !dest.exists()) { "الصورة موجودة مسبقاً؛ لن تُستبدل" }
             val encoded=row.getString("base64")
             require(encoded.length<=((MAX_FILE+2)/3*4).toInt()+8) { "حجم الصورة المشفرة أكبر من الحد" }
-            require(encoded.length%4==0 && encoded.all { (it in 'A'..'Z' || it in 'a'..'z' || it in '0'..'9') || it=='+' || it=='/' || it=='=' }) { "ترميز الصورة غير صالح" }
-            total+=encoded.length.toLong()/4L*3L
-            require(total<=MAX_TOTAL+entries.length()*2L) { "حجم الصور يتجاوز الحد" }
+            val padding=encoded.takeLast(2).count { it=='=' }
+            require(encoded.length%4==0 && encoded.isNotEmpty() &&
+                encoded.dropLast(padding).all { (it in 'A'..'Z') || (it in 'a'..'z') || (it in '0'..'9') || it=='+' || it=='/' } &&
+                encoded.takeLast(padding).all { it=='=' }) { "ترميز الصورة غير صالح" }
+            val decodedSize=encoded.length.toLong()/4L*3L-padding
+            require(decodedSize in 1..MAX_FILE) { "حجم الصورة غير صالح" }
+            total+=decodedSize
+            require(total<=MAX_TOTAL) { "حجم الصور يتجاوز الحد" }
         }
         require(dir.isDirectory || dir.mkdirs()) { "تعذر إنشاء مجلد الصور" }
         require(dir.canonicalFile.parentFile==context.filesDir.canonicalFile) { "تغير مسار الصور أثناء الاستعادة" }
