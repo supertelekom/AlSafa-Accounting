@@ -37,6 +37,7 @@ open class MainActivity:Activity() {
     private var chooserBarcodeField:EditText?=null
     private var chooserRefresh:(()->Unit)?=null
     private var photoProductId:String?=null
+    private var photoRepairId:String?=null
     private val ink=Color.rgb(62,52,41)
     private val gold=Color.rgb(169,121,41)
     private val vaultNames=listOf("درج المحل","الصندوق الخارجي","شام كاش","البنك")
