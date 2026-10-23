@@ -1248,7 +1248,7 @@ button("＋ مورد"){form("مورد جديد"){box->val n=field("الاسم",b
                     try {
                         val invoice=store.repairInvoice(id)
                         if(invoice==null)throw IllegalStateException("لم تُنشأ فاتورة لهذا الطلب بعد")
-                        shareInvoicePdf(invoice)
+                        shareInvoicePdf(store.invoice(invoice.getValue("id")))
                     }catch(e:Exception){error(e)}
                 }
                 button("إرسال صورة الصيانة عبر واتساب",results){
