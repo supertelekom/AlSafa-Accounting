@@ -123,6 +123,8 @@ open class MainActivity:Activity() {
                     putExtra(Intent.EXTRA_TITLE,"AlSafa-Native6-recovery-${Store.today()}.json")
                 },101)
             }
+        } finally {
+            savedInputs=null
         }
     }
     private fun render(){
