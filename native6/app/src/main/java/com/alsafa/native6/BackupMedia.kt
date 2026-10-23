@@ -63,6 +63,7 @@ object BackupMedia {
         val created=mutableListOf<File>()
         try {
             for((dest,bytes) in pending) {
+                require(dest.canonicalFile.parentFile==dir.canonicalFile) { "مسار صورة غير آمن" }
                 require(dest.createNewFile()) { "تعذر إنشاء ملف الصورة" }
                 created.add(dest)
                 dest.outputStream().use { it.write(bytes) }
