@@ -37,15 +37,33 @@ if not exist "%ANDROID_HOME%\platforms\android-34\android.jar" (
   exit /b 1
 )
 echo Android SDK: %ANDROID_HOME%
-echo Building... output will be saved to build-output.log
-call gradlew.bat --no-daemon --console=plain :app:assembleDebug :app:testDebugUnitTest > build-output.log 2>&1
+echo Building APK first... log: build-output.log
+call gradlew.bat --no-daemon --console=plain :app:assembleDebug > build-output.log 2>&1
 set "BUILD_EXIT=%ERRORLEVEL%"
-type build-output.log
 if not "%BUILD_EXIT%"=="0" (
-  echo BUILD FAILED. Send native6\build-output.log for diagnosis; no APK should be deployed.
+  type build-output.log
+  echo.
+  echo APK BUILD FAILED. Send build-output.log for diagnosis.
+  exit /b 1
+)
+if not exist "app\build\outputs\apk\debug\app-debug.apk" (
+  echo ERROR: Gradle finished without the expected debug APK.
   exit /b 1
 )
 echo.
-echo BUILD AND UNIT TESTS PASSED.
+echo DEBUG APK COMPILED: %CD%\app\build\outputs\apk\debug\app-debug.apk
+echo Running accounting unit tests...
+call gradlew.bat --no-daemon --console=plain :app:testDebugUnitTest >> build-output.log 2>&1
+set "TEST_EXIT=%ERRORLEVEL%"
+if not "%TEST_EXIT%"=="0" (
+  type build-output.log
+  echo.
+  echo UNIT TESTS FAILED. Debug APK is NOT approved for store use.
+  echo Send build-output.log and app\build\reports\tests\testDebugUnitTest\index.html
+  exit /b 2
+)
+echo.
+echo APK BUILD AND UNIT TESTS PASSED.
 echo APK: %CD%\app\build\outputs\apk\debug\app-debug.apk
+echo Test report: %CD%\app\build\reports\tests\testDebugUnitTest\index.html
 exit /b 0
