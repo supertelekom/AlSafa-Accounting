@@ -146,6 +146,8 @@ class MediaCaptureActivity : Activity() {
             FileOutputStream(output).use { stream ->
                 require(outputBitmap.compress(Bitmap.CompressFormat.JPEG, 85, stream)) { "تعذر حفظ الصورة" }
             }
+            if(outputBitmap !== bitmap) outputBitmap.recycle()
+            bitmap.recycle()
             pendingCameraPath?.let { File(it).delete() }
             pendingCameraPath=null
             imagePath = output.absolutePath
