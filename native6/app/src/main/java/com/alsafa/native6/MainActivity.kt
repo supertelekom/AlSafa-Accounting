@@ -1229,6 +1229,12 @@ button("＋ مورد"){form("مورد جديد"){box->val n=field("الاسم",b
             text("عدد النتائج: ${matches.size}",results,16f)
             matches.forEach{row->
                 val id=row.getValue("id")
+                button("إرسال صورة الصيانة عبر واتساب",results){
+                    try {
+                        val path=store.repairImage(id) ?: error("لا توجد صورة لهذا الطلب")
+                        CustomerShare.send(this,java.io.File(path),"image/jpeg","صورة ساعة الصيانة - الصفا للساعات")
+                    }catch(e:Exception){error(e)}
+                }
                 button("صورة الصيانة",results){
                     photoRepairId=id
                     startActivityForResult(Intent(this,MediaCaptureActivity::class.java),70)
