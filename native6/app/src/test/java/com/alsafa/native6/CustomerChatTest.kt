@@ -1,0 +1,18 @@
+package com.alsafa.native6
+
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertThrows
+import org.junit.Test
+
+class CustomerChatTest {
+    @Test fun syrianLocalNumber() {
+        assertEquals("963912345678",CustomerChat.normalizedNumber("0912 345 678"))
+        assertEquals("963912345678",CustomerChat.normalizedNumber("+963 912 345 678"))
+        assertEquals("963912345678",CustomerChat.normalizedNumber("00963-912-345-678"))
+        assertEquals("963912345678",CustomerChat.normalizedNumber("912345678"))
+    }
+    @Test fun invalidPhoneRejected() {
+        assertThrows(IllegalArgumentException::class.java) { CustomerChat.normalizedNumber("") }
+        assertThrows(IllegalArgumentException::class.java) { CustomerChat.normalizedNumber("123") }
+    }
+}
