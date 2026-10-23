@@ -637,6 +637,24 @@ class Store(val helper:StoreDb) {
         require(minimum>=0L){"توجد ذمة سالبة في يوم لاحق؛ راجع تسلسل القبض والمرتجعات"}
         return minimum
     }
+    /** Read-only historical check for customer receivables below zero at day end. */
+    fun negativeReceivableDays():List<Map<String,String>> {
+        val entries=rows("""SELECT substr(j.account,12) invoice_id,j.currency,e.date,
+            coalesce(sum(j.amount),0) movement
+            FROM journal j JOIN events e ON e.id=j.event_id
+            WHERE j.account LIKE 'receivable:%'
+            GROUP BY j.account,j.currency,e.date
+            ORDER BY j.account,j.currency,e.date""")
+        val balances=mutableMapOf<Pair<String,String>,Long>()
+        val issues=mutableListOf<Map<String,String>>()
+        entries.forEach { row ->
+            val key=row.getValue("invoice_id") to row.getValue("currency")
+            val balance=Math.addExact(balances[key]?:0L,row.getValue("movement").toLong())
+            balances[key]=balance
+            if(balance<0L) issues.add(row+("receivable" to balance.toString()))
+        }
+        return issues
+    }
     /** Read-only audit of invoice receivables against the posted journal. */
     fun customerReceivableIssues():List<Map<String,String>> =
         rows("""SELECT i.id invoice_id,i.number,i.currency,i.kind,
