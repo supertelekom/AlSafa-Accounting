@@ -88,7 +88,7 @@ object BackupMedia {
                 dest.outputStream().use { stream ->
                     stream.write(bytes)
                     stream.flush()
-                    (stream as java.io.FileOutputStream).fd.sync()
+                    stream.fd.sync()
                 }
             }
         }catch(e:Exception) {
