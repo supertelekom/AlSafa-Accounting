@@ -17,6 +17,7 @@ object BackupMedia {
         require(root.isDirectory || !root.exists()) { "مسار مجلد الصور غير صالح" }
         var total=0L
         val files=if(root.exists()) requireNotNull(root.listFiles()) { "تعذر قراءة مجلد الصور" }.toList() else emptyList()
+        require(files.none { it.isFile && it.extension.lowercase() in setOf("jpeg","png","webp") }) { "توجد صور بصيغة غير مدعومة في النسخة" }
         files.filter { it.isFile && it.extension.lowercase()=="jpg" }?.sortedBy { it.name }?.forEach { file ->
             require(file.canonicalFile.parentFile==root && file.length()<=MAX_FILE) { "ملف صورة غير صالح للنسخ" }
             require(file.name.removeSuffix(".jpg").matches(Regex("[a-fA-F0-9-]{36}"))) { "اسم صورة غير صالح" }
