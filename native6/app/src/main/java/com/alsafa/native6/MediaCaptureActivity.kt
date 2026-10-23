@@ -94,7 +94,13 @@ class MediaCaptureActivity : Activity() {
     @Deprecated("Deprecated in Java")
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        if (resultCode != RESULT_OK) return
+        if (resultCode != RESULT_OK) {
+            if(requestCode==CAMERA) {
+                pendingCameraPath?.let { File(it).delete() }
+                pendingCameraPath=null
+            }
+            return
+        }
         try {
             val bitmap: Bitmap = when (requestCode) {
                 CAMERA -> {
