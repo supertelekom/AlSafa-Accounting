@@ -7,7 +7,7 @@
 3. Clone the private repository using an authorized GitHub account, or download the **native6-development** branch ZIP and extract it.
 4. In Android Studio select **Open** and choose the inner **native6** folder (the folder containing `settings.gradle.kts`). Do **not** open `native4` or the legacy WebView app.
 5. Wait for **Gradle Sync** to finish; approve any requested SDK package licenses.
-6. Double-click `native6/build-windows.bat` or run from Windows Terminal inside the `native6` directory:
+6. Double-click `native6/build-windows.bat` or run from Windows Terminal inside the `native6` directory. The script **compiles the APK first**, then runs accounting unit tests, and saves a combined log:
    ```bat
    build-windows.bat
    ```
@@ -15,7 +15,7 @@
 
 ## When the build fails
 
-- The Windows build script saves all Gradle output to `native6/build-output.log`. On failure, share this log after checking it contains no credentials, keystores, or customer records. The first error and its surrounding lines are especially useful.
+- The Windows build script saves all Gradle output to `native6/build-output.log`. On failure, share this log after checking it contains no credentials, keystores, or customer records. The first error and its surrounding lines are especially useful. If APK compilation succeeds but unit tests fail, the debug APK may exist but is **not approved** for use; the script exits with code 2.
 - If Gradle cannot download dependencies, check internet/proxy in Android Studio; the wrapper downloads Gradle 8.9 from services.gradle.org, while Android plugins and SDK use Google/Maven repositories.
 - If JDK is missing, select **Settings → Build, Execution, Deployment → Build Tools → Gradle → Gradle JDK** and use the bundled JDK. The batch script tries Android Studio's bundled JDK automatically.
 - If `SDK location not found`, set `ANDROID_HOME` to `%LOCALAPPDATA%\Android\Sdk` or create a local `local.properties` with `sdk.dir=C:\\Users\\YOUR_USER\\AppData\\Local\\Android\\Sdk`. Do not commit `local.properties`.
