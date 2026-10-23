@@ -88,4 +88,21 @@ class ReceivableAccountingTest {
         assertTrue(store.negativeRefundLiabilityDays().isEmpty())
     }
 
+    @Test fun refundBeforeReturnDateIsRejectedWithoutChangingLedger() {
+        val product=store.addProduct("Chronology watch","",Currency.USD,10000L,5000L,2L)
+        val saleDay=java.time.LocalDate.now().minusDays(5).toString()
+        val beforeReturn=java.time.LocalDate.now().minusDays(4).toString()
+        val returnDay=java.time.LocalDate.now().minusDays(3).toString()
+        val id=store.sale(listOf(SaleItem(product,1L,10000L)),"Customer","",
+            Currency.USD,10000L,"drawer",date=saleDay,receiptDate=saleDay)
+        store.returnSale(id,mapOf(0 to 1L),"Returned",date=returnDay)
+        assertEquals(0L,store.refundableOn(id,beforeReturn))
+        try {
+            store.refund(id,1000L,"drawer",date=beforeReturn)
+            fail("Refund must not predate its liability")
+        } catch (_:IllegalArgumentException) { }
+        assertEquals(10000L,store.refundLiability(id))
+        assertTrue(store.negativeRefundLiabilityDays().isEmpty())
+    }
+
 }
