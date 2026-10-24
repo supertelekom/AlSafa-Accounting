@@ -15,4 +15,12 @@ class LegacyDailyClosingAuditTest {
         val result=LegacyDailyClosingAudit.inspect(backup)
         assertEquals("2026-10-01",result.getJSONArray("daysWithMultipleClosings").getString(0))
     }
+    @Test fun extractsActualDrawerCarryForward() {
+        val backup="""{"data":{"dailyClosings":[{"date":"2026-10-01","drawerActual":{"USD":25,"TRY":100},"drawerTransfer":{"TRY":100},"drawerNext":{"USD":25,"TRY":0},"drawerDifference":{"USD":0}}]}}"""
+        val report=LegacyDailyClosingAudit.inspect(backup)
+        val snapshot=report.getJSONArray("closingBalanceSnapshots").getJSONObject(0)
+        assertEquals("25",snapshot.getJSONObject("drawerNext").getString("USD"))
+        assertEquals("100",snapshot.getJSONObject("drawerTransfer").getString("TRY"))
+        assertEquals(0,report.getJSONArray("invalidClosingBalanceFields").length())
+    }
 }
