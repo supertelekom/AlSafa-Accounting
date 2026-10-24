@@ -1210,7 +1210,7 @@ open class MainActivity:Activity() {
                 }
             val reason=field("سبب المرتجع",box)
             val date=field("تاريخ استلام المرتجع YYYY-MM-DD",box,Store.today())
-            {
+            ({
                 val quantities=fields.mapValues { it.value.text.toString().trim().toLong() }
                     .filterValues { it>0L }
                 require(quantities.isNotEmpty()){"حدد كمية مرتجعة واحدة على الأقل"}
@@ -1223,7 +1223,7 @@ open class MainActivity:Activity() {
                 require(why.isNotBlank()){"سبب المرتجع مطلوب"}
                 val actualDate=java.time.LocalDate.parse(date.text.toString().trim()).toString()
                 work{store.returnSale(inv.id,quantities,why,date=actualDate)}
-            }
+            })
         }
     }
     private fun paymentForm(title:String,c:Currency,max:Long,action:(Long,String,String)->Unit){form(title){box->val n=field("المبلغ ${c.name} · المتبقي ${money(max,c)}",box,"0",true);val v=select("الخزنة",vaultNames,box);val received=field("تاريخ حركة النقود الفعلي YYYY-MM-DD",box,Store.today());{val amount=amount(n,c);require(amount>0L && amount<=max){"المبلغ يجب أن يكون أكبر من الصفر وألا يتجاوز الرصيد المستحق"};val vault=Store.vaults[v.selectedItemPosition];val actualDate=java.time.LocalDate.parse(received.text.toString().trim()).toString();work{action(amount,vault,actualDate)}}}}
