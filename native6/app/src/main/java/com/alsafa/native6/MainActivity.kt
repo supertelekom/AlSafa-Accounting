@@ -978,19 +978,26 @@ button("＋ مورد"){form("مورد جديد"){box->val n=field("الاسم",b
                 (resources.displayMetrics.heightPixels*0.86).toInt())
         } catch(e:Exception) { error(e) }
     }
-    /** Mirrors the legacy tablet's 38dp photo icon beside repair identity. */
-    private fun repairIdentity(row:Map<String,String>, target:android.widget.LinearLayout) {
-        val line=android.widget.LinearLayout(this).apply {
-            orientation=android.widget.LinearLayout.HORIZONTAL
-            gravity=Gravity.CENTER_VERTICAL
-            setPadding(dp(12),dp(10),dp(12),dp(10))
-        }
+    /** Legacy v3.9.359 repair row: small rounded watch image, invoice identity, problem and status. */
+    private fun repairIdentity(row:Map<String,String>, target:LinearLayout) {
         val id=row.getValue("id")
         val path=store.repairImage(id)
-        val image=ImageView(this).apply {
+        val line=LinearLayout(this).apply {
+            orientation=LinearLayout.HORIZONTAL
+            layoutDirection=View.LAYOUT_DIRECTION_RTL
+            gravity=Gravity.CENTER_VERTICAL
+            setPadding(dp(12),dp(10),dp(12),dp(10))
+            background=background()
+        }
+        val icon=ImageView(this).apply {
             scaleType=ImageView.ScaleType.CENTER_CROP
             contentDescription="صورة ساعة "+row.getValue("customer")
-            setBackgroundColor(android.graphics.Color.rgb(248,237,219))
+            background=GradientDrawable().apply {
+                setColor(Color.rgb(248,237,219))
+                cornerRadius=dp(11).toFloat()
+                setStroke(dp(1),Color.rgb(226,209,179))
+            }
+            clipToOutline=true
         }
         if(path!=null && java.io.File(path).isFile) {
             val bounds=android.graphics.BitmapFactory.Options().apply { inJustDecodeBounds=true }
@@ -1001,35 +1008,41 @@ button("＋ مورد"){form("مورد جديد"){box->val n=field("الاسم",b
                 val bitmap=android.graphics.BitmapFactory.decodeFile(path,
                     android.graphics.BitmapFactory.Options().apply { inSampleSize=sample })
                 if(bitmap!=null) {
-                    image.setImageBitmap(bitmap)
-                    image.setOnClickListener { showRepairPhoto(path) }
-                } else image.setImageResource(android.R.drawable.ic_menu_gallery)
-            } else image.setImageResource(android.R.drawable.ic_menu_gallery)
-        } else image.setImageResource(android.R.drawable.ic_menu_gallery)
-        line.addView(image,android.widget.LinearLayout.LayoutParams(dp(38),dp(38)).apply {
-            marginEnd=dp(11)
-        })
-        val info=android.widget.LinearLayout(this).apply {
-            orientation=android.widget.LinearLayout.VERTICAL
-        }
-        val heading=TextView(this).apply {
-            text=row.getValue("customer")+" · "+row.getValue("watch")
+                    icon.setImageBitmap(bitmap)
+                    icon.setOnClickListener { showRepairPhoto(path) }
+                } else icon.setImageResource(android.R.drawable.ic_menu_gallery)
+            } else icon.setImageResource(android.R.drawable.ic_menu_gallery)
+        } else icon.setImageResource(android.R.drawable.ic_menu_gallery)
+        line.addView(icon,LinearLayout.LayoutParams(dp(38),dp(38)).apply { marginEnd=dp(11) })
+        val details=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL }
+        val invoice=store.repairInvoice(id)
+        val invoiceLabel=invoice?.get("number")?.let { "فاتورة #$it · " } ?: ""
+        val title=TextView(this).apply {
+            text=invoiceLabel+row.getValue("customer")+" · "+row.getValue("watch")
             textSize=14f
             typeface=font
-            setSingleLine(true)
+            setTextColor(ink)
+            maxLines=2
             ellipsize=android.text.TextUtils.TruncateAt.END
         }
         val detail=TextView(this).apply {
-            text=row.getValue("date")+" · "+label(row.getValue("status"))+
-                " · "+row.getValue("phone")
+            text=row.getValue("date")+" · "+row.getValue("phone")
             textSize=12f
-            setSingleLine(true)
+            setTextColor(Color.DKGRAY)
+            maxLines=1
             ellipsize=android.text.TextUtils.TruncateAt.END
         }
-        info.addView(heading)
-        info.addView(detail)
-        line.addView(info,android.widget.LinearLayout.LayoutParams(0,-2,1f))
-        target.addView(line)
+        details.addView(title)
+        details.addView(detail)
+        line.addView(details,LinearLayout.LayoutParams(0,-2,1f))
+        val status=TextView(this).apply {
+            text=label(row.getValue("status"))
+            textSize=12f
+            setTextColor(if(row.getValue("status")=="ready")Color.rgb(32,111,66) else gold)
+            setPadding(dp(8),dp(5),dp(8),dp(5))
+        }
+        line.addView(status)
+        target.addView(line,LinearLayout.LayoutParams(-1,-2).apply { setMargins(0,dp(4),0,dp(4)) })
     }
     private fun repairs(){text("الصيانة",size=25f);button("استلام صيانة"){
             intakePhotoPath=null
