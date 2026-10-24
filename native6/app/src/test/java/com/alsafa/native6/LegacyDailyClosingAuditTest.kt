@@ -10,4 +10,9 @@ class LegacyDailyClosingAuditTest {
         assertEquals("2026-10-02",result.getJSONArray("movementDaysWithoutClosing").getString(0))
         assertEquals("NONE",result.getString("posting"))
     }
+    @Test fun detectsDuplicateClosingDates() {
+        val backup="""{"data":{"dailyClosings":[{"date":"2026-10-01"},{"date":"2026-10-01"}]}}"""
+        val result=LegacyDailyClosingAudit.inspect(backup)
+        assertEquals("2026-10-01",result.getJSONArray("daysWithMultipleClosings").getString(0))
+    }
 }
