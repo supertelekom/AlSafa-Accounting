@@ -552,7 +552,8 @@ class Store(val helper:StoreDb) {
                 OR EXISTS(SELECT 1 FROM invoice_lines l
                     LEFT JOIN products lp ON lp.id=l.product_id
                     WHERE l.invoice_id=i.id AND (l.name LIKE ? ESCAPE '!'
-                    OR lp.barcode LIKE ? ESCAPE '!' OR lp.model LIKE ? ESCAPE '!'))
+                    OR lp.barcode LIKE ? ESCAPE '!' OR lp.model LIKE ? ESCAPE '!'
+                    OR lp.brand LIKE ? ESCAPE '!'))
                 OR (i.kind='repair' AND EXISTS(
                     SELECT 1 FROM repairs rp WHERE rp.invoice_id=i.id
                     AND (rp.watch LIKE ? ESCAPE '!' OR rp.problem LIKE ? ESCAPE '!'
@@ -563,10 +564,10 @@ class Store(val helper:StoreDb) {
                         WHERE pe.kind='REPAIR_PART'
                         AND pe.memo='REPAIR_PART:' || rp.id
                         AND (p.name LIKE ? ESCAPE '!' OR p.barcode LIKE ? ESCAPE '!'
-                        OR p.model LIKE ? ESCAPE '!')))))
+                        OR p.model LIKE ? ESCAPE '!' OR p.brand LIKE ? ESCAPE '!')))))
                 )""")
             args.addAll(listOf(match,match,match,if(phoneSearch)phoneNeedle else "",
-                if(phoneSearch)"%$phoneNeedle%" else "",needle,match,match,match,match,match,match,match,match,match,match,match))
+                if(phoneSearch)"%$phoneNeedle%" else "",needle,match,match,match,match,match,match,match,match,match,match,match,match))
         }
         if(kind!="all"){conditions.add("i.kind=?");args.add(kind)}
         if(status!="all"){conditions.add("i.status=?");args.add(status)}
