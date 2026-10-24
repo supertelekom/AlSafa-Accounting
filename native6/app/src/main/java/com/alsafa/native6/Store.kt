@@ -1804,7 +1804,7 @@ class Store(val helper:StoreDb) {
         limit:Int=100,offset:Int=0
     ):List<Map<String,String>> {
         require(status in setOf("all","received","in_progress","ready","delivered"))
-        require(query.length<=200 && limit in 1..500 && offset in 0..1000000)
+        require(query.trim().length<=200 && limit in 1..500 && offset in 0..1000000)
         val first=LocalDate.parse(from).toString()
         val last=LocalDate.parse(until).toString()
         require(first<=last && last<=today()){"فترة البحث غير صالحة"}
