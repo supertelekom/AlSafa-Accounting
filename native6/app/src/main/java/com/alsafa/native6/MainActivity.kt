@@ -955,6 +955,10 @@ open class MainActivity:Activity() {
         first.addView(status)
         panel.addView(first)
         text(inv.party.ifBlank { "عميل نقدي" },panel,14f).setTextColor(ink)
+        if(inv.kind=="sale" || inv.kind=="repair") {
+            val issued=store.rows("SELECT date FROM events WHERE id=?",inv.id).firstOrNull()
+            if(issued!=null)text("تاريخ الفاتورة: "+issued.getValue("date"),panel,12f)
+        }
         text(money(inv.total,inv.currency),panel,17f).setTextColor(gold)
         if(inv.kind!="purchase") {
             val collected=store.paid(inv.id)
