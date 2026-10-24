@@ -500,6 +500,33 @@ class Store(val helper:StoreDb) {
         event(command,"OPENING_STOCK",today(),"رصيد افتتاحي: $name")
         if(quantity>0) { val value=mul(cost,quantity);stock(command,0,product(command),quantity,value);post(command,listOf(Posting("inventory",currency,value),Posting("equity:opening",currency,-value))) };command
     }
+    /**
+     * A colour variant is an independent stock-keeping product: own barcode, quantity,
+     * cost, price and image. Parent is descriptive only, never a shared stock balance.
+     */
+    fun addColorVariant(parentId:String,barcode:String,price:Long,cost:Long,quantity:Long,
+                        dialColor:String,caseColor:String,strapColor:String):String = transaction {
+        val parent=rows("SELECT * FROM products WHERE id=? AND archived=0",parentId).singleOrNull()
+            ?: error("المنتج الأساسي غير موجود")
+        require(parent.getValue("kind")=="watch"){"الألوان الإضافية متاحة للساعات فقط"}
+        val parentDetails=JSONObject(parent.getValue("details"))
+        require(!parentDetails.has("variantParentId")){"اختر الساعة الأساسية وليس لوناً إضافياً"}
+        require(listOf(dialColor,caseColor,strapColor).all { it.length<=100 }){"اسم اللون طويل جداً"}
+        require(listOf(dialColor,caseColor,strapColor).any { it.isNotBlank() }){"حدد لوناً واحداً على الأقل"}
+        require(barcode.trim().isNotEmpty()){"باركود مستقل مطلوب لكل لون إضافي"}
+        val details=JSONObject().put("variantParentId",parentId)
+            .put("dialColor",dialColor.trim()).put("caseColor",caseColor.trim())
+            .put("strapColor",strapColor.trim())
+            .put("customerDescription",parentDetails.optString("customerDescription"))
+        addProduct(parent.getValue("name"),barcode,
+            Currency.valueOf(parent.getValue("currency")),price,cost,quantity,
+            details=details.toString(),brand=parent.getValue("brand"),model=parent.getValue("model"))
+    }
+
+    fun colorVariants(parentId:String):List<Map<String,String>> =
+        rows("SELECT id,name,barcode,price,stock,currency,details FROM products WHERE archived=0 ORDER BY name,id")
+            .filter { JSONObject(it.getValue("details")).optString("variantParentId")==parentId }
+
     /** Image references are local metadata, never stock movements or accounting entries. */
     fun productImage(id:String):String? {
         val raw=rows("SELECT details FROM products WHERE id=?",id).singleOrNull()?.get("details") ?: return null
