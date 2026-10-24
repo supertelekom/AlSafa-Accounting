@@ -81,7 +81,7 @@ class MediaCaptureActivity : Activity() {
             text = "استخدام الصورة"
             setOnClickListener {
                 val selected = imagePath
-                if (selected == null) status.text = "اختر صورة أولاً"
+                if (selected == null || !File(selected).isFile) status.text = "اختر صورة صالحة أولاً"
                 else {
                     confirmed = true
                     setResult(RESULT_OK, Intent().putExtra(EXTRA_RESULT_PATH, selected))
