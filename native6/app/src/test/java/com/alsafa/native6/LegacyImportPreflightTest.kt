@@ -24,6 +24,11 @@ class LegacyImportPreflightTest {
         assertTrue(problems.any { it.contains("supplierLedger[0]: unknown supplier") })
     }
 
+    @Test fun detectsOrphanPayment() {
+        val payload = """{"format":"alsafa-accounting-backup","formatVersion":2,"data":{"products":[],"maintenanceParts":[],"suppliers":[],"repairs":[],"sales":[],"purchases":[],"payments":[{"referenceType":"sale","referenceId":"absent"}]}}"""
+        assertTrue(LegacyImportPreflight.inspect(payload).any { it.contains("unknown sale reference") })
+    }
+
     @Test fun detectsMissingSections() {
         val payload = """{"format":"alsafa-accounting-backup","formatVersion":2,"data":{}}"""
         assertEquals(4, LegacyImportPreflight.inspect(payload).size)
