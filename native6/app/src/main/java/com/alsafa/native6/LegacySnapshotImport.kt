@@ -20,6 +20,7 @@ object LegacySnapshotImport {
     fun preview(payload:String):String {
         val d=data(payload)
         val manifest=LegacyRestoreManifest.inspect(payload)
+        val readiness=LegacyRestoreReadiness.inspect(payload)
         val blocking=LegacyImportPreflight.inspectInventory(payload).size
         val warnings=LegacyImportPreflight.inspectFinancialHistory(payload).size
         val continuity=LegacyClosingContinuity.inspect(payload)
@@ -42,13 +43,14 @@ object LegacySnapshotImport {
         val parts=d.getJSONArray("maintenanceParts")
         val suppliers=d.getJSONArray("suppliers")
         val repairs=d.getJSONArray("repairs")
-        return "أخطاء الاستيراد: $blocking، تحذيرات مالية مؤرشفة: $warnings، فروقات إقفال فعلية: $cashIssues، تواريخ إقفال غير صالحة: $invalidClosingDates، تواريخ إقفال مكررة: $duplicateClosingDates، دفعات تحتاج مطابقة مرجع: $brokenPaymentLinks، دفعات بعملة قبض مختلفة: $crossCurrencyPaymentCount، دفعات مطابقة لحركات النقد: $matchedCashPayments، غير مطابقة: $unmatchedCashPayments، ملتبسة: $ambiguousCashPayments، مرتجعات تحتاج مطابقة مرجع: $brokenReturnLinks، سداد موردين مطابق للخزنة: $matchedSupplierPayments، غير مطابق: $unmatchedSupplierPayments. بصمة النسخة: ${manifest.getString("sha256").take(16)}…، إجمالي السجلات: ${manifest.getLong("recordCount")}. مخزون الساعات: ${products.length()}، قطع الصيانة: ${parts.length()}، الموردون: ${suppliers.length()}، سجل الصيانة: ${repairs.length()}. " +
+        return "جاهزية أرشفة النسخة: ${if(readiness.getBoolean("archiveImportPermitted")) "نعم" else "لا"}، عوائق التفعيل المالي: ${readiness.getInt("financialBlockerCount")}، التفعيل المالي: غير مسموح قبل المطابقة. أخطاء الاستيراد: $blocking، تحذيرات مالية مؤرشفة: $warnings، فروقات إقفال فعلية: $cashIssues، تواريخ إقفال غير صالحة: $invalidClosingDates، تواريخ إقفال مكررة: $duplicateClosingDates، دفعات تحتاج مطابقة مرجع: $brokenPaymentLinks، دفعات بعملة قبض مختلفة: $crossCurrencyPaymentCount، دفعات مطابقة لحركات النقد: $matchedCashPayments، غير مطابقة: $unmatchedCashPayments، ملتبسة: $ambiguousCashPayments، مرتجعات تحتاج مطابقة مرجع: $brokenReturnLinks، سداد موردين مطابق للخزنة: $matchedSupplierPayments، غير مطابق: $unmatchedSupplierPayments. بصمة النسخة: ${manifest.getString("sha256").take(16)}…، إجمالي السجلات: ${manifest.getLong("recordCount")}. مخزون الساعات: ${products.length()}، قطع الصيانة: ${parts.length()}، الموردون: ${suppliers.length()}، سجل الصيانة: ${repairs.length()}. " +
             "سيُنقل المخزون والموردون والصيانة، وتُحفظ الفواتير والحركات القديمة كأرشيف قابل للقراءة فقط، دون احتسابها في الأرصدة أو الأرباح."
     }
     fun import(store:Store,payload:String):String {
         val root=JSONObject(payload)
         val d=data(payload)
         val manifest=LegacyRestoreManifest.inspect(payload)
+        val readiness=LegacyRestoreReadiness.inspect(payload)
         val issues=LegacyImportPreflight.inspectInventory(payload)
         val financialWarnings=LegacyImportPreflight.inspectFinancialHistory(payload)
         val closingAudit=LegacyClosingContinuity.inspect(payload)
@@ -197,6 +199,7 @@ object LegacySnapshotImport {
                 .put("scope","inventory_suppliers_repairs_only")
                 .put("financialWarningCount",financialWarnings.size)
                 .put("closingAudit",closingAudit)
+                .put("restoreReadiness",readiness)
                 .put("paymentLinkAudit",paymentLinkAudit)
                 .put("returnLinkAudit",returnLinkAudit)
                 .put("supplierCashAudit",supplierCashAudit)
