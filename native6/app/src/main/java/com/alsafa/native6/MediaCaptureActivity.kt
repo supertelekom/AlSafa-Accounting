@@ -162,15 +162,17 @@ class MediaCaptureActivity : Activity() {
             }
             // Normalize the orientation encoded by the camera or gallery provider.
             // Some Android cameras save JPEG pixels sideways and rely on EXIF.
-            val orientation = when (requestCode) {
-                CAMERA -> pendingCameraPath?.let { readPhotoRotation(File(it)) } ?: 0
-                GALLERY -> data?.data?.let { uri ->
-                    contentResolver.openInputStream(uri)?.use { stream ->
-                        androidx.exifinterface.media.ExifInterface(stream).rotationDegrees
-                    }
-                } ?: 0
-                else -> 0
-            }
+            val orientation = runCatching {
+                when (requestCode) {
+                    CAMERA -> pendingCameraPath?.let { readPhotoRotation(File(it)) } ?: 0
+                    GALLERY -> data?.data?.let { uri ->
+                        contentResolver.openInputStream(uri)?.use { stream ->
+                            androidx.exifinterface.media.ExifInterface(stream).rotationDegrees
+                        }
+                    } ?: 0
+                    else -> 0
+                }
+            }.getOrDefault(0)
             val uprightBitmap = if (orientation != 0) {
                 val matrix = android.graphics.Matrix().apply { postRotate(orientation.toFloat()) }
                 Bitmap.createBitmap(bitmap,0,0,bitmap.width,bitmap.height,matrix,true)
