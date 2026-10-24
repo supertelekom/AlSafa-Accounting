@@ -874,6 +874,12 @@ open class MainActivity:Activity() {
         }
         text(product.name+" × "+item.qty,details,15f).setTextColor(ink)
         text(money(mul(item.qty,item.unitPrice),basketCurrency),details,14f).setTextColor(gold)
+        if(product.stock>0L && item.qty<=product.stock) {
+            val estimatedCost=java.math.BigInteger.valueOf(product.value)
+                .multiply(java.math.BigInteger.valueOf(item.qty))
+                .divide(java.math.BigInteger.valueOf(product.stock)).longValueExact()
+            text("تكلفة تقديرية: "+money(estimatedCost,basketCurrency),details,12f)
+        }
         panel.addView(details,LinearLayout.LayoutParams(0,-2,1f))
         val remove=Button(this).apply {
             style(this)
