@@ -1059,7 +1059,7 @@ open class MainActivity:Activity() {
             AlertDialog.Builder(this).setTitle("اختر التاريخ المطلوب")
                 .setItems(arrayOf("تاريخ البداية","تاريخ النهاية")){_,which->
                     val target=if(which==0)fromDate else toDate
-                    val current=java.time.LocalDate.parse(target.text.toString().trim())
+                    val current=runCatching { java.time.LocalDate.parse(target.text.toString().trim()) }.getOrElse { java.time.LocalDate.now() }
                     android.app.DatePickerDialog(this,{_,year,month,day->
                         target.setText(java.time.LocalDate.of(year,month+1,day).toString())
                     },current.year,current.monthValue-1,current.dayOfMonth).show()
