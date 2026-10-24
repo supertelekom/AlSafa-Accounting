@@ -1055,11 +1055,6 @@ open class MainActivity:Activity() {
         val fromDate=field("من تاريخ YYYY-MM-DD",dateFilters,Store.today())
         val toDate=field("إلى تاريخ YYYY-MM-DD",dateFilters,Store.today())
         body.addView(dateFilters)
-        button("اليوم فقط") {
-            fromDate.setText(Store.today())
-            toDate.setText(Store.today())
-            page="invoices";render()
-        }
         val kinds=listOf("all","sale","purchase","repair")
         val statuses=listOf("all","posted","cancelled")
         val filters=LinearLayout(this).apply {
@@ -1087,6 +1082,11 @@ open class MainActivity:Activity() {
             text("النتائج: ${results.size} (الحد الأقصى 200)",output)
             if(results.isEmpty())text("لا توجد فواتير مطابقة للبحث.",output,14f)
             results.forEach{inv->invoiceCard(inv,output)}
+        }
+        button("اليوم فقط") {
+            fromDate.setText(Store.today())
+            toDate.setText(Store.today())
+            try{show()}catch(e:Exception){error(e)}
         }
         button("بحث في الفواتير"){try{show()}catch(e:Exception){error(e)}}
         button("آخر 7 أيام") {
