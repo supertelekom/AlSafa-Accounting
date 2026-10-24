@@ -260,8 +260,35 @@ open class MainActivity:Activity() {
         visibleInputs.clear()
         val root=column();root.setBackgroundColor(Color.rgb(248,243,235));setContentView(root)
         if(page=="home") {
-            text("الصفا للساعات",root,24f).setTextColor(gold)
-            text("نسخة تطوير — حفظ محلي على التابلت",root,13f)
+            val header=LinearLayout(this).apply {
+                orientation=LinearLayout.HORIZONTAL
+                layoutDirection=View.LAYOUT_DIRECTION_RTL
+                gravity=Gravity.CENTER_VERTICAL
+                setPadding(dp(18),dp(16),dp(18),dp(16))
+                background=GradientDrawable(GradientDrawable.Orientation.TL_BR,
+                    intArrayOf(Color.rgb(249,243,232),Color.rgb(234,217,185)))
+            }
+            val mark=TextView(this).apply {
+                text="◷"
+                textSize=25f
+                gravity=Gravity.CENTER
+                setTextColor(Color.rgb(122,81,24))
+                background=GradientDrawable().apply {
+                    setColor(Color.rgb(249,243,232))
+                    cornerRadius=dp(24).toFloat()
+                    setStroke(dp(2),gold)
+                }
+            }
+            header.addView(mark,LinearLayout.LayoutParams(dp(44),dp(44)).apply{marginEnd=dp(11)})
+            val brand=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL }
+            text("الصفا للساعات",brand,19f).apply {
+                setTextColor(Color.rgb(122,81,24));setPadding(0,0,0,0)
+            }
+            text("ساعات • صيانة • محاسبة محلية",brand,11f).apply {
+                setPadding(0,dp(3),0,0)
+            }
+            header.addView(brand,LinearLayout.LayoutParams(0,-2,1f))
+            root.addView(header,LinearLayout.LayoutParams(-1,-2))
         } else {
             val titles=mapOf(
                 "simple" to "الوضع المبسط","advanced" to "الوضع الكامل",
@@ -376,7 +403,13 @@ open class MainActivity:Activity() {
         button("الصفحة التالية"){ if(offset<=Int.MAX_VALUE-30) offset+=30;refresh() }
         refresh()
     }
-    private fun home(){text("ALSAFA WATCHES",size=16f);text("كيف تريد أن تبدأ؟",size=28f);button("⚡ الوضع المبسط · بيع وصيانة وتسليم سريع"){go("simple")};button("◆ الوضع الكامل · الإدارة والمخزون والحسابات"){go("advanced")}}
+    private fun home(){
+        text("مرحباً بك في الصفا",size=21f)
+        text("اختر طريقة العمل المناسبة",size=12f)
+        button("⚡ الوضع المبسط · بيع وصيانة وتسليم سريع"){go("simple")}
+        button("◆ الوضع الكامل · الإدارة والمخزون والحسابات"){go("advanced")}
+        text("تعمل هذه النسخة على التابلت دون اتصال بالإنترنت.",size=12f)
+    }
     private fun simple(){text("العمل السريع",size=26f);button("مبيع"){go("sale")};button("استلام وتسليم صيانة"){go("repairs")};button("الفواتير وقبض الديون"){go("invoices")};button("الخزنات والإقفال اليومي"){go("vaults")}}
     private fun advanced(){text("الوضع الكامل",size=26f);listOf("مبيع" to "sale","المنتجات وقطع الصيانة" to "products","الفواتير والمرتجعات" to "invoices","استلام وتسليم صيانة" to "repairs","الخزنات والمصاريف والإقفال" to "vaults","الموردون والمشتريات" to "suppliers","تقرير شهر واحد" to "reports","تقرير بين تاريخين" to "period-reports","الشركاء ونسب الأرباح" to "partners","سجل العمليات" to "audit","النسخ الاحتياطي والاستعادة" to "backup","أرشيف الفواتير القديمة" to "legacy-history").forEach{(label,route)->button(label){go(route)}}}
     private fun products(){text("المنتجات وقطع الصيانة",size=25f);button("＋ إضافة منتج / قطعة"){productForm()};button("▣ مسح باركود للبحث"){startActivityForResult(Intent(this,BarcodeScanActivity::class.java), 65)};button("تقييم المخزون والتنبيهات"){go("inventory")};button("سجل تسويات الجرد"){go("stocktake-history")};val query=field("بحث بالاسم أو الباركود أو REF",body);val list=column();body.addView(list)
