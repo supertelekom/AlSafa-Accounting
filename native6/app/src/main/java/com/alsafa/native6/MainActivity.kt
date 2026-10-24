@@ -103,6 +103,11 @@ open class MainActivity:Activity() {
         if(requestCode==71){
             val path=data?.getStringExtra(MediaCaptureActivity.EXTRA_RESULT_PATH)
             if(resultCode==RESULT_OK && !path.isNullOrBlank()){
+                val photoFile=java.io.File(path)
+                if(!photoFile.isFile || photoFile.length()==0L) {
+                    error(IllegalArgumentException("الصورة المختارة غير موجودة أو فارغة"))
+                    return
+                }
                 intakePhotoPath=path
                 intakePhotoStatus?.text="تم اختيار صورة الساعة"
                 val options=android.graphics.BitmapFactory.Options().apply { inJustDecodeBounds=true }
