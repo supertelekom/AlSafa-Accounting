@@ -30,7 +30,7 @@ object BackupMedia {
         require(files.size<=10000) { "عدد ملفات الصور يتجاوز الحد الآمن" }
         require(files.all { it.extension.lowercase()=="jpg" }) { "توجد ملفات غير معروفة في مجلد الصور" }
         files.filter { it.extension.lowercase()=="jpg" }.sortedBy { it.name }.forEach { file ->
-            require(file.canonicalFile.parentFile==root && file.canonicalFile==file.absoluteFile && file.length()<=MAX_FILE) { "ملف صورة غير صالح للنسخ" }
+            require(file.canonicalFile.parentFile==root && file.length()<=MAX_FILE) { "ملف صورة غير صالح للنسخ" }
             require(file.name.removeSuffix(".jpg").matches(Regex("[a-fA-F0-9-]{36}"))) { "اسم صورة غير صالح" }
             require(file.length()>0L) { "صورة فارغة في النسخة" }
             total+=file.length()
