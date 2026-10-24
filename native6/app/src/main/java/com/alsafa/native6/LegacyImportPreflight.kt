@@ -74,6 +74,15 @@ object LegacyImportPreflight {
                 }
             }
         }
+        for(section in listOf("sales","purchases","expenses","partnerWithdrawals")) {
+            val records=data.optJSONArray(section) ?: continue
+            for(i in 0 until records.length()) {
+                val row=records.optJSONObject(i) ?: continue
+                val date=row.optString("date").trim()
+                if(date.isNotEmpty() && runCatching { LocalDate.parse(date).isAfter(LocalDate.now()) }.getOrDefault(true))
+                    problems.add("$section[$i]: invalid or future date")
+            }
+        }
         val purchaseIds=HashSet<String>()
         data.optJSONArray("purchases")?.let { purchases ->
             for(i in 0 until purchases.length()) {
