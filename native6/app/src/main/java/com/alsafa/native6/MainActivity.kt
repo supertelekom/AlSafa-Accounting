@@ -809,6 +809,51 @@ open class MainActivity:Activity() {
         }}}}
     private fun chooseProduct(inStockOnly:Boolean=false,action:(Product)->Unit){val box=column();val search=field("الاسم أو الباركود",box);val results=column();box.addView(results);val sc=ScrollView(this);sc.addView(box);val dialog=AlertDialog.Builder(this).setTitle("اختيار منتج").setView(sc).setNegativeButton("رجوع",null).create()
         fun show(){results.removeAllViews();store.products(search.text.toString()).filter{!inStockOnly || it.stock>0}.take(100).forEach{p->button("${p.name} · ${p.stock}",results){dialog.dismiss();action(p)}}};button("بحث",box){show()};button("▣ مسح باركود",box){chooserBarcodeField=search;chooserRefresh={show()};startActivityForResult(Intent(this,BarcodeScanActivity::class.java),68)};dialog.setOnDismissListener{chooserBarcodeField=null;chooserRefresh=null};show();dialog.show()}
+    private fun invoiceCard(inv:Invoice,parent:LinearLayout) {
+        val panel=column().apply {
+            setPadding(dp(14),dp(10),dp(14),dp(10))
+            background=background(paper,14)
+        }
+        val first=LinearLayout(this).apply {
+            orientation=LinearLayout.HORIZONTAL
+            layoutDirection=View.LAYOUT_DIRECTION_RTL
+            gravity=Gravity.CENTER_VERTICAL
+        }
+        val number=TextView(this).apply {
+            style(this)
+            text="#"+inv.number+" · "+label(inv.kind)
+            textSize=16f
+            setTextColor(ink)
+            setPadding(dp(5),dp(5),dp(5),dp(5))
+        }
+        first.addView(number,LinearLayout.LayoutParams(0,-2,1f))
+        val status=TextView(this).apply {
+            style(this)
+            text=label(inv.status)
+            textSize=12f
+            setTextColor(if(inv.status=="cancelled")Color.rgb(157,62,52) else Color.rgb(32,111,66))
+            background=background(if(inv.status=="cancelled")Color.rgb(255,238,234) else Color.rgb(235,248,237),10)
+            setPadding(dp(9),dp(4),dp(9),dp(4))
+        }
+        first.addView(status)
+        panel.addView(first)
+        text(inv.party.ifBlank { "عميل نقدي" },panel,14f).setTextColor(ink)
+        text(money(inv.total,inv.currency),panel,17f).setTextColor(gold)
+        val open=Button(this).apply {
+            style(this)
+            text="عرض تفاصيل الفاتورة"
+            textSize=13f
+            isAllCaps=false
+            background=background(sand,11)
+            setOnClickListener { if(!busy)invoiceDetail(inv) }
+        }
+        panel.addView(open,LinearLayout.LayoutParams(-1,dp(44)).apply {
+            setMargins(0,dp(7),0,0)
+        })
+        parent.addView(panel,LinearLayout.LayoutParams(-1,-2).apply {
+            setMargins(0,dp(5),0,dp(5))
+        })
+    }
     private fun invoices(){
         text("الفواتير والمرتجعات",size=25f)
         button("كشف الحركات المالية لفاتورة"){
@@ -867,10 +912,8 @@ open class MainActivity:Activity() {
             val results=store.searchInvoices(query.text.toString(),kinds[kind.selectedItemPosition],
                 statuses[status.selectedItemPosition])
             text("النتائج: ${results.size} (الحد الأقصى 200)",output)
-            results.forEach{inv->
-                button("#${inv.number} · ${label(inv.kind)} · ${inv.party}"+
-                    "\n${money(inv.total,inv.currency)} · ${label(inv.status)}",output){invoiceDetail(inv)}
-            }
+            if(results.isEmpty())text("لا توجد فواتير مطابقة للبحث.",output,14f)
+            results.forEach{inv->invoiceCard(inv,output)}
         }
         button("بحث في الفواتير"){try{show()}catch(e:Exception){error(e)}}
         show()
