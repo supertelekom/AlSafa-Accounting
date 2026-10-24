@@ -1827,8 +1827,9 @@ class Store(val helper:StoreDb) {
         require(status in setOf("all","received","in_progress","ready"))
         return rows("""SELECT id,customer,phone,watch,problem,status,date,details
             FROM repairs WHERE status IN ('received','in_progress','ready')
+            AND (?='all' OR status=?)
             AND date<=? ORDER BY date ASC,id ASC LIMIT $limit OFFSET $offset""",
-            day.minusDays(minimumDays).toString()).map { row ->
+            status,status,day.minusDays(minimumDays).toString()).map { row ->
                 val age=java.time.temporal.ChronoUnit.DAYS.between(
                     LocalDate.parse(row.getValue("date")),day)
                 row+mapOf("age_days" to age.toString())
