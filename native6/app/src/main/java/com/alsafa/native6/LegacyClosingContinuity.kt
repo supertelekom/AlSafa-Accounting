@@ -15,7 +15,9 @@ object LegacyClosingContinuity {
         val closings=root.getJSONObject("data").optJSONArray("dailyClosings") ?: JSONArray()
         val rows=mutableListOf<Pair<LocalDate,Int>>()
         val invalidDates=JSONArray()
+        val missingClosingRows=JSONArray()
         for(i in 0 until closings.length()) {
+            if(closings.optJSONObject(i)==null) missingClosingRows.put(i)
             val raw=closings.optJSONObject(i)?.optString("date") ?: ""
             val date=runCatching { LocalDate.parse(raw) }.getOrNull()
             if(date==null) invalidDates.put(i) else rows.add(date to i)
@@ -70,6 +72,7 @@ object LegacyClosingContinuity {
         }
         return JSONObject().put("closingCount",closings.length())
             .put("transitions",transitions).put("invalidDateRows",invalidDates)
+            .put("missingClosingRows",missingClosingRows)
             .put("invalidAmountFields",invalidAmounts)
             .put("arithmeticMismatches",carryMismatches)
             .put("duplicateClosingDates",duplicateClosingDates)
