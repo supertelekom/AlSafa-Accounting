@@ -622,6 +622,7 @@ class Store(val helper:StoreDb) {
 
     fun appendProductImage(id:String,path:String) = transaction {
         require(path.isNotBlank() && path.length<=1024)
+        require(java.io.File(path).isFile) { "ملف الصورة غير موجود" }
         require(java.io.File(path).isAbsolute && java.io.File(path).name.matches(Regex("[a-fA-F0-9-]{36}\\.jpg"))) { "مسار صورة غير صالح" }
         val raw=rows("SELECT details FROM products WHERE id=?",id).single().getValue("details")
         val paths=productImages(id)
