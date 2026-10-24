@@ -118,6 +118,13 @@ object LegacyImportPreflight {
                     problems.add("cashTransactions[$i]: duplicate cash movement ID")
             }
         }
+        val repairIds=HashSet<String>()
+        data.optJSONArray("repairs")?.let { repairs ->
+            for(i in 0 until repairs.length()) {
+                val id=repairs.optJSONObject(i)?.optString("id").orEmpty().trim()
+                if(id.isNotEmpty()) repairIds.add(id)
+            }
+        }
         data.optJSONArray("payments")?.let { payments ->
             for(i in 0 until payments.length()) {
                 val row=payments.optJSONObject(i) ?: continue
