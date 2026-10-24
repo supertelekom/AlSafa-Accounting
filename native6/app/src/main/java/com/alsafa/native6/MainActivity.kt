@@ -562,7 +562,15 @@ open class MainActivity:Activity() {
         }
         heading.addView(price)
         card.addView(heading)
-        text("المتوفر: ${p.stock}   •   الباركود: ${p.barcode}",card,12f)
+        val stockInfo=TextView(this).apply {
+            style(this)
+            text="المتوفر: ${p.stock}   •   الباركود: ${p.barcode}"
+            textSize=12f
+            setTextColor(if(p.stock<=0L)Color.rgb(157,62,52) else muted)
+            background=background(if(p.stock<=0L)Color.rgb(255,239,235) else cream,10)
+            setPadding(dp(10),dp(7),dp(10),dp(7))
+        }
+        card.addView(stockInfo)
         val actions=LinearLayout(this).apply {
             orientation=LinearLayout.HORIZONTAL
             layoutDirection=View.LAYOUT_DIRECTION_RTL
