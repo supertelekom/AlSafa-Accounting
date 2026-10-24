@@ -61,6 +61,12 @@ object LegacyImportPreflight {
                 val currency=row.optString("currency").trim()
                 if(currency.isNotEmpty() && currency !in validCurrencies)
                     problems.add("$section[$i]: unsupported currency")
+                if(section=="sales" || section=="purchases") {
+                    val total=row.optString("total").toBigDecimalOrNull()
+                    val paid=row.optString("paid").toBigDecimalOrNull()
+                    if(total!=null && paid!=null && (paid.signum()<0 || paid>total))
+                        problems.add("$section[$i]: paid exceeds invoice total")
+                }
                 val field=if(section=="sales" || section=="purchases") "total" else "amount"
                 if(row.has(field) && !row.isNull(field)) {
                     val amount=row.optString(field).toBigDecimalOrNull()
