@@ -60,6 +60,14 @@ object LegacyImportPreflight {
                 if(id.isNotEmpty()) supplierIds.add(id)
             }
         }
+        data.optJSONArray("supplierLedger")?.let { ledger ->
+            for(i in 0 until ledger.length()) {
+                val row=ledger.optJSONObject(i) ?: continue
+                val supplier=row.optString("supplierId").trim()
+                if(supplier.isNotEmpty() && supplier !in supplierIds)
+                    problems.add("supplierLedger[$i]: unknown supplier")
+            }
+        }
         data.optJSONArray("purchases")?.let { purchases ->
             for(i in 0 until purchases.length()) {
                 val row=purchases.optJSONObject(i) ?: continue
