@@ -615,7 +615,7 @@ open class MainActivity:Activity() {
         action("تعديل"){productForm(p)}
         action("الحركات"){selectedProduct=p;go("stock-history")}
         action("جرد"){stocktakeForm(p)}
-        if(store.rows("SELECT kind FROM products WHERE id=?",p.id).single()["kind"]=="watch") {
+        if(store.rows("SELECT kind,details FROM products WHERE id=?",p.id).single().let { it["kind"]=="watch" && !org.json.JSONObject(it.getValue("details")).has("variantParentId") }) {
             action("لون إضافي"){variantForm(p)}
         }
         card.addView(actions)
