@@ -2333,6 +2333,14 @@ button("＋ مورد"){form("مورد جديد"){box->val n=field("الاسم",b
         val status=select("حالة الصيانة",listOf("الكل","مستلمة","قيد العمل","جاهزة","تم التسليم"),body)
         val from=field("من تاريخ الاستلام YYYY-MM-DD",body,Store.today())
         val until=field("إلى تاريخ الاستلام YYYY-MM-DD",body,Store.today())
+        button("عرض طلبات آخر 30 يوماً") {
+            from.setText(java.time.LocalDate.now().minusDays(29).toString())
+            until.setText(Store.today())
+        }
+        button("عرض جميع طلبات الصيانة السابقة") {
+            from.setText("2000-01-01")
+            until.setText(Store.today())
+        }
         button("اختيار فترة الصيانة من التقويم") {
             AlertDialog.Builder(this).setTitle("اختر التاريخ")
                 .setItems(arrayOf("تاريخ البداية","تاريخ النهاية")) { _,index ->
