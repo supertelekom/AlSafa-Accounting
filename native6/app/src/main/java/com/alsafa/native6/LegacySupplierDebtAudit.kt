@@ -45,7 +45,7 @@ object LegacySupplierDebtAudit {
             val row=ledger.optJSONObject(i) ?: continue
             val id=row.optString("supplierId")
             val currency=row.optString("currency")
-            val kind=row.optString("kind")
+            val kind=row.optString("kind").trim()
             val amount=money(row,"amount")
             require(currency in setOf("USD","TRY","SYP") && amount>=zero) {
                 "supplierLedger[$i]: amount or currency"
