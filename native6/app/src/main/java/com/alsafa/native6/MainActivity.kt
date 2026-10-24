@@ -1079,9 +1079,24 @@ open class MainActivity:Activity() {
             require(start<=end){"تاريخ البداية يجب ألا يتجاوز تاريخ النهاية"}
             val results=store.searchInvoices(query.text.toString(),kinds[kind.selectedItemPosition],
                 statuses[status.selectedItemPosition],startDate=start,endDate=end)
-            text("النتائج: ${results.size} (الحد الأقصى 200)",output)
-            if(results.isEmpty())text("لا توجد فواتير مطابقة للبحث.",output,14f)
-            results.forEach{inv->invoiceCard(inv,output)}
+            text("الفترة: "+start+" ← "+end+" · عدد الفواتير المعروضة: "+results.size,output,14f)
+            if(results.size==200)text("وصل العرض إلى 200 فاتورة؛ ضيّق الفترة أو أضف كلمة بحث لإظهار نتائج أخرى.",output,13f)
+            if(results.isEmpty())text("لا توجد فواتير مطابقة ضمن الفترة المختارة.",output,14f)
+            val dates=if(results.isEmpty()) emptyMap() else {
+                val ids=results.map { it.id }.toSet()
+                store.rows("SELECT i.id,e.date FROM invoices i JOIN events e ON e.id=i.id WHERE e.date>=? AND e.date<=?",start,end)
+                    .filter { it.getValue("id") in ids }
+                    .associate { it.getValue("id") to it.getValue("date") }
+            }
+            var previousDate=""
+            results.forEach{inv->
+                val day=dates[inv.id].orEmpty()
+                if(day.isNotEmpty() && day!=previousDate) {
+                    sectionHeading("فواتير يوم "+day,"",output)
+                    previousDate=day
+                }
+                invoiceCard(inv,output)
+            }
         }
         button("اختيار الفترة السريعة ▾") {
             val options=arrayOf("اليوم فقط","أمس","آخر 7 أيام","الشهر الحالي")
