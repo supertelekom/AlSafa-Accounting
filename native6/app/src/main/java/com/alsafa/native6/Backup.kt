@@ -45,7 +45,8 @@ class Backup(private val context:Context,private val store:Store) {
         BackupMediaPaths.rebase(context,JSONObject(data),media)
         val result=JSONObject().put("format","alsafa-native6-backup").put("media",media).put("media_sha256",sha(media.toString().toByteArray(Charsets.UTF_8))).put("schema",8).put("encoding","gzip-base64").put("sha256",sha(data.toByteArray(Charsets.UTF_8))).put("data",gzip(data)).toString().toByteArray(Charsets.UTF_8)
         require(result.size<=MAX_BYTES){"حجم النسخة أكبر من الحد المدعوم للاستعادة؛ لم يُكتب ملف ناقص"}
-        output.write(result);output.flush()
+        output.write(result)
+        output.flush()
     }
     fun restore(input:InputStream) {
         val root=JSONObject(String(read(input),Charsets.UTF_8));require(root.getString("format")=="alsafa-native6-backup"&&root.getInt("schema") in 1..8){"نوع النسخة غير مدعوم"}
