@@ -198,12 +198,19 @@ class MediaCaptureActivity : Activity() {
                     stream.fd.sync()
                 }
                 require(output.length() in 1L..(12L*1024*1024)) { "حجم الصورة المحفوظة غير مدعوم" }
+                val bytes=output.inputStream().use { stream ->
+                    val first=stream.read()
+                    val second=stream.read()
+                    first==0xFF && second==0xD8
+                }
+                require(bytes) { "الصورة المحفوظة ليست JPEG" }
             } catch (e: Exception) {
                 output.delete()
                 throw e
+            } finally {
+                if(outputBitmap !== uprightBitmap && !outputBitmap.isRecycled) outputBitmap.recycle()
+                if(!uprightBitmap.isRecycled) uprightBitmap.recycle()
             }
-            if(outputBitmap !== uprightBitmap) uprightBitmap.recycle()
-            outputBitmap.recycle()
             pendingCameraPath?.let { File(it).delete() }
             pendingCameraPath=null
             previousSelection?.takeIf { it != output.absolutePath }?.let { old ->
