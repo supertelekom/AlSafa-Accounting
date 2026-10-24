@@ -1478,12 +1478,16 @@ button("＋ مورد"){form("مورد جديد"){box->val n=field("الاسم",b
                     startActivityForResult(Intent(this,MediaCaptureActivity::class.java),71)
                 }
                 ({
-                    val name=n.text.toString()
-                    val phone=p.text.toString()
-                    val watch=w.text.toString()
-                    val why=problem.text.toString()
+                    val name=n.text.toString().trim()
+                    val phone=p.text.toString().trim()
+                    val watch=w.text.toString().trim()
+                    val why=problem.text.toString().trim()
+                    require(name.isNotEmpty()){"اسم العميل مطلوب لاستلام الصيانة"}
+                    require(watch.isNotEmpty()){"وصف الساعة مطلوب لاستلام الصيانة"}
+                    require(why.isNotEmpty()){"يرجى توضيح مشكلة الساعة"}
                     val received=java.time.LocalDate.parse(date.text.toString().trim()).toString()
                     val photo=intakePhotoPath
+                    if(photo!=null)localPhoto(photo)
                     work{
                         store.receiveRepair(name,phone,watch,why,received,imagePath=photo)
                         intakePhotoPath=null
