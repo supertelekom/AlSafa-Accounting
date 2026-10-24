@@ -73,6 +73,8 @@ object LegacySupplierDebtAudit {
                 .put("ledgerPayments",values[2].toPlainString())
                 .put("unclassifiedLedgerAmount",values[3].toPlainString())
                 .put("provisionalBalance",provisional.toPlainString())
+                .put("negativeBalanceFlag",provisional<zero)
+                .put("unknownSupplierFlag",id.isNotBlank() && id !in supplierNames)
                 .put("requiresReconciliation",true))
         }
         return JSONObject().put("suppliers",rows)
