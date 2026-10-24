@@ -868,10 +868,7 @@ open class MainActivity:Activity() {
                         if(kind?.selectedItemPosition==1)"part" else "watch",
                         details=details,brand=br,model=ref)
                 } else {
-                    store.transaction {
-                        store.editProduct(p.id,n,b,value)
-                        store.updateProductDescription(p.id,br,ref,desc,dc,cc,sc)
-                    }
+                    store.editProductFull(p.id,n,b,value,br,ref,desc,dc,cc,sc)
                 }
             }
         }
