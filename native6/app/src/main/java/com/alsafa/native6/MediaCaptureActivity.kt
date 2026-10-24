@@ -126,6 +126,7 @@ class MediaCaptureActivity : Activity() {
                         contentResolver.openInputStream(uri).use { boundsStream ->
                             BitmapFactory.decodeStream(boundsStream, null, bounds)
                         }
+                        require(bounds.outWidth>0 && bounds.outHeight>0) { "الصورة المختارة غير صالحة" }
                         var sample = 1
                         while (maxOf(bounds.outWidth, bounds.outHeight) / (sample * 2) >= 1600) {
                             sample *= 2
