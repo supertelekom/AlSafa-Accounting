@@ -893,6 +893,16 @@ open class MainActivity:Activity() {
         sectionHeading("فاتورة مبيعات","اختر الأصناف، راجع السلة ثم احفظ الفاتورة")
         button("＋ اختيار منتج"){chooseProduct(inStockOnly=true){p->addSaleProduct(p)}}
         button("▣ مسح باركود لإضافة صنف"){startActivityForResult(Intent(this,BarcodeScanActivity::class.java),66)}
+        if(basket.isNotEmpty()) {
+            val estimatedCost=basket.fold(0L){sum,item->
+                val product=store.product(item.productId)
+                require(product.stock>0L && item.qty in 1L..product.stock){"كمية السلة تتجاوز المخزون"}
+                Math.addExact(sum,Math.multiplyExact(product.value,item.qty)/product.stock)
+            }
+            val gross=basket.fold(0L){sum,item->Math.addExact(sum,mul(item.qty,item.unitPrice))}
+            text("التكلفة التقديرية للأصناف: "+money(estimatedCost,basketCurrency),body,14f)
+            text("هامش الربح المتوقع قبل الخصم والمصاريف: "+money(Math.subtractExact(gross,estimatedCost),basketCurrency),body,14f)
+        }
         if(basket.isEmpty())text("السلة فارغة. أضف ساعة من المنتجات أو امسح الباركود.",body,14f)
         basket.toList().forEach{line->saleBasketRow(line)}
         if(basket.isNotEmpty()){val total=basket.fold(0L){a,i->add(a,mul(i.qty,i.unitPrice))};text("إجمالي الفاتورة: ${money(total,basketCurrency)}",size=21f).apply { setTextColor(gold);background=background(sand,14);setPadding(dp(18),dp(15),dp(18),dp(15)) };button("إتمام الفاتورة"){form("حفظ فاتورة مبيعات"){box->val customer=field("العميل",box);val phone=field("الهاتف",box);val discount=field("الخصم ${basketCurrency.name}",box,"0",true);val paid=field("المدفوع ${basketCurrency.name}",box,Money(total,basketCurrency).display().substringBefore(' '),true);val vault=select("يُقبض في",vaultNames,box);val invoiceDate=field("تاريخ فاتورة البيع YYYY-MM-DD",box,Store.today());val receiptDate=field("تاريخ استلام النقود الفعلي YYYY-MM-DD (إذا دُفع مبلغ)",box,Store.today());text("للمبيعات الأونلاين غير المحصلة: اجعل المدفوع صفراً، ثم سجّل القبض من الفاتورة عند وصول النقود.",box);
