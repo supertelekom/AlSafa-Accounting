@@ -28,4 +28,10 @@ class LegacyDailyClosingAuditTest {
         val report=LegacyDailyClosingAudit.inspect(backup)
         assertEquals("0:USD",report.getJSONArray("drawerCarryForwardMismatches").getString(0))
     }
+    @Test fun missingCarryFieldsAreNotTreatedAsZeroBalances() {
+        val backup="""{"data":{"dailyClosings":[{"date":"2026-10-04"}]}}"""
+        val report=LegacyDailyClosingAudit.inspect(backup)
+        assertEquals(1,report.getJSONArray("incompleteCarryForwardRows").length())
+        assertEquals(0,report.getJSONArray("drawerCarryForwardMismatches").length())
+    }
 }
