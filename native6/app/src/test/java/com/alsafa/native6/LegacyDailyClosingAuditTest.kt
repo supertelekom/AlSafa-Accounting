@@ -34,4 +34,12 @@ class LegacyDailyClosingAuditTest {
         assertEquals(1,report.getJSONArray("incompleteCarryForwardRows").length())
         assertEquals(0,report.getJSONArray("drawerCarryForwardMismatches").length())
     }
+    @Test fun carryForwardTransitionsRemainUnposted() {
+        val backup="""{"data":{"dailyClosings":[{"date":"2026-10-02","drawerNext":{"USD":12}},{"date":"2026-10-03","drawerNext":{"USD":14}}]}}"""
+        val result=LegacyDailyClosingAudit.inspect(backup)
+        assertEquals(1,result.getJSONArray("carryForwardTransitions").length())
+        assertEquals("AWAITING_NEXT_DAY_OPENING_BALANCE",
+            result.getJSONArray("carryForwardTransitions").getJSONObject(0).getString("status"))
+        assertEquals("NONE",result.getString("posting"))
+    }
 }
