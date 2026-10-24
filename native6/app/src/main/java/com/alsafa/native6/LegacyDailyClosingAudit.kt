@@ -42,6 +42,20 @@ object LegacyDailyClosingAudit {
             }
             closingBalances.put(snapshot)
         }
+        val carryMismatches=org.json.JSONArray()
+        for(i in 0 until closings.length()) {
+            val row=closings.optJSONObject(i) ?: continue
+            val actual=row.optJSONObject("drawerActual") ?: continue
+            val transfer=row.optJSONObject("drawerTransfer") ?: continue
+            val next=row.optJSONObject("drawerNext") ?: continue
+            for(currency in listOf("USD","TRY","SYP")) {
+                val a=actual.optString(currency,"0").toBigDecimalOrNull()
+                val t=transfer.optString(currency,"0").toBigDecimalOrNull()
+                val n=next.optString(currency,"0").toBigDecimalOrNull()
+                if(a!=null && t!=null && n!=null && a-t!=n)
+                    carryMismatches.put("$i:$currency")
+            }
+        }
         val multiple=org.json.JSONArray()
         for((date,count) in closeCounts) if(count>1) multiple.put(date)
         val movementDaysWithoutClosing=org.json.JSONArray()
@@ -56,6 +70,7 @@ object LegacyDailyClosingAudit {
             .put("closingRowsMissingDate",missingDate)
             .put("closingBalanceSnapshots",closingBalances)
             .put("invalidClosingBalanceFields",invalidBalances)
+            .put("drawerCarryForwardMismatches",carryMismatches)
             .put("daysWithMultipleClosings",multiple)
             .put("movementDaysWithoutClosing",movementDaysWithoutClosing)
             .put("posting","NONE")
