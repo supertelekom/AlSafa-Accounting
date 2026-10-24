@@ -11,7 +11,9 @@ object BackupMediaPaths {
         val available=mutableSetOf<String>()
         if(media!=null) require(media.length()<=10000) { "فهرس الصور يتجاوز الحد الآمن" }
         if(media!=null) for(i in 0 until media.length()) {
-            require(available.add(media.getJSONObject(i).getString("name"))) { "اسم صورة مكرر في النسخة" }
+            val name=media.getJSONObject(i).getString("name")
+            require(name.endsWith(".jpg") && name.removeSuffix(".jpg").matches(Regex("[a-fA-F0-9-]{36}"))) { "اسم صورة غير صالح في الفهرس" }
+            require(available.add(name)) { "اسم صورة مكرر في النسخة" }
         }
         val imageDir=File(context.filesDir,"images").canonicalFile
         require(imageDir.parentFile==context.filesDir.canonicalFile) { "مجلد الصور خارج تخزين التطبيق" }
