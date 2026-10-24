@@ -1146,6 +1146,10 @@ open class MainActivity:Activity() {
                 }
                 invoiceCard(inv,output)
             }
+            if(pageIndex>0)button("العودة إلى أول صفحة",output){
+                pageIndex=0
+                try{show()}catch(e:Exception){error(e)}
+            }
             if(pageIndex>0)button("◀ الصفحة السابقة",output){
                 pageIndex--
                 try{show()}catch(e:Exception){error(e)}
