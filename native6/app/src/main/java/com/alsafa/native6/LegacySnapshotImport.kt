@@ -181,6 +181,8 @@ object LegacySnapshotImport {
                 .put("scope","inventory_suppliers_repairs_only")
                 .put("financialWarningCount",financialWarnings.size)
                 .put("closingAudit",closingAudit)
+                .put("financialPostingStatus","NOT_POSTED")
+                .put("cashContinuityVerified",false)
                 .put("financialWarnings",org.json.JSONArray(financialWarnings))
                 .put("sourceSha256",manifest.getString("sha256"))
                 .put("sourceRecordCount",manifest.getLong("recordCount"))
