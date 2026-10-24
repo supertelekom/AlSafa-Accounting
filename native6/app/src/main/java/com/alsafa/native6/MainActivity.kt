@@ -594,6 +594,10 @@ open class MainActivity:Activity() {
             setPadding(dp(10),dp(7),dp(10),dp(7))
         }
         card.addView(stockInfo)
+        val colour=store.productColorLabel(p.id)
+        if(colour.isNotBlank()) text("الألوان: "+colour,card,12f)
+        val variantCount=store.colorVariants(p.id).size
+        if(variantCount>0) text("ألوان إضافية مستقلة: "+variantCount,card,12f)
         val actions=LinearLayout(this).apply {
             orientation=LinearLayout.HORIZONTAL
             layoutDirection=View.LAYOUT_DIRECTION_RTL
@@ -668,7 +672,7 @@ open class MainActivity:Activity() {
         body.addView(list)
         fun show(){
             list.removeAllViews()
-            val results=store.products(query.text.toString())
+            val results=store.searchCatalog(query.text.toString())
             text("المنتجات: ${results.size}",list,13f)
             if(results.isEmpty())text("لا توجد منتجات مطابقة للبحث.",list,14f)
             results.take(150).forEach{p->productCard(p,list)}
