@@ -2333,15 +2333,21 @@ button("＋ مورد"){form("مورد جديد"){box->val n=field("الاسم",b
                 }.show()
         }
         val results=column();body.addView(results)
-        button("بحث وعرض الصيانات"){
-            results.removeAllViews()
+        var repairPage=0
+        var repairSearchKey=""
+        fun showRepairResults(){
             val states=listOf("all","received","in_progress","ready","delivered")
-            val matches=store.repairListByDates(search.text.toString(),states[status.selectedItemPosition],
-                from.text.toString().trim(),until.text.toString().trim(),limit=100)
-            text("عدد النتائج: ${matches.size}",results,16f)
-            if(matches.isEmpty())text("لا توجد طلبات مطابقة. جرّب الاسم أو رقم الهاتف أو نوع الساعة.",results,14f)
-            if(matches.size==100)text("تُعرض أول 100 نتيجة ضمن الفترة. ضيّق البحث إذا لزم الأمر.",results,13f)
-            matches.take(100).forEach{row->
+            val key=listOf(search.text.toString(),states[status.selectedItemPosition],
+                from.text.toString().trim(),until.text.toString().trim()).joinToString("|")
+            if(key!=repairSearchKey) { repairPage=0;repairSearchKey=key }
+            results.removeAllViews()
+            val fetched=store.repairListByDates(search.text.toString(),states[status.selectedItemPosition],
+                from.text.toString().trim(),until.text.toString().trim(),limit=51,offset=repairPage*50)
+            val matches=fetched.take(50)
+            val hasNext=fetched.size>50
+            text("صفحة "+(repairPage+1)+" · عدد الطلبات المعروضة: "+matches.size,results,16f)
+            if(matches.isEmpty())text("لا توجد طلبات مطابقة ضمن الفترة المختارة.",results,14f)
+            matches.forEach{row->
                 val id=row.getValue("id")
                 repairIdentity(row,results)
                 val actions=column().apply {
@@ -2411,7 +2417,16 @@ button("＋ مورد"){form("مورد جديد"){box->val n=field("الاسم",b
             }
         };if(r.getValue("status")=="received")button("بدء الصيانة"){work{store.startRepair(id)}};if(r.getValue("status") in setOf("received","in_progress"))button("جاهزة للاستلام"){work{store.repairReady(id)}};if(r.getValue("status")=="ready")button("تسليم وفاتورة أجرة عمل"){form("تسليم الصيانة"){box->val c=select("العملة",Currency.entries.map{it.name},box);val n=field("أجرة العمل",box,"0",true);val paid=field("المدفوع",box,"0",true);val v=select("خزنة القبض",vaultNames,box);val delivered=field("تاريخ تسليم الساعة YYYY-MM-DD",box,Store.today());val received=field("تاريخ قبض الأجرة الفعلي YYYY-MM-DD",box,Store.today());{val curr=Currency.entries[c.selectedItemPosition];val value=amount(n,curr);val pay=amount(paid,curr);require(value>=0L){"أجرة الصيانة لا يمكن أن تكون سالبة"};require(pay>=0L && pay<=value){"المدفوع يجب أن يكون بين الصفر وأجرة الصيانة"};val vault=Store.vaults[v.selectedItemPosition];val deliveryDate=java.time.LocalDate.parse(delivered.text.toString().trim()).toString();val receiptDate=java.time.LocalDate.parse(received.text.toString().trim()).toString();work{store.deliverRepair(id,curr,value,pay,vault,deliveryDate=deliveryDate,receiptDate=receiptDate)}}}}}
             }
+            if(repairPage>0) button("الصفحة السابقة",results) {
+                repairPage--
+                showRepairResults()
+            }
+            if(hasNext) button("الصفحة التالية",results) {
+                repairPage++
+                showRepairResults()
+            }
         }
+        button("بحث وعرض الصيانات"){showRepairResults()}
     }
     private fun reports(){sectionHeading("التقارير الشهرية","اختر شهراً واحداً للمراجعة والتحليل");
         collapsibleTools("تدقيق الحسابات والفواتير المتقدم") {
