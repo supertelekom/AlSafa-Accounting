@@ -1091,6 +1091,7 @@ open class MainActivity:Activity() {
             val end=runCatching { java.time.LocalDate.parse(toDate.text.toString().trim()).toString() }
                 .getOrElse { throw IllegalArgumentException("تاريخ النهاية غير صالح؛ اختره من التقويم بصيغة YYYY-MM-DD") }
             require(start<=end){"تاريخ البداية يجب ألا يتجاوز تاريخ النهاية"}
+            require(end<=Store.today()){"تاريخ النهاية لا يمكن أن يكون في المستقبل"}
             val searchKey=listOf(query.text.toString().trim(),start,end,
                 kinds[kind.selectedItemPosition],statuses[status.selectedItemPosition]).joinToString("\u001F")
             if(searchKey!=lastSearchKey) {
