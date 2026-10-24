@@ -134,6 +134,8 @@ object LegacyImportPreflight {
                     problems.add("payments[$i]: unknown sale reference")
                 if(ref.isNotEmpty() && type=="purchase" && ref !in purchaseIds)
                     problems.add("payments[$i]: unknown purchase reference")
+                if(ref.isNotEmpty() && type=="repair" && ref !in repairIds)
+                    problems.add("payments[$i]: unknown repair reference")
             }
         }
         data.optJSONArray("supplierLedger")?.let { ledger ->
