@@ -28,7 +28,7 @@ object BackupMedia {
         require(files.none { it.isFile && it.extension.lowercase() in setOf("jpeg","png","webp") }) { "توجد صور بصيغة غير مدعومة في النسخة" }
         require(files.all { it.isFile }) { "يوجد عنصر غير صالح داخل مجلد الصور" }
         require(files.size<=10000) { "عدد ملفات الصور يتجاوز الحد الآمن" }
-        require(files.none { it.isFile && it.extension.lowercase() !in setOf("jpg","jpeg","png","webp") }) { "توجد ملفات غير معروفة في مجلد الصور" }
+        require(files.none { it.extension.lowercase() !in setOf("jpg","jpeg","png","webp") }) { "توجد ملفات غير معروفة في مجلد الصور" }
         files.filter { it.extension.lowercase()=="jpg" }.sortedBy { it.name }.forEach { file ->
             require(file.canonicalFile.parentFile==root && file.length()<=MAX_FILE) { "ملف صورة غير صالح للنسخ" }
             require(file.name.removeSuffix(".jpg").matches(Regex("[a-fA-F0-9-]{36}"))) { "اسم صورة غير صالح" }
