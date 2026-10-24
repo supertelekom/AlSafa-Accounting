@@ -1191,6 +1191,18 @@ open class MainActivity:Activity() {
         sc.addView(box)
         val dialog=AlertDialog.Builder(this).setTitle("تفاصيل الفاتورة").setView(sc).setNegativeButton("رجوع",null).create()
         val choices=mutableListOf<Pair<String,()->Unit>>()
+        if(inv.kind=="sale" || inv.kind=="repair")choices.add("كشف الحركات المالية والذمم" to {
+            val entries=store.invoiceFinancialHistory(inv.id)
+            val detail=if(entries.isEmpty())"لا توجد حركات مالية."
+            else entries.joinToString("\n\n"){row->
+                row.getValue("date")+" · "+row.getValue("kind")+
+                    "\n"+row.getValue("memo")+
+                    "\nذمة العميل: "+money(row.getValue("receivable_balance").toLong(),inv.currency)+
+                    " · التزام الاسترداد: "+money(row.getValue("refund_liability").toLong(),inv.currency)
+            }
+            AlertDialog.Builder(this).setTitle("الحركات المالية · فاتورة #"+inv.number)
+                .setMessage(detail).setPositiveButton("حسناً",null).show()
+        })
         choices.add("سجل قبض النقود وتواريخه" to {
             val receipts=store.invoiceReceiptHistory(inv.id)
             AlertDialog.Builder(this).setTitle("القبض الفعلي · فاتورة #"+inv.number)
