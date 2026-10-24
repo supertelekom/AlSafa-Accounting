@@ -55,6 +55,7 @@ object LegacyRestoreManifest {
             append("بصمة النسخة SHA-256: ").append(manifest.getString("sha256")).append('\n')
             append("الإصدار: ").append(manifest.optString("appVersion")).append('\n')
             append("عدد السجلات: ").append(manifest.getLong("recordCount")).append('\n')
+            append("الأقسام الغائبة: ").append(manifest.getJSONArray("missingCollections").length()).append('\n')
             for (key in collections) {
                 append(key).append(": ").append(counts.getInt(key)).append('\n')
             }
