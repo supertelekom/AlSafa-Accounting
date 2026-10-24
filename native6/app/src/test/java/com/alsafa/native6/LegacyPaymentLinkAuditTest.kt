@@ -15,4 +15,13 @@ class LegacyPaymentLinkAuditTest {
         assertEquals(1,report.getJSONArray("unresolvedReferenceRows").length())
         assertEquals("NONE",report.getString("posting"))
     }
+    @Test fun duplicatePaymentIdentifiersAreFlagged() {
+        val payload="""{"format":"alsafa-accounting-backup","formatVersion":2,"data":{
+            "sales":[{"id":"s1"}],
+            "payments":[{"id":"p1","referenceType":"sale","referenceId":"s1","amount":10},
+                        {"id":"p1","referenceType":"sale","referenceId":"s1","amount":10}]
+        }}"""
+        val report=LegacyPaymentLinkAudit.inspect(payload)
+        assertEquals(1,report.getJSONArray("duplicatePaymentIdRows").length())
+    }
 }
