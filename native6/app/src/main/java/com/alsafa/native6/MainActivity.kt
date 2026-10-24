@@ -507,6 +507,34 @@ open class MainActivity:Activity() {
             Triple("◫","أرشيف الفواتير القديمة","legacy-history")
         ))
     }
+    private fun sectionHeading(title:String,subtitle:String="",parent:LinearLayout=body) {
+        val panel=LinearLayout(this).apply {
+            orientation=LinearLayout.VERTICAL
+            layoutDirection=View.LAYOUT_DIRECTION_RTL
+            setPadding(dp(13),dp(11),dp(13),dp(11))
+            background=background(sand,12)
+        }
+        val heading=TextView(this).apply {
+            typeface=font
+            text=title
+            textSize=19f
+            setTextColor(gold)
+        }
+        panel.addView(heading)
+        if(subtitle.isNotBlank()){
+            val description=TextView(this).apply {
+                typeface=font
+                text=subtitle
+                textSize=12f
+                setTextColor(muted)
+                setPadding(0,dp(5),0,0)
+            }
+            panel.addView(description)
+        }
+        parent.addView(panel,LinearLayout.LayoutParams(-1,-2).apply {
+            setMargins(0,dp(8),0,dp(10))
+        })
+    }
     private fun productCard(p:Product,parent:LinearLayout) {
         val card=column().apply {
             setPadding(dp(14),dp(12),dp(14),dp(12))
@@ -562,7 +590,7 @@ open class MainActivity:Activity() {
         })
     }
     private fun products(){
-        text("المنتجات وقطع الصيانة",size=23f)
+        sectionHeading("المنتجات وقطع الصيانة","إدارة الأصناف والباركود والكميات والجرد")
         button("＋ إضافة منتج / قطعة"){productForm()}
         button("▣ مسح باركود للبحث"){startActivityForResult(Intent(this,BarcodeScanActivity::class.java),65)}
         val shortcuts=LinearLayout(this).apply { orientation=LinearLayout.HORIZONTAL;layoutDirection=View.LAYOUT_DIRECTION_RTL }
@@ -802,7 +830,7 @@ open class MainActivity:Activity() {
         }
     }
     private fun sale(){
-        text("فاتورة مبيعات",size=25f)
+        sectionHeading("فاتورة مبيعات","اختر الأصناف، راجع السلة ثم احفظ الفاتورة")
         button("＋ اختيار منتج"){chooseProduct(inStockOnly=true){p->addSaleProduct(p)}}
         button("▣ مسح باركود لإضافة صنف"){startActivityForResult(Intent(this,BarcodeScanActivity::class.java),66)}
         basket.toList().forEach{line->button("${store.product(line.productId).name} × ${line.qty}  |  ${money(mul(line.qty,line.unitPrice),basketCurrency)}  |  إزالة"){basket.remove(line);render()}}
@@ -857,7 +885,7 @@ open class MainActivity:Activity() {
         })
     }
     private fun invoices(){
-        text("الفواتير والمرتجعات",size=25f)
+        sectionHeading("الفواتير والمرتجعات","البحث في الفواتير وعمليات القبض والاسترداد")
         button("كشف الحركات المالية لفاتورة"){
             form("كشف الفاتورة","عرض"){box->
                 val number=field("رقم الفاتورة",box)
@@ -966,7 +994,7 @@ open class MainActivity:Activity() {
     private fun returnForm(inv:Invoice){val lines=store.rows("SELECT * FROM invoice_lines WHERE invoice_id=? ORDER BY line",inv.id);form("استلام مرتجع جزئي"){box->val fields=lines.associate{r->r.getValue("line").toInt() to field("${r.getValue("name")} — كمية مرتجعة",box,"0",true)};val reason=field("السبب",box);
         {val q=fields.mapValues{it.value.text.toString().toLong()}.filterValues{it>0};val why=reason.text.toString();require(q.isNotEmpty()&&why.isNotBlank());work{store.returnSale(inv.id,q,why)}}}}
     private fun paymentForm(title:String,c:Currency,max:Long,action:(Long,String,String)->Unit){form(title){box->val n=field("المبلغ ${c.name} · المتبقي ${money(max,c)}",box,"0",true);val v=select("الخزنة",vaultNames,box);val received=field("تاريخ حركة النقود الفعلي YYYY-MM-DD",box,Store.today());{val amount=amount(n,c);val vault=Store.vaults[v.selectedItemPosition];val actualDate=java.time.LocalDate.parse(received.text.toString().trim()).toString();work{action(amount,vault,actualDate)}}}}
-    private fun vaults(){text("الخزنات",size=25f);
+    private fun vaults(){sectionHeading("الخزنات والإقفال اليومي","الأرصدة الفعلية والمحاسبية بحسب الخزنة والعملة");
         button("تدقيق فروقات الإقفال لجميع الخزنات"){
             form("تدقيق الإقفالات الشهري","عرض"){box->
                 val month=field("الشهر YYYY-MM",box,YearMonth.now().toString())
@@ -1383,7 +1411,7 @@ button("＋ مورد"){form("مورد جديد"){box->val n=field("الاسم",b
         line.addView(status)
         target.addView(line,LinearLayout.LayoutParams(-1,-2).apply { setMargins(0,dp(4),0,dp(4)) })
     }
-    private fun repairs(){text("الصيانة",size=25f);button("استلام صيانة"){
+    private fun repairs(){sectionHeading("الصيانة","استلام الطلبات ومتابعة الحالة والتسليم");button("استلام صيانة"){
             intakePhotoPath=null
             intakePhotoPreview=null
             intakePhotoStatus=null
@@ -1776,7 +1804,7 @@ button("＋ مورد"){form("مورد جديد"){box->val n=field("الاسم",b
             }
         };if(r.getValue("status")=="received")button("بدء الصيانة"){work{store.startRepair(id)}};if(r.getValue("status") in setOf("received","in_progress"))button("جاهزة للاستلام"){work{store.repairReady(id)}};if(r.getValue("status")=="ready")button("تسليم وفاتورة أجرة عمل"){form("تسليم الصيانة"){box->val c=select("العملة",Currency.entries.map{it.name},box);val n=field("أجرة العمل",box,"0",true);val paid=field("المدفوع",box,"0",true);val v=select("خزنة القبض",vaultNames,box);val delivered=field("تاريخ تسليم الساعة YYYY-MM-DD",box,Store.today());val received=field("تاريخ قبض الأجرة الفعلي YYYY-MM-DD",box,Store.today());{val curr=Currency.entries[c.selectedItemPosition];val value=amount(n,curr);val pay=amount(paid,curr);val vault=Store.vaults[v.selectedItemPosition];val deliveryDate=java.time.LocalDate.parse(delivered.text.toString().trim()).toString();val receiptDate=java.time.LocalDate.parse(received.text.toString().trim()).toString();work{store.deliverRepair(id,curr,value,pay,vault,deliveryDate=deliveryDate,receiptDate=receiptDate)}}}}}
     }
-    private fun reports(){text("تقرير شهر واحد",size=25f);
+    private fun reports(){sectionHeading("التقارير الشهرية","اختر شهراً واحداً للمراجعة والتحليل");
         button("تدقيق ربط حسابات الفواتير"){
             try {
                 val issues=store.invoiceAccountReferenceIssues()
@@ -2087,7 +2115,7 @@ button("ميزان المراجعة بين تاريخين"){go("trial-balance")}
         }
     }
     private fun partners(){
-        text("الشركاء ونسب الأرباح",size=25f)
+        sectionHeading("الشركاء ونسب الأرباح","تقرير كل شهر مستقل مع فصل الأرصدة السابقة")
         text("النسب تُسجل بتاريخ سريانها، ولا تُعدّل قيود الأشهر السابقة.",size=15f)
         button("＋ إضافة شريك"){
             form("إضافة شريك"){box->
