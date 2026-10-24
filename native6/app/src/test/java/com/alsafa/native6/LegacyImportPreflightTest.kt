@@ -39,6 +39,11 @@ class LegacyImportPreflightTest {
         assertTrue(LegacyImportPreflight.inspect(payload).any { it.contains("paid exceeds invoice total") })
     }
 
+    @Test fun detectsInvalidFinancialDate() {
+        val payload = """{"format":"alsafa-accounting-backup","formatVersion":2,"data":{"products":[],"maintenanceParts":[],"suppliers":[],"repairs":[],"expenses":[{"date":"not-a-date","amount":2}]}}"""
+        assertTrue(LegacyImportPreflight.inspect(payload).any { it.contains("invalid or future date") })
+    }
+
     @Test fun detectsMissingSections() {
         val payload = """{"format":"alsafa-accounting-backup","formatVersion":2,"data":{}}"""
         assertEquals(4, LegacyImportPreflight.inspect(payload).size)
