@@ -1106,6 +1106,7 @@ open class MainActivity:Activity() {
             results.count { it.status=="cancelled" }.takeIf { it>0 }?.let { cancelled->
                 text("فواتير ملغاة في هذه الصفحة: "+cancelled+" (مستبعدة من الإجماليات)",output,13f)
             }
+            text("الملخص لهذه الصفحة فقط؛ لا يمثل إجمالي الفترة أو المقبوضات.",output,12f)
             active.groupBy { it.kind to it.currency }.forEach { (key,invoices)->
                 val net=invoices.fold(0L){sum,inv->
                     val value=if(inv.kind=="sale")
