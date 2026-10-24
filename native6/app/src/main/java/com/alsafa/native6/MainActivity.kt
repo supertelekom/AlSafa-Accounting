@@ -1083,24 +1083,24 @@ open class MainActivity:Activity() {
             if(results.isEmpty())text("لا توجد فواتير مطابقة للبحث.",output,14f)
             results.forEach{inv->invoiceCard(inv,output)}
         }
-        button("اليوم فقط") {
-            fromDate.setText(Store.today())
-            toDate.setText(Store.today())
-            try{show()}catch(e:Exception){error(e)}
+        button("اختيار الفترة السريعة ▾") {
+            val options=arrayOf("اليوم فقط","أمس","آخر 7 أيام","الشهر الحالي")
+            AlertDialog.Builder(this).setTitle("فترة عرض الفواتير")
+                .setItems(options){_,which->
+                    val today=java.time.LocalDate.now()
+                    val from=when(which) {
+                        0->today
+                        1->today.minusDays(1)
+                        2->today.minusDays(6)
+                        else->today.withDayOfMonth(1)
+                    }
+                    val to=if(which==1)today.minusDays(1) else today
+                    fromDate.setText(from.toString())
+                    toDate.setText(to.toString())
+                    try{show()}catch(e:Exception){error(e)}
+                }.setNegativeButton("رجوع",null).show()
         }
         button("بحث في الفواتير"){try{show()}catch(e:Exception){error(e)}}
-        button("آخر 7 أيام") {
-            val today=java.time.LocalDate.now()
-            fromDate.setText(today.minusDays(6).toString())
-            toDate.setText(today.toString())
-            try{show()}catch(e:Exception){error(e)}
-        }
-        button("الشهر الحالي") {
-            val today=java.time.LocalDate.now()
-            fromDate.setText(today.withDayOfMonth(1).toString())
-            toDate.setText(today.toString())
-            try{show()}catch(e:Exception){error(e)}
-        }
         try{show()}catch(e:Exception){error(e)}
     }
     private fun shareInvoicePdf(inv:Invoice) {
