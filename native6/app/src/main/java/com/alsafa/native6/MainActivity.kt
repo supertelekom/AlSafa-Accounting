@@ -103,11 +103,7 @@ open class MainActivity:Activity() {
         if(requestCode==71){
             val path=data?.getStringExtra(MediaCaptureActivity.EXTRA_RESULT_PATH)
             if(resultCode==RESULT_OK && !path.isNullOrBlank()){
-                val photoFile=java.io.File(path)
-                if(!photoFile.isFile || photoFile.length()==0L) {
-                    error(IllegalArgumentException("الصورة المختارة غير موجودة أو فارغة"))
-                    return
-                }
+                try { localPhoto(path) } catch(e:Exception) { error(e);return }
                 intakePhotoPath=path
                 intakePhotoStatus?.text="تم اختيار صورة الساعة"
                 val options=android.graphics.BitmapFactory.Options().apply { inJustDecodeBounds=true }
@@ -126,9 +122,8 @@ open class MainActivity:Activity() {
             val id=photoRepairId
             photoRepairId=null
             if(resultCode==RESULT_OK && !path.isNullOrBlank() && id!=null) {
-                val image=java.io.File(path)
-                if(image.isFile && image.length()>0L) work{store.setRepairImage(id,path)}
-                else error(IllegalArgumentException("صورة الصيانة غير موجودة أو فارغة"))
+                try { localPhoto(path);work{store.setRepairImage(id,path)} }
+                catch(e:Exception){error(e)}
             }
             return
         }
@@ -137,9 +132,8 @@ open class MainActivity:Activity() {
             val productId=photoProductId
             photoProductId=null
             if(resultCode==RESULT_OK && !path.isNullOrBlank() && productId!=null){
-                val image=java.io.File(path)
-                if(image.isFile && image.length()>0L) work{store.setProductImage(productId,path)}
-                else error(IllegalArgumentException("صورة المنتج غير موجودة أو فارغة"))
+                try { localPhoto(path);work{store.setProductImage(productId,path)} }
+                catch(e:Exception){error(e)}
             }
             return
         }
@@ -941,10 +935,21 @@ button("＋ مورد"){form("مورد جديد"){box->val n=field("الاسم",b
             }
         };button("كشف شهر محدد ${c.name}"){form("كشف المورد الشهري","عرض"){box->val month=field("الشهر YYYY-MM",box,YearMonth.now().toString());{val selected=month.text.toString().trim();val lines=store.supplierLedgerMonth(id,c,selected);val statement=store.supplierStatement(id,c,selected);val datedPayments=store.supplierPaymentsMonth(id,c,selected);val verifiedPayments=store.supplierPaymentTotalMonth(id,c,selected);val opening=statement.getValue("opening");val closing=statement.getValue("closing");val movement=statement.getValue("current_month_net");val charges=statement.getValue("charges");val payments=statement.getValue("payments");AlertDialog.Builder(this).setTitle("كشف ${c.name} · $selected").setMessage("الرصيد السابق (من أشهر سابقة): "+money(opening,c)+"\nديون افتتاحية أضيفت هذا الشهر: "+money(statement.getValue("new_opening_debt"),c)+"\nمشتريات هذا الشهر: "+money(statement.getValue("purchases"),c)+"\nتغيرات دين أخرى: "+money(statement.getValue("other_debt_changes"),c)+"\nديون مضافة: "+money(charges,c)+"\nدفعات المورد: "+money(payments,c)+"\nصافي حركة الشهر: "+money(movement,c)+"\nرصيد نهاية الشهر: "+money(closing,c)+"\nالدفعات المؤرخة للمورد: "+money(verifiedPayments,c)+"\n"+(if(datedPayments.isEmpty())"لا توجد دفعات خلال الشهر" else datedPayments.joinToString("\n"){x->x.getValue("date")+" · دفعة "+money(x.getValue("amount").toLong(),c)})+"\n"+(if(lines.isEmpty())"لا توجد حركات في الشهر المحدد" else lines.joinToString("\n"){x->x.getValue("date")+" · "+x.getValue("kind")+" · "+money(Math.negateExact(x.getValue("amount").toLong()),c)+" · المتبقي "+money(x.getValue("remaining").toLong(),c)})).setPositiveButton("حسناً",null).show()}}};button("${c.name} · الدين ${money(due,c)} · دفع"){form("دفع للمورد"){box->val n=field("المبلغ ${c.name} · الدين ${money(due,c)}",box,"0",true);val day=field("تاريخ الدفع YYYY-MM-DD",box,Store.today());val v=select("خزنة الدفع",vaultNames,box);{val paid=amount(n,c);val date=java.time.LocalDate.parse(day.text.toString().trim()).toString();require(!java.time.LocalDate.parse(date).isAfter(java.time.LocalDate.now())){"تاريخ الدفع في المستقبل"};val permitted=store.supplierAvailableOn(id,c,date);require(paid>0L&&paid<=permitted){"الحد المتاح في هذا التاريخ: "+money(permitted,c)};val vault=Store.vaults[v.selectedItemPosition];work{store.paySupplier(id,c,paid,vault,date)}}}}};button("شراء بضاعة من ${r.getValue("name")}"){chooseProduct{p->form("شراء ${p.name}"){box->val qty=field("الكمية",box,"1",true);val cost=field("كلفة الوحدة ${p.currency}",box,"0",true);val paid=field("المدفوع",box,"0",true);val date=field("تاريخ الشراء YYYY-MM-DD",box,Store.today());val paymentDay=field("تاريخ دفع النقود الفعلي YYYY-MM-DD",box,Store.today());val v=select("خزنة الدفع",vaultNames,box);{val q=qty.text.toString().toLong();val value=amount(cost,p.currency);val pay=amount(paid,p.currency);val vault=Store.vaults[v.selectedItemPosition];val purchaseDate=java.time.LocalDate.parse(date.text.toString().trim()).toString();require(!java.time.LocalDate.parse(purchaseDate).isAfter(java.time.LocalDate.now())){"تاريخ الشراء في المستقبل"};val actualPayment=java.time.LocalDate.parse(paymentDay.text.toString().trim()).toString();work{store.purchase(id,listOf(SaleItem(p.id,q,value)),p.currency,pay,vault,purchaseDate,paymentDate=actualPayment)}}}}}}
     }
+    /** Only display or attach photos created inside this installation's private image store. */
+    private fun localPhoto(path:String):java.io.File {
+        val root=java.io.File(filesDir,"images").canonicalFile
+        val file=java.io.File(path).canonicalFile
+        require(file.parentFile==root && file.name.matches(Regex("[a-fA-F0-9-]{36}\\.jpg"))) {
+            "مسار صورة الساعة غير آمن"
+        }
+        require(file.isFile && file.length() in 1L..(12L*1024*1024)) {
+            "صورة الساعة غير متوفرة أو حجمها غير صالح"
+        }
+        return file
+    }
     private fun showRepairPhoto(path:String) {
         try {
-            val file=java.io.File(path)
-            require(file.isFile && file.length()>0L) { "صورة الصيانة غير متوفرة" }
+            val file=localPhoto(path)
             val bounds=android.graphics.BitmapFactory.Options().apply { inJustDecodeBounds=true }
             android.graphics.BitmapFactory.decodeFile(path,bounds)
             require(bounds.outWidth>0 && bounds.outHeight>0) { "تعذر قراءة صورة الساعة" }
@@ -999,7 +1004,7 @@ button("＋ مورد"){form("مورد جديد"){box->val n=field("الاسم",b
             }
             clipToOutline=true
         }
-        if(path!=null && java.io.File(path).isFile) {
+        if(path!=null && runCatching { localPhoto(path) }.isSuccess) {
             val bounds=android.graphics.BitmapFactory.Options().apply { inJustDecodeBounds=true }
             android.graphics.BitmapFactory.decodeFile(path,bounds)
             if(bounds.outWidth>0 && bounds.outHeight>0) {
