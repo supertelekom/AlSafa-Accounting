@@ -1368,6 +1368,7 @@ button("＋ مورد"){form("مورد جديد"){box->val n=field("الاسم",b
                 })
             }
         }
+        text("الطلبات الحالية — اضغط على صورة الساعة لتكبيرها، ثم اضغط مجددًا أو × للعودة.",body,14f)
         val search=field("بحث بالعميل أو الهاتف أو الساعة أو المشكلة",body)
         val status=select("حالة الصيانة",listOf("الكل","مستلمة","قيد العمل","جاهزة","تم التسليم"),body)
         val results=column();body.addView(results)
@@ -1412,6 +1413,7 @@ button("＋ مورد"){form("مورد جديد"){box->val n=field("الاسم",b
                     }.setPositiveButton("حسناً",null).show()}
             }
         }
+        text("الطلبات المفتوحة",body,18f)
         val counts=store.repairStatusCounts()
         text("مستلمة: ${counts.getValue("received")} · قيد العمل: ${counts.getValue("in_progress")} · جاهزة: ${counts.getValue("ready")} · مسلّمة: ${counts.getValue("delivered")}",size=15f)
         store.repairList().filter{it.getValue("status")!="delivered"}.forEach{r->val id=r.getValue("id");repairIdentity(r,body);button("استخدام قطعة صيانة"){
