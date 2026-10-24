@@ -2327,7 +2327,7 @@ button("＋ مورد"){form("مورد جديد"){box->val n=field("الاسم",b
                         " · "+it.getValue("age_days")+" يوم"
                     }
                     AlertDialog.Builder(this).setTitle("الساعات غير المسلمة · صفحة "+pageNumber)
-                        .setMessage(details.ifBlank { "لا توجد نتائج" })
+                        .setMessage(details.ifBlank { "لا توجد نتائج" } + if(rows.size>50)"\n\nتوجد صفحة تالية؛ اختر رقم الصفحة التالي." else "")
                         .setPositiveButton("حسناً",null).show()
                 })
             }
