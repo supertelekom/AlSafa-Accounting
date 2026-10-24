@@ -49,6 +49,7 @@ class BarcodeScanActivity : ComponentActivity() {
     private var camera: Camera? = null
     private var torchOn = false
     private var zoomed = false
+    private var provider: ProcessCameraProvider? = null
 
     private val requestCamera = registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
         if (granted) startCamera() else status.text = "تحتاج قراءة الباركود إلى السماح بالكاميرا"
@@ -112,6 +113,7 @@ class BarcodeScanActivity : ComponentActivity() {
             try {
                 if (isFinishing || isDestroyed) return@addListener
                 val provider = future.get()
+                this.provider = provider
                 val livePreview = Preview.Builder().build().also {
                     it.surfaceProvider = preview.surfaceProvider
                 }
@@ -160,6 +162,7 @@ class BarcodeScanActivity : ComponentActivity() {
     }
 
     override fun onDestroy() {
+        provider?.unbindAll()
         scanner.close()
         executor.shutdown()
         super.onDestroy()
