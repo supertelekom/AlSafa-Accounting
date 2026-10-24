@@ -557,7 +557,8 @@ class Store(val helper:StoreDb) {
                 OR (i.kind='repair' AND EXISTS(
                     SELECT 1 FROM repairs rp WHERE rp.invoice_id=i.id
                     AND (rp.watch LIKE ? ESCAPE '!' OR rp.problem LIKE ? ESCAPE '!'
-                    OR rp.customer LIKE ? ESCAPE '!' OR rp.phone LIKE ? ESCAPE '!' OR EXISTS(
+                    OR rp.customer LIKE ? ESCAPE '!' OR rp.phone LIKE ? ESCAPE '!' OR
+                    (?<>'' AND replace(replace(replace(replace(replace(replace(replace(rp.phone,' ',''),'-',''),'+',''),'(',''),')',''),'/',''),'.','') LIKE ? ESCAPE '!') OR EXISTS(
                         SELECT 1 FROM stock_moves sm
                         JOIN events pe ON pe.id=sm.event_id
                         JOIN products p ON p.id=sm.product_id
@@ -567,7 +568,10 @@ class Store(val helper:StoreDb) {
                         OR p.model LIKE ? ESCAPE '!' OR p.brand LIKE ? ESCAPE '!')))))
                 )""")
             args.addAll(listOf(match,match,match,if(phoneSearch)phoneNeedle else "",
-                if(phoneSearch)"%$phoneNeedle%" else "",needle,match,match,match,match,match,match,match,match,match,match,match,match,match))
+                if(phoneSearch)"%$phoneNeedle%" else "",needle,
+                match,match,match,match,match,match,match,match,
+                if(phoneSearch)phoneNeedle else "",if(phoneSearch)"%$phoneNeedle%" else "",
+                match,match,match,match))
         }
         if(kind!="all"){conditions.add("i.kind=?");args.add(kind)}
         if(status!="all"){conditions.add("i.status=?");args.add(status)}
