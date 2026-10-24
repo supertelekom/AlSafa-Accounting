@@ -42,6 +42,9 @@ class Backup(private val context:Context,private val store:Store) {
     fun export(output:OutputStream) {
         val data=store.transaction {validate(store);val obj=JSONObject();tables.forEach { table ->val list=JSONArray();store.db.rawQuery("SELECT * FROM $table",null).use{c->while(c.moveToNext()){val row=JSONObject();c.columnNames.forEachIndexed{i,n->row.put(n,when(c.getType(i)){android.database.Cursor.FIELD_TYPE_NULL->JSONObject.NULL;android.database.Cursor.FIELD_TYPE_INTEGER->c.getLong(i);else->c.getString(i)})};list.put(row)}};obj.put(table,list)};obj.toString()}
         val media=BackupMedia.collect(context)
+        val referenced=store.productImageReferences()
+        val included=(0 until media.length()).map { media.getJSONObject(it).getString("name") }.toSet()
+        require(referenced.all { java.io.File(it).name in included }) { "صور مستخدمة مفقودة من النسخة" }
         BackupMediaPaths.rebase(context,JSONObject(data),media)
         val result=JSONObject().put("format","alsafa-native6-backup").put("media",media).put("media_sha256",sha(media.toString().toByteArray(Charsets.UTF_8))).put("schema",8).put("encoding","gzip-base64").put("sha256",sha(data.toByteArray(Charsets.UTF_8))).put("data",gzip(data)).toString().toByteArray(Charsets.UTF_8)
         require(result.size<=MAX_BYTES){"حجم النسخة أكبر من الحد المدعوم للاستعادة؛ لم يُكتب ملف ناقص"}
