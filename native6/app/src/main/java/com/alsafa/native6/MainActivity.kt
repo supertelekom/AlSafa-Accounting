@@ -188,7 +188,7 @@ open class MainActivity:Activity() {
             val productId=photoProductId
             photoProductId=null
             if(resultCode==RESULT_OK && !path.isNullOrBlank() && productId!=null){
-                try { localPhoto(path);work{store.setProductImage(productId,path)} }
+                try { localPhoto(path);work{store.appendProductImage(productId,path)} }
                 catch(e:Exception){error(e)}
             }
             return
@@ -879,7 +879,7 @@ open class MainActivity:Activity() {
                     CustomerShare.send(this,java.io.File(path),"image/jpeg","الصفا للساعات - ${p.name}")
                 }catch(e:Exception){error(e)}
             }
-            button("تصوير أو اختيار صورة للمنتج",box){
+            button("إضافة صورة بالكاميرا أو المعرض (حتى 8 صور)",box){
                 photoProductId=p.id
                 startActivityForResult(Intent(this,MediaCaptureActivity::class.java),69)
             }
