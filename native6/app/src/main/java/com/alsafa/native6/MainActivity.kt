@@ -2319,7 +2319,9 @@ button("＋ مورد"){form("مورد جديد"){box->val n=field("الاسم",b
                 ({
                     val rows=store.uncollectedRepairs(minimumDays=days.text.toString().trim().toLong())
                     val details=rows.joinToString("\n") {
-                        it.getValue("customer")+" - "+it.getValue("watch")+" - "+it.getValue("age_days")+" يوم"
+                        it.getValue("customer")+" · "+it.getValue("phone")+" · "+
+                        it.getValue("watch")+" · "+label(it.getValue("status"))+
+                        " · "+it.getValue("age_days")+" يوم"
                     }
                     AlertDialog.Builder(this).setTitle("الساعات غير المسلمة: "+rows.size)
                         .setMessage(details.ifBlank { "لا توجد نتائج" })
