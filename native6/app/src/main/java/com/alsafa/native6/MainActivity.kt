@@ -1086,7 +1086,11 @@ open class MainActivity:Activity() {
             text("مستحق الرد: "+money(store.refundable(inv.id),inv.currency),box,14f)
         }
         if(inv.kind=="sale") {
-            val lines=store.rows("SELECT name,qty,net,cost FROM invoice_lines WHERE invoice_id=? ORDER BY line",inv.id)
+            val lines=store.rows("""SELECT l.name,l.qty,l.net,l.cost,
+                coalesce((SELECT sum(r.qty) FROM returns r WHERE r.invoice_id=l.invoice_id AND r.line=l.line),0) returned_qty,
+                coalesce((SELECT sum(r.credit) FROM returns r WHERE r.invoice_id=l.invoice_id AND r.line=l.line),0) returned_net,
+                coalesce((SELECT sum(r.cost) FROM returns r WHERE r.invoice_id=l.invoice_id AND r.line=l.line),0) returned_cost
+                FROM invoice_lines l WHERE l.invoice_id=? ORDER BY l.line""",inv.id)
             var netTotal=0L
             var costTotal=0L
             lines.forEach { line->
@@ -1096,6 +1100,14 @@ open class MainActivity:Activity() {
                 costTotal=Math.addExact(costTotal,cost)
                 text(line.getValue("name")+" × "+line.getValue("qty"),box,15f).setTextColor(ink)
                 text("سعر البيع: "+money(net,inv.currency)+" · تكلفة الصنف: "+money(cost,inv.currency),box,13f)
+                val returnedQty=line.getValue("returned_qty").toLong()
+                val remainingQty=Math.subtractExact(line.getValue("qty").toLong(),returnedQty)
+                val remainingNet=Math.subtractExact(net,line.getValue("returned_net").toLong())
+                val remainingCost=Math.subtractExact(cost,line.getValue("returned_cost").toLong())
+                require(remainingQty>=0L && remainingNet>=0L && remainingCost>=0L){"سجل مرتجعات الصنف غير متسق"}
+                text("المتبقي بعد المرتجع: "+remainingQty+" · صافي البيع: "+money(remainingNet,inv.currency),box,13f)
+                text("صافي التكلفة: "+money(remainingCost,inv.currency)+" · هامش الصنف: "+
+                    money(Math.subtractExact(remainingNet,remainingCost),inv.currency),box,13f)
             }
             text("إجمالي تكلفة الأصناف عند البيع: "+money(costTotal,inv.currency),box,15f).setTextColor(ink)
             val returns=store.rows("""SELECT l.name,r.qty,r.credit,r.cost,e.date
