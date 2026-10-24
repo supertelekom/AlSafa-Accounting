@@ -1221,6 +1221,18 @@ open class MainActivity:Activity() {
                     row.getValue("actual_date")+" · "+money(row.getValue("amount").toLong(),inv.currency)+" · "+row.getValue("vault")
                 }).setPositiveButton("حسناً",null).show()
         })
+        if(inv.kind=="sale" || inv.kind=="repair")choices.add("سجل المبالغ المعادة للعميل" to {
+            val refunds=store.rows("""SELECT e.date,f.amount,f.vault
+                FROM refunds f JOIN events e ON e.id=f.event_id
+                WHERE f.invoice_id=? ORDER BY e.date,e.created,e.id""",inv.id)
+            val details=if(refunds.isEmpty())"لم يتم تسجيل أي رد نقدي لهذه الفاتورة."
+                else refunds.joinToString("\n"){row->
+                    row.getValue("date")+" · "+money(row.getValue("amount").toLong(),inv.currency)+
+                        " · "+row.getValue("vault")
+                }
+            AlertDialog.Builder(this).setTitle("سجل رد النقود · فاتورة #"+inv.number)
+                .setMessage(details).setPositiveButton("حسناً",null).show()
+        })
         choices.add("مشاركة فاتورة PDF عبر واتساب" to { shareInvoicePdf(inv) })
         choices.add("حفظ فاتورة PDF" to {
             pdfInvoice=inv.id
