@@ -31,7 +31,8 @@ object LegacySnapshotImport {
         val root=JSONObject(payload)
         val d=data(payload)
         val manifest=LegacyRestoreManifest.inspect(payload)
-        val issues=LegacyImportPreflight.inspect(payload)
+        val issues=LegacyImportPreflight.inspectInventory(payload)
+        val financialWarnings=LegacyImportPreflight.inspectFinancialHistory(payload)
         require(issues.isEmpty()) { "فحص النسخة القديمة فشل: "+issues.take(5).joinToString("; ") }
         val lists=listOf("products" to "watch","maintenanceParts" to "part")
         val suppliers=d.getJSONArray("suppliers")
@@ -171,6 +172,8 @@ object LegacySnapshotImport {
             }
             store.insert("settings","key" to "legacy_snapshot_import","value" to JSONObject()
                 .put("scope","inventory_suppliers_repairs_only")
+                .put("financialWarningCount",financialWarnings.size)
+                .put("financialWarnings",org.json.JSONArray(financialWarnings))
                 .put("sourceSha256",manifest.getString("sha256"))
                 .put("sourceRecordCount",manifest.getLong("recordCount"))
                 .put("sourceCollections",manifest.getJSONObject("collections"))
