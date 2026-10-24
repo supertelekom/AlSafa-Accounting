@@ -98,11 +98,16 @@ class MediaCaptureActivity : Activity() {
     }
 
     override fun onDestroy() {
-        if (isFinishing && !confirmed) {
+        if (isFinishing) {
+            // Camera captures are temporary even after confirming the final JPEG.
             pendingCameraPath?.let { File(it).delete() }
-            imagePath?.let { path ->
-                val file = File(path)
-                if (file.canonicalFile.parentFile == File(filesDir, "images").canonicalFile) file.delete()
+            if (!confirmed) imagePath?.let { path ->
+                runCatching {
+                    val file = File(path).canonicalFile
+                    val directory = File(filesDir, "images").canonicalFile
+                    if (file.parentFile == directory &&
+                        file.name.matches(Regex("[a-fA-F0-9-]{36}\\.jpg"))) file.delete()
+                }
             }
         }
         super.onDestroy()
@@ -162,6 +167,9 @@ class MediaCaptureActivity : Activity() {
                 val scale = 1600.0 / maxSide
                 Bitmap.createScaledBitmap(bitmap, (bitmap.width * scale).toInt().coerceAtLeast(1), (bitmap.height * scale).toInt().coerceAtLeast(1), true)
             } else bitmap
+            // The previous selection belongs to this picker only. Never remove a photo
+            // already referenced by a product or repair while replacing the preview.
+            val previousSelection = imagePath
             val directory = File(filesDir, "images").apply {
                 require(isDirectory || mkdirs()) { "تعذر إنشاء مجلد الصور المحلي" }
                 require(isDirectory && canonicalFile.parentFile == filesDir.canonicalFile) {
@@ -184,9 +192,12 @@ class MediaCaptureActivity : Activity() {
             bitmap.recycle()
             pendingCameraPath?.let { File(it).delete() }
             pendingCameraPath=null
-            imagePath?.takeIf { it!=output.absolutePath }?.let { old ->
-                val oldFile=File(old)
-                if(oldFile.parentFile?.canonicalFile==directory.canonicalFile) oldFile.delete()
+            previousSelection?.takeIf { it != output.absolutePath }?.let { old ->
+                runCatching {
+                    val oldFile=File(old).canonicalFile
+                    if(oldFile.parentFile==directory.canonicalFile &&
+                        oldFile.name.matches(Regex("[a-fA-F0-9-]{36}\\.jpg"))) oldFile.delete()
+                }
             }
             imagePath = output.absolutePath
             show(output.absolutePath)
