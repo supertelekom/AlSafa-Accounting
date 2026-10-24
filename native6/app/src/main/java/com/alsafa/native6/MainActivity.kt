@@ -1154,7 +1154,7 @@ open class MainActivity:Activity() {
             }
         }
         button("اختيار الفترة السريعة ▾") {
-            val options=arrayOf("اليوم فقط","أمس","آخر 7 أيام","الشهر الحالي","الشهر السابق")
+            val options=arrayOf("اليوم فقط","أمس","آخر 7 أيام","آخر 30 يوماً","الشهر الحالي","الشهر السابق")
             AlertDialog.Builder(this).setTitle("فترة عرض الفواتير")
                 .setItems(options){_,which->
                     val today=java.time.LocalDate.now()
@@ -1162,12 +1162,13 @@ open class MainActivity:Activity() {
                         0->today
                         1->today.minusDays(1)
                         2->today.minusDays(6)
-                        3->today.withDayOfMonth(1)
+                        3->today.minusDays(29)
+                        4->today.withDayOfMonth(1)
                         else->today.minusMonths(1).withDayOfMonth(1)
                     }
                     val to=when(which){
                         1->today.minusDays(1)
-                        4->today.withDayOfMonth(1).minusDays(1)
+                        5->today.withDayOfMonth(1).minusDays(1)
                         else->today
                     }
                     fromDate.setText(from.toString())
