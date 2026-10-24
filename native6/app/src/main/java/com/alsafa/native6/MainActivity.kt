@@ -958,13 +958,14 @@ button("＋ مورد"){form("مورد جديد"){box->val n=field("الاسم",b
                 adjustViewBounds=true
                 scaleType=ImageView.ScaleType.FIT_CENTER
                 contentDescription="صورة الساعة مكبرة"
-                setOnClickListener { /* Keep the enlarged image open until X or Back is pressed. */ }
+
             }
             val container=android.widget.FrameLayout(this).apply {
                 setPadding(dp(12),dp(12),dp(12),dp(12))
                 addView(photo,android.widget.FrameLayout.LayoutParams(-1,-1))
             }
             val dialog=AlertDialog.Builder(this).setTitle("معاينة صورة الساعة").setView(container).create()
+            photo.setOnClickListener { dialog.dismiss() }
             val close=Button(this).apply {
                 text="×"
                 textSize=28f
