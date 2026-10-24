@@ -99,6 +99,13 @@ object LegacyImportPreflight {
                     problems.add("sales[$i]: duplicate sale ID")
             }
         }
+        val repairIds=HashSet<String>()
+        data.optJSONArray("repairs")?.let { repairs ->
+            for(i in 0 until repairs.length()) {
+                val id=repairs.optJSONObject(i)?.optString("id").orEmpty().trim()
+                if(id.isNotEmpty()) repairIds.add(id)
+            }
+        }
         data.optJSONArray("returns")?.let { returns ->
             for(i in 0 until returns.length()) {
                 val row=returns.optJSONObject(i) ?: continue
@@ -118,13 +125,6 @@ object LegacyImportPreflight {
                 val id=transactions.optJSONObject(i)?.optString("id").orEmpty().trim()
                 if(id.isNotEmpty() && !seen.add(id))
                     problems.add("cashTransactions[$i]: duplicate cash movement ID")
-            }
-        }
-        val repairIds=HashSet<String>()
-        data.optJSONArray("repairs")?.let { repairs ->
-            for(i in 0 until repairs.length()) {
-                val id=repairs.optJSONObject(i)?.optString("id").orEmpty().trim()
-                if(id.isNotEmpty()) repairIds.add(id)
             }
         }
         data.optJSONArray("payments")?.let { payments ->
