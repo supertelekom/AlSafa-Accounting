@@ -69,6 +69,14 @@ object LegacyImportPreflight {
                     problems.add("sales[$i]: duplicate sale ID")
             }
         }
+        data.optJSONArray("returns")?.let { returns ->
+            for(i in 0 until returns.length()) {
+                val row=returns.optJSONObject(i) ?: continue
+                val sale=row.optString("saleId").trim()
+                if(sale.isNotEmpty() && sale !in saleIds)
+                    problems.add("returns[$i]: unknown sale reference")
+            }
+        }
         data.optJSONArray("payments")?.let { payments ->
             for(i in 0 until payments.length()) {
                 val row=payments.optJSONObject(i) ?: continue
