@@ -1343,12 +1343,7 @@ button("＋ مورد"){form("مورد جديد"){box->val n=field("الاسم",b
                         if(path==null || !java.io.File(path).isFile){
                             Toast.makeText(this,"لا توجد صورة محفوظة لهذا الطلب",Toast.LENGTH_SHORT).show()
                         }else{
-                            val view=android.widget.ImageView(this).apply {
-                                setImageBitmap(android.graphics.BitmapFactory.decodeFile(path))
-                                adjustViewBounds=true
-                            }
-                            AlertDialog.Builder(this).setTitle("صورة الصيانة").setView(view)
-                                .setPositiveButton("إغلاق",null).show()
+                            showRepairPhoto(path)
                         }
                     }.setPositiveButton("حسناً",null).show()}
             }
