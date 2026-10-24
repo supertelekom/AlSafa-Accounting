@@ -1403,10 +1403,21 @@ button("＋ مورد"){form("مورد جديد"){box->val n=field("الاسم",b
         details.addView(subtitle)
         line.addView(details,LinearLayout.LayoutParams(0,-2,1f))
         val status=TextView(this).apply {
+            val ready=row.getValue("status")=="ready"
+            val delivered=row.getValue("status")=="delivered"
             text=label(row.getValue("status"))
             textSize=12f
-            setTextColor(if(row.getValue("status")=="ready")Color.rgb(32,111,66) else gold)
-            setPadding(dp(8),dp(5),dp(8),dp(5))
+            setTextColor(when {
+                ready->Color.rgb(32,111,66)
+                delivered->muted
+                else->Color.rgb(128,88,26)
+            })
+            background=background(when {
+                ready->Color.rgb(232,247,234)
+                delivered->Color.rgb(240,238,235)
+                else->Color.rgb(249,240,222)
+            },10)
+            setPadding(dp(9),dp(6),dp(9),dp(6))
         }
         line.addView(status)
         target.addView(line,LinearLayout.LayoutParams(-1,-2).apply { setMargins(0,dp(4),0,dp(4)) })
