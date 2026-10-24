@@ -25,4 +25,8 @@ class LegacyCashAuditTest {
         assertEquals(0,report.getJSONArray("invalidRows").length())
         assertEquals("NONE",report.getString("posting"))
     }
+    @Test fun missingTransactionTypeIsFlagged() {
+        val report=LegacyCashAudit.inspect("""{"data":{"cashTransactions":[{"vault":"drawer","currency":"USD","amount":3}]}}""")
+        assertEquals(1,report.getJSONArray("missingTypeRows").length())
+    }
 }
