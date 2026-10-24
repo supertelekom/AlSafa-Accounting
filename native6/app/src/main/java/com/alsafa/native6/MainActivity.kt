@@ -2317,14 +2317,30 @@ button("＋ مورد"){form("مورد جديد"){box->val n=field("الاسم",b
         text("الطلبات الحالية — اضغط على صورة الساعة لتكبيرها، ثم اضغط مجددًا أو × للعودة.",body,14f)
         val search=field("بحث بالعميل أو الهاتف أو الساعة أو المشكلة",body)
         val status=select("حالة الصيانة",listOf("الكل","مستلمة","قيد العمل","جاهزة","تم التسليم"),body)
+        val from=field("من تاريخ الاستلام YYYY-MM-DD",body,Store.today())
+        val until=field("إلى تاريخ الاستلام YYYY-MM-DD",body,Store.today())
+        button("اختيار فترة الصيانة من التقويم") {
+            AlertDialog.Builder(this).setTitle("اختر التاريخ")
+                .setItems(arrayOf("تاريخ البداية","تاريخ النهاية")) { _,index ->
+                    val target=if(index==0)from else until
+                    val day=runCatching { java.time.LocalDate.parse(target.text.toString()) }
+                        .getOrElse { java.time.LocalDate.now() }
+                    android.app.DatePickerDialog(this,{_,y,m,d->
+                        target.setText(java.time.LocalDate.of(y,m+1,d).toString())
+                    },day.year,day.monthValue-1,day.dayOfMonth).apply {
+                        datePicker.maxDate=System.currentTimeMillis()
+                    }.show()
+                }.show()
+        }
         val results=column();body.addView(results)
         button("بحث وعرض الصيانات"){
             results.removeAllViews()
             val states=listOf("all","received","in_progress","ready","delivered")
-            val matches=store.repairList(search.text.toString(),states[status.selectedItemPosition])
+            val matches=store.repairListByDates(search.text.toString(),states[status.selectedItemPosition],
+                from.text.toString().trim(),until.text.toString().trim(),limit=100)
             text("عدد النتائج: ${matches.size}",results,16f)
             if(matches.isEmpty())text("لا توجد طلبات مطابقة. جرّب الاسم أو رقم الهاتف أو نوع الساعة.",results,14f)
-            if(matches.size>100)text("تُعرض أول 100 نتيجة. ضيّق البحث لعرض الطلب المطلوب.",results,13f)
+            if(matches.size==100)text("تُعرض أول 100 نتيجة ضمن الفترة. ضيّق البحث إذا لزم الأمر.",results,13f)
             matches.take(100).forEach{row->
                 val id=row.getValue("id")
                 repairIdentity(row,results)
