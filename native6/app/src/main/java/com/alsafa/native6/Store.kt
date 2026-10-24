@@ -1836,6 +1836,17 @@ class Store(val helper:StoreDb) {
             }
     }
 
+    fun uncollectedRepairCount(asOf:String=today(),minimumDays:Long=0,
+                               status:String="all"):Long {
+        val day=LocalDate.parse(asOf)
+        require(!day.isAfter(LocalDate.now()) && minimumDays in 0..36500)
+        require(status in setOf("all","received","in_progress","ready"))
+        return scalar("""SELECT count(*) FROM repairs
+            WHERE status IN ('received','in_progress','ready')
+            AND (?='all' OR status=?) AND date<=?""",
+            status,status,day.minusDays(minimumDays).toString())
+    }
+
     fun repairDetail(id:String):Map<String,String> =
         rows("SELECT * FROM repairs WHERE id=?",id).single()
     /** Net repair margin is invoice revenue minus consumed parts, not collected cash. */
