@@ -1819,16 +1819,18 @@ class Store(val helper:StoreDb) {
     }
 
     /** Uncollected repairs are operational custody, not cash or accounts receivable. */
-    fun uncollectedRepairs(asOf:String=today(),minimumDays:Long=0):List<Map<String,String>> {
+    fun uncollectedRepairs(asOf:String=today(),minimumDays:Long=0,
+                           limit:Int=100,offset:Int=0):List<Map<String,String>> {
         val day=LocalDate.parse(asOf)
         require(!day.isAfter(LocalDate.now()) && minimumDays in 0..36500)
+        require(limit in 1..500 && offset in 0..1000000)
         return rows("""SELECT id,customer,phone,watch,problem,status,date,details
             FROM repairs WHERE status IN ('received','in_progress','ready')
-            AND date<=? AND date<=? ORDER BY date ASC,id ASC""",day.toString(),
-            day.minusDays(minimumDays).toString()).mapNotNull { row ->
+            AND date<=? ORDER BY date ASC,id ASC LIMIT $limit OFFSET $offset""",
+            day.minusDays(minimumDays).toString()).map { row ->
                 val age=java.time.temporal.ChronoUnit.DAYS.between(
                     LocalDate.parse(row.getValue("date")),day)
-                if(age<minimumDays) null else row+mapOf("age_days" to age.toString())
+                row+mapOf("age_days" to age.toString())
             }
     }
 
