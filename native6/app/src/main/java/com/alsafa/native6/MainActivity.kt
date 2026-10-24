@@ -498,7 +498,9 @@ open class MainActivity:Activity() {
                 val thumbnail=android.widget.ImageView(this).apply {
                     setImageBitmap(android.graphics.BitmapFactory.decodeFile(photo))
                     adjustViewBounds=true
-                    maxHeight=300
+                    maxHeight=dp(160)
+                    contentDescription="اضغط لتكبير صورة المنتج"
+                    setOnClickListener { showRepairPhoto(photo) }
                 }
                 box.addView(thumbnail)
             }
