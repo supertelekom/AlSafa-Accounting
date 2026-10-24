@@ -23,9 +23,13 @@ object LegacyReturnLinkAudit {
         val missing=JSONArray()
         val unresolved=JSONArray()
         val linked=JSONObject()
+        val duplicateReturnIds=JSONArray()
+        val seenReturnIds=mutableSetOf<String>()
         val returns=data.optJSONArray("returns") ?: JSONArray()
         for(i in 0 until returns.length()) {
             val row=returns.optJSONObject(i) ?: continue
+            val returnId=row.optString("id").trim()
+            if(returnId.isNotBlank() && !seenReturnIds.add(returnId)) duplicateReturnIds.put(i)
             val id=row.optString("referenceId").trim()
             val section=when(row.optString("referenceType").trim().lowercase()) {
                 "sale","sales" -> "sales"
@@ -45,6 +49,7 @@ object LegacyReturnLinkAudit {
         return JSONObject().put("returnCount",returns.length())
             .put("missingReferenceRows",missing)
             .put("unresolvedReferenceRows",unresolved)
+            .put("duplicateReturnIdRows",duplicateReturnIds)
             .put("linkedReturnIndexes",linked)
             .put("posting","NONE")
     }
