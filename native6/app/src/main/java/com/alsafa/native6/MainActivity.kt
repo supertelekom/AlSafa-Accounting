@@ -1079,9 +1079,14 @@ open class MainActivity:Activity() {
                 text(line.getValue("name")+" × "+line.getValue("qty"),box,15f).setTextColor(ink)
                 text("سعر البيع: "+money(net,inv.currency)+" · تكلفة الصنف: "+money(cost,inv.currency),box,13f)
             }
-            text("إجمالي تكلفة الأصناف: "+money(costTotal,inv.currency),box,15f).setTextColor(ink)
-            text("هامش الربح قبل المصاريف: "+money(Math.subtractExact(netTotal,costTotal),inv.currency),box,16f).setTextColor(gold)
-            if(netTotal!=inv.total)text("ملاحظة: صافي الأصناف يختلف عن إجمالي الفاتورة؛ راجع الخصومات والمرتجعات.",box,12f)
+            text("إجمالي تكلفة الأصناف عند البيع: "+money(costTotal,inv.currency),box,15f).setTextColor(ink)
+            val returned=store.rows("SELECT invoice_id FROM returns WHERE invoice_id=? LIMIT 1",inv.id).isNotEmpty()
+            if(returned) {
+                text("توجد مرتجعات لهذه الفاتورة؛ القيم أعلاه تخص البيع الأصلي، وليست صافي الربح بعد المرتجعات.",box,13f)
+            } else {
+                text("هامش الربح قبل المصاريف: "+money(Math.subtractExact(netTotal,costTotal),inv.currency),box,16f).setTextColor(gold)
+            }
+            if(netTotal!=inv.total)text("ملاحظة: مجموع صافي الأصناف لا يساوي إجمالي الفاتورة؛ يلزم تدقيق السجل.",box,12f)
         }
         if(inv.kind=="repair") {
             val repair=store.rows("SELECT id FROM repairs WHERE invoice_id=?",inv.id).firstOrNull()
