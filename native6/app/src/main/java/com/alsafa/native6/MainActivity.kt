@@ -1086,8 +1086,10 @@ open class MainActivity:Activity() {
         var pageIndex=0
         var lastSearchKey=""
         fun show(){
-            val start=java.time.LocalDate.parse(fromDate.text.toString().trim()).toString()
-            val end=java.time.LocalDate.parse(toDate.text.toString().trim()).toString()
+            val start=runCatching { java.time.LocalDate.parse(fromDate.text.toString().trim()).toString() }
+                .getOrElse { throw IllegalArgumentException("تاريخ البداية غير صالح؛ اختره من التقويم بصيغة YYYY-MM-DD") }
+            val end=runCatching { java.time.LocalDate.parse(toDate.text.toString().trim()).toString() }
+                .getOrElse { throw IllegalArgumentException("تاريخ النهاية غير صالح؛ اختره من التقويم بصيغة YYYY-MM-DD") }
             require(start<=end){"تاريخ البداية يجب ألا يتجاوز تاريخ النهاية"}
             val searchKey=listOf(query.text.toString().trim(),start,end,
                 kinds[kind.selectedItemPosition],statuses[status.selectedItemPosition]).joinToString("\u001F")
