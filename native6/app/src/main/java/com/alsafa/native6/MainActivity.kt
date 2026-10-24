@@ -1107,9 +1107,16 @@ open class MainActivity:Activity() {
                 text("فواتير ملغاة في هذه الصفحة: "+cancelled+" (مستبعدة من الإجماليات)",output,13f)
             }
             active.groupBy { it.kind to it.currency }.forEach { (key,invoices)->
-                val gross=invoices.fold(0L){sum,inv->Math.addExact(sum,inv.total)}
-                text("إجمالي الفواتير السارية · "+label(key.first)+" ("+key.second.name+"): "+
-                    money(gross,key.second)+" · "+invoices.size+" فاتورة",output,13f)
+                val net=invoices.fold(0L){sum,inv->
+                    val value=if(inv.kind=="sale")
+                        store.saleProfitAfterReturns(inv.id).getValue("net_revenue")
+                    else inv.total
+                    Math.addExact(sum,value)
+                }
+                val title=if(key.first=="sale")"صافي المبيع بعد المرتجعات"
+                    else "إجمالي فواتير "+label(key.first)
+                text(title+" ("+key.second.name+"): "+
+                    money(net,key.second)+" · "+invoices.size+" فاتورة",output,13f)
             }
             if(results.isEmpty()) {
                 text(if(pageIndex>0)"لا توجد فواتير إضافية في هذه الصفحة؛ ارجع للصفحة السابقة."
