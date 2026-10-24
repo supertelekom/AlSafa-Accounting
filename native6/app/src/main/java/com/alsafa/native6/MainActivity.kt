@@ -978,42 +978,56 @@ button("＋ مورد"){form("مورد جديد"){box->val n=field("الاسم",b
                 (resources.displayMetrics.heightPixels*0.86).toInt())
         } catch(e:Exception) { error(e) }
     }
-    /** Compact repair identity row; image stays beside the customer and watch details. */
+    /** Mirrors the legacy tablet's 38dp photo icon beside repair identity. */
     private fun repairIdentity(row:Map<String,String>, target:android.widget.LinearLayout) {
         val line=android.widget.LinearLayout(this).apply {
             orientation=android.widget.LinearLayout.HORIZONTAL
             gravity=Gravity.CENTER_VERTICAL
-            setPadding(dp(8),dp(8),dp(8),dp(8))
+            setPadding(dp(12),dp(10),dp(12),dp(10))
         }
         val id=row.getValue("id")
         val path=store.repairImage(id)
+        val image=ImageView(this).apply {
+            scaleType=ImageView.ScaleType.CENTER_CROP
+            contentDescription="صورة ساعة "+row.getValue("customer")
+            setBackgroundColor(android.graphics.Color.rgb(248,237,219))
+        }
         if(path!=null && java.io.File(path).isFile) {
             val bounds=android.graphics.BitmapFactory.Options().apply { inJustDecodeBounds=true }
             android.graphics.BitmapFactory.decodeFile(path,bounds)
             if(bounds.outWidth>0 && bounds.outHeight>0) {
                 var sample=1
-                while(maxOf(bounds.outWidth,bounds.outHeight)/sample>320) sample*=2
+                while(maxOf(bounds.outWidth,bounds.outHeight)/sample>160) sample*=2
                 val bitmap=android.graphics.BitmapFactory.decodeFile(path,
                     android.graphics.BitmapFactory.Options().apply { inSampleSize=sample })
                 if(bitmap!=null) {
-                    val photo=ImageView(this).apply {
-                        setImageBitmap(bitmap)
-                        scaleType=ImageView.ScaleType.CENTER_CROP
-                        contentDescription="تكبير صورة ساعة "+row.getValue("customer")
-                        setOnClickListener { showRepairPhoto(path) }
-                    }
-                    line.addView(photo,android.widget.LinearLayout.LayoutParams(dp(92),dp(92)).apply {
-                        marginEnd=dp(12)
-                    })
-                }
-            }
+                    image.setImageBitmap(bitmap)
+                    image.setOnClickListener { showRepairPhoto(path) }
+                } else image.setImageResource(android.R.drawable.ic_menu_gallery)
+            } else image.setImageResource(android.R.drawable.ic_menu_gallery)
+        } else image.setImageResource(android.R.drawable.ic_menu_gallery)
+        line.addView(image,android.widget.LinearLayout.LayoutParams(dp(38),dp(38)).apply {
+            marginEnd=dp(11)
+        })
+        val info=android.widget.LinearLayout(this).apply {
+            orientation=android.widget.LinearLayout.VERTICAL
         }
-        val info=TextView(this).apply {
-            text=row.getValue("customer")+"\n"+row.getValue("watch")+"\n"+
-                label(row.getValue("status"))+" · "+row.getValue("date")
-            textSize=16f
+        val heading=TextView(this).apply {
+            text=row.getValue("customer")+" · "+row.getValue("watch")
+            textSize=14f
             typeface=font
+            setSingleLine(true)
+            ellipsize=android.text.TextUtils.TruncateAt.END
         }
+        val detail=TextView(this).apply {
+            text=row.getValue("date")+" · "+label(row.getValue("status"))+
+                " · "+row.getValue("phone")
+            textSize=12f
+            setSingleLine(true)
+            ellipsize=android.text.TextUtils.TruncateAt.END
+        }
+        info.addView(heading)
+        info.addView(detail)
         line.addView(info,android.widget.LinearLayout.LayoutParams(0,-2,1f))
         target.addView(line)
     }
