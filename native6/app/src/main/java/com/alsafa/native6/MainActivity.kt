@@ -963,7 +963,6 @@ button("＋ مورد"){form("مورد جديد"){box->val n=field("الاسم",b
                 adjustViewBounds=true
                 scaleType=ImageView.ScaleType.FIT_CENTER
                 contentDescription="صورة الساعة مكبرة"
-
             }
             val container=android.widget.FrameLayout(this).apply {
                 setPadding(dp(12),dp(12),dp(12),dp(12))
@@ -978,6 +977,10 @@ button("＋ مورد"){form("مورد جديد"){box->val n=field("الاسم",b
                 setOnClickListener { dialog.dismiss() }
             }
             container.addView(close,android.widget.FrameLayout.LayoutParams(dp(56),dp(56),Gravity.TOP or Gravity.END))
+            dialog.setOnDismissListener {
+                photo.setImageDrawable(null)
+                if(!bitmap.isRecycled) bitmap.recycle()
+            }
             dialog.show()
             dialog.window?.setLayout((resources.displayMetrics.widthPixels*0.94).toInt(),
                 (resources.displayMetrics.heightPixels*0.86).toInt())
