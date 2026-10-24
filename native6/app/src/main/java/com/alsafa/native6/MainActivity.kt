@@ -579,6 +579,7 @@ open class MainActivity:Activity() {
         shortcut("تقييم المخزون","inventory")
         shortcut("تسويات الجرد","stocktake-history")
         body.addView(shortcuts)
+        text("كتالوج المنتجات",size=20f).setTextColor(gold)
         val query=field("بحث بالاسم أو الباركود أو REF",body)
         val list=column().apply {setPadding(0,dp(4),0,dp(4))}
         body.addView(list)
@@ -587,7 +588,8 @@ open class MainActivity:Activity() {
             val results=store.products(query.text.toString())
             text("المنتجات: ${results.size}",list,13f)
             if(results.isEmpty())text("لا توجد منتجات مطابقة للبحث.",list,14f)
-            results.forEach{p->productCard(p,list)}
+            results.take(150).forEach{p->productCard(p,list)}
+            if(results.size>150)text("تُعرض أول 150 نتيجة. استخدم البحث لتضييق القائمة.",list,13f)
         }
         button("بحث"){show()}
         show()
