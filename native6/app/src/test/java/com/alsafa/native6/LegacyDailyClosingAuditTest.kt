@@ -23,4 +23,9 @@ class LegacyDailyClosingAuditTest {
         assertEquals("100",snapshot.getJSONObject("drawerTransfer").getString("TRY"))
         assertEquals(0,report.getJSONArray("invalidClosingBalanceFields").length())
     }
+    @Test fun flagsCarryForwardMismatch() {
+        val backup="""{"data":{"dailyClosings":[{"date":"2026-10-03","drawerActual":{"USD":100},"drawerTransfer":{"USD":30},"drawerNext":{"USD":60}}]}}"""
+        val report=LegacyDailyClosingAudit.inspect(backup)
+        assertEquals("0:USD",report.getJSONArray("drawerCarryForwardMismatches").getString(0))
+    }
 }
