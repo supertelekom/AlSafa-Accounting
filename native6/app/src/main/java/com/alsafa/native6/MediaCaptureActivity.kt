@@ -35,6 +35,7 @@ class MediaCaptureActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         imagePath = savedInstanceState?.getString("imagePath")
+        confirmed = savedInstanceState?.getBoolean("confirmed") ?: false
         pendingCameraPath = savedInstanceState?.getString("pendingCameraPath")
         val layout = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
@@ -93,6 +94,7 @@ class MediaCaptureActivity : Activity() {
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
+        outState.putBoolean("confirmed", confirmed)
         outState.putString("imagePath", imagePath)
         outState.putString("pendingCameraPath", pendingCameraPath)
         super.onSaveInstanceState(outState)
