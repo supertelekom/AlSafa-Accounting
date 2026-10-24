@@ -1099,11 +1099,21 @@ open class MainActivity:Activity() {
             if(event!=null)text("تاريخ الفاتورة: "+event.getValue("date"),box,14f)
         }
         if(inv.kind!="purchase") {
-            text("المقبوض فعلياً: "+money(store.paid(inv.id),inv.currency),box,15f).setTextColor(ink)
-        }
-        if(inv.kind!="purchase") {
-            text("المتبقي للتحصيل: "+money(store.due(inv.id),inv.currency),box,15f).setTextColor(ink)
-            text("مستحق الرد: "+money(store.refundable(inv.id),inv.currency),box,14f)
+            val received=store.paid(inv.id)
+            val due=store.due(inv.id)
+            val refund=store.refundable(inv.id)
+            text("المقبوض فعلياً: "+money(received,inv.currency),box,15f).setTextColor(ink)
+            text("المتبقي للتحصيل: "+money(due,inv.currency),box,15f)
+                .setTextColor(if(due>0L)Color.rgb(157,62,52) else ink)
+            text("مستحق الرد للعميل: "+money(refund,inv.currency),box,14f)
+                .setTextColor(if(refund>0L)Color.rgb(157,62,52) else ink)
+            val paymentState=when {
+                refund>0L->"يوجد مبلغ يجب إرجاعه للعميل"
+                due>0L && received>0L->"مدفوع جزئياً"
+                due>0L->"غير محصل بالكامل"
+                else->"لا توجد ذمة مستحقة حالياً"
+            }
+            text("حالة التحصيل: "+paymentState,box,14f).setTextColor(gold)
         }
         if(inv.kind=="sale") {
             val lines=store.rows("""SELECT l.name,l.qty,l.net,l.cost,
