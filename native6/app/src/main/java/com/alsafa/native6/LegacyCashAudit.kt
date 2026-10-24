@@ -11,11 +11,13 @@ object LegacyCashAudit {
         val totals=sortedMapOf<String,BigDecimal>()
         val counts=sortedMapOf<String,Int>()
         val invalid=org.json.JSONArray()
+        val missingVaults=org.json.JSONArray()
         for(i in 0 until entries.length()) {
             val row=entries.optJSONObject(i) ?: continue
             val currency=row.optString("currency")
             val vault=row.optString("vault")
             val type=row.optString("type")
+            if(vault.isBlank()) missingVaults.put(i)
             val amount=row.optString("amount").toBigDecimalOrNull()
             if(currency !in setOf("USD","TRY","SYP") || amount==null) {
                 invalid.put(i)
@@ -30,6 +32,7 @@ object LegacyCashAudit {
         return JSONObject().put("totals",result)
             .put("counts",JSONObject(counts as Map<*,*>))
             .put("invalidRows",invalid)
+            .put("missingVaultRows",missingVaults)
             .put("posting","NONE")
     }
 }
