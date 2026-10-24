@@ -957,6 +957,8 @@ open class MainActivity:Activity() {
         text(inv.party.ifBlank { "عميل نقدي" },panel,14f).setTextColor(ink)
         text(money(inv.total,inv.currency),panel,17f).setTextColor(gold)
         if(inv.kind!="purchase") {
+            val collected=store.paid(inv.id)
+            if(collected>0L)text("المقبوض: "+money(collected,inv.currency),panel,13f)
             val outstanding=store.due(inv.id)
             if(outstanding>0L)text("المتبقي للتحصيل: "+money(outstanding,inv.currency),panel,13f)
                 .setTextColor(Color.rgb(157,62,52))
