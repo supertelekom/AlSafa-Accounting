@@ -549,7 +549,7 @@ class Store(val helper:StoreDb) {
                         JOIN products p ON p.id=sm.product_id
                         WHERE pe.kind='REPAIR_PART'
                         AND pe.memo='REPAIR_PART:' || rp.id
-                        AND p.name LIKE ? ESCAPE '!')))
+                        AND p.name LIKE ? ESCAPE '!'))))
                 )""")
             args.addAll(listOf(match,match,match,needle,match,match,match))
         }
