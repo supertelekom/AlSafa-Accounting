@@ -1753,10 +1753,13 @@ button("＋ مورد"){form("مورد جديد"){box->val n=field("الاسم",b
                     }.setPositiveButton("حسناً",null).show()}
             }
         }
-        text("الطلبات المفتوحة",body,18f)
+        text("الطلبات المفتوحة",body,20f).setTextColor(gold)
         val counts=store.repairStatusCounts()
         text("مستلمة: ${counts.getValue("received")} · قيد العمل: ${counts.getValue("in_progress")} · جاهزة: ${counts.getValue("ready")} · مسلّمة: ${counts.getValue("delivered")}",size=15f)
-        store.repairList().filter{it.getValue("status")!="delivered"}.forEach{r->val id=r.getValue("id");repairIdentity(r,body);if(store.repairImage(id).let { it==null || runCatching { localPhoto(it) }.isFailure })button("إضافة صورة الساعة"){photoRepairId=id;startActivityForResult(Intent(this,MediaCaptureActivity::class.java),70)};button("استخدام قطعة صيانة"){
+        val openRepairs=store.repairList().filter{it.getValue("status")!="delivered"}
+        if(openRepairs.isEmpty())text("لا توجد طلبات صيانة مفتوحة حالياً.",body,14f)
+        if(openRepairs.size>100)text("تُعرض أول 100 صيانة مفتوحة. استخدم البحث للوصول إلى بقية الطلبات.",body,13f)
+        openRepairs.take(100).forEach{r->val id=r.getValue("id");repairIdentity(r,body);if(store.repairImage(id).let { it==null || runCatching { localPhoto(it) }.isFailure })button("إضافة صورة الساعة"){photoRepairId=id;startActivityForResult(Intent(this,MediaCaptureActivity::class.java),70)};button("استخدام قطعة صيانة"){
             chooseProduct(inStockOnly=true){part->
                 form("تركيب قطعة للصيانة"){box->
                     val quantity=field("الكمية",box,"1",true)
