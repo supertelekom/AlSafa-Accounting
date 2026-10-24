@@ -71,6 +71,19 @@ object LegacyDailyClosingAudit {
                     .put("drawerNext",closing.optJSONObject("drawerNext") ?: JSONObject()))
             }
         }
+        val carryGaps=org.json.JSONArray()
+        for(i in 0 until datedCarry.length()-1) {
+            val earlier=datedCarry.getJSONObject(i)
+            val later=datedCarry.getJSONObject(i+1)
+            if(earlier.getString("date")==later.getString("date")) continue
+            val next=earlier.getJSONObject("drawerNext")
+            val comparison=JSONObject()
+                .put("fromDate",earlier.getString("date"))
+                .put("toDate",later.getString("date"))
+                .put("previousCarry",next)
+                .put("status","AWAITING_NEXT_DAY_OPENING_BALANCE")
+            carryGaps.put(comparison)
+        }
         val multiple=org.json.JSONArray()
         for((date,count) in closeCounts) if(count>1) multiple.put(date)
         val movementDaysWithoutClosing=org.json.JSONArray()
@@ -83,6 +96,7 @@ object LegacyDailyClosingAudit {
             .put("closingCountsByDate",JSONObject(closeCounts as Map<*,*>))
             .put("orderedClosingDates",org.json.JSONArray(orderedDates))
             .put("datedCarryForward",datedCarry)
+            .put("carryForwardTransitions",carryGaps)
             .put("movementCountsByDate",movements)
             .put("closingRowsMissingDate",missingDate)
             .put("closingBalanceSnapshots",closingBalances)
