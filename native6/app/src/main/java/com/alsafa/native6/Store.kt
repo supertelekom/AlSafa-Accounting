@@ -528,6 +528,7 @@ class Store(val helper:StoreDb) {
         require(status in setOf("all","posted","cancelled"))
         require(limit in 1..1000)
         require(offset>=0){"إزاحة النتائج غير صالحة"}
+        require(offset<=1_000_000){"تجاوز البحث الحد المسموح لتصفح النتائج"}
         val from=LocalDate.parse(startDate).toString()
         val until=LocalDate.parse(endDate).toString()
         require(from<=until){"تاريخ البداية يجب ألا يتجاوز تاريخ النهاية"}
