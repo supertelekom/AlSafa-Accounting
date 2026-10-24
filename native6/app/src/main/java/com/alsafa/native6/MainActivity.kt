@@ -104,16 +104,19 @@ open class MainActivity:Activity() {
             val path=data?.getStringExtra(MediaCaptureActivity.EXTRA_RESULT_PATH)
             if(resultCode==RESULT_OK && !path.isNullOrBlank()){
                 try { localPhoto(path) } catch(e:Exception) { error(e);return }
-                intakePhotoPath=path
-                intakePhotoStatus?.text="تم اختيار صورة الساعة"
-                val options=android.graphics.BitmapFactory.Options().apply { inJustDecodeBounds=true }
-                android.graphics.BitmapFactory.decodeFile(path,options)
-                if(options.outWidth>0 && options.outHeight>0) {
+                val previewBitmap=runCatching {
+                    val options=android.graphics.BitmapFactory.Options().apply { inJustDecodeBounds=true }
+                    android.graphics.BitmapFactory.decodeFile(path,options)
+                    require(options.outWidth>0 && options.outHeight>0) { "الصورة غير قابلة للقراءة" }
                     var sample=1
                     while(maxOf(options.outWidth,options.outHeight)/sample>800) sample*=2
-                    intakePhotoPreview?.setImageBitmap(android.graphics.BitmapFactory.decodeFile(path,
-                        android.graphics.BitmapFactory.Options().apply { inSampleSize=sample }))
-                }
+                    android.graphics.BitmapFactory.decodeFile(path,
+                        android.graphics.BitmapFactory.Options().apply { inSampleSize=sample })
+                        ?: error("تعذر معاينة الصورة")
+                }.getOrElse { error(it);return }
+                intakePhotoPath=path
+                intakePhotoStatus?.text="تم اختيار صورة الساعة"
+                intakePhotoPreview?.setImageBitmap(previewBitmap)
             }
             return
         }
