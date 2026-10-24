@@ -20,11 +20,13 @@ object LegacySnapshotImport {
     fun preview(payload:String):String {
         val d=data(payload)
         val manifest=LegacyRestoreManifest.inspect(payload)
+        val blocking=LegacyImportPreflight.inspectInventory(payload).size
+        val warnings=LegacyImportPreflight.inspectFinancialHistory(payload).size
         val products=d.getJSONArray("products")
         val parts=d.getJSONArray("maintenanceParts")
         val suppliers=d.getJSONArray("suppliers")
         val repairs=d.getJSONArray("repairs")
-        return "بصمة النسخة: ${manifest.getString("sha256").take(16)}…، إجمالي السجلات: ${manifest.getLong("recordCount")}. مخزون الساعات: ${products.length()}، قطع الصيانة: ${parts.length()}، الموردون: ${suppliers.length()}، سجل الصيانة: ${repairs.length()}. " +
+        return "أخطاء الاستيراد: $blocking، تحذيرات مالية مؤرشفة: $warnings. بصمة النسخة: ${manifest.getString("sha256").take(16)}…، إجمالي السجلات: ${manifest.getLong("recordCount")}. مخزون الساعات: ${products.length()}، قطع الصيانة: ${parts.length()}، الموردون: ${suppliers.length()}، سجل الصيانة: ${repairs.length()}. " +
             "سيُنقل المخزون والموردون والصيانة، وتُحفظ الفواتير والحركات القديمة كأرشيف قابل للقراءة فقط، دون احتسابها في الأرصدة أو الأرباح."
     }
     fun import(store:Store,payload:String):String {
