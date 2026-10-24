@@ -905,6 +905,28 @@ class Store(val helper:StoreDb) {
         if(scalar("SELECT coalesce(sum(qty),0) FROM returns WHERE invoice_id=?",invoiceId)==scalar("SELECT sum(qty) FROM invoice_lines WHERE invoice_id=?",invoiceId))db.execSQL("UPDATE invoices SET status='cancelled' WHERE id=?",arrayOf(invoiceId))
         command
     }
+    /** Net historical sale profitability after posted returns; amounts use invoice minor units. */
+    fun saleProfitAfterReturns(invoiceId:String):Map<String,Long> {
+        val inv=invoice(invoiceId)
+        require(inv.kind=="sale"){"هذا التقرير لفواتير المبيع فقط"}
+        val originalCost=scalar("SELECT cost FROM invoices WHERE id=?",invoiceId)
+        val returnedRevenue=scalar("SELECT coalesce(sum(credit),0) FROM returns WHERE invoice_id=?",invoiceId)
+        val returnedCost=scalar("SELECT coalesce(sum(cost),0) FROM returns WHERE invoice_id=?",invoiceId)
+        require(returnedRevenue in 0L..inv.total && returnedCost in 0L..originalCost) {
+            "قيمة المرتجعات أو تكلفتها غير متسقة مع الفاتورة"
+        }
+        val netRevenue=Math.subtractExact(inv.total,returnedRevenue)
+        val netCost=Math.subtractExact(originalCost,returnedCost)
+        return mapOf(
+            "original_revenue" to inv.total,
+            "original_cost" to originalCost,
+            "returned_revenue" to returnedRevenue,
+            "returned_cost" to returnedCost,
+            "net_revenue" to netRevenue,
+            "net_cost" to netCost,
+            "gross_margin" to Math.subtractExact(netRevenue,netCost)
+        )
+    }
     fun cancelSale(invoiceId:String,reason:String,date:String=today(),command:String=id()):String=transaction {
         require(reason.isNotBlank()){"سبب إلغاء الفاتورة مطلوب"};require(!LocalDate.parse(date).isAfter(LocalDate.now())){"تاريخ الإلغاء في المستقبل"}
         val inv=invoice(invoiceId)
