@@ -24,6 +24,26 @@ object BackupMediaPaths {
                 val raw=record.optString("details","{}")
                 if(raw.isBlank()) continue
                 val details=JSONObject(raw)
+                val gallery=details.optJSONArray("imagePaths")
+                if(gallery!=null) {
+                    require(gallery.length()<=8) { "عدد صور المنتج يتجاوز الحد المسموح" }
+                    val rebasedGallery=JSONArray()
+                    val seen=mutableSetOf<String>()
+                    for(index in 0 until gallery.length()) {
+                        val oldGallery=gallery.getString(index)
+                        val file=File(oldGallery)
+                        require(file.isAbsolute && file.parentFile?.name=="images") { "مسار صورة إضافية غير صالح" }
+                        val name=file.name
+                        require(name.endsWith(".jpg") && name.removeSuffix(".jpg").matches(Regex("[a-fA-F0-9-]{36}"))) { "اسم صورة إضافية غير صالح" }
+                        require(seen.add(name)) { "صورة مكررة في معرض المنتج" }
+                        if(media!=null) require(name in available) { "صورة إضافية مفقودة من النسخة" }
+                        val target=File(imageDir,name).canonicalFile
+                        require(target.parentFile==imageDir) { "مسار صورة إضافية غير آمن" }
+                        rebasedGallery.put(target.absolutePath)
+                    }
+                    details.put("imagePaths",rebasedGallery)
+                    record.put("details",details.toString())
+                }
                 val old=details.optString("imagePath")
                 if(old.isBlank()) continue
                 val file=File(old)
