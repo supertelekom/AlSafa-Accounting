@@ -11,6 +11,7 @@ object LegacyImportPreflight {
         val data=root.getJSONObject("data")
         val problems=mutableListOf<String>()
         val ids=HashSet<String>()
+        val barcodes=HashSet<String>()
         for(section in listOf("products","maintenanceParts","suppliers","repairs")) {
             val items=data.optJSONArray(section)
             if(items==null) {
