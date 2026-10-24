@@ -630,6 +630,11 @@ open class MainActivity:Activity() {
     private fun variantForm(parent:Product) {
         form("إضافة لون مستقل · "+parent.name){box->
             val barcode=field("باركود اللون",box)
+            button("▣ قراءة باركود اللون بالكاميرا",box) {
+                barcodeTarget=barcode
+                startActivityForResult(Intent(this,BarcodeScanActivity::class.java),67)
+            }
+            text("كل لون منتج مستقل. لا يُخصم رصيده من الساعة الأساسية.",box,13f)
             val dial=field("لون المينا",box)
             val caseColor=field("لون الهيكل",box)
             val strap=field("لون الحزام",box)
