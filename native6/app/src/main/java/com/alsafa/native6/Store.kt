@@ -542,7 +542,7 @@ class Store(val helper:StoreDb) {
             val match="%$escaped%"
             conditions.add("""(CAST(i.number AS TEXT) LIKE ? ESCAPE '!' OR i.party LIKE ? ESCAPE '!'
                 OR i.phone LIKE ? ESCAPE '!'
-                OR (?<>'' AND replace(replace(replace(replace(i.phone,' ',''),'-',''),'+',''),'(', '') LIKE ? ESCAPE '!')
+                OR (?<>'' AND replace(replace(replace(replace(replace(i.phone,' ',''),'-',''),'+',''),'(',''),')','') LIKE ? ESCAPE '!')
                 OR i.id=?
                 OR EXISTS(SELECT 1 FROM invoice_lines l
                     WHERE l.invoice_id=i.id AND l.name LIKE ? ESCAPE '!')
