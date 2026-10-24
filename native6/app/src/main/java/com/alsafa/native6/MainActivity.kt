@@ -930,6 +930,17 @@ open class MainActivity:Activity() {
         panel.addView(first)
         text(inv.party.ifBlank { "عميل نقدي" },panel,14f).setTextColor(ink)
         text(money(inv.total,inv.currency),panel,17f).setTextColor(gold)
+        if(inv.kind=="sale" || inv.kind=="repair") {
+            val cost=store.rows("SELECT cost FROM invoices WHERE id=?",inv.id).singleOrNull()
+                ?.get("cost")?.toLongOrNull()
+            if(cost!=null) {
+                text("التكلفة: "+money(cost,inv.currency),panel,13f)
+                if(inv.status=="posted") {
+                    text("هامش الربح قبل المصاريف: "+money(Math.subtractExact(inv.total,cost),inv.currency),panel,13f)
+                        .setTextColor(gold)
+                }
+            }
+        }
         val open=Button(this).apply {
             style(this)
             text="عرض تفاصيل الفاتورة"
