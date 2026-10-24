@@ -1071,7 +1071,17 @@ open class MainActivity:Activity() {
         if(inv.kind=="repair") {
             val repair=store.rows("SELECT id FROM repairs WHERE invoice_id=?",inv.id).firstOrNull()
             if(repair!=null) {
-                val profit=store.repairProfit(repair.getValue("id"))
+                val repairId=repair.getValue("id")
+                val parts=store.repairPartsUsed(repairId)
+                if(parts.isEmpty())text("لم تُسجل قطع غيار لهذا الطلب.",box,13f)
+                parts.forEach { part->
+                    val currency=Currency.valueOf(part.getValue("currency"))
+                    val quantity=part.getValue("quantity").toLong()
+                    val value=Math.negateExact(part.getValue("value_delta").toLong())
+                    text("قطعة: "+part.getValue("name")+" × "+Math.abs(quantity),box,14f).setTextColor(ink)
+                    text("التكلفة الفعلية: "+money(value,currency)+" · تاريخ التركيب: "+part.getValue("date"),box,12f)
+                }
+                val profit=store.repairProfit(repairId)
                 if(profit!=null) {
                     val currency=Currency.valueOf(profit.getValue("currency"))
                     text("أجرة الصيانة: "+money(profit.getValue("revenue").toLong(),currency),box,15f).setTextColor(ink)
