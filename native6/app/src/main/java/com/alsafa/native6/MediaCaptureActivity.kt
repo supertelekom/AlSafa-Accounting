@@ -91,7 +91,9 @@ class MediaCaptureActivity : Activity() {
         })
         setContentView(layout)
         imagePath?.let { path ->
-            if (File(path).isFile) show(path) else imagePath = null
+            if (File(path).isFile) {
+                try { show(path) } catch (_: Exception) { imagePath = null }
+            } else imagePath = null
         }
     }
 
