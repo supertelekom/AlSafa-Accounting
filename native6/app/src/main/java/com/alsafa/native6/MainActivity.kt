@@ -2321,7 +2321,7 @@ button("＋ مورد"){form("مورد جديد"){box->val n=field("الاسم",b
                     val pageNumber=page.text.toString().trim().toInt()
                     require(pageNumber in 1..20000){"رقم الصفحة غير صالح"}
                     val rows=store.uncollectedRepairs(minimumDays=days.text.toString().trim().toLong(),limit=51,offset=(pageNumber-1)*50)
-                    val details=rows.joinToString("\n") {
+                    val details=rows.take(50).joinToString("\n") {
                         it.getValue("customer")+" · "+it.getValue("phone")+" · "+
                         it.getValue("watch")+" · "+label(it.getValue("status"))+
                         " · "+it.getValue("age_days")+" يوم"
