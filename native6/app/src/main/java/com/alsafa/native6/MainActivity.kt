@@ -615,10 +615,34 @@ open class MainActivity:Activity() {
         action("تعديل"){productForm(p)}
         action("الحركات"){selectedProduct=p;go("stock-history")}
         action("جرد"){stocktakeForm(p)}
+        if(store.rows("SELECT kind FROM products WHERE id=?",p.id).single()["kind"]=="watch") {
+            action("لون إضافي"){variantForm(p)}
+        }
         card.addView(actions)
         parent.addView(card,LinearLayout.LayoutParams(-1,-2).apply {
             setMargins(0,dp(5),0,dp(6))
         })
+    }
+    private fun variantForm(parent:Product) {
+        form("إضافة لون مستقل · "+parent.name){box->
+            val barcode=field("باركود اللون",box)
+            val dial=field("لون المينا",box)
+            val caseColor=field("لون الهيكل",box)
+            val strap=field("لون الحزام",box)
+            val price=field("سعر البيع",box,Money(parent.price,parent.currency).display().substringBefore(' '),true)
+            val cost=field("تكلفة الوحدة",box,"0",true)
+            val qty=field("الكمية الافتتاحية",box,"0",true)
+            ({
+                val b=barcode.text.toString()
+                val d=dial.text.toString()
+                val c=caseColor.text.toString()
+                val st=strap.text.toString()
+                val pr=amount(price,parent.currency)
+                val co=amount(cost,parent.currency)
+                val q=qty.text.toString().trim().toLong()
+                work { store.addColorVariant(parent.id,b,pr,co,q,d,c,st) }
+            })
+        }
     }
     private fun products(){
         sectionHeading("المنتجات وقطع الصيانة","إدارة الأصناف والباركود والكميات والجرد")
