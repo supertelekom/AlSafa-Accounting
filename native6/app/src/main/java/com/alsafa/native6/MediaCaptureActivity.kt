@@ -152,6 +152,10 @@ class MediaCaptureActivity : Activity() {
             bitmap.recycle()
             pendingCameraPath?.let { File(it).delete() }
             pendingCameraPath=null
+            imagePath?.takeIf { it!=output.absolutePath }?.let { old ->
+                val oldFile=File(old)
+                if(oldFile.parentFile?.canonicalFile==directory.canonicalFile) oldFile.delete()
+            }
             imagePath = output.absolutePath
             show(output.absolutePath)
         } catch (e: Exception) {
