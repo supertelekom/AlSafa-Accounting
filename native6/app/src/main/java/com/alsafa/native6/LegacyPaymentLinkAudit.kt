@@ -23,10 +23,14 @@ object LegacyPaymentLinkAudit {
         val missing=JSONArray()
         val unresolved=JSONArray()
         val invalidAmounts=JSONArray()
+        val duplicatePaymentIds=JSONArray()
+        val seenPaymentIds=mutableSetOf<String>()
         val evidence=linkedMapOf<String,BigDecimal>()
         val payments=data.optJSONArray("payments") ?: JSONArray()
         for(i in 0 until payments.length()) {
             val payment=payments.optJSONObject(i) ?: continue
+            val paymentId=payment.optString("id").trim()
+            if(paymentId.isNotBlank() && !seenPaymentIds.add(paymentId)) duplicatePaymentIds.put(i)
             val type=payment.optString("referenceType").trim().lowercase()
             val section=when(type) {
                 "sale","sales" -> "sales"
@@ -50,6 +54,7 @@ object LegacyPaymentLinkAudit {
             .put("missingReferenceRows",missing)
             .put("unresolvedReferenceRows",unresolved)
             .put("invalidAmountRows",invalidAmounts)
+            .put("duplicatePaymentIdRows",duplicatePaymentIds)
             .put("linkedPaymentEvidence",totals)
             .put("posting","NONE")
     }
