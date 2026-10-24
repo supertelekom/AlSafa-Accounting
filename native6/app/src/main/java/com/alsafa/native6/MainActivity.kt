@@ -2317,6 +2317,7 @@ button("＋ مورد"){form("مورد جديد"){box->val n=field("الاسم",b
             form("الساعات الموجودة لدينا","عرض"){box->
                 val days=field("عدد أيام الانتظار على الأقل",box,"2",true)
                 val page=field("صفحة التقرير (50 نتيجة)",box,"1",true)
+                val stage=select("حالة الساعات",listOf("الكل","مستلمة","قيد العمل","جاهزة للاستلام"),box)
                 ({
                     val pageNumber=page.text.toString().trim().toInt()
                     require(pageNumber in 1..20000){"رقم الصفحة غير صالح"}
