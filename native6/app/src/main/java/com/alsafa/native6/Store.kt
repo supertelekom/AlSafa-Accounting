@@ -519,25 +519,49 @@ class Store(val helper:StoreDb) {
         db.execSQL("UPDATE products SET name=?,barcode=?,price=? WHERE id=?",arrayOf(name.trim(),barcode.trim(),price,id));event(id(),"PRODUCT_EDIT",today(),"تعديل وصف المنتج $id")
     }
     fun invoices()=rows("SELECT * FROM invoices ORDER BY number DESC").map { Invoice(it.getValue("id"),it.getValue("number").toLong(),it.getValue("kind"),it.getValue("party"),Currency.valueOf(it.getValue("currency")),it.getValue("total").toLong(),it.getValue("status")) }
-    fun searchInvoices(query:String="",kind:String="all",status:String="all",limit:Int=200):List<Invoice> {
+    /** Date-scoped invoice lookup; matches customers, sold items, repaired watches and repair parts. */
+    fun searchInvoices(
+        query:String="",kind:String="all",status:String="all",limit:Int=200,
+        startDate:String=today(),endDate:String=startDate
+    ):List<Invoice> {
         require(kind in setOf("all","sale","purchase","repair"))
         require(status in setOf("all","posted","cancelled"))
         require(limit in 1..1000)
+        val from=LocalDate.parse(startDate).toString()
+        val until=LocalDate.parse(endDate).toString()
+        require(from<=until){"تاريخ البداية يجب ألا يتجاوز تاريخ النهاية"}
         val needle=query.trim()
-        val conditions=mutableListOf<String>()
-        val args=mutableListOf<String>()
+        val conditions=mutableListOf("e.date>=?","e.date<=?")
+        val args=mutableListOf(from,until)
         if(needle.isNotEmpty()){
-            conditions.add("(CAST(number AS TEXT) LIKE ? OR party LIKE ? OR phone LIKE ? OR id=?)")
-            repeat(3){args.add("%$needle%")}
-            args.add(needle)
+            val match="%$needle%"
+            conditions.add("""(CAST(i.number AS TEXT) LIKE ? OR i.party LIKE ? OR i.phone LIKE ?
+                OR i.id=?
+                OR EXISTS(SELECT 1 FROM invoice_lines l
+                    WHERE l.invoice_id=i.id AND l.name LIKE ?)
+                OR (i.kind='repair' AND EXISTS(
+                    SELECT 1 FROM repairs rp WHERE rp.invoice_id=i.id
+                    AND (rp.watch LIKE ? OR EXISTS(
+                        SELECT 1 FROM stock_moves sm
+                        JOIN events pe ON pe.id=sm.event_id
+                        JOIN products p ON p.id=sm.product_id
+                        WHERE pe.kind='REPAIR_PART'
+                        AND pe.memo='REPAIR_PART:' || rp.id
+                        AND p.name LIKE ?))))
+                )""")
+            args.addAll(listOf(match,match,match,needle,match,match,match))
         }
-        if(kind!="all"){conditions.add("kind=?");args.add(kind)}
-        if(status!="all"){conditions.add("status=?");args.add(status)}
-        val where=if(conditions.isEmpty())"" else " WHERE "+conditions.joinToString(" AND ")
-        val result=rows("SELECT * FROM invoices"+where+" ORDER BY number DESC LIMIT $limit",*args.toTypedArray())
-        return result.map{Invoice(it.getValue("id"),it.getValue("number").toLong(),
-            it.getValue("kind"),it.getValue("party"),Currency.valueOf(it.getValue("currency")),
-            it.getValue("total").toLong(),it.getValue("status"))}
+        if(kind!="all"){conditions.add("i.kind=?");args.add(kind)}
+        if(status!="all"){conditions.add("i.status=?");args.add(status)}
+        val sql="""SELECT i.* FROM invoices i JOIN events e ON e.id=i.id
+            WHERE ${conditions.joinToString(" AND ")}
+            ORDER BY e.date DESC,i.number DESC LIMIT $limit"""
+        return rows(sql,*args.toTypedArray()).map { row->
+            Invoice(row.getValue("id"),row.getValue("number").toLong(),
+                row.getValue("kind"),row.getValue("party"),
+                Currency.valueOf(row.getValue("currency")),
+                row.getValue("total").toLong(),row.getValue("status"))
+        }
     }
     fun invoice(id:String):Invoice {
         val row=rows("SELECT id,number,kind,party,currency,total,status FROM invoices WHERE id=?",id).singleOrNull()
