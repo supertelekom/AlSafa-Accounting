@@ -1283,6 +1283,24 @@ button("＋ مورد"){form("مورد جديد"){box->val n=field("الاسم",b
                     photoRepairId=id
                     startActivityForResult(Intent(this,MediaCaptureActivity::class.java),70)
                 }
+                val repairPhoto=store.repairImage(id)
+                if(repairPhoto!=null && java.io.File(repairPhoto).isFile){
+                    val thumbnail=ImageView(this).apply {
+                        val bounds=android.graphics.BitmapFactory.Options().apply { inJustDecodeBounds=true }
+                        android.graphics.BitmapFactory.decodeFile(repairPhoto,bounds)
+                        if(bounds.outWidth>0 && bounds.outHeight>0) {
+                            var sample=1
+                            while(maxOf(bounds.outWidth,bounds.outHeight)/sample>480) sample*=2
+                            setImageBitmap(android.graphics.BitmapFactory.decodeFile(repairPhoto,
+                                android.graphics.BitmapFactory.Options().apply { inSampleSize=sample }))
+                        }
+                        adjustViewBounds=true
+                        maxHeight=dp(160)
+                        contentDescription="اضغط لتكبير صورة ساعة الصيانة"
+                        setOnClickListener { showRepairPhoto(repairPhoto) }
+                    }
+                    results.addView(thumbnail)
+                }
                 text(row.getValue("date")+" · "+row.getValue("customer")+" · "+row.getValue("watch")+" · "+label(row.getValue("status")),results)
                 button("تفاصيل الصيانة",results){val detail=store.repairDetail(id);val invoice=store.repairInvoice(id);val profit=store.repairProfit(id);val profitText=if(profit==null)"" else {val c=Currency.valueOf(profit.getValue("currency"));"\nأجرة الصيانة: "+money(profit.getValue("revenue").toLong(),c)+"\nتكلفة القطع: "+money(profit.getValue("parts_cost").toLong(),c)+"\nهامش الصيانة: "+money(profit.getValue("margin").toLong(),c)+"\nالمقبوض: "+money(profit.getValue("collected").toLong(),c)+"\nالمتبقي: "+money(profit.getValue("outstanding").toLong(),c)};val info="العميل: "+detail.getValue("customer")+"\nالهاتف: "+detail.getValue("phone")+"\nالساعة: "+detail.getValue("watch")+"\nالمشكلة: "+detail.getValue("problem")+"\nالحالة: "+label(detail.getValue("status"))+"\nالفاتورة: "+(invoice?.get("number")?:"لا توجد")+profitText;AlertDialog.Builder(this).setTitle("تفاصيل الصيانة").setMessage(info)
                     .setNeutralButton("عرض الصورة"){_,_->
