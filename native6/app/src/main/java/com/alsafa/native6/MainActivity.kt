@@ -1050,7 +1050,16 @@ open class MainActivity:Activity() {
         }
         }
         text("البحث في الفواتير",size=20f).setTextColor(gold)
-        val query=field("رقم الفاتورة أو اسم العميل أو الهاتف",body)
+        val query=field("الاسم، الهاتف، رقم الفاتورة، المنتج أو قطعة الصيانة",body)
+        val dateFilters=column()
+        val fromDate=field("من تاريخ YYYY-MM-DD",dateFilters,Store.today())
+        val toDate=field("إلى تاريخ YYYY-MM-DD",dateFilters,Store.today())
+        body.addView(dateFilters)
+        button("اليوم فقط") {
+            fromDate.setText(Store.today())
+            toDate.setText(Store.today())
+            page="invoices";render()
+        }
         val kinds=listOf("all","sale","purchase","repair")
         val statuses=listOf("all","posted","cancelled")
         val filters=LinearLayout(this).apply {
@@ -1070,8 +1079,11 @@ open class MainActivity:Activity() {
         body.addView(output)
         fun show(){
             output.removeAllViews()
+            val start=java.time.LocalDate.parse(fromDate.text.toString().trim()).toString()
+            val end=java.time.LocalDate.parse(toDate.text.toString().trim()).toString()
+            require(start<=end){"تاريخ البداية يجب ألا يتجاوز تاريخ النهاية"}
             val results=store.searchInvoices(query.text.toString(),kinds[kind.selectedItemPosition],
-                statuses[status.selectedItemPosition])
+                statuses[status.selectedItemPosition],startDate=start,endDate=end)
             text("النتائج: ${results.size} (الحد الأقصى 200)",output)
             if(results.isEmpty())text("لا توجد فواتير مطابقة للبحث.",output,14f)
             results.forEach{inv->invoiceCard(inv,output)}
