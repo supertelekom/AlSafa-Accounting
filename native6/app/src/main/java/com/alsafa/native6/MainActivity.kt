@@ -1717,7 +1717,9 @@ button("＋ مورد"){form("مورد جديد"){box->val n=field("الاسم",b
             val states=listOf("all","received","in_progress","ready","delivered")
             val matches=store.repairList(search.text.toString(),states[status.selectedItemPosition])
             text("عدد النتائج: ${matches.size}",results,16f)
-            matches.forEach{row->
+            if(matches.isEmpty())text("لا توجد طلبات مطابقة. جرّب الاسم أو رقم الهاتف أو نوع الساعة.",results,14f)
+            if(matches.size>100)text("تُعرض أول 100 نتيجة. ضيّق البحث لعرض الطلب المطلوب.",results,13f)
+            matches.take(100).forEach{row->
                 val id=row.getValue("id")
                 button("فتح واتساب العميل",results){
                     try {
