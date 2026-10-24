@@ -45,6 +45,10 @@ object BackupMediaPaths {
                     details.put("imagePaths",rebasedGallery)
                     record.put("details",details.toString())
                 }
+                if(gallery!=null && gallery.length()>0) {
+                    val primary=details.optString("imagePath")
+                    if(primary.isNotBlank()) require((0 until gallery.length()).any { gallery.getString(it)==primary }) { "الصورة الرئيسية خارج المعرض" }
+                }
                 val old=details.optString("imagePath")
                 if(old.isBlank()) {
                     val first=details.optJSONArray("imagePaths")?.optString(0).orEmpty()
