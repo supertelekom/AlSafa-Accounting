@@ -1195,8 +1195,37 @@ open class MainActivity:Activity() {
         }
         dialog.show()
     }
-    private fun returnForm(inv:Invoice){val lines=store.rows("SELECT * FROM invoice_lines WHERE invoice_id=? ORDER BY line",inv.id);form("استلام مرتجع جزئي"){box->val fields=lines.associate{r->r.getValue("line").toInt() to field("${r.getValue("name")} — كمية مرتجعة",box,"0",true)};val reason=field("السبب",box);
-        {val q=fields.mapValues{it.value.text.toString().toLong()}.filterValues{it>0};val why=reason.text.toString();require(q.isNotEmpty()&&why.isNotBlank());work{store.returnSale(inv.id,q,why)}}}}
+    private fun returnForm(inv:Invoice) {
+        val lines=store.rows("""SELECT l.line,l.name,l.qty,
+            coalesce((SELECT sum(r.qty) FROM returns r
+                WHERE r.invoice_id=l.invoice_id AND r.line=l.line),0) returned
+            FROM invoice_lines l WHERE l.invoice_id=? ORDER BY l.line""",inv.id)
+        form("استلام مرتجع جزئي"){box->
+            sectionHeading("الأصناف القابلة للإرجاع","أدخل الكمية التي وصلت إلى المحل فعلياً",box)
+            val fields=lines.filter { it.getValue("qty").toLong()>it.getValue("returned").toLong() }
+                .associate { row->
+                    val remaining=Math.subtractExact(row.getValue("qty").toLong(),row.getValue("returned").toLong())
+                    row.getValue("line").toInt() to
+                        field(row.getValue("name")+" · المتبقي "+remaining,box,"0",true)
+                }
+            val reason=field("سبب المرتجع",box)
+            val date=field("تاريخ استلام المرتجع YYYY-MM-DD",box,Store.today())
+            {
+                val quantities=fields.mapValues { it.value.text.toString().trim().toLong() }
+                    .filterValues { it>0L }
+                require(quantities.isNotEmpty()){"حدد كمية مرتجعة واحدة على الأقل"}
+                lines.forEach { row->
+                    val index=row.getValue("line").toInt()
+                    val remaining=Math.subtractExact(row.getValue("qty").toLong(),row.getValue("returned").toLong())
+                    require((quantities[index]?:0L) in 0L..remaining){"كمية مرتجع "+row.getValue("name")+" تتجاوز المتبقي"}
+                }
+                val why=reason.text.toString().trim()
+                require(why.isNotBlank()){"سبب المرتجع مطلوب"}
+                val actualDate=java.time.LocalDate.parse(date.text.toString().trim()).toString()
+                work{store.returnSale(inv.id,quantities,why,date=actualDate)}
+            }
+        }
+    }
     private fun paymentForm(title:String,c:Currency,max:Long,action:(Long,String,String)->Unit){form(title){box->val n=field("المبلغ ${c.name} · المتبقي ${money(max,c)}",box,"0",true);val v=select("الخزنة",vaultNames,box);val received=field("تاريخ حركة النقود الفعلي YYYY-MM-DD",box,Store.today());{val amount=amount(n,c);require(amount>0L && amount<=max){"المبلغ يجب أن يكون أكبر من الصفر وألا يتجاوز الرصيد المستحق"};val vault=Store.vaults[v.selectedItemPosition];val actualDate=java.time.LocalDate.parse(received.text.toString().trim()).toString();work{action(amount,vault,actualDate)}}}}
     private fun vaults(){sectionHeading("الخزنات والإقفال اليومي","الأرصدة الفعلية والمحاسبية بحسب الخزنة والعملة");
         collapsibleTools("تقارير وتدقيق الخزنات المتقدم") {
