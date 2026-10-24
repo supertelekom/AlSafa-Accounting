@@ -34,6 +34,17 @@ class RepairDateSearchTest {
         assertEquals(1,s.repairListByDates(query="0933456789",from=date,until=date).size)
     }
 
+    @Test fun searchRepairByInstalledPart() {
+        val s=Store(StoreDb(RuntimeEnvironment.getApplication(),"repair-part-${Store.id()}.db"))
+        val day=LocalDate.now().toString()
+        val repair=s.receiveRepair("عميل","0933","Casio","توقف",day)
+        val part=s.addProduct("بطارية يابانية","PART-901",Currency.USD,500L,200L,3L,kind="part")
+        s.useRepairPart(repair,part,1L)
+        assertEquals(repair,s.repairListByDates(query="PART-901",from=day,until=day).single().getValue("id"))
+        assertEquals(repair,s.repairListByDates(query="بطارية يابانية",from=day,until=day).single().getValue("id"))
+        assertTrue(s.repairListByDates(query="PART-999",from=day,until=day).isEmpty())
+    }
+
     @Test fun rejectsInvertedDateRange() {
         val s=Store(StoreDb(RuntimeEnvironment.getApplication(),"repair-range-${Store.id()}.db"))
         val today=LocalDate.now()
