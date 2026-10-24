@@ -25,7 +25,7 @@ object BackupMedia {
         require(root.isDirectory || !root.exists()) { "مسار مجلد الصور غير صالح" }
         var total=0L
         val files=if(root.exists()) requireNotNull(root.listFiles()) { "تعذر قراءة مجلد الصور" }.toList() else emptyList()
-        require(files.none { it.isFile && it.extension.lowercase() in setOf("jpeg","png","webp") }) { "توجد صور بصيغة غير مدعومة في النسخة" }
+        require(files.none { it.extension.lowercase() in setOf("jpeg","png","webp") }) { "توجد صور بصيغة غير مدعومة في النسخة" }
         require(files.all { it.isFile }) { "يوجد عنصر غير صالح داخل مجلد الصور" }
         require(files.size<=10000) { "عدد ملفات الصور يتجاوز الحد الآمن" }
         require(files.none { it.extension.lowercase() !in setOf("jpg","jpeg","png","webp") }) { "توجد ملفات غير معروفة في مجلد الصور" }
