@@ -1099,6 +1099,11 @@ open class MainActivity:Activity() {
         text("إجمالي الفاتورة: "+money(inv.total,inv.currency),box,18f).setTextColor(gold)
         text("حالة الفاتورة: "+label(inv.status),box,14f)
         if(inv.kind=="sale" || inv.kind=="repair") {
+            val contact=store.rows("SELECT phone FROM invoices WHERE id=?",inv.id).firstOrNull()
+            val phone=contact?.get("phone").orEmpty()
+            if(phone.isNotBlank())text("هاتف العميل: "+phone,box,14f)
+        }
+        if(inv.kind=="sale" || inv.kind=="repair") {
             val event=store.rows("SELECT date FROM events WHERE id=?",inv.id).firstOrNull()
             if(event!=null)text("تاريخ الفاتورة: "+event.getValue("date"),box,14f)
         }
