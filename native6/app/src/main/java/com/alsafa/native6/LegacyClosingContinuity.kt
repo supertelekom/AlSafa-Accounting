@@ -38,7 +38,7 @@ object LegacyClosingContinuity {
                 val actual=number(row,"drawerActual",currency,index)
                 val transfer=number(row,"drawerTransfer",currency,index)
                 val carry=number(row,"drawerNext",currency,index)
-                if(actual!=null && transfer!=null && carry!=null && actual-transfer!=carry)
+                if(actual!=null && transfer!=null && carry!=null && (actual-transfer-carry).abs()>BigDecimal("0.000001"))
                     carryMismatches.put(JSONObject().put("date",date.toString()).put("currency",currency)
                         .put("sourceIndex",index).put("difference",(actual-transfer-carry).toPlainString()))
             }
