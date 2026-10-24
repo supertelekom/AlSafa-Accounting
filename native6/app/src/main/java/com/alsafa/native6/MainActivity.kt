@@ -146,7 +146,12 @@ open class MainActivity:Activity() {
         if(resultCode!=RESULT_OK || requestCode !in listOf(65,66,67,68))return
         val code=data?.getStringExtra(BarcodeScanActivity.EXTRA_BARCODE)?.trim().orEmpty()
         if(code.isEmpty())return
-        if(requestCode==67){barcodeTarget?.setText(code);barcodeTarget=null;return}
+        if(requestCode==67){
+            barcodeTarget?.setText(code)
+            barcodeTarget?.setSelection(barcodeTarget?.text?.length ?: 0)
+            barcodeTarget=null
+            return
+        }
         if(requestCode==68){chooserBarcodeField?.setText(code);chooserRefresh?.invoke();return}
         val matches=store.products(code).filter { it.barcode==code }
         when {
