@@ -40,6 +40,8 @@ object LegacySnapshotImport {
         val issues=LegacyImportPreflight.inspectInventory(payload)
         val financialWarnings=LegacyImportPreflight.inspectFinancialHistory(payload)
         val closingAudit=LegacyClosingContinuity.inspect(payload)
+        val paymentLinkAudit=LegacyPaymentLinkAudit.inspect(payload)
+        val returnLinkAudit=LegacyReturnLinkAudit.inspect(payload)
         require(issues.isEmpty()) { "فحص النسخة القديمة فشل: "+issues.take(5).joinToString("; ") }
         val lists=listOf("products" to "watch","maintenanceParts" to "part")
         val suppliers=d.getJSONArray("suppliers")
@@ -181,6 +183,8 @@ object LegacySnapshotImport {
                 .put("scope","inventory_suppliers_repairs_only")
                 .put("financialWarningCount",financialWarnings.size)
                 .put("closingAudit",closingAudit)
+                .put("paymentLinkAudit",paymentLinkAudit)
+                .put("returnLinkAudit",returnLinkAudit)
                 .put("financialPostingStatus","NOT_POSTED")
                 .put("cashContinuityVerified",false)
                 .put("financialWarnings",org.json.JSONArray(financialWarnings))
