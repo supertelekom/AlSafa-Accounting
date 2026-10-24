@@ -622,7 +622,8 @@ class Store(val helper:StoreDb) {
 
     fun appendProductImage(id:String,path:String) = transaction {
         require(path.isNotBlank() && path.length<=1024)
-        val raw=rows("SELECT details FROM products WHERE id=?",id).single().getValue("details")
+        val raw=rows("SELECT details FROM products WHERE id=? AND archived=0",id).singleOrNull()?.get("details")
+            ?: error("المنتج غير موجود أو مؤرشف")
         val paths=productImages(id)
         require(paths.size<8 || path in paths){"الحد الأقصى 8 صور"}
         if(path !in paths) {
