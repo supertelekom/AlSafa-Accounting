@@ -9,6 +9,7 @@ import java.io.File
 object BackupMediaPaths {
     fun rebase(context:Context,data:JSONObject,media:JSONArray?=null) {
         val available=mutableSetOf<String>()
+        if(media!=null) require(media.length()<=10000) { "فهرس الصور يتجاوز الحد الآمن" }
         if(media!=null) for(i in 0 until media.length()) {
             require(available.add(media.getJSONObject(i).getString("name"))) { "اسم صورة مكرر في النسخة" }
         }
