@@ -897,8 +897,16 @@ open class MainActivity:Activity() {
     }
     private fun sale(){
         sectionHeading("فاتورة مبيعات","اختر الأصناف، راجع السلة ثم احفظ الفاتورة")
-        button("＋ اختيار منتج"){chooseProduct(inStockOnly=true){p->addSaleProduct(p)}}
-        button("▣ مسح باركود لإضافة صنف"){startActivityForResult(Intent(this,BarcodeScanActivity::class.java),66)}
+        button("إضافة أصناف إلى الفاتورة ▾") {
+            val actions=arrayOf("اختيار ساعة من المنتجات","مسح باركود الساعة")
+            AlertDialog.Builder(this).setTitle("طريقة إضافة الصنف")
+                .setItems(actions){_,which->
+                    when(which) {
+                        0->chooseProduct(inStockOnly=true){p->addSaleProduct(p)}
+                        1->startActivityForResult(Intent(this,BarcodeScanActivity::class.java),66)
+                    }
+                }.setNegativeButton("رجوع",null).show()
+        }
         if(basket.isNotEmpty()) {
             val estimatedCost=basket.fold(0L){sum,item->
                 val product=store.product(item.productId)
