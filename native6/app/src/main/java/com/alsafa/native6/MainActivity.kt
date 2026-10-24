@@ -2169,11 +2169,25 @@ button("ميزان المراجعة بين تاريخين"){go("trial-balance")}
                 if(lines.isEmpty()) text("لا توجد حسابات شركاء مسجلة لهذا التقرير.",result,15f)
                 lines.forEach { line->
                     val name=partners.firstOrNull { it["id"]==line.partnerId }?.get("name")?:line.partnerId
-                    text(name,result,20f)
-                    text("ربح الشهر: ${money(line.selectedMonthProfitMinor,curr)}",result)
-                    text("سحوبات الشهر: ${money(line.selectedMonthDrawingsMinor,curr)}",result)
-                    text("المتبقي للشهر: ${money(line.selectedMonthRemainderMinor,curr)}",result)
-                    text("رصيد الأشهر السابقة (من بداية الفترة المحددة): ${money(line.olderUnpaidMinor,curr)}",result)
+                    val partnerCard=column().apply {
+                        background=background(paper,14)
+                        setPadding(dp(15),dp(12),dp(15),dp(12))
+                    }
+                    text(name,partnerCard,19f).setTextColor(gold)
+                    text("ربح الشهر: ${money(line.selectedMonthProfitMinor,curr)}",partnerCard,15f).setTextColor(ink)
+                    text("سحوبات الشهر: ${money(line.selectedMonthDrawingsMinor,curr)}",partnerCard,15f).setTextColor(ink)
+                    text("المتبقي للشهر: ${money(line.selectedMonthRemainderMinor,curr)}",partnerCard,16f).setTextColor(gold)
+                    val previous=TextView(this).apply {
+                        style(this)
+                        text="رصيد الأشهر السابقة (من بداية الفترة المحددة): ${money(line.olderUnpaidMinor,curr)}"
+                        textSize=13f
+                        setTextColor(muted)
+                        background=background(cream,10)
+                    }
+                    partnerCard.addView(previous)
+                    result.addView(partnerCard,LinearLayout.LayoutParams(-1,-2).apply {
+                        setMargins(0,dp(7),0,dp(7))
+                    })
                 }
             } catch(e:Exception){error(e)}
         }
