@@ -24,6 +24,9 @@ object LegacyImportPreflight {
                 val id=item.optString("id").trim()
                 if(id.isEmpty() || !ids.add(id)) problems.add("$section[$i]: missing or duplicate ID")
                 if(section=="products" || section=="maintenanceParts") {
+                    val barcode=item.optString("barcode").trim()
+                    if(barcode.isNotEmpty() && !barcodes.add(barcode))
+                        problems.add("$section[$i]: duplicate barcode")
                     if(item.optString("currency") !in setOf("USD","TRY","SYP"))
                         problems.add("$section[$i]: unsupported currency")
                     val qty=item.optString("stock").toLongOrNull()
