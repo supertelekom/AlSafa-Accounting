@@ -907,7 +907,7 @@ open class MainActivity:Activity() {
         }
     }}
     private fun addSaleProduct(p:Product){
-        form("إضافة ${p.name}"){box->
+        form("إضافة ${p.name} · ${store.productColorLabel(p.id)}"){box->
             val qty=field("الكمية",box,"1",true)
             val price=field("سعر الوحدة ${p.currency}",box,Money(p.price,p.currency).display().substringBefore(' '),true)
             ({
@@ -935,6 +935,8 @@ open class MainActivity:Activity() {
             orientation=LinearLayout.VERTICAL
         }
         text(product.name+" × "+item.qty,details,15f).setTextColor(ink)
+        val colour=store.productColorLabel(product.id)
+        if(colour.isNotBlank()) text(colour+" · "+product.barcode,details,12f)
         text(money(mul(item.qty,item.unitPrice),basketCurrency),details,14f).setTextColor(gold)
         if(product.stock>0L && item.qty<=product.stock) {
             val estimatedCost=java.math.BigInteger.valueOf(product.value)
@@ -987,7 +989,7 @@ open class MainActivity:Activity() {
             {val customerText=customer.text.toString();val phoneText=phone.text.toString();val d=amount(discount,basketCurrency);val pay=amount(paid,basketCurrency);val v=Store.vaults[vault.selectedItemPosition];val items=basket.toList();val c=basketCurrency;val gross=items.fold(0L){sum,item->Math.addExact(sum,Math.multiplyExact(item.qty,item.unitPrice))};require(gross>0 && d>=0 && d<gross){"الإجمالي أو الخصم غير صالح"};require(pay>=0 && pay<=gross-d){"المدفوع يتجاوز المبلغ المستحق بعد الخصم"};require(pay==gross-d || customerText.isNotBlank()){"اسم العميل مطلوب عند وجود مبلغ آجل"};items.forEach{item->require(item.qty<=store.product(item.productId).stock){"تغير مخزون أحد الأصناف؛ راجع السلة"}};val issued=java.time.LocalDate.parse(invoiceDate.text.toString().trim()).toString();val collected=java.time.LocalDate.parse(receiptDate.text.toString().trim()).toString();work{store.sale(items,customerText,phoneText,c,pay,v,d,date=issued,receiptDate=collected);runOnUiThread{basket.clear();page="invoices"}}}
         }}}}
     private fun chooseProduct(inStockOnly:Boolean=false,action:(Product)->Unit){val box=column();val search=field("الاسم أو الباركود",box);val results=column();box.addView(results);val sc=ScrollView(this);sc.addView(box);val dialog=AlertDialog.Builder(this).setTitle("اختيار منتج").setView(sc).setNegativeButton("رجوع",null).create()
-        fun show(){results.removeAllViews();store.products(search.text.toString()).filter{!inStockOnly || it.stock>0}.take(100).forEach{p->button("${p.name} · ${p.stock}",results){dialog.dismiss();action(p)}}};button("بحث",box){show()};button("▣ مسح باركود",box){chooserBarcodeField=search;chooserRefresh={show()};startActivityForResult(Intent(this,BarcodeScanActivity::class.java),68)};dialog.setOnDismissListener{chooserBarcodeField=null;chooserRefresh=null};show();dialog.show()}
+        fun show(){results.removeAllViews();store.searchCatalog(search.text.toString()).filter{!inStockOnly || it.stock>0}.take(100).forEach{p->button(p.name+" · "+store.productColorLabel(p.id)+" · "+p.barcode+" · "+p.stock,results){dialog.dismiss();action(p)}}};button("بحث",box){show()};button("▣ مسح باركود",box){chooserBarcodeField=search;chooserRefresh={show()};startActivityForResult(Intent(this,BarcodeScanActivity::class.java),68)};dialog.setOnDismissListener{chooserBarcodeField=null;chooserRefresh=null};show();dialog.show()}
     private fun invoiceCard(inv:Invoice,parent:LinearLayout) {
         val panel=column().apply {
             setPadding(dp(14),dp(10),dp(14),dp(10))
