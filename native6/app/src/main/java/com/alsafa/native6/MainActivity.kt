@@ -1055,17 +1055,15 @@ open class MainActivity:Activity() {
         val fromDate=field("من تاريخ YYYY-MM-DD",dateFilters,Store.today())
         val toDate=field("إلى تاريخ YYYY-MM-DD",dateFilters,Store.today())
         body.addView(dateFilters)
-        button("اختيار تاريخ البداية من التقويم") {
-            val current=java.time.LocalDate.parse(fromDate.text.toString().trim())
-            android.app.DatePickerDialog(this,{_,year,month,day->
-                fromDate.setText(java.time.LocalDate.of(year,month+1,day).toString())
-            },current.year,current.monthValue-1,current.dayOfMonth).show()
-        }
-        button("اختيار تاريخ النهاية من التقويم") {
-            val current=java.time.LocalDate.parse(toDate.text.toString().trim())
-            android.app.DatePickerDialog(this,{_,year,month,day->
-                toDate.setText(java.time.LocalDate.of(year,month+1,day).toString())
-            },current.year,current.monthValue-1,current.dayOfMonth).show()
+        button("اختيار التاريخ من التقويم ▾") {
+            AlertDialog.Builder(this).setTitle("اختر التاريخ المطلوب")
+                .setItems(arrayOf("تاريخ البداية","تاريخ النهاية")){_,which->
+                    val target=if(which==0)fromDate else toDate
+                    val current=java.time.LocalDate.parse(target.text.toString().trim())
+                    android.app.DatePickerDialog(this,{_,year,month,day->
+                        target.setText(java.time.LocalDate.of(year,month+1,day).toString())
+                    },current.year,current.monthValue-1,current.dayOfMonth).show()
+                }.setNegativeButton("رجوع",null).show()
         }
         val kinds=listOf("all","sale","purchase","repair")
         val statuses=listOf("all","posted","cancelled")
