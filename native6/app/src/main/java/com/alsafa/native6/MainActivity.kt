@@ -1044,6 +1044,10 @@ open class MainActivity:Activity() {
         sectionHeading("فاتورة #"+inv.number+" · "+label(inv.kind),"بيانات داخلية للمحل — لا تظهر تكاليف الشراء في PDF العميل",box)
         text("العميل: "+inv.party.ifBlank { "عميل نقدي" },box,16f).setTextColor(ink)
         text("إجمالي الفاتورة: "+money(inv.total,inv.currency),box,18f).setTextColor(gold)
+        text("حالة الفاتورة: "+label(inv.status),box,14f)
+        if(inv.kind!="purchase") {
+            text("المقبوض فعلياً: "+money(store.paid(inv.id),inv.currency),box,15f).setTextColor(ink)
+        }
         if(inv.kind!="purchase") {
             text("المتبقي للتحصيل: "+money(store.due(inv.id),inv.currency),box,15f).setTextColor(ink)
             text("مستحق الرد: "+money(store.refundable(inv.id),inv.currency),box,14f)
