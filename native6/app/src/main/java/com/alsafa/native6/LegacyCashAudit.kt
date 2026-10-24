@@ -13,12 +13,14 @@ object LegacyCashAudit {
         val invalid=org.json.JSONArray()
         val missingVaults=org.json.JSONArray()
         val negativeRows=org.json.JSONArray()
+        val missingTypes=org.json.JSONArray()
         for(i in 0 until entries.length()) {
             val row=entries.optJSONObject(i) ?: continue
             val currency=row.optString("currency")
             val vault=row.optString("vault")
             val type=row.optString("type")
             if(vault.isBlank()) missingVaults.put(i)
+            if(type.isBlank()) missingTypes.put(i)
             val amount=row.optString("amount").toBigDecimalOrNull()
             if(currency !in setOf("USD","TRY","SYP") || amount==null) {
                 invalid.put(i)
@@ -36,6 +38,7 @@ object LegacyCashAudit {
             .put("invalidRows",invalid)
             .put("missingVaultRows",missingVaults)
             .put("negativeAmountRows",negativeRows)
+            .put("missingTypeRows",missingTypes)
             .put("posting","NONE")
     }
 }
