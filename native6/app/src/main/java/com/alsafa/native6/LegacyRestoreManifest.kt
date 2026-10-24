@@ -24,12 +24,13 @@ object LegacyRestoreManifest {
             root.optInt("formatVersion") >= 2) { "صيغة النسخة الاحتياطية غير مدعومة" }
         val data = root.getJSONObject("data")
         val counts = JSONObject()
+        val missing = org.json.JSONArray()
         var records = 0L
         for (key in collections) {
             val array = data.optJSONArray(key)
-                ?: throw IllegalArgumentException("القسم مفقود من النسخة: $key")
-            counts.put(key, array.length())
-            records += array.length()
+            if (array == null) missing.put(key)
+            counts.put(key, array?.length() ?: 0)
+            records += array?.length() ?: 0
         }
         val sha256 = MessageDigest.getInstance("SHA-256")
             .digest(payload.toByteArray(Charsets.UTF_8))
@@ -42,6 +43,7 @@ object LegacyRestoreManifest {
             .put("sha256", sha256)
             .put("recordCount", records)
             .put("collections", counts)
+            .put("missingCollections", missing)
             .put("financialPostingStatus", "NOT_POSTED")
             .put("readOnly", true)
     }
