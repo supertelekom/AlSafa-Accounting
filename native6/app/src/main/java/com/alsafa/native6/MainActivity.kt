@@ -1018,6 +1018,14 @@ button("＋ مورد"){form("مورد جديد"){box->val n=field("الاسم",b
                 } else icon.setImageResource(android.R.drawable.ic_menu_gallery)
             } else icon.setImageResource(android.R.drawable.ic_menu_gallery)
         } else icon.setImageResource(android.R.drawable.ic_menu_gallery)
+        // A missing or damaged image should remain recoverable from the repair card.
+        if(!icon.hasOnClickListeners()) {
+            icon.contentDescription="إضافة صورة لساعة "+row.getValue("customer")
+            icon.setOnClickListener {
+                photoRepairId=id
+                startActivityForResult(Intent(this,MediaCaptureActivity::class.java),70)
+            }
+        }
         line.addView(icon,LinearLayout.LayoutParams(dp(38),dp(38)).apply { marginEnd=dp(11) })
         val details=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL }
         val heading=TextView(this).apply {
@@ -1421,7 +1429,7 @@ button("＋ مورد"){form("مورد جديد"){box->val n=field("الاسم",b
         text("الطلبات المفتوحة",body,18f)
         val counts=store.repairStatusCounts()
         text("مستلمة: ${counts.getValue("received")} · قيد العمل: ${counts.getValue("in_progress")} · جاهزة: ${counts.getValue("ready")} · مسلّمة: ${counts.getValue("delivered")}",size=15f)
-        store.repairList().filter{it.getValue("status")!="delivered"}.forEach{r->val id=r.getValue("id");repairIdentity(r,body);if(store.repairImage(id).isNullOrBlank())button("إضافة صورة الساعة"){photoRepairId=id;startActivityForResult(Intent(this,MediaCaptureActivity::class.java),70)};button("استخدام قطعة صيانة"){
+        store.repairList().filter{it.getValue("status")!="delivered"}.forEach{r->val id=r.getValue("id");repairIdentity(r,body);if(store.repairImage(id).let { it==null || runCatching { localPhoto(it) }.isFailure })button("إضافة صورة الساعة"){photoRepairId=id;startActivityForResult(Intent(this,MediaCaptureActivity::class.java),70)};button("استخدام قطعة صيانة"){
             chooseProduct(inStockOnly=true){part->
                 form("تركيب قطعة للصيانة"){box->
                     val quantity=field("الكمية",box,"1",true)
