@@ -124,12 +124,20 @@ object LegacySnapshotImport {
                 store.insert("legacy_records","category" to "configuration",
                     "legacy_id" to key,"payload" to source.toString())
             }
+            // Preserve scalar metadata too (the original backup has data.version).
+            val scalarKeys=d.keys().asSequence()
+                .filter { d.optJSONArray(it)==null && d.optJSONObject(it)==null }.toList()
+            scalarKeys.forEach { key ->
+                store.insert("legacy_records","category" to "configuration",
+                    "legacy_id" to key,"payload" to JSONObject()
+                        .put("_legacyValue",d.opt(key)).toString())
+            }
             val deviceSettings=root.optJSONObject("deviceSettings")
             if(deviceSettings!=null) store.insert("legacy_records",
                 "category" to "configuration","legacy_id" to "deviceSettings",
                 "payload" to deviceSettings.toString())
             val expectedArchive=historical.sumOf { d.getJSONArray(it).length() } +
-                configurationKeys.size +
+                configurationKeys.size + scalarKeys.size +
                 (if(deviceSettings!=null) 1 else 0)
             require(store.scalar("SELECT count(*) FROM suppliers")==suppliers.length().toLong()) { "عدد الموردين المنقولين غير مطابق" }
             require(store.scalar("SELECT count(*) FROM events WHERE kind<>?", "OPENING_STOCK")==0L) { "الاستعادة أنشأت حدثاً محاسبياً غير رصيد المخزون الافتتاحي" }
