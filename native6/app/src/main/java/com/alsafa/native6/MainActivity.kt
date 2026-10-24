@@ -105,7 +105,14 @@ open class MainActivity:Activity() {
             if(resultCode==RESULT_OK && !path.isNullOrBlank()){
                 intakePhotoPath=path
                 intakePhotoStatus?.text="تم اختيار صورة الساعة"
-                intakePhotoPreview?.setImageBitmap(android.graphics.BitmapFactory.decodeFile(path))
+                val options=android.graphics.BitmapFactory.Options().apply { inJustDecodeBounds=true }
+                android.graphics.BitmapFactory.decodeFile(path,options)
+                if(options.outWidth>0 && options.outHeight>0) {
+                    var sample=1
+                    while(maxOf(options.outWidth,options.outHeight)/sample>800) sample*=2
+                    intakePhotoPreview?.setImageBitmap(android.graphics.BitmapFactory.decodeFile(path,
+                        android.graphics.BitmapFactory.Options().apply { inSampleSize=sample }))
+                }
             }
             return
         }
