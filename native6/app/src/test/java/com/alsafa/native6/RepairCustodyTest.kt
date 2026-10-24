@@ -68,6 +68,20 @@ class RepairCustodyTest {
         assertTrue(s.uncollectedRepairs().none { it.getValue("id")==repair })
     }
 
+    @Test fun custodyCountMatchesStatusAndMinimumAge() {
+        val s=Store(StoreDb(RuntimeEnvironment.getApplication(),"custody-count-${Store.id()}.db"))
+        val today=LocalDate.now()
+        val old=s.receiveRepair("قديم","0901","Casio","زجاج",today.minusDays(3).toString())
+        s.receiveRepair("جديد","0902","Citizen","بطارية",today.toString())
+        s.repairReady(old)
+        assertEquals(2L,s.uncollectedRepairCount())
+        assertEquals(1L,s.uncollectedRepairCount(minimumDays=2))
+        assertEquals(1L,s.uncollectedRepairCount(status="ready"))
+        assertEquals(1L,s.uncollectedRepairCount(status="received"))
+        assertEquals(s.uncollectedRepairCount(status="ready").toInt(),
+            s.uncollectedRepairs(status="ready").size)
+    }
+
     @Test fun custodyRejectsFutureAsOfDates() {
         val s=Store(StoreDb(RuntimeEnvironment.getApplication(),"custody-${Store.id()}.db"))
         try {
