@@ -1024,13 +1024,8 @@ button("＋ مورد"){form("مورد جديد"){box->val n=field("الاسم",b
         if(thumbnail!=null && path!=null) {
             icon.setImageBitmap(thumbnail)
             icon.setOnClickListener { showRepairPhoto(path) }
-            icon.addOnAttachStateChangeListener(object:View.OnAttachStateChangeListener {
-                override fun onViewAttachedToWindow(view:View) {}
-                override fun onViewDetachedFromWindow(view:View) {
-                    icon.setImageDrawable(null)
-                    if(!thumbnail.isRecycled) thumbnail.recycle()
-                }
-            })
+            // Keep the bitmap while the view exists: Android can detach and reattach
+            // list content during navigation, so recycling here would blank the image.
         } else icon.setImageResource(android.R.drawable.ic_menu_gallery)
         // A missing or damaged image should remain recoverable from the repair card.
         if(!icon.hasOnClickListeners()) {
