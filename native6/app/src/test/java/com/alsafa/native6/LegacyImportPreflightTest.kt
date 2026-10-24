@@ -34,6 +34,11 @@ class LegacyImportPreflightTest {
         assertTrue(LegacyImportPreflight.inspect(payload).any { it.contains("duplicate cash movement ID") })
     }
 
+    @Test fun detectsOverpaidPurchase() {
+        val payload = """{"format":"alsafa-accounting-backup","formatVersion":2,"data":{"products":[],"maintenanceParts":[],"suppliers":[],"repairs":[],"purchases":[{"id":"p1","total":100,"paid":120}]}}"""
+        assertTrue(LegacyImportPreflight.inspect(payload).any { it.contains("paid exceeds invoice total") })
+    }
+
     @Test fun detectsMissingSections() {
         val payload = """{"format":"alsafa-accounting-backup","formatVersion":2,"data":{}}"""
         assertEquals(4, LegacyImportPreflight.inspect(payload).size)
