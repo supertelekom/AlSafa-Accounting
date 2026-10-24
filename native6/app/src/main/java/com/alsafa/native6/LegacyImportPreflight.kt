@@ -61,6 +61,11 @@ object LegacyImportPreflight {
                 val currency=row.optString("currency").trim()
                 if(currency.isNotEmpty() && currency !in validCurrencies)
                     problems.add("$section[$i]: unsupported currency")
+                val field=if(section=="sales" || section=="purchases") "total" else "amount"
+                if(row.has(field) && !row.isNull(field)) {
+                    val amount=row.optString(field).toBigDecimalOrNull()
+                    if(amount==null) problems.add("$section[$i]: invalid $field")
+                }
             }
         }
         val purchaseIds=HashSet<String>()
