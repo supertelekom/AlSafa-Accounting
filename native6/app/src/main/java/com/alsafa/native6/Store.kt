@@ -522,11 +522,12 @@ class Store(val helper:StoreDb) {
     /** Date-scoped invoice lookup; matches customers, sold items, repaired watches and repair parts. */
     fun searchInvoices(
         query:String="",kind:String="all",status:String="all",limit:Int=200,
-        startDate:String=today(),endDate:String=startDate
+        startDate:String=today(),endDate:String=startDate,offset:Int=0
     ):List<Invoice> {
         require(kind in setOf("all","sale","purchase","repair"))
         require(status in setOf("all","posted","cancelled"))
         require(limit in 1..1000)
+        require(offset>=0){"إزاحة النتائج غير صالحة"}
         val from=LocalDate.parse(startDate).toString()
         val until=LocalDate.parse(endDate).toString()
         require(from<=until){"تاريخ البداية يجب ألا يتجاوز تاريخ النهاية"}
@@ -557,7 +558,7 @@ class Store(val helper:StoreDb) {
         if(status!="all"){conditions.add("i.status=?");args.add(status)}
         val sql="""SELECT i.* FROM invoices i JOIN events e ON e.id=i.id
             WHERE ${conditions.joinToString(" AND ")}
-            ORDER BY e.date DESC,i.number DESC LIMIT $limit"""
+            ORDER BY e.date DESC,i.number DESC LIMIT $limit OFFSET $offset"""
         return rows(sql,*args.toTypedArray()).map { row->
             Invoice(row.getValue("id"),row.getValue("number").toLong(),
                 row.getValue("kind"),row.getValue("party"),
