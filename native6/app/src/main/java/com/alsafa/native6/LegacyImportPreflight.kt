@@ -53,6 +53,16 @@ object LegacyImportPreflight {
                 }
             }
         }
+        val validCurrencies=setOf("USD","TRY","SYP")
+        for(section in listOf("sales","purchases","expenses","partnerWithdrawals","payments")) {
+            val records=data.optJSONArray(section) ?: continue
+            for(i in 0 until records.length()) {
+                val row=records.optJSONObject(i) ?: continue
+                val currency=row.optString("currency").trim()
+                if(currency.isNotEmpty() && currency !in validCurrencies)
+                    problems.add("$section[$i]: unsupported currency")
+            }
+        }
         val purchaseIds=HashSet<String>()
         data.optJSONArray("purchases")?.let { purchases ->
             for(i in 0 until purchases.length()) {
