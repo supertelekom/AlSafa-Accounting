@@ -90,7 +90,9 @@ class MediaCaptureActivity : Activity() {
             }
         })
         setContentView(layout)
-        imagePath?.let { show(it) }
+        imagePath?.let { path ->
+            if (File(path).isFile) show(path) else imagePath = null
+        }
     }
 
     override fun onDestroy() {
