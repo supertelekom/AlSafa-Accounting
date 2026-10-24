@@ -126,6 +126,17 @@ object LegacyImportPreflight {
                     problems.add("payments[$i]: unknown purchase reference")
             }
         }
+        data.optJSONArray("supplierLedger")?.let { ledger ->
+            for(i in 0 until ledger.length()) {
+                val row=ledger.optJSONObject(i) ?: continue
+                val amount=row.optString("amount").toBigDecimalOrNull()
+                if(amount==null || amount.signum()<0)
+                    problems.add("supplierLedger[$i]: invalid amount")
+                val currency=row.optString("currency")
+                if(currency.isNotBlank() && currency !in validCurrencies)
+                    problems.add("supplierLedger[$i]: unsupported currency")
+            }
+        }
         val supplierIds=HashSet<String>()
         data.optJSONArray("suppliers")?.let { suppliers ->
             for(i in 0 until suppliers.length()) {
