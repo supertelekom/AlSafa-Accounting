@@ -1095,10 +1095,10 @@ open class MainActivity:Activity() {
             text("الفترة: "+start+" ← "+end+" · الصفحة "+(pageIndex+1)+
                 " · الفواتير المعروضة: "+results.size,output,14f)
             // Per-page gross totals are separated by currency, not presented as cash receipts.
-            results.groupBy { it.currency }.forEach { (currency,invoices)->
+            results.groupBy { it.kind to it.currency }.forEach { (key,invoices)->
                 val gross=invoices.fold(0L){sum,inv->Math.addExact(sum,inv.total)}
-                text("قيم فواتير الصفحة ("+currency.name+"): "+
-                    money(gross,currency)+" · "+invoices.size+" فاتورة",output,13f)
+                text("إجمالي "+label(key.first)+" ("+key.second.name+"): "+
+                    money(gross,key.second)+" · "+invoices.size+" فاتورة",output,13f)
             }
             if(results.isEmpty()) {
                 text(if(pageIndex>0)"لا توجد فواتير إضافية في هذه الصفحة؛ ارجع للصفحة السابقة."
