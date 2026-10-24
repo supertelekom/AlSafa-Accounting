@@ -1814,7 +1814,7 @@ class Store(val helper:StoreDb) {
         return rows("""SELECT * FROM repairs WHERE date>=? AND date<=?
             AND (?='all' OR status=?)
             AND (instr(lower(customer),lower(?))>0 OR instr(lower(phone),lower(?))>0
-            OR (?<>'' AND instr(replace(replace(replace(replace(replace(phone,' ',''),'-',''),'+',''),'(',''),')',''),?)>0)
+            OR (?<>'' AND instr(replace(replace(replace(replace(replace(replace(replace(phone,' ',''),'-',''),'+',''),'(',''),')',''),'/',''),'.',''),?)>0)
             OR instr(lower(watch),lower(?))>0 OR instr(lower(problem),lower(?))>0
             OR instr(lower(id),lower(?))>0)
             ORDER BY date DESC,id DESC LIMIT $limit OFFSET $offset""",
