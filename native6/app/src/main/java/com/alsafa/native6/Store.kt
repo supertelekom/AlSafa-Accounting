@@ -586,6 +586,16 @@ class Store(val helper:StoreDb) {
         return out.toList()
     }
 
+    fun primaryProductImage(id:String,path:String) = transaction {
+        require(path in productImages(id)){"الصورة غير مرتبطة بالمنتج"}
+        val raw=rows("SELECT details FROM products WHERE id=?",id).single().getValue("details")
+        val all=listOf(path)+productImages(id).filterNot { it==path }
+        val json=JSONObject(raw).put("imagePath",path)
+            .put("imagePaths",org.json.JSONArray(all))
+        db.execSQL("UPDATE products SET details=? WHERE id=?",arrayOf(json.toString(),id))
+        event(id(),"PRODUCT_IMAGE",today(),"تغيير الصورة الرئيسية للمنتج $id")
+    }
+
     fun unlinkProductImage(id:String,path:String) = transaction {
         val raw=rows("SELECT details FROM products WHERE id=?",id).single().getValue("details")
         val existing=productImages(id)
