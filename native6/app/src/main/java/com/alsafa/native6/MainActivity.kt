@@ -874,6 +874,20 @@ open class MainActivity:Activity() {
                 box.addView(thumbnail)
             }
             val gallery=store.productImages(p.id)
+            if(gallery.isNotEmpty()) {
+                button("إدارة صور المنتج وحذف ارتباط صورة",box) {
+                    AlertDialog.Builder(this).setTitle("صور المنتج")
+                        .setItems(gallery.mapIndexed { i,_ -> "صورة "+(i+1) }.toTypedArray()) { _,index ->
+                            val selected=gallery[index]
+                            AlertDialog.Builder(this).setTitle("فصل الصورة عن المنتج")
+                                .setMessage("سيُزال ارتباط الصورة بهذا المنتج دون حذف الملف من النسخة الاحتياطية.")
+                                .setNegativeButton("رجوع",null)
+                                .setPositiveButton("تأكيد") { _,_ ->
+                                    work { store.unlinkProductImage(p.id,selected) }
+                                }.show()
+                        }.setNegativeButton("رجوع",null).show()
+                }
+            }
             if(gallery.size>1) {
                 text("صور المنتج: "+gallery.size+" من 8",box,13f)
                 gallery.drop(1).forEachIndexed { index,path ->
