@@ -1826,7 +1826,8 @@ class Store(val helper:StoreDb) {
                     OR instr(lower(p.model),lower(?))>0
                     OR instr(lower(p.brand),lower(?))>0)))
             ORDER BY date DESC,id DESC LIMIT $limit OFFSET $offset""",
-            first,last,status,status,needle,needle,phoneNeedle,phoneNeedle,needle,needle,needle)
+            first,last,status,status,needle,needle,phoneNeedle,phoneNeedle,needle,needle,needle,
+            needle,needle,needle,needle)
     }
 
     /** Uncollected repairs are operational custody, not cash or accounts receivable. */
