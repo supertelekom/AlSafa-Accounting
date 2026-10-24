@@ -29,12 +29,13 @@ object LegacySnapshotImport {
         val payments=LegacyPaymentLinkAudit.inspect(payload)
         val returns=LegacyReturnLinkAudit.inspect(payload)
         val brokenPaymentLinks=payments.getJSONArray("unresolvedReferenceRows").length()+payments.getJSONArray("missingReferenceRows").length()
+        val crossCurrencyPaymentCount=payments.getJSONArray("crossCurrencyPaymentRows").length()
         val brokenReturnLinks=returns.getJSONArray("unresolvedReferenceRows").length()+returns.getJSONArray("missingReferenceRows").length()
         val products=d.getJSONArray("products")
         val parts=d.getJSONArray("maintenanceParts")
         val suppliers=d.getJSONArray("suppliers")
         val repairs=d.getJSONArray("repairs")
-        return "أخطاء الاستيراد: $blocking، تحذيرات مالية مؤرشفة: $warnings، فروقات إقفال فعلية: $cashIssues، تواريخ إقفال غير صالحة: $invalidClosingDates، تواريخ إقفال مكررة: $duplicateClosingDates، دفعات تحتاج مطابقة مرجع: $brokenPaymentLinks، مرتجعات تحتاج مطابقة مرجع: $brokenReturnLinks. بصمة النسخة: ${manifest.getString("sha256").take(16)}…، إجمالي السجلات: ${manifest.getLong("recordCount")}. مخزون الساعات: ${products.length()}، قطع الصيانة: ${parts.length()}، الموردون: ${suppliers.length()}، سجل الصيانة: ${repairs.length()}. " +
+        return "أخطاء الاستيراد: $blocking، تحذيرات مالية مؤرشفة: $warnings، فروقات إقفال فعلية: $cashIssues، تواريخ إقفال غير صالحة: $invalidClosingDates، تواريخ إقفال مكررة: $duplicateClosingDates، دفعات تحتاج مطابقة مرجع: $brokenPaymentLinks، دفعات بعملة قبض مختلفة: $crossCurrencyPaymentCount، مرتجعات تحتاج مطابقة مرجع: $brokenReturnLinks. بصمة النسخة: ${manifest.getString("sha256").take(16)}…، إجمالي السجلات: ${manifest.getLong("recordCount")}. مخزون الساعات: ${products.length()}، قطع الصيانة: ${parts.length()}، الموردون: ${suppliers.length()}، سجل الصيانة: ${repairs.length()}. " +
             "سيُنقل المخزون والموردون والصيانة، وتُحفظ الفواتير والحركات القديمة كأرشيف قابل للقراءة فقط، دون احتسابها في الأرصدة أو الأرباح."
     }
     fun import(store:Store,payload:String):String {
