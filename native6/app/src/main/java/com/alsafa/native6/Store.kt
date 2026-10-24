@@ -550,7 +550,9 @@ class Store(val helper:StoreDb) {
                 OR (?<>'' AND replace(replace(replace(replace(replace(i.phone,' ',''),'-',''),'+',''),'(',''),')','') LIKE ? ESCAPE '!')
                 OR i.id=? OR (i.kind='repair' AND i.notes LIKE ? ESCAPE '!')
                 OR EXISTS(SELECT 1 FROM invoice_lines l
-                    WHERE l.invoice_id=i.id AND l.name LIKE ? ESCAPE '!')
+                    LEFT JOIN products lp ON lp.id=l.product_id
+                    WHERE l.invoice_id=i.id AND (l.name LIKE ? ESCAPE '!'
+                    OR lp.barcode LIKE ? ESCAPE '!' OR lp.model LIKE ? ESCAPE '!'))
                 OR (i.kind='repair' AND EXISTS(
                     SELECT 1 FROM repairs rp WHERE rp.invoice_id=i.id
                     AND (rp.watch LIKE ? ESCAPE '!' OR rp.problem LIKE ? ESCAPE '!'
@@ -560,10 +562,11 @@ class Store(val helper:StoreDb) {
                         JOIN products p ON p.id=sm.product_id
                         WHERE pe.kind='REPAIR_PART'
                         AND pe.memo='REPAIR_PART:' || rp.id
-                        AND p.name LIKE ? ESCAPE '!'))))
+                        AND (p.name LIKE ? ESCAPE '!' OR p.barcode LIKE ? ESCAPE '!'
+                        OR p.model LIKE ? ESCAPE '!')))))
                 )""")
             args.addAll(listOf(match,match,match,if(phoneSearch)phoneNeedle else "",
-                if(phoneSearch)"%$phoneNeedle%" else "",needle,match,match,match,match,match,match,match))
+                if(phoneSearch)"%$phoneNeedle%" else "",needle,match,match,match,match,match,match,match,match,match,match,match))
         }
         if(kind!="all"){conditions.add("i.kind=?");args.add(kind)}
         if(status!="all"){conditions.add("i.status=?");args.add(status)}
