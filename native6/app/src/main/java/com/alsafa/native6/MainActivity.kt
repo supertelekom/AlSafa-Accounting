@@ -1080,12 +1080,14 @@ open class MainActivity:Activity() {
                 text("سعر البيع: "+money(net,inv.currency)+" · تكلفة الصنف: "+money(cost,inv.currency),box,13f)
             }
             text("إجمالي تكلفة الأصناف عند البيع: "+money(costTotal,inv.currency),box,15f).setTextColor(ink)
-            val returned=store.rows("SELECT invoice_id FROM returns WHERE invoice_id=? LIMIT 1",inv.id).isNotEmpty()
-            if(returned) {
-                text("توجد مرتجعات لهذه الفاتورة؛ القيم أعلاه تخص البيع الأصلي، وليست صافي الربح بعد المرتجعات.",box,13f)
-            } else {
-                text("هامش الربح قبل المصاريف: "+money(Math.subtractExact(netTotal,costTotal),inv.currency),box,16f).setTextColor(gold)
+            val profit=store.saleProfitAfterReturns(inv.id)
+            if(profit.getValue("returned_revenue")>0L) {
+                text("قيمة المرتجعات: "+money(profit.getValue("returned_revenue"),inv.currency),box,14f)
+                text("تكلفة الأصناف المرتجعة: "+money(profit.getValue("returned_cost"),inv.currency),box,14f)
             }
+            text("صافي المبيع بعد المرتجعات: "+money(profit.getValue("net_revenue"),inv.currency),box,15f).setTextColor(ink)
+            text("صافي تكلفة الأصناف: "+money(profit.getValue("net_cost"),inv.currency),box,15f).setTextColor(ink)
+            text("هامش الربح بعد المرتجعات وقبل المصاريف: "+money(profit.getValue("gross_margin"),inv.currency),box,16f).setTextColor(gold)
             if(netTotal!=inv.total)text("ملاحظة: مجموع صافي الأصناف لا يساوي إجمالي الفاتورة؛ يلزم تدقيق السجل.",box,12f)
         }
         if(inv.kind=="repair") {
