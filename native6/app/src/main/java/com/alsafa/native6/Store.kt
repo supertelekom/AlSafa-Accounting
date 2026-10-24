@@ -1799,6 +1799,25 @@ class Store(val helper:StoreDb) {
         require(search.length<=200){"نص البحث طويل جداً"}
         return rows("SELECT * FROM repairs WHERE (?='all' OR status=?) AND (instr(lower(customer),lower(?))>0 OR instr(lower(phone),lower(?))>0 OR instr(lower(watch),lower(?))>0 OR instr(lower(problem),lower(?))>0 OR instr(lower(id),lower(?))>0) ORDER BY date DESC,id DESC",status,status,search,search,search,search,search)
     }
+    fun repairListByDates(
+        query:String="",status:String="all",from:String=today(),until:String=from,
+        limit:Int=100,offset:Int=0
+    ):List<Map<String,String>> {
+        require(status in setOf("all","received","in_progress","ready","delivered"))
+        require(query.length<=200 && limit in 1..500 && offset in 0..1000000)
+        val first=LocalDate.parse(from).toString()
+        val last=LocalDate.parse(until).toString()
+        require(first<=last && last<=today()){"فترة البحث غير صالحة"}
+        val needle=query.trim()
+        return rows("""SELECT * FROM repairs WHERE date>=? AND date<=?
+            AND (?='all' OR status=?)
+            AND (instr(lower(customer),lower(?))>0 OR instr(lower(phone),lower(?))>0
+            OR instr(lower(watch),lower(?))>0 OR instr(lower(problem),lower(?))>0
+            OR instr(lower(id),lower(?))>0)
+            ORDER BY date DESC,id DESC LIMIT $limit OFFSET $offset""",
+            first,last,status,status,needle,needle,needle,needle,needle)
+    }
+
     fun repairDetail(id:String):Map<String,String> =
         rows("SELECT * FROM repairs WHERE id=?",id).single()
     /** Net repair margin is invoice revenue minus consumed parts, not collected cash. */
