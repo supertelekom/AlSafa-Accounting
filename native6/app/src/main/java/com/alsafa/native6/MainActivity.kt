@@ -1100,7 +1100,10 @@ open class MainActivity:Activity() {
                 text("قيم فواتير الصفحة ("+currency.name+"): "+
                     money(gross,currency)+" · "+invoices.size+" فاتورة",output,13f)
             }
-            if(results.isEmpty())text("لا توجد فواتير مطابقة ضمن الفترة المختارة.",output,14f)
+            if(results.isEmpty()) {
+                text(if(pageIndex>0)"لا توجد فواتير إضافية في هذه الصفحة؛ ارجع للصفحة السابقة."
+                    else "لا توجد فواتير مطابقة ضمن الفترة المختارة.",output,14f)
+            }
             var previousDate=""
             results.forEach{inv->
                 val day=dates[inv.id].orEmpty()
