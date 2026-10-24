@@ -1089,7 +1089,19 @@ open class MainActivity:Activity() {
             results.forEach{inv->invoiceCard(inv,output)}
         }
         button("بحث في الفواتير"){try{show()}catch(e:Exception){error(e)}}
-        show()
+        button("آخر 7 أيام") {
+            val today=java.time.LocalDate.now()
+            fromDate.setText(today.minusDays(6).toString())
+            toDate.setText(today.toString())
+            try{show()}catch(e:Exception){error(e)}
+        }
+        button("الشهر الحالي") {
+            val today=java.time.LocalDate.now()
+            fromDate.setText(today.withDayOfMonth(1).toString())
+            toDate.setText(today.toString())
+            try{show()}catch(e:Exception){error(e)}
+        }
+        try{show()}catch(e:Exception){error(e)}
     }
     private fun shareInvoicePdf(inv:Invoice) {
         if(busy)return
