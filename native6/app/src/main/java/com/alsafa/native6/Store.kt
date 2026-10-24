@@ -1824,7 +1824,8 @@ class Store(val helper:StoreDb) {
         require(!day.isAfter(LocalDate.now()) && minimumDays in 0..36500)
         return rows("""SELECT id,customer,phone,watch,problem,status,date,details
             FROM repairs WHERE status IN ('received','in_progress','ready')
-            AND date<=? ORDER BY date ASC,id ASC""",day.toString()).mapNotNull { row ->
+            AND date<=? AND date<=? ORDER BY date ASC,id ASC""",day.toString(),
+            day.minusDays(minimumDays).toString()).mapNotNull { row ->
                 val age=java.time.temporal.ChronoUnit.DAYS.between(
                     LocalDate.parse(row.getValue("date")),day)
                 if(age<minimumDays) null else row+mapOf("age_days" to age.toString())
