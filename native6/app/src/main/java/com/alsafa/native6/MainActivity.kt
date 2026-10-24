@@ -1086,10 +1086,9 @@ open class MainActivity:Activity() {
             val hasNext=fetched.size>pageSize
             val results=fetched.take(pageSize)
             val dates=if(results.isEmpty()) emptyMap<String,String>() else {
-                val ids=results.map { it.id }.toSet()
-                store.rows("""SELECT i.id,e.date FROM invoices i
-                    JOIN events e ON e.id=i.id WHERE e.date>=? AND e.date<=?""",start,end)
-                    .filter { it.getValue("id") in ids }
+                val ids=results.map { it.id }
+                val placeholders=ids.joinToString(","){"?"}
+                store.rows("""SELECT id,date FROM events WHERE id IN ($placeholders)""",*ids.toTypedArray())
                     .associate { it.getValue("id") to it.getValue("date") }
             }
             output.removeAllViews()
