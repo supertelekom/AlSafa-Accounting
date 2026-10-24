@@ -64,11 +64,56 @@ open class MainActivity:Activity() {
         }
     }
     private fun dp(n:Int)=(n*resources.displayMetrics.density).toInt()
-    private fun style(v:TextView){v.typeface=font;v.setTextColor(ink);v.textSize=18f;v.setPadding(dp(12),dp(10),dp(12),dp(10))}
-    private fun background(color:Int=Color.rgb(255,253,249))=GradientDrawable().apply{setColor(color);cornerRadius=dp(14).toFloat();setStroke(dp(1),Color.rgb(234,223,206))}
-    private fun column()=LinearLayout(this).apply{orientation=LinearLayout.VERTICAL;layoutDirection=View.LAYOUT_DIRECTION_RTL;setPadding(dp(12),dp(8),dp(12),dp(8))}
-    private fun text(value:String,parent:LinearLayout=body,size:Float=18f)=TextView(this).also{style(it);it.textSize=size;it.text=value;parent.addView(it)}
-    private fun button(label:String,parent:LinearLayout=body,action:()->Unit)=Button(this).also{style(it);it.text=label;it.isAllCaps=false;it.background=background();parent.addView(it,LinearLayout.LayoutParams(-1,dp(62)).apply{setMargins(0,dp(4),0,dp(4))});it.setOnClickListener{if(!busy)action()}}
+    // Native interpretation of the v3.9.359 CSS tokens (no WebView).
+    private val paper get()=Color.rgb(255,253,249)
+    private val cream get()=Color.rgb(248,243,235)
+    private val sand get()=Color.rgb(239,228,208)
+    private val muted get()=Color.rgb(138,123,108)
+    private val lineColor get()=Color.rgb(234,223,206)
+    private fun style(v:TextView){
+        v.typeface=font
+        v.setTextColor(ink)
+        v.textSize=14f
+        v.setPadding(dp(12),dp(9),dp(12),dp(9))
+        if(v is EditText){
+            v.textSize=15f
+            v.setSingleLine(true)
+            v.background=background(paper)
+            v.setPadding(dp(14),dp(12),dp(14),dp(12))
+        }
+    }
+    private fun background(color:Int=paper,radius:Int=14)=GradientDrawable().apply{
+        setColor(color);cornerRadius=dp(radius).toFloat();setStroke(dp(1),lineColor)
+    }
+    private fun goldButtonBackground()=GradientDrawable(
+        GradientDrawable.Orientation.TL_BR,
+        intArrayOf(Color.rgb(179,131,50),Color.rgb(139,96,31))
+    ).apply { cornerRadius=dp(12).toFloat() }
+    private fun column()=LinearLayout(this).apply{
+        orientation=LinearLayout.VERTICAL
+        layoutDirection=View.LAYOUT_DIRECTION_RTL
+        setPadding(dp(15),dp(10),dp(15),dp(10))
+    }
+    private fun text(value:String,parent:LinearLayout=body,size:Float=18f)=TextView(this).also{
+        style(it);it.textSize=size;it.text=value
+        if(size<=15f)it.setTextColor(muted)
+        parent.addView(it)
+    }
+    private fun button(label:String,parent:LinearLayout=body,action:()->Unit)=Button(this).also{
+        style(it)
+        it.text=label
+        it.textSize=13f
+        it.isAllCaps=false
+        val primary=label.startsWith("＋") || label.startsWith("⚡") || label.startsWith("◆") ||
+            label.startsWith("استلام صيانة") || label.startsWith("حفظ")
+        it.background=if(primary)goldButtonBackground() else background(paper,14)
+        it.setTextColor(if(primary)Color.WHITE else ink)
+        it.gravity=Gravity.CENTER_VERTICAL or Gravity.RIGHT
+        it.setPadding(dp(15),0,dp(15),0)
+        it.minHeight=dp(44)
+        parent.addView(it,LinearLayout.LayoutParams(-1,dp(52)).apply{setMargins(0,dp(5),0,dp(5))})
+        it.setOnClickListener{if(!busy)action()}
+    }
     private fun field(label:String,parent:LinearLayout,value:String="",numeric:Boolean=false):EditText {text(label,parent,15f);return EditText(this).also{style(it);it.setSingleLine();if(numeric)it.inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL;val isScreen=::body.isInitialized && parent===body;val restored=if(isScreen)savedInputs?.getOrNull(visibleInputs.size) else null;it.setText(restored?:value);if(isScreen)visibleInputs.add(it);parent.addView(it)}}
     private fun select(label:String,items:List<String>,parent:LinearLayout):Spinner {text(label,parent,15f);return Spinner(this).also{it.adapter=ArrayAdapter(this,android.R.layout.simple_spinner_dropdown_item,items);parent.addView(it)}}
     private fun form(title:String,submit:String="حفظ",build:(LinearLayout)->(()->Unit)) {
