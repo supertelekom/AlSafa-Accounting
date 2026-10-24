@@ -40,6 +40,20 @@ class RepairCustodyTest {
         assertTrue(s.uncollectedRepairs(minimumDays=1,limit=2,offset=6).isEmpty())
     }
 
+    @Test fun custodyStatusFilterSeparatesReadyFromReceived() {
+        val s=Store(StoreDb(RuntimeEnvironment.getApplication(),"custody-status-${Store.id()}.db"))
+        val day=LocalDate.now().toString()
+        val ready=s.receiveRepair("عميل جاهز","09331","Casio","بطارية",day)
+        s.receiveRepair("عميل جديد","09332","Citizen","زجاج",day)
+        s.repairReady(ready)
+        val readyOnly=s.uncollectedRepairs(status="ready")
+        val receivedOnly=s.uncollectedRepairs(status="received")
+        assertEquals(1,readyOnly.size)
+        assertEquals(ready,readyOnly.single().getValue("id"))
+        assertEquals(1,receivedOnly.size)
+        assertEquals(2,s.uncollectedRepairs(status="all").size)
+    }
+
     @Test fun custodyRejectsFutureAsOfDates() {
         val s=Store(StoreDb(RuntimeEnvironment.getApplication(),"custody-${Store.id()}.db"))
         try {
