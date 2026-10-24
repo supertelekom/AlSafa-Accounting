@@ -49,6 +49,7 @@ object LegacyDebtReconciliation {
             .put("supplierLedgerRows",data.optJSONArray("supplierLedger")?.length() ?: 0)
             .put("returnRows",data.optJSONArray("returns")?.length() ?: 0)
             .put("paymentReferenceVerification","PENDING")
+            .put("returnReferenceVerification","PENDING")
             .put("posting","NONE")
             .put("warning","مبالغ الفواتير المتبقية مؤشرات أولية؛ يجب مطابقة المرتجعات ودفتر الموردين قبل إثبات الديون")
     }
