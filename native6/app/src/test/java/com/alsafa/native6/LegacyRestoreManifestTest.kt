@@ -23,10 +23,10 @@ class LegacyRestoreManifestTest {
         assertEquals(64, manifest.getString("sha256").length)
         assertEquals("NOT_POSTED", manifest.getString("financialPostingStatus"))
     }
-    @Test fun missingCollectionFailsClosed() {
+    @Test fun missingOptionalCollectionIsReported() {
         val payload = backup().replace("\"shiftHandovers\":[]", "\"other\":[]")
-        assertThrows(IllegalArgumentException::class.java) {
-            LegacyRestoreManifest.inspect(payload)
-        }
+        val manifest = LegacyRestoreManifest.inspect(payload)
+        assertEquals(1, manifest.getJSONArray("missingCollections").length())
+        assertEquals("shiftHandovers", manifest.getJSONArray("missingCollections").getString(0))
     }
 }
