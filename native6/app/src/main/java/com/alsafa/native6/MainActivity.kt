@@ -152,7 +152,12 @@ open class MainActivity:Activity() {
             barcodeTarget=null
             return
         }
-        if(requestCode==68){chooserBarcodeField?.setText(code);chooserRefresh?.invoke();return}
+        if(requestCode==68){
+            chooserBarcodeField?.setText(code)
+            chooserBarcodeField?.setSelection(chooserBarcodeField?.text?.length ?: 0)
+            chooserRefresh?.invoke()
+            return
+        }
         val matches=store.products(code).filter { it.barcode==code }
         when {
             matches.size>1 -> AlertDialog.Builder(this).setTitle("باركود مكرر")
