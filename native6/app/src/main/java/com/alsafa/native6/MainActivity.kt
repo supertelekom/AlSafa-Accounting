@@ -496,7 +496,14 @@ open class MainActivity:Activity() {
             val photo=store.productImage(p.id)
             if(photo!=null && java.io.File(photo).isFile){
                 val thumbnail=android.widget.ImageView(this).apply {
-                    setImageBitmap(android.graphics.BitmapFactory.decodeFile(photo))
+                    val bounds=android.graphics.BitmapFactory.Options().apply { inJustDecodeBounds=true }
+                    android.graphics.BitmapFactory.decodeFile(photo,bounds)
+                    if(bounds.outWidth>0 && bounds.outHeight>0) {
+                        var sample=1
+                        while(maxOf(bounds.outWidth,bounds.outHeight)/sample>480) sample*=2
+                        setImageBitmap(android.graphics.BitmapFactory.decodeFile(photo,
+                            android.graphics.BitmapFactory.Options().apply { inSampleSize=sample }))
+                    }
                     adjustViewBounds=true
                     maxHeight=dp(160)
                     contentDescription="اضغط لتكبير صورة المنتج"
