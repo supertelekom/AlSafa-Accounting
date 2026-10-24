@@ -1396,21 +1396,21 @@ button("＋ مورد"){form("مورد جديد"){box->val n=field("الاسم",b
                         shareInvoicePdf(store.invoice(invoice.getValue("id")))
                     }catch(e:Exception){error(e)}
                 }
+                repairIdentity(row,results)
                 button("إرسال صورة الصيانة عبر واتساب",results){
                     try {
                         val path=store.repairImage(id) ?: throw IllegalStateException("لا توجد صورة لهذا الطلب")
-                        CustomerShare.send(this,java.io.File(path),"image/jpeg","صورة ساعة الصيانة - الصفا للساعات")
+                        CustomerShare.send(this,localPhoto(path),"image/jpeg","صورة ساعة الصيانة - الصفا للساعات")
                     }catch(e:Exception){error(e)}
                 }
                 button("صورة الصيانة",results){
                     photoRepairId=id
                     startActivityForResult(Intent(this,MediaCaptureActivity::class.java),70)
                 }
-                repairIdentity(row,results)
                 button("تفاصيل الصيانة",results){val detail=store.repairDetail(id);val invoice=store.repairInvoice(id);val profit=store.repairProfit(id);val profitText=if(profit==null)"" else {val c=Currency.valueOf(profit.getValue("currency"));"\nأجرة الصيانة: "+money(profit.getValue("revenue").toLong(),c)+"\nتكلفة القطع: "+money(profit.getValue("parts_cost").toLong(),c)+"\nهامش الصيانة: "+money(profit.getValue("margin").toLong(),c)+"\nالمقبوض: "+money(profit.getValue("collected").toLong(),c)+"\nالمتبقي: "+money(profit.getValue("outstanding").toLong(),c)};val info="العميل: "+detail.getValue("customer")+"\nالهاتف: "+detail.getValue("phone")+"\nالساعة: "+detail.getValue("watch")+"\nالمشكلة: "+detail.getValue("problem")+"\nالحالة: "+label(detail.getValue("status"))+"\nالفاتورة: "+(invoice?.get("number")?:"لا توجد")+profitText;AlertDialog.Builder(this).setTitle("تفاصيل الصيانة").setMessage(info)
                     .setNeutralButton("عرض الصورة"){_,_->
                         val path=store.repairImage(id)
-                        if(path==null || !java.io.File(path).isFile){
+                        if(path==null || runCatching { localPhoto(path) }.isFailure){
                             Toast.makeText(this,"لا توجد صورة محفوظة لهذا الطلب",Toast.LENGTH_SHORT).show()
                         }else{
                             showRepairPhoto(path)
