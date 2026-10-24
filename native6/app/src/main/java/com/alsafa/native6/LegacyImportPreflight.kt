@@ -9,6 +9,7 @@ object LegacyImportPreflight {
         val root=JSONObject(payload)
         require(root.optString("format")=="alsafa-accounting-backup")
         val data=root.getJSONObject("data")
+        require(root.optInt("formatVersion")>=2){"Unsupported legacy backup version"}
         val problems=mutableListOf<String>()
         val ids=HashSet<String>()
         val barcodes=HashSet<String>()
