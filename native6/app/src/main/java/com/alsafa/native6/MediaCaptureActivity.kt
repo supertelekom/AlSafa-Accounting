@@ -95,6 +95,7 @@ class MediaCaptureActivity : Activity() {
 
     override fun onDestroy() {
         if (isFinishing && !confirmed) {
+            pendingCameraPath?.let { File(it).delete() }
             imagePath?.let { path ->
                 val file = File(path)
                 if (file.canonicalFile.parentFile == File(filesDir, "images").canonicalFile) file.delete()
