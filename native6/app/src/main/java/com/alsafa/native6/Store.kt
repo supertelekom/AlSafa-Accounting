@@ -614,9 +614,13 @@ class Store(val helper:StoreDb) {
         require(path.isNotBlank() && path.length<=1024){"مسار الصورة غير صالح"}
         val raw=rows("SELECT details FROM products WHERE id=?",id).singleOrNull()?.get("details")
             ?: error("المنتج غير موجود")
+        val current=productImages(id)
+        val all=listOf(path)+current.filterNot { it==path }
+        require(all.size<=8){"الحد الأقصى 8 صور"}
         val details=JSONObject(raw).put("imagePath",path)
+            .put("imagePaths",org.json.JSONArray(all))
         db.execSQL("UPDATE products SET details=? WHERE id=?",arrayOf(details.toString(),id))
-        event(id(),"PRODUCT_IMAGE",today(),"تحديث صورة المنتج $id")
+        event(id(),"PRODUCT_IMAGE",today(),"تحديد الصورة الأساسية للمنتج $id")
     }
     fun editProduct(id:String,name:String,barcode:String,price:Long) = transaction {
         require(scalar("SELECT count(*) FROM products WHERE id=?",id)==1L){"المنتج غير موجود"}
