@@ -125,7 +125,11 @@ open class MainActivity:Activity() {
             val path=data?.getStringExtra(MediaCaptureActivity.EXTRA_RESULT_PATH)
             val id=photoRepairId
             photoRepairId=null
-            if(resultCode==RESULT_OK && !path.isNullOrBlank() && id!=null) work{store.setRepairImage(id,path)}
+            if(resultCode==RESULT_OK && !path.isNullOrBlank() && id!=null) {
+                val image=java.io.File(path)
+                if(image.isFile && image.length()>0L) work{store.setRepairImage(id,path)}
+                else error(IllegalArgumentException("صورة الصيانة غير موجودة أو فارغة"))
+            }
             return
         }
         if(requestCode==69){
