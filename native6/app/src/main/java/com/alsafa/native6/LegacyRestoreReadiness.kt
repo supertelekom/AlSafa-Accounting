@@ -34,7 +34,7 @@ object LegacyRestoreReadiness {
         flag(closings.getJSONArray("invalidDateRows").length()>0,"CLOSING_DATE_INVALID")
         flag(closings.getJSONArray("duplicateClosingDates").length()>0,"CLOSING_DATE_DUPLICATE")
         return JSONObject()
-            .put("archiveImportPermitted",true)
+            .put("archiveImportPermitted",LegacyImportPreflight.inspectInventory(payload).isEmpty())
             .put("financialActivationPermitted",false)
             .put("financialBlockers",blockers)
             .put("financialBlockerCount",blockers.length())
