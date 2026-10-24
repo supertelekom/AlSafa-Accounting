@@ -523,9 +523,40 @@ class Store(val helper:StoreDb) {
             details=details.toString(),brand=parent.getValue("brand"),model=parent.getValue("model"))
     }
 
-    fun colorVariants(parentId:String):List<Map<String,String>> =
-        rows("SELECT id,name,barcode,price,stock,currency,details FROM products WHERE archived=0 ORDER BY name,id")
+    /** Group related watch colours without merging their independent stock or prices. */
+    fun colorVariants(parentId:String):List<Map<String,String>> {
+        val parent=rows("SELECT id,details FROM products WHERE id=? AND archived=0",parentId).singleOrNull()
+            ?: return emptyList()
+        if(JSONObject(parent.getValue("details")).has("variantParentId")) return emptyList()
+        return rows("SELECT id,name,barcode,price,stock,currency,details FROM products WHERE archived=0 ORDER BY name,id")
             .filter { JSONObject(it.getValue("details")).optString("variantParentId")==parentId }
+    }
+
+    fun productColorLabel(id:String):String {
+        val row=rows("SELECT details FROM products WHERE id=?",id).singleOrNull() ?: return ""
+        val details=JSONObject(row.getValue("details"))
+        return listOf("المينا" to "dialColor","الهيكل" to "caseColor","الحزام" to "strapColor")
+            .mapNotNull { (title,key)->details.optString(key).takeIf { it.isNotBlank() }?.let { "$title: $it" } }
+            .joinToString(" · ")
+    }
+
+    /** Search watch colours as well as identity fields; every result remains a distinct SKU. */
+    fun searchCatalog(query:String):List<Product> {
+        val term=query.trim()
+        require(term.length<=200){"نص البحث طويل جداً"}
+        if(term.isEmpty()) return products()
+        val normalized=term.lowercase()
+        return rows("SELECT * FROM products WHERE archived=0 ORDER BY name,id").filter { row ->
+            listOf("name","barcode","brand","model").any { key ->
+                row[key].orEmpty().contains(term,ignoreCase=true)
+            } || productColorLabelFromDetails(row.getValue("details")).lowercase().contains(normalized)
+        }.map(::toProduct)
+    }
+
+    private fun productColorLabelFromDetails(raw:String):String {
+        val details=JSONObject(raw)
+        return listOf("dialColor","caseColor","strapColor").joinToString(" ") { details.optString(it) }
+    }
 
     /** Image references are local metadata, never stock movements or accounting entries. */
     fun productImage(id:String):String? {
