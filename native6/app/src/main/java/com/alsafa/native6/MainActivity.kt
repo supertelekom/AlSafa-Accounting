@@ -873,6 +873,27 @@ open class MainActivity:Activity() {
                 }
                 box.addView(thumbnail)
             }
+            val gallery=store.productImages(p.id)
+            if(gallery.size>1) {
+                text("صور المنتج: "+gallery.size+" من 8",box,13f)
+                gallery.drop(1).forEachIndexed { index,path ->
+                    if(java.io.File(path).isFile) {
+                        val preview=ImageView(this).apply {
+                            val opts=android.graphics.BitmapFactory.Options().apply { inJustDecodeBounds=true }
+                            android.graphics.BitmapFactory.decodeFile(path,opts)
+                            var sample=1
+                            while(maxOf(opts.outWidth,opts.outHeight)/sample>400) sample*=2
+                            setImageBitmap(android.graphics.BitmapFactory.decodeFile(path,
+                                android.graphics.BitmapFactory.Options().apply { inSampleSize=sample }))
+                            adjustViewBounds=true
+                            maxHeight=dp(160)
+                            contentDescription="تكبير صورة المنتج "+(index+2)
+                            setOnClickListener { showRepairPhoto(path) }
+                        }
+                        box.addView(preview)
+                    }
+                }
+            }
             button("إرسال صورة المنتج عبر واتساب",box){
                 try {
                     val path=store.productImage(p.id) ?: throw IllegalStateException("لا توجد صورة لهذا المنتج")
