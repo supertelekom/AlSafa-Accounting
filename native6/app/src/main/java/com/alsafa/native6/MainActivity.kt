@@ -948,6 +948,14 @@ open class MainActivity:Activity() {
         panel.addView(first)
         text(inv.party.ifBlank { "عميل نقدي" },panel,14f).setTextColor(ink)
         text(money(inv.total,inv.currency),panel,17f).setTextColor(gold)
+        if(inv.kind!="purchase") {
+            val outstanding=store.due(inv.id)
+            if(outstanding>0L)text("المتبقي للتحصيل: "+money(outstanding,inv.currency),panel,13f)
+                .setTextColor(Color.rgb(157,62,52))
+            val refund=store.refundable(inv.id)
+            if(refund>0L)text("مستحق الرد للعميل: "+money(refund,inv.currency),panel,13f)
+                .setTextColor(Color.rgb(157,62,52))
+        }
         if(inv.kind=="sale") {
             val profit=store.saleProfitAfterReturns(inv.id)
             text("صافي التكلفة: "+money(profit.getValue("net_cost"),inv.currency),panel,13f)
