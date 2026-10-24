@@ -947,7 +947,7 @@ open class MainActivity:Activity() {
         }
         val open=Button(this).apply {
             style(this)
-            text="عرض تفاصيل الفاتورة"
+            text="تفاصيل الفاتورة والإجراءات ▾"
             textSize=13f
             isAllCaps=false
             background=background(sand,11)
