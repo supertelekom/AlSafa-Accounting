@@ -978,7 +978,7 @@ button("＋ مورد"){form("مورد جديد"){box->val n=field("الاسم",b
                 (resources.displayMetrics.heightPixels*0.86).toInt())
         } catch(e:Exception) { error(e) }
     }
-    /** Legacy v3.9.359 repair row: small rounded watch image, invoice identity, problem and status. */
+    /** Legacy tablet list-row: 38dp image, customer/watch, problem/date, and status. */
     private fun repairIdentity(row:Map<String,String>, target:LinearLayout) {
         val id=row.getValue("id")
         val path=store.repairImage(id)
@@ -1015,24 +1015,24 @@ button("＋ مورد"){form("مورد جديد"){box->val n=field("الاسم",b
         } else icon.setImageResource(android.R.drawable.ic_menu_gallery)
         line.addView(icon,LinearLayout.LayoutParams(dp(38),dp(38)).apply { marginEnd=dp(11) })
         val details=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL }
-        val invoiceLabel="" // Intake rows may not have an invoice until delivery.
-        val title=TextView(this).apply {
-            text=invoiceLabel+row.getValue("customer")+" · "+row.getValue("watch")
+        val heading=TextView(this).apply {
+            text=row.getValue("customer")+" · "+row.getValue("watch")
             textSize=14f
             typeface=font
             setTextColor(ink)
             maxLines=2
             ellipsize=android.text.TextUtils.TruncateAt.END
         }
-        val detail=TextView(this).apply {
-            text=row.getValue("date")+" · "+row.getValue("phone")
+        val subtitle=TextView(this).apply {
+            val problem=row["problem"].orEmpty()
+            text=(if(problem.isBlank())"" else "$problem · ")+row.getValue("date")+" · "+row.getValue("phone")
             textSize=12f
             setTextColor(Color.DKGRAY)
-            maxLines=1
+            maxLines=2
             ellipsize=android.text.TextUtils.TruncateAt.END
         }
-        details.addView(title)
-        details.addView(detail)
+        details.addView(heading)
+        details.addView(subtitle)
         line.addView(details,LinearLayout.LayoutParams(0,-2,1f))
         val status=TextView(this).apply {
             text=label(row.getValue("status"))
