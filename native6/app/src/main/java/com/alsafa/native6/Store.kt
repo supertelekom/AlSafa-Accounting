@@ -567,7 +567,7 @@ class Store(val helper:StoreDb) {
                         OR p.model LIKE ? ESCAPE '!' OR p.brand LIKE ? ESCAPE '!')))))
                 )""")
             args.addAll(listOf(match,match,match,if(phoneSearch)phoneNeedle else "",
-                if(phoneSearch)"%$phoneNeedle%" else "",needle,match,match,match,match,match,match,match,match,match,match,match,match))
+                if(phoneSearch)"%$phoneNeedle%" else "",needle,match,match,match,match,match,match,match,match,match,match,match,match,match))
         }
         if(kind!="all"){conditions.add("i.kind=?");args.add(kind)}
         if(status!="all"){conditions.add("i.status=?");args.add(status)}
