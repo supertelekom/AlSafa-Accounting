@@ -47,6 +47,7 @@ object LegacyDebtReconciliation {
             .put("purchases",byCurrency(data,"purchases"))
             .put("paymentRows",data.optJSONArray("payments")?.length() ?: 0)
             .put("supplierLedgerRows",data.optJSONArray("supplierLedger")?.length() ?: 0)
+            .put("returnRows",data.optJSONArray("returns")?.length() ?: 0)
             .put("posting","NONE")
             .put("warning","مبالغ الفواتير المتبقية مؤشرات أولية؛ يجب مطابقة المرتجعات ودفتر الموردين قبل إثبات الديون")
     }
@@ -64,6 +65,7 @@ object LegacyDebtReconciliation {
         }
         lines += "سجلات دفعات مستقلة: ${report.getInt("paymentRows")} (لا تُضاف إلى المدفوع بالفواتير)"
         lines += "قيود الموردين: ${report.getInt("supplierLedgerRows")} (تتطلب مطابقة مستقلة)"
+        lines += "المرتجعات: ${report.getInt("returnRows")} (لا تُطرح مجددًا من الفاتورة قبل فحص أثرها المسجل)"
         lines += report.getString("warning")
         return lines.joinToString("\n")
     }
