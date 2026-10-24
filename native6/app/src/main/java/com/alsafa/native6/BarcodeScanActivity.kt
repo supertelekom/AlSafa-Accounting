@@ -164,6 +164,7 @@ class BarcodeScanActivity : ComponentActivity() {
     override fun onDestroy() {
         camera = null
         provider?.unbindAll()
+        provider = null
         scanner.close()
         executor.shutdown()
         super.onDestroy()
