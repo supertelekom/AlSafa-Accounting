@@ -1116,10 +1116,12 @@ open class MainActivity:Activity() {
                     else "لا توجد فواتير مطابقة ضمن الفترة المختارة.",output,14f)
             }
             var previousDate=""
+            val dailyCounts=results.groupingBy { dates[it.id].orEmpty() }.eachCount()
             results.forEach{inv->
                 val day=dates[inv.id].orEmpty()
                 if(day.isNotEmpty() && day!=previousDate) {
-                    sectionHeading("فواتير يوم "+day,"",output)
+                    sectionHeading("فواتير يوم "+day,
+                        "عدد الفواتير المعروضة لهذا اليوم في الصفحة: "+dailyCounts.getValue(day),output)
                     previousDate=day
                 }
                 invoiceCard(inv,output)
