@@ -27,6 +27,13 @@ class RepairDateSearchTest {
         assertTrue(s.repairListByDates(query="زجاج",from=current,until=current).isEmpty())
     }
 
+    @Test fun formattedPhoneSearch() {
+        val s=Store(StoreDb(RuntimeEnvironment.getApplication(),"phone-${Store.id()}.db"))
+        val date=LocalDate.now().toString()
+        s.receiveRepair("عميل","0933-456 789","Casio","بطارية",date)
+        assertEquals(1,s.repairListByDates(query="0933456789",from=date,until=date).size)
+    }
+
     @Test fun rejectsInvertedDateRange() {
         val s=Store(StoreDb(RuntimeEnvironment.getApplication(),"repair-range-${Store.id()}.db"))
         val today=LocalDate.now()
