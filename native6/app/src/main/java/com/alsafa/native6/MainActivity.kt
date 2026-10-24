@@ -978,6 +978,45 @@ button("＋ مورد"){form("مورد جديد"){box->val n=field("الاسم",b
                 (resources.displayMetrics.heightPixels*0.86).toInt())
         } catch(e:Exception) { error(e) }
     }
+    /** Compact repair identity row; image stays beside the customer and watch details. */
+    private fun repairIdentity(row:Map<String,String>, target:android.widget.LinearLayout) {
+        val line=android.widget.LinearLayout(this).apply {
+            orientation=android.widget.LinearLayout.HORIZONTAL
+            gravity=Gravity.CENTER_VERTICAL
+            setPadding(dp(8),dp(8),dp(8),dp(8))
+        }
+        val id=row.getValue("id")
+        val path=store.repairImage(id)
+        if(path!=null && java.io.File(path).isFile) {
+            val bounds=android.graphics.BitmapFactory.Options().apply { inJustDecodeBounds=true }
+            android.graphics.BitmapFactory.decodeFile(path,bounds)
+            if(bounds.outWidth>0 && bounds.outHeight>0) {
+                var sample=1
+                while(maxOf(bounds.outWidth,bounds.outHeight)/sample>320) sample*=2
+                val bitmap=android.graphics.BitmapFactory.decodeFile(path,
+                    android.graphics.BitmapFactory.Options().apply { inSampleSize=sample })
+                if(bitmap!=null) {
+                    val photo=ImageView(this).apply {
+                        setImageBitmap(bitmap)
+                        scaleType=ImageView.ScaleType.CENTER_CROP
+                        contentDescription="تكبير صورة ساعة "+row.getValue("customer")
+                        setOnClickListener { showRepairPhoto(path) }
+                    }
+                    line.addView(photo,android.widget.LinearLayout.LayoutParams(dp(92),dp(92)).apply {
+                        marginEnd=dp(12)
+                    })
+                }
+            }
+        }
+        val info=TextView(this).apply {
+            text=row.getValue("customer")+"\n"+row.getValue("watch")+"\n"+
+                label(row.getValue("status"))+" · "+row.getValue("date")
+            textSize=16f
+            typeface=font
+        }
+        line.addView(info,android.widget.LinearLayout.LayoutParams(0,-2,1f))
+        target.addView(line)
+    }
     private fun repairs(){text("الصيانة",size=25f);button("استلام صيانة"){
             intakePhotoPath=null
             intakePhotoPreview=null
@@ -1353,7 +1392,7 @@ button("＋ مورد"){form("مورد جديد"){box->val n=field("الاسم",b
                     }
                     results.addView(thumbnail)
                 }
-                text(row.getValue("date")+" · "+row.getValue("customer")+" · "+row.getValue("watch")+" · "+label(row.getValue("status")),results)
+                repairIdentity(row,results)
                 button("تفاصيل الصيانة",results){val detail=store.repairDetail(id);val invoice=store.repairInvoice(id);val profit=store.repairProfit(id);val profitText=if(profit==null)"" else {val c=Currency.valueOf(profit.getValue("currency"));"\nأجرة الصيانة: "+money(profit.getValue("revenue").toLong(),c)+"\nتكلفة القطع: "+money(profit.getValue("parts_cost").toLong(),c)+"\nهامش الصيانة: "+money(profit.getValue("margin").toLong(),c)+"\nالمقبوض: "+money(profit.getValue("collected").toLong(),c)+"\nالمتبقي: "+money(profit.getValue("outstanding").toLong(),c)};val info="العميل: "+detail.getValue("customer")+"\nالهاتف: "+detail.getValue("phone")+"\nالساعة: "+detail.getValue("watch")+"\nالمشكلة: "+detail.getValue("problem")+"\nالحالة: "+label(detail.getValue("status"))+"\nالفاتورة: "+(invoice?.get("number")?:"لا توجد")+profitText;AlertDialog.Builder(this).setTitle("تفاصيل الصيانة").setMessage(info)
                     .setNeutralButton("عرض الصورة"){_,_->
                         val path=store.repairImage(id)
@@ -1367,7 +1406,7 @@ button("＋ مورد"){form("مورد جديد"){box->val n=field("الاسم",b
         }
         val counts=store.repairStatusCounts()
         text("مستلمة: ${counts.getValue("received")} · قيد العمل: ${counts.getValue("in_progress")} · جاهزة: ${counts.getValue("ready")} · مسلّمة: ${counts.getValue("delivered")}",size=15f)
-        store.repairList().filter{it.getValue("status")!="delivered"}.forEach{r->val id=r.getValue("id");text("${r.getValue("customer")} · ${r.getValue("watch")} · ${label(r.getValue("status"))}");button("استخدام قطعة صيانة"){
+        store.repairList().filter{it.getValue("status")!="delivered"}.forEach{r->val id=r.getValue("id");repairIdentity(r,body);button("استخدام قطعة صيانة"){
             chooseProduct(inStockOnly=true){part->
                 form("تركيب قطعة للصيانة"){box->
                     val quantity=field("الكمية",box,"1",true)
