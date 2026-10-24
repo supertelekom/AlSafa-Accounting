@@ -1,6 +1,7 @@
 package com.alsafa.native6
 
 import org.json.JSONObject
+import java.math.BigDecimal
 
 /**
  * Read-only alignment of daily closing records and cash movement dates.
@@ -23,6 +24,24 @@ object LegacyDailyClosingAudit {
             }
             closeCounts[date]=(closeCounts[date] ?: 0)+1
         }
+        val closingBalances=org.json.JSONArray()
+        val invalidBalances=org.json.JSONArray()
+        for(i in 0 until closings.length()) {
+            val row=closings.optJSONObject(i) ?: continue
+            val snapshot=JSONObject().put("date",row.optString("date"))
+            for(field in listOf("drawerActual","drawerTransfer","drawerNext","drawerDifference","shamActual","shamDifference")) {
+                val source=row.optJSONObject(field) ?: continue
+                val amounts=JSONObject()
+                for(currency in listOf("USD","TRY","SYP")) {
+                    if(!source.has(currency)) continue
+                    val value=source.optString(currency).toBigDecimalOrNull()
+                    if(value==null) invalidBalances.put("$i:$field:$currency")
+                    else amounts.put(currency,value.toPlainString())
+                }
+                snapshot.put(field,amounts)
+            }
+            closingBalances.put(snapshot)
+        }
         val multiple=org.json.JSONArray()
         for((date,count) in closeCounts) if(count>1) multiple.put(date)
         val movementDaysWithoutClosing=org.json.JSONArray()
@@ -35,6 +54,8 @@ object LegacyDailyClosingAudit {
             .put("closingCountsByDate",JSONObject(closeCounts as Map<*,*>))
             .put("movementCountsByDate",movements)
             .put("closingRowsMissingDate",missingDate)
+            .put("closingBalanceSnapshots",closingBalances)
+            .put("invalidClosingBalanceFields",invalidBalances)
             .put("daysWithMultipleClosings",multiple)
             .put("movementDaysWithoutClosing",movementDaysWithoutClosing)
             .put("posting","NONE")
