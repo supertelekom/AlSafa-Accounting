@@ -558,7 +558,7 @@ open class MainActivity:Activity() {
             setMargins(0,dp(8),0,dp(10))
         })
     }
-    private fun productCard(p:Product,parent:LinearLayout) {
+    private fun productCard(p:Product,parent:LinearLayout,variantCount:Int=0) {
         val card=column().apply {
             setPadding(dp(14),dp(12),dp(14),dp(12))
             background=background(paper,15)
@@ -596,10 +596,10 @@ open class MainActivity:Activity() {
         card.addView(stockInfo)
         val colour=store.productColorLabel(p.id)
         if(colour.isNotBlank()) text("الألوان: "+colour,card,12f)
-        val variants=store.colorVariants(p.id)
-        if(variants.isNotEmpty()) {
-            text("ألوان إضافية مستقلة: "+variants.size,card,12f)
+        if(variantCount>0) {
+            text("ألوان إضافية مستقلة: "+variantCount,card,12f)
             button("عرض ألوان هذه الساعة ومخزونها",card) {
+                val variants=store.colorVariants(p.id)
                 val lines=variants.joinToString("\n\n") { row ->
                     val colour=store.productColorLabel(row.getValue("id"))
                     (colour.ifBlank { "لون غير محدد" })+
@@ -694,7 +694,8 @@ open class MainActivity:Activity() {
             val results=store.searchCatalog(query.text.toString())
             text("المنتجات: ${results.size}",list,13f)
             if(results.isEmpty())text("لا توجد منتجات مطابقة للبحث.",list,14f)
-            results.take(150).forEach{p->productCard(p,list)}
+            val variantCounts=store.colorVariantCounts()
+            results.take(150).forEach{p->productCard(p,list,variantCounts[p.id]?:0)}
             if(results.size>150)text("تُعرض أول 150 نتيجة. استخدم البحث لتضييق القائمة.",list,13f)
         }
         button("بحث"){show()}
