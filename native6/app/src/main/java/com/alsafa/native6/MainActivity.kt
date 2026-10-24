@@ -117,7 +117,7 @@ open class MainActivity:Activity() {
     private fun field(label:String,parent:LinearLayout,value:String="",numeric:Boolean=false):EditText {text(label,parent,15f);return EditText(this).also{style(it);it.setSingleLine();if(numeric)it.inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL;val isScreen=::body.isInitialized && parent===body;val restored=if(isScreen)savedInputs?.getOrNull(visibleInputs.size) else null;it.setText(restored?:value);if(isScreen)visibleInputs.add(it);parent.addView(it)}}
     private fun select(label:String,items:List<String>,parent:LinearLayout):Spinner {text(label,parent,15f);return Spinner(this).also{it.adapter=ArrayAdapter(this,android.R.layout.simple_spinner_dropdown_item,items);parent.addView(it)}}
     private fun form(title:String,submit:String="حفظ",build:(LinearLayout)->(()->Unit)) {
-        val layout=column();val action=build(layout);val scroll=ScrollView(this);scroll.addView(layout)
+        val layout=column().apply { setPadding(dp(20),dp(14),dp(20),dp(18));setBackgroundColor(paper) };val action=build(layout);val scroll=ScrollView(this);scroll.addView(layout)
         val dialog=AlertDialog.Builder(this).setTitle(title).setView(scroll).setNegativeButton("رجوع",null).setPositiveButton(submit,null).create()
         dialog.setOnShowListener{dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {if(busy)return@setOnClickListener;try{action();dialog.dismiss()}catch(e:Exception){error(e)}}}
         dialog.show()
