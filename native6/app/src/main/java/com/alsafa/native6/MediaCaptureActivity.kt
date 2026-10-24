@@ -194,7 +194,9 @@ class MediaCaptureActivity : Activity() {
         var sample=1
         require(bounds.outWidth>0 && bounds.outHeight>0) { "ملف الصورة غير قابل للعرض" }
         while(maxOf(bounds.outWidth,bounds.outHeight)/sample>1200)sample*=2
-        preview.setImageBitmap(BitmapFactory.decodeFile(path,BitmapFactory.Options().apply { inSampleSize=sample }))
+        val thumbnail=BitmapFactory.decodeFile(path,BitmapFactory.Options().apply { inSampleSize=sample })
+            ?: error("تعذر عرض معاينة الصورة")
+        preview.setImageBitmap(thumbnail)
         status.text = "الصورة محفوظة محلياً، اضغط استخدام الصورة للمتابعة"
     }
 }
