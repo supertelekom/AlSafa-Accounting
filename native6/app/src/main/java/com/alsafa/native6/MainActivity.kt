@@ -875,6 +875,12 @@ open class MainActivity:Activity() {
             }
             val gallery=store.productImages(p.id)
             if(gallery.isNotEmpty()) {
+                button("اختيار الصورة الرئيسية",box) {
+                    AlertDialog.Builder(this).setTitle("الصورة الرئيسية للمنتج")
+                        .setItems(gallery.mapIndexed { i,_ -> "صورة "+(i+1) }.toTypedArray()) { _,index ->
+                            work { store.primaryProductImage(p.id,gallery[index]) }
+                        }.setNegativeButton("رجوع",null).show()
+                }
                 button("إدارة صور المنتج وحذف ارتباط صورة",box) {
                     AlertDialog.Builder(this).setTitle("صور المنتج")
                         .setItems(gallery.mapIndexed { i,_ -> "صورة "+(i+1) }.toTypedArray()) { _,index ->
