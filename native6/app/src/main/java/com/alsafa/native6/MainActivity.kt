@@ -1829,7 +1829,11 @@ button("＋ مورد"){form("مورد جديد"){box->val n=field("الاسم",b
         val openRepairs=store.repairList().filter{it.getValue("status")!="delivered"}
         if(openRepairs.isEmpty())text("لا توجد طلبات صيانة مفتوحة حالياً.",body,14f)
         if(openRepairs.size>100)text("تُعرض أول 100 صيانة مفتوحة. استخدم البحث للوصول إلى بقية الطلبات.",body,13f)
-        openRepairs.take(100).forEach{r->val id=r.getValue("id");repairIdentity(r,body);if(store.repairImage(id).let { it==null || runCatching { localPhoto(it) }.isFailure })button("إضافة صورة الساعة"){photoRepairId=id;startActivityForResult(Intent(this,MediaCaptureActivity::class.java),70)};button("استخدام قطعة صيانة"){
+        openRepairs.take(100).forEach{r->
+            val id=r.getValue("id")
+            repairIdentity(r,body)
+            collapsibleTools("إجراءات صيانة · "+r.getValue("customer")) {
+                if(store.repairImage(id).let { it==null || runCatching { localPhoto(it) }.isFailure })button("إضافة صورة الساعة"){photoRepairId=id;startActivityForResult(Intent(this,MediaCaptureActivity::class.java),70)};button("استخدام قطعة صيانة"){
             chooseProduct(inStockOnly=true){part->
                 form("تركيب قطعة للصيانة"){box->
                     val quantity=field("الكمية",box,"1",true)
@@ -1843,7 +1847,8 @@ button("＋ مورد"){form("مورد جديد"){box->val n=field("الاسم",b
                 }
             }
         };if(r.getValue("status")=="received")button("بدء الصيانة"){work{store.startRepair(id)}};if(r.getValue("status") in setOf("received","in_progress"))button("جاهزة للاستلام"){work{store.repairReady(id)}};if(r.getValue("status")=="ready")button("تسليم وفاتورة أجرة عمل"){form("تسليم الصيانة"){box->val c=select("العملة",Currency.entries.map{it.name},box);val n=field("أجرة العمل",box,"0",true);val paid=field("المدفوع",box,"0",true);val v=select("خزنة القبض",vaultNames,box);val delivered=field("تاريخ تسليم الساعة YYYY-MM-DD",box,Store.today());val received=field("تاريخ قبض الأجرة الفعلي YYYY-MM-DD",box,Store.today());{val curr=Currency.entries[c.selectedItemPosition];val value=amount(n,curr);val pay=amount(paid,curr);val vault=Store.vaults[v.selectedItemPosition];val deliveryDate=java.time.LocalDate.parse(delivered.text.toString().trim()).toString();val receiptDate=java.time.LocalDate.parse(received.text.toString().trim()).toString();work{store.deliverRepair(id,curr,value,pay,vault,deliveryDate=deliveryDate,receiptDate=receiptDate)}}}}}
-    }
+            }
+        }
     private fun reports(){sectionHeading("التقارير الشهرية","اختر شهراً واحداً للمراجعة والتحليل");
         collapsibleTools("تدقيق الحسابات والفواتير المتقدم") {
         button("تدقيق ربط حسابات الفواتير"){
