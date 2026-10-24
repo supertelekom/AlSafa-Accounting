@@ -61,6 +61,7 @@ object LegacyDailyClosingAudit {
                     carryMismatches.put("$i:$currency")
             }
         }
+        val orderedDates=closeCounts.keys.sorted()
         val multiple=org.json.JSONArray()
         for((date,count) in closeCounts) if(count>1) multiple.put(date)
         val movementDaysWithoutClosing=org.json.JSONArray()
@@ -71,6 +72,7 @@ object LegacyDailyClosingAudit {
         }
         return JSONObject()
             .put("closingCountsByDate",JSONObject(closeCounts as Map<*,*>))
+            .put("orderedClosingDates",org.json.JSONArray(orderedDates))
             .put("movementCountsByDate",movements)
             .put("closingRowsMissingDate",missingDate)
             .put("closingBalanceSnapshots",closingBalances)
