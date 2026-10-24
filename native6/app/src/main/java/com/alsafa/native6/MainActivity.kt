@@ -596,8 +596,22 @@ open class MainActivity:Activity() {
         card.addView(stockInfo)
         val colour=store.productColorLabel(p.id)
         if(colour.isNotBlank()) text("الألوان: "+colour,card,12f)
-        val variantCount=store.colorVariants(p.id).size
-        if(variantCount>0) text("ألوان إضافية مستقلة: "+variantCount,card,12f)
+        val variants=store.colorVariants(p.id)
+        if(variants.isNotEmpty()) {
+            text("ألوان إضافية مستقلة: "+variants.size,card,12f)
+            button("عرض ألوان هذه الساعة ومخزونها",card) {
+                val lines=variants.joinToString("\n\n") { row ->
+                    val colour=store.productColorLabel(row.getValue("id"))
+                    (colour.ifBlank { "لون غير محدد" })+
+                        "\nالباركود: "+row.getValue("barcode")+
+                        " · المتوفر: "+row.getValue("stock")+
+                        " · السعر: "+money(row.getValue("price").toLong(),
+                            Currency.valueOf(row.getValue("currency")))
+                }
+                AlertDialog.Builder(this).setTitle("ألوان "+p.name)
+                    .setMessage(lines).setPositiveButton("حسناً",null).show()
+            }
+        }
         val actions=LinearLayout(this).apply {
             orientation=LinearLayout.HORIZONTAL
             layoutDirection=View.LAYOUT_DIRECTION_RTL
