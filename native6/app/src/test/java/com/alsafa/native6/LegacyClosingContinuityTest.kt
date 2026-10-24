@@ -27,4 +27,9 @@ class LegacyClosingContinuityTest {
         val report=LegacyClosingContinuity.inspect(payload)
         assertEquals("10",report.getJSONArray("arithmeticMismatches").getJSONObject(0).getString("difference"))
     }
+    @Test fun malformedClosingRowIsReportedNotSilentlyIgnored() {
+        val report=LegacyClosingContinuity.inspect(backup("""null,{"date":"2026-10-01"}"""))
+        assertEquals(1,report.getJSONArray("missingClosingRows").length())
+        assertEquals(1,report.getJSONArray("invalidDateRows").length())
+    }
 }
