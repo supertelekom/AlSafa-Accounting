@@ -839,10 +839,42 @@ open class MainActivity:Activity() {
 
         val name=field("الاسم",box,p?.name?:"");val barcode=field("الباركود",box,p?.barcode?:"");button("▣ قراءة الباركود بالكاميرا",box){barcodeTarget=barcode;startActivityForResult(Intent(this,BarcodeScanActivity::class.java),67)};val curr=select("العملة",Currency.entries.map{it.name},box);curr.setSelection(p?.currency?.ordinal?:0);curr.isEnabled=p==null
         val price=field("سعر البيع",box,p?.let{Money(it.price,it.currency).display().substringBefore(' ')}?:"0",true)
+        val saved=if(p==null) org.json.JSONObject() else org.json.JSONObject(
+            store.rows("SELECT details FROM products WHERE id=?",p.id).single().getValue("details"))
+        val stored=if(p==null) emptyMap<String,String>() else store.rows(
+            "SELECT brand,model FROM products WHERE id=?",p.id).single()
+        val brand=field("الماركة",box,stored["brand"].orEmpty())
+        val model=field("رقم الموديل REF",box,stored["model"].orEmpty())
+        val description=field("تفاصيل الساعة للعميل",box,saved.optString("customerDescription"))
+        val dial=field("لون المينا",box,saved.optString("dialColor"))
+        val caseColor=field("لون الهيكل",box,saved.optString("caseColor"))
+        val strap=field("لون الحزام",box,saved.optString("strapColor"))
         val cost=if(p==null)field("التكلفة",box,"0",true)else null;val qty=if(p==null)field("رصيد افتتاحي",box,"0",true)else null
         val kind=if(p==null)select("النوع",listOf("ساعة","قطعة صيانة"),box)else null;
-        {val c=Currency.entries[curr.selectedItemPosition];val n=name.text.toString();val b=barcode.text.toString();val value=amount(price,c);val costValue=cost?.let{amount(it,c)}?:0;val q=qty?.text?.toString()?.toLong()?:0
-            work{if(p==null)store.addProduct(n,b,c,value,costValue,q,if(kind?.selectedItemPosition==1)"part" else "watch")else store.editProduct(p.id,n,b,value)} }
+        {
+            val c=Currency.entries[curr.selectedItemPosition]
+            val n=name.text.toString();val b=barcode.text.toString();val value=amount(price,c)
+            val costValue=cost?.let{amount(it,c)}?:0;val q=qty?.text?.toString()?.toLong()?:0
+            val br=brand.text.toString();val ref=model.text.toString()
+            val desc=description.text.toString();val dc=dial.text.toString()
+            val cc=caseColor.text.toString();val sc=strap.text.toString()
+            require(listOf(br,ref,desc,dc,cc,sc).all { it.length<=500 }){"تفاصيل المنتج طويلة جداً"}
+            work {
+                if(p==null) {
+                    val details=org.json.JSONObject()
+                        .put("customerDescription",desc.trim()).put("dialColor",dc.trim())
+                        .put("caseColor",cc.trim()).put("strapColor",sc.trim()).toString()
+                    store.addProduct(n,b,c,value,costValue,q,
+                        if(kind?.selectedItemPosition==1)"part" else "watch",
+                        details=details,brand=br,model=ref)
+                } else {
+                    store.transaction {
+                        store.editProduct(p.id,n,b,value)
+                        store.updateProductDescription(p.id,br,ref,desc,dc,cc,sc)
+                    }
+                }
+            }
+        }
     }}
     private fun addSaleProduct(p:Product){
         form("إضافة ${p.name}"){box->
