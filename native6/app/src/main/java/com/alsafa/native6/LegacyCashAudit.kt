@@ -14,11 +14,14 @@ object LegacyCashAudit {
         val missingVaults=org.json.JSONArray()
         val negativeRows=org.json.JSONArray()
         val missingTypes=org.json.JSONArray()
+        val dates=sortedMapOf<String,Int>()
         for(i in 0 until entries.length()) {
             val row=entries.optJSONObject(i) ?: continue
             val currency=row.optString("currency")
             val vault=row.optString("vault")
             val type=row.optString("type")
+            val date=row.optString("date")
+            if(date.isNotBlank()) dates[date]=(dates[date] ?: 0)+1
             if(vault.isBlank()) missingVaults.put(i)
             if(type.isBlank()) missingTypes.put(i)
             val amount=row.optString("amount").toBigDecimalOrNull()
@@ -39,6 +42,7 @@ object LegacyCashAudit {
             .put("missingVaultRows",missingVaults)
             .put("negativeAmountRows",negativeRows)
             .put("missingTypeRows",missingTypes)
+            .put("movementCountsByDate",JSONObject(dates as Map<*,*>))
             .put("posting","NONE")
     }
 }
