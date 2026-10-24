@@ -1818,6 +1818,19 @@ class Store(val helper:StoreDb) {
             first,last,status,status,needle,needle,needle,needle,needle)
     }
 
+    /** Uncollected repairs are operational custody, not cash or accounts receivable. */
+    fun uncollectedRepairs(asOf:String=today(),minimumDays:Long=0):List<Map<String,String>> {
+        val day=LocalDate.parse(asOf)
+        require(!day.isAfter(LocalDate.now()) && minimumDays in 0..36500)
+        return rows("""SELECT id,customer,phone,watch,problem,status,date,details
+            FROM repairs WHERE status IN ('received','in_progress','ready')
+            AND date<=? ORDER BY date ASC,id ASC""",day.toString()).mapNotNull { row ->
+                val age=java.time.temporal.ChronoUnit.DAYS.between(
+                    LocalDate.parse(row.getValue("date")),day)
+                if(age<minimumDays) null else row+mapOf("age_days" to age.toString())
+            }
+    }
+
     fun repairDetail(id:String):Map<String,String> =
         rows("SELECT * FROM repairs WHERE id=?",id).single()
     /** Net repair margin is invoice revenue minus consumed parts, not collected cash. */
