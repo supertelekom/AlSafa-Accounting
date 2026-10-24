@@ -145,8 +145,13 @@ class MediaCaptureActivity : Activity() {
             } else bitmap
             val directory = File(filesDir, "images").apply { mkdirs() }
             val output = File(directory, "${UUID.randomUUID()}.jpg")
-            FileOutputStream(output).use { stream ->
-                require(outputBitmap.compress(Bitmap.CompressFormat.JPEG, 85, stream)) { "تعذر حفظ الصورة" }
+            try {
+                FileOutputStream(output).use { stream ->
+                    require(outputBitmap.compress(Bitmap.CompressFormat.JPEG, 85, stream)) { "تعذر حفظ الصورة" }
+                }
+            } catch (e: Exception) {
+                output.delete()
+                throw e
             }
             if(outputBitmap !== bitmap) outputBitmap.recycle()
             bitmap.recycle()
