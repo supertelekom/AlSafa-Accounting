@@ -13,4 +13,10 @@ class LegacyCashAuditTest {
         assertEquals("30",totals.getString("external|USD|deposit"))
         assertEquals("NONE",result.getString("posting"))
     }
+    @Test fun invalidAmountsAreReportedWithoutPosting() {
+        val backup = """{"data":{"cashTransactions":[{"vault":"drawer","currency":"USD","type":"deposit","amount":"bad"}]}}"""
+        val report=LegacyCashAudit.inspect(backup)
+        assertEquals(1,report.getJSONArray("invalidRows").length())
+        assertEquals("NONE",report.getString("posting"))
+    }
 }
