@@ -1090,6 +1090,19 @@ open class MainActivity:Activity() {
                 text("سعر البيع: "+money(net,inv.currency)+" · تكلفة الصنف: "+money(cost,inv.currency),box,13f)
             }
             text("إجمالي تكلفة الأصناف عند البيع: "+money(costTotal,inv.currency),box,15f).setTextColor(ink)
+            val returns=store.rows("""SELECT l.name,r.qty,r.credit,r.cost,e.date
+                FROM returns r JOIN invoice_lines l ON l.invoice_id=r.invoice_id AND l.line=r.line
+                JOIN events e ON e.id=r.event_id
+                WHERE r.invoice_id=? ORDER BY e.date,e.created,e.id""",inv.id)
+            if(returns.isNotEmpty()) {
+                sectionHeading("الأصناف المرتجعة","حركات المرتجع المسجلة فعلياً",box)
+                returns.forEach { row->
+                    text(row.getValue("date")+" · "+row.getValue("name")+" × "+row.getValue("qty"),box,14f)
+                        .setTextColor(ink)
+                    text("قيمة المرتجع: "+money(row.getValue("credit").toLong(),inv.currency)+
+                        " · تكلفته: "+money(row.getValue("cost").toLong(),inv.currency),box,13f)
+                }
+            }
             val profit=store.saleProfitAfterReturns(inv.id)
             if(profit.getValue("returned_revenue")>0L) {
                 text("قيمة المرتجعات: "+money(profit.getValue("returned_revenue"),inv.currency),box,14f)
