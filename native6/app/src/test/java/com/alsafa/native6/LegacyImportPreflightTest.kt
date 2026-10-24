@@ -29,6 +29,11 @@ class LegacyImportPreflightTest {
         assertTrue(LegacyImportPreflight.inspect(payload).any { it.contains("unknown sale reference") })
     }
 
+    @Test fun detectsDuplicateCashMovement() {
+        val payload = """{"format":"alsafa-accounting-backup","formatVersion":2,"data":{"products":[],"maintenanceParts":[],"suppliers":[],"repairs":[],"cashTransactions":[{"id":"c1"},{"id":"c1"}]}}"""
+        assertTrue(LegacyImportPreflight.inspect(payload).any { it.contains("duplicate cash movement ID") })
+    }
+
     @Test fun detectsMissingSections() {
         val payload = """{"format":"alsafa-accounting-backup","formatVersion":2,"data":{}}"""
         assertEquals(4, LegacyImportPreflight.inspect(payload).size)
