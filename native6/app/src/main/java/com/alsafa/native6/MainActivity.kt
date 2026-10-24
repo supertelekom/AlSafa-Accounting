@@ -914,6 +914,15 @@ open class MainActivity:Activity() {
                     }
                 }
             }
+            if(gallery.size>1) button("إرسال صورة محددة عبر واتساب",box) {
+                AlertDialog.Builder(this).setTitle("اختر الصورة للإرسال")
+                    .setItems(gallery.mapIndexed { i,_ -> "صورة "+(i+1) }.toTypedArray()) { _,index ->
+                        try {
+                            CustomerShare.send(this,java.io.File(gallery[index]),
+                                "image/jpeg","الصفا للساعات - "+p.name)
+                        } catch(e:Exception) { error(e) }
+                    }.setNegativeButton("رجوع",null).show()
+            }
             button("إرسال صورة المنتج عبر واتساب",box){
                 try {
                     val path=store.productImage(p.id) ?: throw IllegalStateException("لا توجد صورة لهذا المنتج")
