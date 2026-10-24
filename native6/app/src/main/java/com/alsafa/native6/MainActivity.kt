@@ -964,7 +964,7 @@ button("＋ مورد"){form("مورد جديد"){box->val n=field("الاسم",b
                 setPadding(dp(12),dp(12),dp(12),dp(12))
                 addView(photo,android.widget.FrameLayout.LayoutParams(-1,-1))
             }
-            val dialog=AlertDialog.Builder(this).setView(container).create()
+            val dialog=AlertDialog.Builder(this).setTitle("معاينة صورة الساعة").setView(container).create()
             val close=Button(this).apply {
                 text="×"
                 textSize=28f
