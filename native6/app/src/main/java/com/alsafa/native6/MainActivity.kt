@@ -1074,10 +1074,17 @@ open class MainActivity:Activity() {
         body.addView(output)
         val pageSize=50
         var pageIndex=0
+        var lastSearchKey=""
         fun show(){
             val start=java.time.LocalDate.parse(fromDate.text.toString().trim()).toString()
             val end=java.time.LocalDate.parse(toDate.text.toString().trim()).toString()
             require(start<=end){"تاريخ البداية يجب ألا يتجاوز تاريخ النهاية"}
+            val searchKey=listOf(query.text.toString().trim(),start,end,
+                kinds[kind.selectedItemPosition],statuses[status.selectedItemPosition]).joinToString("\u001F")
+            if(searchKey!=lastSearchKey) {
+                pageIndex=0
+                lastSearchKey=searchKey
+            }
             val offset=Math.multiplyExact(pageIndex,pageSize)
             // Fetch one extra row to detect a following page without counting the entire database.
             val fetched=store.searchInvoices(query.text.toString(),kinds[kind.selectedItemPosition],
