@@ -19,4 +19,10 @@ class LegacyCashAuditTest {
         assertEquals(1,report.getJSONArray("invalidRows").length())
         assertEquals("NONE",report.getString("posting"))
     }
+    @Test fun emptyMovementsReturnCompleteReport() {
+        val report=LegacyCashAudit.inspect("""{"data":{}}""")
+        assertEquals(0,report.getJSONObject("totals").length())
+        assertEquals(0,report.getJSONArray("invalidRows").length())
+        assertEquals("NONE",report.getString("posting"))
+    }
 }
