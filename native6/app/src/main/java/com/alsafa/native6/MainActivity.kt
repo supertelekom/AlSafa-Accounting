@@ -1220,6 +1220,12 @@ open class MainActivity:Activity() {
             coalesce((SELECT sum(r.qty) FROM returns r
                 WHERE r.invoice_id=l.invoice_id AND r.line=l.line),0) returned
             FROM invoice_lines l WHERE l.invoice_id=? ORDER BY l.line""",inv.id)
+        if(lines.none { it.getValue("qty").toLong()>it.getValue("returned").toLong() }) {
+            AlertDialog.Builder(this).setTitle("لا يوجد مرتجع متاح")
+                .setMessage("جميع أصناف هذه الفاتورة أُعيدت بالفعل؛ لا يمكن إرجاعها مرة ثانية.")
+                .setPositiveButton("حسناً",null).show()
+            return
+        }
         form("استلام مرتجع جزئي"){box->
             sectionHeading("الأصناف القابلة للإرجاع","أدخل الكمية التي وصلت إلى المحل فعلياً",box)
             val fields=lines.filter { it.getValue("qty").toLong()>it.getValue("returned").toLong() }
