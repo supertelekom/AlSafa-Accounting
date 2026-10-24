@@ -5,7 +5,10 @@ import java.time.LocalDate
 
 /** Read-only validation; never mutates the active store. */
 object LegacyImportPreflight {
-    fun inspect(payload:String):List<String> {
+    fun inspect(payload:String):List<String> = inspectInventory(payload) + inspectFinancialHistory(payload)
+
+    /** Only imported inventory, suppliers and repairs can block the snapshot transaction. */
+    fun inspectInventory(payload:String):List<String> {
         val root=JSONObject(payload)
         require(root.optString("format")=="alsafa-accounting-backup")
         val data=root.getJSONObject("data")
@@ -53,6 +56,13 @@ object LegacyImportPreflight {
                 }
             }
         }
+        return problems
+    }
+
+    /** Archived history is advisory until its accounting semantics are reconciled. */
+    fun inspectFinancialHistory(payload:String):List<String> {
+        val data=JSONObject(payload).getJSONObject("data")
+        val problems=mutableListOf<String>()
         val validCurrencies=setOf("USD","TRY","SYP")
         for(section in listOf("sales","purchases","expenses","partnerWithdrawals","payments")) {
             val records=data.optJSONArray(section) ?: continue
