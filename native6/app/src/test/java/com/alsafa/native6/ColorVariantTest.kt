@@ -24,6 +24,20 @@ class ColorVariantTest {
         assertEquals(1,s.product(child).stock)
     }
 
+    @Test fun catalogSearchFindsColourAndKeepsSeparateVariants() {
+        val s=Store(StoreDb(RuntimeEnvironment.getApplication(),"variants-${Store.id()}.db"))
+        val parent=s.addProduct("Casio","BASE",Currency.USD,5000,2000,4)
+        val blue=s.addColorVariant(parent,"BLUE",5500,2500,2,"أزرق","فضي","جلد")
+        val black=s.addColorVariant(parent,"BLACK",5700,2600,1,"أسود","أسود","معدن")
+        assertEquals(listOf(blue),s.searchCatalog("أزرق").map { it.id })
+        assertEquals(listOf(black),s.searchCatalog("معدن").map { it.id })
+        assertEquals(2,s.colorVariants(parent).size)
+        assertTrue(s.colorVariants(blue).isEmpty())
+        assertEquals(4,s.product(parent).stock)
+        assertEquals(2,s.product(blue).stock)
+        assertEquals(1,s.product(black).stock)
+    }
+
     @Test fun duplicateVariantBarcodeRollsBack() {
         val s=Store(StoreDb(RuntimeEnvironment.getApplication(),"variants-${Store.id()}.db"))
         val parent=s.addProduct("Casio","BASE",Currency.USD,5000,2000,3)
