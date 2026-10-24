@@ -145,6 +145,17 @@ object LegacySnapshotImport {
             require(store.scalar("SELECT count(*) FROM invoices")==0L) { "استعادة المخزون لا يجوز أن تنشئ فواتير" }
             require(store.scalar("SELECT count(*) FROM receipts")==0L) { "استعادة الأرشيف لا يجوز أن تنشئ مقبوضات" }
             val actualArchive=store.scalar("SELECT count(*) FROM legacy_records")
+            val expectedFinancialCategories=historical.filter {
+                it in setOf("sales","purchases","payments","cashTransactions",
+                    "dailyClosings","partnerWithdrawals","supplierLedger","returns")
+            }
+            expectedFinancialCategories.forEach { category ->
+                val actual=store.scalar(
+                    "SELECT count(*) FROM legacy_records WHERE category=?",category)
+                require(actual==d.getJSONArray(category).length().toLong()) {
+                    "أرشيف $category غير مكتمل: $actual"
+                }
+            }
             require(actualArchive==expectedArchive.toLong()) {
                 "عدد السجلات التاريخية المستعادة لا يطابق النسخة الأصلية: $actualArchive / $expectedArchive"
             }
