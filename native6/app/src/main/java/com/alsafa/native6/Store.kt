@@ -534,6 +534,8 @@ class Store(val helper:StoreDb) {
         val needle=query.trim()
         // Search both formatted and unformatted phone numbers (spaces, +, dashes).
         val phoneNeedle=needle.filter { it.isDigit() }
+        // A single digit inside a name must not turn into an overly broad phone search.
+        val phoneSearch=phoneNeedle.length>=3
         // Escape user-entered LIKE wildcards so '%' and '_' are searched literally.
         val escaped=needle.replace("!", "!!").replace("%", "!%").replace("_", "!_")
         val conditions=mutableListOf("e.date>=?","e.date<=?")
@@ -556,7 +558,8 @@ class Store(val helper:StoreDb) {
                         AND pe.memo='REPAIR_PART:' || rp.id
                         AND p.name LIKE ? ESCAPE '!'))))
                 )""")
-            args.addAll(listOf(match,match,match,phoneNeedle,"%$phoneNeedle%",needle,match,match,match))
+            args.addAll(listOf(match,match,match,if(phoneSearch)phoneNeedle else "",
+                if(phoneSearch)"%$phoneNeedle%" else "",needle,match,match,match))
         }
         if(kind!="all"){conditions.add("i.kind=?");args.add(kind)}
         if(status!="all"){conditions.add("i.status=?");args.add(status)}
