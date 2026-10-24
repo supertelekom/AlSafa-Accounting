@@ -2313,6 +2313,20 @@ button("＋ مورد"){form("مورد جديد"){box->val n=field("الاسم",b
             }
         }
         }
+        button("تقرير الساعات غير المستلمة") {
+            form("الساعات الموجودة لدينا","عرض"){box->
+                val days=field("عدد أيام الانتظار على الأقل",box,"2",true)
+                ({
+                    val rows=store.uncollectedRepairs(minimumDays=days.text.toString().trim().toLong())
+                    val details=rows.take(100).joinToString("\n") {
+                        it.getValue("customer")+" - "+it.getValue("watch")+" - "+it.getValue("age_days")+" يوم"
+                    }
+                    AlertDialog.Builder(this).setTitle("الساعات غير المسلمة: "+rows.size)
+                        .setMessage(details.ifBlank { "لا توجد نتائج" })
+                        .setPositiveButton("حسناً",null).show()
+                })
+            }
+        }
         sectionHeading("طلبات الصيانة","الصور والحالة والتواصل مع العميل")
         text("الطلبات الحالية — اضغط على صورة الساعة لتكبيرها، ثم اضغط مجددًا أو × للعودة.",body,14f)
         val search=field("بحث بالعميل أو الهاتف أو الساعة أو المشكلة",body)
