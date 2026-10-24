@@ -162,12 +162,20 @@ class MediaCaptureActivity : Activity() {
                 val scale = 1600.0 / maxSide
                 Bitmap.createScaledBitmap(bitmap, (bitmap.width * scale).toInt().coerceAtLeast(1), (bitmap.height * scale).toInt().coerceAtLeast(1), true)
             } else bitmap
-            val directory = File(filesDir, "images").apply { mkdirs() }
+            val directory = File(filesDir, "images").apply {
+                require(isDirectory || mkdirs()) { "تعذر إنشاء مجلد الصور المحلي" }
+                require(isDirectory && canonicalFile.parentFile == filesDir.canonicalFile) {
+                    "مسار حفظ الصور غير آمن"
+                }
+            }
             val output = File(directory, "${UUID.randomUUID()}.jpg")
             try {
                 FileOutputStream(output).use { stream ->
                     require(outputBitmap.compress(Bitmap.CompressFormat.JPEG, 85, stream)) { "تعذر حفظ الصورة" }
+                    stream.flush()
+                    stream.fd.sync()
                 }
+                require(output.length() in 1L..(12L*1024*1024)) { "حجم الصورة المحفوظة غير مدعوم" }
             } catch (e: Exception) {
                 output.delete()
                 throw e
