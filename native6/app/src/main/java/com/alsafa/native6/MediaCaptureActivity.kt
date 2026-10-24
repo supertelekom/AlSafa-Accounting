@@ -93,6 +93,16 @@ class MediaCaptureActivity : Activity() {
         imagePath?.let { show(it) }
     }
 
+    override fun onDestroy() {
+        if (isFinishing && !confirmed) {
+            imagePath?.let { path ->
+                val file = File(path)
+                if (file.canonicalFile.parentFile == File(filesDir, "images").canonicalFile) file.delete()
+            }
+        }
+        super.onDestroy()
+    }
+
     override fun onSaveInstanceState(outState: Bundle) {
         outState.putBoolean("confirmed", confirmed)
         outState.putString("imagePath", imagePath)
