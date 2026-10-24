@@ -492,11 +492,11 @@ class Store(val helper:StoreDb) {
             }
     }
     fun product(id:String)=toProduct(rows("SELECT * FROM products WHERE id=?",id).single())
-    fun addProduct(name:String,barcode:String,currency:Currency,price:Long,cost:Long,quantity:Long,kind:String="watch",details:String="{}",command:String=id()):String=transaction {
+    fun addProduct(name:String,barcode:String,currency:Currency,price:Long,cost:Long,quantity:Long,kind:String="watch",details:String="{}",command:String=id(),brand:String="",model:String=""):String=transaction {
         require(name.isNotBlank() && price>=0 && cost>=0 && quantity>=0);require(kind in listOf("watch","part"));JSONObject(details)
-        require(barcode.trim().length<=128){"الباركود طويل جداً"}
+        require(barcode.trim().length<=128 && brand.length<=500 && model.length<=500){"بيانات المنتج طويلة جداً"}
         require(barcode.isBlank() || scalar("SELECT count(*) FROM products WHERE barcode=?",barcode.trim())==0L){"الباركود مستخدم لمنتج آخر"}
-        insert("products","id" to command,"name" to name.trim(),"barcode" to barcode.trim(),"currency" to currency.name,"price" to price,"cost" to cost,"stock" to 0,"kind" to kind,"details" to details)
+        insert("products","id" to command,"name" to name.trim(),"barcode" to barcode.trim(),"brand" to brand.trim(),"model" to model.trim(),"currency" to currency.name,"price" to price,"cost" to cost,"stock" to 0,"kind" to kind,"details" to details)
         event(command,"OPENING_STOCK",today(),"رصيد افتتاحي: $name")
         if(quantity>0) { val value=mul(cost,quantity);stock(command,0,product(command),quantity,value);post(command,listOf(Posting("inventory",currency,value),Posting("equity:opening",currency,-value))) };command
     }
