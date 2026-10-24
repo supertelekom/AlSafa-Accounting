@@ -534,10 +534,15 @@ class Store(val helper:StoreDb) {
 
     fun productColorLabel(id:String):String {
         val row=rows("SELECT details FROM products WHERE id=?",id).singleOrNull() ?: return ""
-        val details=JSONObject(row.getValue("details"))
-        return listOf("المينا" to "dialColor","الهيكل" to "caseColor","الحزام" to "strapColor")
-            .mapNotNull { (title,key)->details.optString(key).takeIf { it.isNotBlank() }?.let { "$title: $it" } }
-            .joinToString(" · ")
+        return productColorLabelFromDetails(row.getValue("details"),true)
+    }
+
+    private fun productColorLabelFromDetails(raw:String,withLabels:Boolean):String {
+        val details=JSONObject(raw)
+        val fields=listOf("المينا" to "dialColor","الهيكل" to "caseColor","الحزام" to "strapColor")
+        return fields.mapNotNull { (title,key) ->
+            details.optString(key).takeIf { it.isNotBlank() }?.let { if(withLabels) "$title: $it" else it }
+        }.joinToString(if(withLabels) " · " else " ")
     }
 
     /** Search watch colours as well as identity fields; every result remains a distinct SKU. */
@@ -553,10 +558,8 @@ class Store(val helper:StoreDb) {
         }.map(::toProduct)
     }
 
-    private fun productColorLabelFromDetails(raw:String):String {
-        val details=JSONObject(raw)
-        return listOf("dialColor","caseColor","strapColor").joinToString(" ") { details.optString(it) }
-    }
+    private fun productColorLabelFromDetails(raw:String):String =
+        productColorLabelFromDetails(raw,false)
 
     /** Image references are local metadata, never stock movements or accounting entries. */
     fun productImage(id:String):String? {
