@@ -2316,6 +2316,7 @@ button("＋ مورد"){form("مورد جديد"){box->val n=field("الاسم",b
         button("تقرير الساعات غير المستلمة") {
             form("الساعات الموجودة لدينا","عرض"){box->
                 val days=field("عدد أيام الانتظار على الأقل",box,"2",true)
+                val page=field("صفحة التقرير (50 نتيجة)",box,"1",true)
                 ({
                     val rows=store.uncollectedRepairs(minimumDays=days.text.toString().trim().toLong())
                     val details=rows.joinToString("\n") {
