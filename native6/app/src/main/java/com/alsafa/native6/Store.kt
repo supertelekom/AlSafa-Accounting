@@ -1820,7 +1820,7 @@ class Store(val helper:StoreDb) {
 
     /** Uncollected repairs are operational custody, not cash or accounts receivable. */
     fun uncollectedRepairs(asOf:String=today(),minimumDays:Long=0,
-                           limit:Int=100,offset:Int=0):List<Map<String,String>> {
+                           limit:Int=100,offset:Int=0,status:String="all"):List<Map<String,String>> {
         val day=LocalDate.parse(asOf)
         require(!day.isAfter(LocalDate.now()) && minimumDays in 0..36500)
         require(limit in 1..500 && offset in 0..1000000)
