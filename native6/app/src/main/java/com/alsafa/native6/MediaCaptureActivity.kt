@@ -30,6 +30,7 @@ class MediaCaptureActivity : Activity() {
     private lateinit var status: TextView
     private var imagePath: String? = null
     private var pendingCameraPath: String? = null
+    private var confirmed = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -81,6 +82,7 @@ class MediaCaptureActivity : Activity() {
                 val selected = imagePath
                 if (selected == null) status.text = "اختر صورة أولاً"
                 else {
+                    confirmed = true
                     setResult(RESULT_OK, Intent().putExtra(EXTRA_RESULT_PATH, selected))
                     finish()
                 }
