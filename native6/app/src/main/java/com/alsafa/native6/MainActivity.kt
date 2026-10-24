@@ -507,8 +507,91 @@ open class MainActivity:Activity() {
             Triple("◫","أرشيف الفواتير القديمة","legacy-history")
         ))
     }
-    private fun products(){text("المنتجات وقطع الصيانة",size=25f);button("＋ إضافة منتج / قطعة"){productForm()};button("▣ مسح باركود للبحث"){startActivityForResult(Intent(this,BarcodeScanActivity::class.java), 65)};button("تقييم المخزون والتنبيهات"){go("inventory")};button("سجل تسويات الجرد"){go("stocktake-history")};val query=field("بحث بالاسم أو الباركود أو REF",body);val list=column();body.addView(list)
-        fun show(){list.removeAllViews();store.products(query.text.toString()).forEach{p->button("${p.name}  ·  ${money(p.price,p.currency)}\nالمخزون ${p.stock}  ·  ${p.barcode}",list){productForm(p)};button("سجل مخزون ${p.name}",list){selectedProduct=p;go("stock-history")};button("جرد فعلي ${p.name}",list){stocktakeForm(p)}}};button("بحث"){show()};show()}
+    private fun productCard(p:Product,parent:LinearLayout) {
+        val card=column().apply {
+            setPadding(dp(14),dp(12),dp(14),dp(12))
+            background=background(paper,15)
+        }
+        val heading=LinearLayout(this).apply {
+            orientation=LinearLayout.HORIZONTAL
+            layoutDirection=View.LAYOUT_DIRECTION_RTL
+            gravity=Gravity.CENTER_VERTICAL
+        }
+        val name=TextView(this).apply {
+            style(this)
+            text=p.name
+            textSize=16f
+            maxLines=2
+            setPadding(dp(4),0,dp(4),0)
+        }
+        heading.addView(name,LinearLayout.LayoutParams(0,-2,1f))
+        val price=TextView(this).apply {
+            style(this)
+            text=money(p.price,p.currency)
+            textSize=15f
+            setTextColor(gold)
+            setPadding(dp(8),dp(5),dp(8),dp(5))
+        }
+        heading.addView(price)
+        card.addView(heading)
+        text("المتوفر: ${p.stock}   •   الباركود: ${p.barcode}",card,12f)
+        val actions=LinearLayout(this).apply {
+            orientation=LinearLayout.HORIZONTAL
+            layoutDirection=View.LAYOUT_DIRECTION_RTL
+        }
+        fun action(label:String,onClick:()->Unit) {
+            val control=Button(this).apply {
+                style(this)
+                text=label
+                textSize=12f
+                isAllCaps=false
+                gravity=Gravity.CENTER
+                background=background(cream,10)
+                setOnClickListener { if(!busy)onClick() }
+            }
+            actions.addView(control,LinearLayout.LayoutParams(0,dp(46),1f).apply {
+                setMargins(dp(3),dp(4),dp(3),dp(2))
+            })
+        }
+        action("تعديل"){productForm(p)}
+        action("الحركات"){selectedProduct=p;go("stock-history")}
+        action("جرد"){stocktakeForm(p)}
+        card.addView(actions)
+        parent.addView(card,LinearLayout.LayoutParams(-1,-2).apply {
+            setMargins(0,dp(5),0,dp(6))
+        })
+    }
+    private fun products(){
+        text("المنتجات وقطع الصيانة",size=23f)
+        button("＋ إضافة منتج / قطعة"){productForm()}
+        button("▣ مسح باركود للبحث"){startActivityForResult(Intent(this,BarcodeScanActivity::class.java),65)}
+        val shortcuts=LinearLayout(this).apply { orientation=LinearLayout.HORIZONTAL;layoutDirection=View.LAYOUT_DIRECTION_RTL }
+        fun shortcut(label:String,route:String){
+            val control=Button(this).apply {
+                style(this);text=label;textSize=12f;isAllCaps=false
+                background=background(sand,12)
+                setOnClickListener{if(!busy)go(route)}
+            }
+            shortcuts.addView(control,LinearLayout.LayoutParams(0,dp(48),1f).apply{
+                setMargins(dp(3),dp(4),dp(3),dp(4))
+            })
+        }
+        shortcut("تقييم المخزون","inventory")
+        shortcut("تسويات الجرد","stocktake-history")
+        body.addView(shortcuts)
+        val query=field("بحث بالاسم أو الباركود أو REF",body)
+        val list=column().apply {setPadding(0,dp(4),0,dp(4))}
+        body.addView(list)
+        fun show(){
+            list.removeAllViews()
+            val results=store.products(query.text.toString())
+            text("المنتجات: ${results.size}",list,13f)
+            if(results.isEmpty())text("لا توجد منتجات مطابقة للبحث.",list,14f)
+            results.forEach{p->productCard(p,list)}
+        }
+        button("بحث"){show()}
+        show()
+    }
     private fun stocktakeForm(p:Product){
         form("جرد فعلي · ${p.name}","حفظ تسوية الجرد"){box->
             text("الكمية المسجلة حالياً: ${p.stock}",box)
