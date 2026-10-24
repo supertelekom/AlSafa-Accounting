@@ -536,7 +536,7 @@ class Store(val helper:StoreDb) {
         val needle=query.trim()
         require(needle.length<=200){"نص البحث طويل جداً"}
         // Search both formatted and unformatted phone numbers (spaces, +, dashes).
-        val phoneNeedle=needle.filter { it.isDigit() }
+        val phoneNeedle=needle.filter { it in '0'..'9' }
         // A single digit inside a name must not turn into an overly broad phone search.
         val phoneSearch=phoneNeedle.length>=3
         // Escape user-entered LIKE wildcards so '%' and '_' are searched literally.
@@ -547,7 +547,7 @@ class Store(val helper:StoreDb) {
             val match="%$escaped%"
             conditions.add("""(CAST(i.number AS TEXT) LIKE ? ESCAPE '!' OR i.party LIKE ? ESCAPE '!'
                 OR i.phone LIKE ? ESCAPE '!'
-                OR (?<>'' AND replace(replace(replace(replace(replace(i.phone,' ',''),'-',''),'+',''),'(',''),')','') LIKE ? ESCAPE '!')
+                OR (?<>'' AND replace(replace(replace(replace(replace(replace(replace(replace(i.phone,' ',''),'-',''),'+',''),'(',''),')',''),'/',''),'.','') LIKE ? ESCAPE '!')
                 OR i.id=? OR (i.kind='repair' AND i.notes LIKE ? ESCAPE '!')
                 OR EXISTS(SELECT 1 FROM invoice_lines l
                     LEFT JOIN products lp ON lp.id=l.product_id
