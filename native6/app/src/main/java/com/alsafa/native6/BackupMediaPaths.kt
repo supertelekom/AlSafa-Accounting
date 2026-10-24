@@ -13,6 +13,7 @@ object BackupMediaPaths {
             require(available.add(media.getJSONObject(i).getString("name"))) { "اسم صورة مكرر في النسخة" }
         }
         val imageDir=File(context.filesDir,"images").canonicalFile
+        require(imageDir.parentFile==context.filesDir.canonicalFile) { "مجلد الصور خارج تخزين التطبيق" }
         for(table in listOf("products","repairs")) {
             val records=data.getJSONArray(table)
             for(i in 0 until records.length()) {
