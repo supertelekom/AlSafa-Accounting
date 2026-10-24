@@ -51,6 +51,7 @@ object LegacySnapshotImport {
         val closingAudit=LegacyClosingContinuity.inspect(payload)
         val paymentLinkAudit=LegacyPaymentLinkAudit.inspect(payload)
         val returnLinkAudit=LegacyReturnLinkAudit.inspect(payload)
+        val supplierCashAudit=LegacySupplierCashAudit.inspect(payload)
         val paymentCashAudit=LegacyPaymentCashAudit.inspect(payload)
         require(issues.isEmpty()) { "فحص النسخة القديمة فشل: "+issues.take(5).joinToString("; ") }
         val lists=listOf("products" to "watch","maintenanceParts" to "part")
@@ -195,6 +196,7 @@ object LegacySnapshotImport {
                 .put("closingAudit",closingAudit)
                 .put("paymentLinkAudit",paymentLinkAudit)
                 .put("returnLinkAudit",returnLinkAudit)
+                .put("supplierCashAudit",supplierCashAudit)
                 .put("paymentCashAudit",paymentCashAudit)
                 .put("financialPostingStatus","NOT_POSTED")
                 .put("cashContinuityVerified",false)
