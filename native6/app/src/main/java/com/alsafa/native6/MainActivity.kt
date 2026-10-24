@@ -308,6 +308,9 @@ open class MainActivity:Activity() {
                 layoutDirection=View.LAYOUT_DIRECTION_RTL
                 gravity=Gravity.CENTER_VERTICAL
             }
+            header.setPadding(dp(10),dp(4),dp(10),dp(4))
+            header.background=GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,
+                intArrayOf(Color.rgb(250,245,236),Color.rgb(240,226,200)))
             root.addView(header,LinearLayout.LayoutParams(-1,dp(66)))
             val back=Button(this).also {
                 style(it);it.text="رجوع";it.isAllCaps=false;it.background=background()
@@ -325,7 +328,19 @@ open class MainActivity:Activity() {
                 it.setOnClickListener { if(!busy)homePage() }
             }
         }
-        val scroll=ScrollView(this);contentScroll=scroll;body=column();scroll.addView(body);root.addView(scroll,LinearLayout.LayoutParams(-1,0,1f))
+        val scroll=ScrollView(this).apply {
+            isFillViewport=true
+            clipToPadding=false
+            setBackgroundColor(cream)
+        }
+        contentScroll=scroll
+        body=column().apply {
+            val tablet=resources.configuration.smallestScreenWidthDp>=600
+            val horizontal=if(tablet)dp(28) else dp(12)
+            setPadding(horizontal,dp(15),horizontal,dp(24))
+        }
+        scroll.addView(body)
+        root.addView(scroll,LinearLayout.LayoutParams(-1,0,1f))
         when(page){"home"->home();"simple"->simple();"advanced"->advanced();"products"->products();"inventory"->inventoryDashboard();"stock-history"->if(selectedProduct!=null)stockHistory(selectedProduct!!) else {text("لم يتم اختيار منتج لعرض حركاته.");button("العودة إلى المنتجات"){go("products")}};"stocktake-history"->stocktakeHistoryScreen();"sale"->sale();"invoices"->invoices();"vaults"->vaults();"suppliers"->suppliers();"repairs"->repairs();"reports"->reports();"period-reports"->periodReports();"trial-balance"->trialBalanceScreen();"account-ledger"->accountLedgerScreen();"journal-integrity"->journalIntegrityScreen();"structural-audit"->structuralAuditScreen();"partners"->partners();"backup"->backup();"legacy-audit"->legacyAudit();"legacy-history"->legacyHistory();"audit"->audit();else->{text("هذه الصفحة غير متاحة في النسخة الحالية.");button("العودة إلى الرئيسية"){homePage()}}}
     }
     private fun legacyHistory() {
