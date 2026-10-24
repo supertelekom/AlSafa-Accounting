@@ -903,7 +903,9 @@ open class MainActivity:Activity() {
             val estimatedCost=basket.fold(0L){sum,item->
                 val product=store.product(item.productId)
                 require(product.stock>0L && item.qty in 1L..product.stock){"كمية السلة تتجاوز المخزون"}
-                Math.addExact(sum,Math.multiplyExact(product.value,item.qty)/product.stock)
+                Math.addExact(sum,java.math.BigInteger.valueOf(product.value)
+                    .multiply(java.math.BigInteger.valueOf(item.qty))
+                    .divide(java.math.BigInteger.valueOf(product.stock)).longValueExact())
             }
             val gross=basket.fold(0L){sum,item->Math.addExact(sum,mul(item.qty,item.unitPrice))}
             text("التكلفة التقديرية للأصناف: "+money(estimatedCost,basketCurrency),body,14f)
