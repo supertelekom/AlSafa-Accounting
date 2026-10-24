@@ -24,4 +24,15 @@ class LegacyPaymentLinkAuditTest {
         val report=LegacyPaymentLinkAudit.inspect(payload)
         assertEquals(1,report.getJSONArray("duplicatePaymentIdRows").length())
     }
+    @Test fun differentReceiptCurrencyIsFlaggedWithoutChangingDebtEvidence() {
+        val payload="""{"format":"alsafa-accounting-backup","formatVersion":2,"data":{
+            "sales":[{"id":"s1"}],
+            "payments":[{"id":"p1","referenceType":"sale","referenceId":"s1",
+                         "currency":"USD","amount":6,"paymentCurrency":"TRY","paymentAmount":300}]
+        }}"""
+        val report=LegacyPaymentLinkAudit.inspect(payload)
+        assertEquals(1,report.getJSONArray("crossCurrencyPaymentRows").length())
+        assertEquals("6",report.getJSONObject("linkedPaymentEvidence").getString("sales:s1"))
+        assertEquals(0,report.getJSONArray("invalidReceivedAmountRows").length())
+    }
 }
