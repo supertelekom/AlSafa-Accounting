@@ -26,6 +26,8 @@ object LegacyPaymentLinkAudit {
         val duplicatePaymentIds=JSONArray()
         val seenPaymentIds=mutableSetOf<String>()
         val evidence=linkedMapOf<String,BigDecimal>()
+        val crossCurrencyPayments=JSONArray()
+        val invalidPaymentCurrencyRows=JSONArray()
         val payments=data.optJSONArray("payments") ?: JSONArray()
         for(i in 0 until payments.length()) {
             val payment=payments.optJSONObject(i) ?: continue
@@ -41,6 +43,11 @@ object LegacyPaymentLinkAudit {
             val id=payment.optString("referenceId").trim()
             if(id.isBlank()) missing.put(i)
             else if(section==null || id !in (ids[section] ?: emptySet())) unresolved.put(i)
+            val invoiceCurrency=payment.optString("currency").trim()
+            val receivedCurrency=payment.optString("paymentCurrency",invoiceCurrency).trim()
+            if(invoiceCurrency !in setOf("USD","TRY","SYP") || receivedCurrency !in setOf("USD","TRY","SYP"))
+                invalidPaymentCurrencyRows.put(i)
+            else if(invoiceCurrency!=receivedCurrency) crossCurrencyPayments.put(i)
             val amount=payment.optString("amount").toBigDecimalOrNull()
             if(amount==null || amount<BigDecimal.ZERO) invalidAmounts.put(i)
             else if(section!=null && id in (ids[section] ?: emptySet())) {
@@ -55,6 +62,8 @@ object LegacyPaymentLinkAudit {
             .put("unresolvedReferenceRows",unresolved)
             .put("invalidAmountRows",invalidAmounts)
             .put("duplicatePaymentIdRows",duplicatePaymentIds)
+            .put("crossCurrencyPaymentRows",crossCurrencyPayments)
+            .put("invalidPaymentCurrencyRows",invalidPaymentCurrencyRows)
             .put("linkedPaymentEvidence",totals)
             .put("posting","NONE")
     }
