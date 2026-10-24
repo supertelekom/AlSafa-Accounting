@@ -54,6 +54,20 @@ class RepairCustodyTest {
         assertEquals(2,s.uncollectedRepairs(status="all").size)
     }
 
+    @Test fun complimentaryRepairDeliveryHasNoReceivable() {
+        val s=Store(StoreDb(RuntimeEnvironment.getApplication(),"complimentary-${Store.id()}.db"))
+        val repair=s.receiveRepair("عميل ضمان","09330","Casio","ضمان",LocalDate.now().toString())
+        s.repairReady(repair)
+        val journalBefore=s.scalar("SELECT count(*) FROM journal")
+        s.deliverRepair(repair,Currency.USD,0L,0L,Store.vaults.first())
+        assertEquals("delivered",s.repairDetail(repair).getValue("status"))
+        val invoiceId=s.repairInvoice(repair)!!.getValue("id")
+        assertEquals(0L,s.invoice(invoiceId).total)
+        assertEquals(0L,s.due(invoiceId))
+        assertEquals(journalBefore,s.scalar("SELECT count(*) FROM journal"))
+        assertTrue(s.uncollectedRepairs().none { it.getValue("id")==repair })
+    }
+
     @Test fun custodyRejectsFutureAsOfDates() {
         val s=Store(StoreDb(RuntimeEnvironment.getApplication(),"custody-${Store.id()}.db"))
         try {
