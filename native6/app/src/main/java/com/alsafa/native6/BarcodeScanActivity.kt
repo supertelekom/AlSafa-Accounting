@@ -165,6 +165,7 @@ class BarcodeScanActivity : ComponentActivity() {
         camera = null
         provider?.unbindAll()
         provider = null
+        torchOn = false
         scanner.close()
         executor.shutdown()
         super.onDestroy()
