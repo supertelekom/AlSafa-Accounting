@@ -1365,8 +1365,8 @@ button("＋ مورد"){form("مورد جديد"){box->val n=field("الاسم",b
             orientation=LinearLayout.HORIZONTAL
             layoutDirection=View.LAYOUT_DIRECTION_RTL
             gravity=Gravity.CENTER_VERTICAL
-            setPadding(dp(12),dp(10),dp(12),dp(10))
-            background=background()
+            setPadding(dp(13),dp(12),dp(13),dp(12))
+            background=background(paper,15)
         }
         val icon=ImageView(this).apply {
             isClickable=true
@@ -1406,12 +1406,12 @@ button("＋ مورد"){form("مورد جديد"){box->val n=field("الاسم",b
                 startActivityForResult(Intent(this,MediaCaptureActivity::class.java),70)
             }
         }
-        line.addView(icon,LinearLayout.LayoutParams(dp(38),dp(38)).apply { marginEnd=dp(11) })
+        line.addView(icon,LinearLayout.LayoutParams(dp(64),dp(64)).apply { marginEnd=dp(12) })
         // The image remains focusable for keyboard and accessibility navigation.
         val details=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL }
         val heading=TextView(this).apply {
             text=row.getValue("customer")+" · "+row.getValue("watch")
-            textSize=14f
+            textSize=15f
             typeface=font
             setTextColor(ink)
             maxLines=2
