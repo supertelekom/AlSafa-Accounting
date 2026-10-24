@@ -29,6 +29,8 @@ object LegacySnapshotImport {
     fun import(store:Store,payload:String):String {
         val root=JSONObject(payload)
         val d=data(payload)
+        val issues=LegacyImportPreflight.inspect(payload)
+        require(issues.isEmpty()) { "فحص النسخة القديمة فشل: "+issues.take(5).joinToString("; ") }
         val lists=listOf("products" to "watch","maintenanceParts" to "part")
         val suppliers=d.getJSONArray("suppliers")
         return store.transaction {
