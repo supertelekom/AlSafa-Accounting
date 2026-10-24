@@ -19,7 +19,10 @@ class ColorVariantTest {
         assertEquals(2,s.product(child).stock)
         assertEquals(1,s.colorVariants(parent).size)
         assertEquals(parent,JSONObject(s.rows("SELECT details FROM products WHERE id=?",child).single().getValue("details")).getString("variantParentId"))
-        s.sale(listOf(SaleItem(child,1,5500)),"عميل","",Currency.USD,5500,"drawer")
+        val invoice=s.sale(listOf(SaleItem(child,1,5500)),"عميل","",Currency.USD,5500,"drawer")
+        val soldLine=s.rows("SELECT name FROM invoice_lines WHERE invoice_id=?",invoice).single().getValue("name")
+        assertTrue(soldLine.contains("أزرق"))
+        assertTrue(soldLine.contains("فضي"))
         assertEquals(3,s.product(parent).stock)
         assertEquals(1,s.product(child).stock)
     }
