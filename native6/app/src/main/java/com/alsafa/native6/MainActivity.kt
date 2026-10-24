@@ -1039,17 +1039,93 @@ open class MainActivity:Activity() {
             }catch(e:Exception){runOnUiThread{busy=false;error(e)}}
         }
     }
-    private fun invoiceDetail(inv:Invoice){val box=column();text("الإجمالي ${money(inv.total,inv.currency)}",box);if(inv.kind!="purchase"){text("المتبقي ${money(store.due(inv.id),inv.currency)}",box);text("مستحق الرد ${money(store.refundable(inv.id),inv.currency)}",box)}
-        val sc=ScrollView(this);sc.addView(box);val dialog=AlertDialog.Builder(this).setTitle("فاتورة #${inv.number}").setView(sc).setNegativeButton("رجوع",null).create()
-        button("سجل قبض النقود وتواريخه",box){val receipts=store.invoiceReceiptHistory(inv.id);AlertDialog.Builder(this).setTitle("القبض الفعلي · فاتورة #${inv.number}").setMessage(if(receipts.isEmpty())"لم يتم تحصيل أي مبلغ حتى الآن." else receipts.joinToString("\n"){row->row.getValue("actual_date")+" · "+money(row.getValue("amount").toLong(),inv.currency)+" · "+row.getValue("vault")}).setPositiveButton("حسناً",null).show()}
-        button("مشاركة فاتورة PDF عبر واتساب",box){shareInvoicePdf(inv)}
-        button("حفظ فاتورة PDF",box){pdfInvoice=inv.id;startActivityForResult(Intent(Intent.ACTION_CREATE_DOCUMENT).apply{addCategory(Intent.CATEGORY_OPENABLE);type="application/pdf";putExtra(Intent.EXTRA_TITLE,"AlSafa-${inv.number}.pdf")},104)}
-        if(inv.kind!="purchase"&&store.due(inv.id)>0)button("قبض دفعة",box){dialog.dismiss();paymentForm("قبض دين",inv.currency,store.due(inv.id)){n,v,date->store.collect(inv.id,n,v,date)}}
-        if(inv.kind=="sale"&&inv.status=="posted"){
-            button("مرتجع جزئي",box){dialog.dismiss();returnForm(inv)}
-            button("إلغاء الفاتورة وإرجاع كامل المتبقي للمخزون",box){dialog.dismiss();form("تأكيد استلام الأصناف المرتجعة فعلياً","إلغاء الفاتورة"){b->val reason=field("سبب الإلغاء",b);text("ينشأ رصيد مستحق للعميل؛ رد المال عملية مستقلة.",b);{val value=reason.text.toString();require(value.isNotBlank());work{store.cancelSale(inv.id,value)}}}}
+    private fun invoiceDetail(inv:Invoice) {
+        val box=column()
+        sectionHeading("فاتورة #"+inv.number+" · "+label(inv.kind),"بيانات داخلية للمحل — لا تظهر تكاليف الشراء في PDF العميل",box)
+        text("العميل: "+inv.party.ifBlank { "عميل نقدي" },box,16f).setTextColor(ink)
+        text("إجمالي الفاتورة: "+money(inv.total,inv.currency),box,18f).setTextColor(gold)
+        if(inv.kind!="purchase") {
+            text("المتبقي للتحصيل: "+money(store.due(inv.id),inv.currency),box,15f).setTextColor(ink)
+            text("مستحق الرد: "+money(store.refundable(inv.id),inv.currency),box,14f)
         }
-        if(inv.kind!="purchase" && store.refundable(inv.id)>0)button("رد مبلغ للعميل",box){dialog.dismiss();paymentForm("رد نقدي",inv.currency,store.refundable(inv.id)){n,v,date->store.refund(inv.id,n,v,date)}}
+        if(inv.kind=="sale") {
+            val lines=store.rows("SELECT name,qty,net,cost FROM invoice_lines WHERE invoice_id=? ORDER BY line",inv.id)
+            var netTotal=0L
+            var costTotal=0L
+            lines.forEach { line->
+                val net=line.getValue("net").toLong()
+                val cost=line.getValue("cost").toLong()
+                netTotal=Math.addExact(netTotal,net)
+                costTotal=Math.addExact(costTotal,cost)
+                text(line.getValue("name")+" × "+line.getValue("qty"),box,15f).setTextColor(ink)
+                text("سعر البيع: "+money(net,inv.currency)+" · تكلفة الصنف: "+money(cost,inv.currency),box,13f)
+            }
+            text("إجمالي تكلفة الأصناف: "+money(costTotal,inv.currency),box,15f).setTextColor(ink)
+            text("هامش الربح قبل المصاريف: "+money(Math.subtractExact(netTotal,costTotal),inv.currency),box,16f).setTextColor(gold)
+            if(netTotal!=inv.total)text("ملاحظة: صافي الأصناف يختلف عن إجمالي الفاتورة؛ راجع الخصومات والمرتجعات.",box,12f)
+        }
+        if(inv.kind=="repair") {
+            val repair=store.rows("SELECT id FROM repairs WHERE invoice_id=?",inv.id).firstOrNull()
+            if(repair!=null) {
+                val profit=store.repairProfit(repair.getValue("id"))
+                if(profit!=null) {
+                    val currency=Currency.valueOf(profit.getValue("currency"))
+                    text("أجرة الصيانة: "+money(profit.getValue("revenue").toLong(),currency),box,15f).setTextColor(ink)
+                    text("تكلفة قطع الغيار: "+money(profit.getValue("parts_cost").toLong(),currency),box,15f).setTextColor(ink)
+                    text("هامش الصيانة قبل المصاريف: "+money(profit.getValue("margin").toLong(),currency),box,16f).setTextColor(gold)
+                }
+            } else text("لا يوجد طلب صيانة مرتبط بهذه الفاتورة.",box,13f)
+        }
+        val sc=ScrollView(this)
+        sc.addView(box)
+        val dialog=AlertDialog.Builder(this).setTitle("تفاصيل الفاتورة").setView(sc).setNegativeButton("رجوع",null).create()
+        val choices=mutableListOf<Pair<String,()->Unit>>()
+        choices.add("سجل قبض النقود وتواريخه" to {
+            val receipts=store.invoiceReceiptHistory(inv.id)
+            AlertDialog.Builder(this).setTitle("القبض الفعلي · فاتورة #"+inv.number)
+                .setMessage(if(receipts.isEmpty())"لم يتم تحصيل أي مبلغ حتى الآن." else receipts.joinToString("\n"){row->
+                    row.getValue("actual_date")+" · "+money(row.getValue("amount").toLong(),inv.currency)+" · "+row.getValue("vault")
+                }).setPositiveButton("حسناً",null).show()
+        })
+        choices.add("مشاركة فاتورة PDF عبر واتساب" to { shareInvoicePdf(inv) })
+        choices.add("حفظ فاتورة PDF" to {
+            pdfInvoice=inv.id
+            startActivityForResult(Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
+                addCategory(Intent.CATEGORY_OPENABLE)
+                type="application/pdf"
+                putExtra(Intent.EXTRA_TITLE,"AlSafa-${inv.number}.pdf")
+            },104)
+        })
+        if(inv.kind!="purchase" && store.due(inv.id)>0)choices.add("قبض دفعة" to {
+            dialog.dismiss()
+            paymentForm("قبض دين",inv.currency,store.due(inv.id)){n,v,date->store.collect(inv.id,n,v,date)}
+        })
+        if(inv.kind=="sale" && inv.status=="posted") {
+            choices.add("مرتجع جزئي" to { dialog.dismiss();returnForm(inv) })
+            choices.add("إلغاء الفاتورة وإرجاع الأصناف للمخزون" to {
+                dialog.dismiss()
+                form("تأكيد استلام الأصناف المرتجعة فعلياً","إلغاء الفاتورة"){b->
+                    val reason=field("سبب الإلغاء",b)
+                    text("ينشأ رصيد مستحق للعميل؛ رد المال عملية مستقلة.",b)
+                    {
+                        val value=reason.text.toString()
+                        require(value.isNotBlank())
+                        work{store.cancelSale(inv.id,value)}
+                    }
+                }
+            })
+        }
+        if(inv.kind!="purchase" && store.refundable(inv.id)>0)choices.add("رد مبلغ للعميل" to {
+            dialog.dismiss()
+            paymentForm("رد نقدي",inv.currency,store.refundable(inv.id)){n,v,date->store.refund(inv.id,n,v,date)}
+        })
+        val labels=choices.map { it.first }.toTypedArray()
+        button("الإجراءات ▾",box) {
+            AlertDialog.Builder(this).setTitle("اختر إجراء الفاتورة")
+                .setItems(labels){_,index->
+                    try { choices[index].second() } catch(e:Exception) { error(e) }
+                }.setNegativeButton("رجوع",null).show()
+        }
         dialog.show()
     }
     private fun returnForm(inv:Invoice){val lines=store.rows("SELECT * FROM invoice_lines WHERE invoice_id=? ORDER BY line",inv.id);form("استلام مرتجع جزئي"){box->val fields=lines.associate{r->r.getValue("line").toInt() to field("${r.getValue("name")} — كمية مرتجعة",box,"0",true)};val reason=field("السبب",box);
