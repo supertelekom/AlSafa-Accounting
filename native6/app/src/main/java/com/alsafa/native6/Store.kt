@@ -1796,6 +1796,7 @@ class Store(val helper:StoreDb) {
     fun repairList(query:String="",status:String="all"):List<Map<String,String>> {
         require(status in setOf("all","received","in_progress","ready","delivered")){"حالة الصيانة غير صالحة"}
         val search=query.trim()
+        require(search.length<=200){"نص البحث طويل جداً"}
         return rows("SELECT * FROM repairs WHERE (?='all' OR status=?) AND (instr(lower(customer),lower(?))>0 OR instr(lower(phone),lower(?))>0 OR instr(lower(watch),lower(?))>0 OR instr(lower(problem),lower(?))>0 OR instr(lower(id),lower(?))>0) ORDER BY date DESC,id DESC",status,status,search,search,search,search,search)
     }
     fun repairDetail(id:String):Map<String,String> =
