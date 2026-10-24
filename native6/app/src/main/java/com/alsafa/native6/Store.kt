@@ -533,6 +533,7 @@ class Store(val helper:StoreDb) {
         require(from<=until){"تاريخ البداية يجب ألا يتجاوز تاريخ النهاية"}
         require(until<=today()){"تاريخ النهاية لا يمكن أن يكون في المستقبل"}
         val needle=query.trim()
+        require(needle.length<=200){"نص البحث طويل جداً"}
         // Search both formatted and unformatted phone numbers (spaces, +, dashes).
         val phoneNeedle=needle.filter { it.isDigit() }
         // A single digit inside a name must not turn into an overly broad phone search.
