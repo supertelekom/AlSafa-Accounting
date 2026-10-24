@@ -1072,22 +1072,30 @@ open class MainActivity:Activity() {
         body.addView(filters)
         val output=column().apply{setPadding(0,dp(8),0,dp(8))}
         body.addView(output)
+        val pageSize=50
+        var pageIndex=0
         fun show(){
-            output.removeAllViews()
             val start=java.time.LocalDate.parse(fromDate.text.toString().trim()).toString()
             val end=java.time.LocalDate.parse(toDate.text.toString().trim()).toString()
             require(start<=end){"تاريخ البداية يجب ألا يتجاوز تاريخ النهاية"}
-            val results=store.searchInvoices(query.text.toString(),kinds[kind.selectedItemPosition],
-                statuses[status.selectedItemPosition],startDate=start,endDate=end)
-            text("الفترة: "+start+" ← "+end+" · عدد الفواتير المعروضة: "+results.size,output,14f)
-            if(results.size==200)text("وصل العرض إلى 200 فاتورة؛ ضيّق الفترة أو أضف كلمة بحث لإظهار نتائج أخرى.",output,13f)
-            if(results.isEmpty())text("لا توجد فواتير مطابقة ضمن الفترة المختارة.",output,14f)
-            val dates=if(results.isEmpty()) emptyMap() else {
+            val offset=Math.multiplyExact(pageIndex,pageSize)
+            // Fetch one extra row to detect a following page without counting the entire database.
+            val fetched=store.searchInvoices(query.text.toString(),kinds[kind.selectedItemPosition],
+                statuses[status.selectedItemPosition],limit=pageSize+1,
+                startDate=start,endDate=end,offset=offset)
+            val hasNext=fetched.size>pageSize
+            val results=fetched.take(pageSize)
+            val dates=if(results.isEmpty()) emptyMap<String,String>() else {
                 val ids=results.map { it.id }.toSet()
-                store.rows("SELECT i.id,e.date FROM invoices i JOIN events e ON e.id=i.id WHERE e.date>=? AND e.date<=?",start,end)
+                store.rows("""SELECT i.id,e.date FROM invoices i
+                    JOIN events e ON e.id=i.id WHERE e.date>=? AND e.date<=?""",start,end)
                     .filter { it.getValue("id") in ids }
                     .associate { it.getValue("id") to it.getValue("date") }
             }
+            output.removeAllViews()
+            text("الفترة: "+start+" ← "+end+" · الصفحة "+(pageIndex+1)+
+                " · الفواتير المعروضة: "+results.size,output,14f)
+            if(results.isEmpty())text("لا توجد فواتير مطابقة ضمن الفترة المختارة.",output,14f)
             var previousDate=""
             results.forEach{inv->
                 val day=dates[inv.id].orEmpty()
@@ -1096,6 +1104,14 @@ open class MainActivity:Activity() {
                     previousDate=day
                 }
                 invoiceCard(inv,output)
+            }
+            if(pageIndex>0)button("◀ الصفحة السابقة",output){
+                pageIndex--
+                try{show()}catch(e:Exception){error(e)}
+            }
+            if(hasNext)button("الصفحة التالية ▶",output){
+                pageIndex++
+                try{show()}catch(e:Exception){error(e)}
             }
         }
         button("اختيار الفترة السريعة ▾") {
@@ -1112,10 +1128,11 @@ open class MainActivity:Activity() {
                     val to=if(which==1)today.minusDays(1) else today
                     fromDate.setText(from.toString())
                     toDate.setText(to.toString())
+                    pageIndex=0
                     try{show()}catch(e:Exception){error(e)}
                 }.setNegativeButton("رجوع",null).show()
         }
-        button("بحث في الفواتير"){try{show()}catch(e:Exception){error(e)}}
+        button("بحث في الفواتير"){pageIndex=0;try{show()}catch(e:Exception){error(e)}}
         try{show()}catch(e:Exception){error(e)}
     }
     private fun shareInvoicePdf(inv:Invoice) {
