@@ -44,7 +44,10 @@ class Backup(private val context:Context,private val store:Store) {
         val media=BackupMedia.collect(context)
         val referenced=store.productImageReferences()
         val included=(0 until media.length()).map { media.getJSONObject(it).getString("name") }.toSet()
-        require(referenced.all { java.io.File(it).name in included }) { "صور مستخدمة مفقودة من النسخة" }
+        require(referenced.all { path ->
+            val file=java.io.File(path)
+            file.isAbsolute && file.parentFile?.canonicalFile==java.io.File(context.filesDir,"images").canonicalFile && file.name in included
+        }) { "صورة مستخدمة خارج مجلد التطبيق أو مفقودة من النسخة" }
         BackupMediaPaths.rebase(context,JSONObject(data),media)
         val result=JSONObject().put("format","alsafa-native6-backup").put("media",media).put("media_sha256",sha(media.toString().toByteArray(Charsets.UTF_8))).put("schema",8).put("encoding","gzip-base64").put("sha256",sha(data.toByteArray(Charsets.UTF_8))).put("data",gzip(data)).toString().toByteArray(Charsets.UTF_8)
         require(result.size<=MAX_BYTES){"حجم النسخة أكبر من الحد المدعوم للاستعادة؛ لم يُكتب ملف ناقص"}
