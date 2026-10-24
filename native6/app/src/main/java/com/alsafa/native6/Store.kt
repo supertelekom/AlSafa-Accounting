@@ -531,6 +531,7 @@ class Store(val helper:StoreDb) {
         val from=LocalDate.parse(startDate).toString()
         val until=LocalDate.parse(endDate).toString()
         require(from<=until){"تاريخ البداية يجب ألا يتجاوز تاريخ النهاية"}
+        require(until<=today()){"تاريخ النهاية لا يمكن أن يكون في المستقبل"}
         val needle=query.trim()
         // Search both formatted and unformatted phone numbers (spaces, +, dashes).
         val phoneNeedle=needle.filter { it.isDigit() }
