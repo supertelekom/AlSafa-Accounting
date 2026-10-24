@@ -64,7 +64,7 @@ object LegacyImportPreflight {
                 val field=if(section=="sales" || section=="purchases") "total" else "amount"
                 if(row.has(field) && !row.isNull(field)) {
                     val amount=row.optString(field).toBigDecimalOrNull()
-                    if(amount==null) problems.add("$section[$i]: invalid $field")
+                    if(amount==null || (section in setOf("sales","purchases","payments","partnerWithdrawals") && amount.signum()<0)) problems.add("$section[$i]: invalid $field")
                 }
             }
         }
