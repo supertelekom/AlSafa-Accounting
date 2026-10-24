@@ -576,6 +576,17 @@ class Store(val helper:StoreDb) {
         val raw=rows("SELECT details FROM products WHERE id=?",id).singleOrNull()?.get("details") ?: return null
         return JSONObject(raw).optString("imagePath").takeIf { it.isNotBlank() }
     }
+    fun productImageReferences():Set<String> {
+        val paths=linkedSetOf<String>()
+        rows("SELECT id FROM products").forEach { row ->
+            paths.addAll(productImages(row.getValue("id")))
+        }
+        rows("SELECT image_path FROM repairs WHERE image_path<>''").forEach { row ->
+            row["image_path"]?.takeIf { it.isNotBlank() }?.let { paths.add(it) }
+        }
+        return paths
+    }
+
     fun productImages(id:String):List<String> {
         val raw=rows("SELECT details FROM products WHERE id=?",id).singleOrNull()?.get("details") ?: return emptyList()
         val json=JSONObject(raw)
