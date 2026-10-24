@@ -137,7 +137,9 @@ open class MainActivity:Activity() {
             val productId=photoProductId
             photoProductId=null
             if(resultCode==RESULT_OK && !path.isNullOrBlank() && productId!=null){
-                work{store.setProductImage(productId,path)}
+                val image=java.io.File(path)
+                if(image.isFile && image.length()>0L) work{store.setProductImage(productId,path)}
+                else error(IllegalArgumentException("صورة المنتج غير موجودة أو فارغة"))
             }
             return
         }
