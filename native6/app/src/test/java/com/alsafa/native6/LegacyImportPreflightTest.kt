@@ -12,6 +12,11 @@ class LegacyImportPreflightTest {
         assertTrue(issues.any { it.contains("duplicate barcode") })
     }
 
+    @Test fun detectsUnsupportedRepairState() {
+        val payload = """{"format":"alsafa-accounting-backup","data":{"products":[],"maintenanceParts":[],"suppliers":[],"repairs":[{"id":"r1","date":"2026-01-01","status":"unknown"}]}}"""
+        assertTrue(LegacyImportPreflight.inspect(payload).any { it.contains("unsupported status") })
+    }
+
     @Test fun detectsMissingSections() {
         val payload = """{"format":"alsafa-accounting-backup","data":{}}"""
         assertEquals(4, LegacyImportPreflight.inspect(payload).size)
