@@ -108,6 +108,8 @@ object LegacyImportPreflight {
                     problems.add("returns[$i]: unknown sale reference")
                 if(ref.isNotEmpty() && type=="purchase" && ref !in purchaseIds)
                     problems.add("returns[$i]: unknown purchase reference")
+                if(ref.isNotEmpty() && type=="repair" && ref !in repairIds)
+                    problems.add("returns[$i]: unknown repair reference")
             }
         }
         data.optJSONArray("cashTransactions")?.let { transactions ->
