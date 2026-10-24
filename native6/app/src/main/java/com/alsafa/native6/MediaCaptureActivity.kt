@@ -139,26 +139,24 @@ class MediaCaptureActivity : Activity() {
                     BitmapFactory.decodeFile(source.absolutePath,bounds)
                     var sample=1
                     require(bounds.outWidth>0 && bounds.outHeight>0) { "ملف الصورة تالف" }
-                    while(maxOf(bounds.outWidth,bounds.outHeight)/(sample*2)>=1600)sample*=2
+                    while(maxOf(bounds.outWidth,bounds.outHeight)/sample>2400)sample*=2
                     BitmapFactory.decodeFile(source.absolutePath,BitmapFactory.Options().apply { inSampleSize=sample })
                         ?: error("تعذر قراءة صورة الكاميرا")
                 }
                 GALLERY -> {
                     val uri = data?.data ?: error("لم يتم اختيار صورة")
-                    contentResolver.openInputStream(uri).use { stream ->
-                        val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
-                        contentResolver.openInputStream(uri).use { boundsStream ->
-                            BitmapFactory.decodeStream(boundsStream, null, bounds)
-                        }
-                        require(bounds.outWidth>0 && bounds.outHeight>0) { "الصورة المختارة غير صالحة" }
-                        var sample = 1
-                        while (maxOf(bounds.outWidth, bounds.outHeight) / (sample * 2) >= 1600) {
-                            sample *= 2
-                        }
+                    val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+                    contentResolver.openInputStream(uri)?.use { boundsStream ->
+                        BitmapFactory.decodeStream(boundsStream, null, bounds)
+                    } ?: error("تعذر فتح الصورة المختارة")
+                    require(bounds.outWidth>0 && bounds.outHeight>0) { "الصورة المختارة غير صالحة" }
+                    var sample = 1
+                    while (maxOf(bounds.outWidth, bounds.outHeight) / sample > 2400) sample *= 2
+                    contentResolver.openInputStream(uri)?.use { stream ->
                         BitmapFactory.decodeStream(stream, null, BitmapFactory.Options().apply {
                             inSampleSize = sample
-                        }) ?: error("تعذر قراءة الصورة")
-                    }
+                        })
+                    } ?: error("تعذر قراءة الصورة")
                 }
                 else -> return
             }
