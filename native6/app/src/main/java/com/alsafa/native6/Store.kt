@@ -1816,7 +1816,15 @@ class Store(val helper:StoreDb) {
             AND (instr(lower(customer),lower(?))>0 OR instr(lower(phone),lower(?))>0
             OR (?<>'' AND instr(replace(replace(replace(replace(replace(replace(replace(phone,' ',''),'-',''),'+',''),'(',''),')',''),'/',''),'.',''),?)>0)
             OR instr(lower(watch),lower(?))>0 OR instr(lower(problem),lower(?))>0
-            OR instr(lower(id),lower(?))>0)
+            OR instr(lower(id),lower(?))>0
+            OR EXISTS(SELECT 1 FROM stock_moves sm
+                JOIN events pe ON pe.id=sm.event_id
+                JOIN products p ON p.id=sm.product_id
+                WHERE pe.kind='REPAIR_PART' AND pe.memo='REPAIR_PART:' || repairs.id
+                AND (instr(lower(p.name),lower(?))>0
+                    OR instr(lower(p.barcode),lower(?))>0
+                    OR instr(lower(p.model),lower(?))>0
+                    OR instr(lower(p.brand),lower(?))>0)))
             ORDER BY date DESC,id DESC LIMIT $limit OFFSET $offset""",
             first,last,status,status,needle,needle,phoneNeedle,phoneNeedle,needle,needle,needle)
     }
