@@ -32,6 +32,7 @@ class RepairDateSearchTest {
         val date=LocalDate.now().toString()
         s.receiveRepair("عميل","0933-456 789","Casio","بطارية",date)
         assertEquals(1,s.repairListByDates(query="0933456789",from=date,until=date).size)
+        assertEquals(1,s.repairListByDates(query="0933/456.789",from=date,until=date).size)
     }
 
     @Test fun searchRepairByInstalledPart() {
