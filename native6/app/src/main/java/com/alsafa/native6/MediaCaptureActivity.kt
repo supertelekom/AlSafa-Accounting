@@ -162,11 +162,27 @@ class MediaCaptureActivity : Activity() {
                 }
                 else -> return
             }
-            val maxSide = maxOf(bitmap.width, bitmap.height)
+            // Normalize the orientation encoded by the camera or gallery provider.
+            // Some Android cameras save JPEG pixels sideways and rely on EXIF.
+            val orientation = when (requestCode) {
+                CAMERA -> pendingCameraPath?.let { readPhotoRotation(File(it)) } ?: 0
+                GALLERY -> data?.data?.let { uri ->
+                    contentResolver.openInputStream(uri)?.use { stream ->
+                        androidx.exifinterface.media.ExifInterface(stream).rotationDegrees
+                    }
+                } ?: 0
+                else -> 0
+            }
+            val uprightBitmap = if (orientation != 0) {
+                val matrix = android.graphics.Matrix().apply { postRotate(orientation.toFloat()) }
+                Bitmap.createBitmap(bitmap,0,0,bitmap.width,bitmap.height,matrix,true)
+            } else bitmap
+            if (uprightBitmap !== bitmap) bitmap.recycle()
+            val maxSide = maxOf(uprightBitmap.width, uprightBitmap.height)
             val outputBitmap = if (maxSide > 1600) {
                 val scale = 1600.0 / maxSide
-                Bitmap.createScaledBitmap(bitmap, (bitmap.width * scale).toInt().coerceAtLeast(1), (bitmap.height * scale).toInt().coerceAtLeast(1), true)
-            } else bitmap
+                Bitmap.createScaledBitmap(uprightBitmap, (uprightBitmap.width * scale).toInt().coerceAtLeast(1), (uprightBitmap.height * scale).toInt().coerceAtLeast(1), true)
+            } else uprightBitmap
             // The previous selection belongs to this picker only. Never remove a photo
             // already referenced by a product or repair while replacing the preview.
             val previousSelection = imagePath
@@ -188,8 +204,8 @@ class MediaCaptureActivity : Activity() {
                 output.delete()
                 throw e
             }
-            if(outputBitmap !== bitmap) outputBitmap.recycle()
-            bitmap.recycle()
+            if(outputBitmap !== uprightBitmap) uprightBitmap.recycle()
+            outputBitmap.recycle()
             pendingCameraPath?.let { File(it).delete() }
             pendingCameraPath=null
             previousSelection?.takeIf { it != output.absolutePath }?.let { old ->
@@ -206,6 +222,9 @@ class MediaCaptureActivity : Activity() {
             status.text = "تعذر حفظ الصورة: ${e.message}"
         }
     }
+
+    private fun readPhotoRotation(file: File): Int =
+        androidx.exifinterface.media.ExifInterface(file.absolutePath).rotationDegrees
 
     private fun show(path: String) {
         val bounds=BitmapFactory.Options().apply { inJustDecodeBounds=true }
