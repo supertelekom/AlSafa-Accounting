@@ -531,23 +531,25 @@ class Store(val helper:StoreDb) {
         val until=LocalDate.parse(endDate).toString()
         require(from<=until){"تاريخ البداية يجب ألا يتجاوز تاريخ النهاية"}
         val needle=query.trim()
+        // Escape user-entered LIKE wildcards so '%' and '_' are searched literally.
+        val escaped=needle.replace("!", "!!").replace("%", "!%").replace("_", "!_")
         val conditions=mutableListOf("e.date>=?","e.date<=?")
         val args=mutableListOf(from,until)
         if(needle.isNotEmpty()){
-            val match="%$needle%"
-            conditions.add("""(CAST(i.number AS TEXT) LIKE ? OR i.party LIKE ? OR i.phone LIKE ?
-                OR i.id=?
+            val match="%$escaped%"
+            conditions.add("""(CAST(i.number AS TEXT) LIKE ? ESCAPE '!' OR i.party LIKE ? ESCAPE '!'
+                OR i.phone LIKE ? ESCAPE '!' OR i.id=?
                 OR EXISTS(SELECT 1 FROM invoice_lines l
-                    WHERE l.invoice_id=i.id AND l.name LIKE ?)
+                    WHERE l.invoice_id=i.id AND l.name LIKE ? ESCAPE '!')
                 OR (i.kind='repair' AND EXISTS(
                     SELECT 1 FROM repairs rp WHERE rp.invoice_id=i.id
-                    AND (rp.watch LIKE ? OR EXISTS(
+                    AND (rp.watch LIKE ? ESCAPE '!' OR EXISTS(
                         SELECT 1 FROM stock_moves sm
                         JOIN events pe ON pe.id=sm.event_id
                         JOIN products p ON p.id=sm.product_id
                         WHERE pe.kind='REPAIR_PART'
                         AND pe.memo='REPAIR_PART:' || rp.id
-                        AND p.name LIKE ?))))
+                        AND p.name LIKE ? ESCAPE '!')))
                 )""")
             args.addAll(listOf(match,match,match,needle,match,match,match))
         }
