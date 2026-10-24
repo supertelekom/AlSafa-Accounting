@@ -935,9 +935,13 @@ open class MainActivity:Activity() {
                 ?.get("cost")?.toLongOrNull()
             if(cost!=null) {
                 text("التكلفة: "+money(cost,inv.currency),panel,13f)
-                if(inv.status=="posted") {
-                    text("هامش الربح قبل المصاريف: "+money(Math.subtractExact(inv.total,cost),inv.currency),panel,13f)
+                val hasReturns=inv.kind=="sale" &&
+                    store.rows("SELECT invoice_id FROM returns WHERE invoice_id=? LIMIT 1",inv.id).isNotEmpty()
+                if(inv.status=="posted" && !hasReturns) {
+                    text("هامش الربح الأصلي قبل المصاريف: "+money(Math.subtractExact(inv.total,cost),inv.currency),panel,13f)
                         .setTextColor(gold)
+                } else if(hasReturns) {
+                    text("توجد مرتجعات: راجع تفاصيل الفاتورة لتدقيق صافي الربح.",panel,12f)
                 }
             }
         }
