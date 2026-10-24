@@ -1818,7 +1818,7 @@ class Store(val helper:StoreDb) {
             OR instr(lower(watch),lower(?))>0 OR instr(lower(problem),lower(?))>0
             OR instr(lower(id),lower(?))>0)
             ORDER BY date DESC,id DESC LIMIT $limit OFFSET $offset""",
-            first,last,status,status,needle,needle,needle,needle,needle)
+            first,last,status,status,needle,needle,phoneNeedle,phoneNeedle,needle,needle,needle)
     }
 
     /** Uncollected repairs are operational custody, not cash or accounts receivable. */
