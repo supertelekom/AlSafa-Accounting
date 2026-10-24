@@ -1095,9 +1095,13 @@ open class MainActivity:Activity() {
             text("الفترة: "+start+" ← "+end+" · الصفحة "+(pageIndex+1)+
                 " · الفواتير المعروضة: "+results.size,output,14f)
             // Per-page gross totals are separated by currency, not presented as cash receipts.
-            results.groupBy { it.kind to it.currency }.forEach { (key,invoices)->
+            val active=results.filter { it.status=="posted" }
+            results.count { it.status=="cancelled" }.takeIf { it>0 }?.let { cancelled->
+                text("فواتير ملغاة في هذه الصفحة: "+cancelled+" (مستبعدة من الإجماليات)",output,13f)
+            }
+            active.groupBy { it.kind to it.currency }.forEach { (key,invoices)->
                 val gross=invoices.fold(0L){sum,inv->Math.addExact(sum,inv.total)}
-                text("إجمالي "+label(key.first)+" ("+key.second.name+"): "+
+                text("إجمالي الفواتير السارية · "+label(key.first)+" ("+key.second.name+"): "+
                     money(gross,key.second)+" · "+invoices.size+" فاتورة",output,13f)
             }
             if(results.isEmpty()) {
