@@ -2318,7 +2318,7 @@ button("＋ مورد"){form("مورد جديد"){box->val n=field("الاسم",b
                 val days=field("عدد أيام الانتظار على الأقل",box,"2",true)
                 ({
                     val rows=store.uncollectedRepairs(minimumDays=days.text.toString().trim().toLong())
-                    val details=rows.take(100).joinToString("\n") {
+                    val details=rows.joinToString("\n") {
                         it.getValue("customer")+" - "+it.getValue("watch")+" - "+it.getValue("age_days")+" يوم"
                     }
                     AlertDialog.Builder(this).setTitle("الساعات غير المسلمة: "+rows.size)
