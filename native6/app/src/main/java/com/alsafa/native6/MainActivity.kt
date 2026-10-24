@@ -1229,12 +1229,14 @@ open class MainActivity:Activity() {
                 dialog.dismiss()
                 form("تأكيد استلام الأصناف المرتجعة فعلياً","إلغاء الفاتورة"){b->
                     val reason=field("سبب الإلغاء",b)
-                    text("ينشأ رصيد مستحق للعميل؛ رد المال عملية مستقلة.",b)
-                    {
-                        val value=reason.text.toString()
-                        require(value.isNotBlank())
-                        work{store.cancelSale(inv.id,value)}
-                    }
+                    val date=field("تاريخ استلام الأصناف فعلياً YYYY-MM-DD",b,Store.today())
+                    text("لا يتم رد المال تلقائياً. سجّل الاسترداد كحركة مستقلة بعد إرجاع الأصناف.",b)
+                    ({
+                        val value=reason.text.toString().trim()
+                        require(value.isNotBlank()){"سبب الإلغاء مطلوب"}
+                        val actualDate=java.time.LocalDate.parse(date.text.toString().trim()).toString()
+                        work{store.cancelSale(inv.id,value,date=actualDate)}
+                    })
                 }
             })
         }
