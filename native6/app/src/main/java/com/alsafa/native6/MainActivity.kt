@@ -1009,19 +1009,21 @@ button("＋ مورد"){form("مورد جديد"){box->val n=field("الاسم",b
             }
             clipToOutline=true
         }
-        if(path!=null && runCatching { localPhoto(path) }.isSuccess) {
-            val bounds=android.graphics.BitmapFactory.Options().apply { inJustDecodeBounds=true }
-            android.graphics.BitmapFactory.decodeFile(path,bounds)
-            if(bounds.outWidth>0 && bounds.outHeight>0) {
+        val thumbnail=path?.let { photoPath ->
+            runCatching {
+                localPhoto(photoPath)
+                val bounds=android.graphics.BitmapFactory.Options().apply { inJustDecodeBounds=true }
+                android.graphics.BitmapFactory.decodeFile(photoPath,bounds)
+                require(bounds.outWidth>0 && bounds.outHeight>0) { "صورة غير قابلة للقراءة" }
                 var sample=1
                 while(maxOf(bounds.outWidth,bounds.outHeight)/sample>160) sample*=2
-                val bitmap=android.graphics.BitmapFactory.decodeFile(path,
+                android.graphics.BitmapFactory.decodeFile(photoPath,
                     android.graphics.BitmapFactory.Options().apply { inSampleSize=sample })
-                if(bitmap!=null) {
-                    icon.setImageBitmap(bitmap)
-                    icon.setOnClickListener { showRepairPhoto(path) }
-                } else icon.setImageResource(android.R.drawable.ic_menu_gallery)
-            } else icon.setImageResource(android.R.drawable.ic_menu_gallery)
+            }.getOrNull()
+        }
+        if(thumbnail!=null && path!=null) {
+            icon.setImageBitmap(thumbnail)
+            icon.setOnClickListener { showRepairPhoto(path) }
         } else icon.setImageResource(android.R.drawable.ic_menu_gallery)
         // A missing or damaged image should remain recoverable from the repair card.
         if(!icon.hasOnClickListeners()) {
