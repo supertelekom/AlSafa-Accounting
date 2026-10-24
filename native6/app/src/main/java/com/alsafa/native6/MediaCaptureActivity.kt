@@ -190,6 +190,7 @@ class MediaCaptureActivity : Activity() {
         val bounds=BitmapFactory.Options().apply { inJustDecodeBounds=true }
         BitmapFactory.decodeFile(path,bounds)
         var sample=1
+        require(bounds.outWidth>0 && bounds.outHeight>0) { "ملف الصورة غير قابل للعرض" }
         while(maxOf(bounds.outWidth,bounds.outHeight)/sample>1200)sample*=2
         preview.setImageBitmap(BitmapFactory.decodeFile(path,BitmapFactory.Options().apply { inSampleSize=sample }))
         status.text = "الصورة محفوظة محلياً، اضغط استخدام الصورة للمتابعة"
