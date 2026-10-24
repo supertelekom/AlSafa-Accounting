@@ -61,6 +61,14 @@ object LegacyImportPreflight {
                     problems.add("purchases[$i]: duplicate purchase ID")
             }
         }
+        val saleIds=HashSet<String>()
+        data.optJSONArray("sales")?.let { sales ->
+            for(i in 0 until sales.length()) {
+                val id=sales.optJSONObject(i)?.optString("id").orEmpty().trim()
+                if(id.isNotEmpty() && !saleIds.add(id))
+                    problems.add("sales[$i]: duplicate sale ID")
+            }
+        }
         val supplierIds=HashSet<String>()
         data.optJSONArray("suppliers")?.let { suppliers ->
             for(i in 0 until suppliers.length()) {
