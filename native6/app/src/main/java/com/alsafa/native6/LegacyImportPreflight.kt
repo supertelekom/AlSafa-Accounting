@@ -22,6 +22,12 @@ object LegacyImportPreflight {
                 if(item==null) { problems.add("$section[$i]: invalid record");continue }
                 val id=item.optString("id").trim()
                 if(id.isEmpty() || !ids.add(id)) problems.add("$section[$i]: missing or duplicate ID")
+                if(section=="products" || section=="maintenanceParts") {
+                    if(item.optString("currency") !in setOf("USD","TRY","SYP"))
+                        problems.add("$section[$i]: unsupported currency")
+                    val qty=item.optString("stock").toLongOrNull()
+                    if(qty==null || qty<0) problems.add("$section[$i]: invalid stock")
+                }
                 if(section=="repairs") {
                     val date=item.optString("date")
                     val valid=runCatching { !LocalDate.parse(date).isAfter(LocalDate.now()) }.getOrDefault(false)
