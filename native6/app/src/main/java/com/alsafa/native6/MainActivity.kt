@@ -901,12 +901,25 @@ open class MainActivity:Activity() {
                 })
             }
         }
+        text("البحث في الفواتير",size=20f).setTextColor(gold)
         val query=field("رقم الفاتورة أو اسم العميل أو الهاتف",body)
         val kinds=listOf("all","sale","purchase","repair")
         val statuses=listOf("all","posted","cancelled")
-        val kind=select("نوع الفاتورة",listOf("الكل","مبيع","شراء","صيانة"),body)
-        val status=select("حالة الفاتورة",listOf("الكل","مرحلة","ملغاة"),body)
-        val output=column();body.addView(output)
+        val filters=LinearLayout(this).apply {
+            orientation=LinearLayout.HORIZONTAL
+            layoutDirection=View.LAYOUT_DIRECTION_RTL
+            background=background(paper,12)
+            setPadding(dp(8),dp(8),dp(8),dp(8))
+        }
+        val kindBox=column().apply {setPadding(dp(4),0,dp(4),0)}
+        val statusBox=column().apply {setPadding(dp(4),0,dp(4),0)}
+        val kind=select("نوع الفاتورة",listOf("الكل","مبيع","شراء","صيانة"),kindBox)
+        val status=select("حالة الفاتورة",listOf("الكل","مرحلة","ملغاة"),statusBox)
+        filters.addView(kindBox,LinearLayout.LayoutParams(0,-2,1f))
+        filters.addView(statusBox,LinearLayout.LayoutParams(0,-2,1f))
+        body.addView(filters)
+        val output=column().apply{setPadding(0,dp(8),0,dp(8))}
+        body.addView(output)
         fun show(){
             output.removeAllViews()
             val results=store.searchInvoices(query.text.toString(),kinds[kind.selectedItemPosition],
