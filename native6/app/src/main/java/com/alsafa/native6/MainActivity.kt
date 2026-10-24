@@ -1015,8 +1015,7 @@ button("＋ مورد"){form("مورد جديد"){box->val n=field("الاسم",b
         } else icon.setImageResource(android.R.drawable.ic_menu_gallery)
         line.addView(icon,LinearLayout.LayoutParams(dp(38),dp(38)).apply { marginEnd=dp(11) })
         val details=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL }
-        val invoice=store.repairInvoice(id)
-        val invoiceLabel=invoice?.get("number")?.let { "فاتورة #$it · " } ?: ""
+        val invoiceLabel="" // Intake rows may not have an invoice until delivery.
         val title=TextView(this).apply {
             text=invoiceLabel+row.getValue("customer")+" · "+row.getValue("watch")
             textSize=14f
