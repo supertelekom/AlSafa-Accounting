@@ -79,6 +79,14 @@ class Backup(private val context:Context,private val store:Store) {
             }
         }
         require(data.keys().asSequence().toSet()==tables.toSet()){"جداول النسخة غير مكتملة"}
+        // Reject structurally invalid rows before any file is written or restored.
+        tables.forEach { table ->
+            val records=data.getJSONArray(table)
+            require(records.length()<=1_000_000){"عدد سجلات غير منطقي في $table"}
+            for(index in 0 until records.length()) {
+                require(records.optJSONObject(index)!=null){"سجل غير صالح في $table"}
+            }
+        }
         // Validate in a disposable database, then restore atomically only into an empty database.
         if(root.getInt("schema")>=7) BackupMediaPaths.rebase(context,data,root.getJSONArray("media"))
         val name="validate-${Store.id()}.db";val helper=StoreDb(context,name);val staging=Store(helper)
