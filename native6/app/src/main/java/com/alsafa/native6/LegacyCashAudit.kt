@@ -7,11 +7,12 @@ import java.math.BigDecimal
 object LegacyCashAudit {
     fun inspect(payload:String):JSONObject {
         val data=JSONObject(payload).getJSONObject("data")
-        val entries=data.optJSONArray("cashTransactions") ?: return JSONObject()
+        val entries=data.optJSONArray("cashTransactions") ?: org.json.JSONArray()
         val totals=sortedMapOf<String,BigDecimal>()
         val counts=sortedMapOf<String,Int>()
         val invalid=org.json.JSONArray()
         val missingVaults=org.json.JSONArray()
+        val negativeRows=org.json.JSONArray()
         for(i in 0 until entries.length()) {
             val row=entries.optJSONObject(i) ?: continue
             val currency=row.optString("currency")
@@ -23,6 +24,7 @@ object LegacyCashAudit {
                 invalid.put(i)
                 continue
             }
+            if(amount< BigDecimal.ZERO) negativeRows.put(i)
             val key="$vault|$currency|$type"
             totals[key]=(totals[key] ?: BigDecimal.ZERO)+amount
             counts[key]=(counts[key] ?: 0)+1
@@ -33,6 +35,7 @@ object LegacyCashAudit {
             .put("counts",JSONObject(counts as Map<*,*>))
             .put("invalidRows",invalid)
             .put("missingVaultRows",missingVaults)
+            .put("negativeAmountRows",negativeRows)
             .put("posting","NONE")
     }
 }
