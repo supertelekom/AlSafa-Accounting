@@ -581,8 +581,9 @@ class Store(val helper:StoreDb) {
         rows("SELECT id FROM products").forEach { row ->
             paths.addAll(productImages(row.getValue("id")))
         }
-        rows("SELECT image_path FROM repairs WHERE image_path<>''").forEach { row ->
-            row["image_path"]?.takeIf { it.isNotBlank() }?.let { paths.add(it) }
+        rows("SELECT details FROM repairs").forEach { row ->
+            JSONObject(row.getValue("details")).optString("imagePath")
+                .takeIf { it.isNotBlank() }?.let { paths.add(it) }
         }
         return paths
     }
