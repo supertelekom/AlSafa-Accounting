@@ -995,6 +995,8 @@ button("＋ مورد"){form("مورد جديد"){box->val n=field("الاسم",b
             background=background()
         }
         val icon=ImageView(this).apply {
+            isClickable=true
+            isFocusable=true
             scaleType=ImageView.ScaleType.CENTER_CROP
             contentDescription="صورة ساعة "+row.getValue("customer")
             background=GradientDrawable().apply {
@@ -1027,6 +1029,13 @@ button("＋ مورد"){form("مورد جديد"){box->val n=field("الاسم",b
             }
         }
         line.addView(icon,LinearLayout.LayoutParams(dp(38),dp(38)).apply { marginEnd=dp(11) })
+        // The watch thumbnail is small by design; keep the touch target tablet-friendly.
+        icon.setOnTouchListener { view,event ->
+            if(event.action==android.view.MotionEvent.ACTION_UP) {
+                view.performClick()
+                true
+            } else event.action==android.view.MotionEvent.ACTION_DOWN
+        }
         val details=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL }
         val heading=TextView(this).apply {
             text=row.getValue("customer")+" · "+row.getValue("watch")
