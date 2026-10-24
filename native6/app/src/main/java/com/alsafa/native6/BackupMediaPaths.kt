@@ -25,6 +25,7 @@ object BackupMediaPaths {
                 if(raw.isBlank()) continue
                 val details=JSONObject(raw)
                 val gallery=details.optJSONArray("imagePaths")
+                if(table=="repairs") require(gallery==null) { "معرض الصور الإضافية مخصص للمنتجات" }
                 if(gallery!=null) {
                     require(gallery.length()<=8) { "عدد صور المنتج يتجاوز الحد المسموح" }
                     val rebasedGallery=JSONArray()
