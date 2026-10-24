@@ -139,6 +139,9 @@ object LegacySnapshotImport {
             val expectedArchive=historical.sumOf { d.getJSONArray(it).length() } +
                 configurationKeys.size + scalarKeys.size +
                 (if(deviceSettings!=null) 1 else 0)
+            require(store.scalar("SELECT count(*) FROM repairs")==repairs.length().toLong()) {
+                "سجل الصيانة غير مكتمل بعد الاستيراد"
+            }
             require(store.scalar("SELECT count(*) FROM suppliers")==suppliers.length().toLong()) { "عدد الموردين المنقولين غير مطابق" }
             require(store.scalar("SELECT count(*) FROM events WHERE kind<>?", "OPENING_STOCK")==0L) { "الاستعادة أنشأت حدثاً محاسبياً غير رصيد المخزون الافتتاحي" }
             require(store.scalar("SELECT count(*) FROM events WHERE kind=?", "OPENING_STOCK")==seen.size.toLong()-suppliers.length()-repairs.length()) { "عدد أحداث المخزون الافتتاحي غير مطابق" }
