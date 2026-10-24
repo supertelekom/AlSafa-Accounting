@@ -1809,6 +1809,8 @@ class Store(val helper:StoreDb) {
         val last=LocalDate.parse(until).toString()
         require(first<=last && last<=today()){"فترة البحث غير صالحة"}
         val needle=query.trim()
+        val digits=needle.filter { it in '0'..'9' }
+        val phoneNeedle=if(digits.length>=3) digits else ""
         return rows("""SELECT * FROM repairs WHERE date>=? AND date<=?
             AND (?='all' OR status=?)
             AND (instr(lower(customer),lower(?))>0 OR instr(lower(phone),lower(?))>0
