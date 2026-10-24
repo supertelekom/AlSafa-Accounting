@@ -507,6 +507,21 @@ open class MainActivity:Activity() {
             Triple("◫","أرشيف الفواتير القديمة","legacy-history")
         ))
     }
+    /** Keeps specialist audit tools accessible without pushing daily operations off screen. */
+    private fun collapsibleTools(title:String,build:()->Unit) {
+        val host=body
+        val content=column().apply {
+            setPadding(dp(9),dp(5),dp(9),dp(9))
+            background=background(paper,12)
+            visibility=View.GONE
+        }
+        button("▸ "+title,host) {
+            content.visibility=if(content.visibility==View.VISIBLE)View.GONE else View.VISIBLE
+        }
+        host.addView(content,LinearLayout.LayoutParams(-1,-2))
+        body=content
+        try { build() } finally { body=host }
+    }
     private fun sectionHeading(title:String,subtitle:String="",parent:LinearLayout=body) {
         val panel=LinearLayout(this).apply {
             orientation=LinearLayout.VERTICAL
@@ -1003,6 +1018,7 @@ open class MainActivity:Activity() {
         {val q=fields.mapValues{it.value.text.toString().toLong()}.filterValues{it>0};val why=reason.text.toString();require(q.isNotEmpty()&&why.isNotBlank());work{store.returnSale(inv.id,q,why)}}}}
     private fun paymentForm(title:String,c:Currency,max:Long,action:(Long,String,String)->Unit){form(title){box->val n=field("المبلغ ${c.name} · المتبقي ${money(max,c)}",box,"0",true);val v=select("الخزنة",vaultNames,box);val received=field("تاريخ حركة النقود الفعلي YYYY-MM-DD",box,Store.today());{val amount=amount(n,c);val vault=Store.vaults[v.selectedItemPosition];val actualDate=java.time.LocalDate.parse(received.text.toString().trim()).toString();work{action(amount,vault,actualDate)}}}}
     private fun vaults(){sectionHeading("الخزنات والإقفال اليومي","الأرصدة الفعلية والمحاسبية بحسب الخزنة والعملة");
+        collapsibleTools("تقارير وتدقيق الخزنات المتقدم") {
         button("تدقيق فروقات الإقفال لجميع الخزنات"){
             form("تدقيق الإقفالات الشهري","عرض"){box->
                 val month=field("الشهر YYYY-MM",box,YearMonth.now().toString())
@@ -1203,6 +1219,8 @@ Store.vaults.forEach{v->text(v+" · إقفالات تحتاج عدّاً: "+stor
                 })
             }
         }
+        }
+        sectionHeading("عمليات الخزنة اليومية","إضافة الحركات المالية والصرف والإقفال")
         button("إضافة رصيد / مصروف / سحب / نقل"){form("حركة مالية"){box->val type=select("نوع العملية",listOf("رصيد افتتاحي","مصروف","سحب شريك","نقل بين الخزنات"),box);val v=select("الخزنة",vaultNames,box);val c=select("العملة",Currency.entries.map{it.name},box);val n=field("المبلغ",box,"0",true);val dest=select("إلى خزنة (للنقل)",vaultNames,box);val partnerRows=store.rows("SELECT id,name FROM partner_members ORDER BY name");val partner=select("الشريك (للسحب)",if(partnerRows.isEmpty())listOf("لا يوجد شركاء مسجلون") else partnerRows.map{it.getValue("name")},box);val note=field("البيان",box);val date=field("تاريخ الحركة YYYY-MM-DD",box,Store.today());
             {val currency=Currency.entries[c.selectedItemPosition];val amount=amount(n,currency);val source=Store.vaults[v.selectedItemPosition];val kind=listOf("opening","expense","withdrawal","transfer")[type.selectedItemPosition];val destination=if(kind=="withdrawal"){require(partnerRows.isNotEmpty()){"أضف الشريك أولاً من شاشة الشركاء"};partnerRows[partner.selectedItemPosition].getValue("id")}else Store.vaults[dest.selectedItemPosition];val memo=note.text.toString();val day=date.text.toString();work{store.cash(kind,source,currency,amount,memo,day,destination)}}}}
         button("صرف عملة بين الخزنات"){form("صرف عملة"){box->val from=select("العملة المدفوعة",Currency.entries.map{it.name},box);val source=select("من خزنة",vaultNames,box);val spent=field("المبلغ المدفوع",box,"0",true);val to=select("العملة المقبوضة",Currency.entries.map{it.name},box);val dest=select("إلى خزنة",vaultNames,box);val received=field("المبلغ المقبوض فعلياً",box,"0",true);{val fc=Currency.entries[from.selectedItemPosition];val tc=Currency.entries[to.selectedItemPosition];val a=amount(spent,fc);val b=amount(received,tc);val sv=Store.vaults[source.selectedItemPosition];val dv=Store.vaults[dest.selectedItemPosition];work{store.exchange(sv,fc,a,dv,tc,b)}}}}
@@ -1465,6 +1483,7 @@ button("＋ مورد"){form("مورد جديد"){box->val n=field("الاسم",b
                 })
             }
         }
+        collapsibleTools("تقارير وتدقيق الصيانة المتقدم") {
         button("كشف تفصيلي لمقبوضات الصيانة الشهرية"){form("كشف الدفعات","عرض"){box->val m=field("الشهر YYYY-MM",box,YearMonth.now().toString());({val rows=store.repairCashReceivedMonthDetails(m.text.toString().trim());val details=rows.joinToString("\n"){it.getValue("receipt_date")+" (تسليم "+it.getValue("delivery_date")+") · #"+it.getValue("invoice_number")+" · "+it.getValue("customer")+" · "+money(it.getValue("amount").toLong(),Currency.valueOf(it.getValue("currency")))+" · "+it.getValue("vault")};AlertDialog.Builder(this).setTitle("الدفعات الفعلية").setMessage(details.ifBlank{"لا توجد دفعات"}).setPositiveButton("حسناً",null).show()})}}
         button("عدد دفعات الصيانة الشهرية"){form("عدد الدفعات","عرض"){box->val m=field("الشهر YYYY-MM",box,YearMonth.now().toString());({val selected=m.text.toString().trim();val count=store.repairCashReceiptCount(selected);val old=store.repairOldDebtReceiptCount(selected);val current=store.repairReceiptCurrentMonthCount(selected);AlertDialog.Builder(this).setTitle("دفعات الصيانة").setMessage("عدد عمليات القبض: $count · فواتير الشهر: $current · ديون قديمة: $old").setPositiveButton("حسناً",null).show()})}}
         button("مقارنة تحصيل الصيانة الحالي والقديم"){
@@ -1755,6 +1774,8 @@ button("＋ مورد"){form("مورد جديد"){box->val n=field("الاسم",b
                 })
             }
         }
+        }
+        sectionHeading("طلبات الصيانة","الصور والحالة والتواصل مع العميل")
         text("الطلبات الحالية — اضغط على صورة الساعة لتكبيرها، ثم اضغط مجددًا أو × للعودة.",body,14f)
         val search=field("بحث بالعميل أو الهاتف أو الساعة أو المشكلة",body)
         val status=select("حالة الصيانة",listOf("الكل","مستلمة","قيد العمل","جاهزة","تم التسليم"),body)
