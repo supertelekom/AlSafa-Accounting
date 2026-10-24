@@ -25,12 +25,12 @@ object BackupMedia {
         require(root.isDirectory || !root.exists()) { "مسار مجلد الصور غير صالح" }
         var total=0L
         val files=if(root.exists()) requireNotNull(root.listFiles()) { "تعذر قراءة مجلد الصور" }.toList() else emptyList()
-        require(files.none { it.extension.lowercase() in setOf("jpeg","png","webp") }) { "توجد صور بصيغة غير مدعومة في النسخة" }
+        require(files.none { it.extension.lowercase() in setOf("jpeg","png","webp") }) { "النسخ الاحتياطي يدعم ملفات JPG فقط؛ توجد صور بصيغة أخرى" }
         require(files.all { it.isFile }) { "يوجد عنصر غير صالح داخل مجلد الصور" }
         require(files.size<=10000) { "عدد ملفات الصور يتجاوز الحد الآمن" }
-        require(files.none { it.extension.lowercase() !in setOf("jpg","jpeg","png","webp") }) { "توجد ملفات غير معروفة في مجلد الصور" }
+        require(files.all { it.extension.lowercase()=="jpg" }) { "توجد ملفات غير معروفة في مجلد الصور" }
         files.filter { it.extension.lowercase()=="jpg" }.sortedBy { it.name }.forEach { file ->
-            require(file.canonicalFile.parentFile==root && file.length()<=MAX_FILE) { "ملف صورة غير صالح للنسخ" }
+            require(file.canonicalFile.parentFile==root && file.canonicalFile==file.absoluteFile && file.length()<=MAX_FILE) { "ملف صورة غير صالح للنسخ" }
             require(file.name.removeSuffix(".jpg").matches(Regex("[a-fA-F0-9-]{36}"))) { "اسم صورة غير صالح" }
             require(file.length()>0L) { "صورة فارغة في النسخة" }
             total+=file.length()
@@ -70,7 +70,7 @@ object BackupMedia {
             total+=decodedSize
             require(total<=MAX_TOTAL) { "حجم الصور يتجاوز الحد" }
         }
-        require(dir.isDirectory || dir.mkdirs()) { "تعذر إنشاء مجلد الصور" }
+        require((dir.isDirectory || dir.mkdirs()) && dir.isDirectory) { "تعذر إنشاء مجلد الصور" }
         require(dir.canonicalFile.parentFile==context.filesDir.canonicalFile) { "تغير مسار الصور أثناء الاستعادة" }
         val created=mutableListOf<File>()
         var decodedTotal=0L
