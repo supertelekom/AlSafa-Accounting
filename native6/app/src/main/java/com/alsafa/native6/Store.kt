@@ -576,6 +576,28 @@ class Store(val helper:StoreDb) {
         val raw=rows("SELECT details FROM products WHERE id=?",id).singleOrNull()?.get("details") ?: return null
         return JSONObject(raw).optString("imagePath").takeIf { it.isNotBlank() }
     }
+    fun productImages(id:String):List<String> {
+        val raw=rows("SELECT details FROM products WHERE id=?",id).singleOrNull()?.get("details") ?: return emptyList()
+        val json=JSONObject(raw)
+        val out=linkedSetOf<String>()
+        json.optString("imagePath").takeIf(String::isNotBlank)?.let(out::add)
+        val arr=json.optJSONArray("imagePaths")
+        if(arr!=null) for(i in 0 until arr.length()) arr.optString(i).takeIf(String::isNotBlank)?.let(out::add)
+        return out.toList()
+    }
+
+    fun appendProductImage(id:String,path:String) = transaction {
+        require(path.isNotBlank() && path.length<=1024)
+        val raw=rows("SELECT details FROM products WHERE id=?",id).single().getValue("details")
+        val paths=productImages(id)
+        require(paths.size<8 || path in paths){"الحد الأقصى 8 صور"}
+        if(path !in paths) {
+            val all=paths+path
+            val json=JSONObject(raw).put("imagePath",all.first()).put("imagePaths",org.json.JSONArray(all))
+            db.execSQL("UPDATE products SET details=? WHERE id=?",arrayOf(json.toString(),id))
+            event(id(),"PRODUCT_IMAGE",today(),"إضافة صورة للمنتج $id")
+        }
+    }
     fun setProductImage(id:String,path:String) = transaction {
         require(path.isNotBlank() && path.length<=1024){"مسار الصورة غير صالح"}
         val raw=rows("SELECT details FROM products WHERE id=?",id).singleOrNull()?.get("details")
