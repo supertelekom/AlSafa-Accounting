@@ -2326,7 +2326,7 @@ button("＋ مورد"){form("مورد جديد"){box->val n=field("الاسم",b
                         it.getValue("watch")+" · "+label(it.getValue("status"))+
                         " · "+it.getValue("age_days")+" يوم"
                     }
-                    AlertDialog.Builder(this).setTitle("الساعات غير المسلمة: "+rows.size)
+                    AlertDialog.Builder(this).setTitle("الساعات غير المسلمة · صفحة "+pageNumber)
                         .setMessage(details.ifBlank { "لا توجد نتائج" })
                         .setPositiveButton("حسناً",null).show()
                 })
