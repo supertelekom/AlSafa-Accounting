@@ -532,6 +532,8 @@ class Store(val helper:StoreDb) {
         val until=LocalDate.parse(endDate).toString()
         require(from<=until){"تاريخ البداية يجب ألا يتجاوز تاريخ النهاية"}
         val needle=query.trim()
+        // Search both formatted and unformatted phone numbers (spaces, +, dashes).
+        val phoneNeedle=needle.filter { it.isDigit() }
         // Escape user-entered LIKE wildcards so '%' and '_' are searched literally.
         val escaped=needle.replace("!", "!!").replace("%", "!%").replace("_", "!_")
         val conditions=mutableListOf("e.date>=?","e.date<=?")
@@ -539,7 +541,9 @@ class Store(val helper:StoreDb) {
         if(needle.isNotEmpty()){
             val match="%$escaped%"
             conditions.add("""(CAST(i.number AS TEXT) LIKE ? ESCAPE '!' OR i.party LIKE ? ESCAPE '!'
-                OR i.phone LIKE ? ESCAPE '!' OR i.id=?
+                OR i.phone LIKE ? ESCAPE '!'
+                OR (?<>'' AND replace(replace(replace(replace(i.phone,' ',''),'-',''),'+',''),'(', '') LIKE ? ESCAPE '!')
+                OR i.id=?
                 OR EXISTS(SELECT 1 FROM invoice_lines l
                     WHERE l.invoice_id=i.id AND l.name LIKE ? ESCAPE '!')
                 OR (i.kind='repair' AND EXISTS(
@@ -552,7 +556,7 @@ class Store(val helper:StoreDb) {
                         AND pe.memo='REPAIR_PART:' || rp.id
                         AND p.name LIKE ? ESCAPE '!'))))
                 )""")
-            args.addAll(listOf(match,match,match,needle,match,match,match))
+            args.addAll(listOf(match,match,match,phoneNeedle,"%$phoneNeedle%",needle,match,match,match))
         }
         if(kind!="all"){conditions.add("i.kind=?");args.add(kind)}
         if(status!="all"){conditions.add("i.status=?");args.add(status)}
