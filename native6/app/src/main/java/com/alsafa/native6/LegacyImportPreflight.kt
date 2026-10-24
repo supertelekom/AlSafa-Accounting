@@ -102,9 +102,12 @@ object LegacyImportPreflight {
         data.optJSONArray("returns")?.let { returns ->
             for(i in 0 until returns.length()) {
                 val row=returns.optJSONObject(i) ?: continue
-                val sale=row.optString("saleId").trim()
-                if(sale.isNotEmpty() && sale !in saleIds)
+                val ref=row.optString("referenceId").trim()
+                val type=row.optString("referenceType")
+                if(ref.isNotEmpty() && type=="sale" && ref !in saleIds)
                     problems.add("returns[$i]: unknown sale reference")
+                if(ref.isNotEmpty() && type=="purchase" && ref !in purchaseIds)
+                    problems.add("returns[$i]: unknown purchase reference")
             }
         }
         data.optJSONArray("cashTransactions")?.let { transactions ->
