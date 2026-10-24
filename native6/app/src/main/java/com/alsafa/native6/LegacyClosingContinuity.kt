@@ -24,6 +24,10 @@ object LegacyClosingContinuity {
         val transitions=JSONArray()
         val invalidAmounts=JSONArray()
         val carryMismatches=JSONArray()
+        val duplicateClosingDates=JSONArray()
+        for(i in 1 until rows.size) {
+            if(rows[i].first==rows[i-1].first) duplicateClosingDates.put(rows[i].first.toString())
+        }
         val currencies=listOf("USD","TRY","SYP")
         fun number(row:JSONObject,field:String,currency:String,index:Int):BigDecimal? {
             val values=row.optJSONObject(field) ?: return null
@@ -68,6 +72,7 @@ object LegacyClosingContinuity {
             .put("transitions",transitions).put("invalidDateRows",invalidDates)
             .put("invalidAmountFields",invalidAmounts)
             .put("arithmeticMismatches",carryMismatches)
+            .put("duplicateClosingDates",duplicateClosingDates)
             .put("posting","NONE")
             .put("note","Previous closing carry is not proof of next-day opening balance")
     }
