@@ -45,7 +45,12 @@ object BackupMediaPaths {
                     record.put("details",details.toString())
                 }
                 val old=details.optString("imagePath")
-                if(old.isBlank()) continue
+                if(old.isBlank()) {
+                    val first=details.optJSONArray("imagePaths")?.optString(0).orEmpty()
+                    if(first.isNotBlank()) details.put("imagePath",first)
+                    record.put("details",details.toString())
+                    continue
+                }
                 val file=File(old)
                 require(file.isAbsolute && file.parentFile?.name=="images") { "مسار الصورة الأصلي غير صالح" }
                 val name=file.name
