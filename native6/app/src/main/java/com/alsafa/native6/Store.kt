@@ -518,6 +518,21 @@ class Store(val helper:StoreDb) {
         require(name.isNotBlank() && price>=0 && barcode.trim().length<=128);require(barcode.isBlank() || scalar("SELECT count(*) FROM products WHERE barcode=? AND id<>?",barcode.trim(),id)==0L){"الباركود مكرر"}
         db.execSQL("UPDATE products SET name=?,barcode=?,price=? WHERE id=?",arrayOf(name.trim(),barcode.trim(),price,id));event(id(),"PRODUCT_EDIT",today(),"تعديل وصف المنتج $id")
     }
+    /** One atomic edit for the tablet product form, including watch metadata. */
+    fun editProductFull(id:String,name:String,barcode:String,price:Long,
+                        brand:String,model:String,description:String,
+                        dialColor:String,caseColor:String,strapColor:String) = transaction {
+        require(scalar("SELECT count(*) FROM products WHERE id=?",id)==1L){"المنتج غير موجود"}
+        require(name.isNotBlank() && price>=0 && barcode.trim().length<=128){"بيانات المنتج غير صالحة"}
+        require(listOf(brand,model,description,dialColor,caseColor,strapColor).all { it.length<=500 }){"تفاصيل المنتج طويلة جداً"}
+        require(barcode.isBlank() || scalar("SELECT count(*) FROM products WHERE barcode=? AND id<>?",barcode.trim(),id)==0L){"الباركود مكرر"}
+        val details=JSONObject(rows("SELECT details FROM products WHERE id=?",id).single().getValue("details"))
+        details.put("customerDescription",description.trim()).put("dialColor",dialColor.trim())
+            .put("caseColor",caseColor.trim()).put("strapColor",strapColor.trim())
+        db.execSQL("UPDATE products SET name=?,barcode=?,price=?,brand=?,model=?,details=? WHERE id=?",
+            arrayOf(name.trim(),barcode.trim(),price,brand.trim(),model.trim(),details.toString(),id))
+        event(id(),"PRODUCT_EDIT",today(),"تعديل المنتج ومواصفاته $id")
+    }
     /** Descriptive watch metadata never changes inventory valuation or posted invoices. */
     fun updateProductDescription(id:String,brand:String,model:String,description:String,
                                  dialColor:String,caseColor:String,strapColor:String) = transaction {
