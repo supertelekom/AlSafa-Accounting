@@ -988,7 +988,7 @@ class Store(val helper:StoreDb) {
         val cost=costs.fold(0L,::add)
         event(command,"SALE",date,"مبيع $party")
         insert("invoices","id" to command,"number" to nextNumber(),"kind" to "sale","party" to party,"phone" to phone,"currency" to currency.name,"total" to total,"cost" to cost,"notes" to "")
-        items.forEachIndexed {i,item->val p=products[i];insert("invoice_lines","invoice_id" to command,"line" to i,"product_id" to p.id,"name" to p.name,"qty" to item.qty,"net" to nets[i],"cost" to costs[i]);stock(command,i,p,-item.qty,-costs[i])}
+        items.forEachIndexed {i,item->val p=products[i];insert("invoice_lines","invoice_id" to command,"line" to i,"product_id" to p.id,"name" to (p.name + productColorLabel(p.id).takeIf { it.isNotBlank() }?.let { " · $it" }.orEmpty()),"qty" to item.qty,"net" to nets[i],"cost" to costs[i]);stock(command,i,p,-item.qty,-costs[i])}
         post(command,listOf(Posting("receivable:$command",currency,total),Posting("revenue:sales",currency,-total),Posting("expense:cogs",currency,cost),Posting("inventory",currency,-cost)))
         if(paid>0) collectInternal(command,paid,vault,receiptDate,"$command-receipt");command
     }
