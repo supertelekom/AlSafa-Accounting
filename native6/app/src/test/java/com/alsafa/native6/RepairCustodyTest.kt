@@ -24,6 +24,22 @@ class RepairCustodyTest {
         assertTrue(s.uncollectedRepairs(minimumDays=2).isEmpty())
     }
 
+    @Test fun custodyPaginationDoesNotRepeatOrSkipWatches() {
+        val s=Store(StoreDb(RuntimeEnvironment.getApplication(),"custody-page-${Store.id()}.db"))
+        val yesterday=LocalDate.now().minusDays(1).toString()
+        repeat(6) { i ->
+            s.receiveRepair("عميل "+i,"0933"+i,"Casio "+i,"زجاج",yesterday)
+        }
+        val first=s.uncollectedRepairs(minimumDays=1,limit=2,offset=0)
+        val second=s.uncollectedRepairs(minimumDays=1,limit=2,offset=2)
+        val third=s.uncollectedRepairs(minimumDays=1,limit=2,offset=4)
+        assertEquals(2,first.size)
+        assertEquals(2,second.size)
+        assertEquals(2,third.size)
+        assertEquals(6,(first+second+third).map { it.getValue("id") }.toSet().size)
+        assertTrue(s.uncollectedRepairs(minimumDays=1,limit=2,offset=6).isEmpty())
+    }
+
     @Test fun custodyRejectsFutureAsOfDates() {
         val s=Store(StoreDb(RuntimeEnvironment.getApplication(),"custody-${Store.id()}.db"))
         try {
