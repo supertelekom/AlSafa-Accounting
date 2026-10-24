@@ -949,7 +949,7 @@ button("＋ مورد"){form("مورد جديد"){box->val n=field("الاسم",b
     }
     private fun showRepairPhoto(path:String) {
         try {
-            val file=localPhoto(path)
+            localPhoto(path)
             val bounds=android.graphics.BitmapFactory.Options().apply { inJustDecodeBounds=true }
             android.graphics.BitmapFactory.decodeFile(path,bounds)
             require(bounds.outWidth>0 && bounds.outHeight>0) { "تعذر قراءة صورة الساعة" }
@@ -1421,7 +1421,7 @@ button("＋ مورد"){form("مورد جديد"){box->val n=field("الاسم",b
         text("الطلبات المفتوحة",body,18f)
         val counts=store.repairStatusCounts()
         text("مستلمة: ${counts.getValue("received")} · قيد العمل: ${counts.getValue("in_progress")} · جاهزة: ${counts.getValue("ready")} · مسلّمة: ${counts.getValue("delivered")}",size=15f)
-        store.repairList().filter{it.getValue("status")!="delivered"}.forEach{r->val id=r.getValue("id");repairIdentity(r,body);button("استخدام قطعة صيانة"){
+        store.repairList().filter{it.getValue("status")!="delivered"}.forEach{r->val id=r.getValue("id");repairIdentity(r,body);if(store.repairImage(id).isNullOrBlank())button("إضافة صورة الساعة"){photoRepairId=id;startActivityForResult(Intent(this,MediaCaptureActivity::class.java),70)};button("استخدام قطعة صيانة"){
             chooseProduct(inStockOnly=true){part->
                 form("تركيب قطعة للصيانة"){box->
                     val quantity=field("الكمية",box,"1",true)
