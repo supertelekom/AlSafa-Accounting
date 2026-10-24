@@ -1824,6 +1824,7 @@ class Store(val helper:StoreDb) {
         val day=LocalDate.parse(asOf)
         require(!day.isAfter(LocalDate.now()) && minimumDays in 0..36500)
         require(limit in 1..500 && offset in 0..1000000)
+        require(status in setOf("all","received","in_progress","ready"))
         return rows("""SELECT id,customer,phone,watch,problem,status,date,details
             FROM repairs WHERE status IN ('received','in_progress','ready')
             AND date<=? ORDER BY date ASC,id ASC LIMIT $limit OFFSET $offset""",
