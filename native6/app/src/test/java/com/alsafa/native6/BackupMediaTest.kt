@@ -99,4 +99,14 @@ class BackupMediaTest {
         }
     }
 
+    @Test fun rejectsNestedFolderInsteadOfSilentlyOmittingIt() {
+        val activity=Robolectric.buildActivity(Activity::class.java).setup().get()
+        val folder=File(activity.filesDir,"images/unexpected").apply { mkdirs() }
+        try {
+            assertThrows(IllegalArgumentException::class.java) {
+                BackupMedia.collect(activity)
+            }
+        } finally { folder.delete() }
+    }
+
 }
