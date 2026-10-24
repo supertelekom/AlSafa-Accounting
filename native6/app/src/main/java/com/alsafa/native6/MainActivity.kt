@@ -998,6 +998,7 @@ open class MainActivity:Activity() {
     }
     private fun invoices(){
         sectionHeading("الفواتير والمرتجعات","البحث في الفواتير وعمليات القبض والاسترداد")
+        collapsibleTools("تقارير الفواتير والتحصيلات") {
         button("كشف الحركات المالية لفاتورة"){
             form("كشف الفاتورة","عرض"){box->
                 val number=field("رقم الفاتورة",box)
@@ -1042,6 +1043,7 @@ open class MainActivity:Activity() {
                     AlertDialog.Builder(this).setTitle("تحصيلات الشهر").setMessage(details).setPositiveButton("حسناً",null).show()
                 })
             }
+        }
         }
         text("البحث في الفواتير",size=20f).setTextColor(gold)
         val query=field("رقم الفاتورة أو اسم العميل أو الهاتف",body)
