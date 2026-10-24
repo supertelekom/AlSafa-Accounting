@@ -1086,6 +1086,10 @@ open class MainActivity:Activity() {
         text("العميل: "+inv.party.ifBlank { "عميل نقدي" },box,16f).setTextColor(ink)
         text("إجمالي الفاتورة: "+money(inv.total,inv.currency),box,18f).setTextColor(gold)
         text("حالة الفاتورة: "+label(inv.status),box,14f)
+        if(inv.kind=="sale" || inv.kind=="repair") {
+            val event=store.rows("SELECT date FROM events WHERE id=?",inv.id).firstOrNull()
+            if(event!=null)text("تاريخ الفاتورة: "+event.getValue("date"),box,14f)
+        }
         if(inv.kind!="purchase") {
             text("المقبوض فعلياً: "+money(store.paid(inv.id),inv.currency),box,15f).setTextColor(ink)
         }
