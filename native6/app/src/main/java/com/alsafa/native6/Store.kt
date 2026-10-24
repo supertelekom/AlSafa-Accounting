@@ -532,6 +532,16 @@ class Store(val helper:StoreDb) {
             .filter { JSONObject(it.getValue("details")).optString("variantParentId")==parentId }
     }
 
+    /** One catalogue pass avoids re-reading all products for each visible watch card. */
+    fun colorVariantCounts():Map<String,Int> {
+        val counts=mutableMapOf<String,Int>()
+        rows("SELECT details FROM products WHERE archived=0").forEach { row ->
+            val parent=JSONObject(row.getValue("details")).optString("variantParentId")
+            if(parent.isNotBlank()) counts[parent]=(counts[parent]?:0)+1
+        }
+        return counts
+    }
+
     fun productColorLabel(id:String):String {
         val row=rows("SELECT details FROM products WHERE id=?",id).singleOrNull() ?: return ""
         return productColorLabelFromDetails(row.getValue("details"),true)
