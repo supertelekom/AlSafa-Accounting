@@ -1062,7 +1062,7 @@ open class MainActivity:Activity() {
                     val current=runCatching { java.time.LocalDate.parse(target.text.toString().trim()) }.getOrElse { java.time.LocalDate.now() }
                     android.app.DatePickerDialog(this,{_,year,month,day->
                         target.setText(java.time.LocalDate.of(year,month+1,day).toString())
-                    },current.year,current.monthValue-1,current.dayOfMonth).show()
+                    },current.year,current.monthValue-1,current.dayOfMonth).apply { datePicker.maxDate=System.currentTimeMillis() }.show()
                 }.setNegativeButton("رجوع",null).show()
         }
         val kinds=listOf("all","sale","purchase","repair")
