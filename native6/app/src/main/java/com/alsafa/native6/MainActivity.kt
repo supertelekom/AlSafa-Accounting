@@ -403,15 +403,95 @@ open class MainActivity:Activity() {
         button("الصفحة التالية"){ if(offset<=Int.MAX_VALUE-30) offset+=30;refresh() }
         refresh()
     }
+    /** Tablet dashboard tiles, built with native views and the original warm AlSafa palette. */
+    private fun dashboardTiles(items:List<Triple<String,String,String>>) {
+        val tablet=resources.configuration.smallestScreenWidthDp>=600
+        val columns=if(tablet)3 else 2
+        var grid:LinearLayout?=null
+        items.forEachIndexed { index,item ->
+            if(index%columns==0) {
+                grid=LinearLayout(this).apply {
+                    orientation=LinearLayout.HORIZONTAL
+                    layoutDirection=View.LAYOUT_DIRECTION_RTL
+                    gravity=Gravity.TOP
+                }
+                body.addView(grid,LinearLayout.LayoutParams(-1,-2))
+            }
+            val tile=LinearLayout(this).apply {
+                orientation=LinearLayout.VERTICAL
+                gravity=Gravity.CENTER
+                setPadding(dp(10),dp(17),dp(10),dp(14))
+                background=background(paper,16)
+                isClickable=true
+                isFocusable=true
+                contentDescription=item.second
+            }
+            val glyph=TextView(this).apply {
+                text=item.first
+                textSize=27f
+                gravity=Gravity.CENTER
+                setTextColor(gold)
+                typeface=font
+            }
+            tile.addView(glyph,LinearLayout.LayoutParams(-1,dp(42)))
+            val title=TextView(this).apply {
+                text=item.second
+                textSize=13f
+                typeface=font
+                setTextColor(ink)
+                gravity=Gravity.CENTER
+                maxLines=2
+            }
+            tile.addView(title,LinearLayout.LayoutParams(-1,dp(44)))
+            tile.setOnClickListener { if(!busy)go(item.third) }
+            grid!!.addView(tile,LinearLayout.LayoutParams(0,dp(123),1f).apply {
+                setMargins(dp(4),dp(5),dp(4),dp(5))
+            })
+        }
+        val remaining=items.size%columns
+        if(remaining!=0) repeat(columns-remaining) {
+            grid?.addView(android.view.View(this),LinearLayout.LayoutParams(0,dp(1),1f))
+        }
+    }
     private fun home(){
         text("مرحباً بك في الصفا",size=21f)
         text("اختر طريقة العمل المناسبة",size=12f)
-        button("⚡ الوضع المبسط · بيع وصيانة وتسليم سريع"){go("simple")}
-        button("◆ الوضع الكامل · الإدارة والمخزون والحسابات"){go("advanced")}
+        dashboardTiles(listOf(
+            Triple("⚡","الوضع المبسط","simple"),
+            Triple("◆","الوضع الكامل","advanced"),
+            Triple("▣","المنتجات","products"),
+            Triple("◷","الصيانة","repairs"),
+            Triple("＄","المبيع","sale"),
+            Triple("▤","الإقفال اليومي","vaults")
+        ))
         text("تعمل هذه النسخة على التابلت دون اتصال بالإنترنت.",size=12f)
     }
-    private fun simple(){text("العمل السريع",size=26f);button("مبيع"){go("sale")};button("استلام وتسليم صيانة"){go("repairs")};button("الفواتير وقبض الديون"){go("invoices")};button("الخزنات والإقفال اليومي"){go("vaults")}}
-    private fun advanced(){text("الوضع الكامل",size=26f);listOf("مبيع" to "sale","المنتجات وقطع الصيانة" to "products","الفواتير والمرتجعات" to "invoices","استلام وتسليم صيانة" to "repairs","الخزنات والمصاريف والإقفال" to "vaults","الموردون والمشتريات" to "suppliers","تقرير شهر واحد" to "reports","تقرير بين تاريخين" to "period-reports","الشركاء ونسب الأرباح" to "partners","سجل العمليات" to "audit","النسخ الاحتياطي والاستعادة" to "backup","أرشيف الفواتير القديمة" to "legacy-history").forEach{(label,route)->button(label){go(route)}}}
+    private fun simple(){
+        text("العمل السريع",size=23f)
+        dashboardTiles(listOf(
+            Triple("＄","مبيع","sale"),
+            Triple("◷","استلام وتسليم صيانة","repairs"),
+            Triple("▤","الفواتير وقبض الديون","invoices"),
+            Triple("▣","الخزنات والإقفال اليومي","vaults")
+        ))
+    }
+    private fun advanced(){
+        text("الوضع الكامل",size=23f)
+        dashboardTiles(listOf(
+            Triple("＄","مبيع","sale"),
+            Triple("▣","المنتجات وقطع الصيانة","products"),
+            Triple("▤","الفواتير والمرتجعات","invoices"),
+            Triple("◷","استلام وتسليم صيانة","repairs"),
+            Triple("◈","الخزنات والمصاريف والإقفال","vaults"),
+            Triple("▦","الموردون والمشتريات","suppliers"),
+            Triple("▥","تقرير شهر واحد","reports"),
+            Triple("▥","تقرير بين تاريخين","period-reports"),
+            Triple("♧","الشركاء ونسب الأرباح","partners"),
+            Triple("≡","سجل العمليات","audit"),
+            Triple("▧","النسخ الاحتياطي والاستعادة","backup"),
+            Triple("◫","أرشيف الفواتير القديمة","legacy-history")
+        ))
+    }
     private fun products(){text("المنتجات وقطع الصيانة",size=25f);button("＋ إضافة منتج / قطعة"){productForm()};button("▣ مسح باركود للبحث"){startActivityForResult(Intent(this,BarcodeScanActivity::class.java), 65)};button("تقييم المخزون والتنبيهات"){go("inventory")};button("سجل تسويات الجرد"){go("stocktake-history")};val query=field("بحث بالاسم أو الباركود أو REF",body);val list=column();body.addView(list)
         fun show(){list.removeAllViews();store.products(query.text.toString()).forEach{p->button("${p.name}  ·  ${money(p.price,p.currency)}\nالمخزون ${p.stock}  ·  ${p.barcode}",list){productForm(p)};button("سجل مخزون ${p.name}",list){selectedProduct=p;go("stock-history")};button("جرد فعلي ${p.name}",list){stocktakeForm(p)}}};button("بحث"){show()};show()}
     private fun stocktakeForm(p:Product){
