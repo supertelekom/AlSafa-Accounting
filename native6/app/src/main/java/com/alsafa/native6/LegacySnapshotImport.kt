@@ -67,12 +67,24 @@ object LegacySnapshotImport {
      * Fast confirmation for large backups. The actual import still performs
      * inventory and financial checks and verifies every archived record.
      */
+    private fun requireRequiredCollections(data:JSONObject) {
+        // A missing collection must never be interpreted as an empty store.
+        // This is especially important for stock, suppliers and repair history.
+        val required=listOf("products","maintenanceParts","suppliers","repairs",
+            "sales","purchases","payments","cashTransactions",
+            "supplierLedger","partnerWithdrawals","dailyClosings")
+        val missing=required.filter { !data.has(it) || data.optJSONArray(it)==null }
+        require(missing.isEmpty()) {
+            "النسخة الاحتياطية ناقصة أو تالفة؛ أقسام مفقودة: ${missing.joinToString(", ")}"
+        }
+    }
     fun quickPreview(payload:String):String {
         val root=JSONObject(payload)
         require(root.optString("format")=="alsafa-accounting-backup" &&
             root.optInt("formatVersion")==2) { "صيغة النسخة الاحتياطية غير مدعومة" }
         val data=root.getJSONObject("data")
-        val sections=listOf("products","maintenanceParts","suppliers","repairs",
+        requireRequiredCollections(data)
+        val sections=listOf;"products","maintenanceParts","suppliers","repairs",
             "sales","purchases","payments","cashTransactions","supplierLedger",
             "partnerWithdrawals","dailyClosings","returns")
         val labels=mapOf(
@@ -112,6 +124,7 @@ object LegacySnapshotImport {
         require(root.optString("format")=="alsafa-accounting-backup" &&
             root.optInt("formatVersion")==2) { "صيغة النسخة الاحتياطية غير مدعومة" }
         val d=root.getJSONObject("data")
+        requireRequiredCollections(d)
         // Reject invalid stock immediately, before the more expensive financial
         // reconciliation passes over the large backup.
         val issues=LegacyImportPreflight.inspectInventory(payload)
