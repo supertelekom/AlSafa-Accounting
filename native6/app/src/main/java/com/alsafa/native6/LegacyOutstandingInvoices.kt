@@ -10,7 +10,8 @@ import java.math.BigDecimal
  */
 object LegacyOutstandingInvoices {
     fun page(store: Store, section: String, currency: String = "",
-             offset: Int = 0, limit: Int = 50, from: String = "", to: String = ""): JSONObject {
+             offset: Int = 0, limit: Int = 50, from: String = "", to: String = "",
+             query: String = ""): JSONObject {
         require(section == "sales" || section == "purchases") { "نوع فاتورة غير مدعوم" }
         require(currency.isEmpty() || currency in setOf("USD", "TRY", "SYP")) { "عملة غير مدعومة" }
         require(offset >= 0 && limit in 1..200) { "حدود الصفحة غير صالحة" }
@@ -23,6 +24,8 @@ object LegacyOutstandingInvoices {
             "SELECT legacy_id,payload FROM legacy_records WHERE category=? ORDER BY legacy_id", section
         )
         val matches = ArrayList<JSONObject>()
+        val outstandingTotals = linkedMapOf<String, BigDecimal>()
+        val search = query.trim()
         val seen = HashSet<String>()
         for (row in rows) {
             val invoice = JSONObject(row.getValue("payload"))
@@ -47,6 +50,19 @@ object LegacyOutstandingInvoices {
             val date = invoice.optString("date").take(10)
             if (from.isNotEmpty() && (date.isEmpty() || date < from)) continue
             if (to.isNotEmpty() && (date.isEmpty() || date > to)) continue
+            if (search.isNotEmpty()) {
+                val fields = listOf("id", "invoiceNo", "customer", "customerName", "phone",
+                    "supplierName", "supplierId", "notes")
+                val direct = fields.any { invoice.optString(it).contains(search, ignoreCase = true) }
+                val items = invoice.optJSONArray("items")
+                val nested = items != null && (0 until items.length()).any { index ->
+                    val item = items.optJSONObject(index)
+                    item != null && listOf("name", "productName", "partName", "barcode", "sku", "model")
+                        .any { item.optString(it).contains(search, ignoreCase = true) }
+                }
+                if (!direct && !nested) continue
+            }
+            outstandingTotals[unit] = (outstandingTotals[unit] ?: BigDecimal.ZERO).add(due)
             matches.add(JSONObject()
                 .put("archiveKey", row.getValue("legacy_id"))
                 .put("invoiceId", id)
@@ -59,6 +75,8 @@ object LegacyOutstandingInvoices {
                 .put("paidSnapshot", paid.toPlainString())
                 .put("outstandingSnapshot", due.toPlainString()))
         }
+        val totalsJson = JSONObject()
+        for ((unit, amount) in outstandingTotals) totalsJson.put(unit, amount.toPlainString())
         val result = JSONArray()
         matches.drop(offset).take(limit).forEach { result.put(it) }
         return JSONObject()
@@ -66,6 +84,8 @@ object LegacyOutstandingInvoices {
             .put("currency", currency)
             .put("from", from)
             .put("to", to)
+            .put("query", query)
+            .put("outstandingTotalsByCurrency", totalsJson)
             .put("totalOutstandingInvoices", matches.size)
             .put("offset", offset)
             .put("limit", limit)
