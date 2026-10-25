@@ -469,6 +469,7 @@ object LegacySnapshotImport {
                 .put("repairs",repairs.length())
                 .put("archivedFinancialRecords",store.scalar("SELECT count(*) FROM legacy_records")).toString())
             require(createdImages.all { it.isFile && it.length()>0L }) { "ملفات الصور المستعادة غير مكتملة" }
+            require(createdImages.distinctBy { it.canonicalPath }.size==createdImages.size) { "تكرار مسار صورة أثناء الاستعادة" }
             val photoCount=createdImages.size
             val receipt=LegacyRestoreReceipt.inspect(store)
             val financialSummary=runCatching { LegacyArchivedFinancialPosition.summary(store) }
