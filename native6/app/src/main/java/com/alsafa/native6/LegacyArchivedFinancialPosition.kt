@@ -214,7 +214,7 @@ object LegacyArchivedFinancialPosition {
             val item=JSONObject(record.getValue("payload"))
             val recordId=record.getValue("legacy_id")
             require(recordId.isNotBlank() && seenIds.add(recordId)) { "معرف سحب شريك مفقود أو مكرر" }
-            require(item.optString("id").trim()==recordId) { "معرف السحب لا يطابق الأرشيف" }
+            require(item.optString("id").trim()==recordId.substringAfter(":")) { "معرف السحب لا يطابق الأرشيف" }
             val date=java.time.LocalDate.parse(item.getString("date").take(10))
             val currency=item.optString("currency")
             require(currency in currencies) { "عملة سحب غير مدعومة" }
