@@ -260,7 +260,9 @@ class Backup(private val context:Context,private val store:Store) {
 
     }
     fun stageLegacy(input:InputStream):String {
-        val bytes=read(input);require(bytes.isNotEmpty()){"ملف النسخة القديمة فارغ"};val text=String(bytes,Charsets.UTF_8).removePrefix("\uFEFF");val root=JSONObject(text);val data=if(root.optString("format")=="alsafa-accounting-backup")root.getJSONObject("data") else root
+        val bytes=read(input);require(bytes.isNotEmpty()){"ملف النسخة القديمة فارغ"};val text=String(bytes,Charsets.UTF_8).removePrefix("\uFEFF");val root=JSONObject(text)
+        require(root.optString("format")=="alsafa-accounting-backup" && root.optInt("formatVersion")==2) { "يلزم ملف نسخة الصفا القديمة الأصلي، الإصدار الثاني" }
+        val data=root.getJSONObject("data")
         require(data.optJSONObject("settings")!=null&&data.optJSONArray("products")!=null&&data.optJSONArray("sales")!=null){"ليست نسخة الصفا القديمة"}
         val summary=JSONObject();data.keys().forEach{k->(data.opt(k) as? JSONArray)?.let{summary.put(k,it.length())}}
         summary.put("_source_sha256",sha(bytes))
