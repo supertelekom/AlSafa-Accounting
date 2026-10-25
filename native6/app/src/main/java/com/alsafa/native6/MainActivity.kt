@@ -384,12 +384,14 @@ open class MainActivity:Activity() {
         val search=field("بحث في بيانات السجل القديم",body)
         val unpaidFrom=field("من تاريخ (YYYY-MM-DD)",body)
         val unpaidTo=field("إلى تاريخ (YYYY-MM-DD)",body)
+        val unpaidCurrency=select("عملة الفواتير غير المسددة",listOf("جميع العملات","USD","TRY","SYP"),body)
         button("الفواتير القديمة غير المسددة (قراءة فقط)",body) {
             val queryText=search.text.toString()
             val dateFrom=unpaidFrom.text.toString().trim()
             val dateTo=unpaidTo.text.toString().trim()
+            val unit=listOf("","USD","TRY","SYP")[unpaidCurrency.selectedItemPosition.coerceIn(0,3)]
             work {
-                val sales=LegacyOutstandingInvoices.page(store,"sales",limit=20,query=queryText,from=dateFrom,to=dateTo)
+                val sales=LegacyOutstandingInvoices.page(store,"sales",limit=20,query=queryText,from=dateFrom,to=dateTo,currency=unit)
                 val purchases=LegacyOutstandingInvoices.page(store,"purchases",limit=20,query=queryText,from=dateFrom,to=dateTo)
                 fun describe(name:String, data:org.json.JSONObject):String {
                     val records=data.getJSONArray("records")
