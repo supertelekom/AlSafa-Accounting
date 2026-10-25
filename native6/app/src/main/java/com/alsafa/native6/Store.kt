@@ -41,7 +41,11 @@ class Store(val helper:StoreDb) {
             val payload=decoder.decode(java.nio.ByteBuffer.wrap(output.toByteArray())).toString()
             require(payload.isNotBlank()) { "سجل أرشيف فارغ" }
             val parser=org.json.JSONTokener(payload)
-            parser.nextValue()
+            val parsed=parser.nextValue()
+            if(category!="configuration" && category!="source_suppliers") {
+                val original=(parsed as? org.json.JSONObject)?.optString("id")?.trim()
+                if(!original.isNullOrEmpty()) require(id.substringAfter(":")==original) { "معرف الأرشيف لا يطابق السجل الأصلي" }
+            }
             require(parser.nextClean().code==0) { "بيانات إضافية بعد نهاية سجل الأرشيف" }
             mapOf("legacy_id" to id,"payload" to payload)
         }
