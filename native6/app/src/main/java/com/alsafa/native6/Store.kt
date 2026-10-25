@@ -36,7 +36,11 @@ class Store(val helper:StoreDb) {
                 }
                 offset+=count
             }
-            val decoder=Charsets.UTF_8.newDecoder()\n                .onMalformedInput(java.nio.charset.CodingErrorAction.REPORT)\n                .onUnmappableCharacter(java.nio.charset.CodingErrorAction.REPORT)\n            val payload=decoder.decode(java.nio.ByteBuffer.wrap(output.toByteArray())).toString()\n            mapOf("legacy_id" to id,"payload" to payload)
+            val decoder=Charsets.UTF_8.newDecoder()
+                .onMalformedInput(java.nio.charset.CodingErrorAction.REPORT)
+                .onUnmappableCharacter(java.nio.charset.CodingErrorAction.REPORT)
+            val payload=decoder.decode(java.nio.ByteBuffer.wrap(output.toByteArray())).toString()
+            mapOf("legacy_id" to id,"payload" to payload)
         }
     }
     fun legacyPage(category:String,term:String,limit:Int,offset:Int):List<Map<String,String>> {
@@ -62,7 +66,11 @@ class Store(val helper:StoreDb) {
                 }
                 offset+=count
             }
-            val decoder=Charsets.UTF_8.newDecoder()\n                .onMalformedInput(java.nio.charset.CodingErrorAction.REPORT)\n                .onUnmappableCharacter(java.nio.charset.CodingErrorAction.REPORT)\n            val payload=decoder.decode(java.nio.ByteBuffer.wrap(output.toByteArray())).toString()\n            mapOf("legacy_id" to id,"payload" to payload)
+            val decoder=Charsets.UTF_8.newDecoder()
+                .onMalformedInput(java.nio.charset.CodingErrorAction.REPORT)
+                .onUnmappableCharacter(java.nio.charset.CodingErrorAction.REPORT)
+            val payload=decoder.decode(java.nio.ByteBuffer.wrap(output.toByteArray())).toString()
+            mapOf("legacy_id" to id,"payload" to payload)
         }
     }
     fun scalar(sql:String,vararg args:String):Long = db.rawQuery(sql,args).use { cursor ->
