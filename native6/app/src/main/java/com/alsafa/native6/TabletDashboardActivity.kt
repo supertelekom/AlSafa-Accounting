@@ -154,6 +154,7 @@ class TabletDashboardActivity : Activity() {
                     Triple("المبيع", "فاتورة جديدة", "sale"),
                     Triple("الصيانة", "استلام وتسليم", "repairs"),
                     Triple("المنتجات", "الأصناف والمخزون", "products"),
+                    Triple("قطع الصيانة", "القطع والباركود والكميات", "maintenance-parts"),
                     Triple("الفواتير", "سجل المبيع والصيانة", "invoices"),
                     Triple("الموردون والمشتريات", "المشتريات والذمم", "suppliers"),
                     Triple("الإقفال اليومي", "الخزنات والأرصدة", "vaults"),
@@ -174,7 +175,8 @@ class TabletDashboardActivity : Activity() {
                 content.addView(title("إدارة المحل", 25f, gold))
                 grid(content, listOf(
                     Triple("المبيع", "فواتير البيع", "sale"),
-                    Triple("المنتجات", "الأصناف وقطع الصيانة", "products"),
+                    Triple("المنتجات", "الساعات والألوان والمواصفات", "products"),
+                    Triple("قطع الصيانة", "قطع الصيانة ومخزونها", "maintenance-parts"),
                     Triple("الفواتير", "القبض والمرتجعات", "invoices"),
                     Triple("الصيانة", "الاستلام والتسليم", "repairs"),
                     Triple("الخزنات", "الأرصدة والإقفال", "vaults"),
