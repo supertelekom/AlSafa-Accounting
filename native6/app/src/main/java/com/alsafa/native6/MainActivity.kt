@@ -811,6 +811,11 @@ open class MainActivity:Activity() {
             })
         }
     }
+    private fun imageMime(path:String):String = when(java.io.File(path).extension.lowercase(java.util.Locale.ROOT)) {
+        "png" -> "image/png"
+        "webp" -> "image/webp"
+        else -> "image/jpeg"
+    }
     private fun products(){
         sectionHeading("المنتجات وقطع الصيانة","إدارة الأصناف والباركود والكميات والجرد")
         button("＋ إضافة منتج / قطعة"){productForm()}
@@ -1063,14 +1068,14 @@ open class MainActivity:Activity() {
                     .setItems(gallery.mapIndexed { i,_ -> "صورة "+(i+1) }.toTypedArray()) { _,index ->
                         try {
                             CustomerShare.send(this,java.io.File(gallery[index]),
-                                "image/jpeg","الصفا للساعات - "+p.name)
+                                imageMime(gallery[index]),"الصفا للساعات - "+p.name)
                         } catch(e:Exception) { error(e) }
                     }.setNegativeButton("رجوع",null).show()
             }
             button("إرسال صورة المنتج عبر واتساب",box){
                 try {
                     val path=store.productImage(p.id) ?: throw IllegalStateException("لا توجد صورة لهذا المنتج")
-                    CustomerShare.send(this,java.io.File(path),"image/jpeg","الصفا للساعات - ${p.name}")
+                    CustomerShare.send(this,java.io.File(path),imageMime(path),"الصفا للساعات - ${p.name}")
                 }catch(e:Exception){error(e)}
             }
             button("إضافة صورة بالكاميرا أو المعرض (حتى 8 صور)",box){
@@ -2550,7 +2555,7 @@ button("＋ مورد"){form("مورد جديد"){box->val n=field("الاسم",b
                 button("إرسال صورة الصيانة عبر واتساب",actions){
                     try {
                         val path=store.repairImage(id) ?: throw IllegalStateException("لا توجد صورة لهذا الطلب")
-                        CustomerShare.send(this,localPhoto(path),"image/jpeg","صورة ساعة الصيانة - الصفا للساعات")
+                        CustomerShare.send(this,localPhoto(path),imageMime(path),"صورة ساعة الصيانة - الصفا للساعات")
                     }catch(e:Exception){error(e)}
                 }
                 button("صورة الصيانة",actions){
