@@ -348,11 +348,13 @@ object LegacySnapshotImport {
                 .put("repairs",repairs.length())
                 .put("archivedFinancialRecords",store.scalar("SELECT count(*) FROM legacy_records")).toString())
             val receipt=LegacyRestoreReceipt.inspect(store)
+            val financialSummary=runCatching { LegacyArchivedFinancialPosition.summary(store) }
+                .getOrElse { "البيانات المالية محفوظة، لكن تقرير الذمم يحتاج مراجعة: ${it.message}" }
             "تمت مطابقة الاستعادة مع قاعدة البيانات: ${receipt.getLong("products")} منتجًا، " +
                 "${receipt.getLong("maintenanceParts")} قطعة صيانة، ${receipt.getLong("suppliers")} موردًا، " +
                 "${receipt.getLong("repairs")} طلب صيانة. " +
                 "بصمة المصدر: ${receipt.getString("sourceSha256").take(16)}… " +
-                "الفواتير والحركات المالية القديمة محفوظة للقراءة فقط؛ لم تُفعّل أرصدتها أو أرباحها."
+                "الفواتير والحركات المالية القديمة محفوظة للقراءة فقط؛ لم تُفعّل أرصدتها أو أرباحها.\n" + financialSummary
         }
     }
 }
