@@ -179,7 +179,9 @@ object LegacyArchivedFinancialPosition {
             val currency=item.optString("currency")
             require(currency in currencies) { "عملة سحب غير مدعومة" }
             val partner=item.optString("partnerId").ifBlank {
-                item.optString("partnerName").ifBlank { item.optString("person","غير محدد") }
+                item.optString("partnerName").ifBlank {
+                    item.optString("partner").ifBlank { item.optString("person","غير محدد") }
+                }
             }
             val value=cents(item,"amount")
             val key="$partner|$currency"
