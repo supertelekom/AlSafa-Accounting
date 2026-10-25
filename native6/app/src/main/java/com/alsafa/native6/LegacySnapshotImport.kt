@@ -468,12 +468,14 @@ object LegacySnapshotImport {
                 .put("suppliers",suppliers.length())
                 .put("repairs",repairs.length())
                 .put("archivedFinancialRecords",store.scalar("SELECT count(*) FROM legacy_records")).toString())
+            require(createdImages.all { it.isFile && it.length()>0L }) { "ملفات الصور المستعادة غير مكتملة" }
+            val photoCount=createdImages.size
             val receipt=LegacyRestoreReceipt.inspect(store)
             val financialSummary=runCatching { LegacyArchivedFinancialPosition.summary(store) }
                 .getOrElse { "البيانات المالية محفوظة، لكن تقرير الذمم يحتاج مراجعة: ${it.message}" }
             "تمت مطابقة الاستعادة مع قاعدة البيانات: ${receipt.getLong("products")} منتجًا، " +
                 "${receipt.getLong("maintenanceParts")} قطعة صيانة، ${receipt.getLong("suppliers")} موردًا، " +
-                "${receipt.getLong("repairs")} طلب صيانة. " +
+                "${receipt.getLong("repairs")} طلب صيانة، $photoCount صورة محفوظة محلياً. " +
                 "بصمة المصدر: ${receipt.getString("sourceSha256").take(16)}… " +
                 "الفواتير والحركات المالية القديمة محفوظة للقراءة فقط؛ لم تُفعّل أرصدتها أو أرباحها.\n" + financialSummary
         } } catch (failure:Exception) {
