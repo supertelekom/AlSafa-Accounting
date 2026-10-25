@@ -78,6 +78,22 @@ object LegacyCashActivationPlan {
             block((returnsAudit.optJSONArray("duplicateReturnIdRows")?.length() ?: -1) != 0,
                 "مرتجعات بمعرفات مكررة")
         }
+        block(metadata.optInt("financialWarningCount", -1) != 0,
+            "توجد أخطاء في السجل المالي التاريخي")
+        if (paymentLinks != null) {
+            block((paymentLinks.optJSONArray("invalidAmountRows")?.length() ?: -1) != 0,
+                "مبالغ دفعات غير صالحة")
+            block((paymentLinks.optJSONArray("invalidReceivedAmountRows")?.length() ?: -1) != 0,
+                "مبالغ قبض غير صالحة")
+            block((paymentLinks.optJSONArray("invalidPaymentCurrencyRows")?.length() ?: -1) != 0,
+                "عملات دفعات غير صالحة")
+            block((paymentLinks.optJSONArray("duplicatePaymentIdRows")?.length() ?: -1) != 0,
+                "دفعات بمعرفات مكررة")
+        }
+        if (supplierAudit != null) {
+            block((supplierAudit.optJSONArray("invalidLedgerIndexes")?.length() ?: -1) != 0,
+                "قيود موردين غير صالحة")
+        }
         val items = JSONArray()
         val keys = source.keys().asSequence().toList().sorted()
         for (key in keys) {
