@@ -32,6 +32,14 @@ object LegacyRestoreManifest {
             counts.put(key, array?.length() ?: 0)
             records += array?.length() ?: 0
         }
+        // Include every additional array found in the selected backup, not only
+        // the historical schema list. This keeps future app exports auditable.
+        for (key in data.keys()) {
+            if (key in collections) continue
+            val array=data.optJSONArray(key) ?: continue
+            counts.put(key,array.length())
+            records=Math.addExact(records,array.length().toLong())
+        }
         val sha256 = MessageDigest.getInstance("SHA-256")
             .digest(payload.toByteArray(Charsets.UTF_8))
             .joinToString("") { "%02x".format(it.toInt() and 0xff) }
