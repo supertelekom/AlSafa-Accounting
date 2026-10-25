@@ -184,6 +184,8 @@ object LegacySnapshotImport {
             require(store.scalar("SELECT count(*) FROM suppliers")==suppliers.length().toLong()) { "عدد الموردين المنقولين غير مطابق" }
             require(store.scalar("SELECT count(*) FROM events WHERE kind<>?", "OPENING_STOCK")==0L) { "الاستعادة أنشأت حدثاً محاسبياً غير رصيد المخزون الافتتاحي" }
             require(store.scalar("SELECT count(*) FROM events WHERE kind=?", "OPENING_STOCK")==seen.size.toLong()-suppliers.length()-repairs.length()) { "عدد أحداث المخزون الافتتاحي غير مطابق" }
+            require(store.scalar("SELECT count(*) FROM journal WHERE account LIKE ?", "cash:%")==0L) { "لا يجوز ترحيل النقد ضمن استعادة المخزون" }
+            require(store.scalar("SELECT count(*) FROM journal WHERE account LIKE ?", "payable:%")==0L) { "لا يجوز ترحيل ديون الموردين ضمن استعادة المخزون" }
             require(store.scalar("SELECT count(*) FROM invoices")==0L) { "استعادة المخزون لا يجوز أن تنشئ فواتير" }
             require(store.scalar("SELECT count(*) FROM receipts")==0L) { "استعادة الأرشيف لا يجوز أن تنشئ مقبوضات" }
             val actualArchive=store.scalar("SELECT count(*) FROM legacy_records")
