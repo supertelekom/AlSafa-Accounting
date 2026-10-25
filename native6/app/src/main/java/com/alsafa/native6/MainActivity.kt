@@ -3124,7 +3124,8 @@ button("＋ مورد"){form("مورد جديد"){box->val n=field("الاسم",b
             val bytes=Backup.read(input)
             val payload=String(bytes,Charsets.UTF_8).removePrefix("\uFEFF")
             val preview=LegacySnapshotImport.quickPreview(payload)
-            // Keep the original source available for future financial reconciliation.
+            // Preserve the source before import; do not perform the expensive
+            // full financial audit merely to display a confirmation dialog.
             backup.stageLegacy(bytes.inputStream())
             runOnUiThread {
                 if(!isFinishing&&!isDestroyed) AlertDialog.Builder(this)
