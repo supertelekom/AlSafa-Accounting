@@ -51,6 +51,10 @@ object LegacyImportPreflight {
                             runCatching { amount.movePointRight(2).longValueExact() }.isFailure)
                             problems.add("$section[$i]: invalid or over-precise $field")
                     }
+                    val cost=item.optString("cost","0").toBigDecimalOrNull()
+                    if(cost!=null && qty!=null && qty>=0 &&
+                        runCatching { cost.movePointRight(2).multiply(java.math.BigDecimal.valueOf(qty)).longValueExact() }.isFailure)
+                        problems.add("$section[$i]: inventory valuation overflow")
                 }
                 if(section=="suppliers" && item.optString("name").isBlank())
                     problems.add("$section[$i]: missing name")
