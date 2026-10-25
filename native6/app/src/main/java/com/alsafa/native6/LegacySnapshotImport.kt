@@ -516,6 +516,12 @@ object LegacySnapshotImport {
                         id,"\"imagePath\"") == 1L) { "صورة غير مرتبطة بسجلها: $section / $id" }
                 }
             }
+            for(image in createdImages) {
+                require(store.scalar("SELECT count(*) FROM products WHERE instr(details,?)>0",image.absolutePath)+
+                    store.scalar("SELECT count(*) FROM repairs WHERE instr(details,?)>0",image.absolutePath)==1L) {
+                    "صورة غير مرتبطة بسجل واحد: "+image.name
+                }
+            }
             val photoCount=createdImages.size
             val receipt=LegacyRestoreReceipt.inspect(store)
             val financialSummary=runCatching { LegacyArchivedFinancialPosition.summary(store) }
