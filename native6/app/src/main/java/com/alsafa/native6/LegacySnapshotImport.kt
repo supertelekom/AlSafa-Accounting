@@ -468,6 +468,15 @@ object LegacySnapshotImport {
                 .put("archivedFinancialRecords",store.scalar("SELECT count(*) FROM legacy_records")).toString())
             require(createdImages.all { it.isFile && it.length()>0L }) { "ملفات الصور المستعادة غير مكتملة" }
             require(createdImages.distinctBy { it.canonicalPath }.size==createdImages.size) { "تكرار مسار صورة أثناء الاستعادة" }
+            val expectedPhotos=listOf("products","maintenanceParts","repairs").sumOf { section ->
+                val array=d.getJSONArray(section)
+                (0 until array.length()).sumOf { index ->
+                    val row=array.getJSONObject(index)
+                    listOf("photo","photo2","photo3","couplePhoto","barcodePhoto","watchPhoto")
+                        .count { row.optString(it).startsWith("data:image/") }
+                }
+            }
+            require(createdImages.size==expectedPhotos) { "عدد الصور المستعادة لا يطابق النسخة الأصلية" }
             val photoCount=createdImages.size
             val receipt=LegacyRestoreReceipt.inspect(store)
             val financialSummary=runCatching { LegacyArchivedFinancialPosition.summary(store) }
