@@ -50,6 +50,8 @@ object LegacyImportPreflight {
                             problems.add("$section[$i]: invalid or over-precise $field")
                     }
                 }
+                if(section=="suppliers" && item.optString("name").isBlank())
+                    problems.add("$section[$i]: missing name")
                 if(section=="repairs") {
                     val date=item.optString("date")
                     val valid=runCatching { !LocalDate.parse(date).isAfter(LocalDate.now()) }.getOrDefault(false)
