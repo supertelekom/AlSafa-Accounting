@@ -108,7 +108,8 @@ object LegacyArchivedFinancialPosition {
         }
         val supplierOpening=JSONArray()
         for((key,balance) in supplierOpeningBalances) {
-            require(balance.signum()>=0) { "دفعات دفتر الموردين تتجاوز الدين الافتتاحي: $key" }
+            // Negative net amount may be an advance to the supplier, not corrupt data.
+            // Preserve the sign and explicitly request reconciliation.
             val separator=key.lastIndexOf('|')
             val supplierId=key.substring(0,separator)
             val currency=key.substring(separator+1)
@@ -117,6 +118,7 @@ object LegacyArchivedFinancialPosition {
                 .put("supplierName",supplierNames.getValue(supplierId))
                 .put("currency",currency)
                 .put("openingDebtLessLedgerPayments",balance.toPlainString())
+                .put("possibleSupplierAdvance",balance.signum()<0)
                 .put("requiresManualReconciliation",true))
         }
         // Returns are already reflected in some old invoice snapshots.
