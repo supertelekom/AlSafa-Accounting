@@ -108,6 +108,7 @@ object LegacyArchivedFinancialPosition {
         }
         val supplierOpening=JSONArray()
         for((key,balance) in supplierOpeningBalances) {
+            require(balance.signum()>=0) { "دفعات دفتر الموردين تتجاوز الدين الافتتاحي: $key" }
             val separator=key.lastIndexOf('|')
             val supplierId=key.substring(0,separator)
             val currency=key.substring(separator+1)
