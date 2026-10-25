@@ -81,9 +81,12 @@ object LegacySnapshotImport {
         require(root.optString("format")=="alsafa-accounting-backup" &&
             root.optInt("formatVersion")==2) { "صيغة النسخة الاحتياطية غير مدعومة" }
         val d=root.getJSONObject("data")
+        // Reject invalid stock immediately, before the more expensive financial
+        // reconciliation passes over the large backup.
+        val issues=LegacyImportPreflight.inspectInventory(payload)
+        require(issues.isEmpty()) { "فحص النسخة القديمة فشل: "+issues.take(5).joinToString("; ") }
         val manifest=LegacyRestoreManifest.inspect(payload)
         val readiness=LegacyRestoreReadiness.inspect(payload)
-        val issues=LegacyImportPreflight.inspectInventory(payload)
         val financialWarnings=LegacyImportPreflight.inspectFinancialHistory(payload)
         val closingAudit=LegacyClosingContinuity.inspect(payload)
         val paymentLinkAudit=LegacyPaymentLinkAudit.inspect(payload)
@@ -91,7 +94,6 @@ object LegacySnapshotImport {
         val supplierCashAudit=LegacySupplierCashAudit.inspect(payload)
         val vaultSnapshot=LegacyVaultSnapshot.inspect(payload)
         val paymentCashAudit=LegacyPaymentCashAudit.inspect(payload)
-        require(issues.isEmpty()) { "فحص النسخة القديمة فشل: "+issues.take(5).joinToString("; ") }
         val lists=listOf("products" to "watch","maintenanceParts" to "part")
         val suppliers=d.getJSONArray("suppliers")
         return store.transaction {
