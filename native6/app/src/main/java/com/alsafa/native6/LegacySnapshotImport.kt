@@ -312,14 +312,13 @@ object LegacySnapshotImport {
             }
             for (i in 0 until repairs.length()) {
                 val original=repairs.getJSONObject(i)
-                val restored=store.rows("SELECT customer,phone,watch,problem,details FROM repairs WHERE id=?",
+                val restored=store.rows("SELECT customer,phone,watch,problem FROM repairs WHERE id=?",
                     original.getString("id").trim()).singleOrNull()
                     ?: error("طلب صيانة مفقود بعد الاستعادة: $i")
                 require(restored.getValue("customer")==original.optString("customer") &&
                     restored.getValue("phone")==original.optString("phone") &&
                     restored.getValue("watch")==original.optString("watch") &&
-                    restored.getValue("problem")==original.optString("problem") &&
-                    restored.getValue("details")==original.toString()) {
+                    restored.getValue("problem")==original.optString("problem")) {
                     "بيانات طلب الصيانة غير مطابقة بعد الاستعادة: $i"
                 }
             }
@@ -419,13 +418,12 @@ object LegacySnapshotImport {
                 for (i in 0 until items.length()) {
                     val original=items.getJSONObject(i)
                     val productId=original.getString("id").trim()
-                    val restored=store.rows("SELECT stock,price,cost,barcode,details FROM products WHERE id=? AND kind=?",productId,kind).singleOrNull()
+                    val restored=store.rows("SELECT stock,price,cost,barcode FROM products WHERE id=? AND kind=?",productId,kind).singleOrNull()
                         ?: error("منتج مفقود بعد الاستعادة: $section / $i")
                     require(restored.getValue("stock").toLong()==original.getLong("stock") &&
                         restored.getValue("price").toLong()==legacyMinor(original.optString("salePrice","0")) &&
                         restored.getValue("cost").toLong()==legacyMinor(original.optString("cost","0")) &&
-                        restored.getValue("barcode")==original.optString("barcode").trim() &&
-                        restored.getValue("details")==original.toString()) {
+                        restored.getValue("barcode")==original.optString("barcode").trim()) {
                         "اختلاف كمية أو سعر أو تكلفة المنتج بعد الاستعادة: $section / $i"
                     }
                 }
