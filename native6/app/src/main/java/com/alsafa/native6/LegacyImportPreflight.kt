@@ -42,6 +42,7 @@ object LegacyImportPreflight {
                         problems.add("$section[$i]: unsupported currency")
                     val qty=item.optString("stock").toLongOrNull()
                     if(qty==null || qty<0) problems.add("$section[$i]: invalid stock")
+                    if(qty!=null && qty>100000000L) problems.add("$section[$i]: stock exceeds supported range")
                     if(item.optString("name").isBlank())
                         problems.add("$section[$i]: missing product name")
                     for(field in listOf("cost","salePrice")) {
