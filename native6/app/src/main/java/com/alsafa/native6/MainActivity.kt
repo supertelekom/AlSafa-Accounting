@@ -384,8 +384,10 @@ open class MainActivity:Activity() {
         val search=field("بحث في بيانات السجل القديم",body)
         button("الفواتير القديمة غير المسددة (قراءة فقط)",body) {
             val queryText=search.text.toString()
+            val dateFrom=""
+            val dateTo=""
             work {
-                val sales=LegacyOutstandingInvoices.page(store,"sales",limit=20,query=queryText)
+                val sales=LegacyOutstandingInvoices.page(store,"sales",limit=20,query=queryText,from=dateFrom,to=dateTo)
                 val purchases=LegacyOutstandingInvoices.page(store,"purchases",limit=20,query=queryText)
                 fun describe(name:String, data:org.json.JSONObject):String {
                     val records=data.getJSONArray("records")
