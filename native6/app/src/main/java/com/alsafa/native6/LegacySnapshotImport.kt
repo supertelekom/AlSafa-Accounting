@@ -83,6 +83,8 @@ object LegacySnapshotImport {
                 store.scalar("SELECT count(*) FROM closings")==0L &&
                 store.scalar("SELECT count(*) FROM settings WHERE key=?", "legacy_snapshot_import")==0L){"يجب أن تكون قاعدة Native 6 المحاسبية فارغة"}
             val seen=HashSet<String>()
+            val supplierIds=HashSet<String>()
+            val repairIds=HashSet<String>()
             val barcodes=HashSet<String>()
             lists.forEach { (key,kind) ->
                 val a=d.getJSONArray(key)
@@ -107,7 +109,7 @@ object LegacySnapshotImport {
             for(i in 0 until suppliers.length()) {
                 val s=suppliers.getJSONObject(i)
                 val id=s.getString("id").trim()
-                require(id.isNotEmpty() && seen.add(id)){"معرف مورد مكرر"}
+                require(id.isNotEmpty() && supplierIds.add(id)){"معرف مورد مكرر"}
                 store.insert("suppliers","id" to id,"name" to s.getString("name"),"phone" to s.optString("phone"))
                 store.insert("legacy_records","category" to "source_suppliers",
                     "legacy_id" to id,"payload" to s.toString())
@@ -116,7 +118,7 @@ object LegacySnapshotImport {
             for(i in 0 until repairs.length()) {
                 val repair=repairs.getJSONObject(i)
                 val id=repair.getString("id").trim()
-                require(id.isNotEmpty() && seen.add(id)){"معرف صيانة مكرر"}
+                require(id.isNotEmpty() && repairIds.add(id)){"معرف صيانة مكرر"}
                 val originalStatus=repair.optString("status")
                 val status=when(originalStatus) {
                     "تم التسليم","delivered" -> "delivered"
@@ -192,7 +194,7 @@ object LegacySnapshotImport {
                 "نسخة بيانات الموردين الأصلية غير مكتملة"
             }
             require(store.scalar("SELECT count(*) FROM events WHERE kind<>?", "OPENING_STOCK")==0L) { "الاستعادة أنشأت حدثاً محاسبياً غير رصيد المخزون الافتتاحي" }
-            require(store.scalar("SELECT count(*) FROM events WHERE kind=?", "OPENING_STOCK")==seen.size.toLong()-suppliers.length()-repairs.length()) { "عدد أحداث المخزون الافتتاحي غير مطابق" }
+            require(store.scalar("SELECT count(*) FROM events WHERE kind=?", "OPENING_STOCK")==seen.size.toLong()) { "عدد أحداث المخزون الافتتاحي غير مطابق" }
             require(store.scalar("SELECT count(*) FROM journal WHERE account LIKE ?", "cash:%")==0L) { "لا يجوز ترحيل النقد ضمن استعادة المخزون" }
             require(store.scalar("SELECT count(*) FROM journal WHERE account LIKE ?", "payable:%")==0L) { "لا يجوز ترحيل ديون الموردين ضمن استعادة المخزون" }
             require(store.scalar("SELECT count(*) FROM invoices")==0L) { "استعادة المخزون لا يجوز أن تنشئ فواتير" }
