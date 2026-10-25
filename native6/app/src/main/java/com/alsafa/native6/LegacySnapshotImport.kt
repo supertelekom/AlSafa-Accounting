@@ -12,25 +12,35 @@ import java.math.RoundingMode
 object LegacySnapshotImport {
     private fun legacyPhotos(item:JSONObject,context:android.content.Context,created:MutableList<java.io.File>):JSONObject {
         val copy=JSONObject(item.toString())
-        val paths=org.json.JSONArray()
-        for(field in listOf("photo","photo2","photo3","barcodePhoto","couplePhoto","watchPhoto")) {
+        val productPhotos=org.json.JSONArray()
+        val directory=java.io.File(context.filesDir,"images").apply { require(isDirectory || mkdirs()) }
+        for(field in listOf("photo","photo2","photo3","couplePhoto","barcodePhoto","watchPhoto")) {
             val raw=copy.optString(field)
+            if(raw.isBlank()) continue
             if(!raw.startsWith("data:image/") || !raw.contains(";base64,")) continue
             val mime=raw.substringAfter("data:").substringBefore(";base64,")
-            require(mime in setOf("image/jpeg","image/png","image/webp")) { "نوع صورة غير مدعوم" }
-            val bytes=android.util.Base64.decode(raw.substringAfter(";base64,"),android.util.Base64.DEFAULT)
-            require(bytes.isNotEmpty() && bytes.size<=12*1024*1024) { "حجم صورة غير صالح" }
-            val folder=java.io.File(context.filesDir,"images").apply { mkdirs() }
-            val file=java.io.File(folder,"legacy_"+java.util.UUID.randomUUID().toString()+when(mime) {"image/png"->".png";"image/webp"->".webp";else->".jpg"})
+            require(mime in setOf("image/jpeg","image/png","image/webp")) { "نوع صورة غير مدعوم: $field" }
+            val encoded=raw.substringAfter(";base64,")
+            require(encoded.length<=16*1024*1024) { "صورة كبيرة جداً: $field" }
+            val bytes=android.util.Base64.decode(encoded,android.util.Base64.DEFAULT)
+            require(bytes.isNotEmpty() && bytes.size<=12*1024*1024) { "حجم صورة غير صالح: $field" }
+            val bounds=android.graphics.BitmapFactory.Options().apply { inJustDecodeBounds=true }
+            android.graphics.BitmapFactory.decodeByteArray(bytes,0,bytes.size,bounds)
+            require(bounds.outWidth in 1..10000 && bounds.outHeight in 1..10000) { "صورة غير قابلة للقراءة: $field" }
+            val extension=when(mime) {"image/png"->".png";"image/webp"->".webp";else->".jpg"}
+            val file=java.io.File(directory,"legacy_"+java.util.UUID.randomUUID().toString()+extension)
             file.outputStream().use { it.write(bytes) }
             created.add(file)
-            if(field=="watchPhoto") copy.put("imagePath",file.absolutePath)
-            else paths.put(file.absolutePath)
+            when(field) {
+                "photo","photo2","photo3" -> productPhotos.put(file.absolutePath)
+                "watchPhoto" -> copy.put("imagePath",file.absolutePath)
+                else -> copy.put(field+"Path",file.absolutePath)
+            }
             copy.remove(field)
         }
-        if(paths.length()>0) {
-            copy.put("imagePath",paths.getString(0))
-            copy.put("imagePaths",paths)
+        if(productPhotos.length()>0) {
+            copy.put("imagePath",productPhotos.getString(0))
+            copy.put("imagePaths",productPhotos)
         }
         return copy
     }
