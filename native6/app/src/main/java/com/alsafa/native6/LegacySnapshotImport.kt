@@ -18,7 +18,7 @@ object LegacySnapshotImport {
     private fun data(payload:String):JSONObject {
         val root=JSONObject(payload)
         require(root.optString("format")=="alsafa-accounting-backup"){"يلزم ملف AlSafa Backup v2 الأصلي"}
-        require(root.optInt("formatVersion")>=2){"إصدار النسخة القديمة غير مدعوم"}
+        require(root.optInt("formatVersion")==2){"يتطلب الاستيراد نسخة الصفا بصيغة الإصدار 2 تحديداً"}
         return root.getJSONObject("data")
     }
     fun preview(payload:String):String {
