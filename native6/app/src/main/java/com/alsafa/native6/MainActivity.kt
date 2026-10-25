@@ -2957,10 +2957,10 @@ button("＋ مورد"){form("مورد جديد"){box->val n=field("الاسم",b
                 work {
                     val report=LegacyArchivedFinancialPosition.monthlyPartnerWithdrawals(store,selected.toString())
                     val entries=report.getJSONArray("withdrawals")
-                    val message="الشهر: ${report.getString("month")}\\n"+
-                        "عدد السحوبات: ${entries.length()}\\n"+
-                        "الإجماليات لكل شريك وعملة: ${report.getJSONObject("totalsByPartnerCurrency")}\\n"+
-                        "الأشهر الأخرى مستبعدة: ${report.getInt("excludedOtherMonths")}\\n"+
+                    val message="الشهر: ${report.getString("month")}\n"+
+                        "عدد السحوبات: ${entries.length()}\n"+
+                        "الإجماليات لكل شريك وعملة: ${report.getJSONObject("totalsByPartnerCurrency")}\n"+
+                        "الأشهر الأخرى مستبعدة: ${report.getInt("excludedOtherMonths")}\n"+
                         "هذه بيانات تاريخية للقراءة فقط، ولا تدخل في أرباح أو سحوبات Native 6."
                     runOnUiThread {
                         if(!isFinishing&&!isDestroyed) AlertDialog.Builder(this)
