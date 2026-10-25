@@ -26,7 +26,17 @@ object LegacyInvoiceSnapshot {
             "SELECT payload FROM legacy_records WHERE category=? AND legacy_id=?",
             section,archiveKey).firstOrNull() ?: return null
         val source=JSONObject(row.getValue("payload"))
-        val id=source.optString("id")
+        val id=source.optString("id").trim()
+        require(id.isNotEmpty()) { "معرف الفاتورة التاريخية مفقود" }
+        if(section in invoiceSections) {
+            val total=source.optString("total","0").toBigDecimalOrNull()
+            val paid=source.optString("paid","0").toBigDecimalOrNull()
+            require(total!=null && paid!=null && total>=BigDecimal.ZERO &&
+                paid>=BigDecimal.ZERO && paid<=total) { "مبالغ الفاتورة التاريخية غير متطابقة" }
+            require(source.optString("currency") in setOf("USD","TRY","SYP")) {
+                "عملة الفاتورة التاريخية غير مدعومة"
+            }
+        }
         val linked=JSONArray()
         if(id.isNotBlank()) {
             val payments=store.rows(
