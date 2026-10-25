@@ -835,8 +835,8 @@ open class MainActivity:Activity() {
         shortcut("تسويات الجرد","stocktake-history")
         body.addView(shortcuts)
         text(if(onlyKind=="part") "كتالوج قطع الصيانة" else "كتالوج المنتجات",size=20f).setTextColor(gold)
-        if(onlyKind=="part") button("عرض جميع المنتجات"){go("products")}
-        else button("قطع الصيانة فقط"){go("maintenance-parts")}
+        if(onlyKind=="part") button("العودة إلى الساعات"){go("products")}
+        else button("الانتقال إلى قطع الصيانة"){go("maintenance-parts")}
         val query=field("بحث بالاسم أو الباركود أو REF",body)
         val list=column().apply {setPadding(0,dp(4),0,dp(4))}
         body.addView(list)
