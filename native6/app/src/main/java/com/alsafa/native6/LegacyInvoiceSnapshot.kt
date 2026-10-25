@@ -35,7 +35,7 @@ object LegacyInvoiceSnapshot {
                 val ref=original.optString("referenceId")
                 val type=original.optString("referenceType")
                 val expected=if(section=="sales") "sale" else "purchase"
-                if(ref==id && type.equals(expected,ignoreCase=true)) {
+                if(ref==id && (type.equals(expected,ignoreCase=true) || type.equals(section,ignoreCase=true))) {
                     linked.put(JSONObject()
                         .put("archiveKey",payment.getValue("legacy_id"))
                         .put("record",original))
