@@ -37,6 +37,9 @@ object LegacySupplierLedgerView {
             val id = item.optString("supplierId").trim()
             val date = item.optString("date").take(10)
             require(id.isNotEmpty()) { "معرف المورد مفقود في دفتر الموردين القديم" }
+            require(store.scalar("SELECT count(*) FROM suppliers WHERE id=?", id) == 1L) {
+                "المورد المرتبط بالقيد التاريخي غير موجود"
+            }
             if (supplierId.isNotEmpty() && supplierId != id) continue
             if (from.isNotEmpty() || to.isNotEmpty()) {
                 java.time.LocalDate.parse(date)
