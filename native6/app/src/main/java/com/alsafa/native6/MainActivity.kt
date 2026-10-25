@@ -1177,6 +1177,7 @@ open class MainActivity:Activity() {
             orientation=LinearLayout.VERTICAL
         }
         text(product.name+" × "+item.qty,details,15f).setTextColor(ink)
+        text(if(product.kind=="part") "قطعة صيانة مباعة" else "ساعة",details,12f).setTextColor(muted)
         val colour=store.productColorLabel(product.id)
         if(colour.isNotBlank()) text(colour+" · "+product.barcode,details,12f)
         text(money(mul(item.qty,item.unitPrice),basketCurrency),details,14f).setTextColor(gold)
