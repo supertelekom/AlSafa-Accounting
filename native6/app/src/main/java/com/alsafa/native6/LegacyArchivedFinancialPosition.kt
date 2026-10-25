@@ -185,6 +185,12 @@ object LegacyArchivedFinancialPosition {
             val currency=item.optString("currency")
             require(currency in currencies) { "عملة سحب غير مدعومة" }
             val value=cents(item,"amount")
+            val partnerId=item.optString("partnerId").trim()
+            val partnerName=item.optString("partnerName").trim()
+            require(partnerId.isNotEmpty() || partnerName.isNotEmpty() ||
+                item.optString("partner").isNotBlank() || item.optString("person").isNotBlank()) {
+                "سحب شريك دون هوية شريك"
+            }
             if(java.time.YearMonth.from(date)!=period) { excluded++;continue }
             val partner=item.optString("partnerId").ifBlank {
                 item.optString("partnerName").ifBlank {
