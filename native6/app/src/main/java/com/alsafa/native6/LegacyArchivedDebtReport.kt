@@ -76,6 +76,9 @@ object LegacyArchivedDebtReport {
         report.put("relatedArchiveCounts", archiveCounts)
         return report.put("readOnly", true)
             .put("financialPosting", "NONE")
+            .put("supplierLedgerReconciled", false)
+            .put("returnsReconciled", false)
+            .put("cashBalancesActivated", false)
             .put("warning", "المرتجعات ودفتر الموردين تحتاج مطابقة قبل اعتماد هذه الأرصدة")
     }
 }
