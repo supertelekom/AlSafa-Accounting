@@ -738,7 +738,8 @@ class Store(val helper:StoreDb) {
         val details=JSONObject(rows("SELECT details FROM products WHERE id=?",id).single().getValue("details"))
         details.put("customerDescription",description.trim()).put("dialColor",dialColor.trim())
             .put("watchType",watchType.trim())
-            .put("gender",gender.trim()).put("displayType",displayType.trim())
+            .put("gender",gender.trim().ifBlank { details.optString("gender") })
+            .put("displayType",displayType.trim().ifBlank { details.optString("displayType") })
             .put("movement",movement.trim()).put("warrantyMonths",warrantyMonths.trim())
             .put("caseColor",caseColor.trim()).put("strapColor",strapColor.trim())
         db.execSQL("UPDATE products SET name=?,barcode=?,price=?,brand=?,model=?,details=? WHERE id=?",
