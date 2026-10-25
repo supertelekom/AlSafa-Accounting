@@ -71,7 +71,9 @@ object LegacyArchivedDebtReport {
         val pending = listOf("payments", "supplierLedger", "returns", "cashTransactions", "partnerWithdrawals", "dailyClosings")
         val archiveCounts = JSONObject()
         for (section in pending) {
-            val expected = metadata.optJSONObject("sourceCollections")?.optInt(section, -1) ?: -1
+            val counts = metadata.optJSONObject("sourceCollections")
+                ?: throw IllegalStateException("قائمة أقسام النسخة الأصلية مفقودة")
+            val expected = if (counts.has(section)) counts.getInt(section) else 0
             val actual = store.scalar("SELECT count(*) FROM legacy_records WHERE category=?", section)
             require(expected >= 0 && actual == expected.toLong()) { "$section: أرشيف مالي غير مكتمل" }
             archiveCounts.put(section, actual)
