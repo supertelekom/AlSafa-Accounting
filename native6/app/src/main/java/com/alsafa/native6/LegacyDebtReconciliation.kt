@@ -12,6 +12,7 @@ object LegacyDebtReconciliation {
     private val zero = BigDecimal.ZERO
     private fun amount(row:JSONObject, field:String):BigDecimal =
         row.optString(field,"0").toBigDecimalOrNull()
+            ?.also { require(it.stripTrailingZeros().scale()<=2) { "دقة مبلغ غير مدعومة: $field" } }
             ?: throw IllegalArgumentException("مبلغ غير صالح: $field")
     private fun byCurrency(data:JSONObject, section:String):JSONObject {
         val rows=data.optJSONArray(section) ?: return JSONObject()
