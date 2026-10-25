@@ -39,6 +39,10 @@ object LegacyCounterpartyDebt {
                 require(record.getValue("legacy_id").substringAfter(":") == id) {
                     "مفتاح الفاتورة التاريخية لا يطابق المصدر: $id"
                 }
+                val date = invoice.optString("date").take(10)
+                require(runCatching { java.time.LocalDate.parse(date) }.isSuccess) {
+                    "تاريخ فاتورة تاريخية غير صالح: $id"
+                }
                 val currency = invoice.optString("currency")
                 require(currency in currencies) { "عملة فاتورة غير مدعومة: $id" }
                 val total = minor(invoice, "total")
