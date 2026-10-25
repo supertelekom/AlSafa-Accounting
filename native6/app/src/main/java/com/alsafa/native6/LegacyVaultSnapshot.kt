@@ -21,6 +21,7 @@ object LegacyVaultSnapshot {
         val invalid=JSONArray()
         val negative=JSONArray()
         val duplicates=JSONArray()
+        val fractionalMinorUnits=JSONArray()
         val ids=mutableSetOf<String>()
         for(i in 0 until movements.length()) {
             val row=movements.optJSONObject(i)
@@ -35,6 +36,7 @@ object LegacyVaultSnapshot {
                 invalid.put(i)
                 continue
             }
+            if(amount.stripTrailingZeros().scale()>2) fractionalMinorUnits.put(i)
             val key="$vault|$currency"
             sums[key]=(sums[key] ?: BigDecimal.ZERO)+amount
             counts[key]=(counts[key] ?: 0)+1
@@ -47,9 +49,10 @@ object LegacyVaultSnapshot {
         return JSONObject().put("movementCount",movements.length())
             .put("balances",balances).put("movementCounts",JSONObject(counts as Map<*,*>))
             .put("invalidMovementIndexes",invalid).put("duplicateMovementIndexes",duplicates)
-            .put("negativeFinalBalances",negative).put("posting","NONE")
+            .put("negativeFinalBalances",negative)
+            .put("fractionalMinorUnitRows",fractionalMinorUnits).put("posting","NONE")
             .put("readyToActivate",invalid.length()==0 && duplicates.length()==0 &&
-                negative.length()==0)
+                negative.length()==0 && fractionalMinorUnits.length()==0)
             .put("warning","These are historical signed cash sums, not verified physical vault counts")
     }
 }
