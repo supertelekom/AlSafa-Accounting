@@ -392,7 +392,7 @@ open class MainActivity:Activity() {
             val unit=listOf("","USD","TRY","SYP")[unpaidCurrency.selectedItemPosition.coerceIn(0,3)]
             work {
                 val sales=LegacyOutstandingInvoices.page(store,"sales",limit=20,query=queryText,from=dateFrom,to=dateTo,currency=unit)
-                val purchases=LegacyOutstandingInvoices.page(store,"purchases",limit=20,query=queryText,from=dateFrom,to=dateTo)
+                val purchases=LegacyOutstandingInvoices.page(store,"purchases",limit=20,query=queryText,from=dateFrom,to=dateTo,currency=unit)
                 fun describe(name:String, data:org.json.JSONObject):String {
                     val records=data.getJSONArray("records")
                     val lines=(0 until records.length()).joinToString("\\n") { index ->
