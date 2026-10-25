@@ -71,7 +71,13 @@ object LegacySnapshotImport {
                 store.scalar("SELECT count(*) FROM suppliers")==0L &&
                 store.scalar("SELECT count(*) FROM events")==0L &&
                 store.scalar("SELECT count(*) FROM invoices")==0L &&
-                store.scalar("SELECT count(*) FROM journal")==0L){"يجب أن تكون قاعدة Native 6 المحاسبية فارغة"}
+                store.scalar("SELECT count(*) FROM journal")==0L &&
+                store.scalar("SELECT count(*) FROM receipts")==0L &&
+                store.scalar("SELECT count(*) FROM stock_moves")==0L &&
+                store.scalar("SELECT count(*) FROM returns")==0L &&
+                store.scalar("SELECT count(*) FROM refunds")==0L &&
+                store.scalar("SELECT count(*) FROM closings")==0L &&
+                store.scalar("SELECT count(*) FROM settings WHERE key=?", "legacy_snapshot_import")==0L){"يجب أن تكون قاعدة Native 6 المحاسبية فارغة"}
             val seen=HashSet<String>()
             val barcodes=HashSet<String>()
             lists.forEach { (key,kind) ->
