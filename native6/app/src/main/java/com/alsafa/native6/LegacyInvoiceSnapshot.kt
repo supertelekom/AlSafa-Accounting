@@ -11,6 +11,46 @@ import java.math.BigDecimal
  */
 object LegacyInvoiceSnapshot {
     private val allowed=setOf("sales","purchases")
+
+    /**
+     * Returns the complete source invoice, without posting another sale, purchase,
+     * stock change or receipt. Historical payment rows are evidence, not additional
+     * paid amounts. Caller must reconcile before enabling debt settlement.
+     */
+    fun detail(store:Store,section:String,archiveKey:String):JSONObject? {
+        require(section in allowed){"نوع الفاتورة غير مدعوم"}
+        require(archiveKey.isNotBlank()){"معرف الفاتورة مطلوب"}
+        val row=store.rows(
+            "SELECT payload FROM legacy_records WHERE category=? AND legacy_id=?",
+            section,archiveKey).firstOrNull() ?: return null
+        val source=JSONObject(row.getValue("payload"))
+        val id=source.optString("id")
+        val linked=JSONArray()
+        if(id.isNotBlank()) {
+            val payments=store.rows(
+                "SELECT legacy_id,payload FROM legacy_records WHERE category=?",
+                "payments")
+            for(payment in payments) {
+                val original=JSONObject(payment.getValue("payload"))
+                val ref=original.optString("referenceId")
+                val type=original.optString("referenceType")
+                val expected=if(section=="sales") "sale" else "purchase"
+                if(ref==id && type.equals(expected,ignoreCase=true)) {
+                    linked.put(JSONObject()
+                        .put("archiveKey",payment.getValue("legacy_id"))
+                        .put("record",original))
+                }
+            }
+        }
+        return JSONObject()
+            .put("section",section)
+            .put("archiveKey",archiveKey)
+            .put("invoice",source)
+            .put("linkedPayments",linked)
+            .put("readOnly",true)
+            .put("financialPosting","NONE")
+            .put("paymentsAreEvidenceOnly",true)
+    }
     fun page(store:Store,section:String,from:String="",to:String="",term:String="",
              offset:Int=0,limit:Int=50):JSONObject {
         require(section in allowed){"نوع الفاتورة غير مدعوم"}
