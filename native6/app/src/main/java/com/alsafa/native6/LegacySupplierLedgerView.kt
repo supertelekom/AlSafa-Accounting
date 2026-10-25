@@ -75,6 +75,7 @@ object LegacySupplierLedgerView {
             .put("records", records)
             .put("totalMatching", matched)
             .put("hasMore", offset.toLong() + records.length() < matched)
+            .put("nextOffset", if (offset.toLong() + records.length() < matched) offset + records.length() else -1)
             .put("totalsByKindAndCurrency", byKind)
             .put("readOnly", true)
             .put("financialPosting", "NONE")
