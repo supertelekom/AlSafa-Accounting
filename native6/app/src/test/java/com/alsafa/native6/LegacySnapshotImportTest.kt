@@ -50,7 +50,7 @@ class LegacySnapshotImportTest {
     }
 
     @Test fun rejectsMissingAccountingCollectionBeforeImport() {
-        val context=androidx.test.core.app.ApplicationProvider.getApplicationContext<Context>()
+        val context=RuntimeEnvironment.getApplication()
         val name="legacy-incomplete-test.db"
         context.deleteDatabase(name)
         val helper=StoreDb(context,name)
@@ -73,7 +73,7 @@ class LegacySnapshotImportTest {
     }
 
     @Test fun importsInventorySuppliersAndRepairsWithoutHistoricalInvoices() {
-        val context=androidx.test.core.app.ApplicationProvider.getApplicationContext<Context>()
+        val context=RuntimeEnvironment.getApplication()
         val name="legacy-snapshot-test.db"
         context.deleteDatabase(name)
         val helper=StoreDb(context,name)
@@ -93,7 +93,7 @@ class LegacySnapshotImportTest {
     }
 
     @Test fun rejectsSecondImportWithoutChangingExistingProducts() {
-        val context=androidx.test.core.app.ApplicationProvider.getApplicationContext<Context>()
+        val context=RuntimeEnvironment.getApplication()
         val name="legacy-repeat-test.db"
         context.deleteDatabase(name)
         val helper=StoreDb(context,name)
@@ -107,7 +107,7 @@ class LegacySnapshotImportTest {
         } finally { helper.close();context.deleteDatabase(name) }
     }
     @Test fun invalidSecondProductRollsBackEveryInsertedRecord() {
-        val context=androidx.test.core.app.ApplicationProvider.getApplicationContext<Context>()
+        val context=RuntimeEnvironment.getApplication()
         val name="legacy-atomic-test.db"
         context.deleteDatabase(name)
         val helper=StoreDb(context,name)
@@ -128,7 +128,7 @@ class LegacySnapshotImportTest {
     }
 
     @Test fun importedSnapshotCanBeExportedAndRestored() {
-        val context=androidx.test.core.app.ApplicationProvider.getApplicationContext<Context>()
+        val context=RuntimeEnvironment.getApplication()
         val sourceName="legacy-export-source-test.db"
         val targetName="legacy-export-target-test.db"
         context.deleteDatabase(sourceName)
@@ -157,7 +157,7 @@ class LegacySnapshotImportTest {
     }
 
     @Test fun preservesUnknownHistoricalSectionsAndConfiguration() {
-        val context=androidx.test.core.app.ApplicationProvider.getApplicationContext<Context>()
+        val context=RuntimeEnvironment.getApplication()
         val name="legacy-unknown-section-test.db"
         context.deleteDatabase(name)
         val helper=StoreDb(context,name)
@@ -176,7 +176,7 @@ class LegacySnapshotImportTest {
     }
 
     @Test fun preservesInProgressRepairStatusFromLegacyBackup() {
-        val context=androidx.test.core.app.ApplicationProvider.getApplicationContext<Context>()
+        val context=RuntimeEnvironment.getApplication()
         val name="legacy-in-progress-test.db"
         context.deleteDatabase(name)
         val helper=StoreDb(context,name)
@@ -192,7 +192,7 @@ class LegacySnapshotImportTest {
     }
 
     @Test fun legacyArchiveCannotBeDeletedOrModified() {
-        val context=androidx.test.core.app.ApplicationProvider.getApplicationContext<Context>()
+        val context=RuntimeEnvironment.getApplication()
         val name="legacy-immutable-test.db"
         context.deleteDatabase(name)
         val helper=StoreDb(context,name)
@@ -212,7 +212,7 @@ class LegacySnapshotImportTest {
     }
 
     @Test fun duplicateBarcodeRollsBackWholeImport() {
-        val context=androidx.test.core.app.ApplicationProvider.getApplicationContext<Context>()
+        val context=RuntimeEnvironment.getApplication()
         val name="legacy-duplicate-barcode-test.db"
         context.deleteDatabase(name)
         val helper=StoreDb(context,name)
@@ -233,7 +233,7 @@ class LegacySnapshotImportTest {
     }
 
     @Test fun malformedCurrencyCannotPartiallyImportInventory() {
-        val context=androidx.test.core.app.ApplicationProvider.getApplicationContext<Context>()
+        val context=RuntimeEnvironment.getApplication()
         val name="legacy-bad-currency-test.db"
         context.deleteDatabase(name)
         val helper=StoreDb(context,name)
@@ -253,7 +253,7 @@ class LegacySnapshotImportTest {
     }
 
     @Test fun unknownLegacyRepairStatusIsNotSilentlyMarkedReceived() {
-        val context=androidx.test.core.app.ApplicationProvider.getApplicationContext<Context>()
+        val context=RuntimeEnvironment.getApplication()
         val name="legacy-unknown-status-test.db"
         context.deleteDatabase(name)
         val helper=StoreDb(context,name)
@@ -269,7 +269,7 @@ class LegacySnapshotImportTest {
     }
 
     @Test fun firstNativeSaleContinuesLegacyInvoiceSequence() {
-        val context=androidx.test.core.app.ApplicationProvider.getApplicationContext<Context>()
+        val context=RuntimeEnvironment.getApplication()
         val name="legacy-invoice-sequence-test.db"
         context.deleteDatabase(name)
         val helper=StoreDb(context,name)
@@ -286,7 +286,7 @@ class LegacySnapshotImportTest {
     }
 
     @Test fun secondNativeSaleAdvancesAfterImportedSequence() {
-        val context=androidx.test.core.app.ApplicationProvider.getApplicationContext<Context>()
+        val context=RuntimeEnvironment.getApplication()
         val name="legacy-invoice-second-test.db"
         context.deleteDatabase(name)
         val helper=StoreDb(context,name)
@@ -306,7 +306,7 @@ class LegacySnapshotImportTest {
     }
 
     @Test fun corruptLegacyNumberingBlocksSaleWithoutPostingLedger() {
-        val context=androidx.test.core.app.ApplicationProvider.getApplicationContext<Context>()
+        val context=RuntimeEnvironment.getApplication()
         val name="legacy-corrupt-sequence-test.db"
         context.deleteDatabase(name)
         val helper=StoreDb(context,name)
@@ -327,7 +327,7 @@ class LegacySnapshotImportTest {
     }
 
     @Test fun duplicateBarcodeWithWhitespaceIsRejected() {
-        val context=androidx.test.core.app.ApplicationProvider.getApplicationContext<Context>()
+        val context=RuntimeEnvironment.getApplication()
         val name="barcode-normalization-test.db"
         context.deleteDatabase(name)
         val helper=StoreDb(context,name)
@@ -343,7 +343,7 @@ class LegacySnapshotImportTest {
     }
 
     @Test fun missingProductEditCannotCreateFakeAuditEvent() {
-        val context=androidx.test.core.app.ApplicationProvider.getApplicationContext<Context>()
+        val context=RuntimeEnvironment.getApplication()
         val name="missing-product-edit-test.db"
         context.deleteDatabase(name)
         val helper=StoreDb(context,name)
@@ -358,7 +358,7 @@ class LegacySnapshotImportTest {
     }
 
     @Test fun repairWorkProgressionKeepsSingleAuditableTimeline() {
-        val context=androidx.test.core.app.ApplicationProvider.getApplicationContext<Context>()
+        val context=RuntimeEnvironment.getApplication()
         val name="repair-work-progression-test.db"
         context.deleteDatabase(name)
         val helper=StoreDb(context,name)
@@ -375,7 +375,7 @@ class LegacySnapshotImportTest {
     }
 
     @Test fun startingRepairTwiceDoesNotCreateDuplicateEvents() {
-        val context=androidx.test.core.app.ApplicationProvider.getApplicationContext<Context>()
+        val context=RuntimeEnvironment.getApplication()
         val name="repair-double-start-test.db"
         context.deleteDatabase(name)
         val helper=StoreDb(context,name)
@@ -391,7 +391,7 @@ class LegacySnapshotImportTest {
     }
 
     @Test fun repairDeliveryCreatesBalancedReceivableAndNoPrematureCash() {
-        val context=androidx.test.core.app.ApplicationProvider.getApplicationContext<Context>()
+        val context=RuntimeEnvironment.getApplication()
         val name="repair-invoice-ledger-test.db"
         context.deleteDatabase(name)
         val helper=StoreDb(context,name)
@@ -414,7 +414,7 @@ class LegacySnapshotImportTest {
     }
 
     @Test fun dailyClosePreservesCashBalances() {
-        val context=androidx.test.core.app.ApplicationProvider.getApplicationContext<Context>()
+        val context=RuntimeEnvironment.getApplication()
         val name="close-cash-test.db"
         context.deleteDatabase(name)
         val helper=StoreDb(context,name)
@@ -430,7 +430,7 @@ class LegacySnapshotImportTest {
     }
 
     @Test fun duplicateOpeningIsRejected() {
-        val context=androidx.test.core.app.ApplicationProvider.getApplicationContext<Context>()
+        val context=RuntimeEnvironment.getApplication()
         val name="opening-once-test.db"
         context.deleteDatabase(name)
         val helper=StoreDb(context,name)
@@ -446,7 +446,7 @@ class LegacySnapshotImportTest {
     }
 
     @Test fun separateVaultCurrencyOpeningsAreValid() {
-        val context=androidx.test.core.app.ApplicationProvider.getApplicationContext<Context>()
+        val context=RuntimeEnvironment.getApplication()
         val name="currency-openings-test.db"
         context.deleteDatabase(name)
         val helper=StoreDb(context,name)
@@ -462,7 +462,7 @@ class LegacySnapshotImportTest {
     }
 
     @Test fun supplierLedgerBreakdownIsCurrencyScoped() {
-        val context=androidx.test.core.app.ApplicationProvider.getApplicationContext<Context>()
+        val context=RuntimeEnvironment.getApplication()
         val name="supplier-ledger-breakdown-test.db"
         context.deleteDatabase(name)
         val helper=StoreDb(context,name)
@@ -479,7 +479,7 @@ class LegacySnapshotImportTest {
     }
 
     @Test fun supplierRunningBalanceMatchesPostedLiability() {
-        val context=androidx.test.core.app.ApplicationProvider.getApplicationContext<Context>()
+        val context=RuntimeEnvironment.getApplication()
         val name="supplier-running-balance-test.db"
         context.deleteDatabase(name)
         val helper=StoreDb(context,name)
@@ -500,7 +500,7 @@ class LegacySnapshotImportTest {
     }
 
     @Test fun supplierMonthFilterRetainsOlderDebtInRunningBalance() {
-        val context=androidx.test.core.app.ApplicationProvider.getApplicationContext<Context>()
+        val context=RuntimeEnvironment.getApplication()
         val name="supplier-month-filter-test.db"
         context.deleteDatabase(name)
         val helper=StoreDb(context,name)
@@ -533,7 +533,7 @@ class LegacySnapshotImportTest {
     }
 
     @Test fun dateRangeReportSeparatesDaysAndCurrencies() {
-        val context=androidx.test.core.app.ApplicationProvider.getApplicationContext<Context>()
+        val context=RuntimeEnvironment.getApplication()
         val name="period-report-test.db"
         context.deleteDatabase(name)
         val helper=StoreDb(context,name)
@@ -552,7 +552,7 @@ class LegacySnapshotImportTest {
     }
 
     @Test fun periodReportRejectsReversedAndExcessiveDateRanges() {
-        val context=androidx.test.core.app.ApplicationProvider.getApplicationContext<Context>()
+        val context=RuntimeEnvironment.getApplication()
         val name="period-report-validation-test.db"
         context.deleteDatabase(name)
         val helper=StoreDb(context,name)
@@ -570,7 +570,7 @@ class LegacySnapshotImportTest {
     }
 
     @Test fun monthlyVaultBalancesExcludeLaterMonthAndKeepCurrenciesSeparate() {
-        val context=androidx.test.core.app.ApplicationProvider.getApplicationContext<Context>()
+        val context=RuntimeEnvironment.getApplication()
         val name="monthly-vault-report-test.db"
         context.deleteDatabase(name)
         val helper=StoreDb(context,name)
@@ -611,7 +611,7 @@ class LegacySnapshotImportTest {
     }
 
     @Test fun dailyClosingPreviewDoesNotPostOrAlterBalances() {
-        val context=androidx.test.core.app.ApplicationProvider.getApplicationContext<Context>()
+        val context=RuntimeEnvironment.getApplication()
         val name="closing-preview-test.db"
         context.deleteDatabase(name)
         val helper=StoreDb(context,name)
@@ -642,7 +642,7 @@ class LegacySnapshotImportTest {
     }
 
     @Test fun repairSearchAndStatusFiltersAreLocalAndReadOnly() {
-        val context=androidx.test.core.app.ApplicationProvider.getApplicationContext<Context>()
+        val context=RuntimeEnvironment.getApplication()
         val name="repair-filter-test.db"
         context.deleteDatabase(name)
         val helper=StoreDb(context,name)
@@ -665,7 +665,7 @@ class LegacySnapshotImportTest {
     }
 
     @Test fun automaticClosingCarriesBookBalanceWithoutClaimingPhysicalCount() {
-        val context=androidx.test.core.app.ApplicationProvider.getApplicationContext<Context>()
+        val context=RuntimeEnvironment.getApplication()
         val name="automatic-closing-test.db"
         context.deleteDatabase(name)
         val helper=StoreDb(context,name)
