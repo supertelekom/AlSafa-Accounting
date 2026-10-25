@@ -1096,6 +1096,8 @@ open class MainActivity:Activity() {
         val dial=field("لون المينا",box,saved.optString("dialColor"))
         val caseColor=field("لون الهيكل",box,saved.optString("caseColor"))
         val strap=field("لون الحزام",box,saved.optString("strapColor"))
+        val watchType=select("نوع الساعة",listOf("عادية","إسلامية"),box)
+        watchType.setSelection(if(saved.optString("watchType")=="إسلامية") 1 else 0)
         val cost=if(p==null)field("التكلفة",box,"0",true)else null;val qty=if(p==null)field("رصيد افتتاحي",box,"0",true)else null
         val kind=if(p==null)select("النوع",listOf("ساعة","قطعة صيانة"),box)else null;
         {
@@ -1105,17 +1107,19 @@ open class MainActivity:Activity() {
             val br=brand.text.toString();val ref=model.text.toString()
             val desc=description.text.toString();val dc=dial.text.toString()
             val cc=caseColor.text.toString();val sc=strap.text.toString()
+            val wt=if(watchType.selectedItemPosition==1) "إسلامية" else "عادية"
             require(listOf(br,ref,desc,dc,cc,sc).all { it.length<=500 }){"تفاصيل المنتج طويلة جداً"}
             work {
                 if(p==null) {
                     val details=org.json.JSONObject()
                         .put("customerDescription",desc.trim()).put("dialColor",dc.trim())
-                        .put("caseColor",cc.trim()).put("strapColor",sc.trim()).toString()
+                        .put("caseColor",cc.trim()).put("strapColor",sc.trim())
+                        .put("watchType",wt).toString()
                     store.addProduct(n,b,c,value,costValue,q,
                         if(kind?.selectedItemPosition==1)"part" else "watch",
                         details=details,brand=br,model=ref)
                 } else {
-                    store.editProductFull(p.id,n,b,value,br,ref,desc,dc,cc,sc)
+                    store.editProductFull(p.id,n,b,value,br,ref,desc,dc,cc,sc,wt)
                 }
             }
         }
