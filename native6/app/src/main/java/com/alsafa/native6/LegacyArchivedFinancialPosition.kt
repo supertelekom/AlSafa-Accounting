@@ -129,6 +129,7 @@ object LegacyArchivedFinancialPosition {
         }
         val returnTotals=JSONObject()
         val returnCashEffects=JSONObject()
+        val returnByReference=JSONObject()
         val invoiceIds=mapOf(
             "sales" to store.rows("SELECT legacy_id FROM legacy_records WHERE category=?", "sales")
                 .map { it.getValue("legacy_id") }.toSet(),
@@ -156,6 +157,9 @@ object LegacyArchivedFinancialPosition {
             require(referenceId in invoiceIds.getValue(section)) {
                 "مرتجع مرتبط بفاتورة أو صيانة غير موجودة: $id"
             }
+            val referenceKey="$section|$referenceId"
+            val referenceCount=returnByReference.optInt(referenceKey,0)
+            returnByReference.put(referenceKey,Math.addExact(referenceCount,1))
             val refund=cents(row,"refundAmount")
             val extra=cents(row,"extraCollected")
             val cashEffect=row.optString("cashEffect","0").toBigDecimalOrNull()
@@ -181,6 +185,7 @@ object LegacyArchivedFinancialPosition {
         return JSONObject()
             .put("returnEffectsAlreadyInSource",returnTotals)
             .put("returnCashEffectsAlreadyInSource",returnCashEffects)
+            .put("returnCountsByReference",returnByReference)
             .put("supplierOpeningDebtBalances",supplierOpening)
             .put("supplierLedgerByKindCurrency",ledgerKinds)
             .put("sourceSha256",metadata.optString("sourceSha256"))
