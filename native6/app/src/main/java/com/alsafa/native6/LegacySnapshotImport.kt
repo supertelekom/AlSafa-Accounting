@@ -274,23 +274,29 @@ object LegacySnapshotImport {
                     "اختلاف بيانات النسخة الوصفية: $key"
                 }
             }
+            // Verify the archive using a streaming SQLite cursor. Avoid keeping
+            // another in-memory copy of every historical JSON row on the tablet.
             for (section in historical) {
                 val expected=d.getJSONArray(section)
-                val archivedRows=store.rows("SELECT legacy_id,payload FROM legacy_records WHERE category=?",
-                    section)
-                val archived=archivedRows.associateBy { it.getValue("legacy_id") }
-                require(archivedRows.size==expected.length() && archived.size==expected.length()) {
-                    "أرشيف غير مكتمل أو يحوي مفاتيح مكررة: $section"
-                }
-                for (i in 0 until expected.length()) {
-                    val original=expected.get(i)
-                    val sourceId=(original as? JSONObject)?.optString("id")?.trim()
-                    val key="$i:${sourceId?.takeIf { it.isNotEmpty() } ?: "no-id"}"
-                    val value=if (original is JSONObject) original.toString()
-                        else JSONObject().put("_legacyValue",original).toString()
-                    require(archived[key]?.get("payload")==value) {
-                        "فشل التحقق من سجل الأرشيف: $section / $i"
+                store.db.rawQuery(
+                    "SELECT legacy_id,payload FROM legacy_records WHERE category=? " +
+                        "ORDER BY CAST(substr(legacy_id,1,instr(legacy_id,':')-1) AS INTEGER)",
+                    arrayOf(section)
+                ).use { cursor ->
+                    var index=0
+                    while(cursor.moveToNext()) {
+                        require(index<expected.length()) { "سجلات أرشيف زائدة: $section" }
+                        val original=expected.get(index)
+                        val sourceId=(original as? JSONObject)?.optString("id")?.trim()
+                        val key="$index:${sourceId?.takeIf { it.isNotEmpty() } ?: "no-id"}"
+                        val value=if(original is JSONObject) original.toString()
+                            else JSONObject().put("_legacyValue",original).toString()
+                        require(cursor.getString(0)==key && cursor.getString(1)==value) {
+                            "فشل التحقق من سجل الأرشيف: $section / $index"
+                        }
+                        index++
                     }
+                    require(index==expected.length()) { "أرشيف غير مكتمل: $section" }
                 }
             }
             require(actualArchive==expectedArchive.toLong()) {
