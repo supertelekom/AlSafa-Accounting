@@ -193,6 +193,7 @@ open class MainActivity:Activity() {
             }
             return
         }
+        if(requestCode in 101..105){handleDocumentResult(requestCode,resultCode,data);return}
         if(resultCode!=RESULT_OK || requestCode !in listOf(65,66,67,68))return
         val code=data?.getStringExtra(BarcodeScanActivity.EXTRA_BARCODE)?.trim().orEmpty()
         if(code.isEmpty())return
@@ -3120,7 +3121,7 @@ button("＋ مورد"){form("مورد جديد"){box->val n=field("الاسم",b
         }
     }
     private fun pick(code:Int){startActivityForResult(Intent(Intent.ACTION_OPEN_DOCUMENT).apply{addCategory(Intent.CATEGORY_OPENABLE);type="application/json"},code)}
-    override fun onActivityResult(request:Int,result:Int,data:Intent?){super.onActivityResult(request,result,data);if(result!=RESULT_OK)return;val uri=data?.data?:return
+    private fun handleDocumentResult(request:Int,result:Int,data:Intent?){if(result!=RESULT_OK)return;val uri=data?.data?:return
         work{val backup=Backup(this,store);when(request){104->contentResolver.openOutputStream(uri,"wt")!!.use{InvoicePdf(this,store).write(requireNotNull(pdfInvoice),it)};101->contentResolver.openOutputStream(uri,"wt")!!.use{backup.export(it)};102->contentResolver.openInputStream(uri)!!.use{backup.restore(it)};103->contentResolver.openInputStream(uri)!!.use{val report=backup.stageLegacy(it);runOnUiThread{AlertDialog.Builder(this).setMessage(report).setPositiveButton("حسناً",null).show()}};105->contentResolver.openInputStream(uri)!!.use{ input ->
             val bytes=Backup.read(input)
             val payload=String(bytes,Charsets.UTF_8).removePrefix("\uFEFF")
