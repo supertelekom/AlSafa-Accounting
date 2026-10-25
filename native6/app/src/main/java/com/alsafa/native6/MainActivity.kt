@@ -3091,7 +3091,7 @@ button("＋ مورد"){form("مورد جديد"){box->val n=field("الاسم",b
                             .setMessage(preview+"\\n\\nتتطلب قاعدة محاسبية فارغة، ولا تستبدل أي بيانات قائمة. هل تريد التنفيذ؟")
                             .setNegativeButton("إلغاء",null)
                             .setPositiveButton("استعادة البيانات"){_,_->work {
-                                LegacySnapshotImport.import(store,payload)
+                                LegacySnapshotImport.import(store,payload,this@MainActivity)
                             }}.show()
                     }
                 }
@@ -3128,7 +3128,7 @@ button("＋ مورد"){form("مورد جديد"){box->val n=field("الاسم",b
                     .setMessage(preview+"\n\nلن تُفعّل الديون أو أرصدة الصناديق أو أرباح الشركاء. تتطلب الاستعادة قاعدة فارغة، ولن تستبدل البيانات الموجودة. هل تريد المتابعة؟")
                     .setNegativeButton("إلغاء",null)
                     .setPositiveButton("استعادة المخزون والصيانة والموردين"){_,_->work {
-                        LegacySnapshotImport.import(store,payload)
+                        LegacySnapshotImport.import(store,payload,this@MainActivity)
                     }}.show()
             }
         }}}
