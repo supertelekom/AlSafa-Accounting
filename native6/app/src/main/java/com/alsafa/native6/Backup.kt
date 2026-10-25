@@ -259,6 +259,13 @@ class Backup(private val context:Context,private val store:Store) {
         }
 
     }
+    fun readStagedLegacy(hash:String):String {
+        require(hash.matches(Regex("[a-f0-9]{64}"))) { "بصمة النسخة غير صالحة" }
+        val file=java.io.File(context.filesDir,"legacy_snapshots/$"+"{hash}.json")
+        require(file.isFile) { "النسخة محفوظة في الفهرس فقط؛ اختر ملف JSON الأصلي مرة أخرى لتفعيل قراءتها" }
+        require(file.length() in 1..MAX_BYTES.toLong()) { "حجم النسخة المحفوظة غير صالح" }
+        return file.readText(Charsets.UTF_8).removePrefix("\uFEFF")
+    }
     fun stageLegacy(input:InputStream):String {
         val bytes=read(input);require(bytes.isNotEmpty()){"ملف النسخة القديمة فارغ"};val text=String(bytes,Charsets.UTF_8).removePrefix("\uFEFF");val root=JSONObject(text)
         require(root.optString("format")=="alsafa-accounting-backup" && root.optInt("formatVersion")==2) { "يلزم ملف نسخة الصفا القديمة الأصلي، الإصدار الثاني" }
@@ -269,10 +276,21 @@ class Backup(private val context:Context,private val store:Store) {
         summary.put("_source_bytes",bytes.size)
         require(bytes.size<=MAX_BYTES){"حجم النسخة القديمة أكبر من الحد المدعوم"}
         val fingerprint=sha(bytes)
+        // Large legacy snapshots must never be read through SQLite CursorWindow.
+        // Store the original bytes as a private atomic file, indexed by its hash.
+        val archiveDir=java.io.File(context.filesDir,"legacy_snapshots").apply { mkdirs() }
+        val archive=java.io.File(archiveDir,"$"+"{fingerprint}.json")
+        if(!archive.isFile || archive.length()!=bytes.size.toLong()) {
+            val temp=java.io.File.createTempFile("legacy-", ".tmp",archiveDir)
+            try {
+                temp.outputStream().use { it.write(bytes);it.fd.sync() }
+                require(temp.renameTo(archive)) { "تعذر حفظ ملف النسخة الكبيرة" }
+            } finally { temp.delete() }
+        }
         val inserted=store.transaction {
             if(store.scalar("SELECT count(*) FROM legacy_imports WHERE hash=?",fingerprint)>0L) false
             else {
-                store.insert("legacy_imports","hash" to fingerprint,"payload" to text,"created" to System.currentTimeMillis(),"summary" to summary.toString())
+                store.insert("legacy_imports","hash" to fingerprint,"payload" to "", "created" to System.currentTimeMillis(),"summary" to summary.toString())
                 true
             }
         }
