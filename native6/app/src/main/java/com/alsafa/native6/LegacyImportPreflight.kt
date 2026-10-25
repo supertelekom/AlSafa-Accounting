@@ -47,7 +47,8 @@ object LegacyImportPreflight {
                         problems.add("$section[$i]: missing product name")
                     for(field in listOf("cost","salePrice")) {
                         val amount=item.optString(field,"0").toBigDecimalOrNull()
-                        if(amount==null || amount.signum()<0 || amount.stripTrailingZeros().scale()>2)
+                        if(amount==null || amount.signum()<0 || amount.stripTrailingZeros().scale()>2 ||
+                            runCatching { amount.movePointRight(2).longValueExact() }.isFailure)
                             problems.add("$section[$i]: invalid or over-precise $field")
                     }
                 }
