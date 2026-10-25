@@ -197,6 +197,28 @@ object LegacySnapshotImport {
             require(store.scalar("SELECT count(*) FROM repairs")==repairs.length().toLong()) {
                 "سجل الصيانة غير مكتمل بعد الاستيراد"
             }
+            for (i in 0 until suppliers.length()) {
+                val original=suppliers.getJSONObject(i)
+                val restored=store.rows("SELECT name,phone FROM suppliers WHERE id=?",original.getString("id").trim()).singleOrNull()
+                    ?: error("مورد مفقود بعد الاستعادة: $i")
+                require(restored.getValue("name")==original.getString("name") &&
+                    restored.getValue("phone")==original.optString("phone")) {
+                    "بيانات المورد غير مطابقة بعد الاستعادة: $i"
+                }
+            }
+            for (i in 0 until repairs.length()) {
+                val original=repairs.getJSONObject(i)
+                val restored=store.rows("SELECT customer,phone,watch,problem,details FROM repairs WHERE id=?",
+                    original.getString("id").trim()).singleOrNull()
+                    ?: error("طلب صيانة مفقود بعد الاستعادة: $i")
+                require(restored.getValue("customer")==original.optString("customer") &&
+                    restored.getValue("phone")==original.optString("phone") &&
+                    restored.getValue("watch")==original.optString("watch") &&
+                    restored.getValue("problem")==original.optString("problem") &&
+                    JSONObject(restored.getValue("details")).similar(original)) {
+                    "بيانات طلب الصيانة غير مطابقة بعد الاستعادة: $i"
+                }
+            }
             require(store.scalar("SELECT count(*) FROM suppliers")==suppliers.length().toLong()) { "عدد الموردين المنقولين غير مطابق" }
             require(store.scalar(
                 "SELECT count(*) FROM legacy_records WHERE category=?", "source_suppliers"
