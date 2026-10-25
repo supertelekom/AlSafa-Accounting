@@ -1143,7 +1143,7 @@ class Store(val helper:StoreDb) {
     }
     fun sale(items:List<SaleItem>,party:String,phone:String,currency:Currency,paid:Long,vault:String,discount:Long=0,date:String=today(),command:String=id(),receiptDate:String=date):String=transaction {
         require(items.isNotEmpty() && items.map {it.productId}.distinct().size==items.size){"الصنف مكرر"};vault(vault)
-        val products=items.map { product(it.productId) };require(products.all {it.currency==currency}){"اختلاف عملة المنتج: يلزم تحويل مسجل قبل هذه العملية"}
+        val products=items.map { product(it.productId) };require(products.all {it.kind in setOf("watch","part")}){"صنف المبيع غير مدعوم"};require(products.all {it.currency==currency}){"اختلاف عملة المنتج: يلزم تحويل مسجل قبل هذه العملية"}
         require(items.all {it.qty>0&&it.unitPrice>=0}){"الكمية والسعر غير صالحين"};val gross=items.fold(0L){a,i->add(a,mul(i.qty,i.unitPrice))};require(gross>0){"لا يمكن إنشاء فاتورة بإجمالي صفر"};require(discount>=0 && discount<gross){"الخصم غير صالح"}
         val total=Math.subtractExact(gross,discount);require(paid in 0..total){"المدفوع يتجاوز قيمة الفاتورة"};require(paid==total||party.isNotBlank()){"اسم العميل مطلوب للبيع الآجل"}
         require(!LocalDate.parse(date).isAfter(LocalDate.now())){"لا يمكن تسجيل مبيع بتاريخ مستقبلي"}
