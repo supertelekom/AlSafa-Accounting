@@ -387,7 +387,7 @@ open class MainActivity:Activity() {
         val unpaidCurrency=select("عملة الفواتير غير المسددة",listOf("جميع العملات","USD","TRY","SYP"),body)
         val unpaidPage=field("رقم الصفحة (1، 2، 3...)",body)
         button("الفواتير القديمة غير المسددة (قراءة فقط)",body) {
-            val queryText=search.text.toString()
+            val queryText=search.text.toString().trim()
             val dateFrom=unpaidFrom.text.toString().trim()
             val dateTo=unpaidTo.text.toString().trim()
             val unit=listOf("","USD","TRY","SYP")[unpaidCurrency.selectedItemPosition.coerceIn(0,3)]
