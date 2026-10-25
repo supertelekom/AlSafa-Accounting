@@ -1096,6 +1096,13 @@ open class MainActivity:Activity() {
         val dial=field("لون المينا",box,saved.optString("dialColor"))
         val caseColor=field("لون الهيكل",box,saved.optString("caseColor"))
         val strap=field("لون الحزام",box,saved.optString("strapColor"))
+        val gender=select("الفئة",listOf("غير محدد","رجالي","نسائي","للجنسين"),box)
+        gender.setSelection(when(saved.optString("gender").lowercase()) {
+            "male","men","رجالي" -> 1
+            "female","women","نسائي" -> 2
+            "unisex","للجنسين" -> 3
+            else -> 0
+        })
         val movement=field("نوع الحركة",box,saved.optString("movement"))
         val warranty=field("الضمان بالأشهر",box,saved.optString("warrantyMonths"))
         val watchType=select("نوع الساعة",listOf("عادية","إسلامية"),box)
@@ -1110,6 +1117,7 @@ open class MainActivity:Activity() {
             val desc=description.text.toString();val dc=dial.text.toString()
             val cc=caseColor.text.toString();val sc=strap.text.toString()
             val wt=if(watchType.selectedItemPosition==1) "إسلامية" else "عادية"
+            val gen=listOf("","male","female","unisex")[gender.selectedItemPosition]
             val mv=movement.text.toString().trim()
             val warr=warranty.text.toString().trim()
             require(listOf(br,ref,desc,dc,cc,sc).all { it.length<=500 }){"تفاصيل المنتج طويلة جداً"}
@@ -1118,12 +1126,12 @@ open class MainActivity:Activity() {
                     val details=org.json.JSONObject()
                         .put("customerDescription",desc.trim()).put("dialColor",dc.trim())
                         .put("caseColor",cc.trim()).put("strapColor",sc.trim())
-                        .put("watchType",wt).put("movement",mv).put("warrantyMonths",warr).toString()
+                        .put("watchType",wt).put("gender",gen).put("movement",mv).put("warrantyMonths",warr).toString()
                     store.addProduct(n,b,c,value,costValue,q,
                         if(kind?.selectedItemPosition==1)"part" else "watch",
                         details=details,brand=br,model=ref)
                 } else {
-                    store.editProductFull(p.id,n,b,value,br,ref,desc,dc,cc,sc,wt,movement=mv,warrantyMonths=warr)
+                    store.editProductFull(p.id,n,b,value,br,ref,desc,dc,cc,sc,wt,gender=gen,movement=mv,warrantyMonths=warr)
                 }
             }
         }
