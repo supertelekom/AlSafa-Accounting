@@ -48,6 +48,26 @@ object LegacyCashActivationPlan {
             block((supplierAudit.optJSONArray("ambiguousCandidates")?.length() ?: -1) != 0,
                 "دفعات موردين ذات مطابقة ملتبسة")
         }
+        val closingAudit = metadata.optJSONObject("closingAudit")
+        block(closingAudit == null, "فحص استمرارية الإقفال اليومي غير موجود")
+        if (closingAudit != null) {
+            block((closingAudit.optJSONArray("arithmeticMismatches")?.length() ?: -1) != 0,
+                "فروقات حسابية في الإقفالات القديمة")
+            block((closingAudit.optJSONArray("invalidDateRows")?.length() ?: -1) != 0,
+                "تواريخ إقفال غير صالحة")
+            block((closingAudit.optJSONArray("duplicateClosingDates")?.length() ?: -1) != 0,
+                "إقفالات متكررة لنفس اليوم")
+        }
+        val paymentLinks = metadata.optJSONObject("paymentLinkAudit")
+        block(paymentLinks == null, "فحص ارتباط الدفعات بالفواتير غير موجود")
+        if (paymentLinks != null) {
+            block((paymentLinks.optJSONArray("missingReferenceRows")?.length() ?: -1) != 0,
+                "دفعات دون مرجع فاتورة")
+            block((paymentLinks.optJSONArray("unresolvedReferenceRows")?.length() ?: -1) != 0,
+                "دفعات تشير إلى فواتير غير معروفة")
+            block((paymentLinks.optJSONArray("crossCurrencyPaymentRows")?.length() ?: -1) != 0,
+                "دفعات بعملة مختلفة تحتاج مطابقة سعر الصرف")
+        }
         val items = JSONArray()
         val keys = source.keys().asSequence().toList().sorted()
         for (key in keys) {
