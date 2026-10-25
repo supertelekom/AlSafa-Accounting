@@ -83,6 +83,9 @@ object LegacyInvoiceSnapshot {
                 "معرف فاتورة تاريخية مفقود أو مكرر: $section"
             }
             val date=original.optString("date").take(10)
+            require(runCatching { java.time.LocalDate.parse(date) }.isSuccess) {
+                "تاريخ فاتورة تاريخية غير صالح: $invoiceId"
+            }
             if(from.isNotBlank() && (date.isBlank() || date<from)) continue
             if(to.isNotBlank() && (date.isBlank() || date>to)) continue
             if(query.isNotBlank()) {
