@@ -16,8 +16,11 @@ object LegacyDebtReconciliation {
     private fun byCurrency(data:JSONObject, section:String):JSONObject {
         val rows=data.optJSONArray(section) ?: return JSONObject()
         val totals=linkedMapOf<String,Triple<BigDecimal,BigDecimal,BigDecimal>>()
+        val seenInvoiceIds=HashSet<String>()
         for(i in 0 until rows.length()) {
             val row=rows.optJSONObject(i) ?: throw IllegalArgumentException("Invalid historical invoice row")
+            val invoiceId=row.optString("id").trim()
+            require(invoiceId.isNotEmpty() && seenInvoiceIds.add(invoiceId)) { "Duplicate or missing historical invoice ID" }
             val currency=row.optString("currency")
             require(currency in setOf("USD","TRY","SYP")) { "$section[$i]: عملة غير مدعومة" }
             val total=amount(row,"total")
