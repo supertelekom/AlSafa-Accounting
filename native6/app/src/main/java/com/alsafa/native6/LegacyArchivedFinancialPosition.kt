@@ -118,7 +118,37 @@ object LegacyArchivedFinancialPosition {
                 .put("openingDebtLessLedgerPayments",balance.toPlainString())
                 .put("requiresManualReconciliation",true))
         }
+        // Returns are already reflected in some old invoice snapshots.
+        // Report their cash/debt effects as evidence, NEVER subtract again.
+        val returns=store.rows("SELECT payload FROM legacy_records WHERE category=?","returns")
+        require(returns.size.toLong()==counts.optLong("returns",0)) {
+            "المرتجعات التاريخية المؤرشفة غير مكتملة"
+        }
+        val returnTotals=JSONObject()
+        val seenReturns=hashSetOf<String>()
+        for(record in returns) {
+            val row=JSONObject(record.getValue("payload"))
+            val id=row.optString("id").trim()
+            require(id.isNotEmpty() && seenReturns.add(id)) { "معرف مرتجع مكرر أو مفقود" }
+            val currency=row.optString("currency")
+            require(currency in currencies) { "عملة مرتجع غير مدعومة" }
+            val referenceType=row.optString("referenceType")
+            val referenceId=row.optString("referenceId").trim()
+            require(referenceType in setOf("sale","repair") && referenceId.isNotEmpty()) {
+                "مرجع مرتجع غير معروف"
+            }
+            val fieldNames=listOf("refundAmount","debtReduction","netCreditAmount")
+            for(field in fieldNames) {
+                val amount=row.optString(field,"0").toBigDecimalOrNull()
+                    ?: error("قيمة مرتجع غير صالحة: $field")
+                require(amount.signum()>=0) { "قيمة مرتجع سالبة: $field" }
+                val key="$currency|$field"
+                returnTotals.put(key,
+                    returnTotals.optString(key,"0").toBigDecimal().add(amount).toPlainString())
+            }
+        }
         return JSONObject()
+            .put("returnEffectsAlreadyInSource",returnTotals)
             .put("supplierOpeningDebtBalances",supplierOpening)
             .put("supplierLedgerByKindCurrency",ledgerKinds)
             .put("sourceSha256",metadata.optString("sourceSha256"))
