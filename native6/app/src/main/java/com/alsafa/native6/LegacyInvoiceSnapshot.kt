@@ -21,6 +21,7 @@ object LegacyInvoiceSnapshot {
     fun detail(store:Store,section:String,archiveKey:String):JSONObject? {
         require(section in allowed){"نوع الفاتورة غير مدعوم"}
         require(archiveKey.isNotBlank()){"معرف الفاتورة مطلوب"}
+        LegacyArchivedDebtReport.verifyArchiveCounts(store)
         val row=store.rows(
             "SELECT payload FROM legacy_records WHERE category=? AND legacy_id=?",
             section,archiveKey).firstOrNull() ?: return null
