@@ -384,7 +384,7 @@ open class MainActivity:Activity() {
         val search=field("بحث في بيانات السجل القديم",body)
         button("الفواتير القديمة غير المسددة (قراءة فقط)",body) {
             val queryText=search.text.toString()
-            val dateFrom=""
+            val dateFrom=search.text.toString().takeIf { it.matches(Regex("\\d{4}-\\d{2}-\\d{2}")) } ?: ""
             val dateTo=""
             work {
                 val sales=LegacyOutstandingInvoices.page(store,"sales",limit=20,query=queryText,from=dateFrom,to=dateTo)
