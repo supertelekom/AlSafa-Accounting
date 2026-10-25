@@ -25,7 +25,9 @@ object LegacyArchivedDebtReport {
                 "SELECT legacy_id,payload FROM legacy_records WHERE category=? ORDER BY legacy_id",
                 section
             )
-            val expected = metadata.optJSONObject("sourceCollections")?.optInt(section, -1) ?: -1
+            val counts = metadata.optJSONObject("sourceCollections")
+                ?: throw IllegalStateException("قائمة أقسام النسخة الأصلية مفقودة")
+            val expected = if (counts.has(section)) counts.getInt(section) else 0
             require(expected >= 0 && rows.size == expected) { "$section: عدد الفواتير المؤرشفة لا يطابق النسخة الأصلية" }
             val totals = linkedMapOf<String, Array<BigDecimal>>()
             val seen = HashSet<String>()
