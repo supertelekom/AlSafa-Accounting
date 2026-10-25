@@ -32,6 +32,8 @@ object LegacySnapshotImport {
         val brokenPaymentLinks=payments.getJSONArray("unresolvedReferenceRows").length()+payments.getJSONArray("missingReferenceRows").length()
         val crossCurrencyPaymentCount=payments.getJSONArray("crossCurrencyPaymentRows").length()
         val cashMatch=LegacyPaymentCashAudit.inspect(payload)
+        val vaults=LegacyVaultSnapshot.inspect(payload)
+        val vaultPrecisionWarnings=vaults.getJSONArray("fractionalMinorUnitRows").length()
         val supplierCash=LegacySupplierCashAudit.inspect(payload)
         val matchedSupplierPayments=supplierCash.getJSONArray("matched").length()
         val unmatchedSupplierPayments=supplierCash.getJSONArray("unmatchedLedgerIndexes").length()
@@ -43,7 +45,7 @@ object LegacySnapshotImport {
         val parts=d.getJSONArray("maintenanceParts")
         val suppliers=d.getJSONArray("suppliers")
         val repairs=d.getJSONArray("repairs")
-        return "جاهزية أرشفة النسخة: ${if(readiness.getBoolean("archiveImportPermitted")) "نعم" else "لا"}، عوائق التفعيل المالي: ${readiness.getInt("financialBlockerCount")}، التفعيل المالي: غير مسموح قبل المطابقة. أخطاء الاستيراد: $blocking، تحذيرات مالية مؤرشفة: $warnings، فروقات إقفال فعلية: $cashIssues، تواريخ إقفال غير صالحة: $invalidClosingDates، تواريخ إقفال مكررة: $duplicateClosingDates، دفعات تحتاج مطابقة مرجع: $brokenPaymentLinks، دفعات بعملة قبض مختلفة: $crossCurrencyPaymentCount، دفعات مطابقة لحركات النقد: $matchedCashPayments، غير مطابقة: $unmatchedCashPayments، ملتبسة: $ambiguousCashPayments، مرتجعات تحتاج مطابقة مرجع: $brokenReturnLinks، سداد موردين مطابق للخزنة: $matchedSupplierPayments، غير مطابق: $unmatchedSupplierPayments. بصمة النسخة: ${manifest.getString("sha256").take(16)}…، إجمالي السجلات: ${manifest.getLong("recordCount")}. مخزون الساعات: ${products.length()}، قطع الصيانة: ${parts.length()}، الموردون: ${suppliers.length()}، سجل الصيانة: ${repairs.length()}. " +
+        return "جاهزية أرشفة النسخة: ${if(readiness.getBoolean("archiveImportPermitted")) "نعم" else "لا"}، عوائق التفعيل المالي: ${readiness.getInt("financialBlockerCount")}، حركات نقدية ذات كسور دقيقة: $vaultPrecisionWarnings، التفعيل المالي: غير مسموح قبل المطابقة. أخطاء الاستيراد: $blocking، تحذيرات مالية مؤرشفة: $warnings، فروقات إقفال فعلية: $cashIssues، تواريخ إقفال غير صالحة: $invalidClosingDates، تواريخ إقفال مكررة: $duplicateClosingDates، دفعات تحتاج مطابقة مرجع: $brokenPaymentLinks، دفعات بعملة قبض مختلفة: $crossCurrencyPaymentCount، دفعات مطابقة لحركات النقد: $matchedCashPayments، غير مطابقة: $unmatchedCashPayments، ملتبسة: $ambiguousCashPayments، مرتجعات تحتاج مطابقة مرجع: $brokenReturnLinks، سداد موردين مطابق للخزنة: $matchedSupplierPayments، غير مطابق: $unmatchedSupplierPayments. بصمة النسخة: ${manifest.getString("sha256").take(16)}…، إجمالي السجلات: ${manifest.getLong("recordCount")}. مخزون الساعات: ${products.length()}، قطع الصيانة: ${parts.length()}، الموردون: ${suppliers.length()}، سجل الصيانة: ${repairs.length()}. " +
             "سيُنقل المخزون والموردون والصيانة، وتُحفظ الفواتير والحركات القديمة كأرشيف قابل للقراءة فقط، دون احتسابها في الأرصدة أو الأرباح."
     }
     fun import(store:Store,payload:String):String {
