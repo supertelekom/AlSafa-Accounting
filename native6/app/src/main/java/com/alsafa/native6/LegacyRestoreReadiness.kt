@@ -14,6 +14,7 @@ object LegacyRestoreReadiness {
         val supplier=LegacySupplierCashAudit.inspect(payload)
         val returns=LegacyReturnLinkAudit.inspect(payload)
         val closings=LegacyClosingContinuity.inspect(payload)
+        val vaults=LegacyVaultSnapshot.inspect(payload)
         val blockers=JSONArray()
         fun flag(condition:Boolean,code:String) { if(condition) blockers.put(code) }
         flag(payment.getJSONArray("missingReferenceRows").length()>0,"PAYMENT_REFERENCE_MISSING")
@@ -30,6 +31,10 @@ object LegacyRestoreReadiness {
         flag(returns.getJSONArray("missingReferenceRows").length()>0,"RETURN_REFERENCE_MISSING")
         flag(returns.getJSONArray("unresolvedReferenceRows").length()>0,"RETURN_REFERENCE_UNKNOWN")
         flag(returns.getJSONArray("duplicateReturnIdRows").length()>0,"RETURN_ID_DUPLICATE")
+        flag(vaults.getJSONArray("invalidMovementIndexes").length()>0,"VAULT_MOVEMENT_INVALID")
+        flag(vaults.getJSONArray("duplicateMovementIndexes").length()>0,"VAULT_MOVEMENT_DUPLICATE")
+        flag(vaults.getJSONArray("negativeFinalBalances").length()>0,"VAULT_NEGATIVE_BALANCE")
+        flag(vaults.getJSONArray("fractionalMinorUnitRows").length()>0,"VAULT_FRACTIONAL_MINOR_UNITS")
         flag(closings.getJSONArray("arithmeticMismatches").length()>0,"CLOSING_ARITHMETIC_MISMATCH")
         flag(closings.getJSONArray("invalidDateRows").length()>0,"CLOSING_DATE_INVALID")
         flag(closings.getJSONArray("duplicateClosingDates").length()>0,"CLOSING_DATE_DUPLICATE")
