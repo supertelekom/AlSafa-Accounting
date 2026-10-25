@@ -68,8 +68,14 @@ object LegacyImportPreflight {
         val validCurrencies=setOf("USD","TRY","SYP")
         for(section in listOf("sales","purchases","expenses","partnerWithdrawals","payments")) {
             val records=data.optJSONArray(section) ?: continue
+            val ids=HashSet<String>()
             for(i in 0 until records.length()) {
-                val row=records.optJSONObject(i) ?: continue
+                val row=records.optJSONObject(i)
+                if(row==null) { problems.add("$section[$i]: invalid record"); continue }
+                if(section=="sales" || section=="purchases" || section=="payments") {
+                    val id=row.optString("id").trim()
+                    if(id.isEmpty() || !ids.add(id)) problems.add("$section[$i]: missing or duplicate ID")
+                }
                 val currency=row.optString("currency").trim()
                 if(currency.isNotEmpty() && currency !in validCurrencies)
                     problems.add("$section[$i]: unsupported currency")
