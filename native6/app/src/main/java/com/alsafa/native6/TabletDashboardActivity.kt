@@ -154,6 +154,8 @@ class TabletDashboardActivity : Activity() {
                     Triple("المبيع", "فاتورة جديدة", "sale"),
                     Triple("الصيانة", "استلام وتسليم", "repairs"),
                     Triple("المنتجات", "الأصناف والمخزون", "products"),
+                    Triple("الفواتير", "سجل المبيع والصيانة", "invoices"),
+                    Triple("الموردون والمشتريات", "المشتريات والذمم", "suppliers"),
                     Triple("الإقفال اليومي", "الخزنات والأرصدة", "vaults"),
                     Triple("الكاميرا والمعرض", "حفظ صور محلية", "camera"),
                     Triple("قارئ الباركود", "قراءة بكاميرا الجهاز", "barcode")
