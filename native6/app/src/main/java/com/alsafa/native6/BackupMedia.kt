@@ -18,6 +18,19 @@ object BackupMedia {
             (bytes[bytes.lastIndex-1].toInt() and 255)==0xFF &&
             (bytes[bytes.lastIndex].toInt() and 255)==0xD9
 
+    private fun validImage(name:String,bytes:ByteArray):Boolean = when(name.substringAfterLast('.').lowercase()) {
+        "jpg" -> validJpeg(bytes)
+        "png" -> bytes.size>=8 && bytes[0]==0x89.toByte() && bytes[1]==0x50.toByte() &&
+            bytes[2]==0x4E.toByte() && bytes[3]==0x47.toByte()
+        "webp" -> bytes.size>=12 && String(bytes,0,4,Charsets.US_ASCII)=="RIFF" &&
+            String(bytes,8,4,Charsets.US_ASCII)=="WEBP"
+        else -> false
+    }
+    private fun validName(name:String):Boolean {
+        val ext=name.substringAfterLast('.').lowercase()
+        return ext in setOf("jpg","png","webp") &&
+            name.substringBeforeLast('.').matches(Regex("[a-fA-F0-9-]{36}"))
+    }
     fun collect(context:Context):JSONArray {
         val root=File(context.filesDir,"images").canonicalFile
         val result=JSONArray()
@@ -25,19 +38,18 @@ object BackupMedia {
         require(root.isDirectory || !root.exists()) { "مسار مجلد الصور غير صالح" }
         var total=0L
         val files=if(root.exists()) requireNotNull(root.listFiles()) { "تعذر قراءة مجلد الصور" }.toList() else emptyList()
-        require(files.none { it.extension.lowercase() in setOf("jpeg","png","webp") }) { "النسخ الاحتياطي يدعم ملفات JPG فقط؛ توجد صور بصيغة أخرى" }
         require(files.all { it.isFile }) { "يوجد عنصر غير صالح داخل مجلد الصور" }
         require(files.size<=10000) { "عدد ملفات الصور يتجاوز الحد الآمن" }
-        require(files.all { it.extension.lowercase()=="jpg" }) { "توجد ملفات غير معروفة في مجلد الصور" }
-        files.filter { it.extension.lowercase()=="jpg" }.sortedBy { it.name }.forEach { file ->
+        require(files.all { validName(it.name) }) { "توجد ملفات صور بأسماء غير مدعومة" }
+        files.sortedBy { it.name }.forEach { file ->
             require(file.canonicalFile.parentFile==root && file.length()<=MAX_FILE) { "ملف صورة غير صالح للنسخ" }
-            require(file.name.removeSuffix(".jpg").matches(Regex("[a-fA-F0-9-]{36}"))) { "اسم صورة غير صالح" }
+            require(validName(file.name)) { "اسم صورة غير صالح" }
             require(file.length()>0L) { "صورة فارغة في النسخة" }
             total+=file.length()
             require(total<=MAX_TOTAL) { "حجم الصور يتجاوز حد النسخة الاحتياطية" }
             val bytes=file.readBytes()
             require(bytes.size.toLong()==file.length() && bytes.size.toLong()<=MAX_FILE) { "تغير حجم الصورة أثناء النسخ" }
-            require(validJpeg(bytes)) { "ملف الصورة ليس JPEG صالحاً" }
+            require(validImage(file.name,bytes)) { "ملف الصورة غير صالح" }
             result.put(JSONObject().put("name",file.name).put("sha256",Backup.sha(bytes))
                 .put("base64",Base64.encodeToString(bytes,Base64.NO_WRAP)))
         }
@@ -55,7 +67,7 @@ object BackupMedia {
         for(i in 0 until entries.length()) {
             val row=entries.getJSONObject(i)
             val name=row.getString("name")
-            require(name.endsWith(".jpg") && name.removeSuffix(".jpg").matches(Regex("[a-fA-F0-9-]{36}")) && names.add(name)) { "اسم صورة غير صالح أو مكرر" }
+            require(validName(name) && names.add(name)) { "اسم صورة غير صالح أو مكرر" }
             val dest=File(dir,name).canonicalFile
             require(dest.parentFile==dir && !dest.exists()) { "الصورة موجودة مسبقاً؛ لن تُستبدل" }
             val encoded=row.getString("base64")
@@ -82,7 +94,7 @@ object BackupMedia {
                 val bytes=Base64.decode(row.getString("base64"),Base64.NO_WRAP)
                 decodedTotal+=bytes.size.toLong()
                 require(bytes.isNotEmpty() && bytes.size<=MAX_FILE && decodedTotal<=MAX_TOTAL) { "حجم الصور غير صالح" }
-                require(validJpeg(bytes)) { "محتوى الصورة ليس JPEG صالحاً" }
+                require(validImage(dest.name,bytes)) { "محتوى الصورة غير صالح" }
                 require(Backup.sha(bytes)==row.getString("sha256")) { "صورة تالفة في النسخة الاحتياطية" }
                 require(dest.createNewFile()) { "تعذر إنشاء ملف الصورة" }
                 created.add(dest)
