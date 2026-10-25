@@ -2573,6 +2573,14 @@ button("＋ مورد"){form("مورد جديد"){box->val n=field("الاسم",b
                         }
                     }.setPositiveButton("حسناً",null).show()}
             }
+            if(repairPage>0) button("الصفحة السابقة",results) {
+                repairPage--
+                showRepairResults()
+            }
+            if(hasNext) button("الصفحة التالية",results) {
+                repairPage++
+                showRepairResults()
+            }
         }
         text("الطلبات المفتوحة",body,20f).setTextColor(gold)
         val counts=store.repairStatusCounts()
@@ -2598,14 +2606,6 @@ button("＋ مورد"){form("مورد جديد"){box->val n=field("الاسم",b
                 }
             }
         };if(r.getValue("status")=="received")button("بدء الصيانة"){work{store.startRepair(id)}};if(r.getValue("status") in setOf("received","in_progress"))button("جاهزة للاستلام"){work{store.repairReady(id)}};if(r.getValue("status")=="ready")button("تسليم وفاتورة أجرة عمل"){form("تسليم الصيانة"){box->val c=select("العملة",Currency.entries.map{it.name},box);val n=field("أجرة العمل",box,"0",true);val paid=field("المدفوع",box,"0",true);val v=select("خزنة القبض",vaultNames,box);val delivered=field("تاريخ تسليم الساعة YYYY-MM-DD",box,Store.today());val received=field("تاريخ قبض الأجرة الفعلي YYYY-MM-DD",box,Store.today());{val curr=Currency.entries[c.selectedItemPosition];val value=amount(n,curr);val pay=amount(paid,curr);require(value>=0L){"أجرة الصيانة لا يمكن أن تكون سالبة"};require(pay>=0L && pay<=value){"المدفوع يجب أن يكون بين الصفر وأجرة الصيانة"};val vault=Store.vaults[v.selectedItemPosition];val deliveryDate=java.time.LocalDate.parse(delivered.text.toString().trim()).toString();val receiptDate=java.time.LocalDate.parse(received.text.toString().trim()).toString();work{store.deliverRepair(id,curr,value,pay,vault,deliveryDate=deliveryDate,receiptDate=receiptDate)}}}}}
-            }
-            if(repairPage>0) button("الصفحة السابقة",results) {
-                repairPage--
-                showRepairResults()
-            }
-            if(hasNext) button("الصفحة التالية",results) {
-                repairPage++
-                showRepairResults()
             }
         }
         button("بحث وعرض الصيانات"){showRepairResults()}
