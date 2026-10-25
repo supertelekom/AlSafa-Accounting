@@ -3103,7 +3103,7 @@ button("＋ مورد"){form("مورد جديد"){box->val n=field("الاسم",b
                         require(cursor.moveToFirst()){"النسخة غير موجودة"}
                         cursor.getString(0)
                     }
-                    val preview=LegacySnapshotImport.preview(payload)
+                    val preview=LegacySnapshotImport.quickPreview(payload)
                     runOnUiThread {
                         if(!isFinishing&&!isDestroyed) AlertDialog.Builder(this)
                             .setTitle("استعادة جزئية — لا تشمل الحسابات")
