@@ -730,7 +730,7 @@ class Store(val helper:StoreDb) {
     /** One atomic edit for the tablet product form, including watch metadata. */
     fun editProductFull(id:String,name:String,barcode:String,price:Long,
                         brand:String,model:String,description:String,
-                        dialColor:String,caseColor:String,strapColor:String,watchType:String="") = transaction {
+                        dialColor:String,caseColor:String,strapColor:String,watchType:String="",gender:String="",displayType:String="",movement:String="",warrantyMonths:String="") = transaction {
         require(scalar("SELECT count(*) FROM products WHERE id=?",id)==1L){"المنتج غير موجود"}
         require(name.isNotBlank() && price>=0 && barcode.trim().length<=128){"بيانات المنتج غير صالحة"}
         require(listOf(brand,model,description,dialColor,caseColor,strapColor).all { it.length<=500 }){"تفاصيل المنتج طويلة جداً"}
@@ -738,6 +738,8 @@ class Store(val helper:StoreDb) {
         val details=JSONObject(rows("SELECT details FROM products WHERE id=?",id).single().getValue("details"))
         details.put("customerDescription",description.trim()).put("dialColor",dialColor.trim())
             .put("watchType",watchType.trim())
+            .put("gender",gender.trim()).put("displayType",displayType.trim())
+            .put("movement",movement.trim()).put("warrantyMonths",warrantyMonths.trim())
             .put("caseColor",caseColor.trim()).put("strapColor",strapColor.trim())
         db.execSQL("UPDATE products SET name=?,barcode=?,price=?,brand=?,model=?,details=? WHERE id=?",
             arrayOf(name.trim(),barcode.trim(),price,brand.trim(),model.trim(),details.toString(),id))
