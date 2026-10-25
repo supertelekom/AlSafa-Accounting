@@ -130,7 +130,7 @@ class TabletDashboardActivity : Activity() {
         outer.addView(separator, LinearLayout.LayoutParams(-1, dp(1)).apply {
             topMargin = dp(10); bottomMargin = dp(14)
         })
-        val scroll = ScrollView(this).apply { fillViewport = true }
+        val scroll = ScrollView(this).apply { isFillViewport = true }
         outer.addView(scroll, LinearLayout.LayoutParams(-1, 0, 1f))
         val content = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
