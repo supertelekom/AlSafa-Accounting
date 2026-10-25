@@ -15,7 +15,7 @@ object LegacyFinancialLinkAudit {
         val data=root.getJSONObject("data")
         val collections=listOf("sales","repairs","purchases","suppliers",
             "payments","returns","cashTransactions","supplierLedger",
-            "partnerWithdrawals","dailyClosings")
+            "partnerWithdrawals","dailyClosings","expenses")
         val ids=HashMap<String,HashSet<String>>()
         val duplicateIds=JSONArray()
         val missingIds=JSONArray()
@@ -32,7 +32,8 @@ object LegacyFinancialLinkAudit {
         }
         val targets=mapOf("sale" to "sales","repair" to "repairs",
             "purchase" to "purchases","supplier" to "suppliers",
-            "partnerWithdrawal" to "partnerWithdrawals")
+            "partnerWithdrawal" to "partnerWithdrawals",
+            "expense" to "expenses", "dailyClosing" to "dailyClosings")
         val missingReferences=JSONArray()
         val ambiguousReferences=JSONArray()
         val linked=JSONObject()
