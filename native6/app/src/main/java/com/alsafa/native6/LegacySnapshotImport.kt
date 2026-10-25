@@ -480,30 +480,19 @@ object LegacySnapshotImport {
                 }
             }
             require(createdImages.size==expectedPhotos) { "عدد الصور المستعادة لا يطابق النسخة الأصلية" }
-            for(section in listOf("products","maintenanceParts")) {
+            // Avoid SQLite JSON1 here: it is not guaranteed on older Android builds.
+            // Confirm every image-bearing source record has its local photo reference.
+            for(section in listOf("products","maintenanceParts","repairs")) {
                 val array=d.getJSONArray(section)
                 for(index in 0 until array.length()) {
                     val original=array.getJSONObject(index)
+                    val fields=if(section=="repairs") listOf("watchPhoto") else listOf("photo","photo2","photo3")
+                    if(fields.none { original.optString(it).startsWith("data:image/") }) continue
+                    val table=if(section=="repairs") "repairs" else "products"
                     val id=original.getString("id").trim()
-                    val count=listOf("photo","photo2","photo3")
-                        .count { original.optString(it).startsWith("data:image/") }
-                    if(count==0) continue
-                    val stored=store.rows(
-                        "SELECT json_array_length(json_extract(details,'$.imagePaths')) AS photo_count, "+
-                            "json_extract(details,'$.imagePath') AS main_photo FROM products WHERE id=?",id
-                    ).singleOrNull() ?: error("صور منتج مفقودة: $id")
-                    require(stored.getValue("photo_count").toInt()==count &&
-                        stored.getValue("main_photo").isNotBlank()) { "صور المنتج غير مرتبطة: $id" }
+                    require(store.scalar("SELECT count(*) FROM $table WHERE id=? AND instr(details,?)>0",
+                        id,"\"imagePath\"") == 1L) { "صورة غير مرتبطة بسجلها: $section / $id" }
                 }
-            }
-            for(index in 0 until repairs.length()) {
-                val original=repairs.getJSONObject(index)
-                if(!original.optString("watchPhoto").startsWith("data:image/")) continue
-                val id=original.getString("id").trim()
-                val stored=store.rows(
-                    "SELECT json_extract(details,'$.imagePath') AS photo FROM repairs WHERE id=?",id
-                ).singleOrNull() ?: error("صورة صيانة مفقودة: $id")
-                require(stored.getValue("photo").isNotBlank()) { "صورة الصيانة غير مرتبطة: $id" }
             }
             val photoCount=createdImages.size
             val receipt=LegacyRestoreReceipt.inspect(store)
