@@ -10,10 +10,13 @@ import java.math.BigDecimal
  */
 object LegacyOutstandingInvoices {
     fun page(store: Store, section: String, currency: String = "",
-             offset: Int = 0, limit: Int = 50): JSONObject {
+             offset: Int = 0, limit: Int = 50, from: String = "", to: String = ""): JSONObject {
         require(section == "sales" || section == "purchases") { "نوع فاتورة غير مدعوم" }
         require(currency.isEmpty() || currency in setOf("USD", "TRY", "SYP")) { "عملة غير مدعومة" }
         require(offset >= 0 && limit in 1..200) { "حدود الصفحة غير صالحة" }
+        if (from.isNotEmpty()) java.time.LocalDate.parse(from)
+        if (to.isNotEmpty()) java.time.LocalDate.parse(to)
+        require(from.isEmpty() || to.isEmpty() || from <= to) { "نطاق التاريخ غير صالح" }
         // Verify the complete archive and import metadata before displaying any balances.
         LegacyArchivedDebtReport.inspect(store)
         val rows = store.rows(
@@ -41,6 +44,9 @@ object LegacyOutstandingInvoices {
             }
             val due = total.subtract(paid)
             if (due.signum() == 0 || (currency.isNotEmpty() && currency != unit)) continue
+            val date = invoice.optString("date").take(10)
+            if (from.isNotEmpty() && (date.isEmpty() || date < from)) continue
+            if (to.isNotEmpty() && (date.isEmpty() || date > to)) continue
             matches.add(JSONObject()
                 .put("archiveKey", row.getValue("legacy_id"))
                 .put("invoiceId", id)
@@ -58,6 +64,8 @@ object LegacyOutstandingInvoices {
         return JSONObject()
             .put("section", section)
             .put("currency", currency)
+            .put("from", from)
+            .put("to", to)
             .put("totalOutstandingInvoices", matches.size)
             .put("offset", offset)
             .put("limit", limit)
