@@ -14,6 +14,31 @@ class Store(val helper:StoreDb) {
     companion object { fun id()=UUID.randomUUID().toString(); fun today()=LocalDate.now().toString(); val vaults=listOf("drawer","external","sham","bank") }
     @Synchronized fun <T> transaction(block:()->T):T { if(db.inTransaction()) return block(); db.beginTransaction();try { val result=block(); db.setTransactionSuccessful();return result } finally { db.endTransaction() } }
     fun rows(sql:String,vararg args:String):List<Map<String,String>> = db.rawQuery(sql,args).use { c -> buildList { while(c.moveToNext()) add(c.columnNames.indices.associate { c.getColumnName(it) to (c.getString(it)?:"") }) } }
+    /** Read legacy JSON without ever placing an entire photo-bearing row in CursorWindow. */
+    fun legacyRows(category:String):List<Map<String,String>> {
+        val ids=rows("SELECT legacy_id FROM legacy_records WHERE category=? ORDER BY CAST(substr(legacy_id,1,instr(legacy_id,':')-1) AS INTEGER)",category)
+        return ids.map { record ->
+            val id=record.getValue("legacy_id")
+            val size=scalar("SELECT length(CAST(payload AS BLOB)) FROM legacy_records WHERE category=? AND legacy_id=?",category,id)
+            require(size>=0 && size<=128L*1024*1024) { "حجم سجل الأرشيف غير صالح" }
+            val output=java.io.ByteArrayOutputStream()
+            var offset=0L
+            while(offset<size) {
+                val count=minOf(8192L,size-offset).toInt()
+                db.rawQuery(
+                    "SELECT substr(CAST(payload AS BLOB),?,?) FROM legacy_records WHERE category=? AND legacy_id=?",
+                    arrayOf((offset+1).toString(),count.toString(),category,id)
+                ).use { cursor ->
+                    require(cursor.moveToFirst() && !cursor.isNull(0)) { "سجل أرشيف مفقود" }
+                    val chunk=cursor.getBlob(0)
+                    require(chunk.size==count) { "سجل أرشيف غير مكتمل" }
+                    output.write(chunk)
+                }
+                offset+=count
+            }
+            mapOf("legacy_id" to id,"payload" to output.toString("UTF-8"))
+        }
+    }
     fun scalar(sql:String,vararg args:String):Long = db.rawQuery(sql,args).use { cursor ->
         if(!cursor.moveToFirst() || cursor.isNull(0)) 0L
         else {
