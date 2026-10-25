@@ -3111,7 +3111,7 @@ button("＋ مورد"){form("مورد جديد"){box->val n=field("الاسم",b
         work{val backup=Backup(this,store);when(request){104->contentResolver.openOutputStream(uri,"wt")!!.use{InvoicePdf(this,store).write(requireNotNull(pdfInvoice),it)};101->contentResolver.openOutputStream(uri,"wt")!!.use{backup.export(it)};102->contentResolver.openInputStream(uri)!!.use{backup.restore(it)};103->contentResolver.openInputStream(uri)!!.use{val report=backup.stageLegacy(it);runOnUiThread{AlertDialog.Builder(this).setMessage(report).setPositiveButton("حسناً",null).show()}};105->contentResolver.openInputStream(uri)!!.use{ input ->
             val bytes=Backup.read(input)
             val payload=String(bytes,Charsets.UTF_8).removePrefix("\uFEFF")
-            val preview=LegacySnapshotImport.preview(payload)
+            val preview=LegacySnapshotImport.quickPreview(payload)
             // Keep the original source available for future financial reconciliation.
             backup.stageLegacy(bytes.inputStream())
             runOnUiThread {
