@@ -36,6 +36,14 @@ object LegacyArchivedDebtReport {
             )
             require(actual == expected.toLong()) { "الأرشيف غير مكتمل: $section" }
         }
+        val expectedSuppliers = metadata.optInt("suppliers", -1)
+        require(expectedSuppliers >= 0) { "عدد الموردين الأصلي غير محفوظ" }
+        val archivedSuppliers = store.scalar(
+            "SELECT count(*) FROM legacy_records WHERE category=?", "source_suppliers"
+        )
+        require(archivedSuppliers == expectedSuppliers.toLong()) {
+            "بيانات الموردين الأصلية غير مكتملة في الأرشيف"
+        }
         return metadata
     }
 
