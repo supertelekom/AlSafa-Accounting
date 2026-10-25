@@ -382,6 +382,28 @@ open class MainActivity:Activity() {
         }
         val choice=select("نوع السجل",categoryLabels,body)
         val search=field("بحث في بيانات السجل القديم",body)
+        button("الفواتير القديمة غير المسددة (قراءة فقط)",body) {
+            work {
+                val sales=LegacyOutstandingInvoices.page(store,"sales",limit=20,query=search.text.toString())
+                val purchases=LegacyOutstandingInvoices.page(store,"purchases",limit=20,query=search.text.toString())
+                fun describe(name:String, data:org.json.JSONObject):String {
+                    val records=data.getJSONArray("records")
+                    val lines=(0 until records.length()).joinToString("\\n") { index ->
+                        val item=records.getJSONObject(index)
+                        "${item.optString("invoiceId")} | ${item.optString("date")} | ${item.optString("currency")} ${item.optString("outstandingSnapshot")}"
+                    }
+                    return "$name: ${data.getInt("totalOutstandingInvoices")} فاتورة\\n"+
+                        "المتبقي بحسب العملة: ${data.getJSONObject("outstandingTotalsByCurrency")}\\n"+lines
+                }
+                val message=describe("المبيعات",sales)+"\\n\\n"+describe("المشتريات",purchases)+
+                    "\\n\\nالأرصدة أولية للقراءة فقط، دون ترحيل مالي."
+                runOnUiThread {
+                    if(!isFinishing&&!isDestroyed) AlertDialog.Builder(this)
+                        .setTitle("الفواتير غير المسددة من الأرشيف")
+                        .setMessage(message).setPositiveButton("إغلاق",null).show()
+                }
+            }
+        }
         val results=column()
         body.addView(results)
         var offset=0
