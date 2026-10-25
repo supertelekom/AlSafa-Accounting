@@ -47,8 +47,6 @@ object LegacyImportPreflight {
                         problems.add("$section[$i]: missing product name")
                     if(item.optString("barcode").trim().length>128)
                         problems.add("$section[$i]: barcode exceeds native limit")
-                    if(item.optString("brand").length>500 || item.optString("model").length>500)
-                        problems.add("$section[$i]: brand or model exceeds native limit")
                     for(field in listOf("cost","salePrice")) {
                         val amount=item.optString(field,"0").toBigDecimalOrNull()
                         if(amount==null || amount.signum()<0 || amount.stripTrailingZeros().scale()>2 ||
