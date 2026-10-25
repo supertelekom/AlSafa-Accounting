@@ -58,10 +58,7 @@ object LegacyArchivedDebtReport {
         }
         val report = JSONObject()
         for (section in listOf("sales", "purchases")) {
-            val rows = store.rows(
-                "SELECT legacy_id,payload FROM legacy_records WHERE category=? ORDER BY legacy_id",
-                section
-            )
+            val rows = store.legacyRows(section)
             val counts = metadata.optJSONObject("sourceCollections")
                 ?: throw IllegalStateException("قائمة أقسام النسخة الأصلية مفقودة")
             val expected = if (counts.has(section)) counts.getInt(section) else 0
