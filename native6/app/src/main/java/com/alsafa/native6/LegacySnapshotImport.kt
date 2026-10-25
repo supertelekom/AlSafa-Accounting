@@ -188,6 +188,9 @@ object LegacySnapshotImport {
                         .put("_legacyValue",d.opt(key)).toString())
             }
             val deviceSettings=root.optJSONObject("deviceSettings")
+            require("deviceSettings" !in configurationKeys && "deviceSettings" !in scalarKeys) {
+                "تعارض اسم إعدادات الجهاز مع بيانات النسخة"
+            }
             if(deviceSettings!=null) store.insert("legacy_records",
                 "category" to "configuration","legacy_id" to "deviceSettings",
                 "payload" to deviceSettings.toString())
