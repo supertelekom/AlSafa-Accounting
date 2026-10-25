@@ -49,13 +49,13 @@ object LegacyImportPreflight {
                         problems.add("$section[$i]: barcode exceeds native limit")
                     for(field in listOf("cost","salePrice")) {
                         val amount=item.optString(field,"0").toBigDecimalOrNull()
-                        if(amount==null || amount.signum()<0 || amount.stripTrailingZeros().scale()>2 ||
-                            runCatching { amount.movePointRight(2).longValueExact() }.isFailure)
+                        if(amount==null || amount.signum()<0 ||
+                            runCatching { amount.setScale(2,java.math.RoundingMode.HALF_UP).movePointRight(2).longValueExact() }.isFailure)
                             problems.add("$section[$i]: invalid or over-precise $field")
                     }
                     val cost=item.optString("cost","0").toBigDecimalOrNull()
                     if(cost!=null && qty!=null && qty>=0 &&
-                        runCatching { cost.movePointRight(2).multiply(java.math.BigDecimal.valueOf(qty)).longValueExact() }.isFailure)
+                        runCatching { cost.setScale(2,java.math.RoundingMode.HALF_UP).movePointRight(2).multiply(java.math.BigDecimal.valueOf(qty)).longValueExact() }.isFailure)
                         problems.add("$section[$i]: inventory valuation overflow")
                 }
                 if(section=="suppliers" && item.optString("name").isBlank())
