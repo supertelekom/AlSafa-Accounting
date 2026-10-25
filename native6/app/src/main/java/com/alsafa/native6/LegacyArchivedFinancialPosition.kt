@@ -171,9 +171,12 @@ object LegacyArchivedFinancialPosition {
         require(rows.size.toLong()==expected) { "أرشيف سحوبات الشركاء غير مكتمل" }
         val totals=sortedMapOf<String,Long>()
         val entries=JSONArray()
+        val seenIds=hashSetOf<String>()
         var excluded=0
         for(record in rows) {
             val item=JSONObject(record.getValue("payload"))
+            val recordId=record.getValue("legacy_id")
+            require(recordId.isNotBlank() && seenIds.add(recordId)) { "معرف سحب شريك مفقود أو مكرر" }
             val date=java.time.LocalDate.parse(item.getString("date").take(10))
             if(java.time.YearMonth.from(date)!=period) { excluded++;continue }
             val currency=item.optString("currency")
