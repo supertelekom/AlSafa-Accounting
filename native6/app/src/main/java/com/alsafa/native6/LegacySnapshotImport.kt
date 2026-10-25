@@ -230,6 +230,17 @@ object LegacySnapshotImport {
             for ((section,kind) in lists) {
                 val items=d.getJSONArray(section)
                 val sourceQuantity=(0 until items.length()).sumOf { i -> items.getJSONObject(i).getLong("stock") }
+                for (i in 0 until items.length()) {
+                    val original=items.getJSONObject(i)
+                    val productId=original.getString("id").trim()
+                    val restored=store.rows("SELECT stock,price,cost FROM products WHERE id=? AND kind=?",productId,kind).singleOrNull()
+                        ?: error("منتج مفقود بعد الاستعادة: $section / $i")
+                    require(restored.getValue("stock").toLong()==original.getLong("stock") &&
+                        restored.getValue("price").toLong()==legacyMinor(original.optString("salePrice","0")) &&
+                        restored.getValue("cost").toLong()==legacyMinor(original.optString("cost","0"))) {
+                        "اختلاف كمية أو سعر أو تكلفة المنتج بعد الاستعادة: $section / $i"
+                    }
+                }
                 val importedQuantity=store.scalar("SELECT coalesce(sum(stock),0) FROM products WHERE kind=?",kind)
                 require(sourceQuantity==importedQuantity) { "مجموع كميات $section لا يطابق النسخة الأصلية" }
             }
