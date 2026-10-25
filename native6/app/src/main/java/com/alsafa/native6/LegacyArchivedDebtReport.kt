@@ -10,6 +10,35 @@ import java.math.BigDecimal
 object LegacyArchivedDebtReport {
     private val currencies = setOf("USD", "TRY", "SYP")
 
+    /**
+     * Fast archive completeness gate for paginated screens: checks metadata and
+     * collection counts without parsing every historical invoice a second time.
+     */
+    fun verifyArchiveCounts(store: Store): JSONObject {
+        val imported = store.rows(
+            "SELECT value FROM settings WHERE key=?", "legacy_snapshot_import"
+        ).singleOrNull() ?: throw IllegalStateException("بيانات الاستيراد التاريخي مفقودة أو مكررة")
+        val metadata = JSONObject(imported.getValue("value"))
+        require(metadata.optString("scope") == "inventory_suppliers_repairs_only") {
+            "نطاق الأرشيف غير مدعوم"
+        }
+        require(metadata.optString("financialPostingStatus") == "NOT_POSTED") {
+            "تم تغيير حالة الحسابات التاريخية"
+        }
+        val counts = metadata.optJSONObject("sourceCollections")
+            ?: throw IllegalStateException("قائمة أقسام النسخة مفقودة")
+        for (section in listOf("sales", "purchases", "payments", "supplierLedger",
+            "returns", "cashTransactions", "partnerWithdrawals", "dailyClosings")) {
+            val expected = if (counts.has(section)) counts.getInt(section) else 0
+            require(expected >= 0) { "عدد السجلات المتوقع غير صالح: $section" }
+            val actual = store.scalar(
+                "SELECT count(*) FROM legacy_records WHERE category=?", section
+            )
+            require(actual == expected.toLong()) { "الأرشيف غير مكتمل: $section" }
+        }
+        return metadata
+    }
+
     fun inspect(store: Store): JSONObject {
         val imported = store.rows(
             "SELECT value FROM settings WHERE key=?", "legacy_snapshot_import"
