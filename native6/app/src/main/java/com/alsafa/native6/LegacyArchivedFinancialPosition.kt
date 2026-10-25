@@ -73,6 +73,10 @@ object LegacyArchivedFinancialPosition {
             "دفتر الموردين المؤرشف غير مكتمل"
         }
         val ledgerKinds=JSONObject()
+        val supplierOpeningBalances=linkedMapOf<String,BigDecimal>()
+        val supplierNames=store.rows("SELECT id,name FROM suppliers")
+            .associate { it.getValue("id") to it.getValue("name") }
+        val seenLedgerIds=hashSetOf<String>()
         for(record in supplierLedger) {
             val row=JSONObject(record.getValue("payload"))
             val currency=row.optString("currency")
@@ -82,11 +86,40 @@ object LegacyArchivedFinancialPosition {
             require(currency in currencies && amount.signum()>=0) {
                 "قيد مورد بعملة أو مبلغ غير صالح"
             }
+            val ledgerId=row.optString("id").trim()
+            require(ledgerId.isNotEmpty() && seenLedgerIds.add(ledgerId)) {
+                "معرف حركة مورد مفقود أو مكرر"
+            }
+            val supplierId=row.optString("supplierId").trim()
+            require(supplierNames.containsKey(supplierId)) {
+                "حركة مالية مرتبطة بمورد غير موجود"
+            }
             val key="$kind|$currency"
             val previous=ledgerKinds.optString(key,"0").toBigDecimal()
             ledgerKinds.put(key,previous.add(amount).toPlainString())
+            // The old supplier ledger contains independent opening debts.
+            // These are NOT purchases and must never be merged into invoice paid.
+            if(kind=="opening-debt" || kind=="payment") {
+                val balanceKey="$supplierId|$currency"
+                val signed=if(kind=="opening-debt") amount else amount.negate()
+                supplierOpeningBalances[balanceKey]=
+                    (supplierOpeningBalances[balanceKey] ?: BigDecimal.ZERO).add(signed)
+            }
+        }
+        val supplierOpening=JSONArray()
+        for((key,balance) in supplierOpeningBalances) {
+            val separator=key.lastIndexOf('|')
+            val supplierId=key.substring(0,separator)
+            val currency=key.substring(separator+1)
+            supplierOpening.put(JSONObject()
+                .put("supplierId",supplierId)
+                .put("supplierName",supplierNames.getValue(supplierId))
+                .put("currency",currency)
+                .put("openingDebtLessLedgerPayments",balance.toPlainString())
+                .put("requiresManualReconciliation",true))
         }
         return JSONObject()
+            .put("supplierOpeningDebtBalances",supplierOpening)
             .put("supplierLedgerByKindCurrency",ledgerKinds)
             .put("sourceSha256",metadata.optString("sourceSha256"))
             .put("sourceExportedAt",metadata.optString("sourceExportedAt"))
