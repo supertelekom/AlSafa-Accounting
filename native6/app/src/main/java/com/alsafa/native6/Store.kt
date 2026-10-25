@@ -40,7 +40,9 @@ class Store(val helper:StoreDb) {
                 .onUnmappableCharacter(java.nio.charset.CodingErrorAction.REPORT)
             val payload=decoder.decode(java.nio.ByteBuffer.wrap(output.toByteArray())).toString()
             require(payload.isNotBlank()) { "سجل أرشيف فارغ" }
-            org.json.JSONTokener(payload).nextValue()
+            val parser=org.json.JSONTokener(payload)
+            parser.nextValue()
+            require(parser.nextClean().code==0) { "بيانات إضافية بعد نهاية سجل الأرشيف" }
             mapOf("legacy_id" to id,"payload" to payload)
         }
     }
