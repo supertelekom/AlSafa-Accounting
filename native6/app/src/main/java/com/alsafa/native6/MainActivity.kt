@@ -3108,7 +3108,19 @@ button("＋ مورد"){form("مورد جديد"){box->val n=field("الاسم",b
     }
     private fun pick(code:Int){startActivityForResult(Intent(Intent.ACTION_OPEN_DOCUMENT).apply{addCategory(Intent.CATEGORY_OPENABLE);type="application/json"},code)}
     private fun handleDocumentResult(request:Int,result:Int,data:Intent?){if(result!=RESULT_OK)return;val uri=data?.data?:return
-        work{val backup=Backup(this,store);when(request){104->contentResolver.openOutputStream(uri,"wt")!!.use{InvoicePdf(this,store).write(requireNotNull(pdfInvoice),it)};101->contentResolver.openOutputStream(uri,"wt")!!.use{backup.export(it)};102->contentResolver.openInputStream(uri)!!.use{backup.restore(it)};103->contentResolver.openInputStream(uri)!!.use{val report=backup.stageLegacy(it);runOnUiThread{AlertDialog.Builder(this).setMessage(report).setPositiveButton("حسناً",null).show()}};105->contentResolver.openInputStream(uri)!!.use{ input ->
+        work{val backup=Backup(this,store);when(request){104->contentResolver.openOutputStream(uri,"wt")!!.use{InvoicePdf(this,store).write(requireNotNull(pdfInvoice),it)};101->contentResolver.openOutputStream(uri,"wt")!!.use{backup.export(it)};102->contentResolver.openInputStream(uri)!!.use{ input ->
+            val bytes=Backup.read(input)
+            val root=org.json.JSONObject(String(bytes,Charsets.UTF_8).removePrefix("\uFEFF"))
+            when(root.optString("format")) {
+                "alsafa-native6-backup" -> backup.restore(bytes.inputStream())
+                "alsafa-accounting-backup" -> {
+                    // Reuse the legacy import confirmation path rather than reporting
+                    // an unsupported backup type to users selecting the Restore button.
+                    runOnUiThread { handleDocumentResult(105,RESULT_OK,data) }
+                }
+                else -> error("نوع النسخة غير مدعوم؛ اختر ملف نسخة الصفا JSON الأصلي")
+            }
+        };103->contentResolver.openInputStream(uri)!!.use{val report=backup.stageLegacy(it);runOnUiThread{AlertDialog.Builder(this).setMessage(report).setPositiveButton("حسناً",null).show()}};105->contentResolver.openInputStream(uri)!!.use{ input ->
             val bytes=Backup.read(input)
             val payload=String(bytes,Charsets.UTF_8).removePrefix("\uFEFF")
             val preview=LegacySnapshotImport.quickPreview(payload)
