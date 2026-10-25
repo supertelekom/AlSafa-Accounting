@@ -265,6 +265,25 @@ object LegacySnapshotImport {
                     }
                 }
             }
+            for (key in configurationKeys) {
+                val restored=store.rows(
+                    "SELECT payload FROM legacy_records WHERE category=? AND legacy_id=?",
+                    "configuration",key
+                ).singleOrNull() ?: error("إعدادات قديمة مفقودة: $key")
+                require(restored.getValue("payload")==d.getJSONObject(key).toString()) {
+                    "اختلاف إعدادات النسخة الأصلية: $key"
+                }
+            }
+            for (key in scalarKeys) {
+                val restored=store.rows(
+                    "SELECT payload FROM legacy_records WHERE category=? AND legacy_id=?",
+                    "configuration",key
+                ).singleOrNull() ?: error("بيانات وصفية قديمة مفقودة: $key")
+                require(restored.getValue("payload")==JSONObject()
+                    .put("_legacyValue",d.opt(key)).toString()) {
+                    "اختلاف بيانات النسخة الوصفية: $key"
+                }
+            }
             require(actualArchive==expectedArchive.toLong()) {
                 "عدد السجلات التاريخية المستعادة لا يطابق النسخة الأصلية: $actualArchive / $expectedArchive"
             }
