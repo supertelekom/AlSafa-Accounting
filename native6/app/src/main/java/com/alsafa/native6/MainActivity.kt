@@ -834,7 +834,7 @@ open class MainActivity:Activity() {
         shortcut("تقييم المخزون","inventory")
         shortcut("تسويات الجرد","stocktake-history")
         body.addView(shortcuts)
-        text("كتالوج المنتجات",size=20f).setTextColor(gold)
+        text(if(onlyKind=="part") "كتالوج قطع الصيانة" else "كتالوج المنتجات",size=20f).setTextColor(gold)
         if(onlyKind=="part") button("عرض جميع المنتجات"){go("products")}
         else button("قطع الصيانة فقط"){go("maintenance-parts")}
         val query=field("بحث بالاسم أو الباركود أو REF",body)
@@ -842,9 +842,9 @@ open class MainActivity:Activity() {
         body.addView(list)
         fun show(){
             list.removeAllViews()
-            val results=store.searchCatalog(query.text.toString()).filter { onlyKind==null || it.kind==onlyKind }
+            val results=store.searchCatalog(query.text.toString(),onlyKind)
             text(if(onlyKind=="part") "قطع الصيانة: ${results.size}" else "المنتجات: ${results.size}",list,13f)
-            if(results.isEmpty())text("لا توجد منتجات مطابقة للبحث.",list,14f)
+            if(results.isEmpty())text(if(onlyKind=="part") "لا توجد قطع صيانة مطابقة للبحث." else "لا توجد منتجات مطابقة للبحث.",list,14f)
             val variantCounts=store.colorVariantCounts()
             results.take(150).forEach{p->productCard(p,list,variantCounts[p.id]?:0)}
             if(results.size>150)text("تُعرض أول 150 نتيجة. استخدم البحث لتضييق القائمة.",list,13f)
