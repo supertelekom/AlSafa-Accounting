@@ -2941,6 +2941,25 @@ button("＋ مورد"){form("مورد جديد"){box->val n=field("الاسم",b
                 }}.show()
         }
         val month=field("شهر التقرير YYYY-MM",body,YearMonth.now().toString())
+        button("عرض سحوبات الشركاء من النسخة القديمة (الشهر المحدد)") {
+            try {
+                val selected=YearMonth.parse(month.text.toString().trim())
+                work {
+                    val report=LegacyArchivedFinancialPosition.monthlyPartnerWithdrawals(store,selected.toString())
+                    val entries=report.getJSONArray("withdrawals")
+                    val message="الشهر: ${report.getString("month")}\\n"+
+                        "عدد السحوبات: ${entries.length()}\\n"+
+                        "الإجماليات لكل شريك وعملة: ${report.getJSONObject("totalsByPartnerCurrency")}\\n"+
+                        "الأشهر الأخرى مستبعدة: ${report.getInt("excludedOtherMonths")}\\n"+
+                        "هذه بيانات تاريخية للقراءة فقط، ولا تدخل في أرباح أو سحوبات Native 6."
+                    runOnUiThread {
+                        if(!isFinishing&&!isDestroyed) AlertDialog.Builder(this)
+                            .setTitle("سحوبات الشركاء القديمة")
+                            .setMessage(message).setPositiveButton("إغلاق",null).show()
+                    }
+                }
+            } catch(e:Exception){error(e)}
+        }
         val firstMonth=field("أول شهر للحسابات السابقة YYYY-MM",body,YearMonth.now().toString())
         val currency=select("عملة التقرير",Currency.entries.map { it.name },body)
         val result=column();body.addView(result)
