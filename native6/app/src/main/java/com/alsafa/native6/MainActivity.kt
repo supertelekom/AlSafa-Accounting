@@ -1214,8 +1214,20 @@ open class MainActivity:Activity() {
             background=background(cream,10)
             setOnClickListener {
                 if(!busy) {
-                    basket.remove(item)
-                    addSaleProduct(product)
+                    form("تعديل "+product.name){box->
+                        val quantity=field("الكمية",box,item.qty.toString(),true)
+                        val unitPrice=field("سعر الوحدة "+product.currency,box,Money(item.unitPrice,product.currency).display().substringBefore(' '),true)
+                        ({
+                            val q=quantity.text.toString().trim().toLong()
+                            require(q>0 && q<=store.product(product.id).stock){"الكمية غير متوفرة"}
+                            val unit=amount(unitPrice,product.currency)
+                            require(unit>=0L){"سعر الوحدة غير صالح"}
+                            val index=basket.indexOfFirst { it.productId==item.productId }
+                            require(index>=0){"الصنف لم يعد موجوداً في السلة"}
+                            basket[index]=item.copy(qty=q,unitPrice=unit)
+                            render()
+                        })
+                    }
                 }
             }
         }
