@@ -65,7 +65,9 @@ object LegacySnapshotImport {
     }
     fun import(store:Store,payload:String):String {
         val root=JSONObject(payload)
-        val d=data(payload)
+        require(root.optString("format")=="alsafa-accounting-backup" &&
+            root.optInt("formatVersion")==2) { "صيغة النسخة الاحتياطية غير مدعومة" }
+        val d=root.getJSONObject("data")
         val manifest=LegacyRestoreManifest.inspect(payload)
         val readiness=LegacyRestoreReadiness.inspect(payload)
         val issues=LegacyImportPreflight.inspectInventory(payload)
