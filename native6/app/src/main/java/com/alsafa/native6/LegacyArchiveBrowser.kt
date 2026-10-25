@@ -44,7 +44,7 @@ object LegacyArchiveBrowser {
                 .put("record",data)
         }
         val page=JSONArray()
-        filtered.drop(offset).take(limit).forEach(page::put)
+        filtered.drop(offset).take(limit).forEach { page.put(it) }
         return JSONObject().put("section",section).put("total",filtered.size)
             .put("offset",offset).put("limit",limit).put("records",page)
             .put("readOnly",true).put("financialPosting","NONE")
