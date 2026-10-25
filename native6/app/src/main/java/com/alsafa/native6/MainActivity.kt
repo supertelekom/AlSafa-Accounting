@@ -362,6 +362,16 @@ open class MainActivity:Activity() {
             "حساب الموردين","سحوبات الشركاء","المصاريف","المرتجعات","الإقفالات اليومية",
             "حركات المخزون","تاريخ تكلفة المنتجات","سجل التدقيق","سجل الولاء",
             "الإيصالات الذكية","قواعد الخصومات","خيارات تفاصيل المنتجات")
+        button("تقرير الوضع المالي للنسخة المستوردة",body) {
+            work {
+                val message=LegacyArchivedFinancialPosition.summary(store)
+                runOnUiThread {
+                    if(!isFinishing&&!isDestroyed) AlertDialog.Builder(this)
+                        .setTitle("مطابقة مالية تاريخية — قراءة فقط")
+                        .setMessage(message).setPositiveButton("إغلاق",null).show()
+                }
+            }
+        }
         button("مطابقة أرصدة الفواتير القديمة",body) {
             work {
                 val sales=LegacyInvoiceSnapshot.page(store,"sales",limit=1)
