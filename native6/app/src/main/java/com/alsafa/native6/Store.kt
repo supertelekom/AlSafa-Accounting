@@ -52,19 +52,19 @@ class Store(val helper:StoreDb) {
             val size=record.getValue("bytes").toLong()
             require(size>=0 && size<=128L*1024*1024) { "حجم سجل الأرشيف غير صالح" }
             val output=java.io.ByteArrayOutputStream()
-            var offset=0L
-            while(offset<size) {
-                val count=minOf(8192L,size-offset).toInt()
+            var byteOffset=0L
+            while(byteOffset<size) {
+                val count=minOf(8192L,size-byteOffset).toInt()
                 db.rawQuery(
                     "SELECT substr(CAST(payload AS BLOB),?,?) FROM legacy_records WHERE category=? AND legacy_id=?",
-                    arrayOf((offset+1).toString(),count.toString(),category,id)
+                    arrayOf((byteOffset+1).toString(),count.toString(),category,id)
                 ).use { cursor ->
                     require(cursor.moveToFirst() && !cursor.isNull(0)) { "سجل أرشيف مفقود" }
                     val chunk=cursor.getBlob(0)
                     require(chunk.size==count) { "سجل أرشيف غير مكتمل" }
                     output.write(chunk)
                 }
-                offset+=count
+                byteOffset+=count
             }
             val decoder=Charsets.UTF_8.newDecoder()
                 .onMalformedInput(java.nio.charset.CodingErrorAction.REPORT)
