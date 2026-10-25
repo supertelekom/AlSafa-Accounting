@@ -54,7 +54,7 @@ class MediaCaptureActivity : Activity() {
                     val dir=File(cacheDir,"camera").apply { mkdirs() }
                     val output=File(dir,"${UUID.randomUUID()}.jpg")
                     pendingCameraPath=output.absolutePath
-                    val uri=FileProvider.getUriForFile(this,packageName+".share",output)
+                    val uri=FileProvider.getUriForFile(this@MediaCaptureActivity,packageName+".share",output)
                     val intent=Intent(MediaStore.ACTION_IMAGE_CAPTURE).apply {
                         putExtra(MediaStore.EXTRA_OUTPUT,uri)
                         addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION or Intent.FLAG_GRANT_READ_URI_PERMISSION)
