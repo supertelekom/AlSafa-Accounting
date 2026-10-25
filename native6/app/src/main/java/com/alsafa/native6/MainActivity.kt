@@ -1157,9 +1157,17 @@ open class MainActivity:Activity() {
                 require(q>0){"الكمية يجب أن تكون موجبة"}
                 require(q<=store.product(p.id).stock){"الكمية المطلوبة أكبر من المخزون المتاح"}
                 require(basket.isEmpty()||basketCurrency==p.currency){"اختر أصنافاً بنفس العملة"}
-                require(basket.none{it.productId==p.id}){"الصنف موجود في السلة"}
+                val unit=amount(price,p.currency)
+                require(unit>=0L){"سعر البيع لا يمكن أن يكون سالباً"}
+                val previous=basket.indexOfFirst { it.productId==p.id }
+                if(previous>=0) {
+                    val existing=basket[previous]
+                    require(existing.unitPrice==unit){"الصنف موجود في السلة بسعر مختلف؛ عدّل السطر السابق أولاً"}
+                    val combined=Math.addExact(existing.qty,q)
+                    require(combined<=store.product(p.id).stock){"إجمالي الكمية يتجاوز المخزون"}
+                    basket[previous]=existing.copy(qty=combined)
+                } else basket.add(SaleItem(p.id,q,unit))
                 basketCurrency=p.currency
-                basket.add(SaleItem(p.id,q,amount(price,p.currency)))
                 render()
             })
         }
