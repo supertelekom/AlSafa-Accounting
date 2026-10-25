@@ -167,6 +167,7 @@ class TabletDashboardActivity : Activity() {
                 grid(content, listOf(
                     Triple("مبيع", "إصدار فاتورة", "sale"),
                     Triple("الصيانة", "استلام وتسليم", "repairs"),
+                    Triple("قطع الصيانة", "البحث عن القطع والمخزون", "maintenance-parts"),
                     Triple("الفواتير", "القبض والمرتجعات", "invoices"),
                     Triple("الخزنات", "الإقفال اليومي", "vaults")
                 ))
