@@ -81,6 +81,17 @@ object LegacyCounterpartyDebt {
                     .put("invoiceCount", invoiceCounts.getValue(key))
                     .put("outstanding", BigDecimal.valueOf(value, 2).toPlainString()))
             }
+            val reconciled = sortedMapOf<String, Long>()
+            for ((key, amount) in totals) {
+                val currency = key.substringAfterLast("|")
+                reconciled[currency] = Math.addExact(reconciled[currency] ?: 0L, amount)
+            }
+            require(reconciled == currencyTotals.filterValues { it != 0L }) {
+                "إجمالي ديون الأطراف لا يطابق مجموع الفواتير: $section"
+            }
+            require(openInvoices.length() == openCount) {
+                "عدد الفواتير المفتوحة لا يطابق التفاصيل: $section"
+            }
             val perCurrency = JSONObject()
             for ((currency, amount) in currencyTotals) {
                 perCurrency.put(currency, BigDecimal.valueOf(amount, 2).toPlainString())
