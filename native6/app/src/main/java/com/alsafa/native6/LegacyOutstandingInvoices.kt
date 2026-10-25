@@ -49,6 +49,10 @@ object LegacyOutstandingInvoices {
             val due = total.subtract(paid)
             if (due.signum() == 0 || (currency.isNotEmpty() && currency != unit)) continue
             val date = invoice.optString("date").take(10)
+            if (from.isNotEmpty() || to.isNotEmpty()) {
+                require(date.matches(Regex("\\d{4}-\\d{2}-\\d{2}"))) { "تاريخ الفاتورة $id غير صالح" }
+                java.time.LocalDate.parse(date)
+            }
             if (from.isNotEmpty() && (date.isEmpty() || date < from)) continue
             if (to.isNotEmpty() && (date.isEmpty() || date > to)) continue
             if (search.isNotEmpty()) {
