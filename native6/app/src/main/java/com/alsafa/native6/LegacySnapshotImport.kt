@@ -31,7 +31,7 @@ object LegacySnapshotImport {
             android.graphics.BitmapFactory.decodeByteArray(bytes,0,bytes.size,bounds)
             require(bounds.outWidth in 1..10000 && bounds.outHeight in 1..10000) { "صورة غير قابلة للقراءة: $field" }
             val extension=when(mime) {"image/png"->".png";"image/webp"->".webp";else->".jpg"}
-            val file=java.io.File(directory,"legacy_"+java.util.UUID.randomUUID().toString()+extension)
+            val file=java.io.File(directory,java.util.UUID.randomUUID().toString()+extension)
             try {
                 file.outputStream().use { output ->
                     output.write(bytes)
