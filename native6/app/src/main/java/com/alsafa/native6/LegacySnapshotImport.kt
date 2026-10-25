@@ -227,6 +227,12 @@ object LegacySnapshotImport {
             require(actualArchive==expectedArchive.toLong()) {
                 "عدد السجلات التاريخية المستعادة لا يطابق النسخة الأصلية: $actualArchive / $expectedArchive"
             }
+            require(store.scalar("SELECT count(*) FROM products WHERE kind=?", "watch")==d.getJSONArray("products").length().toLong()) {
+                "عدد الساعات المنقولة غير مطابق للنسخة الأصلية"
+            }
+            require(store.scalar("SELECT count(*) FROM products WHERE kind=?", "part")==d.getJSONArray("maintenanceParts").length().toLong()) {
+                "عدد قطع الصيانة المنقولة غير مطابق للنسخة الأصلية"
+            }
             require(store.scalar("SELECT count(*) FROM products")==
                 (d.getJSONArray("products").length()+d.getJSONArray("maintenanceParts").length()).toLong()) {
                 "عدد سجلات المخزون لا يطابق النسخة الأصلية"
