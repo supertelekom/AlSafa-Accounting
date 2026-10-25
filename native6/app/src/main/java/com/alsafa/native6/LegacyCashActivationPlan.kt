@@ -32,6 +32,22 @@ object LegacyCashActivationPlan {
             "مطابقة الإقفالات والأرصدة النقدية لم تعتمد")
         block(metadata.optString("financialPostingStatus") != "NOT_POSTED",
             "الحالة المالية للأرشيف غير متوقعة")
+        val cashAudit = metadata.optJSONObject("paymentCashAudit")
+        block(cashAudit == null, "فحص مطابقة الدفعات بالحركات النقدية غير موجود")
+        if (cashAudit != null) {
+            block((cashAudit.optJSONArray("unmatched")?.length() ?: -1) != 0,
+                "دفعات لا تقابلها حركة نقدية مؤكدة")
+            block((cashAudit.optJSONArray("ambiguous")?.length() ?: -1) != 0,
+                "دفعات تقابلها حركات نقدية ملتبسة")
+        }
+        val supplierAudit = metadata.optJSONObject("supplierCashAudit")
+        block(supplierAudit == null, "فحص مطابقة سداد الموردين بالخزنة غير موجود")
+        if (supplierAudit != null) {
+            block((supplierAudit.optJSONArray("unmatchedLedgerIndexes")?.length() ?: -1) != 0,
+                "دفعات موردين غير مطابقة لحركات الخزنة")
+            block((supplierAudit.optJSONArray("ambiguousCandidates")?.length() ?: -1) != 0,
+                "دفعات موردين ذات مطابقة ملتبسة")
+        }
         val items = JSONArray()
         val keys = source.keys().asSequence().toList().sorted()
         for (key in keys) {
