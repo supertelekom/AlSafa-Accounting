@@ -386,6 +386,24 @@ open class MainActivity:Activity() {
         val unpaidTo=field("إلى تاريخ (YYYY-MM-DD)",body)
         val unpaidCurrency=select("عملة الفواتير غير المسددة",listOf("جميع العملات","USD","TRY","SYP"),body)
         val unpaidPage=field("رقم الصفحة (1، 2، 3...)",body)
+        button("الموردون من النسخة القديمة (قراءة فقط)",body) {
+            val searchText=search.text.toString().trim()
+            work {
+                val report=LegacySupplierArchive.page(store,search=searchText)
+                val records=report.getJSONArray("records")
+                val lines=(0 until records.length()).joinToString("\\n") { index ->
+                    val item=records.getJSONObject(index)
+                    "${item.optString("name")} | ${item.optString("phone")} | ${item.optString("id")}"
+                }
+                val message="الموردون المطابقون: ${report.getInt("totalMatching")}\\n"+
+                    lines+"\\n\\nبيانات للقراءة فقط؛ لا يوجد ترحيل مالي."
+                runOnUiThread {
+                    if(!isFinishing&&!isDestroyed) AlertDialog.Builder(this)
+                        .setTitle("الموردون المستوردون")
+                        .setMessage(message).setPositiveButton("إغلاق",null).show()
+                }
+            }
+        }
         button("تدقيق أرصدة الخزنات القديمة",body) {
             work {
                 val report=LegacyCashActivationPlan.inspect(store)
