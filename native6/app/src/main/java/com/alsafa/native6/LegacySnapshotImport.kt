@@ -10,6 +10,30 @@ import java.math.RoundingMode
  * The original backup remains intact in legacy_imports for a later ledger migration.
  */
 object LegacySnapshotImport {
+    private fun legacyPhotos(item:JSONObject,context:android.content.Context,created:MutableList<java.io.File>):JSONObject {
+        val copy=JSONObject(item.toString())
+        val paths=org.json.JSONArray()
+        for(field in listOf("photo","photo2","photo3","barcodePhoto","couplePhoto","watchPhoto")) {
+            val raw=copy.optString(field)
+            if(!raw.startsWith("data:image/") || !raw.contains(";base64,")) continue
+            val mime=raw.substringAfter("data:").substringBefore(";base64,")
+            require(mime in setOf("image/jpeg","image/png","image/webp")) { "نوع صورة غير مدعوم" }
+            val bytes=android.util.Base64.decode(raw.substringAfter(";base64,"),android.util.Base64.DEFAULT)
+            require(bytes.isNotEmpty() && bytes.size<=12*1024*1024) { "حجم صورة غير صالح" }
+            val folder=java.io.File(context.filesDir,"images").apply { mkdirs() }
+            val file=java.io.File(folder,"legacy_"+java.util.UUID.randomUUID().toString()+when(mime) {"image/png"->".png";"image/webp"->".webp";else->".jpg"})
+            file.outputStream().use { it.write(bytes) }
+            created.add(file)
+            if(field=="watchPhoto") copy.put("imagePath",file.absolutePath)
+            else paths.put(file.absolutePath)
+            copy.remove(field)
+        }
+        if(paths.length()>0) {
+            copy.put("imagePath",paths.getString(0))
+            copy.put("imagePaths",paths)
+        }
+        return copy
+    }
     private fun legacyMinor(raw:String):Long {
         val value=BigDecimal(raw)
         return value.setScale(2,RoundingMode.HALF_UP).movePointRight(2).longValueExact()
