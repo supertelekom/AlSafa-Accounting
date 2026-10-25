@@ -385,21 +385,28 @@ open class MainActivity:Activity() {
         val unpaidFrom=field("من تاريخ (YYYY-MM-DD)",body)
         val unpaidTo=field("إلى تاريخ (YYYY-MM-DD)",body)
         val unpaidCurrency=select("عملة الفواتير غير المسددة",listOf("جميع العملات","USD","TRY","SYP"),body)
+        val unpaidPage=field("رقم الصفحة (1، 2، 3...)",body)
         button("الفواتير القديمة غير المسددة (قراءة فقط)",body) {
             val queryText=search.text.toString()
             val dateFrom=unpaidFrom.text.toString().trim()
             val dateTo=unpaidTo.text.toString().trim()
             val unit=listOf("","USD","TRY","SYP")[unpaidCurrency.selectedItemPosition.coerceIn(0,3)]
+            val pageNumber=unpaidPage.text.toString().trim().ifEmpty { "1" }.toIntOrNull()
+            if(pageNumber==null || pageNumber !in 1..100000) {
+                AlertDialog.Builder(this).setMessage("أدخل رقم صفحة صحيحاً من 1 إلى 100000").setPositiveButton("إغلاق",null).show()
+                return@button
+            }
+            val invoiceOffset=(pageNumber-1)*20
             work {
-                val sales=LegacyOutstandingInvoices.page(store,"sales",limit=20,query=queryText,from=dateFrom,to=dateTo,currency=unit)
-                val purchases=LegacyOutstandingInvoices.page(store,"purchases",limit=20,query=queryText,from=dateFrom,to=dateTo,currency=unit)
+                val sales=LegacyOutstandingInvoices.page(store,"sales",offset=invoiceOffset,limit=20,query=queryText,from=dateFrom,to=dateTo,currency=unit)
+                val purchases=LegacyOutstandingInvoices.page(store,"purchases",offset=invoiceOffset,limit=20,query=queryText,from=dateFrom,to=dateTo,currency=unit)
                 fun describe(name:String, data:org.json.JSONObject):String {
                     val records=data.getJSONArray("records")
                     val lines=(0 until records.length()).joinToString("\\n") { index ->
                         val item=records.getJSONObject(index)
                         "${item.optString("invoiceId")} | ${item.optString("date")} | ${item.optString("currency")} ${item.optString("outstandingSnapshot")}"
                     }
-                    return "$name: ${data.getInt("totalOutstandingInvoices")} فاتورة\\n"+
+                    return "$name: ${data.getInt("totalOutstandingInvoices")} فاتورة | صفحة $pageNumber | التالية: ${if(data.optBoolean("hasMore")) "متاحة" else "لا توجد"}\\n"+
                         "المتبقي بحسب العملة: ${data.getJSONObject("outstandingTotalsByCurrency")}\\n"+lines
                 }
                 val message=describe("المبيعات",sales)+"\\n\\n"+describe("المشتريات",purchases)+
