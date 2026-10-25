@@ -55,6 +55,7 @@ object LegacySupplierArchive {
             .put("records", records)
             .put("totalMatching", matched)
             .put("hasMore", offset.toLong() + records.length() < matched)
+            .put("nextOffset", if (offset.toLong() + records.length() < matched) offset + records.length() else -1)
             .put("readOnly", true)
             .put("financialPosting", "NONE")
             .put("warning", "بيانات المورد الأصلية محفوظة؛ دين المورد يحتاج مطابقة مستقلة")
