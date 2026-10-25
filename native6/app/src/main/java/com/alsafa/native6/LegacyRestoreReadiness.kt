@@ -9,6 +9,8 @@ import org.json.JSONObject
  */
 object LegacyRestoreReadiness {
     fun inspect(payload:String):JSONObject {
+        val root=JSONObject(payload)
+        require(root.optString("format")=="alsafa-accounting-backup" && root.optInt("formatVersion")==2) { "Unsupported legacy backup format" }
         val payment=LegacyPaymentLinkAudit.inspect(payload)
         val cash=LegacyPaymentCashAudit.inspect(payload)
         val supplier=LegacySupplierCashAudit.inspect(payload)
