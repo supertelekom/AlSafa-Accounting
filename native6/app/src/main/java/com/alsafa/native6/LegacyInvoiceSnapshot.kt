@@ -65,11 +65,11 @@ object LegacyInvoiceSnapshot {
         val query=term.trim()
         for(row in all) {
             val original=JSONObject(row.getValue("payload"))
-            val date=original.optString("date")
+            val date=original.optString("date").take(10)
             if(from.isNotBlank() && (date.isBlank() || date<from)) continue
             if(to.isNotBlank() && (date.isBlank() || date>to)) continue
             if(query.isNotBlank()) {
-                val fields=listOf("invoiceNo","customer","phone","supplierName","supplierInvoice","notes")
+                val fields=listOf("invoiceNo","customer","phone","supplierName","supplierInvoice","notes","id","reference")
                 val found=fields.any { original.optString(it).contains(query,true) }
                 val items=original.optJSONArray("items")
                 val itemFound=items!=null && (0 until items.length()).any { index ->
