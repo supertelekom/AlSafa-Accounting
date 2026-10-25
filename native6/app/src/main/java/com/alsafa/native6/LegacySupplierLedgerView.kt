@@ -36,6 +36,7 @@ object LegacySupplierLedgerView {
             val item = JSONObject(row.getValue("payload"))
             val id = item.optString("supplierId").trim()
             val date = item.optString("date").take(10)
+            require(id.isNotEmpty()) { "معرف المورد مفقود في دفتر الموردين القديم" }
             if (supplierId.isNotEmpty() && supplierId != id) continue
             if (from.isNotEmpty() || to.isNotEmpty()) {
                 java.time.LocalDate.parse(date)
