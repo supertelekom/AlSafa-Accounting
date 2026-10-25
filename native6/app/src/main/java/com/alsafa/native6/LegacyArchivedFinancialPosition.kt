@@ -149,6 +149,15 @@ object LegacyArchivedFinancialPosition {
             lines.add("دفتر الموردين التاريخي (حسب نوع القيد؛ لا يُضاف إلى دين الفواتير):")
             for(key in ledger.keys()) lines.add("$key: ${ledger.getString(key)}")
         }
+        val opening=report.getJSONArray("supplierOpeningDebtBalances")
+        if(opening.length()>0) {
+            lines.add("ديون الموردين الافتتاحية بعد دفعات دفتر الموردين (منفصلة عن فواتير المشتريات):")
+            for(i in 0 until opening.length()) {
+                val row=opening.getJSONObject(i)
+                lines.add("${row.getString("supplierName")} / ${row.getString("currency")}: " +
+                    row.getString("openingDebtLessLedgerPayments"))
+            }
+        }
         lines.add(report.getString("warning"))
         return lines.joinToString("\n")
     }
