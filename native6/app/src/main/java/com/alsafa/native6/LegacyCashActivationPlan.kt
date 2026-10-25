@@ -68,6 +68,16 @@ object LegacyCashActivationPlan {
             block((paymentLinks.optJSONArray("crossCurrencyPaymentRows")?.length() ?: -1) != 0,
                 "دفعات بعملة مختلفة تحتاج مطابقة سعر الصرف")
         }
+        val returnsAudit = metadata.optJSONObject("returnLinkAudit")
+        block(returnsAudit == null, "فحص ارتباط المرتجعات بالفواتير غير موجود")
+        if (returnsAudit != null) {
+            block((returnsAudit.optJSONArray("missingReferenceRows")?.length() ?: -1) != 0,
+                "مرتجعات دون مرجع فاتورة")
+            block((returnsAudit.optJSONArray("unresolvedReferenceRows")?.length() ?: -1) != 0,
+                "مرتجعات تشير إلى فواتير غير معروفة")
+            block((returnsAudit.optJSONArray("duplicateReturnIdRows")?.length() ?: -1) != 0,
+                "مرتجعات بمعرفات مكررة")
+        }
         val items = JSONArray()
         val keys = source.keys().asSequence().toList().sorted()
         for (key in keys) {
