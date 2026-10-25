@@ -1404,7 +1404,7 @@ class Store(val helper:StoreDb) {
     }
     fun cash(kind:String,v:String,c:Currency,amount:Long,note:String,date:String=today(),destination:String="",command:String=id())=transaction {
         require(amount>0&&note.isNotBlank());require(!LocalDate.parse(date).isAfter(LocalDate.now())){"تاريخ حركة الخزنة في المستقبل"};vault(v);val lines=when(kind) {
-            "opening"->{require(scalar("SELECT count(*) FROM journal j JOIN events e ON e.id=j.event_id WHERE e.kind=? AND j.account=? AND j.currency=?","OPENING","cash:$v",c.name)==0L);listOf(Posting("cash:$v",c,amount),Posting("equity:opening",c,-amount))}
+            "opening"->{require(scalar("SELECT count(*) FROM journal WHERE account=? AND currency=?","cash:$v",c.name)==0L){"لا يمكن تسجيل رصيد افتتاحي بعد بدء حركات هذه الخزنة والعملة؛ يجب تثبيت الرصيد قبل أول عملية"};listOf(Posting("cash:$v",c,amount),Posting("equity:opening",c,-amount))}
             "expense"->{validateHistoricalVaultOutflow(v,c,amount,date);listOf(Posting("expense:operating",c,amount),Posting("cash:$v",c,-amount))}
             "withdrawal"->{require(destination.isNotBlank());validateHistoricalVaultOutflow(v,c,amount,date);listOf(Posting("equity:withdrawal:$destination",c,amount),Posting("cash:$v",c,-amount))}
             "transfer"->{vault(destination);require(v!=destination);validateHistoricalVaultOutflow(v,c,amount,date);listOf(Posting("cash:$destination",c,amount),Posting("cash:$v",c,-amount))}
