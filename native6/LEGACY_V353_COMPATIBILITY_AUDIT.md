@@ -51,3 +51,13 @@
 2. Implement deterministic legacy invoice/receipt/cash/returns reconciliation with fixture-based assertions.
 3. Activate historical records only after independently reconciled cash and payable opening balances; no blind replay.
 4. Build APK and run complete 60 MB backup restore in an isolated tablet test environment.
+
+## Source-backup read-only integrity audit
+- JSON parse: PASS (Python standard library, no data mutation).
+- Exact size: 61,954,988 bytes.
+- SHA-256: `8b9ea135719f3e20186bd2274b3487c1bd91a51413efacc76fadbd96cb63ae88`.
+- Required collections present: products, maintenanceParts, repairs, suppliers, sales, purchases, payments, cashTransactions, dailyClosings, partnerWithdrawals, returns.
+- Missing/blank IDs in those 11 collections: **0**.
+- Duplicate IDs *within each of those collections*: **0**.
+- These are structural checks, **not** evidence that financial relationships, invoice numbering, payment totals, or screen parity are correct.
+- No Android build, instrumentation run or actual SQLite restore was performed in this audit.
