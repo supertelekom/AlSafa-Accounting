@@ -17,7 +17,7 @@ object LegacyDebtReconciliation {
         val rows=data.optJSONArray(section) ?: return JSONObject()
         val totals=linkedMapOf<String,Triple<BigDecimal,BigDecimal,BigDecimal>>()
         for(i in 0 until rows.length()) {
-            val row=rows.optJSONObject(i) ?: continue
+            val row=rows.optJSONObject(i) ?: throw IllegalArgumentException("Invalid historical invoice row")
             val currency=row.optString("currency")
             require(currency in setOf("USD","TRY","SYP")) { "$section[$i]: عملة غير مدعومة" }
             val total=amount(row,"total")
