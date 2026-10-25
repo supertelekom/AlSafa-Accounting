@@ -218,11 +218,6 @@ open class MainActivity:Activity() {
                 .setMessage("الباركود: $code")
                 .setPositiveButton("حسنًا",null).show()
             requestCode==65 -> productForm(matches.first())
-            requestCode==66 && matches.first().kind!="watch" -> AlertDialog.Builder(this)
-                .setTitle("قطعة صيانة")
-                .setMessage("هذا الباركود تابع لقطعة صيانة. اختر ساعة من قسم المنتجات لإضافتها إلى فاتورة المبيع.")
-                .setPositiveButton("فتح قطع الصيانة"){_,_->go("maintenance-parts")}
-                .setNegativeButton("رجوع",null).show()
             matches.first().stock<=0 -> AlertDialog.Builder(this).setTitle("نفاد المخزون")
                 .setMessage("الصنف ${matches.first().name} غير متوفر في المخزون.")
                 .setPositiveButton("حسنًا",null).show()
@@ -1154,7 +1149,6 @@ open class MainActivity:Activity() {
         }
     }}
     private fun addSaleProduct(p:Product){
-        require(p.kind=="watch"){"هذا الصنف قطعة صيانة ولا يمكن إضافته إلى مبيع الساعات"}
         form("إضافة ${p.name} · ${store.productColorLabel(p.id)}"){box->
             val qty=field("الكمية",box,"1",true)
             val price=field("سعر الوحدة ${p.currency}",box,Money(p.price,p.currency).display().substringBefore(' '),true)
@@ -1210,12 +1204,13 @@ open class MainActivity:Activity() {
     private fun sale(){
         sectionHeading("فاتورة مبيعات","اختر الأصناف، راجع السلة ثم احفظ الفاتورة")
         button("إضافة أصناف إلى الفاتورة ▾") {
-            val actions=arrayOf("اختيار ساعة من المنتجات","مسح باركود الساعة")
+            val actions=arrayOf("اختيار ساعة من المنتجات","اختيار قطعة صيانة للبيع","مسح باركود الصنف")
             AlertDialog.Builder(this).setTitle("طريقة إضافة الصنف")
                 .setItems(actions){_,which->
                     when(which) {
                         0->chooseProduct(inStockOnly=true,kind="watch"){p->addSaleProduct(p)}
-                        1->startActivityForResult(Intent(this,BarcodeScanActivity::class.java),66)
+                        1->chooseProduct(inStockOnly=true,kind="part"){p->addSaleProduct(p)}
+                        2->startActivityForResult(Intent(this,BarcodeScanActivity::class.java),66)
                     }
                 }.setNegativeButton("رجوع",null).show()
         }
