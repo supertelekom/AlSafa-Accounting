@@ -218,6 +218,11 @@ open class MainActivity:Activity() {
                 .setMessage("الباركود: $code")
                 .setPositiveButton("حسنًا",null).show()
             requestCode==65 -> productForm(matches.first())
+            requestCode==66 && matches.first().kind!="watch" -> AlertDialog.Builder(this)
+                .setTitle("قطعة صيانة")
+                .setMessage("هذا الباركود تابع لقطعة صيانة. اختر ساعة من قسم المنتجات لإضافتها إلى فاتورة المبيع.")
+                .setPositiveButton("فتح قطع الصيانة"){_,_->go("maintenance-parts")}
+                .setNegativeButton("رجوع",null).show()
             matches.first().stock<=0 -> AlertDialog.Builder(this).setTitle("نفاد المخزون")
                 .setMessage("الصنف ${matches.first().name} غير متوفر في المخزون.")
                 .setPositiveButton("حسنًا",null).show()
