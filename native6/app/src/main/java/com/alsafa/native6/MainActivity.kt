@@ -362,6 +362,17 @@ open class MainActivity:Activity() {
             "حساب الموردين","سحوبات الشركاء","المصاريف","المرتجعات","الإقفالات اليومية",
             "حركات المخزون","تاريخ تكلفة المنتجات","سجل التدقيق","سجل الولاء",
             "الإيصالات الذكية","قواعد الخصومات","خيارات تفاصيل المنتجات")
+        button("ديون العملاء والموردين القديمة حسب الاسم",body) {
+            work {
+                val message=LegacyCounterpartyDebt.summary(store)
+                runOnUiThread {
+                    if(!isFinishing&&!isDestroyed) AlertDialog.Builder(this)
+                        .setTitle("ديون تاريخية حسب العميل والمورد — قراءة فقط")
+                        .setMessage(message)
+                        .setPositiveButton("إغلاق",null).show()
+                }
+            }
+        }
         button("تقرير الوضع المالي للنسخة المستوردة",body) {
             work {
                 val message=LegacyArchivedFinancialPosition.summary(store)
