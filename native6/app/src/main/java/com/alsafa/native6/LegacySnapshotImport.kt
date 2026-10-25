@@ -133,9 +133,23 @@ object LegacySnapshotImport {
         val counts=sections.joinToString("\n") { section ->
             "${labels.getValue(section)}: ${data.optJSONArray(section)?.length() ?: 0}"
         }
+        val imageFields=listOf("photo","photo2","photo3","couplePhoto","barcodePhoto","watchPhoto")
+        val photoCounts=linkedMapOf<String,Int>()
+        for(section in listOf("products","maintenanceParts","repairs")) {
+            val array=data.optJSONArray(section) ?: continue
+            for(index in 0 until array.length()) {
+                val row=array.optJSONObject(index) ?: continue
+                for(field in imageFields) if(row.optString(field).startsWith("data:image/")) {
+                    val key="$section.$field"
+                    photoCounts[key]=(photoCounts[key] ?: 0)+1
+                }
+            }
+        }
+        val imageSummary="الصور المدمجة في النسخة: "+photoCounts.values.sum()+
+            " (صور المنتجات والصيانة ستُستخرج إلى ملفات محلية عند الاستعادة)"
         return "نسخة بتاريخ: ${root.optString("exportedAt")}\n" +
             "الإصدار: ${root.optString("appVersion")}\n" +
-            counts + "\n\n" +
+            counts + "\n" + imageSummary + "\n\n" +
             "هذه معاينة سريعة فقط. ستجري الاستعادة الفحوصات التفصيلية " +
             "داخل عملية الحفظ. لن تُفعّل الأرصدة النقدية والديون والأرباح " +
             "التاريخية تلقائياً، بل ستُحفظ في أرشيف للقراءة والمطابقة."
