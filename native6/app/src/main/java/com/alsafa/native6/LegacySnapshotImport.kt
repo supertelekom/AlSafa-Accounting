@@ -141,7 +141,7 @@ object LegacySnapshotImport {
         require(store.scalar("SELECT count(*) FROM settings WHERE key=?",
             "legacy_snapshot_import")==0L) { "هذه النسخة مستعادة مسبقاً" }
     }
-    fun import(store:Store,payload:String):String {
+    fun import(store:Store,payload:String,context:android.content.Context):String {
         // Reject an occupied database before parsing and auditing a large backup.
         requireEmptyAccounting(store)
         val root=JSONObject(payload)
@@ -164,7 +164,8 @@ object LegacySnapshotImport {
         val paymentCashAudit=LegacyPaymentCashAudit.inspect(payload)
         val lists=listOf("products" to "watch","maintenanceParts" to "part")
         val suppliers=d.getJSONArray("suppliers")
-        return store.transaction {
+        val createdImages=mutableListOf<java.io.File>()
+        return try { store.transaction {
             // Recheck under the write transaction to prevent accidental overwrite.
             requireEmptyAccounting(store)
             val seen=HashSet<String>()
@@ -186,7 +187,7 @@ object LegacySnapshotImport {
                     val qty=item.getLong("stock")
                     require(qty in 0L..100000000L && price>=0 && cost>=0 && name.isNotEmpty()){"بيانات مخزون غير صالحة: $id"}
                     // Preserve all legacy metadata and embedded photos as JSON details.
-                    store.addProduct(name,barcode,currency,price,cost,qty,kind,item.toString(),id,
+                    store.addProduct(name,barcode,currency,price,cost,qty,kind,legacyPhotos(item,context,createdImages).toString(),id,
                         brand=item.optString("brand").take(500),
                         model=item.optString("model").take(500))
                 }
@@ -217,7 +218,7 @@ object LegacySnapshotImport {
                     "phone" to repair.optString("phone"),"watch" to repair.optString("watch"),
                     "problem" to repair.optString("problem"),"status" to status,
                     "date" to repair.optString("date"),"invoice_id" to null,
-                    "details" to repair.toString())
+                    "details" to legacyPhotos(repair,context,createdImages).toString())
             }
             // Preserve historical financial records verbatim for accurate later ledger
             // reconstruction. They are NOT booked as new income or cash movements.
@@ -451,6 +452,9 @@ object LegacySnapshotImport {
                 "${receipt.getLong("repairs")} طلب صيانة. " +
                 "بصمة المصدر: ${receipt.getString("sourceSha256").take(16)}… " +
                 "الفواتير والحركات المالية القديمة محفوظة للقراءة فقط؛ لم تُفعّل أرصدتها أو أرباحها.\n" + financialSummary
+        } } catch (failure:Exception) {
+            createdImages.forEach { it.delete() }
+            throw failure
         }
     }
 }
