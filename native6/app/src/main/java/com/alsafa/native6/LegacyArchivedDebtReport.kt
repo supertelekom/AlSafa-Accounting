@@ -33,7 +33,7 @@ object LegacyArchivedDebtReport {
                 val currency = invoice.optString("currency")
                 require(currency in currencies) { "$section/$id: عملة غير مدعومة" }
                 fun money(field: String): BigDecimal {
-                    val amount = invoice.optString(field, "0").toBigDecimalOrNull()
+                    val amount = invoice.optString(field).takeIf { invoice.has(field) && !invoice.isNull(field) }?.toBigDecimalOrNull()
                         ?: throw IllegalArgumentException("$section/$id: مبلغ $field غير صالح")
                     require(amount.stripTrailingZeros().scale() <= 2) {
                         "$section/$id: كسور غير مدعومة في $field"
