@@ -109,6 +109,8 @@ object LegacySnapshotImport {
                 val id=s.getString("id").trim()
                 require(id.isNotEmpty() && seen.add(id)){"معرف مورد مكرر"}
                 store.insert("suppliers","id" to id,"name" to s.getString("name"),"phone" to s.optString("phone"))
+                store.insert("legacy_records","category" to "source_suppliers",
+                    "legacy_id" to id,"payload" to s.toString())
             }
             val repairs=d.getJSONArray("repairs")
             for(i in 0 until repairs.length()) {
@@ -177,7 +179,7 @@ object LegacySnapshotImport {
             if(deviceSettings!=null) store.insert("legacy_records",
                 "category" to "configuration","legacy_id" to "deviceSettings",
                 "payload" to deviceSettings.toString())
-            val expectedArchive=historical.sumOf { d.getJSONArray(it).length() } +
+            val expectedArchive=suppliers.length() + historical.sumOf { d.getJSONArray(it).length() } +
                 configurationKeys.size + scalarKeys.size +
                 (if(deviceSettings!=null) 1 else 0)
             require(store.scalar("SELECT count(*) FROM repairs")==repairs.length().toLong()) {
