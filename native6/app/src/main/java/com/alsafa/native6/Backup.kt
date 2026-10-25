@@ -261,7 +261,7 @@ class Backup(private val context:Context,private val store:Store) {
     }
     fun readStagedLegacy(hash:String):String {
         require(hash.matches(Regex("[a-f0-9]{64}"))) { "بصمة النسخة غير صالحة" }
-        val file=java.io.File(context.filesDir,"legacy_snapshots/$"+"{hash}.json")
+        val file=java.io.File(context.filesDir,"legacy_snapshots/${hash}.json")
         require(file.isFile) { "النسخة محفوظة في الفهرس فقط؛ اختر ملف JSON الأصلي مرة أخرى لتفعيل قراءتها" }
         require(file.length() in 1..MAX_BYTES.toLong()) { "حجم النسخة المحفوظة غير صالح" }
         return file.readText(Charsets.UTF_8).removePrefix("\uFEFF")
@@ -279,7 +279,7 @@ class Backup(private val context:Context,private val store:Store) {
         // Large legacy snapshots must never be read through SQLite CursorWindow.
         // Store the original bytes as a private atomic file, indexed by its hash.
         val archiveDir=java.io.File(context.filesDir,"legacy_snapshots").apply { mkdirs() }
-        val archive=java.io.File(archiveDir,"$"+"{fingerprint}.json")
+        val archive=java.io.File(archiveDir,"${fingerprint}.json")
         if(!archive.isFile || archive.length()!=bytes.size.toLong()) {
             val temp=java.io.File.createTempFile("legacy-", ".tmp",archiveDir)
             try {
