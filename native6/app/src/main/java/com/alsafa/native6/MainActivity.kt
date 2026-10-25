@@ -382,13 +382,15 @@ open class MainActivity:Activity() {
         }
         val choice=select("نوع السجل",categoryLabels,body)
         val search=field("بحث في بيانات السجل القديم",body)
+        val unpaidFrom=field("من تاريخ (YYYY-MM-DD)",body)
+        val unpaidTo=field("إلى تاريخ (YYYY-MM-DD)",body)
         button("الفواتير القديمة غير المسددة (قراءة فقط)",body) {
             val queryText=search.text.toString()
-            val dateFrom=search.text.toString().takeIf { it.matches(Regex("\\d{4}-\\d{2}-\\d{2}")) } ?: ""
-            val dateTo=""
+            val dateFrom=unpaidFrom.text.toString().trim()
+            val dateTo=unpaidTo.text.toString().trim()
             work {
                 val sales=LegacyOutstandingInvoices.page(store,"sales",limit=20,query=queryText,from=dateFrom,to=dateTo)
-                val purchases=LegacyOutstandingInvoices.page(store,"purchases",limit=20,query=queryText)
+                val purchases=LegacyOutstandingInvoices.page(store,"purchases",limit=20,query=queryText,from=dateFrom,to=dateTo)
                 fun describe(name:String, data:org.json.JSONObject):String {
                     val records=data.getJSONArray("records")
                     val lines=(0 until records.length()).joinToString("\\n") { index ->
