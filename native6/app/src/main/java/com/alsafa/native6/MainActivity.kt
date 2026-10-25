@@ -1154,6 +1154,7 @@ open class MainActivity:Activity() {
         }
     }}
     private fun addSaleProduct(p:Product){
+        require(p.kind=="watch"){"هذا الصنف قطعة صيانة ولا يمكن إضافته إلى مبيع الساعات"}
         form("إضافة ${p.name} · ${store.productColorLabel(p.id)}"){box->
             val qty=field("الكمية",box,"1",true)
             val price=field("سعر الوحدة ${p.currency}",box,Money(p.price,p.currency).display().substringBefore(' '),true)
