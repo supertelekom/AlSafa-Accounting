@@ -230,7 +230,7 @@ object LegacyArchivedFinancialPosition {
             }
             val key="$partner|$currency"
             totals[key]=Math.addExact(totals[key] ?: 0,value)
-            entries.put(JSONObject().put("id",record.getValue("legacy_id"))
+            entries.put(JSONObject().put("id",item.optString("id"))
                 .put("date",date.toString()).put("partner",partner)
                 .put("currency",currency).put("amount",amount(value)))
         }
