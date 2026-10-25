@@ -320,29 +320,45 @@ object LegacySnapshotImport {
                     "اختلاف بيانات النسخة الوصفية: $key"
                 }
             }
-            // Verify the archive using a streaming SQLite cursor. Avoid keeping
-            // another in-memory copy of every historical JSON row on the tablet.
+            // CursorWindow cannot hold a single JSON row containing large base64 photos.
+            // Verify archived payloads in bounded UTF-8 byte chunks, never selecting
+            // the full payload into a CursorWindow. The enclosing transaction rolls
+            // back the import if any byte differs from the original snapshot.
             for (section in historical) {
                 val expected=d.getJSONArray(section)
-                store.db.rawQuery(
-                    "SELECT legacy_id,payload FROM legacy_records WHERE category=? " +
-                        "ORDER BY CAST(substr(legacy_id,1,instr(legacy_id,':')-1) AS INTEGER)",
-                    arrayOf(section)
-                ).use { cursor ->
-                    var index=0
-                    while(cursor.moveToNext()) {
-                        require(index<expected.length()) { "سجلات أرشيف زائدة: $section" }
-                        val original=expected.get(index)
-                        val sourceId=(original as? JSONObject)?.optString("id")?.trim()
-                        val key="$index:${sourceId?.takeIf { it.isNotEmpty() } ?: "no-id"}"
-                        val value=if(original is JSONObject) original.toString()
-                            else JSONObject().put("_legacyValue",original).toString()
-                        require(cursor.getString(0)==key && cursor.getString(1)==value) {
-                            "فشل التحقق من سجل الأرشيف: $section / $index"
-                        }
-                        index++
+                val actualCount=store.scalar(
+                    "SELECT count(*) FROM legacy_records WHERE category=?",section)
+                require(actualCount==expected.length().toLong()) {
+                    "أرشيف غير مكتمل: $section"
+                }
+                for (index in 0 until expected.length()) {
+                    val original=expected.get(index)
+                    val sourceId=(original as? JSONObject)?.optString("id")?.trim()
+                    val key="$index:${sourceId?.takeIf { it.isNotEmpty() } ?: "no-id"}"
+                    val serialized=if(original is JSONObject) original.toString()
+                        else JSONObject().put("_legacyValue",original).toString()
+                    val bytes=serialized.toByteArray(Charsets.UTF_8)
+                    val storedSize=store.scalar(
+                        "SELECT length(CAST(payload AS BLOB)) FROM legacy_records WHERE category=? AND legacy_id=?",
+                        section,key)
+                    require(storedSize==bytes.size.toLong()) {
+                        "اختلاف حجم سجل الأرشيف: $section / $index"
                     }
-                    require(index==expected.length()) { "أرشيف غير مكتمل: $section" }
+                    var offset=0
+                    while(offset<bytes.size) {
+                        val count=minOf(8192,bytes.size-offset)
+                        val expectedHex=bytes.copyOfRange(offset,offset+count)
+                            .joinToString("") { "%02X".format(it.toInt() and 255) }
+                        store.db.rawQuery(
+                            "SELECT hex(substr(CAST(payload AS BLOB),?,?)) FROM legacy_records WHERE category=? AND legacy_id=?",
+                            arrayOf((offset+1).toString(),count.toString(),section,key)
+                        ).use { cursor ->
+                            require(cursor.moveToFirst() && cursor.getString(0)==expectedHex) {
+                                "فشل التحقق من سجل الأرشيف: $section / $index / $offset"
+                            }
+                        }
+                        offset+=count
+                    }
                 }
             }
             require(actualArchive==expectedArchive.toLong()) {
