@@ -54,7 +54,7 @@ open class MainActivity:Activity() {
         }
         lastScrollY=saved.getInt("contentScrollY",0)
         savedInputs=saved.getStringArrayList("visibleInputs")
-    };safeRender();contentScroll?.post { contentScroll?.scrollTo(0,lastScrollY) };if(this !is SectionActivity)io.execute{Store.vaults.forEach{vault->try{store.autoCloseMissingDays(vault,31)}catch(e:Exception){runOnUiThread{if(!isFinishing&&!isDestroyed)Toast.makeText(this,"تعذر الإقفال التلقائي للصندوق $vault: ${e.message}",Toast.LENGTH_LONG).show()}}};runOnUiThread{if(!isFinishing&&!isDestroyed && page=="vaults")safeRender()}}}
+    };safeRender();contentScroll?.post { contentScroll?.scrollTo(0,lastScrollY) };if(this !is SectionActivity && store.scalar("SELECT count(*) FROM events")>0L)io.execute{Store.vaults.forEach{vault->try{store.autoCloseMissingDays(vault,31)}catch(e:Exception){runOnUiThread{if(!isFinishing&&!isDestroyed)Toast.makeText(this,"تعذر الإقفال التلقائي للصندوق $vault: ${e.message}",Toast.LENGTH_LONG).show()}}};runOnUiThread{if(!isFinishing&&!isDestroyed && page=="vaults")safeRender()}}}
     override fun onNewIntent(newIntent:Intent) {
         super.onNewIntent(newIntent)
         setIntent(newIntent)
