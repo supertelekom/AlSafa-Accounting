@@ -61,7 +61,9 @@ object LegacyImportPreflight {
 
     /** Archived history is advisory until its accounting semantics are reconciled. */
     fun inspectFinancialHistory(payload:String):List<String> {
-        val data=JSONObject(payload).getJSONObject("data")
+        val root=JSONObject(payload)
+        require(root.optString("format")=="alsafa-accounting-backup" && root.optInt("formatVersion")==2) { "Unsupported legacy backup version" }
+        val data=root.getJSONObject("data")
         val problems=mutableListOf<String>()
         val validCurrencies=setOf("USD","TRY","SYP")
         for(section in listOf("sales","purchases","expenses","partnerWithdrawals","payments")) {
