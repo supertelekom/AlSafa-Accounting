@@ -18,6 +18,10 @@ object LegacySupplierArchive {
             "source_suppliers"
         )
         require(rows.size == expected) { "سجلات الموردين القديمة غير مكتملة" }
+        val activeSupplierCount = store.scalar("SELECT count(*) FROM suppliers")
+        require(activeSupplierCount == expected.toLong()) {
+            "عدد الموردين النشطين لا يطابق نسخة الاستيراد"
+        }
         val query = search.trim()
         val records = JSONArray()
         val ids = HashSet<String>()
