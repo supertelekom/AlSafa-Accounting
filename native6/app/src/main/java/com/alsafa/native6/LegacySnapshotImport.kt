@@ -289,6 +289,22 @@ object LegacySnapshotImport {
                     "اختلاف بيانات النسخة الوصفية: $key"
                 }
             }
+            for (section in historical) {
+                val expected=d.getJSONArray(section)
+                val archived=store.rows("SELECT legacy_id,payload FROM legacy_records WHERE category=?",
+                    section).associateBy { it.getValue("legacy_id") }
+                require(archived.size==expected.length()) { "أرشيف غير مكتمل: $section" }
+                for (i in 0 until expected.length()) {
+                    val original=expected.get(i)
+                    val sourceId=(original as? JSONObject)?.optString("id")?.trim()
+                    val key="$i:${sourceId?.takeIf { it.isNotEmpty() } ?: "no-id"}"
+                    val value=if (original is JSONObject) original.toString()
+                        else JSONObject().put("_legacyValue",original).toString()
+                    require(archived[key]?.get("payload")==value) {
+                        "فشل التحقق من سجل الأرشيف: $section / $i"
+                    }
+                }
+            }
             require(actualArchive==expectedArchive.toLong()) {
                 "عدد السجلات التاريخية المستعادة لا يطابق النسخة الأصلية: $actualArchive / $expectedArchive"
             }
