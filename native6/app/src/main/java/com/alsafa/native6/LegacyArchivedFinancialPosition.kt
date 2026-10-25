@@ -181,6 +181,7 @@ object LegacyArchivedFinancialPosition {
             if(java.time.YearMonth.from(date)!=period) { excluded++;continue }
             val currency=item.optString("currency")
             require(currency in currencies) { "عملة سحب غير مدعومة" }
+            require(item.optString("id").trim()==recordId) { "معرف السحب لا يطابق الأرشيف" }
             val partner=item.optString("partnerId").ifBlank {
                 item.optString("partnerName").ifBlank {
                     item.optString("partner").ifBlank { item.optString("person","غير محدد") }
