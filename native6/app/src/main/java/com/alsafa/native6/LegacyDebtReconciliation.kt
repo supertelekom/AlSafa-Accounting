@@ -44,7 +44,7 @@ object LegacyDebtReconciliation {
     fun inspect(payload:String):JSONObject {
         val root=JSONObject(payload)
         require(root.optString("format")=="alsafa-accounting-backup" &&
-            root.optInt("formatVersion")>=2) { "صيغة النسخة غير مدعومة" }
+            root.optInt("formatVersion")==2) { "صيغة النسخة غير مدعومة" }
         val data=root.getJSONObject("data")
         return JSONObject()
             .put("sales",byCurrency(data,"sales"))
