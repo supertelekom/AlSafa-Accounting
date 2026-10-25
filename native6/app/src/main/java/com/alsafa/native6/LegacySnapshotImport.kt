@@ -186,6 +186,11 @@ object LegacySnapshotImport {
                 "سجل الصيانة غير مكتمل بعد الاستيراد"
             }
             require(store.scalar("SELECT count(*) FROM suppliers")==suppliers.length().toLong()) { "عدد الموردين المنقولين غير مطابق" }
+            require(store.scalar(
+                "SELECT count(*) FROM legacy_records WHERE category=?", "source_suppliers"
+            )==suppliers.length().toLong()) {
+                "نسخة بيانات الموردين الأصلية غير مكتملة"
+            }
             require(store.scalar("SELECT count(*) FROM events WHERE kind<>?", "OPENING_STOCK")==0L) { "الاستعادة أنشأت حدثاً محاسبياً غير رصيد المخزون الافتتاحي" }
             require(store.scalar("SELECT count(*) FROM events WHERE kind=?", "OPENING_STOCK")==seen.size.toLong()-suppliers.length()-repairs.length()) { "عدد أحداث المخزون الافتتاحي غير مطابق" }
             require(store.scalar("SELECT count(*) FROM journal WHERE account LIKE ?", "cash:%")==0L) { "لا يجوز ترحيل النقد ضمن استعادة المخزون" }
