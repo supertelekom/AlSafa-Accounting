@@ -63,7 +63,20 @@ object LegacySnapshotImport {
         return LegacyBackupFreshness.summary(payload) + "\n" + openingWorksheet + "\n" + "جاهزية أرشفة النسخة: ${if(readiness.getBoolean("archiveImportPermitted")) "نعم" else "لا"}، عوائق التفعيل المالي: ${readiness.getInt("financialBlockerCount")}، حركات نقدية ذات كسور دقيقة: $vaultPrecisionWarnings، التفعيل المالي: غير مسموح قبل المطابقة. أخطاء الاستيراد: $blocking، قيم أسعار ستُقرب للسنت مع حفظ الأصل: $roundedPrices، تحذيرات مالية مؤرشفة: $warnings، فروقات إقفال فعلية: $cashIssues، تواريخ إقفال غير صالحة: $invalidClosingDates، تواريخ إقفال مكررة: $duplicateClosingDates، دفعات تحتاج مطابقة مرجع: $brokenPaymentLinks، دفعات بعملة قبض مختلفة: $crossCurrencyPaymentCount، دفعات مطابقة لحركات النقد: $matchedCashPayments، غير مطابقة: $unmatchedCashPayments، ملتبسة: $ambiguousCashPayments، مرتجعات تحتاج مطابقة مرجع: $brokenReturnLinks، سداد موردين مطابق للخزنة: $matchedSupplierPayments، غير مطابق: $unmatchedSupplierPayments. بصمة النسخة: ${manifest.getString("sha256").take(16)}…، إجمالي السجلات: ${manifest.getLong("recordCount")}. مخزون الساعات: ${products.length()}، قطع الصيانة: ${parts.length()}، الموردون: ${suppliers.length()}، سجل الصيانة: ${repairs.length()}. " +
             "سيُنقل المخزون والموردون والصيانة، وتُحفظ الفواتير والحركات القديمة كأرشيف قابل للقراءة فقط، دون احتسابها في الأرصدة أو الأرباح."
     }
+    private fun requireEmptyAccounting(store:Store) {
+        val tables=listOf("legacy_records","repairs","products","suppliers","events",
+            "invoices","journal","receipts","stock_moves","returns","refunds","closings")
+        for (table in tables) {
+            require(store.scalar("SELECT count(*) FROM $table")==0L) {
+                "قاعدة Native 6 تحتوي بيانات في $table؛ لا يمكن استعادة نسخة قديمة فوقها"
+            }
+        }
+        require(store.scalar("SELECT count(*) FROM settings WHERE key=?",
+            "legacy_snapshot_import")==0L) { "هذه النسخة مستعادة مسبقاً" }
+    }
     fun import(store:Store,payload:String):String {
+        // Reject an occupied database before parsing and auditing a large backup.
+        requireEmptyAccounting(store)
         val root=JSONObject(payload)
         require(root.optString("format")=="alsafa-accounting-backup" &&
             root.optInt("formatVersion")==2) { "صيغة النسخة الاحتياطية غير مدعومة" }
@@ -82,19 +95,8 @@ object LegacySnapshotImport {
         val lists=listOf("products" to "watch","maintenanceParts" to "part")
         val suppliers=d.getJSONArray("suppliers")
         return store.transaction {
-            require(store.scalar("SELECT count(*) FROM legacy_records")==0L &&
-                store.scalar("SELECT count(*) FROM repairs")==0L &&
-                store.scalar("SELECT count(*) FROM products")==0L &&
-                store.scalar("SELECT count(*) FROM suppliers")==0L &&
-                store.scalar("SELECT count(*) FROM events")==0L &&
-                store.scalar("SELECT count(*) FROM invoices")==0L &&
-                store.scalar("SELECT count(*) FROM journal")==0L &&
-                store.scalar("SELECT count(*) FROM receipts")==0L &&
-                store.scalar("SELECT count(*) FROM stock_moves")==0L &&
-                store.scalar("SELECT count(*) FROM returns")==0L &&
-                store.scalar("SELECT count(*) FROM refunds")==0L &&
-                store.scalar("SELECT count(*) FROM closings")==0L &&
-                store.scalar("SELECT count(*) FROM settings WHERE key=?", "legacy_snapshot_import")==0L){"يجب أن تكون قاعدة Native 6 المحاسبية فارغة"}
+            // Recheck under the write transaction to prevent accidental overwrite.
+            requireEmptyAccounting(store)
             val seen=HashSet<String>()
             val supplierIds=HashSet<String>()
             val repairIds=HashSet<String>()
