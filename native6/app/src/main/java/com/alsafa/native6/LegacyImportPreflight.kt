@@ -64,12 +64,9 @@ object LegacyImportPreflight {
                     val date=item.optString("date")
                     val valid=runCatching { !LocalDate.parse(date).isAfter(LocalDate.now()) }.getOrDefault(false)
                     if(!valid) problems.add("repairs[$i]: invalid intake date")
-                    val status=item.optString("status")
-                    if(status.isNotBlank() && status !in setOf(
-                        "تم التسليم","delivered","قيد الصيانة","in_progress",
-                        "جاهزة","جاهز","جاهز للاستلام","بانتظار التسليم","ready",
-                        "مستلمة","تم الاستلام","قيد الانتظار","received"))
-                        problems.add("repairs[$i]: unsupported status")
+                    // New legacy-app repair statuses are preserved in details and
+                    // mapped to legacy_unknown by the importer, not discarded.
+
                 }
             }
         }
