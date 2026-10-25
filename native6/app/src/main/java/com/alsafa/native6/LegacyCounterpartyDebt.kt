@@ -25,6 +25,8 @@ object LegacyCounterpartyDebt {
                 "أرشيف الفواتير غير مكتمل: $section"
             }
             val seen = hashSetOf<String>()
+            val invoiceNumbers = hashSetOf<String>()
+            val duplicateNumbers = JSONArray()
             val totals = sortedMapOf<String, Long>()
             val invoiceCounts = sortedMapOf<String, Int>()
             val missingNames = JSONArray()
@@ -39,6 +41,10 @@ object LegacyCounterpartyDebt {
                 }
                 require(record.getValue("legacy_id").substringAfter(":") == id) {
                     "مفتاح الفاتورة التاريخية لا يطابق المصدر: $id"
+                }
+                val number = invoice.optString("invoiceNo").trim()
+                if (number.isNotEmpty() && !invoiceNumbers.add(number)) {
+                    duplicateNumbers.put(JSONObject().put("invoiceId", id).put("invoiceNo", number))
                 }
                 val date = invoice.optString("date").take(10)
                 require(runCatching { java.time.LocalDate.parse(date) }.isSuccess) {
@@ -102,7 +108,8 @@ object LegacyCounterpartyDebt {
                 .put("openInvoices", openInvoices)
                 .put("openInvoiceCount", openCount)
                 .put("missingCounterpartyNames", missingNames)
-                .put("requiresManualReview", missingNames.length() > 0))
+                .put("duplicateInvoiceNumbers", duplicateNumbers)
+                .put("requiresManualReview", missingNames.length() > 0 || duplicateNumbers.length() > 0))
         }
         return JSONObject()
             .put("positions", result)
@@ -137,6 +144,8 @@ object LegacyCounterpartyDebt {
             if (groups.length() == 0) lines.add("لا توجد فواتير غير مسددة")
             val missing = position.getJSONArray("missingCounterpartyNames").length()
             if (missing > 0) lines.add("تنبيه: $missing فواتير دون اسم طرف، تحتاج مطابقة")
+            val duplicates = position.getJSONArray("duplicateInvoiceNumbers").length()
+            if (duplicates > 0) lines.add("تنبيه: $duplicates أرقام فواتير متكررة تحتاج مراجعة")
         }
         lines.add("لا يشمل دين الموردين الافتتاحي المنفصل؛ لا توجد قيود مالية جديدة.")
         return lines.joinToString("\n")
