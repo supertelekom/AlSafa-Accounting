@@ -111,6 +111,11 @@ object LegacyArchivedFinancialPosition {
                     "المدفوع ${v.getString("paidSnapshot")}، المتبقي ${v.getString("outstandingSnapshot")}")
             }
         }
+        val ledger=report.getJSONObject("supplierLedgerByKindCurrency")
+        if(ledger.length()>0) {
+            lines.add("دفتر الموردين التاريخي (حسب نوع القيد؛ لا يُضاف إلى دين الفواتير):")
+            for(key in ledger.keys()) lines.add("$key: ${ledger.getString(key)}")
+        }
         lines.add(report.getString("warning"))
         return lines.joinToString("\n")
     }
