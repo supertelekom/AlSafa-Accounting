@@ -255,11 +255,13 @@ object LegacySnapshotImport {
                 for (i in 0 until items.length()) {
                     val original=items.getJSONObject(i)
                     val productId=original.getString("id").trim()
-                    val restored=store.rows("SELECT stock,price,cost FROM products WHERE id=? AND kind=?",productId,kind).singleOrNull()
+                    val restored=store.rows("SELECT stock,price,cost,barcode,details FROM products WHERE id=? AND kind=?",productId,kind).singleOrNull()
                         ?: error("منتج مفقود بعد الاستعادة: $section / $i")
                     require(restored.getValue("stock").toLong()==original.getLong("stock") &&
                         restored.getValue("price").toLong()==legacyMinor(original.optString("salePrice","0")) &&
-                        restored.getValue("cost").toLong()==legacyMinor(original.optString("cost","0"))) {
+                        restored.getValue("cost").toLong()==legacyMinor(original.optString("cost","0")) &&
+                        restored.getValue("barcode")==original.optString("barcode").trim() &&
+                        restored.getValue("details")==original.toString()) {
                         "اختلاف كمية أو سعر أو تكلفة المنتج بعد الاستعادة: $section / $i"
                     }
                 }
