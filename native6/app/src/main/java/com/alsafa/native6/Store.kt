@@ -60,6 +60,37 @@ class Store(val helper:StoreDb) {
             else rows("SELECT legacy_id,length(CAST(payload AS BLOB)) AS bytes FROM legacy_records WHERE category=? AND instr(payload,?)>0 ORDER BY rowid DESC LIMIT ? OFFSET ?",category,term,limit.toString(),offset.toString())
         return decodeLegacyRecords(category,ids)
     }
+    /** Paginated repair history with bounded BLOB reads for old embedded watch photos. */
+    fun repairPage(term:String,limit:Int,offset:Int):List<Map<String,String>> {
+        require(limit in 1..100 && offset>=0)
+        val ids=if(term.isBlank())
+            rows("SELECT id,length(CAST(details AS BLOB)) AS bytes FROM repairs ORDER BY rowid DESC LIMIT ? OFFSET ?",limit.toString(),offset.toString())
+        else rows("SELECT id,length(CAST(details AS BLOB)) AS bytes FROM repairs WHERE instr(details,?)>0 ORDER BY rowid DESC LIMIT ? OFFSET ?",term,limit.toString(),offset.toString())
+        return ids.map { record ->
+            val id=record.getValue("id")
+            val size=record.getValue("bytes").toLong()
+            require(size in 0..(128L*1024*1024)) { "حجم طلب الصيانة غير صالح" }
+            val output=java.io.ByteArrayOutputStream()
+            var byteOffset=0L
+            while(byteOffset<size) {
+                val count=minOf(8192L,size-byteOffset).toInt()
+                db.rawQuery("SELECT substr(CAST(details AS BLOB),?,?) FROM repairs WHERE id=?",
+                    arrayOf((byteOffset+1).toString(),count.toString(),id)).use { cursor ->
+                    require(cursor.moveToFirst() && !cursor.isNull(0)) { "طلب الصيانة مفقود" }
+                    val chunk=cursor.getBlob(0)
+                    require(chunk.size==count) { "صورة الصيانة غير مكتملة" }
+                    output.write(chunk)
+                }
+                byteOffset+=count
+            }
+            val decoder=Charsets.UTF_8.newDecoder()
+                .onMalformedInput(java.nio.charset.CodingErrorAction.REPORT)
+                .onUnmappableCharacter(java.nio.charset.CodingErrorAction.REPORT)
+            val payload=decoder.decode(java.nio.ByteBuffer.wrap(output.toByteArray())).toString()
+            JSONObject(payload)
+            mapOf("legacy_id" to id,"payload" to payload)
+        }
+    }
     fun scalar(sql:String,vararg args:String):Long = db.rawQuery(sql,args).use { cursor ->
         if(!cursor.moveToFirst() || cursor.isNull(0)) 0L
         else {
