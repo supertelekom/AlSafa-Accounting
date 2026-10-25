@@ -94,6 +94,18 @@ object LegacyCashActivationPlan {
             block((supplierAudit.optJSONArray("invalidLedgerIndexes")?.length() ?: -1) != 0,
                 "قيود موردين غير صالحة")
         }
+        val readiness = metadata.optJSONObject("restoreReadiness")
+        block(readiness == null, "نتيجة فحص جاهزية الاستعادة غير موجودة")
+        if (readiness != null) {
+            val original = readiness.optJSONArray("financialBlockers")
+            block(original == null, "قائمة عوائق الاستعادة الأصلية غير موجودة")
+            if (original != null) {
+                for (index in 0 until original.length()) {
+                    val code = original.optString(index)
+                    block(code.isNotBlank(), "مانع مالي في النسخة الأصلية: $code")
+                }
+            }
+        }
         val items = JSONArray()
         val keys = source.keys().asSequence().toList().sorted()
         for (key in keys) {
