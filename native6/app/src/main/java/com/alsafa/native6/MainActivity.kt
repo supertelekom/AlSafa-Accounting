@@ -397,6 +397,17 @@ open class MainActivity:Activity() {
                 return@button
             }
             val invoiceOffset=(pageNumber-1)*20
+            if(dateFrom.isNotEmpty() || dateTo.isNotEmpty()) {
+                val valid=runCatching {
+                    if(dateFrom.isNotEmpty()) java.time.LocalDate.parse(dateFrom)
+                    if(dateTo.isNotEmpty()) java.time.LocalDate.parse(dateTo)
+                    require(dateFrom.isEmpty() || dateTo.isEmpty() || dateFrom<=dateTo)
+                }.isSuccess
+                if(!valid) {
+                    AlertDialog.Builder(this).setMessage("تأكد من صحة تاريخ البداية والنهاية وترتيبهما بصيغة YYYY-MM-DD").setPositiveButton("إغلاق",null).show()
+                    return@button
+                }
+            }
             work {
                 val sales=LegacyOutstandingInvoices.page(store,"sales",offset=invoiceOffset,limit=20,query=queryText,from=dateFrom,to=dateTo,currency=unit)
                 val purchases=LegacyOutstandingInvoices.page(store,"purchases",offset=invoiceOffset,limit=20,query=queryText,from=dateFrom,to=dateTo,currency=unit)
