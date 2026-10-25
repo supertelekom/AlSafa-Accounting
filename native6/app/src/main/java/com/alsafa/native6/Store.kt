@@ -734,6 +734,8 @@ class Store(val helper:StoreDb) {
         require(scalar("SELECT count(*) FROM products WHERE id=?",id)==1L){"المنتج غير موجود"}
         require(name.isNotBlank() && price>=0 && barcode.trim().length<=128){"بيانات المنتج غير صالحة"}
         require(listOf(brand,model,description,dialColor,caseColor,strapColor).all { it.length<=500 }){"تفاصيل المنتج طويلة جداً"}
+        require(warrantyMonths.isBlank() || (warrantyMonths.toIntOrNull() ?: -1) in 0..1200){"مدة الضمان غير صالحة"}
+        require(movement.length<=500 && watchType.length<=100 && gender.length<=100 && displayType.length<=100){"تفاصيل التصنيف طويلة جداً"}
         require(barcode.isBlank() || scalar("SELECT count(*) FROM products WHERE barcode=? AND id<>?",barcode.trim(),id)==0L){"الباركود مكرر"}
         val details=JSONObject(rows("SELECT details FROM products WHERE id=?",id).single().getValue("details"))
         details.put("customerDescription",description.trim()).put("dialColor",dialColor.trim())
