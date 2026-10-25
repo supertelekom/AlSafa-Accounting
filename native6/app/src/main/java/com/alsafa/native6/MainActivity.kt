@@ -535,10 +535,8 @@ open class MainActivity:Activity() {
             }
             if(total==0L) offset=0
             else if(offset.toLong()>=total) offset=((total-1)/30*30).toInt()
-            val entries=if(category=="repairs") {
-                if(term.isBlank()) store.rows("SELECT id AS legacy_id,details AS payload FROM repairs ORDER BY rowid DESC LIMIT 30 OFFSET ?",offset.toString())
-                else store.rows("SELECT id AS legacy_id,details AS payload FROM repairs WHERE instr(details,?)>0 ORDER BY rowid DESC LIMIT 30 OFFSET ?",term,offset.toString())
-            } else store.legacyPage(category,term,30,offset)
+            val entries=if(category=="repairs") store.repairPage(term,30,offset)
+                else store.legacyPage(category,term,30,offset)
             text("الصفحة ${offset/30+1} من ${((total+29)/30).coerceAtLeast(1)} · مجموع السجلات $total",results,14f)
             if(entries.isEmpty()) text("لا توجد سجلات مطابقة للبحث.",results,16f)
             entries.forEach { record ->
