@@ -10,7 +10,7 @@ import java.math.BigDecimal
  * evidence only; they must never be added to the invoice's paid amount again.
  */
 object LegacyInvoiceSnapshot {
-    private val allowed=setOf("sales","purchases")
+    private val allowed=setOf("sales","purchases","repairs")
 
     /**
      * Returns the complete source invoice, without posting another sale, purchase,
@@ -34,7 +34,7 @@ object LegacyInvoiceSnapshot {
                 val original=JSONObject(payment.getValue("payload"))
                 val ref=original.optString("referenceId")
                 val type=original.optString("referenceType")
-                val expected=if(section=="sales") "sale" else "purchase"
+                val expected=when(section) { "sales" -> "sale"; "repairs" -> "repair"; else -> "purchase" }
                 if(ref==id && (type.equals(expected,ignoreCase=true) || type.equals(section,ignoreCase=true))) {
                     linked.put(JSONObject()
                         .put("archiveKey",payment.getValue("legacy_id"))
@@ -79,7 +79,7 @@ object LegacyInvoiceSnapshot {
                 }
                 if(!found && !itemFound) continue
             }
-            val currency=original.optString("currency")
+            val currency=original.optString("currency","USD")
             require(currency in setOf("USD","TRY","SYP")){"عملة فاتورة قديمة غير معروفة"}
             val total=original.optString("total","0").toBigDecimalOrNull()
             val paid=original.optString("paid","0").toBigDecimalOrNull()
