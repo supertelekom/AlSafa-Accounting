@@ -818,7 +818,7 @@ open class MainActivity:Activity() {
     }
     private fun products(onlyKind:String?=null){
         sectionHeading(if(onlyKind=="part") "قطع الصيانة" else "المنتجات وقطع الصيانة","إدارة الأصناف والباركود والكميات والجرد")
-        button("＋ إضافة منتج / قطعة"){productForm()}
+        button(if(onlyKind=="part") "＋ إضافة قطعة صيانة" else "＋ إضافة منتج / قطعة"){productForm(defaultKind=onlyKind)}
         button("▣ مسح باركود للبحث"){startActivityForResult(Intent(this,BarcodeScanActivity::class.java),65)}
         val shortcuts=LinearLayout(this).apply { orientation=LinearLayout.HORIZONTAL;layoutDirection=View.LAYOUT_DIRECTION_RTL }
         fun shortcut(label:String,route:String){
@@ -1004,7 +1004,7 @@ open class MainActivity:Activity() {
         }catch(e:Exception){error(e)}
     }
     private var selectedProduct:Product?=null
-    private fun productForm(p:Product?=null){form(if(p==null)"إضافة منتج" else "تعديل المنتج"){box->
+    private fun productForm(p:Product?=null,defaultKind:String?=null){form(if(p==null)"إضافة منتج" else "تعديل المنتج"){box->
         if(p!=null){
             val photo=store.productImage(p.id)
             if(photo!=null && java.io.File(photo).isFile){
@@ -1118,6 +1118,7 @@ open class MainActivity:Activity() {
         watchType.setSelection(if(saved.optString("watchType")=="إسلامية") 1 else 0)
         val cost=if(p==null)field("التكلفة",box,"0",true)else null;val qty=if(p==null)field("رصيد افتتاحي",box,"0",true)else null
         val kind=if(p==null)select("النوع",listOf("ساعة","قطعة صيانة"),box)else null;
+        if(defaultKind=="part") kind?.setSelection(1)
         {
             val c=Currency.entries[curr.selectedItemPosition]
             val n=name.text.toString();val b=barcode.text.toString();val value=amount(price,c)
