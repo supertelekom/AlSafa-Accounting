@@ -342,7 +342,12 @@ object LegacySnapshotImport {
                 .put("suppliers",suppliers.length())
                 .put("repairs",repairs.length())
                 .put("archivedFinancialRecords",store.scalar("SELECT count(*) FROM legacy_records")).toString())
-            "نُقل المخزون والموردون والصيانة، وحُفظت الحركات المالية التاريخية في أرشيف منفصل. لم تُرحّل الأرصدة والأرباح المحاسبية."
+            val receipt=LegacyRestoreReceipt.inspect(store)
+            "تمت مطابقة الاستعادة مع قاعدة البيانات: ${receipt.getLong("products")} منتجًا، " +
+                "${receipt.getLong("maintenanceParts")} قطعة صيانة، ${receipt.getLong("suppliers")} موردًا، " +
+                "${receipt.getLong("repairs")} طلب صيانة. " +
+                "بصمة المصدر: ${receipt.getString("sourceSha256").take(16)}… " +
+                "الفواتير والحركات المالية القديمة محفوظة للقراءة فقط؛ لم تُفعّل أرصدتها أو أرباحها."
         }
     }
 }
