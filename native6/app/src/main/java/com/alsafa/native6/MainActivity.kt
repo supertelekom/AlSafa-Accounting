@@ -2874,6 +2874,7 @@ button("＋ مورد"){form("مورد جديد"){box->val n=field("الاسم",b
         button("تصدير نسخة كاملة"){startActivityForResult(Intent(Intent.ACTION_CREATE_DOCUMENT).apply{addCategory(Intent.CATEGORY_OPENABLE);type="application/json";putExtra(Intent.EXTRA_TITLE,"AlSafa-Native6-${Store.today()}.json")},101)}
         button("استعادة Native 6 إلى قاعدة فارغة"){pick(102)}
         button("فحص نسخة التطبيق القديم وحفظها معزولة"){pick(103)}
+        button("اختيار نسخة الصفا القديمة واستعادة البيانات المتاحة"){pick(105)}
         button("النسخ القديمة المحفوظة للفحص"){go("legacy-audit")}
         text("يمكن استعادة المخزون والموردين وسجل الصيانة من الأرشيف إلى قاعدة محاسبية فارغة بعد التأكيد. لا تزال الفواتير والديون والصناديق وأرباح الشركاء خارج الاستعادة.")
     }
@@ -2965,6 +2966,21 @@ button("＋ مورد"){form("مورد جديد"){box->val n=field("الاسم",b
     }
     private fun pick(code:Int){startActivityForResult(Intent(Intent.ACTION_OPEN_DOCUMENT).apply{addCategory(Intent.CATEGORY_OPENABLE);type="application/json"},code)}
     override fun onActivityResult(request:Int,result:Int,data:Intent?){super.onActivityResult(request,result,data);if(result!=RESULT_OK)return;val uri=data?.data?:return
-        work{val backup=Backup(this,store);when(request){104->contentResolver.openOutputStream(uri,"wt")!!.use{InvoicePdf(this,store).write(requireNotNull(pdfInvoice),it)};101->contentResolver.openOutputStream(uri,"wt")!!.use{backup.export(it)};102->contentResolver.openInputStream(uri)!!.use{backup.restore(it)};103->contentResolver.openInputStream(uri)!!.use{val report=backup.stageLegacy(it);runOnUiThread{AlertDialog.Builder(this).setMessage(report).setPositiveButton("حسناً",null).show()}}}}
+        work{val backup=Backup(this,store);when(request){104->contentResolver.openOutputStream(uri,"wt")!!.use{InvoicePdf(this,store).write(requireNotNull(pdfInvoice),it)};101->contentResolver.openOutputStream(uri,"wt")!!.use{backup.export(it)};102->contentResolver.openInputStream(uri)!!.use{backup.restore(it)};103->contentResolver.openInputStream(uri)!!.use{val report=backup.stageLegacy(it);runOnUiThread{AlertDialog.Builder(this).setMessage(report).setPositiveButton("حسناً",null).show()}};105->contentResolver.openInputStream(uri)!!.use{ input ->
+            val bytes=Backup.read(input)
+            val payload=String(bytes,Charsets.UTF_8).removePrefix("\uFEFF")
+            val preview=LegacySnapshotImport.preview(payload)
+            // Keep the original source available for future financial reconciliation.
+            backup.stageLegacy(bytes.inputStream())
+            runOnUiThread {
+                if(!isFinishing&&!isDestroyed) AlertDialog.Builder(this)
+                    .setTitle("استعادة بيانات التطبيق القديم — جزئية حالياً")
+                    .setMessage(preview+"\n\nلن تُفعّل الديون أو أرصدة الصناديق أو أرباح الشركاء. تتطلب الاستعادة قاعدة فارغة، ولن تستبدل البيانات الموجودة. هل تريد المتابعة؟")
+                    .setNegativeButton("إلغاء",null)
+                    .setPositiveButton("استعادة المخزون والصيانة والموردين"){_,_->work {
+                        LegacySnapshotImport.import(store,payload)
+                    }}.show()
+            }
+        }}}
     }
 }
