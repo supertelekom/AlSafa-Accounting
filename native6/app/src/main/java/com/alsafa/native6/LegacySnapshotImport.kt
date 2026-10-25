@@ -84,7 +84,7 @@ object LegacySnapshotImport {
             root.optInt("formatVersion")==2) { "صيغة النسخة الاحتياطية غير مدعومة" }
         val data=root.getJSONObject("data")
         requireRequiredCollections(data)
-        val sections=listOf;"products","maintenanceParts","suppliers","repairs",
+        val sections=listOf("products","maintenanceParts","suppliers","repairs",
             "sales","purchases","payments","cashTransactions","supplierLedger",
             "partnerWithdrawals","dailyClosings","returns")
         val labels=mapOf(
