@@ -26,6 +26,7 @@ object LegacyOutstandingInvoices {
         val matches = ArrayList<JSONObject>()
         val outstandingTotals = linkedMapOf<String, BigDecimal>()
         val search = query.trim()
+        require(search.length <= 200) { "عبارة البحث طويلة جداً" }
         val seen = HashSet<String>()
         for (row in rows) {
             val invoice = JSONObject(row.getValue("payload"))
