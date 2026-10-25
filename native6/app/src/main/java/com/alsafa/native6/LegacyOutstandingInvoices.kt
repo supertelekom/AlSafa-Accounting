@@ -19,7 +19,7 @@ object LegacyOutstandingInvoices {
         if (to.isNotEmpty()) java.time.LocalDate.parse(to)
         require(from.isEmpty() || to.isEmpty() || from <= to) { "نطاق التاريخ غير صالح" }
         // Verify the complete archive and import metadata before displaying any balances.
-        LegacyArchivedDebtReport.inspect(store)
+        LegacyArchivedDebtReport.verifyArchiveCounts(store)
         val rows = store.rows(
             "SELECT legacy_id,payload FROM legacy_records WHERE category=? ORDER BY legacy_id", section
         )
