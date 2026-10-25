@@ -2373,10 +2373,18 @@ class Store(val helper:StoreDb) {
         db.execSQL("UPDATE repairs SET details=? WHERE id=?",arrayOf(details.toString(),id))
         event(id(),"REPAIR_IMAGE",today(),"Repair photo $id")
     }
-    fun startRepair(id:String)=transaction { val repair=repairDetail(id);require(repair.getValue("status")=="received");require(!LocalDate.parse(repair.getValue("date")).isAfter(LocalDate.now())){"تاريخ الاستلام في المستقبل"}; db.execSQL("UPDATE repairs SET status=? WHERE id=?",arrayOf("in_progress",id)); event(id(),"REPAIR_STARTED",today(),"بدء العمل على الصيانة") }
-    fun repairReady(id:String)=transaction {val repair=repairDetail(id);require(repair.getValue("status") in setOf("received","in_progress")){"الصيانة ليست في حالة تسمح بالتجهيز"};require(!LocalDate.parse(repair.getValue("date")).isAfter(LocalDate.now())){"تاريخ الاستلام في المستقبل"};db.execSQL("UPDATE repairs SET status='ready' WHERE id=?",arrayOf(id));event(id(),"REPAIR_READY",today(),"جاهزة $id")}
+    private fun requireLegacyRepairReconciled(repairId:String) {
+        val details=rows("SELECT details FROM repairs WHERE id=?",repairId).singleOrNull()?.get("details")
+            ?: error("طلب الصيانة غير موجود")
+        require(!JSONObject(details).optBoolean("_legacyImported",false)) {
+            "هذه صيانة من النسخة القديمة؛ لا يمكن تغيير حالتها أو خصم قطع جديدة قبل ربط الفواتير والمدفوعات التاريخية"
+        }
+    }
+    fun startRepair(id:String)=transaction { requireLegacyRepairReconciled(id);val repair=repairDetail(id);require(repair.getValue("status")=="received");require(!LocalDate.parse(repair.getValue("date")).isAfter(LocalDate.now())){"تاريخ الاستلام في المستقبل"}; db.execSQL("UPDATE repairs SET status=? WHERE id=?",arrayOf("in_progress",id)); event(id(),"REPAIR_STARTED",today(),"بدء العمل على الصيانة") }
+    fun repairReady(id:String)=transaction {requireLegacyRepairReconciled(id);val repair=repairDetail(id);require(repair.getValue("status") in setOf("received","in_progress")){"الصيانة ليست في حالة تسمح بالتجهيز"};require(!LocalDate.parse(repair.getValue("date")).isAfter(LocalDate.now())){"تاريخ الاستلام في المستقبل"};db.execSQL("UPDATE repairs SET status='ready' WHERE id=?",arrayOf(id));event(id(),"REPAIR_READY",today(),"جاهزة $id")}
     /** Charge an installed repair part to repair COGS on the actual installation date. */
     fun useRepairPart(repairId:String,productId:String,quantity:Long,date:String=today(),command:String=id()):String=transaction {
+        requireLegacyRepairReconciled(repairId)
         val repair=repairDetail(repairId)
         require(repair.getValue("status") in setOf("received","in_progress","ready")){"الصيانة مسلمة ولا يمكن استهلاك قطع إضافية"}
         val day=LocalDate.parse(date)
