@@ -24,6 +24,7 @@ object LegacyOutstandingInvoices {
             "SELECT legacy_id,payload FROM legacy_records WHERE category=? ORDER BY legacy_id", section
         )
         val matches = ArrayList<JSONObject>()
+        val pageRows = JSONArray()
         val outstandingTotals = linkedMapOf<String, BigDecimal>()
         val search = query.trim()
         require(search.length <= 200) { "عبارة البحث طويلة جداً" }
@@ -82,8 +83,7 @@ object LegacyOutstandingInvoices {
         }
         val totalsJson = JSONObject()
         for ((unit, amount) in outstandingTotals) totalsJson.put(unit, amount.toPlainString())
-        val result = JSONArray()
-        matches.drop(offset).take(limit).forEach { result.put(it) }
+        matches.drop(offset).take(limit).forEach { pageRows.put(it) }
         return JSONObject()
             .put("section", section)
             .put("currency", currency)
@@ -94,7 +94,9 @@ object LegacyOutstandingInvoices {
             .put("totalOutstandingInvoices", matches.size)
             .put("offset", offset)
             .put("limit", limit)
-            .put("records", result)
+            .put("records", pageRows)
+            .put("hasMore", offset.toLong() + pageRows.length() < matches.size)
+            .put("nextOffset", if (offset.toLong() + pageRows.length() < matches.size) offset + pageRows.length() else -1)
             .put("readOnly", true)
             .put("financialPosting", "NONE")
             .put("warning", "الأرصدة أولية؛ المرتجعات ودفتر الموردين لم تتم مطابقتهما")
