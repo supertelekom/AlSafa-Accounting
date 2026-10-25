@@ -74,13 +74,13 @@ object LegacyImportPreflight {
                 if(section=="sales" || section=="purchases") {
                     val total=row.optString("total").toBigDecimalOrNull()
                     val paid=row.optString("paid").toBigDecimalOrNull()
-                    if(total!=null && paid!=null && (paid.signum()<0 || paid>total))
+                    if(total!=null && paid!=null && (paid.signum()<0 || paid>total || total.signum()<0 || total.stripTrailingZeros().scale()>2 || paid.stripTrailingZeros().scale()>2))
                         problems.add("$section[$i]: paid exceeds invoice total")
                 }
                 val field=if(section=="sales" || section=="purchases") "total" else "amount"
                 if(row.has(field) && !row.isNull(field)) {
                     val amount=row.optString(field).toBigDecimalOrNull()
-                    if(amount==null || (section in setOf("sales","purchases","payments","partnerWithdrawals") && amount.signum()<0)) problems.add("$section[$i]: invalid $field")
+                    if(amount==null || amount.stripTrailingZeros().scale()>2 || (section in setOf("sales","purchases","payments","partnerWithdrawals") && amount.signum()<0)) problems.add("$section[$i]: invalid $field")
                 }
             }
         }
