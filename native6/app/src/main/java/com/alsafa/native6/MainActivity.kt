@@ -387,6 +387,34 @@ open class MainActivity:Activity() {
         val unpaidCurrency=select("عملة الفواتير غير المسددة",listOf("جميع العملات","USD","TRY","SYP"),body)
         val unpaidPage=field("رقم الصفحة (1، 2، 3...)",body)
         val supplierPage=field("صفحة الموردين القديمة (1، 2، 3...)",body)
+        val ledgerSupplier=field("معرف المورد لتصفية دفتره القديم (اختياري)",body)
+        val ledgerPage=field("صفحة دفتر الموردين القديم",body)
+        button("دفتر الموردين القديم (قراءة فقط)",body) {
+            val supplierId=ledgerSupplier.text.toString().trim()
+            val number=ledgerPage.text.toString().trim().ifEmpty { "1" }.toIntOrNull()
+            if(number==null || number !in 1..100000) {
+                AlertDialog.Builder(this).setMessage("رقم صفحة غير صالح")
+                    .setPositiveButton("إغلاق",null).show()
+                return@button
+            }
+            work {
+                val report=LegacySupplierLedgerView.page(
+                    store,supplierId=supplierId,offset=(number-1)*30)
+                val items=report.getJSONArray("records")
+                val lines=(0 until items.length()).joinToString("\\n") { index ->
+                    val entry=items.getJSONObject(index)
+                    "${entry.optString("date")} | ${entry.optString("supplierId")} | ${entry.optString("kind")} | ${entry.optString("amount")} ${entry.optString("currency")}"
+                }
+                val message="القيود: ${report.getInt("totalMatching")}\\n"+
+                    "الإجماليات حسب النوع والعملة: ${report.getJSONObject("totalsByKindAndCurrency")}\\n"+
+                    lines+"\\nلا يوجد ترحيل مالي."
+                runOnUiThread {
+                    if(!isFinishing&&!isDestroyed) AlertDialog.Builder(this)
+                        .setTitle("دفتر الموردين التاريخي")
+                        .setMessage(message).setPositiveButton("إغلاق",null).show()
+                }
+            }
+        }
         button("الموردون من النسخة القديمة (قراءة فقط)",body) {
             val searchText=search.text.toString().trim()
             val pageNumber=supplierPage.text.toString().trim().ifEmpty { "1" }.toIntOrNull()
