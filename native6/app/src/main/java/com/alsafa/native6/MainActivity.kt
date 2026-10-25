@@ -2939,7 +2939,7 @@ button("＋ مورد"){form("مورد جديد"){box->val n=field("الاسم",b
                     }
                 }
             }
-            button("استعادة المخزون والصيانة والموردين",body) {
+            button("استعادة جزئية من نسخة الصفا القديمة (لا تشمل الأرصدة)",body) {
                 val hash=item.getValue("hash")
                 work {
                     val payload=store.db.rawQuery("SELECT payload FROM legacy_imports WHERE hash=?",arrayOf(hash)).use { cursor->
