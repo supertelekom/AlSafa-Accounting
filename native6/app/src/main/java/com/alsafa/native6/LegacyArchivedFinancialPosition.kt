@@ -140,6 +140,15 @@ object LegacyArchivedFinancialPosition {
             require(referenceType in setOf("sale","sales","repair","repairs","purchase","purchases") && referenceId.isNotEmpty()) {
                 "مرجع مرتجع غير معروف"
             }
+            val refund=cents(row,"refundAmount")
+            val extra=cents(row,"extraCollected")
+            val cashEffect=row.optString("cashEffect","0").toBigDecimalOrNull()
+                ?: error("الأثر النقدي للمرتجع غير صالح")
+            val expectedCash=Math.subtractExact(extra,refund)
+            require(cashEffect.setScale(2,RoundingMode.HALF_UP)
+                .movePointRight(2).longValueExact()==expectedCash) {
+                "أثر المرتجع النقدي لا يطابق المبلغ المسترد والتحصيل الإضافي: $id"
+            }
             val fieldNames=listOf("refundAmount","debtReduction","netCreditAmount")
             for(field in fieldNames) {
                 val amount=row.optString(field,"0").toBigDecimalOrNull()
