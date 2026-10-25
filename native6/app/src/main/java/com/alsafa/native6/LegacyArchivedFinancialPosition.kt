@@ -25,8 +25,7 @@ object LegacyArchivedFinancialPosition {
         val counts=metadata.getJSONObject("sourceCollections")
         val result=JSONObject()
         for(section in listOf("sales","purchases")) {
-            val rows=store.rows("SELECT legacy_id,payload FROM legacy_records WHERE category=?",
-                section)
+            val rows=store.legacyRows(section)
             require(rows.size.toLong()==counts.optLong(section,0)) {
                 "سجلات $section غير مكتملة"
             }
@@ -67,8 +66,7 @@ object LegacyArchivedFinancialPosition {
                 .put("invoiceCount",rows.size))
         }
         // Supplier ledger is separate evidence: never add it to invoice dues.
-        val supplierLedger=store.rows(
-            "SELECT payload FROM legacy_records WHERE category=?", "supplierLedger")
+        val supplierLedger=store.legacyRows("supplierLedger")
         require(supplierLedger.size.toLong()==counts.optLong("supplierLedger",0)) {
             "دفتر الموردين المؤرشف غير مكتمل"
         }
@@ -123,7 +121,7 @@ object LegacyArchivedFinancialPosition {
         }
         // Returns are already reflected in some old invoice snapshots.
         // Report their cash/debt effects as evidence, NEVER subtract again.
-        val returns=store.rows("SELECT payload FROM legacy_records WHERE category=?","returns")
+        val returns=store.legacyRows("returns")
         require(returns.size.toLong()==counts.optLong("returns",0)) {
             "المرتجعات التاريخية المؤرشفة غير مكتملة"
         }
@@ -203,8 +201,7 @@ object LegacyArchivedFinancialPosition {
         val period=java.time.YearMonth.parse(month)
         val meta=LegacyArchivedDebtReport.verifyArchiveCounts(store)
         val expected=meta.getJSONObject("sourceCollections").optLong("partnerWithdrawals",0)
-        val rows=store.rows("SELECT legacy_id,payload FROM legacy_records WHERE category=?",
-            "partnerWithdrawals")
+        val rows=store.legacyRows("partnerWithdrawals")
         require(rows.size.toLong()==expected) { "أرشيف سحوبات الشركاء غير مكتمل" }
         val totals=sortedMapOf<String,Long>()
         val entries=JSONArray()
