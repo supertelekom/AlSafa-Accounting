@@ -13,6 +13,16 @@ object LegacyRestoreReceipt {
         val metadata=JSONObject(rows.single().getValue("value"))
         require(metadata.optString("scope")=="inventory_suppliers_repairs_only")
         require(metadata.optString("financialPostingStatus")=="NOT_POSTED")
+        require(store.rows("PRAGMA integrity_check").single().values.single()=="ok") {
+            "فشل فحص سلامة قاعدة البيانات بعد الاستعادة"
+        }
+        require(store.rows("PRAGMA foreign_key_check").isEmpty()) {
+            "مراجع مفقودة في قاعدة البيانات بعد الاستعادة"
+        }
+        require(store.rows(
+            "SELECT event_id,currency,sum(amount) AS total FROM journal " +
+                "GROUP BY event_id,currency HAVING total<>0"
+        ).isEmpty()) { "قيود المخزون الافتتاحية غير متوازنة" }
         val counts=metadata.getJSONObject("sourceCollections")
         val products=store.scalar("SELECT count(*) FROM products WHERE kind=?", "watch")
         val parts=store.scalar("SELECT count(*) FROM products WHERE kind=?", "part")
