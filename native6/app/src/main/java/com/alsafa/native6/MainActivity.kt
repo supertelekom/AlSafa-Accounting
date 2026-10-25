@@ -386,6 +386,18 @@ open class MainActivity:Activity() {
         val unpaidTo=field("إلى تاريخ (YYYY-MM-DD)",body)
         val unpaidCurrency=select("عملة الفواتير غير المسددة",listOf("جميع العملات","USD","TRY","SYP"),body)
         val unpaidPage=field("رقم الصفحة (1، 2، 3...)",body)
+        button("تدقيق أرصدة الخزنات القديمة",body) {
+            work {
+                val report=LegacyCashActivationPlan.inspect(store)
+                val message=report.toString(2)
+                runOnUiThread {
+                    if(!isFinishing&&!isDestroyed) AlertDialog.Builder(this)
+                        .setTitle("أرصدة الخزنات - دون ترحيل")
+                        .setMessage(message)
+                        .setPositiveButton("إغلاق",null).show()
+                }
+            }
+        }
         button("الفواتير القديمة غير المسددة (قراءة فقط)",body) {
             val queryText=search.text.toString().trim()
             val dateFrom=unpaidFrom.text.toString().trim()
