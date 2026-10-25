@@ -110,6 +110,7 @@ object LegacySnapshotImport {
                 val s=suppliers.getJSONObject(i)
                 val id=s.getString("id").trim()
                 require(id.isNotEmpty() && supplierIds.add(id)){"معرف مورد مكرر"}
+                require(s.optString("name").isNotBlank()){"اسم مورد مفقود"}
                 store.insert("suppliers","id" to id,"name" to s.getString("name"),"phone" to s.optString("phone"))
                 store.insert("legacy_records","category" to "source_suppliers",
                     "legacy_id" to id,"payload" to s.toString())
