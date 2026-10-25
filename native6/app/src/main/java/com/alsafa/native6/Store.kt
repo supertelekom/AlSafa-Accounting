@@ -637,17 +637,20 @@ class Store(val helper:StoreDb) {
         val term=query.trim()
         require(term.length<=200){"نص البحث طويل جداً"}
         require(kind==null || kind in setOf("watch","part")){"نوع صنف غير مدعوم"}
-        val sql=if(kind==null)
-            "SELECT * FROM products WHERE archived=0 ORDER BY name,id"
-        else "SELECT * FROM products WHERE archived=0 AND kind=? ORDER BY name,id"
-        val records=if(kind==null) rows(sql) else rows(sql,kind)
-        if(term.isEmpty()) return records.map(::toProduct)
-        val normalized=term.lowercase()
-        return records.filter { row ->
-            listOf("name","barcode","brand","model").any { key ->
-                row[key].orEmpty().contains(term,ignoreCase=true)
-            } || productColorLabelFromDetails(row.getValue("details")).lowercase().contains(normalized)
-        }.map(::toProduct)
+        val filters=mutableListOf("archived=0")
+        val args=mutableListOf<String>()
+        if(kind!=null) {
+            filters.add("kind=?")
+            args.add(kind)
+        }
+        if(term.isNotEmpty()) {
+            // Match identity and colour metadata without loading the entire catalog.
+            // Escape SQL LIKE wildcards so a barcode containing % or _ is literal.
+            val escaped=term.replace("!", "!!").replace("%", "!%").replace("_", "!_")
+            filters.add("(name LIKE ? ESCAPE '!' COLLATE NOCASE OR barcode LIKE ? ESCAPE '!' COLLATE NOCASE OR brand LIKE ? ESCAPE '!' COLLATE NOCASE OR model LIKE ? ESCAPE '!' COLLATE NOCASE OR details LIKE ? ESCAPE '!' COLLATE NOCASE)")
+            repeat(5) { args.add("%$escaped%") }
+        }
+        return rows("SELECT * FROM products WHERE "+filters.joinToString(" AND ")+" ORDER BY name,id",*args.toTypedArray()).map(::toProduct)
     }
 
     private fun productColorLabelFromDetails(raw:String):String =
