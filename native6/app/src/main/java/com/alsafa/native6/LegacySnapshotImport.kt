@@ -32,7 +32,29 @@ object LegacySnapshotImport {
             require(bounds.outWidth in 1..10000 && bounds.outHeight in 1..10000) { "صورة غير قابلة للقراءة: $field" }
             val extension=when(mime) {"image/png"->".png";"image/webp"->".webp";else->".jpg"}
             val file=java.io.File(directory,"legacy_"+java.util.UUID.randomUUID().toString()+extension)
-            file.outputStream().use { it.write(bytes) }
+            try {
+                file.outputStream().use { output ->
+                    output.write(bytes)
+                    output.flush()
+                    if(output is java.io.FileOutputStream) output.fd.sync()
+                }
+                require(file.length()==bytes.size.toLong()) { "صورة لم تُحفظ كاملة: $field" }
+                val expected=java.security.MessageDigest.getInstance("SHA-256").digest(bytes)
+                val actual=file.inputStream().use { input ->
+                    val digest=java.security.MessageDigest.getInstance("SHA-256")
+                    val buffer=ByteArray(8192)
+                    while(true) {
+                        val read=input.read(buffer)
+                        if(read<0) break
+                        digest.update(buffer,0,read)
+                    }
+                    digest.digest()
+                }
+                require(java.security.MessageDigest.isEqual(expected,actual)) { "اختلاف محتوى الصورة: $field" }
+            } catch(error:Exception) {
+                file.delete()
+                throw error
+            }
             created.add(file)
             when(field) {
                 "photo","photo2","photo3" -> productPhotos.put(file.absolutePath)
