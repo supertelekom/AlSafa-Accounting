@@ -47,6 +47,16 @@ object LegacyRestoreReceipt {
                     "SELECT coalesce(sum(value),0) FROM products WHERE kind=? AND currency=?",kind,currency))
             }
         }
+        for(currency in listOf("USD","TRY","SYP")) {
+            val stockValue=store.scalar(
+                "SELECT coalesce(sum(value),0) FROM products WHERE currency=?",currency)
+            val journalValue=store.scalar(
+                "SELECT coalesce(sum(amount),0) FROM journal WHERE account=? AND currency=?",
+                "inventory",currency)
+            require(stockValue==journalValue) {
+                "قيمة المخزون لا تتطابق مع قيد الجرد الافتتاحي بعملة $currency"
+            }
+        }
         return JSONObject()
             .put("sourceSha256",metadata.getString("sourceSha256"))
             .put("products",products)
