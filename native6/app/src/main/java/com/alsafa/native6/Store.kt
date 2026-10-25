@@ -633,12 +633,17 @@ class Store(val helper:StoreDb) {
     }
 
     /** Search watch colours as well as identity fields; every result remains a distinct SKU. */
-    fun searchCatalog(query:String):List<Product> {
+    fun searchCatalog(query:String,kind:String?=null):List<Product> {
         val term=query.trim()
         require(term.length<=200){"نص البحث طويل جداً"}
-        if(term.isEmpty()) return products()
+        require(kind==null || kind in setOf("watch","part")){"نوع صنف غير مدعوم"}
+        val sql=if(kind==null)
+            "SELECT * FROM products WHERE archived=0 ORDER BY name,id"
+        else "SELECT * FROM products WHERE archived=0 AND kind=? ORDER BY name,id"
+        val records=if(kind==null) rows(sql) else rows(sql,kind)
+        if(term.isEmpty()) return records.map(::toProduct)
         val normalized=term.lowercase()
-        return rows("SELECT * FROM products WHERE archived=0 ORDER BY name,id").filter { row ->
+        return records.filter { row ->
             listOf("name","barcode","brand","model").any { key ->
                 row[key].orEmpty().contains(term,ignoreCase=true)
             } || productColorLabelFromDetails(row.getValue("details")).lowercase().contains(normalized)
