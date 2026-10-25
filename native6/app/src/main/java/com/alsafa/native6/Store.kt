@@ -39,6 +39,8 @@ class Store(val helper:StoreDb) {
                 .onMalformedInput(java.nio.charset.CodingErrorAction.REPORT)
                 .onUnmappableCharacter(java.nio.charset.CodingErrorAction.REPORT)
             val payload=decoder.decode(java.nio.ByteBuffer.wrap(output.toByteArray())).toString()
+            require(payload.isNotBlank()) { "سجل أرشيف فارغ" }
+            org.json.JSONTokener(payload).nextValue()
             mapOf("legacy_id" to id,"payload" to payload)
         }
     }
