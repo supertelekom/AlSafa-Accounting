@@ -73,10 +73,15 @@ object LegacyInvoiceSnapshot {
         LegacyArchivedDebtReport.verifyArchiveCounts(store)
         val all=store.rows("SELECT legacy_id,payload FROM legacy_records WHERE category=? ORDER BY legacy_id",section)
         val matches=mutableListOf<JSONObject>()
+        val seenInvoiceIds=hashSetOf<String>()
         val outstanding=linkedMapOf<String,BigDecimal>()
         val query=term.trim()
         for(row in all) {
             val original=JSONObject(row.getValue("payload"))
+            val invoiceId=original.optString("id").trim()
+            require(invoiceId.isNotEmpty() && seenInvoiceIds.add(invoiceId)) {
+                "معرف فاتورة تاريخية مفقود أو مكرر: $section"
+            }
             val date=original.optString("date").take(10)
             if(from.isNotBlank() && (date.isBlank() || date<from)) continue
             if(to.isNotBlank() && (date.isBlank() || date>to)) continue
