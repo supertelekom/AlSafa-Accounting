@@ -1156,7 +1156,7 @@ open class MainActivity:Activity() {
                 val q=qty.text.toString().toLong()
                 require(q>0){"الكمية يجب أن تكون موجبة"}
                 require(q<=store.product(p.id).stock){"الكمية المطلوبة أكبر من المخزون المتاح"}
-                require(basket.isEmpty()||basketCurrency==p.currency){"اختر أصنافاً بنفس العملة"}
+                require(basket.isEmpty()||basketCurrency==p.currency){"لا يمكن خلط عملات مختلفة في الفاتورة نفسها. أتمم الفاتورة الحالية أو فرّغ السلة أولاً."}
                 val unit=amount(price,p.currency)
                 require(unit>=0L){"سعر البيع لا يمكن أن يكون سالباً"}
                 val previous=basket.indexOfFirst { it.productId==p.id }
