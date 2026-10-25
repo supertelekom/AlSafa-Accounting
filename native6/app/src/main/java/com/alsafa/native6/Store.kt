@@ -15,8 +15,7 @@ class Store(val helper:StoreDb) {
     @Synchronized fun <T> transaction(block:()->T):T { if(db.inTransaction()) return block(); db.beginTransaction();try { val result=block(); db.setTransactionSuccessful();return result } finally { db.endTransaction() } }
     fun rows(sql:String,vararg args:String):List<Map<String,String>> = db.rawQuery(sql,args).use { c -> buildList { while(c.moveToNext()) add(c.columnNames.indices.associate { c.getColumnName(it) to (c.getString(it)?:"") }) } }
     /** Read legacy JSON without ever placing an entire photo-bearing row in CursorWindow. */
-    fun legacyRows(category:String):List<Map<String,String>> {
-        val ids=rows("SELECT legacy_id,length(CAST(payload AS BLOB)) AS bytes FROM legacy_records WHERE category=? ORDER BY CAST(substr(legacy_id,1,instr(legacy_id,':')-1) AS INTEGER)",category)
+    private fun decodeLegacyRecords(category:String,ids:List<Map<String,String>>):List<Map<String,String>> {
         return ids.map { record ->
             val id=record.getValue("legacy_id")
             val size=record.getValue("bytes").toLong()
@@ -43,35 +42,15 @@ class Store(val helper:StoreDb) {
             mapOf("legacy_id" to id,"payload" to payload)
         }
     }
+    fun legacyRows(category:String):List<Map<String,String>> {
+        val ids=rows("SELECT legacy_id,length(CAST(payload AS BLOB)) AS bytes FROM legacy_records WHERE category=? ORDER BY CAST(substr(legacy_id,1,instr(legacy_id,':')-1) AS INTEGER)",category)
+        return decodeLegacyRecords(category,ids)
+    }
     fun legacyPage(category:String,term:String,limit:Int,offset:Int):List<Map<String,String>> {
         require(limit in 1..100 && offset>=0)
         val ids=if(term.isBlank()) rows("SELECT legacy_id,length(CAST(payload AS BLOB)) AS bytes FROM legacy_records WHERE category=? ORDER BY rowid DESC LIMIT ? OFFSET ?",category,limit.toString(),offset.toString())
             else rows("SELECT legacy_id,length(CAST(payload AS BLOB)) AS bytes FROM legacy_records WHERE category=? AND instr(payload,?)>0 ORDER BY rowid DESC LIMIT ? OFFSET ?",category,term,limit.toString(),offset.toString())
-        return ids.map { record ->
-            val id=record.getValue("legacy_id")
-            val size=record.getValue("bytes").toLong()
-            require(size>=0 && size<=128L*1024*1024) { "حجم سجل الأرشيف غير صالح" }
-            val output=java.io.ByteArrayOutputStream()
-            var byteOffset=0L
-            while(byteOffset<size) {
-                val count=minOf(8192L,size-byteOffset).toInt()
-                db.rawQuery(
-                    "SELECT substr(CAST(payload AS BLOB),?,?) FROM legacy_records WHERE category=? AND legacy_id=?",
-                    arrayOf((byteOffset+1).toString(),count.toString(),category,id)
-                ).use { cursor ->
-                    require(cursor.moveToFirst() && !cursor.isNull(0)) { "سجل أرشيف مفقود" }
-                    val chunk=cursor.getBlob(0)
-                    require(chunk.size==count) { "سجل أرشيف غير مكتمل" }
-                    output.write(chunk)
-                }
-                byteOffset+=count
-            }
-            val decoder=Charsets.UTF_8.newDecoder()
-                .onMalformedInput(java.nio.charset.CodingErrorAction.REPORT)
-                .onUnmappableCharacter(java.nio.charset.CodingErrorAction.REPORT)
-            val payload=decoder.decode(java.nio.ByteBuffer.wrap(output.toByteArray())).toString()
-            mapOf("legacy_id" to id,"payload" to payload)
-        }
+        return decodeLegacyRecords(category,ids)
     }
     fun scalar(sql:String,vararg args:String):Long = db.rawQuery(sql,args).use { cursor ->
         if(!cursor.moveToFirst() || cursor.isNull(0)) 0L
