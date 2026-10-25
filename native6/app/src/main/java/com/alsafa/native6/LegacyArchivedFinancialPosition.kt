@@ -129,6 +129,13 @@ object LegacyArchivedFinancialPosition {
         }
         val returnTotals=JSONObject()
         val returnCashEffects=JSONObject()
+        val invoiceIds=mapOf(
+            "sales" to store.rows("SELECT legacy_id FROM legacy_records WHERE category=?", "sales")
+                .map { it.getValue("legacy_id") }.toSet(),
+            "purchases" to store.rows("SELECT legacy_id FROM legacy_records WHERE category=?", "purchases")
+                .map { it.getValue("legacy_id") }.toSet(),
+            "repairs" to store.rows("SELECT id FROM repairs")
+                .map { it.getValue("id") }.toSet())
         val seenReturns=hashSetOf<String>()
         for(record in returns) {
             val row=JSONObject(record.getValue("payload"))
@@ -140,6 +147,14 @@ object LegacyArchivedFinancialPosition {
             val referenceId=row.optString("referenceId").trim()
             require(referenceType in setOf("sale","sales","repair","repairs","purchase","purchases") && referenceId.isNotEmpty()) {
                 "مرجع مرتجع غير معروف"
+            }
+            val section=when(referenceType) {
+                "sale","sales" -> "sales"
+                "purchase","purchases" -> "purchases"
+                else -> "repairs"
+            }
+            require(referenceId in invoiceIds.getValue(section)) {
+                "مرتجع مرتبط بفاتورة أو صيانة غير موجودة: $id"
             }
             val refund=cents(row,"refundAmount")
             val extra=cents(row,"extraCollected")
