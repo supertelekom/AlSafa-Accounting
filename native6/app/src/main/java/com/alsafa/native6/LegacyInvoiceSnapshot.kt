@@ -86,6 +86,13 @@ object LegacyInvoiceSnapshot {
             require(runCatching { java.time.LocalDate.parse(date) }.isSuccess) {
                 "تاريخ فاتورة تاريخية غير صالح: $invoiceId"
             }
+            val currency=original.optString("currency","USD")
+            require(currency in setOf("USD","TRY","SYP")){"عملة فاتورة قديمة غير معروفة: $invoiceId"}
+            val total=original.optString("total","0").toBigDecimalOrNull()
+            val paid=original.optString("paid","0").toBigDecimalOrNull()
+            require(total!=null && paid!=null && total>=BigDecimal.ZERO &&
+                paid>=BigDecimal.ZERO && paid<=total){"قيمة فاتورة قديمة غير صالحة: $invoiceId"}
+            val remaining=total-paid
             if(from.isNotBlank() && (date.isBlank() || date<from)) continue
             if(to.isNotBlank() && (date.isBlank() || date>to)) continue
             if(query.isNotBlank()) {
@@ -100,13 +107,6 @@ object LegacyInvoiceSnapshot {
                 }
                 if(!found && !itemFound) continue
             }
-            val currency=original.optString("currency","USD")
-            require(currency in setOf("USD","TRY","SYP")){"عملة فاتورة قديمة غير معروفة"}
-            val total=original.optString("total","0").toBigDecimalOrNull()
-            val paid=original.optString("paid","0").toBigDecimalOrNull()
-            require(total!=null && paid!=null && total>=BigDecimal.ZERO &&
-                paid>=BigDecimal.ZERO && paid<=total){"قيمة فاتورة قديمة غير صالحة"}
-            val remaining=total-paid
             outstanding[currency]=(outstanding[currency] ?: BigDecimal.ZERO)+remaining
             matches.add(JSONObject().put("archiveKey",row.getValue("legacy_id"))
                 .put("id",original.optString("id")).put("invoiceNo",original.optString("invoiceNo"))
