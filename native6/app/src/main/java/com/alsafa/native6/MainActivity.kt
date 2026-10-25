@@ -3059,20 +3059,14 @@ button("＋ مورد"){form("مورد جديد"){box->val n=field("الاسم",b
             button("فحص جاهزية هذه النسخة",body) {
                 val hash=item.getValue("hash")
                 work {
-                    val report=store.db.rawQuery("SELECT payload FROM legacy_imports WHERE hash=?",arrayOf(hash)).use { cursor->
-                        require(cursor.moveToFirst()){"لم يُعثر على النسخة"}
-                        LegacyReadiness.inspect(cursor.getString(0))
-                    }
+                    val report=LegacyReadiness.inspect(Backup(this,store).readStagedLegacy(hash))
                     runOnUiThread { AlertDialog.Builder(this).setTitle("تدقيق النسخة القديمة").setMessage(report).setPositiveButton("إغلاق",null).show() }
                 }
             }
             button("عرض تدقيق الحركات المالية القديمة",body) {
                 val hash=item.getValue("hash")
                 work {
-                    val report=store.db.rawQuery("SELECT payload FROM legacy_imports WHERE hash=?",arrayOf(hash)).use { cursor->
-                        require(cursor.moveToFirst()){"النسخة غير موجودة"}
-                        LegacyFinancialAudit.inspect(cursor.getString(0))
-                    }
+                    val report=LegacyFinancialAudit.inspect(Backup(this,store).readStagedLegacy(hash))
                     runOnUiThread {
                         if(!isFinishing&&!isDestroyed) AlertDialog.Builder(this)
                             .setTitle("السجلات المالية القديمة — قراءة فقط")
@@ -3083,12 +3077,7 @@ button("＋ مورد"){form("مورد جديد"){box->val n=field("الاسم",b
             button("مطابقة مراجع الفواتير وحركات الصناديق",body) {
                 val hash=item.getValue("hash")
                 work {
-                    val report=store.db.rawQuery(
-                        "SELECT payload FROM legacy_imports WHERE hash=?",arrayOf(hash)
-                    ).use { cursor ->
-                        require(cursor.moveToFirst()){"النسخة غير موجودة"}
-                        LegacyReconciliation.inspect(cursor.getString(0))
-                    }
+                    val report=LegacyReconciliation.inspect(Backup(this,store).readStagedLegacy(hash))
                     runOnUiThread {
                         if(!isFinishing&&!isDestroyed) AlertDialog.Builder(this)
                             .setTitle("مطابقة المراجع القديمة — قراءة فقط")
@@ -3099,10 +3088,7 @@ button("＋ مورد"){form("مورد جديد"){box->val n=field("الاسم",b
             button("استعادة جزئية من نسخة الصفا القديمة (لا تشمل الأرصدة)",body) {
                 val hash=item.getValue("hash")
                 work {
-                    val payload=store.db.rawQuery("SELECT payload FROM legacy_imports WHERE hash=?",arrayOf(hash)).use { cursor->
-                        require(cursor.moveToFirst()){"النسخة غير موجودة"}
-                        cursor.getString(0)
-                    }
+                    val payload=Backup(this,store).readStagedLegacy(hash)
                     val preview=LegacySnapshotImport.quickPreview(payload)
                     runOnUiThread {
                         if(!isFinishing&&!isDestroyed) AlertDialog.Builder(this)
