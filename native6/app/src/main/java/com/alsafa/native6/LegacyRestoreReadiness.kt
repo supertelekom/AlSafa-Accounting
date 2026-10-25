@@ -15,8 +15,10 @@ object LegacyRestoreReadiness {
         val returns=LegacyReturnLinkAudit.inspect(payload)
         val closings=LegacyClosingContinuity.inspect(payload)
         val vaults=LegacyVaultSnapshot.inspect(payload)
+        val financialWarnings=LegacyImportPreflight.inspectFinancialHistory(payload)
         val blockers=JSONArray()
         fun flag(condition:Boolean,code:String) { if(condition) blockers.put(code) }
+        flag(financialWarnings.isNotEmpty(),"FINANCIAL_HISTORY_INVALID")
         flag(payment.getJSONArray("missingReferenceRows").length()>0,"PAYMENT_REFERENCE_MISSING")
         flag(payment.getJSONArray("unresolvedReferenceRows").length()>0,"PAYMENT_REFERENCE_UNKNOWN")
         flag(payment.getJSONArray("invalidAmountRows").length()>0,"PAYMENT_AMOUNT_INVALID")
