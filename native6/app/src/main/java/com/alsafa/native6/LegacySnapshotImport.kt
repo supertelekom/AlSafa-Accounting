@@ -246,9 +246,9 @@ object LegacySnapshotImport {
                     "أرشيف $category غير مكتمل: $actual"
                 }
             }
-            // Verify every critical financial archive row byte-for-byte as normalized JSON
-            // before committing; archived money must never be silently lost or replaced.
-            for (category in expectedFinancialCategories) {
+            // Verify every archived source row, including financial and nonfinancial history,
+            // before committing; source history must never be silently lost or replaced.
+            for (category in historical) {
                 val source=d.getJSONArray(category)
                 for (i in 0 until source.length()) {
                     val raw=source.get(i)
@@ -257,11 +257,11 @@ object LegacySnapshotImport {
                     val saved=store.rows(
                         "SELECT payload FROM legacy_records WHERE category=? AND legacy_id=?",
                         category,archiveId
-                    ).singleOrNull() ?: error("سجل مالي قديم مفقود: $category / $i")
+                    ).singleOrNull() ?: error("سجل قديم مفقود: $category / $i")
                     val expected=if(raw is JSONObject) raw.toString()
                         else JSONObject().put("_legacyValue",raw).toString()
                     require(saved.getValue("payload")==expected) {
-                        "اختلاف في أرشيف السجل المالي: $category / $i"
+                        "اختلاف في أرشيف السجل: $category / $i"
                     }
                 }
             }
