@@ -128,6 +128,7 @@ object LegacyArchivedFinancialPosition {
             "المرتجعات التاريخية المؤرشفة غير مكتملة"
         }
         val returnTotals=JSONObject()
+        val returnCashEffects=JSONObject()
         val seenReturns=hashSetOf<String>()
         for(record in returns) {
             val row=JSONObject(record.getValue("payload"))
@@ -149,6 +150,9 @@ object LegacyArchivedFinancialPosition {
                 .movePointRight(2).longValueExact()==expectedCash) {
                 "أثر المرتجع النقدي لا يطابق المبلغ المسترد والتحصيل الإضافي: $id"
             }
+            val cashKey="$currency|cashEffect"
+            val previousCash=returnCashEffects.optString(cashKey,"0").toBigDecimal()
+            returnCashEffects.put(cashKey,previousCash.add(cashEffect).toPlainString())
             val fieldNames=listOf("refundAmount","debtReduction","netCreditAmount")
             for(field in fieldNames) {
                 val amount=row.optString(field,"0").toBigDecimalOrNull()
@@ -161,6 +165,7 @@ object LegacyArchivedFinancialPosition {
         }
         return JSONObject()
             .put("returnEffectsAlreadyInSource",returnTotals)
+            .put("returnCashEffectsAlreadyInSource",returnCashEffects)
             .put("supplierOpeningDebtBalances",supplierOpening)
             .put("supplierLedgerByKindCurrency",ledgerKinds)
             .put("sourceSha256",metadata.optString("sourceSha256"))
