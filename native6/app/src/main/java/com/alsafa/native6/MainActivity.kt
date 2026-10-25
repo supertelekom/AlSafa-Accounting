@@ -817,8 +817,8 @@ open class MainActivity:Activity() {
         else -> "image/jpeg"
     }
     private fun products(onlyKind:String?="watch"){
-        sectionHeading(if(onlyKind=="part") "قطع الصيانة" else "المنتجات وقطع الصيانة","إدارة الأصناف والباركود والكميات والجرد")
-        button(if(onlyKind=="part") "＋ إضافة قطعة صيانة" else "＋ إضافة منتج / قطعة"){productForm(defaultKind=onlyKind)}
+        sectionHeading(if(onlyKind=="part") "قطع الصيانة" else "المنتجات","إدارة الأصناف والباركود والكميات والجرد")
+        button(if(onlyKind=="part") "＋ إضافة قطعة صيانة" else "＋ إضافة ساعة"){productForm(defaultKind=onlyKind)}
         button("▣ مسح باركود للبحث"){startActivityForResult(Intent(this,BarcodeScanActivity::class.java),65)}
         val shortcuts=LinearLayout(this).apply { orientation=LinearLayout.HORIZONTAL;layoutDirection=View.LAYOUT_DIRECTION_RTL }
         fun shortcut(label:String,route:String){
