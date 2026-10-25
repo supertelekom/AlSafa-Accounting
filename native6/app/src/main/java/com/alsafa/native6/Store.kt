@@ -39,6 +39,32 @@ class Store(val helper:StoreDb) {
             val decoder=Charsets.UTF_8.newDecoder()\n                .onMalformedInput(java.nio.charset.CodingErrorAction.REPORT)\n                .onUnmappableCharacter(java.nio.charset.CodingErrorAction.REPORT)\n            val payload=decoder.decode(java.nio.ByteBuffer.wrap(output.toByteArray())).toString()\n            mapOf("legacy_id" to id,"payload" to payload)
         }
     }
+    fun legacyPage(category:String,term:String,limit:Int,offset:Int):List<Map<String,String>> {
+        require(limit in 1..100 && offset>=0)
+        val ids=if(term.isBlank()) rows("SELECT legacy_id,length(CAST(payload AS BLOB)) AS bytes FROM legacy_records WHERE category=? ORDER BY rowid DESC LIMIT ? OFFSET ?",category,limit.toString(),offset.toString())
+            else rows("SELECT legacy_id,length(CAST(payload AS BLOB)) AS bytes FROM legacy_records WHERE category=? AND instr(payload,?)>0 ORDER BY rowid DESC LIMIT ? OFFSET ?",category,term,limit.toString(),offset.toString())
+        return ids.map { record ->
+            val id=record.getValue("legacy_id")
+            val size=record.getValue("bytes").toLong()
+            require(size>=0 && size<=128L*1024*1024) { "حجم سجل الأرشيف غير صالح" }
+            val output=java.io.ByteArrayOutputStream()
+            var offset=0L
+            while(offset<size) {
+                val count=minOf(8192L,size-offset).toInt()
+                db.rawQuery(
+                    "SELECT substr(CAST(payload AS BLOB),?,?) FROM legacy_records WHERE category=? AND legacy_id=?",
+                    arrayOf((offset+1).toString(),count.toString(),category,id)
+                ).use { cursor ->
+                    require(cursor.moveToFirst() && !cursor.isNull(0)) { "سجل أرشيف مفقود" }
+                    val chunk=cursor.getBlob(0)
+                    require(chunk.size==count) { "سجل أرشيف غير مكتمل" }
+                    output.write(chunk)
+                }
+                offset+=count
+            }
+            val decoder=Charsets.UTF_8.newDecoder()\n                .onMalformedInput(java.nio.charset.CodingErrorAction.REPORT)\n                .onUnmappableCharacter(java.nio.charset.CodingErrorAction.REPORT)\n            val payload=decoder.decode(java.nio.ByteBuffer.wrap(output.toByteArray())).toString()\n            mapOf("legacy_id" to id,"payload" to payload)
+        }
+    }
     fun scalar(sql:String,vararg args:String):Long = db.rawQuery(sql,args).use { cursor ->
         if(!cursor.moveToFirst() || cursor.isNull(0)) 0L
         else {
