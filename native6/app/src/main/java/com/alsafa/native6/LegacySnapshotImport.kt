@@ -480,6 +480,31 @@ object LegacySnapshotImport {
                 }
             }
             require(createdImages.size==expectedPhotos) { "عدد الصور المستعادة لا يطابق النسخة الأصلية" }
+            for(section in listOf("products","maintenanceParts")) {
+                val array=d.getJSONArray(section)
+                for(index in 0 until array.length()) {
+                    val original=array.getJSONObject(index)
+                    val id=original.getString("id").trim()
+                    val count=listOf("photo","photo2","photo3")
+                        .count { original.optString(it).startsWith("data:image/") }
+                    if(count==0) continue
+                    val stored=store.rows(
+                        "SELECT json_array_length(json_extract(details,'$.imagePaths')) AS photo_count, "+
+                            "json_extract(details,'$.imagePath') AS main_photo FROM products WHERE id=?",id
+                    ).singleOrNull() ?: error("صور منتج مفقودة: $id")
+                    require(stored.getValue("photo_count").toInt()==count &&
+                        stored.getValue("main_photo").isNotBlank()) { "صور المنتج غير مرتبطة: $id" }
+                }
+            }
+            for(index in 0 until repairs.length()) {
+                val original=repairs.getJSONObject(index)
+                if(!original.optString("watchPhoto").startsWith("data:image/")) continue
+                val id=original.getString("id").trim()
+                val stored=store.rows(
+                    "SELECT json_extract(details,'$.imagePath') AS photo FROM repairs WHERE id=?",id
+                ).singleOrNull() ?: error("صورة صيانة مفقودة: $id")
+                require(stored.getValue("photo").isNotBlank()) { "صورة الصيانة غير مرتبطة: $id" }
+            }
             val photoCount=createdImages.size
             val receipt=LegacyRestoreReceipt.inspect(store)
             val financialSummary=runCatching { LegacyArchivedFinancialPosition.summary(store) }
