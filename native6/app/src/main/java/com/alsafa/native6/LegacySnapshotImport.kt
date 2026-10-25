@@ -215,7 +215,7 @@ object LegacySnapshotImport {
                     restored.getValue("phone")==original.optString("phone") &&
                     restored.getValue("watch")==original.optString("watch") &&
                     restored.getValue("problem")==original.optString("problem") &&
-                    JSONObject(restored.getValue("details")).similar(original)) {
+                    restored.getValue("details")==original.toString()) {
                     "بيانات طلب الصيانة غير مطابقة بعد الاستعادة: $i"
                 }
             }
