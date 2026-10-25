@@ -1253,6 +1253,12 @@ open class MainActivity:Activity() {
         button("بحث سريع عن صنف بالاسم أو الباركود أو REF") {
             chooseProduct(inStockOnly=true){p->addSaleProduct(p)}
         }
+        if(basket.isNotEmpty()) button("تفريغ سلة المبيع") {
+            AlertDialog.Builder(this).setTitle("تفريغ السلة")
+                .setMessage("سيتم حذف الأصناف من السلة الحالية فقط، دون تسجيل فاتورة أو تعديل المخزون.")
+                .setNegativeButton("رجوع",null)
+                .setPositiveButton("تفريغ"){_,_->basket.clear();render()}.show()
+        }
         if(basket.isNotEmpty()) {
             val estimatedCost=basket.fold(0L){sum,item->
                 val product=store.product(item.productId)
