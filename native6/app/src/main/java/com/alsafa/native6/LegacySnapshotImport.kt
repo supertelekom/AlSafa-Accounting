@@ -63,6 +63,28 @@ object LegacySnapshotImport {
         return LegacyBackupFreshness.summary(payload) + "\n" + openingWorksheet + "\n" + "جاهزية أرشفة النسخة: ${if(readiness.getBoolean("archiveImportPermitted")) "نعم" else "لا"}، عوائق التفعيل المالي: ${readiness.getInt("financialBlockerCount")}، حركات نقدية ذات كسور دقيقة: $vaultPrecisionWarnings، التفعيل المالي: غير مسموح قبل المطابقة. أخطاء الاستيراد: $blocking، قيم أسعار ستُقرب للسنت مع حفظ الأصل: $roundedPrices، تحذيرات مالية مؤرشفة: $warnings، فروقات إقفال فعلية: $cashIssues، تواريخ إقفال غير صالحة: $invalidClosingDates، تواريخ إقفال مكررة: $duplicateClosingDates، دفعات تحتاج مطابقة مرجع: $brokenPaymentLinks، دفعات بعملة قبض مختلفة: $crossCurrencyPaymentCount، دفعات مطابقة لحركات النقد: $matchedCashPayments، غير مطابقة: $unmatchedCashPayments، ملتبسة: $ambiguousCashPayments، مرتجعات تحتاج مطابقة مرجع: $brokenReturnLinks، سداد موردين مطابق للخزنة: $matchedSupplierPayments، غير مطابق: $unmatchedSupplierPayments. بصمة النسخة: ${manifest.getString("sha256").take(16)}…، إجمالي السجلات: ${manifest.getLong("recordCount")}. مخزون الساعات: ${products.length()}، قطع الصيانة: ${parts.length()}، الموردون: ${suppliers.length()}، سجل الصيانة: ${repairs.length()}. " +
             "سيُنقل المخزون والموردون والصيانة، وتُحفظ الفواتير والحركات القديمة كأرشيف قابل للقراءة فقط، دون احتسابها في الأرصدة أو الأرباح."
     }
+    /**
+     * Fast confirmation for large backups. The actual import still performs
+     * inventory and financial checks and verifies every archived record.
+     */
+    fun quickPreview(payload:String):String {
+        val root=JSONObject(payload)
+        require(root.optString("format")=="alsafa-accounting-backup" &&
+            root.optInt("formatVersion")==2) { "صيغة النسخة الاحتياطية غير مدعومة" }
+        val data=root.getJSONObject("data")
+        val sections=listOf("products","maintenanceParts","suppliers","repairs",
+            "sales","purchases","payments","cashTransactions","supplierLedger",
+            "partnerWithdrawals","dailyClosings","returns")
+        val counts=sections.joinToString("\\n") { section ->
+            "$section: ${data.optJSONArray(section)?.length() ?: 0}"
+        }
+        return "نسخة بتاريخ: ${root.optString("exportedAt")}\\n" +
+            "الإصدار: ${root.optString("appVersion")}\\n" +
+            counts + "\\n\\n" +
+            "هذه معاينة سريعة فقط. ستجري الاستعادة الفحوصات التفصيلية " +
+            "داخل عملية الحفظ. لن تُفعّل الأرصدة النقدية والديون والأرباح " +
+            "التاريخية تلقائياً، بل ستُحفظ في أرشيف للقراءة والمطابقة."
+    }
     private fun requireEmptyAccounting(store:Store) {
         val tables=listOf("legacy_records","repairs","products","suppliers","events",
             "invoices","journal","receipts","stock_moves","returns","refunds","closings")
