@@ -15,6 +15,7 @@ object LegacyArchivedDebtReport {
             "SELECT value FROM settings WHERE key=?", "legacy_snapshot_import"
         ).singleOrNull() ?: throw IllegalStateException("بيانات تعريف استيراد النسخة القديمة مفقودة أو مكررة")
         val metadata = JSONObject(imported.getValue("value"))
+        require(metadata.optString("scope") == "inventory_suppliers_repairs_only") { "نطاق الاستيراد التاريخي غير معروف" }
         require(metadata.optString("financialPostingStatus") == "NOT_POSTED") {
             "يجب استخدام تقرير الأرشيف فقط قبل تفعيل الحسابات التاريخية"
         }
