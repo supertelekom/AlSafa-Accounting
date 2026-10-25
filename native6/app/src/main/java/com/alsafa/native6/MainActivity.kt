@@ -386,10 +386,16 @@ open class MainActivity:Activity() {
         val unpaidTo=field("إلى تاريخ (YYYY-MM-DD)",body)
         val unpaidCurrency=select("عملة الفواتير غير المسددة",listOf("جميع العملات","USD","TRY","SYP"),body)
         val unpaidPage=field("رقم الصفحة (1، 2، 3...)",body)
+        val supplierPage=field("صفحة الموردين القديمة (1، 2، 3...)",body)
         button("الموردون من النسخة القديمة (قراءة فقط)",body) {
             val searchText=search.text.toString().trim()
+            val pageNumber=supplierPage.text.toString().trim().ifEmpty { "1" }.toIntOrNull()
+            if(pageNumber==null || pageNumber !in 1..100000) {
+                AlertDialog.Builder(this).setMessage("رقم صفحة الموردين غير صالح").setPositiveButton("إغلاق",null).show()
+                return@button
+            }
             work {
-                val report=LegacySupplierArchive.page(store,search=searchText)
+                val report=LegacySupplierArchive.page(store,search=searchText,offset=(pageNumber-1)*30)
                 val records=report.getJSONArray("records")
                 val lines=(0 until records.length()).joinToString("\\n") { index ->
                     val item=records.getJSONObject(index)
