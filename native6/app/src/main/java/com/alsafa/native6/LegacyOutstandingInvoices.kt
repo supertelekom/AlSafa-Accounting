@@ -24,12 +24,14 @@ object LegacyOutstandingInvoices {
             "SELECT legacy_id,payload FROM legacy_records WHERE category=? ORDER BY legacy_id", section
         )
         val matches = ArrayList<JSONObject>()
+        var scanned = 0
         val pageRows = JSONArray()
         val outstandingTotals = linkedMapOf<String, BigDecimal>()
         val search = query.trim()
         require(search.length <= 200) { "عبارة البحث طويلة جداً" }
         val seen = HashSet<String>()
         for (row in rows) {
+            scanned++
             val invoice = JSONObject(row.getValue("payload"))
             val id = invoice.optString("id").trim()
             require(id.isNotEmpty() && seen.add(id)) { "معرف فاتورة مفقود أو مكرر" }
@@ -92,6 +94,7 @@ object LegacyOutstandingInvoices {
             .put("query", query)
             .put("outstandingTotalsByCurrency", totalsJson)
             .put("totalOutstandingInvoices", matches.size)
+            .put("scannedInvoices", scanned)
             .put("offset", offset)
             .put("limit", limit)
             .put("records", pageRows)
