@@ -14,7 +14,9 @@ object LegacyImportPreflight {
         val data=root.getJSONObject("data")
         require(root.optInt("formatVersion")==2){"Unsupported legacy backup version"}
         val problems=mutableListOf<String>()
-        val ids=HashSet<String>()
+        val inventoryIds=HashSet<String>()
+        val supplierIds=HashSet<String>()
+        val repairIds=HashSet<String>()
         val barcodes=HashSet<String>()
         for(section in listOf("products","maintenanceParts","suppliers","repairs")) {
             val items=data.optJSONArray(section)
@@ -26,7 +28,12 @@ object LegacyImportPreflight {
                 val item=items.optJSONObject(i)
                 if(item==null) { problems.add("$section[$i]: invalid record");continue }
                 val id=item.optString("id").trim()
-                if(id.isEmpty() || !ids.add(id)) problems.add("$section[$i]: missing or duplicate ID")
+                val namespace=when(section) {
+                    "products", "maintenanceParts" -> inventoryIds
+                    "suppliers" -> supplierIds
+                    else -> repairIds
+                }
+                if(id.isEmpty() || !namespace.add(id)) problems.add("$section[$i]: missing or duplicate ID")
                 if(section=="products" || section=="maintenanceParts") {
                     val barcode=item.optString("barcode").trim()
                     if(barcode.isNotEmpty() && !barcodes.add(barcode))
