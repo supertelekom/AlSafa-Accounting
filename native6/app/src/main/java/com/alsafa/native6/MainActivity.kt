@@ -1103,6 +1103,13 @@ open class MainActivity:Activity() {
             "unisex","للجنسين" -> 3
             else -> 0
         })
+        val displayType=select("نوع العرض",listOf("غير محدد","عقارب","رقمية","عقارب ورقمية"),box)
+        displayType.setSelection(when(saved.optString("displayType").lowercase()) {
+            "analog","عقارب" -> 1
+            "digital","رقمية" -> 2
+            "analog-digital","عقارب ورقمية" -> 3
+            else -> 0
+        })
         val movement=field("نوع الحركة",box,saved.optString("movement"))
         val warranty=field("الضمان بالأشهر",box,saved.optString("warrantyMonths"))
         val watchType=select("نوع الساعة",listOf("عادية","إسلامية"),box)
@@ -1118,6 +1125,7 @@ open class MainActivity:Activity() {
             val cc=caseColor.text.toString();val sc=strap.text.toString()
             val wt=if(watchType.selectedItemPosition==1) "إسلامية" else "عادية"
             val gen=listOf("","male","female","unisex")[gender.selectedItemPosition]
+            val disp=listOf("","analog","digital","analog-digital")[displayType.selectedItemPosition]
             val mv=movement.text.toString().trim()
             val warr=warranty.text.toString().trim()
             require(listOf(br,ref,desc,dc,cc,sc).all { it.length<=500 }){"تفاصيل المنتج طويلة جداً"}
@@ -1126,12 +1134,12 @@ open class MainActivity:Activity() {
                     val details=org.json.JSONObject()
                         .put("customerDescription",desc.trim()).put("dialColor",dc.trim())
                         .put("caseColor",cc.trim()).put("strapColor",sc.trim())
-                        .put("watchType",wt).put("gender",gen).put("movement",mv).put("warrantyMonths",warr).toString()
+                        .put("watchType",wt).put("gender",gen).put("displayType",disp).put("movement",mv).put("warrantyMonths",warr).toString()
                     store.addProduct(n,b,c,value,costValue,q,
                         if(kind?.selectedItemPosition==1)"part" else "watch",
                         details=details,brand=br,model=ref)
                 } else {
-                    store.editProductFull(p.id,n,b,value,br,ref,desc,dc,cc,sc,wt,gender=gen,movement=mv,warrantyMonths=warr)
+                    store.editProductFull(p.id,n,b,value,br,ref,desc,dc,cc,sc,wt,gender=gen,displayType=disp,movement=mv,warrantyMonths=warr)
                 }
             }
         }
