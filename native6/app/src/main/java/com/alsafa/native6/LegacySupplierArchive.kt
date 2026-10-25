@@ -28,6 +28,9 @@ object LegacySupplierArchive {
             require(id.isNotEmpty() && ids.add(id) && id == row.getValue("legacy_id")) {
                 "معرف مورد قديم مفقود أو غير مطابق"
             }
+            require(store.scalar("SELECT count(*) FROM suppliers WHERE id=?", id) == 1L) {
+                "سجل المورد الأصلي غير موجود في قاعدة البيانات"
+            }
             val name = original.optString("name")
             val phone = original.optString("phone")
             if (query.isNotEmpty() && !listOf(id, name, phone).any {
