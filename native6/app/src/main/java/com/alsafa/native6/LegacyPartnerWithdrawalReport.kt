@@ -32,7 +32,7 @@ object LegacyPartnerWithdrawalReport {
                 ?: throw IllegalArgumentException("مبلغ سحب غير صالح في السجل $i")
             require(amount>=BigDecimal.ZERO) { "مبلغ سحب سالب في السجل $i" }
             val partner=row.optString("partnerId").ifBlank {
-                row.optString("partner").ifBlank { row.optString("person","غير محدد") }
+                row.optString("partnerName").ifBlank { row.optString("partner").ifBlank { row.optString("person","غير محدد") } }
             }
             val key="$partner|$currency"
             grouped[key]=(grouped[key] ?: BigDecimal.ZERO)+amount
