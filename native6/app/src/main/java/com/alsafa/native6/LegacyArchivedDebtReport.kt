@@ -65,6 +65,15 @@ object LegacyArchivedDebtReport {
                 .put("invoiceCount", rows.size)
                 .put("currencies", sectionReport))
         }
+        val pending = listOf("payments", "supplierLedger", "returns", "cashTransactions", "partnerWithdrawals", "dailyClosings")
+        val archiveCounts = JSONObject()
+        for (section in pending) {
+            val expected = metadata.optJSONObject("sourceCollections")?.optInt(section, -1) ?: -1
+            val actual = store.scalar("SELECT count(*) FROM legacy_records WHERE category=?", section)
+            require(expected >= 0 && actual == expected.toLong()) { "$section: أرشيف مالي غير مكتمل" }
+            archiveCounts.put(section, actual)
+        }
+        report.put("relatedArchiveCounts", archiveCounts)
         return report.put("readOnly", true)
             .put("financialPosting", "NONE")
             .put("warning", "المرتجعات ودفتر الموردين تحتاج مطابقة قبل اعتماد هذه الأرصدة")
