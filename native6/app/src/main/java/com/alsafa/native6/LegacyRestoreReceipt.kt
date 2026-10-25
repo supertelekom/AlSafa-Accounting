@@ -93,6 +93,9 @@ object LegacyRestoreReceipt {
         }
         return JSONObject()
             .put("sourceSha256",metadata.getString("sourceSha256"))
+            .put("sourceExportedAt",metadata.optString("sourceExportedAt",""))
+            .put("sourceAppVersion",metadata.optString("sourceAppVersion",""))
+            .put("sourceRecordCount",metadata.optLong("sourceRecordCount",0L))
             .put("products",products)
             .put("maintenanceParts",parts)
             .put("suppliers",suppliers)
