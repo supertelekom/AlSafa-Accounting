@@ -1214,6 +1214,9 @@ open class MainActivity:Activity() {
                     }
                 }.setNegativeButton("رجوع",null).show()
         }
+        button("بحث سريع عن صنف بالاسم أو الباركود أو REF") {
+            chooseProduct(inStockOnly=true){p->addSaleProduct(p)}
+        }
         if(basket.isNotEmpty()) {
             val estimatedCost=basket.fold(0L){sum,item->
                 val product=store.product(item.productId)
