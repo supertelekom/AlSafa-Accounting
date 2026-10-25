@@ -389,7 +389,7 @@ open class MainActivity:Activity() {
         button("تدقيق أرصدة الخزنات القديمة",body) {
             work {
                 val report=LegacyCashActivationPlan.inspect(store)
-                val message=report.toString(2)
+                val message=LegacyCashReportFormatter.format(report)
                 runOnUiThread {
                     if(!isFinishing&&!isDestroyed) AlertDialog.Builder(this)
                         .setTitle("أرصدة الخزنات - دون ترحيل")
