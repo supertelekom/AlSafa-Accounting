@@ -99,7 +99,9 @@ object LegacySnapshotImport {
                     val qty=item.getLong("stock")
                     require(qty>=0 && price>=0 && cost>=0 && name.isNotEmpty()){"بيانات مخزون غير صالحة: $id"}
                     // Preserve all legacy metadata and embedded photos as JSON details.
-                    store.addProduct(name,barcode,currency,price,cost,qty,kind,item.toString(),id)
+                    store.addProduct(name,barcode,currency,price,cost,qty,kind,item.toString(),id,
+                        brand=item.optString("brand").take(500),
+                        model=item.optString("model").take(500))
                 }
             }
             for(i in 0 until suppliers.length()) {
