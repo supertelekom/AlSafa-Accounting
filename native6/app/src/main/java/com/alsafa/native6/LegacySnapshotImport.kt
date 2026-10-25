@@ -227,6 +227,12 @@ object LegacySnapshotImport {
             require(actualArchive==expectedArchive.toLong()) {
                 "عدد السجلات التاريخية المستعادة لا يطابق النسخة الأصلية: $actualArchive / $expectedArchive"
             }
+            for ((section,kind) in lists) {
+                val items=d.getJSONArray(section)
+                val sourceQuantity=(0 until items.length()).sumOf { i -> items.getJSONObject(i).getLong("stock") }
+                val importedQuantity=store.scalar("SELECT coalesce(sum(stock),0) FROM products WHERE kind=?",kind)
+                require(sourceQuantity==importedQuantity) { "مجموع كميات $section لا يطابق النسخة الأصلية" }
+            }
             require(store.scalar("SELECT count(*) FROM products WHERE kind=?", "watch")==d.getJSONArray("products").length().toLong()) {
                 "عدد الساعات المنقولة غير مطابق للنسخة الأصلية"
             }
