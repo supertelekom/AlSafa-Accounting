@@ -25,8 +25,8 @@ object LegacyInvoiceSnapshot {
         for(row in all) {
             val original=JSONObject(row.getValue("payload"))
             val date=original.optString("date")
-            if(from.isNotBlank() && date<from) continue
-            if(to.isNotBlank() && date>to) continue
+            if(from.isNotBlank() && (date.isBlank() || date<from)) continue
+            if(to.isNotBlank() && (date.isBlank() || date>to)) continue
             if(query.isNotBlank()) {
                 val fields=listOf("invoiceNo","customer","phone","supplierName","supplierInvoice","notes")
                 val found=fields.any { original.optString(it).contains(query,true) }
