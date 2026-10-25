@@ -404,7 +404,7 @@ open class MainActivity:Activity() {
                     val records=data.getJSONArray("records")
                     val lines=(0 until records.length()).joinToString("\\n") { index ->
                         val item=records.getJSONObject(index)
-                        "${item.optString("invoiceId")} | ${item.optString("date")} | ${item.optString("currency")} ${item.optString("outstandingSnapshot")}"
+                        "${item.optString("invoiceId")} | ${item.optString("date")} | ${item.optString("customer").ifBlank { item.optString("supplierName") }} | الإجمالي ${item.optString("total")} | المدفوع ${item.optString("paidSnapshot")} | المتبقي ${item.optString("outstandingSnapshot")} ${item.optString("currency")}"
                     }
                     return "$name: ${data.getInt("totalOutstandingInvoices")} فاتورة | صفحة $pageNumber | التالية: ${if(data.optBoolean("hasMore")) "متاحة" else "لا توجد"}\\n"+
                         "المتبقي بحسب العملة: ${data.getJSONObject("outstandingTotalsByCurrency")}\\n"+lines
