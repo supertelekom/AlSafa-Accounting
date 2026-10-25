@@ -350,7 +350,7 @@ open class MainActivity:Activity() {
         }
         scroll.addView(body)
         root.addView(scroll,LinearLayout.LayoutParams(-1,0,1f))
-        when(page){"home"->home();"simple"->simple();"advanced"->advanced();"products"->products();"inventory"->inventoryDashboard();"stock-history"->if(selectedProduct!=null)stockHistory(selectedProduct!!) else {text("لم يتم اختيار منتج لعرض حركاته.");button("العودة إلى المنتجات"){go("products")}};"stocktake-history"->stocktakeHistoryScreen();"sale"->sale();"invoices"->invoices();"vaults"->vaults();"suppliers"->suppliers();"repairs"->repairs();"reports"->reports();"period-reports"->periodReports();"trial-balance"->trialBalanceScreen();"account-ledger"->accountLedgerScreen();"journal-integrity"->journalIntegrityScreen();"structural-audit"->structuralAuditScreen();"partners"->partners();"backup"->backup();"legacy-audit"->legacyAudit();"legacy-history"->legacyHistory();"audit"->audit();else->{text("هذه الصفحة غير متاحة في النسخة الحالية.");button("العودة إلى الرئيسية"){homePage()}}}
+        when(page){"home"->home();"simple"->simple();"advanced"->advanced();"products"->products();"maintenance-parts"->products("part");"inventory"->inventoryDashboard();"stock-history"->if(selectedProduct!=null)stockHistory(selectedProduct!!) else {text("لم يتم اختيار منتج لعرض حركاته.");button("العودة إلى المنتجات"){go("products")}};"stocktake-history"->stocktakeHistoryScreen();"sale"->sale();"invoices"->invoices();"vaults"->vaults();"suppliers"->suppliers();"repairs"->repairs();"reports"->reports();"period-reports"->periodReports();"trial-balance"->trialBalanceScreen();"account-ledger"->accountLedgerScreen();"journal-integrity"->journalIntegrityScreen();"structural-audit"->structuralAuditScreen();"partners"->partners();"backup"->backup();"legacy-audit"->legacyAudit();"legacy-history"->legacyHistory();"audit"->audit();else->{text("هذه الصفحة غير متاحة في النسخة الحالية.");button("العودة إلى الرئيسية"){homePage()}}}
     }
     private fun legacyHistory() {
         text("أرشيف العمليات القديمة — قراءة فقط",size=25f)
@@ -816,8 +816,8 @@ open class MainActivity:Activity() {
         "webp" -> "image/webp"
         else -> "image/jpeg"
     }
-    private fun products(){
-        sectionHeading("المنتجات وقطع الصيانة","إدارة الأصناف والباركود والكميات والجرد")
+    private fun products(onlyKind:String?=null){
+        sectionHeading(if(onlyKind=="part") "قطع الصيانة" else "المنتجات وقطع الصيانة","إدارة الأصناف والباركود والكميات والجرد")
         button("＋ إضافة منتج / قطعة"){productForm()}
         button("▣ مسح باركود للبحث"){startActivityForResult(Intent(this,BarcodeScanActivity::class.java),65)}
         val shortcuts=LinearLayout(this).apply { orientation=LinearLayout.HORIZONTAL;layoutDirection=View.LAYOUT_DIRECTION_RTL }
@@ -835,13 +835,15 @@ open class MainActivity:Activity() {
         shortcut("تسويات الجرد","stocktake-history")
         body.addView(shortcuts)
         text("كتالوج المنتجات",size=20f).setTextColor(gold)
+        if(onlyKind=="part") button("عرض جميع المنتجات"){go("products")}
+        else button("قطع الصيانة فقط"){go("maintenance-parts")}
         val query=field("بحث بالاسم أو الباركود أو REF",body)
         val list=column().apply {setPadding(0,dp(4),0,dp(4))}
         body.addView(list)
         fun show(){
             list.removeAllViews()
-            val results=store.searchCatalog(query.text.toString())
-            text("المنتجات: ${results.size}",list,13f)
+            val results=store.searchCatalog(query.text.toString()).filter { onlyKind==null || it.kind==onlyKind }
+            text(if(onlyKind=="part") "قطع الصيانة: ${results.size}" else "المنتجات: ${results.size}",list,13f)
             if(results.isEmpty())text("لا توجد منتجات مطابقة للبحث.",list,14f)
             val variantCounts=store.colorVariantCounts()
             results.take(150).forEach{p->productCard(p,list,variantCounts[p.id]?:0)}
