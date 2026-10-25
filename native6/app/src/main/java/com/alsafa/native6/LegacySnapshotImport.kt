@@ -75,12 +75,21 @@ object LegacySnapshotImport {
         val sections=listOf("products","maintenanceParts","suppliers","repairs",
             "sales","purchases","payments","cashTransactions","supplierLedger",
             "partnerWithdrawals","dailyClosings","returns")
-        val counts=sections.joinToString("\\n") { section ->
-            "$section: ${data.optJSONArray(section)?.length() ?: 0}"
+        val labels=mapOf(
+            "products" to "الساعات", "maintenanceParts" to "قطع الصيانة",
+            "suppliers" to "الموردون", "repairs" to "طلبات الصيانة",
+            "sales" to "فواتير البيع", "purchases" to "فواتير الشراء",
+            "payments" to "الدفعات", "cashTransactions" to "حركات الخزنة",
+            "supplierLedger" to "سجل الموردين",
+            "partnerWithdrawals" to "سحوبات الشركاء",
+            "dailyClosings" to "الإقفالات اليومية", "returns" to "المرتجعات"
+        )
+        val counts=sections.joinToString("\n") { section ->
+            "${labels.getValue(section)}: ${data.optJSONArray(section)?.length() ?: 0}"
         }
-        return "نسخة بتاريخ: ${root.optString("exportedAt")}\\n" +
-            "الإصدار: ${root.optString("appVersion")}\\n" +
-            counts + "\\n\\n" +
+        return "نسخة بتاريخ: ${root.optString("exportedAt")}\n" +
+            "الإصدار: ${root.optString("appVersion")}\n" +
+            counts + "\n\n" +
             "هذه معاينة سريعة فقط. ستجري الاستعادة الفحوصات التفصيلية " +
             "داخل عملية الحفظ. لن تُفعّل الأرصدة النقدية والديون والأرباح " +
             "التاريخية تلقائياً، بل ستُحفظ في أرشيف للقراءة والمطابقة."
