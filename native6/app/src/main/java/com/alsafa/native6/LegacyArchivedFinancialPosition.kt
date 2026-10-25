@@ -188,6 +188,7 @@ object LegacyArchivedFinancialPosition {
                     row.getString("openingDebtLessLedgerPayments"))
             }
         }
+        lines.add("أثر المرتجعات المحفوظ في الأرشيف: ${report.getJSONObject("returnEffectsAlreadyInSource")}")
         lines.add(report.getString("warning"))
         return lines.joinToString("\n")
     }
