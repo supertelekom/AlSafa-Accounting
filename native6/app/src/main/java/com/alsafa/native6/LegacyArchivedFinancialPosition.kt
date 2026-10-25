@@ -66,7 +66,28 @@ object LegacyArchivedFinancialPosition {
                 .put("outstandingInvoices",entries)
                 .put("invoiceCount",rows.size))
         }
+        // Supplier ledger is separate evidence: never add it to invoice dues.
+        val supplierLedger=store.rows(
+            "SELECT payload FROM legacy_records WHERE category=?", "supplierLedger")
+        require(supplierLedger.size.toLong()==counts.optLong("supplierLedger",0)) {
+            "دفتر الموردين المؤرشف غير مكتمل"
+        }
+        val ledgerKinds=JSONObject()
+        for(record in supplierLedger) {
+            val row=JSONObject(record.getValue("payload"))
+            val currency=row.optString("currency")
+            val kind=row.optString("kind","unknown")
+            val amount=row.optString("amount","0").toBigDecimalOrNull()
+                ?: error("مبلغ غير صالح في دفتر الموردين")
+            require(currency in currencies && amount.signum()>=0) {
+                "قيد مورد بعملة أو مبلغ غير صالح"
+            }
+            val key="$kind|$currency"
+            val previous=ledgerKinds.optString(key,"0").toBigDecimal()
+            ledgerKinds.put(key,previous.add(amount).toPlainString())
+        }
         return JSONObject()
+            .put("supplierLedgerByKindCurrency",ledgerKinds)
             .put("sourceSha256",metadata.optString("sourceSha256"))
             .put("sourceExportedAt",metadata.optString("sourceExportedAt"))
             .put("positions",result)
