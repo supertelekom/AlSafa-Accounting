@@ -40,6 +40,38 @@ class LegacySnapshotImportTest {
             .put("formatVersion",2).put("data",data).toString()
     }
 
+    @Test fun quickPreviewListsAllMajorSections() {
+        val preview=LegacySnapshotImport.quickPreview(payload())
+        assertTrue(preview.contains("الساعات: 1"))
+        assertTrue(preview.contains("قطع الصيانة: 1"))
+        assertTrue(preview.contains("فواتير البيع: 1"))
+        assertTrue(preview.contains("حركات الخزنة: 1"))
+        assertTrue(preview.contains("الأرصدة النقدية"))
+    }
+
+    @Test fun rejectsMissingAccountingCollectionBeforeImport() {
+        val context=RuntimeEnvironment.getApplication<Context>()
+        val name="legacy-incomplete-test.db"
+        context.deleteDatabase(name)
+        val helper=StoreDb(context,name)
+        try {
+            val root=JSONObject(payload())
+            root.getJSONObject("data").remove("supplierLedger")
+            val broken=root.toString()
+            var previewRejected=false
+            try { LegacySnapshotImport.quickPreview(broken) }
+            catch(_:IllegalArgumentException) { previewRejected=true }
+            assertTrue(previewRejected)
+            val store=Store(helper)
+            var importRejected=false
+            try { LegacySnapshotImport.import(store,broken) }
+            catch(_:IllegalArgumentException) { importRejected=true }
+            assertTrue(importRejected)
+            assertEquals(0L,store.scalar("SELECT count(*) FROM products"))
+            assertEquals(0L,store.scalar("SELECT count(*) FROM journal"))
+        } finally { helper.close();context.deleteDatabase(name) }
+    }
+
     @Test fun importsInventorySuppliersAndRepairsWithoutHistoricalInvoices() {
         val context=RuntimeEnvironment.getApplication<Context>()
         val name="legacy-snapshot-test.db"
