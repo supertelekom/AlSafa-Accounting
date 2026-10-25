@@ -362,6 +362,24 @@ open class MainActivity:Activity() {
             "حساب الموردين","سحوبات الشركاء","المصاريف","المرتجعات","الإقفالات اليومية",
             "حركات المخزون","تاريخ تكلفة المنتجات","سجل التدقيق","سجل الولاء",
             "الإيصالات الذكية","قواعد الخصومات","خيارات تفاصيل المنتجات")
+        button("مطابقة أرصدة الفواتير القديمة",body) {
+            work {
+                val sales=LegacyInvoiceSnapshot.page(store,"sales",limit=1)
+                val purchases=LegacyInvoiceSnapshot.page(store,"purchases",limit=1)
+                val integrity=LegacyArchiveIntegrity.inspect(store)
+                val report="فواتير المبيع: ${sales.getInt("total")}\\n"+
+                    "ديون العملاء بحسب عملة الفاتورة: ${sales.getJSONObject("outstandingByCurrency")}\\n"+
+                    "فواتير الشراء: ${purchases.getInt("total")}\\n"+
+                    "ديون فواتير الموردين: ${purchases.getJSONObject("outstandingByCurrency")}\\n"+
+                    "سلامة عدد السجلات المستوردة: ${if(integrity.optBoolean("complete")) "مطابقة" else "تحتاج مراجعة"}\\n"+
+                    "تنبيه: أرصدة دفتر الموردين التاريخية منفصلة، ولم تُضف هنا لتجنب التكرار. جميع القيم للقراءة فقط."
+                runOnUiThread {
+                    if(!isFinishing&&!isDestroyed) AlertDialog.Builder(this)
+                        .setTitle("تقرير مطابقة النسخة القديمة")
+                        .setMessage(report).setPositiveButton("إغلاق",null).show()
+                }
+            }
+        }
         val choice=select("نوع السجل",categoryLabels,body)
         val search=field("بحث في بيانات السجل القديم",body)
         val results=column()
