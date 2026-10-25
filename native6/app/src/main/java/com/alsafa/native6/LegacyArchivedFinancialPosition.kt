@@ -132,9 +132,9 @@ object LegacyArchivedFinancialPosition {
         val returnByReference=JSONObject()
         val invoiceIds=mapOf(
             "sales" to store.rows("SELECT legacy_id FROM legacy_records WHERE category=?", "sales")
-                .map { it.getValue("legacy_id") }.toSet(),
+                .map { it.getValue("legacy_id").substringAfter(":") }.toSet(),
             "purchases" to store.rows("SELECT legacy_id FROM legacy_records WHERE category=?", "purchases")
-                .map { it.getValue("legacy_id") }.toSet(),
+                .map { it.getValue("legacy_id").substringAfter(":") }.toSet(),
             "repairs" to store.rows("SELECT id FROM repairs")
                 .map { it.getValue("id") }.toSet())
         val seenReturns=hashSetOf<String>()
