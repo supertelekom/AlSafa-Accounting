@@ -47,6 +47,21 @@ object LegacyRestoreReceipt {
             store.scalar("SELECT count(*) FROM journal WHERE account LIKE ?", "payable:%")==0L) {
             "ظهرت قيود مالية تشغيلية غير متوقعة أثناء استعادة الأرشيف"
         }
+        val stockMoveCount=store.scalar("SELECT count(*) FROM stock_moves")
+        val nonzeroStockProducts=store.scalar("SELECT count(*) FROM products WHERE stock>0")
+        require(stockMoveCount==nonzeroStockProducts) {
+            "عدد حركات الجرد الافتتاحي لا يطابق المنتجات ذات المخزون"
+        }
+        require(store.scalar("SELECT count(*) FROM events WHERE kind=?", "OPENING_STOCK")==
+            products+parts) { "عدد أحداث المخزون الافتتاحي غير مطابق" }
+        require(store.scalar("SELECT count(*) FROM events WHERE kind<>?", "OPENING_STOCK")==0L) {
+            "أحداث مالية تاريخية غير متوقعة أثناء الاستعادة"
+        }
+        require(store.rows(
+            "SELECT p.id FROM products p LEFT JOIN stock_moves m ON m.product_id=p.id " +
+                "GROUP BY p.id HAVING p.stock<>coalesce(sum(m.quantity),0) OR " +
+                "p.value<>coalesce(sum(m.value_delta),0)"
+        ).isEmpty()) { "حركة المخزون أو قيمته غير متطابقة مع جدول المنتجات" }
         val quantities=JSONObject()
         val values=JSONObject()
         for(kind in listOf("watch","part")) {
