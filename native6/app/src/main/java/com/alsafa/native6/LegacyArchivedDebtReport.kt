@@ -13,7 +13,7 @@ object LegacyArchivedDebtReport {
     fun inspect(store: Store): JSONObject {
         val imported = store.rows(
             "SELECT value FROM settings WHERE key=?", "legacy_snapshot_import"
-        ).firstOrNull() ?: throw IllegalStateException("لم يتم استيراد أرشيف النسخة القديمة")
+        ).singleOrNull() ?: throw IllegalStateException("بيانات تعريف استيراد النسخة القديمة مفقودة أو مكررة")
         val metadata = JSONObject(imported.getValue("value"))
         require(metadata.optString("financialPostingStatus") == "NOT_POSTED") {
             "يجب استخدام تقرير الأرشيف فقط قبل تفعيل الحسابات التاريخية"
