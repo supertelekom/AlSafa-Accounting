@@ -188,6 +188,8 @@ object LegacySnapshotImport {
             require(store.scalar("SELECT count(*) FROM journal WHERE account LIKE ?", "payable:%")==0L) { "لا يجوز ترحيل ديون الموردين ضمن استعادة المخزون" }
             require(store.scalar("SELECT count(*) FROM invoices")==0L) { "استعادة المخزون لا يجوز أن تنشئ فواتير" }
             require(store.scalar("SELECT count(*) FROM receipts")==0L) { "استعادة الأرشيف لا يجوز أن تنشئ مقبوضات" }
+            require(store.scalar("SELECT count(*) FROM returns")==0L && store.scalar("SELECT count(*) FROM refunds")==0L) { "استعادة الأرشيف لا يجوز أن تنشئ مرتجعات أو ردّ أموال محاسبي" }
+            require(store.scalar("SELECT count(*) FROM closings")==0L) { "استعادة الأرشيف لا يجوز أن تنشئ إقفالات تشغيلية" }
             val actualArchive=store.scalar("SELECT count(*) FROM legacy_records")
             val expectedFinancialCategories=historical.filter {
                 it in setOf("sales","purchases","payments","cashTransactions",
