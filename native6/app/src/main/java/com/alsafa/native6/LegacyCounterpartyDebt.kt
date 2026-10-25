@@ -28,6 +28,7 @@ object LegacyCounterpartyDebt {
             val totals = sortedMapOf<String, Long>()
             val invoiceCounts = sortedMapOf<String, Int>()
             val missingNames = JSONArray()
+            val openInvoices = JSONArray()
             var openCount = 0
             for (record in rows) {
                 val invoice = JSONObject(record.getValue("payload"))
@@ -56,6 +57,11 @@ object LegacyCounterpartyDebt {
                         .put("section", section).put("currency", currency))
                     "غير محدد"
                 }
+                openInvoices.put(JSONObject().put("invoiceId", id)
+                    .put("invoiceNo", invoice.optString("invoiceNo"))
+                    .put("date", invoice.optString("date").take(10))
+                    .put("counterparty", party).put("currency", currency)
+                    .put("outstanding", BigDecimal.valueOf(due, 2).toPlainString()))
                 val key = "$party|$currency"
                 totals[key] = Math.addExact(totals[key] ?: 0L, due)
                 invoiceCounts[key] = Math.addExact(invoiceCounts[key] ?: 0, 1)
@@ -71,6 +77,7 @@ object LegacyCounterpartyDebt {
             }
             result.put(section, JSONObject()
                 .put("groups", groups)
+                .put("openInvoices", openInvoices)
                 .put("openInvoiceCount", openCount)
                 .put("missingCounterpartyNames", missingNames)
                 .put("requiresManualReview", missingNames.length() > 0))
