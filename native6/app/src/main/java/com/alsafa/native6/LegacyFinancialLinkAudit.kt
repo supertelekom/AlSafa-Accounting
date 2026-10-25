@@ -30,6 +30,21 @@ object LegacyFinancialLinkAudit {
             }
             ids[section]=seen
         }
+        // Invoice numbers are display identifiers, not reliable unique source keys.
+        // Preserve every source ID even if the old app reused an invoice number.
+        val duplicateInvoiceNumbers=JSONArray()
+        val invoiceNumbers=HashMap<String,String>()
+        for(section in listOf("sales","repairs")) {
+            val array=data.optJSONArray(section) ?: JSONArray()
+            for(index in 0 until array.length()) {
+                val row=array.optJSONObject(index) ?: continue
+                val number=row.optString("invoiceNo").trim()
+                if(number.isEmpty()) continue
+                val previous=invoiceNumbers.putIfAbsent(number,"$section[$index]")
+                if(previous!=null && duplicateInvoiceNumbers.length()<100)
+                    duplicateInvoiceNumbers.put("$section[$index] conflicts with $previous: $number")
+            }
+        }
         val targets=mapOf("sale" to "sales","repair" to "repairs",
             "purchase" to "purchases","supplier" to "suppliers",
             "partnerWithdrawal" to "partnerWithdrawals",
@@ -80,6 +95,7 @@ object LegacyFinancialLinkAudit {
                 collections.forEach { result.put(it,data.optJSONArray(it)?.length() ?: 0) }
             })
             .put("duplicateIds",duplicateIds)
+            .put("duplicateInvoiceNumbers",duplicateInvoiceNumbers)
             .put("missingIds",missingIds)
             .put("linkSummary",linked)
             .put("missingReferencesSample",missingReferences)
