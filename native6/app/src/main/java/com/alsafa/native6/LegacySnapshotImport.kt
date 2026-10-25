@@ -24,6 +24,9 @@ object LegacySnapshotImport {
             require(encoded.length<=16*1024*1024) { "صورة كبيرة جداً: $field" }
             val bytes=android.util.Base64.decode(encoded,android.util.Base64.DEFAULT)
             require(bytes.isNotEmpty() && bytes.size<=12*1024*1024) { "حجم صورة غير صالح: $field" }
+            require((mime=="image/jpeg" && bytes.size>=3 && bytes[0]==0xFF.toByte() && bytes[1]==0xD8.toByte()) ||
+                (mime=="image/png" && bytes.size>=8 && bytes[0]==0x89.toByte() && bytes[1]==0x50.toByte()) ||
+                (mime=="image/webp" && bytes.size>=12 && String(bytes,0,4,Charsets.US_ASCII)=="RIFF" && String(bytes,8,4,Charsets.US_ASCII)=="WEBP")) { "ترويسة صورة غير مطابقة: $field" }
             val bounds=android.graphics.BitmapFactory.Options().apply { inJustDecodeBounds=true }
             android.graphics.BitmapFactory.decodeByteArray(bytes,0,bytes.size,bounds)
             require(bounds.outWidth in 1..10000 && bounds.outHeight in 1..10000) { "صورة غير قابلة للقراءة: $field" }
