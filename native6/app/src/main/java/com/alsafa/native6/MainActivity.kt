@@ -1119,6 +1119,7 @@ open class MainActivity:Activity() {
         val cost=if(p==null)field("التكلفة",box,"0",true)else null;val qty=if(p==null)field("رصيد افتتاحي",box,"0",true)else null
         val kind=if(p==null)select("النوع",listOf("ساعة","قطعة صيانة"),box)else null;
         if(defaultKind=="part") kind?.setSelection(1)
+        if(defaultKind!=null) kind?.isEnabled=false
         {
             val c=Currency.entries[curr.selectedItemPosition]
             val n=name.text.toString();val b=barcode.text.toString();val value=amount(price,c)
