@@ -816,7 +816,7 @@ open class MainActivity:Activity() {
         "webp" -> "image/webp"
         else -> "image/jpeg"
     }
-    private fun products(onlyKind:String?=null){
+    private fun products(onlyKind:String?="watch"){
         sectionHeading(if(onlyKind=="part") "قطع الصيانة" else "المنتجات وقطع الصيانة","إدارة الأصناف والباركود والكميات والجرد")
         button(if(onlyKind=="part") "＋ إضافة قطعة صيانة" else "＋ إضافة منتج / قطعة"){productForm(defaultKind=onlyKind)}
         button("▣ مسح باركود للبحث"){startActivityForResult(Intent(this,BarcodeScanActivity::class.java),65)}
