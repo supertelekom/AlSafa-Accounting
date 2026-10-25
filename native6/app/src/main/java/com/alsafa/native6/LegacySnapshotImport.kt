@@ -10,7 +10,11 @@ import java.math.RoundingMode
  * The original backup remains intact in legacy_imports for a later ledger migration.
  */
 object LegacySnapshotImport {
-    private fun legacyMinor(raw:String):Long = BigDecimal(raw).setScale(2,RoundingMode.HALF_UP).movePointRight(2).longValueExact()
+    private fun legacyMinor(raw:String):Long {
+        val value=BigDecimal(raw)
+        require(value.stripTrailingZeros().scale()<=2) { "مبلغ النسخة القديمة يحتوي كسوراً لا تدعمها المحاسبة: $raw" }
+        return value.setScale(2,RoundingMode.UNNECESSARY).movePointRight(2).longValueExact()
+    }
     private fun data(payload:String):JSONObject {
         val root=JSONObject(payload)
         require(root.optString("format")=="alsafa-accounting-backup"){"يلزم ملف AlSafa Backup v2 الأصلي"}
