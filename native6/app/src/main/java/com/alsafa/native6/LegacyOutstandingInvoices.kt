@@ -23,7 +23,7 @@ object LegacyOutstandingInvoices {
         val rows = store.rows(
             "SELECT legacy_id,payload FROM legacy_records WHERE category=? ORDER BY legacy_id", section
         )
-        val matches = ArrayList<JSONObject>()
+        var matchedCount = 0
         var scanned = 0
         val pageRows = JSONArray()
         val outstandingTotals = linkedMapOf<String, BigDecimal>()
@@ -71,7 +71,7 @@ object LegacyOutstandingInvoices {
                 if (!direct && !nested) continue
             }
             outstandingTotals[unit] = (outstandingTotals[unit] ?: BigDecimal.ZERO).add(due)
-            matches.add(JSONObject()
+            if (matchedCount >= offset && matchedCount.toLong() < offset.toLong() + limit) pageRows.put(JSONObject()
                 .put("archiveKey", row.getValue("legacy_id"))
                 .put("invoiceId", id)
                 .put("date", invoice.optString("date"))
@@ -82,10 +82,10 @@ object LegacyOutstandingInvoices {
                 .put("total", total.toPlainString())
                 .put("paidSnapshot", paid.toPlainString())
                 .put("outstandingSnapshot", due.toPlainString()))
+            matchedCount++
         }
         val totalsJson = JSONObject()
         for ((unit, amount) in outstandingTotals) totalsJson.put(unit, amount.toPlainString())
-        matches.drop(offset).take(limit).forEach { pageRows.put(it) }
         return JSONObject()
             .put("section", section)
             .put("currency", currency)
@@ -93,7 +93,7 @@ object LegacyOutstandingInvoices {
             .put("to", to)
             .put("query", query)
             .put("outstandingTotalsByCurrency", totalsJson)
-            .put("totalOutstandingInvoices", matches.size)
+            .put("totalOutstandingInvoices", matchedCount)
             .put("scannedInvoices", scanned)
             .put("offset", offset)
             .put("limit", limit)
