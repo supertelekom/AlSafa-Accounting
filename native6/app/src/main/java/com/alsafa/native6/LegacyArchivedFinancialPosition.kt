@@ -180,17 +180,17 @@ object LegacyArchivedFinancialPosition {
             val item=JSONObject(record.getValue("payload"))
             val recordId=record.getValue("legacy_id")
             require(recordId.isNotBlank() && seenIds.add(recordId)) { "معرف سحب شريك مفقود أو مكرر" }
+            require(item.optString("id").trim()==recordId) { "معرف السحب لا يطابق الأرشيف" }
             val date=java.time.LocalDate.parse(item.getString("date").take(10))
-            if(java.time.YearMonth.from(date)!=period) { excluded++;continue }
             val currency=item.optString("currency")
             require(currency in currencies) { "عملة سحب غير مدعومة" }
-            require(item.optString("id").trim()==recordId) { "معرف السحب لا يطابق الأرشيف" }
+            val value=cents(item,"amount")
+            if(java.time.YearMonth.from(date)!=period) { excluded++;continue }
             val partner=item.optString("partnerId").ifBlank {
                 item.optString("partnerName").ifBlank {
                     item.optString("partner").ifBlank { item.optString("person","غير محدد") }
                 }
             }
-            val value=cents(item,"amount")
             val key="$partner|$currency"
             totals[key]=Math.addExact(totals[key] ?: 0,value)
             entries.put(JSONObject().put("id",record.getValue("legacy_id"))
