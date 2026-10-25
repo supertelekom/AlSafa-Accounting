@@ -28,6 +28,9 @@ object LegacyInvoiceSnapshot {
         val source=JSONObject(row.getValue("payload"))
         val id=source.optString("id").trim()
         require(id.isNotEmpty()) { "معرف الفاتورة التاريخية مفقود" }
+        require(archiveKey.substringAfter(":",missingDelimiterValue="")==id) {
+            "معرف الفاتورة لا يطابق مفتاح الأرشيف"
+        }
         if(section in invoiceSections) {
             val total=source.optString("total","0").toBigDecimalOrNull()
             val paid=source.optString("paid","0").toBigDecimalOrNull()
