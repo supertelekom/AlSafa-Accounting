@@ -32,6 +32,15 @@ object LegacyRestoreReceipt {
             require(actual==counts.optLong(section,0L)) { "نقص في أرشيف $section" }
             archived.put(section,actual)
         }
+        // Reconcile all archived arrays, including collections introduced in later
+        // legacy-app versions. Newer backups must not silently drop new sections.
+        val excluded=setOf("products","maintenanceParts","suppliers","repairs")
+        for (section in counts.keys()) {
+            if(section in excluded) continue
+            val expected=counts.optLong(section,0L)
+            val actual=store.scalar("SELECT count(*) FROM legacy_records WHERE category=?",section)
+            require(actual==expected) { "أرشيف القسم الجديد أو القديم غير مكتمل: $section" }
+        }
         require(store.scalar("SELECT count(*) FROM invoices")==0L &&
             store.scalar("SELECT count(*) FROM receipts")==0L &&
             store.scalar("SELECT count(*) FROM journal WHERE account LIKE ?", "cash:%")==0L &&
