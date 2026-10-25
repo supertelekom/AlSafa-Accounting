@@ -1206,6 +1206,20 @@ open class MainActivity:Activity() {
             background=background(Color.rgb(255,239,235),10)
             setOnClickListener { if(!busy){basket.remove(item);render()} }
         }
+        val edit=Button(this).apply {
+            style(this)
+            text="تعديل"
+            isAllCaps=false
+            textSize=12f
+            background=background(cream,10)
+            setOnClickListener {
+                if(!busy) {
+                    basket.remove(item)
+                    addSaleProduct(product)
+                }
+            }
+        }
+        panel.addView(edit,LinearLayout.LayoutParams(dp(76),dp(42)))
         panel.addView(remove,LinearLayout.LayoutParams(dp(76),dp(42)))
         body.addView(panel,LinearLayout.LayoutParams(-1,-2).apply {
             setMargins(0,dp(4),0,dp(4))
