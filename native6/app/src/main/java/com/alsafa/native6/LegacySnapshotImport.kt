@@ -291,9 +291,12 @@ object LegacySnapshotImport {
             }
             for (section in historical) {
                 val expected=d.getJSONArray(section)
-                val archived=store.rows("SELECT legacy_id,payload FROM legacy_records WHERE category=?",
-                    section).associateBy { it.getValue("legacy_id") }
-                require(archived.size==expected.length()) { "أرشيف غير مكتمل: $section" }
+                val archivedRows=store.rows("SELECT legacy_id,payload FROM legacy_records WHERE category=?",
+                    section)
+                val archived=archivedRows.associateBy { it.getValue("legacy_id") }
+                require(archivedRows.size==expected.length() && archived.size==expected.length()) {
+                    "أرشيف غير مكتمل أو يحوي مفاتيح مكررة: $section"
+                }
                 for (i in 0 until expected.length()) {
                     val original=expected.get(i)
                     val sourceId=(original as? JSONObject)?.optString("id")?.trim()
