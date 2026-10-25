@@ -23,13 +23,14 @@ object LegacyArchiveBrowser {
         val rows=store.rows("SELECT legacy_id,payload FROM legacy_records WHERE category=? ORDER BY CAST(substr(legacy_id,1,instr(legacy_id,':')-1) AS INTEGER)",section)
         val filtered=rows.mapNotNull { row ->
             val data=JSONObject(row.getValue("payload"))
-            val date=data.optString("date")
+            val date=data.optString("date").take(10)
             if(from.isNotBlank() && (date.isBlank() || date<from)) return@mapNotNull null
             if(to.isNotBlank() && (date.isBlank() || date>to)) return@mapNotNull null
             if(query.isNotBlank()) {
                 val term=query.trim()
                 val fields=listOf("customer","phone","name","supplierName","invoiceNo",
-                    "referenceId","referenceType","itemName","notes","kind","id")
+                    "referenceId","referenceType","itemName","notes","kind","id",
+                    "watch","problem","productName","partName","barcode")
                 val direct=fields.any { data.optString(it).contains(term,ignoreCase=true) }
                 val items=data.optJSONArray("items")
                 val nested=items!=null && (0 until items.length()).any { index ->
