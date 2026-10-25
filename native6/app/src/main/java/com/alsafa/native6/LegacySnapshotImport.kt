@@ -267,7 +267,7 @@ object LegacySnapshotImport {
                     "phone" to repair.optString("phone"),"watch" to repair.optString("watch"),
                     "problem" to repair.optString("problem"),"status" to status,
                     "date" to repair.optString("date"),"invoice_id" to null,
-                    "details" to legacyPhotos(repair,context,createdImages).toString())
+                    "details" to legacyPhotos(repair,context,createdImages).put("_legacyImported",true).toString())
             }
             // Preserve historical financial records verbatim for accurate later ledger
             // reconstruction. They are NOT booked as new income or cash movements.
