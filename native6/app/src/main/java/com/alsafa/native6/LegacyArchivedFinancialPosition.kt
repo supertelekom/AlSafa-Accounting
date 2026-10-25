@@ -162,6 +162,40 @@ object LegacyArchivedFinancialPosition {
             .put("warning","هذه ذمم الفواتير المؤرشفة وليست قيوداً نشطة؛ يجب تدقيق المرتجعات ودفتر الموردين والمدفوعات قبل التفعيل.")
     }
 
+    fun monthlyPartnerWithdrawals(store:Store,month:String):JSONObject {
+        val period=java.time.YearMonth.parse(month)
+        val meta=LegacyArchivedDebtReport.verifyArchiveCounts(store)
+        val expected=meta.getJSONObject("sourceCollections").optLong("partnerWithdrawals",0)
+        val rows=store.rows("SELECT legacy_id,payload FROM legacy_records WHERE category=?",
+            "partnerWithdrawals")
+        require(rows.size.toLong()==expected) { "أرشيف سحوبات الشركاء غير مكتمل" }
+        val totals=sortedMapOf<String,Long>()
+        val entries=JSONArray()
+        var excluded=0
+        for(record in rows) {
+            val item=JSONObject(record.getValue("payload"))
+            val date=java.time.LocalDate.parse(item.getString("date").take(10))
+            if(java.time.YearMonth.from(date)!=period) { excluded++;continue }
+            val currency=item.optString("currency")
+            require(currency in currencies) { "عملة سحب غير مدعومة" }
+            val partner=item.optString("partnerId").ifBlank {
+                item.optString("partnerName").ifBlank { item.optString("person","غير محدد") }
+            }
+            val value=cents(item,"amount")
+            val key="$partner|$currency"
+            totals[key]=Math.addExact(totals[key] ?: 0,value)
+            entries.put(JSONObject().put("id",record.getValue("legacy_id"))
+                .put("date",date.toString()).put("partner",partner)
+                .put("currency",currency).put("amount",amount(value)))
+        }
+        val sums=JSONObject()
+        for((key,value) in totals) sums.put(key,amount(value))
+        return JSONObject().put("month",period.toString())
+            .put("withdrawals",entries).put("totalsByPartnerCurrency",sums)
+            .put("excludedOtherMonths",excluded)
+            .put("historicalProfitIncluded",false).put("posting","NONE")
+    }
+
     fun summary(store:Store):String {
         val report=inspect(store)
         val positions=report.getJSONObject("positions")
