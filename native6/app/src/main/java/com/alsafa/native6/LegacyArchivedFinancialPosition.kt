@@ -132,7 +132,7 @@ object LegacyArchivedFinancialPosition {
             require(id.isNotEmpty() && seenReturns.add(id)) { "معرف مرتجع مكرر أو مفقود" }
             val currency=row.optString("currency")
             require(currency in currencies) { "عملة مرتجع غير مدعومة" }
-            val referenceType=row.optString("referenceType")
+            val referenceType=row.optString("referenceType").trim().lowercase()
             val referenceId=row.optString("referenceId").trim()
             require(referenceType in setOf("sale","sales","repair","repairs","purchase","purchases") && referenceId.isNotEmpty()) {
                 "مرجع مرتجع غير معروف"
