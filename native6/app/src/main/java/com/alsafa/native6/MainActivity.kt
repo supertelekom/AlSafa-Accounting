@@ -1586,7 +1586,7 @@ open class MainActivity:Activity() {
     private fun invoices(){
         sectionHeading("الفواتير والمرتجعات","البحث في الفواتير وعمليات القبض والاسترداد")
         button("إعدادات طابعة الفواتير والملصقات") {
-            getSharedPreferences("alsafa_printer",MODE_PRIVATE).edit().remove("address").apply()
+            BluetoothReceiptPrinter.forgetPrinter(this)
             choosePrinter { address ->
                 Toast.makeText(this,"تم اختيار الطابعة: $address",Toast.LENGTH_SHORT).show()
             }
@@ -1946,8 +1946,7 @@ open class MainActivity:Activity() {
                     }.setNegativeButton("إلغاء",null).show()
                 return
             }
-            val prefs=getSharedPreferences("alsafa_printer",MODE_PRIVATE)
-            val saved=prefs.getString("address",null)
+            val saved=BluetoothReceiptPrinter.rememberedPrinter(this)
             if(saved!=null && devices.any { it.address==saved }) {
                 onSelected(saved)
                 return
@@ -1955,7 +1954,7 @@ open class MainActivity:Activity() {
             AlertDialog.Builder(this).setTitle("اختر الطابعة المقترنة")
                 .setItems(devices.map { (it.name ?: "طابعة") + " · " + it.address }.toTypedArray()) { _,which ->
                     val address=devices[which].address
-                    prefs.edit().putString("address",address).apply()
+                    BluetoothReceiptPrinter.rememberPrinter(this,address)
                     onSelected(address)
                 }.setNeutralButton("إعدادات البلوتوث"){_,_->
                     startActivity(Intent(android.provider.Settings.ACTION_BLUETOOTH_SETTINGS))
