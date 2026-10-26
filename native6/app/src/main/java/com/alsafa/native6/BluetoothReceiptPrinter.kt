@@ -91,6 +91,26 @@ object BluetoothReceiptPrinter {
             out.flush()
         } finally { runCatching { socket.close() } }
     }
+    /** Prints PDF pages independently, avoiding the combined-image height limit. */
+    fun printInvoicePdf(context:Context,address:String,file:java.io.File) {
+        android.os.ParcelFileDescriptor.open(file,android.os.ParcelFileDescriptor.MODE_READ_ONLY).use { fd ->
+            android.graphics.pdf.PdfRenderer(fd).use { renderer ->
+                require(renderer.pageCount>0) { "ملف الفاتورة فارغ" }
+                for(i in 0 until renderer.pageCount) {
+                    renderer.openPage(i).use { page ->
+                        val height=(page.height.toLong()*384/page.width).toInt().coerceAtLeast(1)
+                        require(height<=16000) { "صفحة الفاتورة طويلة جداً" }
+                        val bitmap=Bitmap.createBitmap(384,height,Bitmap.Config.ARGB_8888)
+                        try {
+                            bitmap.eraseColor(Color.WHITE)
+                            page.render(bitmap,null,null,android.graphics.pdf.PdfRenderer.Page.RENDER_MODE_FOR_PRINT)
+                            print(context,address,bitmap)
+                        } finally { bitmap.recycle() }
+                    }
+                }
+            }
+        }
+    }
     fun invoiceImage(file:java.io.File):Bitmap {
         android.os.ParcelFileDescriptor.open(file,android.os.ParcelFileDescriptor.MODE_READ_ONLY).use { descriptor ->
             android.graphics.pdf.PdfRenderer(descriptor).use { renderer ->
