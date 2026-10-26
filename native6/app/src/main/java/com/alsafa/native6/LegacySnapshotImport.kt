@@ -96,9 +96,7 @@ object LegacySnapshotImport {
         val root=JSONObject(payload)
         require(root.optString("format")=="alsafa-accounting-backup" && root.optInt("formatVersion")==2)
         val d=root.getJSONObject("data")
-        progress(15,"مطابقة بصمة النسخة وعدد السجلات")
         val manifest=LegacyRestoreManifest.inspectData(root,payload)
-        progress(20,"تدقيق السجلات المالية والروابط")
         val readiness=LegacyRestoreReadiness.inspectRoot(root)
         val blocking=LegacyImportPreflight.inspectInventoryData(d).size
         val roundedPrices=listOf("products","maintenanceParts").sumOf { section ->
@@ -155,7 +153,6 @@ object LegacySnapshotImport {
         }
     }
     fun quickPreview(payload:String):String {
-        progress(4,"قراءة بيانات النسخة الاحتياطية")
         val root=JSONObject(payload)
         require(root.optString("format")=="alsafa-accounting-backup" &&
             root.optInt("formatVersion")==2) { "صيغة النسخة الاحتياطية غير مدعومة" }
