@@ -2027,7 +2027,7 @@ open class MainActivity:Activity() {
     private fun printInvoice(inv:Invoice) {
         try {
             PrintQueue(this).use { queue ->
-                queue.enqueue(inv.id,inv.number.toString())
+                if(queue.findOutstanding(inv.id)==null) queue.enqueue(inv.id,inv.number.toString())
             }
             Toast.makeText(this,"حُفظت الفاتورة في انتظار الطباعة",Toast.LENGTH_LONG).show()
             showPrintQueue()
