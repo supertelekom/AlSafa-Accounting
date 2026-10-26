@@ -9,15 +9,18 @@ import org.json.JSONObject
  */
 object LegacyRestoreReadiness {
     fun inspect(payload:String):JSONObject {
-        val root=JSONObject(payload)
+        return inspectRoot(JSONObject(payload))
+    }
+
+    fun inspectRoot(root:JSONObject):JSONObject {
         require(root.optString("format")=="alsafa-accounting-backup" && root.optInt("formatVersion")==2) { "Unsupported legacy backup format" }
-        val payment=LegacyPaymentLinkAudit.inspect(payload)
-        val cash=LegacyPaymentCashAudit.inspect(payload)
-        val supplier=LegacySupplierCashAudit.inspect(payload)
-        val returns=LegacyReturnLinkAudit.inspect(payload)
-        val closings=LegacyClosingContinuity.inspect(payload)
-        val vaults=LegacyVaultSnapshot.inspect(payload)
-        val financialWarnings=LegacyImportPreflight.inspectFinancialHistory(payload)
+        val payment=LegacyPaymentLinkAudit.inspectRoot(root)
+        val cash=LegacyPaymentCashAudit.inspectRoot(root)
+        val supplier=LegacySupplierCashAudit.inspectRoot(root)
+        val returns=LegacyReturnLinkAudit.inspectRoot(root)
+        val closings=LegacyClosingContinuity.inspectRoot(root)
+        val vaults=LegacyVaultSnapshot.inspectRoot(root)
+        val financialWarnings=LegacyImportPreflight.inspectFinancialHistoryData(root.getJSONObject("data"))
         val blockers=JSONArray()
         fun flag(condition:Boolean,code:String) { if(condition) blockers.put(code) }
         flag(financialWarnings.isNotEmpty(),"FINANCIAL_HISTORY_INVALID")
