@@ -86,7 +86,7 @@ object LegacySnapshotImport {
             created.add(file)
             when(field) {
                 "photo","photo2","photo3" -> productPhotos.put(file.absolutePath)
-                "watchPhoto" -> copy.put("imagePath",file.absolutePath)
+                "watchPhoto" -> { copy.put("watchPhotoPath",file.absolutePath); if(!copy.has("imagePath")) copy.put("imagePath",file.absolutePath) }
                 else -> copy.put(field+"Path",file.absolutePath)
             }
             copy.remove(field)
@@ -378,7 +378,7 @@ object LegacySnapshotImport {
                     require(qty in 0L..100000000L && price>=0 && cost>=0 && name.isNotEmpty()){"بيانات مخزون غير صالحة: $id"}
                     // Preserve all legacy metadata and embedded photos as JSON details.
                     store.addProduct(name,barcode,currency,price,cost,qty,kind,legacyPhotos(item,context,createdImages).also { details ->
-                            val keys=listOf("imagePath","couplePhotoPath","barcodePhotoPath")
+                            val keys=listOf("imagePath","watchPhotoPath","couplePhotoPath","barcodePhotoPath")
                             for(key in keys) details.optString(key).takeIf { it.isNotBlank() }?.let { imageOwners[it]="products" to id }
                             val paths=details.optJSONArray("imagePaths")
                             if(paths!=null) for(n in 0 until paths.length()) imageOwners[paths.getString(n)]="products" to id
@@ -417,7 +417,7 @@ object LegacySnapshotImport {
                     "problem" to repair.optString("problem"),"status" to status,
                     "date" to repair.optString("date"),"invoice_id" to null,
                     "details" to legacyPhotos(repair,context,createdImages).also { details ->
-                        for(key in listOf("imagePath","couplePhotoPath","barcodePhotoPath")) {
+                        for(key in listOf("imagePath","watchPhotoPath","couplePhotoPath","barcodePhotoPath")) {
                             details.optString(key).takeIf { it.isNotBlank() }?.let { imageOwners[it]="repairs" to id }
                         }
                         val paths=details.optJSONArray("imagePaths")
@@ -678,7 +678,7 @@ object LegacySnapshotImport {
                     // A product can contain only a couple or barcode image;
                     // neither creates the primary imagePath field.
                     val expectedPaths=if(section=="repairs") listOf("imagePath")
-                        else listOf("imagePath","couplePhotoPath","barcodePhotoPath")
+                        else listOf("imagePath","watchPhotoPath","couplePhotoPath","barcodePhotoPath")
                     require(expectedPaths.any { path ->
                         store.scalar("SELECT count(*) FROM $table WHERE id=? AND instr(details,?)>0",
                             id,"\"$path\"")==1L
