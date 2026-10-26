@@ -212,6 +212,12 @@ object LegacySnapshotImport {
         val vaultSnapshot=LegacyVaultSnapshot.inspect(payload)
         val paymentCashAudit=LegacyPaymentCashAudit.inspect(payload)
         val financialLinkAudit=LegacyFinancialLinkAudit.inspect(payload)
+        require(financialLinkAudit.getJSONArray("duplicateIds").length()==0) {
+            "معرفات مالية مكررة في النسخة القديمة؛ تم إيقاف الاستعادة لحماية البيانات"
+        }
+        require(financialLinkAudit.getJSONArray("missingIds").length()==0) {
+            "معرفات مالية مفقودة في النسخة القديمة؛ تم إيقاف الاستعادة لحماية البيانات"
+        }
         val lists=listOf("products" to "watch","maintenanceParts" to "part")
         val suppliers=d.getJSONArray("suppliers")
         val createdImages=mutableListOf<java.io.File>()
