@@ -33,9 +33,21 @@ object LegacySnapshotImport {
             if(!raw.startsWith("data:image/") || !raw.contains(";base64,")) continue
             val mime=raw.substringAfter("data:").substringBefore(";base64,")
             require(mime in setOf("image/jpeg","image/png","image/webp")) { "نوع صورة غير مدعوم: $field" }
-            val encoded=raw.substringAfter(";base64,")
-            require(encoded.length<=16*1024*1024) { "صورة كبيرة جداً: $field" }
-            val bytes=android.util.Base64.decode(encoded,android.util.Base64.DEFAULT)
+            // Avoid allocating a second multi-megabyte String via substringAfter.
+            // Android Base64 accepts the data URI prefix only after its comma.
+            val separator=raw.indexOf(";base64,")
+            require(separator>=0) { "صيغة ترميز الصورة غير صالحة: $field" }
+            val encodedStart=separator+8
+            val encodedLength=raw.length-encodedStart
+            require(encodedLength in 1..16*1024*1024) { "صورة كبيرة جداً: $field" }
+            // Decode the encoded span without creating an intermediate String.
+            val encodedBytes=ByteArray(encodedLength)
+            for(index in 0 until encodedLength) {
+                val character=raw[encodedStart+index]
+                require(character.code<=127) { "رمز غير صالح داخل الصورة: $field" }
+                encodedBytes[index]=character.code.toByte()
+            }
+            val bytes=android.util.Base64.decode(encodedBytes,android.util.Base64.DEFAULT)
             require(bytes.isNotEmpty() && bytes.size<=12*1024*1024) { "حجم صورة غير صالح: $field" }
             require((mime=="image/jpeg" && bytes.size>=3 && bytes[0]==0xFF.toByte() && bytes[1]==0xD8.toByte()) ||
                 (mime=="image/png" && bytes.size>=8 && bytes[0]==0x89.toByte() && bytes[1]==0x50.toByte()) ||
