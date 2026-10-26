@@ -924,6 +924,16 @@ open class MainActivity:Activity() {
                 menu.text="إخفاء الإجراءات ▴"
             }
         }
+        button("توليد وطباعة ملصق باركود · الاسم والسعر",card) {
+            if(p.barcode.isBlank()) {
+                AlertDialog.Builder(this).setTitle("باركود المنتج")
+                    .setMessage("هذا المنتج لا يحتوي على باركود. أضفه من تعديل المنتج قبل الطباعة.")
+                    .setPositiveButton("تعديل المنتج"){_,_->productForm(p)}
+                    .setNegativeButton("إلغاء",null).show()
+            } else {
+                printImage { BluetoothReceiptPrinter.labelImage(p.name,money(p.price,p.currency),p.barcode) }
+            }
+        }
         card.addView(actions)
         parent.addView(card,LinearLayout.LayoutParams(-1,-2).apply {
             setMargins(0,dp(5),0,dp(6))
@@ -1504,6 +1514,7 @@ open class MainActivity:Activity() {
                     .setTextColor(gold)
             }
         }
+        if(inv.kind!="purchase") button("طباعة الفاتورة بالبلوتوث",panel) { printInvoice(inv) }
         val open=Button(this).apply {
             style(this)
             text="تفاصيل الفاتورة والإجراءات ▾"
