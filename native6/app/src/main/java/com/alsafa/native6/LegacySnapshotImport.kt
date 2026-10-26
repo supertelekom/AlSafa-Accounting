@@ -298,7 +298,11 @@ object LegacySnapshotImport {
                     "problem" to repair.optString("problem"),"status" to status,
                     "date" to repair.optString("date"),"invoice_id" to null,
                     "details" to legacyPhotos(repair,context,createdImages).also { details ->
-                        details.optString("imagePath").takeIf { it.isNotBlank() }?.let { imageOwners[it]="repairs" to id }
+                        for(key in listOf("imagePath","couplePhotoPath","barcodePhotoPath")) {
+                            details.optString(key).takeIf { it.isNotBlank() }?.let { imageOwners[it]="repairs" to id }
+                        }
+                        val paths=details.optJSONArray("imagePaths")
+                        if(paths!=null) for(n in 0 until paths.length()) imageOwners[paths.getString(n)]="repairs" to id
                     }.put("_legacyImported",true).toString())
             }
             // Preserve historical financial records verbatim for accurate later ledger
