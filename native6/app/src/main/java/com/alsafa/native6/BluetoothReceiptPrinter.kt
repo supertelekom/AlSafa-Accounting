@@ -242,7 +242,8 @@ object BluetoothReceiptPrinter {
         while(paint.measureText(price)>available && paint.textSize>9f) paint.textSize-=1f
         canvas.drawText(price,center,paint.textSize*3+13f,paint)
         val top=(paint.textSize*3+24f).toInt()
-        val barcodeHeight=(height-top-27).coerceAtLeast(20)
+        val barcodeHeight=height-top-27
+        require(barcodeHeight>=20) { "مقاس الملصق لا يتسع للاسم والسعر والباركود؛ اختر مقاساً أكبر" }
         val matrix=com.google.zxing.MultiFormatWriter().encode(
             barcode,com.google.zxing.BarcodeFormat.CODE_128,width-24,barcodeHeight,
             mapOf(com.google.zxing.EncodeHintType.MARGIN to 0))
