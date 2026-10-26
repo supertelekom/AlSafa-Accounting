@@ -1683,7 +1683,7 @@ open class MainActivity:Activity() {
             }
         }
         }
-        button("فواتير الصفا القديمة — سجل منظم") {
+        button("الفواتير المستعادة من النسخة الاحتياطية") {
             form("سجل الفواتير القديمة","إغلاق"){box->
                 val section=select("نوع الفاتورة",listOf("مبيع","شراء"),box)
                 val from=field("من تاريخ YYYY-MM-DD (اختياري)",box)
