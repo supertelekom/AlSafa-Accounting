@@ -2064,7 +2064,14 @@ open class MainActivity:Activity() {
                                         setImageResource(android.R.drawable.ic_menu_more)
                                         contentDescription="خيارات الفاتورة"
                                         background=background(sand,10)
-                                        setOnClickListener { showRestoredInvoiceOptions(key,record) }
+                                        setOnClickListener { anchor ->
+                                            val popup=PopupMenu(this@MainActivity,anchor)
+                                            popup.menu.add("خيارات الفاتورة").setOnMenuItemClickListener {
+                                                showRestoredInvoiceOptions(key,record)
+                                                true
+                                            }
+                                            popup.show()
+                                        }
                                     }
                                     card.addView(menu,LinearLayout.LayoutParams(dp(46),dp(42)).apply {
                                         gravity=Gravity.END
