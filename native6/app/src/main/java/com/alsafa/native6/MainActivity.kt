@@ -2011,7 +2011,10 @@ open class MainActivity:Activity() {
                                 val rows=result.getJSONArray("rows")
                                 for(i in 0 until rows.length()) {
                                     val record=rows.getJSONObject(i)
-                                    val card=column()
+                                    val card=column().apply {
+                                        setPadding(dp(14),dp(10),dp(14),dp(10))
+                                        background=background(paper,14)
+                                    }
                                     text("#"+record.optString("invoiceNo")+" · "+
                                         record.optString("date")+" · "+
                                         (if(key=="sales")"مبيع" else "شراء"),card,16f)
@@ -2024,7 +2027,9 @@ open class MainActivity:Activity() {
                                     button("⋮ خيارات الفاتورة",card) {
                                         showRestoredInvoiceOptions(key,record)
                                     }
-                                    restored.addView(card)
+                                    restored.addView(card,LinearLayout.LayoutParams(-1,-2).apply {
+                                        setMargins(0,dp(5),0,dp(5))
+                                    })
                                 }
                                 if(result.optInt("total")>rows.length()) {
                                     text("توجد فواتير مستعادة إضافية؛ استخدم سجل الفواتير المستعادة للبحث التفصيلي.",restored,12f)
