@@ -12,7 +12,11 @@ object LegacyFinancialLinkAudit {
         val root=JSONObject(payload)
         require(root.optString("format")=="alsafa-accounting-backup" &&
             root.optInt("formatVersion")==2) { "Expected AlSafa Backup v2" }
-        val data=root.getJSONObject("data")
+        return inspectData(root.getJSONObject("data"))
+    }
+
+    /** Reuse the already parsed source when importing large image-heavy backups. */
+    fun inspectData(data:JSONObject):JSONObject {
         val collections=listOf("sales","repairs","purchases","suppliers",
             "payments","returns","cashTransactions","supplierLedger",
             "partnerWithdrawals","dailyClosings","expenses")
