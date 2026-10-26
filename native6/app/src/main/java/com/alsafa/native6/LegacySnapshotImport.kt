@@ -233,8 +233,14 @@ object LegacySnapshotImport {
         val idsAcrossSections=HashSet<String>()
         // One indexed table scan per destination instead of thousands of
         // individual SQLite queries while examining a large legacy snapshot.
-        val existingProducts=store.rows("SELECT id,kind FROM products")
-            .associate { it.getValue("id") to it.getValue("kind") }
+        val productRows=store.rows("SELECT id,kind,barcode FROM products")
+        val existingProducts=productRows.associate { it.getValue("id") to it.getValue("kind") }
+        val existingBarcodes=productRows
+            .mapNotNull { row ->
+                row.getValue("barcode").trim().takeIf { it.isNotEmpty() }
+                    ?.let { barcode -> barcode to row.getValue("id") }
+            }.toMap()
+        val incomingBarcodes=HashMap<String,String>()
         val existingSuppliers=store.rows("SELECT id FROM suppliers")
             .mapTo(HashSet()) { it.getValue("id") }
         val existingRepairs=store.rows("SELECT id FROM repairs")
@@ -265,6 +271,19 @@ object LegacySnapshotImport {
                     "suppliers" -> id in existingSuppliers
                     "repairs" -> id in existingRepairs
                     else -> error("قسم مقارنة غير مدعوم")
+                }
+                if(table=="products") {
+                    val barcode=record.optString("barcode").trim()
+                    if(barcode.isNotEmpty()) {
+                        val incomingOwner=incomingBarcodes.putIfAbsent(barcode,id)
+                        require(incomingOwner==null || incomingOwner==id) {
+                            "الباركود $barcode مكرر بين معرفين في النسخة الجديدة"
+                        }
+                        val storedOwner=existingBarcodes[barcode]
+                        require(storedOwner==null || storedOwner==id) {
+                            "الباركود $barcode مرتبط مسبقاً بمنتج آخر: $storedOwner"
+                        }
+                    }
                 }
                 if(exists) existingCount++ else newCount++
             }
