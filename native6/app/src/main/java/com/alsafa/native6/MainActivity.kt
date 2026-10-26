@@ -3416,6 +3416,20 @@ button("＋ مورد"){form("مورد جديد"){box->val n=field("الاسم",b
                     }
                 }
             }
+            button("مقارنة نسخة أحدث دون إضافة سجلات مكررة",body) {
+                val hash=item.getValue("hash")
+                work {
+                    val payload=Backup(this,store).readStagedLegacy(hash)
+                    val report=LegacySnapshotImport.incrementalPreview(store,payload)
+                    runOnUiThread {
+                        if(!isFinishing&&!isDestroyed) AlertDialog.Builder(this)
+                            .setTitle("مقارنة السجلات حسب المعرّف")
+                            .setMessage(report)
+                            .setPositiveButton("إغلاق",null)
+                            .show()
+                    }
+                }
+            }
             button("استعادة جزئية من نسخة الصفا القديمة (لا تشمل الأرصدة)",body) {
                 val hash=item.getValue("hash")
                 work {
