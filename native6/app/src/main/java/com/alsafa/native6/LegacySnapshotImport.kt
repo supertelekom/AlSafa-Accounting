@@ -218,9 +218,10 @@ object LegacySnapshotImport {
         require(financialLinkAudit.getJSONArray("missingIds").length()==0) {
             "معرفات مالية مفقودة في النسخة القديمة؛ تم إيقاف الاستعادة لحماية البيانات"
         }
-        require(financialLinkAudit.getInt("missingReferenceCount")==0) {
-            "توجد روابط مالية مفقودة؛ لا يمكن إكمال الاستعادة دون مطابقة المصدر"
-        }
+        // Source v2 may contain historical references to deleted invoices.
+        // They are archived unchanged and NEVER posted into native financial
+        // journals; missing links must not block inventory-only restoration.
+        val missingHistoricalLinks=financialLinkAudit.getInt("missingReferenceCount")
         val lists=listOf("products" to "watch","maintenanceParts" to "part")
         val suppliers=d.getJSONArray("suppliers")
         val createdImages=mutableListOf<java.io.File>()
