@@ -3036,7 +3036,7 @@ button("＋ مورد"){form("مورد جديد"){box->val n=field("الاسم",b
             val id=r.getValue("id")
             repairIdentity(r,openList)
             collapsibleTools("إجراءات صيانة · "+r.getValue("customer"),openList) {
-                if(store.repairImage(id).let { it==null || runCatching { localPhoto(it) }.isFailure })button("إضافة صورة الساعة"){photoRepairId=id;startActivityForResult(Intent(this,MediaCaptureActivity::class.java),70)};button("استخدام قطعة صيانة"){
+                if(runCatching { org.json.JSONObject(r["details"].orEmpty()).optString("imagePath") }.getOrDefault("").let { it.isBlank() || runCatching { localPhoto(it) }.isFailure })button("إضافة صورة الساعة"){photoRepairId=id;startActivityForResult(Intent(this,MediaCaptureActivity::class.java),70)};button("استخدام قطعة صيانة"){
             chooseProduct(inStockOnly=true,kind="part"){part->
                 form("تركيب قطعة للصيانة"){box->
                     val quantity=field("الكمية",box,"1",true)
