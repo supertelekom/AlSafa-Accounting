@@ -2557,17 +2557,25 @@ button("＋ مورد"){form("مورد جديد"){box->val n=field("الاسم",b
                     layoutDirection=View.LAYOUT_DIRECTION_RTL
                 }
                 box.addView(quickRow,LinearLayout.LayoutParams(-1,-2))
-                listOf("تبديل بطارية","تبديل حزام","تعديل حزام").forEach { label ->
-                    val shortcut=Button(this).apply {
-                        style(this);text=label;textSize=11f;isAllCaps=false
-                        minHeight=dp(44)
-                        setOnClickListener {
-                            problem.setText(label)
-                            problem.setSelection(problem.text.length)
+                listOf("تبديل بطارية","تبديل حزام","تعديل حزام","تبديل زجاج","تبديل ماكينة","تنظيف الساعة")
+                    .chunked(3).forEachIndexed { rowIndex,services ->
+                        val target=if(rowIndex==0) quickRow else LinearLayout(this).apply {
+                            orientation=LinearLayout.HORIZONTAL
+                            layoutDirection=View.LAYOUT_DIRECTION_RTL
+                            box.addView(this,LinearLayout.LayoutParams(-1,-2))
+                        }
+                        services.forEach { label ->
+                            val shortcut=Button(this).apply {
+                                style(this);text=label;textSize=11f;isAllCaps=false
+                                minHeight=dp(44)
+                                setOnClickListener {
+                                    problem.setText(label)
+                                    problem.setSelection(problem.text.length)
+                                }
+                            }
+                            target.addView(shortcut,LinearLayout.LayoutParams(0,dp(46),1f))
                         }
                     }
-                    quickRow.addView(shortcut,LinearLayout.LayoutParams(0,dp(46),1f))
-                }
                 val date=field("تاريخ الاستلام YYYY-MM-DD",box,Store.today())
                 intakePhotoStatus=TextView(this).also { it.text="لم تُضف صورة";box.addView(it) }
                 intakePhotoPreview=ImageView(this).also { preview ->
