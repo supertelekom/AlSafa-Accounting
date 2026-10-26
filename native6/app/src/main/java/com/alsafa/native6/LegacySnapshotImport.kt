@@ -225,6 +225,7 @@ object LegacySnapshotImport {
         val lists=listOf("products" to "watch","maintenanceParts" to "part")
         val suppliers=d.getJSONArray("suppliers")
         val createdImages=mutableListOf<java.io.File>()
+        val imageOwners=linkedMapOf<String,Pair<String,String>>()
         return try { store.transaction {
             // Recheck under the write transaction to prevent accidental overwrite.
             requireEmptyAccounting(store)
@@ -247,7 +248,12 @@ object LegacySnapshotImport {
                     val qty=item.getLong("stock")
                     require(qty in 0L..100000000L && price>=0 && cost>=0 && name.isNotEmpty()){"بيانات مخزون غير صالحة: $id"}
                     // Preserve all legacy metadata and embedded photos as JSON details.
-                    store.addProduct(name,barcode,currency,price,cost,qty,kind,legacyPhotos(item,context,createdImages).toString(),id,
+                    store.addProduct(name,barcode,currency,price,cost,qty,kind,legacyPhotos(item,context,createdImages).also { details ->
+                            val keys=listOf("imagePath","couplePhotoPath","barcodePhotoPath")
+                            for(key in keys) details.optString(key).takeIf { it.isNotBlank() }?.let { imageOwners[it]="products" to id }
+                            val paths=details.optJSONArray("imagePaths")
+                            if(paths!=null) for(n in 0 until paths.length()) imageOwners[paths.getString(n)]="products" to id
+                        }.toString(),id,
                         brand=item.optString("brand").take(500),
                         model=item.optString("model").take(500))
                 }
@@ -278,7 +284,9 @@ object LegacySnapshotImport {
                     "phone" to repair.optString("phone"),"watch" to repair.optString("watch"),
                     "problem" to repair.optString("problem"),"status" to status,
                     "date" to repair.optString("date"),"invoice_id" to null,
-                    "details" to legacyPhotos(repair,context,createdImages).put("_legacyImported",true).toString())
+                    "details" to legacyPhotos(repair,context,createdImages).also { details ->
+                        details.optString("imagePath").takeIf { it.isNotBlank() }?.let { imageOwners[it]="repairs" to id }
+                    }.put("_legacyImported",true).toString())
             }
             // Preserve historical financial records verbatim for accurate later ledger
             // reconstruction. They are NOT booked as new income or cash movements.
