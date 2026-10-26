@@ -264,6 +264,17 @@ class Backup(private val context:Context,private val store:Store) {
         val file=java.io.File(context.filesDir,"legacy_snapshots/${hash}.json")
         require(file.isFile) { "النسخة محفوظة في الفهرس فقط؛ اختر ملف JSON الأصلي مرة أخرى لتفعيل قراءتها" }
         require(file.length() in 1..MAX_BYTES.toLong()) { "حجم النسخة المحفوظة غير صالح" }
+        val digest=java.security.MessageDigest.getInstance("SHA-256")
+        file.inputStream().buffered().use { input ->
+            val buffer=ByteArray(64*1024)
+            while(true) {
+                val n=input.read(buffer)
+                if(n<0) break
+                digest.update(buffer,0,n)
+            }
+        }
+        val actual=digest.digest().joinToString("") { "%02x".format(it.toInt() and 0xff) }
+        require(actual==hash) { "ملف النسخة القديمة تغيّر أو تلف؛ أعد اختيار الملف الأصلي" }
         return file.readText(Charsets.UTF_8).removePrefix("\uFEFF")
     }
     /** Stage already-previewed backup bytes without reparsing photo-heavy JSON. */
