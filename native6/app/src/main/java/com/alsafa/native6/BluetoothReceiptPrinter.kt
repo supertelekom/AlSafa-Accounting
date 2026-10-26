@@ -234,30 +234,48 @@ object BluetoothReceiptPrinter {
             textAlign=android.graphics.Paint.Align.CENTER
         }
         val center=width/2f
-        paint.typeface=android.graphics.Typeface.DEFAULT_BOLD
-        paint.textSize=minOf(21f,width/16f)
-        canvas.drawText("ALSAFA",center,paint.textSize+4f,paint)
-        paint.textSize=minOf(20f,width/17f)
         val available=width-24f
-        val cleanName=name.trim()
-        while(paint.measureText(cleanName)>available && paint.textSize>9f) paint.textSize-=1f
-        var displayed=cleanName
-        while(displayed.isNotEmpty() && paint.measureText(displayed)>available) displayed=displayed.dropLast(1)
-        canvas.drawText(displayed,center,paint.textSize*2+8f,paint)
-        paint.textSize=minOf(22f,width/15f)
-        while(paint.measureText(price)>available && paint.textSize>9f) paint.textSize-=1f
-        canvas.drawText(price,center,paint.textSize*3+13f,paint)
-        val top=(paint.textSize*3+24f).toInt()
-        val barcodeHeight=height-top-27
-        require(barcodeHeight>=20) { "مقاس الملصق لا يتسع للاسم والسعر والباركود؛ اختر مقاساً أكبر" }
+        paint.typeface=android.graphics.Typeface.DEFAULT_BOLD
+        fun fitText(value:String,maxSize:Float,minSize:Float):Float {
+            paint.textSize=maxSize
+            while(paint.measureText(value)>available && paint.textSize>minSize)
+                paint.textSize-=1f
+            return paint.textSize
+        }
+        fun clipped(value:String):String {
+            var result=value
+            while(result.isNotEmpty() && paint.measureText(result)>available)
+                result=result.dropLast(1)
+            return result
+        }
+        val headerSize=minOf(19f,width/17f)
+        paint.textSize=headerSize
+        val headerY=headerSize+3f
+        canvas.drawText("ALSAFA",center,headerY,paint)
+        val nameSize=fitText(name.trim(),minOf(18f,width/17f),8f)
+        val nameY=headerY+nameSize+4f
+        canvas.drawText(clipped(name.trim()),center,nameY,paint)
+        val priceSize=fitText(price.trim(),minOf(20f,width/16f),8f)
+        val priceY=nameY+priceSize+4f
+        canvas.drawText(clipped(price.trim()),center,priceY,paint)
+        val codeSize=minOf(13f,width/26f)
+        paint.textSize=codeSize
+        val codeBaseline=height-5f
+        val top=(priceY+7f).toInt()
+        val bottom=(codeBaseline-codeSize-5f).toInt()
+        val barcodeHeight=bottom-top
+        require(barcodeHeight>=24) {
+            "مقاس الملصق لا يتسع للاسم والسعر والباركود؛ اختر مقاساً أكبر"
+        }
         val matrix=com.google.zxing.MultiFormatWriter().encode(
             barcode,com.google.zxing.BarcodeFormat.CODE_128,width-24,barcodeHeight,
             mapOf(com.google.zxing.EncodeHintType.MARGIN to 0))
         paint.strokeWidth=1f
-        for(y in 0 until matrix.height)for(x in 0 until matrix.width)
-            if(matrix.get(x,y))canvas.drawPoint((12+x).toFloat(),(top+y).toFloat(),paint)
-        paint.textSize=minOf(16f,width/22f)
-        canvas.drawText(barcode.take(maxOf(10,width/11)),center,(height-6).toFloat(),paint)
+        for(y in 0 until matrix.height) for(x in 0 until matrix.width)
+            if(matrix.get(x,y))
+                canvas.drawPoint((12+x).toFloat(),(top+y).toFloat(),paint)
+        paint.textSize=codeSize
+        canvas.drawText(clipped(barcode),center,codeBaseline,paint)
         return bitmap
     }
 }
