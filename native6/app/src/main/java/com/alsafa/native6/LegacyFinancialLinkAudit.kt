@@ -148,6 +148,16 @@ object LegacyFinancialLinkAudit {
                 ?: java.math.BigDecimal.ZERO
             cashTypeCurrencyGross.put(key,old.add(amount).toPlainString())
         }
+        val cashDailyCounts=JSONObject()
+        for(i in 0 until cashRows.length()) {
+            val row=cashRows.optJSONObject(i) ?: continue
+            val date=row.optString("date").take(10)
+            val vault=row.optString("vault")
+            val currency=row.optString("currency")
+            if(date.length!=10 || vault.isBlank() || currency.isBlank()) continue
+            val key=date+"|"+vault+"|"+currency
+            cashDailyCounts.put(key,cashDailyCounts.optInt(key)+1)
+        }
         val supplierLedger=data.optJSONArray("supplierLedger") ?: JSONArray()
         var missingSuppliers=0
         for(index in 0 until supplierLedger.length()) {
@@ -167,6 +177,7 @@ object LegacyFinancialLinkAudit {
             .put("linkSummary",linked)
             .put("cashMirrorEvidence",cashByReference)
             .put("cashTypeCurrencyCounts",cashTypeCurrencyCounts)
+            .put("cashDailyCountsByVaultCurrency",cashDailyCounts)
             .put("cashTypeCurrencyGross",cashTypeCurrencyGross)
             .put("withdrawalCountsByTransactionMonth",withdrawalMonthCounts)
             .put("missingReferencesSample",missingReferences)
