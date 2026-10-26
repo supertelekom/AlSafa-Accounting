@@ -199,6 +199,7 @@ object BluetoothReceiptPrinter {
         while(displayed.isNotEmpty() && paint.measureText(displayed)>available) displayed=displayed.dropLast(1)
         canvas.drawText(displayed,center,paint.textSize*2+8f,paint)
         paint.textSize=minOf(22f,width/15f)
+        while(paint.measureText(price)>available && paint.textSize>9f) paint.textSize-=1f
         canvas.drawText(price,center,paint.textSize*3+13f,paint)
         val top=(paint.textSize*3+24f).toInt()
         val barcodeHeight=(height-top-27).coerceAtLeast(20)
