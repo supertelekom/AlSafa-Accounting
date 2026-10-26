@@ -227,6 +227,8 @@ object LegacySnapshotImport {
             Triple("repairs","repairs","طلبات الصيانة")
         )
         val report=StringBuilder("فحص النسخة الأحدث — قراءة فقط\n")
+        var totalNew=0
+        var totalExisting=0
         val idsAcrossSections=HashSet<String>()
         for((source,table,title) in sections) {
             val array=data.optJSONArray(source) ?: continue
@@ -247,9 +249,12 @@ object LegacySnapshotImport {
                 require(matches in 0L..1L) { "معرف مكرر داخل قاعدة البيانات: $id" }
                 if(matches==1L) existingCount++ else newCount++
             }
+            totalNew+=newCount
+            totalExisting+=existingCount
             report.append("$title: جديد $newCount، موجود $existingCount، إجمالي ${array.length()}\n")
         }
-        report.append("\nالمطابقة تعتمد على المعرّف الأصلي، وليس الاسم. هذا فحص فقط؛ لا تُضاف سجلات أو تُستبدل بيانات أو تُنشأ فواتير. يلزم اعتماد آلية آمنة للتحديثات والحذف قبل تفعيل الدمج.")
+        report.append("\nالمجموع: جديد $totalNew، موجود مسبقاً $totalExisting\n")
+        report.append("\nالمطابقة تعتمد على المعرّف الأصلي، وليس الاسم. الموجود مسبقاً قد يكون تغيّر محتواه، ولا يُعد مطابقاً تلقائياً. هذا فحص فقط؛ لا تُضاف سجلات أو تُستبدل بيانات أو تُنشأ فواتير. يلزم اعتماد آلية آمنة للتحديثات والحذف قبل تفعيل الدمج.")
         return report.toString()
     }
     private fun requireEmptyAccounting(store:Store) {
