@@ -2028,8 +2028,9 @@ open class MainActivity:Activity() {
                                     text("تاريخ الفاتورة: "+record.optString("date"),card,12f)
                                     text(record.optString("total")+" "+record.optString("currency"),card,17f)
                                         .setTextColor(gold)
-                                    text("المقبوض: "+record.optString("paid")+" "+
-                                        record.optString("currency"),card,13f)
+                                    if(record.optString("paid").toBigDecimalOrNull()?.signum()==1)
+                                        text("المقبوض: "+record.optString("paid")+" "+
+                                            record.optString("currency"),card,13f)
                                     if(record.optString("outstanding").toBigDecimalOrNull()?.signum()==1)
                                         text("المتبقي للتحصيل: "+record.optString("outstanding")+" "+
                                             record.optString("currency"),card,13f)
