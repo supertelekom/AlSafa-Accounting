@@ -124,6 +124,16 @@ object LegacyFinancialLinkAudit {
             .put("cashRows",cashRows.length())
             .put("groupedReferenceCount",cashGroups.size)
             .put("deduplicationRequired",true)
+        val withdrawalMonthCounts=JSONObject()
+        val withdrawals=data.optJSONArray("partnerWithdrawals") ?: JSONArray()
+        for(i in 0 until withdrawals.length()) {
+            val row=withdrawals.optJSONObject(i) ?: continue
+            val month=row.optString("date").take(7)
+            if(month.length==7) {
+                val key=month+"|"+row.optString("partnerId")+"|"+row.optString("currency")
+                withdrawalMonthCounts.put(key,withdrawalMonthCounts.optInt(key)+1)
+            }
+        }
         val supplierLedger=data.optJSONArray("supplierLedger") ?: JSONArray()
         var missingSuppliers=0
         for(index in 0 until supplierLedger.length()) {
@@ -142,6 +152,7 @@ object LegacyFinancialLinkAudit {
             .put("missingIds",missingIds)
             .put("linkSummary",linked)
             .put("cashMirrorEvidence",cashByReference)
+            .put("withdrawalCountsByTransactionMonth",withdrawalMonthCounts)
             .put("missingReferencesSample",missingReferences)
             .put("ambiguousReferencesSample",ambiguousReferences)
             .put("missingSupplierLedgerReferences",missingSuppliers)
