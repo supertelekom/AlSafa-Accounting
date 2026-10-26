@@ -74,7 +74,7 @@ object BluetoothReceiptPrinter {
     }
     fun labelImage(name:String,price:String,barcode:String):Bitmap {
         require(barcode.isNotBlank()) { "أضف باركودًا للمنتج أولاً" }
-        val bitmap=Bitmap.createBitmap(384,240,Bitmap.Config.ARGB_8888)
+        val bitmap=Bitmap.createBitmap(384,330,Bitmap.Config.ARGB_8888)
         val canvas=android.graphics.Canvas(bitmap)
         canvas.drawColor(Color.WHITE)
         val paint=android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
@@ -94,7 +94,13 @@ object BluetoothReceiptPrinter {
         for(y in 0 until matrix.height) for(x in 0 until matrix.width)
             if(matrix.get(x,y)) canvas.drawPoint((20+x).toFloat(),(104+y).toFloat(),paint)
         paint.textSize=17f
-        canvas.drawText(barcode.take(35),192f,219f,paint)
+        canvas.drawText(barcode.take(35),192f,211f,paint)
+        // Customer-facing QR is separate from the cashier's scannable CODE128.
+        val customerText="الصفا للساعات | "+name+" | "+price+" | "+barcode
+        val qr=com.google.zxing.MultiFormatWriter().encode(
+            customerText,com.google.zxing.BarcodeFormat.QR_CODE,92,92)
+        for(y in 0 until qr.height) for(x in 0 until qr.width)
+            if(qr.get(x,y)) canvas.drawPoint((146+x).toFloat(),(227+y).toFloat(),paint)
         return bitmap
     }
 }
