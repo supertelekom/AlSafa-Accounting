@@ -14,6 +14,10 @@ object LegacyVaultSnapshot {
         "shamcash" to "sham","sham" to "sham","bank" to "bank")
     fun inspect(payload:String):JSONObject {
         val root=JSONObject(payload)
+        return inspectRoot(root)
+    }
+
+    fun inspectRoot(root:JSONObject):JSONObject {
         require(root.optString("format")=="alsafa-accounting-backup" && root.optInt("formatVersion")==2)
         val movements=root.getJSONObject("data").optJSONArray("cashTransactions") ?: JSONArray()
         val sums=sortedMapOf<String,BigDecimal>()
