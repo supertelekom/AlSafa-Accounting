@@ -60,15 +60,31 @@ object BluetoothReceiptPrinter {
     fun invoiceImage(file:java.io.File):Bitmap {
         android.os.ParcelFileDescriptor.open(file,android.os.ParcelFileDescriptor.MODE_READ_ONLY).use { descriptor ->
             android.graphics.pdf.PdfRenderer(descriptor).use { renderer ->
-                check(renderer.pageCount==1) { "الفاتورة متعددة الصفحات؛ يلزم دعم طباعة جميع الصفحات" }
-                renderer.openPage(0).use { page ->
-                    val width=384
-                    val height=(page.height.toLong()*width/page.width).toInt().coerceAtLeast(1)
-                    val bitmap=Bitmap.createBitmap(width,height,Bitmap.Config.ARGB_8888)
-                    bitmap.eraseColor(Color.WHITE)
-                    page.render(bitmap,null,null,android.graphics.pdf.PdfRenderer.Page.RENDER_MODE_FOR_PRINT)
-                    return bitmap
+                check(renderer.pageCount>0) { "ملف الفاتورة فارغ" }
+                val heights=mutableListOf<Int>()
+                for(index in 0 until renderer.pageCount) {
+                    renderer.openPage(index).use { page ->
+                        heights.add((page.height.toLong()*384/page.width).toInt().coerceAtLeast(1))
+                    }
                 }
+                val total=heights.sum()
+                require(total<=16000) { "الفاتورة طويلة جداً للطباعة دفعة واحدة" }
+                val bitmap=Bitmap.createBitmap(384,total,Bitmap.Config.ARGB_8888)
+                bitmap.eraseColor(Color.WHITE)
+                val canvas=android.graphics.Canvas(bitmap)
+                var top=0
+                for(index in heights.indices) {
+                    renderer.openPage(index).use { page ->
+                        val part=Bitmap.createBitmap(384,heights[index],Bitmap.Config.ARGB_8888)
+                        try {
+                            part.eraseColor(Color.WHITE)
+                            page.render(part,null,null,android.graphics.pdf.PdfRenderer.Page.RENDER_MODE_FOR_PRINT)
+                            canvas.drawBitmap(part,0f,top.toFloat(),null)
+                        } finally { part.recycle() }
+                        top+=heights[index]
+                    }
+                }
+                return bitmap
             }
         }
     }
