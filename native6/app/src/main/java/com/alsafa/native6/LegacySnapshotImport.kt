@@ -152,8 +152,9 @@ object LegacySnapshotImport {
             "النسخة الاحتياطية ناقصة أو تالفة؛ أقسام مفقودة: ${missing.joinToString(", ")}"
         }
     }
-    fun quickPreview(payload:String):String {
-        val root=JSONObject(payload)
+    fun quickPreview(payload:String):String = quickPreviewRoot(JSONObject(payload))
+
+    fun quickPreviewRoot(root:JSONObject):String {
         require(root.optString("format")=="alsafa-accounting-backup" &&
             root.optInt("formatVersion")==2) { "صيغة النسخة الاحتياطية غير مدعومة" }
         val data=root.getJSONObject("data")
