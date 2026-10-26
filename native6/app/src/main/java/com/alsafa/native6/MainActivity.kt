@@ -1981,12 +1981,22 @@ open class MainActivity:Activity() {
         }
     }
     private fun printInvoice(inv:Invoice) {
-        printImage {
-            val file=java.io.File.createTempFile("alsafa-print-",".pdf",cacheDir)
-            try {
-                file.outputStream().use { InvoicePdf(this,store).write(inv.id,it) }
-                BluetoothReceiptPrinter.invoiceImage(file)
-            } finally { file.delete() }
+        choosePrinter { address ->
+            if(busy)return@choosePrinter
+            busy=true
+            io.execute {
+                val file=java.io.File.createTempFile("alsafa-print-",".pdf",cacheDir)
+                try {
+                    file.outputStream().use { InvoicePdf(this,store).write(inv.id,it) }
+                    BluetoothReceiptPrinter.printInvoicePdf(this,address,file)
+                    runOnUiThread {
+                        busy=false
+                        Toast.makeText(this,"أُرسلت الفاتورة للطابعة",Toast.LENGTH_SHORT).show()
+                    }
+                } catch(e:Exception) {
+                    runOnUiThread { busy=false;error(e) }
+                } finally { file.delete() }
+            }
         }
     }
     private fun shareInvoicePdf(inv:Invoice) {
