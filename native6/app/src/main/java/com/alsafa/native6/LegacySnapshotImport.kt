@@ -215,7 +215,7 @@ object LegacySnapshotImport {
         // reconciliation passes over the large backup.
         val issues=LegacyImportPreflight.inspectInventoryData(d)
         require(issues.isEmpty()) { "فحص النسخة القديمة فشل: "+issues.take(5).joinToString("; ") }
-        val manifest=LegacyRestoreManifest.inspect(payload)
+        val manifest=LegacyRestoreManifest.inspectData(root,payload)
         val readiness=LegacyRestoreReadiness.inspectRoot(root)
         val financialWarnings=LegacyImportPreflight.inspectFinancialHistoryData(d)
         val closingAudit=LegacyClosingContinuity.inspectRoot(root)
