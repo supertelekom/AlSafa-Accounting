@@ -96,7 +96,9 @@ object LegacySnapshotImport {
         val root=JSONObject(payload)
         require(root.optString("format")=="alsafa-accounting-backup" && root.optInt("formatVersion")==2)
         val d=root.getJSONObject("data")
+        progress(15,"مطابقة بصمة النسخة وعدد السجلات")
         val manifest=LegacyRestoreManifest.inspectData(root,payload)
+        progress(20,"تدقيق السجلات المالية والروابط")
         val readiness=LegacyRestoreReadiness.inspectRoot(root)
         val blocking=LegacyImportPreflight.inspectInventoryData(d).size
         val roundedPrices=listOf("products","maintenanceParts").sumOf { section ->
@@ -153,6 +155,7 @@ object LegacySnapshotImport {
         }
     }
     fun quickPreview(payload:String):String {
+        progress(4,"قراءة بيانات النسخة الاحتياطية")
         val root=JSONObject(payload)
         require(root.optString("format")=="alsafa-accounting-backup" &&
             root.optInt("formatVersion")==2) { "صيغة النسخة الاحتياطية غير مدعومة" }
@@ -205,7 +208,8 @@ object LegacySnapshotImport {
         require(store.scalar("SELECT count(*) FROM settings WHERE key=?",
             "legacy_snapshot_import")==0L) { "هذه النسخة مستعادة مسبقاً" }
     }
-    fun import(store:Store,payload:String,context:android.content.Context):String {
+    fun import(store:Store,payload:String,context:android.content.Context,progress:(Int,String)->Unit = { _,_ -> }):String {
+        progress(1,"التحقق من قاعدة البيانات")
         // Reject an occupied database before parsing and auditing a large backup.
         requireEmptyAccounting(store)
         val root=JSONObject(payload)
@@ -215,6 +219,7 @@ object LegacySnapshotImport {
         requireRequiredCollections(d)
         // Reject invalid stock immediately, before the more expensive financial
         // reconciliation passes over the large backup.
+        progress(10,"فحص المخزون والبيانات")
         val issues=LegacyImportPreflight.inspectInventoryData(d)
         require(issues.isEmpty()) { "فحص النسخة القديمة فشل: "+issues.take(5).joinToString("; ") }
         val manifest=LegacyRestoreManifest.inspectData(root,payload)
@@ -241,6 +246,7 @@ object LegacySnapshotImport {
         val suppliers=d.getJSONArray("suppliers")
         val createdImages=mutableListOf<java.io.File>()
         val imageOwners=linkedMapOf<String,Pair<String,String>>()
+        progress(30,"بدء حفظ البيانات في قاعدة SQLite")
         return try { store.transaction {
             // Recheck under the write transaction to prevent accidental overwrite.
             requireEmptyAccounting(store)
@@ -249,8 +255,10 @@ object LegacySnapshotImport {
             val repairIds=HashSet<String>()
             val barcodes=HashSet<String>()
             lists.forEach { (key,kind) ->
+                progress(if(key=="products") 33 else 43,if(key=="products") "استعادة الساعات وصورها" else "استعادة قطع الصيانة وصورها")
                 val a=d.getJSONArray(key)
                 for(i in 0 until a.length()) {
+                    if(i%25==0) progress((if(key=="products") 33 else 43)+i*9/maxOf(1,a.length()),"${if(key=="products") "الساعات" else "قطع الصيانة"}: ${i+1} / ${a.length()}")
                     val item=a.getJSONObject(i)
                     val id=item.getString("id").trim()
                     require(id.isNotBlank() && seen.add(id)){"معرف منتج مفقود أو مكرر: $key"}
@@ -273,6 +281,7 @@ object LegacySnapshotImport {
                         model=item.optString("model").take(500))
                 }
             }
+            progress(53,"استعادة الموردين")
             for(i in 0 until suppliers.length()) {
                 val s=suppliers.getJSONObject(i)
                 val id=s.getString("id").trim()
@@ -283,7 +292,9 @@ object LegacySnapshotImport {
                     "legacy_id" to id,"payload" to s.toString())
             }
             val repairs=d.getJSONArray("repairs")
+            progress(58,"استعادة طلبات الصيانة وصورها")
             for(i in 0 until repairs.length()) {
+                if(i%20==0) progress(58+i*10/maxOf(1,repairs.length()),"طلبات الصيانة: ${i+1} / ${repairs.length()}")
                 val repair=repairs.getJSONObject(i)
                 val id=repair.getString("id").trim()
                 require(id.isNotEmpty() && repairIds.add(id)){"معرف صيانة مكرر"}
@@ -314,7 +325,9 @@ object LegacySnapshotImport {
             val historical=d.keys().asSequence()
                 .filter { it !in setOf("products","maintenanceParts","suppliers","repairs") }
                 .filter { d.optJSONArray(it)!=null }.toList()
+            progress(70,"أرشفة الفواتير والحركات التاريخية")
             historical.forEach { key ->
+                progress(70,"أرشفة قسم $key")
                 val array=d.optJSONArray(key) ?: return@forEach
                 for(i in 0 until array.length()) {
                     // Some historical sections contain scalar values or nested arrays.
@@ -358,6 +371,7 @@ object LegacySnapshotImport {
             if(deviceSettings!=null) store.insert("legacy_records",
                 "category" to "configuration","legacy_id" to "deviceSettings",
                 "payload" to deviceSettings.toString())
+            progress(80,"التحقق من أعداد السجلات المنقولة")
             val expectedArchive=suppliers.length() + historical.sumOf { d.getJSONArray(it).length() } +
                 configurationKeys.size + scalarKeys.size +
                 (if(deviceSettings!=null) 1 else 0)
@@ -475,6 +489,7 @@ object LegacySnapshotImport {
             require(actualArchive==expectedArchive.toLong()) {
                 "عدد السجلات التاريخية المستعادة لا يطابق النسخة الأصلية: $actualArchive / $expectedArchive"
             }
+            progress(88,"مطابقة بيانات المخزون والصيانة")
             for ((section,kind) in lists) {
                 val items=d.getJSONArray(section)
                 val sourceQuantity=(0 until items.length()).sumOf { i -> items.getJSONObject(i).getLong("stock") }
@@ -532,6 +547,7 @@ object LegacySnapshotImport {
                 .put("archivedFinancialRecords",store.scalar("SELECT count(*) FROM legacy_records")).toString())
             require(createdImages.all { it.isFile && it.length()>0L }) { "ملفات الصور المستعادة غير مكتملة" }
             require(createdImages.distinctBy { it.canonicalPath }.size==createdImages.size) { "تكرار مسار صورة أثناء الاستعادة" }
+            progress(94,"فحص الصور المستعادة وربطها بالسجلات")
             val expectedPhotos=listOf("products","maintenanceParts","repairs").sumOf { section ->
                 val array=d.getJSONArray(section)
                 (0 until array.length()).sumOf { index ->
@@ -580,6 +596,7 @@ object LegacySnapshotImport {
                     "الصورة لا تظهر في تفاصيل سجلها الأصلي: "+image.name
                 }
             }
+            progress(99,"إنهاء التحقق وحفظ الاستعادة")
             val photoCount=createdImages.size
             val receipt=LegacyRestoreReceipt.inspect(store)
             val financialSummary=runCatching { LegacyArchivedFinancialPosition.summary(store) }
