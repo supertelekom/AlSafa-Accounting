@@ -57,4 +57,44 @@ object BluetoothReceiptPrinter {
             } finally { if(bitmap!==image)bitmap.recycle() }
         } finally { runCatching { socket.close() } }
     }
+    fun invoiceImage(file:java.io.File):Bitmap {
+        android.os.ParcelFileDescriptor.open(file,android.os.ParcelFileDescriptor.MODE_READ_ONLY).use { descriptor ->
+            android.graphics.pdf.PdfRenderer(descriptor).use { renderer ->
+                check(renderer.pageCount==1) { "الفاتورة متعددة الصفحات؛ يلزم دعم طباعة جميع الصفحات" }
+                renderer.openPage(0).use { page ->
+                    val width=384
+                    val height=(page.height.toLong()*width/page.width).toInt().coerceAtLeast(1)
+                    val bitmap=Bitmap.createBitmap(width,height,Bitmap.Config.ARGB_8888)
+                    bitmap.eraseColor(Color.WHITE)
+                    page.render(bitmap,null,null,android.graphics.pdf.PdfRenderer.Page.RENDER_MODE_FOR_PRINT)
+                    return bitmap
+                }
+            }
+        }
+    }
+    fun labelImage(name:String,price:String,barcode:String):Bitmap {
+        require(barcode.isNotBlank()) { "أضف باركودًا للمنتج أولاً" }
+        val bitmap=Bitmap.createBitmap(384,240,Bitmap.Config.ARGB_8888)
+        val canvas=android.graphics.Canvas(bitmap)
+        canvas.drawColor(Color.WHITE)
+        val paint=android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
+            color=Color.BLACK
+            textAlign=android.graphics.Paint.Align.CENTER
+        }
+        paint.typeface=android.graphics.Typeface.DEFAULT_BOLD
+        paint.textSize=22f
+        canvas.drawText("ALSAFA WATCHES",192f,28f,paint)
+        paint.textSize=19f
+        canvas.drawText(name.take(30),192f,60f,paint)
+        paint.textSize=22f
+        canvas.drawText(price,192f,91f,paint)
+        val matrix=com.google.zxing.MultiFormatWriter().encode(
+            barcode,com.google.zxing.BarcodeFormat.CODE_128,344,85)
+        paint.strokeWidth=1f
+        for(y in 0 until matrix.height) for(x in 0 until matrix.width)
+            if(matrix.get(x,y)) canvas.drawPoint((20+x).toFloat(),(104+y).toFloat(),paint)
+        paint.textSize=17f
+        canvas.drawText(barcode.take(35),192f,219f,paint)
+        return bitmap
+    }
 }
