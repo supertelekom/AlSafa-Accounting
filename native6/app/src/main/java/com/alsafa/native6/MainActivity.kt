@@ -1596,7 +1596,7 @@ open class MainActivity:Activity() {
                                                 val record=original?.optJSONObject("invoice")
                                                 val items=record?.optJSONArray("items")
                                                 val itemText=if(items==null) "لا توجد أصناف مسجلة" else
-                                                    (0 until items.length()).joinToString("\\n") { j ->
+                                                    (0 until items.length()).joinToString("\n") { j ->
                                                         val item=items.optJSONObject(j)
                                                         if(item==null) "" else
                                                             (item.optString("name").ifBlank { item.optString("productName") })+
@@ -1605,12 +1605,12 @@ open class MainActivity:Activity() {
                                                 AlertDialog.Builder(this)
                                                     .setTitle("الفاتورة الأصلية #"+invoice.optString("invoiceNo"))
                                                     .setMessage("التاريخ: "+invoice.optString("date")+
-                                                        "\\nالعميل/المورد: "+(if(key=="sales")invoice.optString("customer") else invoice.optString("supplierName"))+
-                                                        "\\nالهاتف: "+invoice.optString("phone")+
-                                                        "\\nالإجمالي: "+invoice.optString("total")+" "+invoice.optString("currency")+
-                                                        "\\nالمدفوع: "+invoice.optString("paid")+
-                                                        "\\nالمتبقي: "+invoice.optString("outstanding")+
-                                                        "\\n\\nالأصناف:\\n"+itemText)
+                                                        "\nالعميل/المورد: "+(if(key=="sales")invoice.optString("customer") else invoice.optString("supplierName"))+
+                                                        "\nالهاتف: "+invoice.optString("phone")+
+                                                        "\nالإجمالي: "+invoice.optString("total")+" "+invoice.optString("currency")+
+                                                        "\nالمدفوع: "+invoice.optString("paid")+
+                                                        "\nالمتبقي: "+invoice.optString("outstanding")+
+                                                        "\n\nالأصناف:\n"+itemText)
                                                     .setPositiveButton("إغلاق",null).show()
                                             }
                                         }
