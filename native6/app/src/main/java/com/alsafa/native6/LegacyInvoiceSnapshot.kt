@@ -11,7 +11,7 @@ import java.math.BigDecimal
  */
 object LegacyInvoiceSnapshot {
     private val allowed=setOf("sales","purchases","repairs")
-    private val invoiceSections=setOf("sales","purchases","repairs")
+    private val invoiceSections=setOf("sales","purchases")
 
     /**
      * Returns the complete source invoice, without posting another sale, purchase,
