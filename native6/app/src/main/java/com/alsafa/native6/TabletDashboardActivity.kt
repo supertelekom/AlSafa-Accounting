@@ -86,16 +86,16 @@ class TabletDashboardActivity : Activity() {
             orientation = LinearLayout.VERTICAL
             gravity = Gravity.CENTER_VERTICAL
             layoutDirection = View.LAYOUT_DIRECTION_RTL
-            setPadding(dp(17), dp(12), dp(17), dp(12))
+            setPadding(dp(12), dp(8), dp(12), dp(8))
             background = shape(Color.WHITE)
             isClickable = true
             isFocusable = true
             setOnClickListener { action() }
             elevation = dp(2).toFloat()
         }
-        box.addView(title(symbol, 27f, gold))
-        box.addView(title(label, 19f))
-        box.addView(title(detail, 13f, Color.rgb(113, 101, 87)))
+        box.addView(title(symbol, 20f, gold))
+        box.addView(title(label, 16f))
+        box.addView(title(detail, 11f, Color.rgb(113, 101, 87)))
         return box
     }
 
@@ -144,10 +144,10 @@ class TabletDashboardActivity : Activity() {
                 content.addView(row, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(22) })
                 row.addView(tile("الوضع المبسط", "المبيع والصيانة والفواتير والإقفال", "⚡") {
                     mode = "simple"; render()
-                }, LinearLayout.LayoutParams(0, dp(195), 1f).apply { marginEnd = dp(12) })
+                }, LinearLayout.LayoutParams(0, dp(144), 1f).apply { marginEnd = dp(12) })
                 row.addView(tile("الوضع الكامل", "المخزون والمحاسبة والموردون والتقارير", "◆") {
                     mode = "advanced"; render()
-                }, LinearLayout.LayoutParams(0, dp(195), 1f))
+                }, LinearLayout.LayoutParams(0, dp(144), 1f))
                 content.addView(title("وصول سريع", 21f, gold))
                 grid(content, listOf(
                     Triple("المبيع", "فاتورة جديدة", "sale"),
@@ -192,13 +192,13 @@ class TabletDashboardActivity : Activity() {
     }
 
     private fun grid(parent: LinearLayout, items: List<Triple<String, String, String>>) {
-        val columns = if (resources.configuration.smallestScreenWidthDp >= 840) 4 else 2
+        val columns = if (resources.configuration.smallestScreenWidthDp >= 840) 4 else if (resources.configuration.smallestScreenWidthDp >= 600) 3 else 2
         items.chunked(columns).forEach { group ->
             val row = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
             parent.addView(row, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(12) })
             group.forEach { (label, detail, route) ->
                 row.addView(tile(label, detail, "◈") { open(route) },
-                    LinearLayout.LayoutParams(0, dp(142), 1f).apply {
+                    LinearLayout.LayoutParams(0, dp(108), 1f).apply {
                         marginEnd = dp(10)
                     })
             }
