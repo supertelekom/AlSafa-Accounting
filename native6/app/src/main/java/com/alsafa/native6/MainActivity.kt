@@ -1549,7 +1549,7 @@ open class MainActivity:Activity() {
                                 val row=payments.optJSONObject(index)?.optJSONObject("record")
                                 if(row==null) "" else {
                                     val date=row.optString("date").take(10)
-                                    val value=row.optString("amount",row.optString("paid",""))
+                                    val value=row.optString("amount").ifBlank { row.optString("paid") }
                                     val currency=row.optString("currency",summary.optString("currency"))
                                     date+" · "+value+" "+currency
                                 }
