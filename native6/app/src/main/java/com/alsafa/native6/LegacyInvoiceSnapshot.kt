@@ -124,6 +124,10 @@ object LegacyInvoiceSnapshot {
         val totals=JSONObject()
         outstanding.forEach { (currency,value)->totals.put(currency,value.toPlainString()) }
         val page=JSONArray()
+        // Show the newest transaction day first, preserving a stable order for pagination.
+        matches.sortWith(compareByDescending<JSONObject> { it.optString("date") }
+            .thenByDescending { it.optString("invoiceNo") }
+            .thenByDescending { it.optString("id") })
         matches.drop(offset).take(limit).forEach { page.put(it) }
         return JSONObject().put("section",section).put("total",matches.size)
             .put("offset",offset).put("limit",limit).put("rows",page)
