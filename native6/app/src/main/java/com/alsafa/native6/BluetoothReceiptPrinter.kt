@@ -101,9 +101,9 @@ object BluetoothReceiptPrinter {
                         heights.add((page.height.toLong()*384/page.width).toInt().coerceAtLeast(1))
                     }
                 }
-                val total=heights.sum()
-                require(total<=16000) { "الفاتورة طويلة جداً للطباعة دفعة واحدة" }
-                val bitmap=Bitmap.createBitmap(384,total,Bitmap.Config.ARGB_8888)
+                val total=heights.sumOf { it.toLong() }
+                require(total<=16000L) { "الفاتورة طويلة جداً للطباعة دفعة واحدة" }
+                val bitmap=Bitmap.createBitmap(384,total.toInt(),Bitmap.Config.ARGB_8888)
                 bitmap.eraseColor(Color.WHITE)
                 val canvas=android.graphics.Canvas(bitmap)
                 var top=0
