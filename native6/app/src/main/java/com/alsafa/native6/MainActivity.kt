@@ -2521,6 +2521,23 @@ open class MainActivity:Activity() {
     }
     private fun paymentForm(title:String,c:Currency,max:Long,action:(Long,String,String)->Unit){form(title){box->val n=field("المبلغ ${c.name} · المتبقي ${money(max,c)}",box,"0",true);val v=select("الخزنة",vaultNames,box);val received=field("تاريخ حركة النقود الفعلي YYYY-MM-DD",box,Store.today());{val amount=amount(n,c);require(amount>0L && amount<=max){"المبلغ يجب أن يكون أكبر من الصفر وألا يتجاوز الرصيد المستحق"};val vault=Store.vaults[v.selectedItemPosition];val actualDate=java.time.LocalDate.parse(received.text.toString().trim()).toString();work{action(amount,vault,actualDate)}}}}
     private fun vaults(){sectionHeading("الخزنات والإقفال اليومي","الأرصدة الفعلية والمحاسبية بحسب الخزنة والعملة");
+        button("سحوبات الشركاء المستعادة حسب الشهر") {
+            form("سحوبات الشركاء التاريخية","عرض"){box->
+                val month=field("الشهر YYYY-MM",box,YearMonth.now().toString())
+                ({ work { try {
+                    val report=LegacyArchivedFinancialPosition.monthlyPartnerWithdrawals(store,month.text.toString().trim())
+                    val entries=report.getJSONArray("withdrawals")
+                    val details=(0 until entries.length()).joinToString("\n"){i->
+                        val row=entries.getJSONObject(i)
+                        row.optString("date")+" · "+row.optString("partner")+" · "+row.optString("amount")+" "+row.optString("currency")
+                    }
+                    runOnUiThread { if(!isFinishing&&!isDestroyed) AlertDialog.Builder(this)
+                        .setTitle("سحوبات "+report.optString("month"))
+                        .setMessage(if(details.isBlank())"لا توجد سحوبات في الشهر المحدد" else details)
+                        .setPositiveButton("إغلاق",null).show() }
+                } catch(e:Exception) { runOnUiThread { if(!isFinishing&&!isDestroyed)error(e) } } } })
+            }
+        }
         button("مطابقة الخزنات والسحوبات والمصاريف المستعادة") {
             work {
                 try {
