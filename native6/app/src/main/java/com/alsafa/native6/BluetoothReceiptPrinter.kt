@@ -220,6 +220,8 @@ object BluetoothReceiptPrinter {
     fun labelImage(name:String,price:String,barcode:String,widthMm:Int=50,heightMm:Int=30):Bitmap {
         require(widthMm in 20..82 && heightMm in 15..150) { "مقاس الملصق خارج نطاق الطابعة" }
         require(barcode.isNotBlank()) { "أضف باركودًا للمنتج أولاً" }
+        require(name.isNotBlank()) { "اسم المنتج مطلوب على الملصق" }
+        require(price.isNotBlank()) { "سعر المنتج مطلوب على الملصق" }
         require(barcode.all { it.code in 32..126 }) { "الباركود يحتوي على أحرف غير مدعومة" }
         val width=widthMm*8
         val height=heightMm*8
