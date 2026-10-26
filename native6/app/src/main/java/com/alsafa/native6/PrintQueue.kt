@@ -15,6 +15,9 @@ class PrintQueue(context:Context):SQLiteOpenHelper(context,"alsafa_print_queue.d
         error("Print queue migration required; existing jobs preserved")
     }
     data class Job(val id:String,val invoiceId:String,val invoiceNumber:String,val status:String,val attempts:Int,val error:String)
+    fun findOutstanding(invoiceId:String):Job? =
+        list().firstOrNull { it.invoiceId==invoiceId && it.status!="sent_unconfirmed" }
+
     fun enqueue(invoiceId:String,invoiceNumber:String):String {
         val db=writableDatabase
         val id=UUID.randomUUID().toString()
