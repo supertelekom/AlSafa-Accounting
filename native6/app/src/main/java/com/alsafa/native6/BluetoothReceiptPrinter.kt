@@ -40,7 +40,10 @@ object BluetoothReceiptPrinter {
         if(!permitted(context)) return null
         val address=context.getSharedPreferences(PREFS,Context.MODE_PRIVATE)
             .getString(ADDRESS,null) ?: return null
-        return if(adapter.bondedDevices.any { it.address==address }) address else null
+        return if(adapter.bondedDevices.any { it.address==address }) address else {
+            forgetPrinter(context)
+            null
+        }
     }
 
     fun forgetPrinter(context:Context) {
