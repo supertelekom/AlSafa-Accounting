@@ -988,13 +988,13 @@ open class MainActivity:Activity() {
         var visibleCount=24
         fun show(){
             list.removeAllViews()
-            val results=store.searchCatalog(query.text.toString().trim(),onlyKind)
-            text(if(onlyKind=="part") "قطع الصيانة: ${results.size}" else "المنتجات: ${results.size}",list,13f)
+            val (total,results)=store.searchCatalogPage(query.text.toString().trim(),onlyKind,visibleCount)
+            text(if(onlyKind=="part") "قطع الصيانة: ${total}" else "المنتجات: ${total}",list,13f)
             if(results.isEmpty())text("لا توجد نتائج مطابقة.",list,14f)
-            results.take(visibleCount).forEach{p->productCard(p,list,variantCounts[p.id]?:0)}
-            if(results.size>visibleCount) {
-                button("عرض المزيد (${minOf(visibleCount,results.size)} من ${results.size})",list) {
-                    visibleCount+=24
+            results.forEach{p->productCard(p,list,variantCounts[p.id]?:0)}
+            if(total>visibleCount) {
+                button("عرض المزيد (${minOf(visibleCount.toLong(),total)} من ${total})",list) {
+                    visibleCount=minOf(visibleCount+24,500)
                     show()
                 }
             }
