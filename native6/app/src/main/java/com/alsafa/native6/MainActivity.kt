@@ -911,16 +911,20 @@ open class MainActivity:Activity() {
         val query=field("بحث بالاسم أو الباركود أو REF",body)
         val list=column().apply {setPadding(0,dp(4),0,dp(4))}
         body.addView(list)
+        val variantCounts=store.colorVariantCounts()
         fun show(){
             list.removeAllViews()
-            val results=store.searchCatalog(query.text.toString(),onlyKind)
+            val results=store.searchCatalog(query.text.toString().trim(),onlyKind)
             text(if(onlyKind=="part") "قطع الصيانة: ${results.size}" else "المنتجات: ${results.size}",list,13f)
-            if(results.isEmpty())text(if(onlyKind=="part") "لا توجد قطع صيانة مطابقة للبحث." else "لا توجد منتجات مطابقة للبحث.",list,14f)
-            val variantCounts=store.colorVariantCounts()
-            results.take(150).forEach{p->productCard(p,list,variantCounts[p.id]?:0)}
-            if(results.size>150)text("تُعرض أول 150 نتيجة. استخدم البحث لتضييق القائمة.",list,13f)
+            if(results.isEmpty())text("لا توجد نتائج مطابقة.",list,14f)
+            results.take(60).forEach{p->productCard(p,list,variantCounts[p.id]?:0)}
+            if(results.size>60)text("تُعرض أول 60 نتيجة. اكتب جزءاً من الاسم أو الباركود لتضييق القائمة.",list,13f)
         }
-        button("بحث"){show()}
+        query.addTextChangedListener(object:android.text.TextWatcher {
+            override fun beforeTextChanged(s:CharSequence?,start:Int,count:Int,after:Int){}
+            override fun onTextChanged(s:CharSequence?,start:Int,before:Int,count:Int){show()}
+            override fun afterTextChanged(s:android.text.Editable?){}
+        })
         show()
     }
     private fun stocktakeForm(p:Product){
