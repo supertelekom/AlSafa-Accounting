@@ -1807,13 +1807,10 @@ open class MainActivity:Activity() {
                                 button("⋮ خيارات الفاتورة",card) {
                                     showRestoredInvoiceOptions(key,invoice)
                                 }
-                                                                button("تفاصيل ▾",card) {
-                                    detail.visibility=if(detail.visibility==View.GONE)View.VISIBLE else View.GONE
-                                }
-                                button("عرض تفاصيل الفاتورة",card) {
+                                                                button("تفاصيل الفاتورة",card) {
                                     showRestoredInvoiceOptions(key,invoice)
                                 }
-                                                                list.addView(card,LinearLayout.LayoutParams(-1,-2).apply {setMargins(0,dp(4),0,dp(4))})
+                                list.addView(card,LinearLayout.LayoutParams(-1,-2).apply {setMargins(0,dp(4),0,dp(4))})
                             }
                             if(rows.length()==0)text("لا توجد فواتير مطابقة.",list,14f)
                         }
