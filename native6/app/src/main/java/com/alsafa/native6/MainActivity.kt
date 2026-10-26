@@ -1543,6 +1543,17 @@ open class MainActivity:Activity() {
                         val invoice=original?.optJSONObject("invoice")
                         val items=invoice?.optJSONArray("items")
                         val linkedPayments=original?.optJSONArray("linkedPayments")?.length() ?: 0
+                        val payments=original?.optJSONArray("linkedPayments")
+                        val paymentLines=if(payments==null || payments.length()==0) "" else
+                            (0 until payments.length()).joinToString("\n") { index ->
+                                val row=payments.optJSONObject(index)?.optJSONObject("record")
+                                if(row==null) "" else {
+                                    val date=row.optString("date").take(10)
+                                    val value=row.optString("amount",row.optString("paid",""))
+                                    val currency=row.optString("currency",summary.optString("currency"))
+                                    date+" · "+value+" "+currency
+                                }
+                            }
                         val lines=if(items==null)"" else (0 until items.length()).joinToString("\n") { index ->
                             val item=items.optJSONObject(index)
                             if(item==null)"" else {
@@ -1562,7 +1573,9 @@ open class MainActivity:Activity() {
                                 summary.optString("currency")+
                             "\nالمدفوع: "+summary.optString("paid")+
                             "\nالمتبقي: "+summary.optString("outstanding")+
-                            "\nعمليات الدفع المرتبطة: "+linkedPayments+"\n\nالأصناف:\n"+lines
+                            "\nعمليات الدفع المرتبطة: "+linkedPayments+
+                            (if(paymentLines.isBlank()) "" else "\n"+paymentLines)+
+                            "\n\nالأصناف:\n"+lines
                         runOnUiThread {
                             if(isFinishing||isDestroyed)return@runOnUiThread
                             if(choice==1) {
