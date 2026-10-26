@@ -3413,12 +3413,9 @@ button("＋ مورد"){form("مورد جديد"){box->val n=field("الاسم",b
         };103->contentResolver.openInputStream(uri)!!.use{val report=backup.stageLegacy(it);runOnUiThread{AlertDialog.Builder(this).setMessage(report).setPositiveButton("حسناً",null).show()}};105->contentResolver.openInputStream(uri)!!.use{ input ->
             val bytes=Backup.read(input)
             val payload=String(bytes,Charsets.UTF_8).removePrefix("\uFEFF")
-            val preview=LegacySnapshotImport.quickPreview(payload)
-            // Preserve the source before import; do not perform the expensive
-            // full financial audit merely to display a confirmation dialog.
-            // The chosen backup is already held in memory for the preview.
-            // Never parse it a second time in stageLegacy: that duplicates
-            // the entire photo-heavy JSON graph and can crash low-RAM tablets.
+            // Parse once for preview, then stage original bytes without a second parse.
+            val root=org.json.JSONObject(payload)
+            val preview=LegacySnapshotImport.quickPreviewRoot(root)
             backup.stageLegacyBytes(bytes)
             runOnUiThread {
                 if(!isFinishing&&!isDestroyed) AlertDialog.Builder(this)
