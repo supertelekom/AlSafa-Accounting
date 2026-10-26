@@ -2529,6 +2529,24 @@ button("＋ مورد"){form("مورد جديد"){box->val n=field("الاسم",b
                 val p=field("الهاتف",box)
                 val w=field("الساعة",box)
                 val problem=field("المشكلة",box)
+                // Fast repair intake: one tap selects a common service while
+                // leaving the description fully editable for unusual repairs.
+                val quickRow=LinearLayout(this).apply {
+                    orientation=LinearLayout.HORIZONTAL
+                    layoutDirection=View.LAYOUT_DIRECTION_RTL
+                }
+                box.addView(quickRow,LinearLayout.LayoutParams(-1,-2))
+                listOf("تبديل بطارية","تبديل حزام","تعديل حزام").forEach { label ->
+                    val shortcut=Button(this).apply {
+                        style(this);text=label;textSize=11f;isAllCaps=false
+                        minHeight=dp(44)
+                        setOnClickListener {
+                            problem.setText(label)
+                            problem.setSelection(problem.text.length)
+                        }
+                    }
+                    quickRow.addView(shortcut,LinearLayout.LayoutParams(0,dp(46),1f))
+                }
                 val date=field("تاريخ الاستلام YYYY-MM-DD",box,Store.today())
                 intakePhotoStatus=TextView(this).also { it.text="لم تُضف صورة";box.addView(it) }
                 intakePhotoPreview=ImageView(this).also { preview ->
