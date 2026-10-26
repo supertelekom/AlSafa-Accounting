@@ -1443,14 +1443,14 @@ open class MainActivity:Activity() {
         }
         button("تفاصيل فاتورة قديمة والمدفوعات المرتبطة بها — قراءة فقط") {
             form("البحث عن فاتورة قديمة","بحث"){box->
-                val kind=select("النوع",listOf("مبيع","شراء","صيانة"),box)
+                val kind=select("النوع",listOf("مبيع","شراء"),box)
                 val search=field("رقم الفاتورة أو الاسم أو رقم الهاتف",box)
                 ({
-                    val section=when(kind.selectedItemPosition){0->"sales";1->"purchases";else->"repairs"}
+                    val section=if(kind.selectedItemPosition==0)"sales" else "purchases"
                     val term=search.text.toString().trim()
                     require(term.isNotEmpty()){"أدخل رقم الفاتورة أو اسم العميل"}
                     work {
-                        val rows=store.legacyPage(section,term,0,50)
+                        val rows=store.legacyPage(section,term,50,0)
                         val labels=rows.map { row ->
                             val item=org.json.JSONObject(row.getValue("payload"))
                             "#"+item.optString("invoiceNo")+" · "+item.optString("date")+
