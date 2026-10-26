@@ -31,6 +31,22 @@ class InvoicePdf(private val context:Context,private val store:Store) {
         rows.add("التاريخ والوقت" to date.replace("-","/"))
         rows.add("إسم العميل / الشركة" to invoice.party.ifBlank { "عميل نقدي" })
         invoiceMeta["phone"]?.takeIf { it.isNotBlank() }?.let { rows.add("رقم الهاتف" to it) }
+        if(invoice.kind=="repair") {
+            val repair=store.rows(
+                "SELECT watch,problem,status,date FROM repairs WHERE invoice_id=? LIMIT 1",id
+            ).firstOrNull()
+            if(repair!=null) {
+                repair["watch"]?.takeIf { it.isNotBlank() }?.let { rows.add("الساعة" to it) }
+                repair["problem"]?.takeIf { it.isNotBlank() }?.let { rows.add("العطل" to it) }
+                repair["date"]?.takeIf { it.isNotBlank() }?.let { rows.add("تاريخ الاستلام" to it.replace("-","/")) }
+                rows.add("حالة الصيانة" to when(repair["status"]) {
+                    "delivered"->"تم التسليم"
+                    "ready"->"جاهزة للاستلام"
+                    "received"->"قيد الصيانة"
+                    else->repair["status"].orEmpty()
+                })
+            }
+        }
         for(item in items) {
             rows.add("نوع المنتج" to item.getValue("name"))
             val qty=item.getValue("qty").toLongOrNull()?:1L
