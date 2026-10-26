@@ -226,7 +226,7 @@ object LegacySnapshotImport {
             Triple("suppliers","suppliers","الموردون"),
             Triple("repairs","repairs","طلبات الصيانة")
         )
-        val report=StringBuilder("فحص النسخة الأحدث — قراءة فقط\\n")
+        val report=StringBuilder("فحص النسخة الأحدث — قراءة فقط\n")
         for((source,table,title) in sections) {
             val array=data.optJSONArray(source) ?: continue
             var newCount=0
@@ -242,9 +242,9 @@ object LegacySnapshotImport {
                 if(store.scalar("SELECT count(*) FROM $table WHERE id=?",id)>0L) existingCount++
                 else newCount++
             }
-            report.append("$title: جديد $newCount، موجود $existingCount، إجمالي ${array.length()}\\n")
+            report.append("$title: جديد $newCount، موجود $existingCount، إجمالي ${array.length()}\n")
         }
-        report.append("\\nالمطابقة تعتمد على المعرّف الأصلي، وليس الاسم. هذا فحص فقط؛ لا تُضاف سجلات أو تُستبدل بيانات أو تُنشأ فواتير. يلزم اعتماد آلية آمنة للتحديثات والحذف قبل تفعيل الدمج.")
+        report.append("\nالمطابقة تعتمد على المعرّف الأصلي، وليس الاسم. هذا فحص فقط؛ لا تُضاف سجلات أو تُستبدل بيانات أو تُنشأ فواتير. يلزم اعتماد آلية آمنة للتحديثات والحذف قبل تفعيل الدمج.")
         return report.toString()
     }
     private fun requireEmptyAccounting(store:Store) {
