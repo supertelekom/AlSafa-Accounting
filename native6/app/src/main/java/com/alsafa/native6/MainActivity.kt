@@ -876,6 +876,16 @@ open class MainActivity:Activity() {
                 setMargins(dp(3),dp(4),dp(3),dp(2))
             })
         }
+        val menu=Button(this).apply {
+            style(this);text="إجراءات ▾";textSize=12f;isAllCaps=false
+            background=background(sand,10)
+        }
+        card.addView(menu,LinearLayout.LayoutParams(-1,dp(44)))
+        actions.visibility=View.GONE
+        menu.setOnClickListener {
+            actions.visibility=if(actions.visibility==View.VISIBLE)View.GONE else View.VISIBLE
+            menu.text=if(actions.visibility==View.VISIBLE)"إخفاء الإجراءات ▴" else "إجراءات ▾"
+        }
         action("تعديل"){productForm(p)}
         action("الحركات"){selectedProduct=p;go("stock-history")}
         action("جرد"){stocktakeForm(p)}
