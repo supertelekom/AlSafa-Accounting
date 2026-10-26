@@ -132,7 +132,7 @@ open class MainActivity:Activity() {
         // setOnShowListener is invoked by show(); keep validation errors on screen.
     }
     private fun error(e:Exception){AlertDialog.Builder(this).setTitle("لم تُحفظ العملية").setMessage(e.message?:"حدث خطأ").setPositiveButton("حسناً",null).show()}
-    private fun work(task:()->Unit){if(busy)return;busy=true;try{io.execute{try{task();runOnUiThread{busy=false;if(!isFinishing&&!isDestroyed){Toast.makeText(this,"اكتملت العملية",Toast.LENGTH_SHORT).show();safeRender()}}}catch(e:Exception){runOnUiThread{busy=false;if(!isFinishing&&!isDestroyed)error(e)}}}}catch(e:java.util.concurrent.RejectedExecutionException){busy=false;if(!isFinishing&&!isDestroyed)error(e)}}
+    private fun work(task:()->Unit){if(busy){android.util.Log.w("AlSafaRestore","Background action ignored because another action is still busy");Toast.makeText(this,"العملية السابقة لم تنتهِ بعد، انتظر قليلاً",Toast.LENGTH_LONG).show();return};busy=true;try{io.execute{try{task();runOnUiThread{busy=false;if(!isFinishing&&!isDestroyed){Toast.makeText(this,"اكتملت العملية",Toast.LENGTH_SHORT).show();safeRender()}}}catch(e:Exception){runOnUiThread{busy=false;if(!isFinishing&&!isDestroyed)error(e)}}}}catch(e:java.util.concurrent.RejectedExecutionException){busy=false;if(!isFinishing&&!isDestroyed)error(e)}}
     /** Every destination is a separate native Activity instance and owns its content. */
     private fun go(value:String){
         if(value==page)return
