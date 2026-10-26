@@ -1535,7 +1535,7 @@ open class MainActivity:Activity() {
         val number=summary.optString("invoiceNo")
         val archiveKey=summary.optString("archiveKey")
         AlertDialog.Builder(this).setTitle("خيارات الفاتورة #"+number)
-            .setItems(arrayOf("تفاصيل الفاتورة","عرض البيانات الأصلية")) { _,choice ->
+            .setItems(arrayOf("تفاصيل الفاتورة","عرض البيانات الأصلية","نسخ بيانات الفاتورة")) { _,choice ->
                 work {
                     try {
                         val original=LegacyInvoiceSnapshot.detail(store,section,archiveKey)
@@ -1543,12 +1543,16 @@ open class MainActivity:Activity() {
                         val items=invoice?.optJSONArray("items")
                         val lines=if(items==null)"" else (0 until items.length()).joinToString("\n") { index ->
                             val item=items.optJSONObject(index)
-                            if(item==null)"" else item.optString("name").ifBlank {
-                                item.optString("productName") }+" × "+
-                                item.optString("quantity",item.optString("qty","1"))
+                            if(item==null)"" else {
+                                val name=item.optString("name").ifBlank { item.optString("productName") }
+                                val qty=item.optString("quantity",item.optString("qty","1"))
+                                val price=item.optString("price",item.optString("unitPrice",""))
+                                name+" × "+qty+(if(price.isBlank())"" else " · "+price)
+                            }
                         }
                         val message=if(invoice==null)"تعذر العثور على الفاتورة" else
-                            "التاريخ: "+summary.optString("date")+
+                            "رقم الفاتورة: "+number+
+                            "\nالتاريخ: "+summary.optString("date")+
                             "\nالعميل/المورد: "+summary.optString("customer").ifBlank {
                                 summary.optString("supplierName") }+
                             "\nالهاتف: "+summary.optString("phone")+
@@ -1556,12 +1560,17 @@ open class MainActivity:Activity() {
                                 summary.optString("currency")+
                             "\nالمدفوع: "+summary.optString("paid")+
                             "\nالمتبقي: "+summary.optString("outstanding")+
-                            "\n\nالأصناف:\n"+lines+
-                            "\n\nالفاتورة مستعادة من النسخة الأصلية؛ لا يُعاد احتسابها."
+                            "\n\nالأصناف:\n"+lines
                         runOnUiThread {
-                            if(!isFinishing&&!isDestroyed) AlertDialog.Builder(this)
-                                .setTitle(if(choice==0)"تفاصيل الفاتورة #"+number
-                                    else "البيانات الأصلية للفاتورة #"+number)
+                            if(isFinishing||isDestroyed)return@runOnUiThread
+                            if(choice==2) {
+                                val clipboard=getSystemService(android.content.Context.CLIPBOARD_SERVICE)
+                                    as android.content.ClipboardManager
+                                clipboard.setPrimaryClip(android.content.ClipData.newPlainText(
+                                    "فاتورة #"+number,message))
+                                Toast.makeText(this,"تم نسخ بيانات الفاتورة",Toast.LENGTH_SHORT).show()
+                            } else AlertDialog.Builder(this)
+                                .setTitle("تفاصيل الفاتورة #"+number)
                                 .setMessage(message).setPositiveButton("إغلاق",null).show()
                         }
                     } catch(e:Exception) {
