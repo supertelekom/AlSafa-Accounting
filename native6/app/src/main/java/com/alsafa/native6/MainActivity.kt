@@ -1790,14 +1790,9 @@ open class MainActivity:Activity() {
                                 detail.visibility=View.GONE
                                 text("المدفوع: "+invoice.optString("paid")+" · المتبقي: "+invoice.optString("outstanding"),detail,13f)
                                 button("⋮ خيارات الفاتورة",card) {
-                                    AlertDialog.Builder(this)
-                                        .setTitle("خيارات الفاتورة #"+invoice.optString("invoiceNo"))
-                                        .setItems(arrayOf("تفاصيل الفاتورة","عرض الفاتورة الأصلية")) { _,choice ->
-                                            if(choice==0) detail.visibility=if(detail.visibility==View.GONE)View.VISIBLE else View.GONE
-                                            else Toast.makeText(this,"اختر عرض الفاتورة الأصلية أدناه",Toast.LENGTH_SHORT).show()
-                                        }.setNegativeButton("إغلاق",null).show()
+                                    showRestoredInvoiceOptions(key,invoice)
                                 }
-                                button("تفاصيل ▾",card) {
+                                                                button("تفاصيل ▾",card) {
                                     detail.visibility=if(detail.visibility==View.GONE)View.VISIBLE else View.GONE
                                 }
                                 button("عرض الفاتورة الأصلية",card) {
