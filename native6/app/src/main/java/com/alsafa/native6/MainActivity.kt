@@ -925,13 +925,9 @@ open class MainActivity:Activity() {
             }
         }
         button("توليد وطباعة ملصق باركود · الاسم والسعر",card) {
-            if(p.barcode.isBlank()) {
-                AlertDialog.Builder(this).setTitle("باركود المنتج")
-                    .setMessage("هذا المنتج لا يحتوي على باركود. أضفه من تعديل المنتج قبل الطباعة.")
-                    .setPositiveButton("تعديل المنتج"){_,_->productForm(p)}
-                    .setNegativeButton("إلغاء",null).show()
-            } else {
-                printImage { BluetoothReceiptPrinter.labelImage(p.name,money(p.price,p.currency),p.barcode) }
+            printImage {
+                val code=store.ensureProductBarcode(p.id)
+                BluetoothReceiptPrinter.labelImage(p.name,money(p.price,p.currency),code)
             }
         }
         card.addView(actions)
