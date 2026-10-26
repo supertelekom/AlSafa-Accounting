@@ -210,6 +210,43 @@ object LegacySnapshotImport {
             "داخل عملية الحفظ. لن تُفعّل الأرصدة النقدية والديون والأرباح " +
             "التاريخية تلقائياً، بل ستُحفظ في أرشيف للقراءة والمطابقة."
     }
+    /**
+     * Read-only comparison for a newer v2 snapshot. Identity is the immutable
+     * source ID, never the display name or barcode. Existing rows are not
+     * inserted again, and changed rows are not silently overwritten.
+     */
+    fun incrementalPreview(store:Store,payload:String):String {
+        val root=JSONObject(payload)
+        require(root.optString("format")=="alsafa-accounting-backup" &&
+            root.optInt("formatVersion")==2) { "الملف ليس نسخة الصفا القديمة المدعومة" }
+        val data=root.getJSONObject("data")
+        val sections=listOf(
+            Triple("products","products","الساعات"),
+            Triple("maintenanceParts","products","قطع الصيانة"),
+            Triple("suppliers","suppliers","الموردون"),
+            Triple("repairs","repairs","طلبات الصيانة")
+        )
+        val report=StringBuilder("فحص النسخة الأحدث — قراءة فقط\\n")
+        for((source,table,title) in sections) {
+            val array=data.optJSONArray(source) ?: continue
+            var newCount=0
+            var existingCount=0
+            val seen=HashSet<String>()
+            for(i in 0 until array.length()) {
+                val record=array.optJSONObject(i)
+                    ?: error("سجل غير صالح في $title عند الفهرس $i")
+                val id=record.optString("id").trim()
+                require(id.isNotBlank() && seen.add(id)) {
+                    "معرف مفقود أو مكرر في $title عند السجل $i"
+                }
+                if(store.scalar("SELECT count(*) FROM $table WHERE id=?",id)>0L) existingCount++
+                else newCount++
+            }
+            report.append("$title: جديد $newCount، موجود $existingCount، إجمالي ${array.length()}\\n")
+        }
+        report.append("\\nالمطابقة تعتمد على المعرّف الأصلي، وليس الاسم. هذا فحص فقط؛ لا تُضاف سجلات أو تُستبدل بيانات أو تُنشأ فواتير. يلزم اعتماد آلية آمنة للتحديثات والحذف قبل تفعيل الدمج.")
+        return report.toString()
+    }
     private fun requireEmptyAccounting(store:Store) {
         val tables=listOf("legacy_records","repairs","products","suppliers","events",
             "invoices","journal","receipts","stock_moves","returns","refunds","closings")
