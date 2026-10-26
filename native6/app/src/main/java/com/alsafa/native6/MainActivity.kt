@@ -109,9 +109,12 @@ open class MainActivity:Activity() {
         it.background=if(primary)goldButtonBackground() else background(paper,14)
         it.setTextColor(if(primary)Color.WHITE else ink)
         it.gravity=Gravity.CENTER_VERTICAL or Gravity.RIGHT
-        it.setPadding(dp(15),0,dp(15),0)
+        it.setPadding(dp(13),0,dp(13),0)
         it.minHeight=dp(44)
-        parent.addView(it,LinearLayout.LayoutParams(-1,dp(52)).apply{setMargins(0,dp(5),0,dp(5))})
+        it.minimumHeight=dp(44)
+        // One consistent, touch-accessible button height on every redraw.
+        // Avoid the previous 52dp height plus 10dp of outer margins.
+        parent.addView(it,LinearLayout.LayoutParams(-1,dp(46)).apply{setMargins(0,dp(3),0,dp(3))})
         it.setOnClickListener{if(!busy)action()}
     }
     private fun field(label:String,parent:LinearLayout,value:String="",numeric:Boolean=false):EditText {text(label,parent,15f);return EditText(this).also{style(it);it.setSingleLine();if(numeric)it.inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL;val isScreen=::body.isInitialized && parent===body;val restored=if(isScreen)savedInputs?.getOrNull(visibleInputs.size) else null;it.setText(restored?:value);if(isScreen)visibleInputs.add(it);parent.addView(it)}}
