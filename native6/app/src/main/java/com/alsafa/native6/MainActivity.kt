@@ -1536,10 +1536,10 @@ open class MainActivity:Activity() {
         val invoiceKind=when(section) { "sales" -> "مبيع"; "purchases" -> "شراء"; else -> "صيانة" }
         val archiveKey=summary.optString("archiveKey")
         AlertDialog.Builder(this).setTitle("خيارات فاتورة "+invoiceKind+" #"+number)
-            .setItems(arrayOf("تفاصيل الفاتورة","نسخ بيانات الفاتورة","عرض PDF التاريخي")) { _,choice ->
+            .setItems(arrayOf("تفاصيل الفاتورة","نسخ بيانات الفاتورة","عرض PDF التاريخي","مشاركة PDF التاريخي")) { _,choice ->
                 work {
                     try {
-                        if(choice==2) {
+                        if(choice==2 || choice==3) {
                             val directory=java.io.File(cacheDir,"restored_invoices").apply { mkdirs() }
                             val safeKey=archiveKey.replace(Regex("[^A-Za-z0-9_-]"),"_")
                             val file=java.io.File(directory,"historical_"+safeKey+".pdf")
@@ -1552,7 +1552,8 @@ open class MainActivity:Activity() {
                                     setDataAndType(uri,"application/pdf")
                                     addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
                                 }
-                                try { startActivity(intent) } catch(e:Exception) { error(e) }
+                                if(choice==3) CustomerShare.send(this,file,"application/pdf","فاتورة الصفا التاريخية #"+number)
+                                else try { startActivity(intent) } catch(e:Exception) { error(e) }
                             }
                             return@work
                         }
