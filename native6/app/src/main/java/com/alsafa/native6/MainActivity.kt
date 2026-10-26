@@ -264,7 +264,7 @@ open class MainActivity:Activity() {
                 LegacySnapshotImport.import(store,payload,this@MainActivity) { value,description ->
                     val current=value.coerceIn(0,99)
                     val now=android.os.SystemClock.uptimeMillis()
-                    if(current!=lastPercent || (description!=lastDescription && now-lastUpdateAt>=120L)) {
+                    if((current!=lastPercent || description!=lastDescription) && now-lastUpdateAt>=120L) {
                         lastPercent=current
                         lastDescription=description
                         lastUpdateAt=now
