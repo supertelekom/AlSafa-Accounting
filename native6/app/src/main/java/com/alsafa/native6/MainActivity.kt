@@ -224,6 +224,68 @@ open class MainActivity:Activity() {
             else -> addSaleProduct(matches.first())
         }
     }
+    private fun restoreWithProgress(payload:String) {
+        if(busy) {
+            Toast.makeText(this,"انتظر اكتمال العملية السابقة",Toast.LENGTH_LONG).show()
+            return
+        }
+        val layout=LinearLayout(this).apply {
+            orientation=LinearLayout.VERTICAL
+            setPadding(dp(22),dp(16),dp(22),dp(16))
+        }
+        val status=TextView(this).apply {
+            style(this)
+            text="التحضير للاستعادة..."
+            textDirection=View.TEXT_DIRECTION_RTL
+        }
+        val bar=ProgressBar(this,null,android.R.attr.progressBarStyleHorizontal).apply {
+            max=100
+            progress=0
+            isIndeterminate=false
+        }
+        val percent=TextView(this).apply {
+            style(this)
+            text="0%"
+        }
+        layout.addView(status)
+        layout.addView(bar,LinearLayout.LayoutParams(-1,dp(14)))
+        layout.addView(percent)
+        val dialog=AlertDialog.Builder(this)
+            .setTitle("استعادة بيانات الصفا")
+            .setView(layout)
+            .setCancelable(false)
+            .create()
+        dialog.show()
+        work {
+            var lastPercent=-1
+            try {
+                LegacySnapshotImport.import(store,payload,this@MainActivity) { value,description ->
+                    val current=value.coerceIn(0,99)
+                    if(current!=lastPercent) {
+                        lastPercent=current
+                        runOnUiThread {
+                            if(!isFinishing&&!isDestroyed && dialog.isShowing) {
+                                bar.progress=current
+                                percent.text="$" + "{current}%"
+                                status.text=description
+                            }
+                        }
+                    }
+                }
+                runOnUiThread {
+                    if(!isFinishing&&!isDestroyed && dialog.isShowing) {
+                        bar.progress=100
+                        percent.text="100%"
+                        status.text="اكتملت الاستعادة والتحقق"
+                        dialog.dismiss()
+                    }
+                }
+            } catch(e:Throwable) {
+                runOnUiThread { if(dialog.isShowing) dialog.dismiss() }
+                throw e
+            }
+        }
+    }
     private fun label(value:String)=mapOf("sale" to "مبيع", "purchase" to "شراء", "repair" to "صيانة", "posted" to "مسجلة", "cancelled" to "ملغاة", "received" to "مستلمة", "in_progress" to "قيد الصيانة", "legacy_unknown" to "حالة قديمة تحتاج مراجعة", "ready" to "جاهزة", "delivered" to "تم التسليم")[value]?:value
     private fun money(n:Long,c:Currency)=Money(n,c).display()
     private fun amount(e:EditText,c:Currency)=Money.parse(e.text.toString(),c).minor
@@ -3309,7 +3371,7 @@ button("＋ مورد"){form("مورد جديد"){box->val n=field("الاسم",b
                             .setMessage(preview+"\\n\\nتتطلب قاعدة محاسبية فارغة، ولا تستبدل أي بيانات قائمة. هل تريد التنفيذ؟")
                             .setNegativeButton("إلغاء",null)
                             .setPositiveButton("استعادة البيانات"){_,_->work {
-                                LegacySnapshotImport.import(store,payload,this@MainActivity)
+                                restoreWithProgress(payload)
                             }}.show()
                     }
                 }
@@ -3349,7 +3411,7 @@ button("＋ مورد"){form("مورد جديد"){box->val n=field("الاسم",b
                     .setMessage(preview+"\n\nلن تُفعّل الديون أو أرصدة الصناديق أو أرباح الشركاء. تتطلب الاستعادة قاعدة فارغة، ولن تستبدل البيانات الموجودة. هل تريد المتابعة؟")
                     .setNegativeButton("إلغاء",null)
                     .setPositiveButton("استعادة المخزون والصيانة والموردين"){_,_->work {
-                        LegacySnapshotImport.import(store,payload,this@MainActivity)
+                        restoreWithProgress(payload)
                     }}.show()
             }
         }}}
