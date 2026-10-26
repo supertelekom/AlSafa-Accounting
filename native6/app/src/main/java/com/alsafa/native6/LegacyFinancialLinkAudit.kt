@@ -55,6 +55,7 @@ object LegacyFinancialLinkAudit {
         val workflowReferences=setOf("currencyExchange","opening",
             "sale-payment-correction","repair-payment-correction")
         val missingReferences=JSONArray()
+        var missingReferenceCount=0
         val ambiguousReferences=JSONArray()
         val linked=JSONObject()
         for(section in listOf("payments","returns","cashTransactions")) {
@@ -82,6 +83,7 @@ object LegacyFinancialLinkAudit {
                 if(ref in ids.getValue(target)) linkedCount++
                 else {
                     missingCount++
+                    missingReferenceCount++
                     if(missingReferences.length()<100)
                         missingReferences.put("$section[$index]: $referenceType")
                 }
@@ -196,6 +198,7 @@ object LegacyFinancialLinkAudit {
             .put("cashDailyCountsByVaultCurrency",cashDailyCounts)
             .put("cashTypeCurrencyGross",cashTypeCurrencyGross)
             .put("withdrawalCountsByTransactionMonth",withdrawalMonthCounts)
+            .put("missingReferenceCount",missingReferenceCount)
             .put("missingReferencesSample",missingReferences)
             .put("ambiguousReferencesSample",ambiguousReferences)
             .put("missingSupplierLedgerReferences",missingSuppliers)
