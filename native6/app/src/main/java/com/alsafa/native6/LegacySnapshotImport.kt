@@ -93,10 +93,12 @@ object LegacySnapshotImport {
         return root.getJSONObject("data")
     }
     fun preview(payload:String):String {
-        val d=data(payload)
+        val root=JSONObject(payload)
+        require(root.optString("format")=="alsafa-accounting-backup" && root.optInt("formatVersion")==2)
+        val d=root.getJSONObject("data")
         val manifest=LegacyRestoreManifest.inspectData(root,payload)
-        val readiness=LegacyRestoreReadiness.inspect(payload)
-        val blocking=LegacyImportPreflight.inspectInventory(payload).size
+        val readiness=LegacyRestoreReadiness.inspectRoot(root)
+        val blocking=LegacyImportPreflight.inspectInventoryData(d).size
         val roundedPrices=listOf("products","maintenanceParts").sumOf { section ->
             val items=d.getJSONArray(section)
             (0 until items.length()).sumOf { i ->
@@ -107,19 +109,19 @@ object LegacySnapshotImport {
                 }
             }
         }
-        val warnings=LegacyImportPreflight.inspectFinancialHistory(payload).size
-        val continuity=LegacyClosingContinuity.inspect(payload)
+        val warnings=LegacyImportPreflight.inspectFinancialHistoryData(d).size
+        val continuity=LegacyClosingContinuity.inspectRoot(root)
         val cashIssues=continuity.getJSONArray("arithmeticMismatches").length()
         val invalidClosingDates=continuity.getJSONArray("invalidDateRows").length()
         val duplicateClosingDates=continuity.getJSONArray("duplicateClosingDates").length()
-        val payments=LegacyPaymentLinkAudit.inspect(payload)
-        val returns=LegacyReturnLinkAudit.inspect(payload)
+        val payments=LegacyPaymentLinkAudit.inspectRoot(root)
+        val returns=LegacyReturnLinkAudit.inspectRoot(root)
         val brokenPaymentLinks=payments.getJSONArray("unresolvedReferenceRows").length()+payments.getJSONArray("missingReferenceRows").length()
         val crossCurrencyPaymentCount=payments.getJSONArray("crossCurrencyPaymentRows").length()
-        val cashMatch=LegacyPaymentCashAudit.inspect(payload)
-        val vaults=LegacyVaultSnapshot.inspect(payload)
+        val cashMatch=LegacyPaymentCashAudit.inspectRoot(root)
+        val vaults=LegacyVaultSnapshot.inspectRoot(root)
         val vaultPrecisionWarnings=vaults.getJSONArray("fractionalMinorUnitRows").length()
-        val supplierCash=LegacySupplierCashAudit.inspect(payload)
+        val supplierCash=LegacySupplierCashAudit.inspectRoot(root)
         val matchedSupplierPayments=supplierCash.getJSONArray("matched").length()
         val unmatchedSupplierPayments=supplierCash.getJSONArray("unmatchedLedgerIndexes").length()
         val matchedCashPayments=cashMatch.getJSONArray("matches").length()
