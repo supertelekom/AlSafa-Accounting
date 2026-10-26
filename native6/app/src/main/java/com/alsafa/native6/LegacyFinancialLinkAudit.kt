@@ -165,9 +165,14 @@ object LegacyFinancialLinkAudit {
             if(supplier.isNotBlank() && supplier !in ids.getValue("suppliers"))
                 missingSuppliers++
         }
+        val referenceProblems=missingReferences.length()+ambiguousReferences.length()+
+            missingSuppliers+duplicateIds.length()+missingIds.length()
+        val safeForAutomaticPosting=false
         return JSONObject()
             .put("readOnly",true)
             .put("financialPostingStatus","NOT_POSTED")
+            .put("referenceProblemSampleCount",referenceProblems)
+            .put("safeForAutomaticPosting",safeForAutomaticPosting)
             .put("collectionCounts",JSONObject().also { result ->
                 collections.forEach { result.put(it,data.optJSONArray(it)?.length() ?: 0) }
             })
