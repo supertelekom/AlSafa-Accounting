@@ -121,23 +121,62 @@ object BluetoothReceiptPrinter {
             out.flush()
         } finally { runCatching { socket.close() } }
     }
-    /** Prints PDF pages independently, avoiding the combined-image height limit. */
+    /** A single Bluetooth connection for all PDF pages; raster chunks bound memory use. */
+    @Suppress("DEPRECATION")
     fun printInvoicePdf(context:Context,address:String,file:java.io.File) {
+        check(permitted(context)) { "يجب السماح بإذن البلوتوث" }
+        val adapter=BluetoothAdapter.getDefaultAdapter() ?: error("البلوتوث غير متاح")
+        check(adapter.isEnabled) { "البلوتوث غير مفعل" }
+        val device=adapter.bondedDevices.firstOrNull { it.address==address }
+            ?: error("الطابعة غير مقترنة")
         android.os.ParcelFileDescriptor.open(file,android.os.ParcelFileDescriptor.MODE_READ_ONLY).use { fd ->
             android.graphics.pdf.PdfRenderer(fd).use { renderer ->
                 require(renderer.pageCount>0) { "ملف الفاتورة فارغ" }
-                for(i in 0 until renderer.pageCount) {
-                    renderer.openPage(i).use { page ->
-                        val height=(page.height.toLong()*384/page.width).toInt().coerceAtLeast(1)
-                        require(height<=16000) { "صفحة الفاتورة طويلة جداً" }
-                        val bitmap=Bitmap.createBitmap(384,height,Bitmap.Config.ARGB_8888)
-                        try {
-                            bitmap.eraseColor(Color.WHITE)
-                            page.render(bitmap,null,null,android.graphics.pdf.PdfRenderer.Page.RENDER_MODE_FOR_PRINT)
-                            print(context,address,bitmap)
-                        } finally { bitmap.recycle() }
+                adapter.cancelDiscovery()
+                val socket=device.createRfcommSocketToServiceRecord(
+                    UUID.fromString("00001101-0000-1000-8000-00805F9B34FB"))
+                try {
+                    socket.connect()
+                    val out=socket.outputStream
+                    out.write(byteArrayOf(27,64))
+                    for(i in 0 until renderer.pageCount) {
+                        renderer.openPage(i).use { page ->
+                            val height=(page.height.toLong()*384/page.width).toInt().coerceAtLeast(1)
+                            var top=0
+                            while(top<height) {
+                                val h=minOf(96,height-top)
+                                val bitmap=Bitmap.createBitmap(384,h,Bitmap.Config.ARGB_8888)
+                                try {
+                                    bitmap.eraseColor(Color.WHITE)
+                                    val scale=384f/page.width
+                                    val transform=android.graphics.Matrix().apply {
+                                        setScale(scale,scale)
+                                        postTranslate(0f,-top.toFloat())
+                                    }
+                                    page.render(bitmap,null,transform,
+                                        android.graphics.pdf.PdfRenderer.Page.RENDER_MODE_FOR_PRINT)
+                                    val pixels=IntArray(384*h)
+                                    bitmap.getPixels(pixels,0,384,0,0,384,h)
+                                    val data=ByteArray(48*h)
+                                    for(y in 0 until h) for(x in 0 until 384) {
+                                        val c=pixels[y*384+x]
+                                        val lum=(Color.red(c)*299+Color.green(c)*587+Color.blue(c)*114)/1000
+                                        if(Color.alpha(c)>80 && lum<155) {
+                                            val at=y*48+x/8
+                                            data[at]=(data[at].toInt() or (128 shr (x%8))).toByte()
+                                        }
+                                    }
+                                    out.write(byteArrayOf(29,118,48,0,48,0,
+                                        (h and 255).toByte(),(h shr 8).toByte()))
+                                    out.write(data)
+                                } finally { bitmap.recycle() }
+                                top+=h
+                            }
+                        }
                     }
-                }
+                    out.write(byteArrayOf(27,100,3))
+                    out.flush()
+                } finally { runCatching { socket.close() } }
             }
         }
     }
