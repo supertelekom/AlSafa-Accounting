@@ -42,3 +42,9 @@ The old JavaScript source contains these explicit renderer functions (verified b
 
 ## Current safety limitation
 `LegacySnapshotImport` still archives historical finance without posting it. Imported repairs are flagged `_legacyImported` and blocked from new financial actions until reconciliation. **Do not describe this as completed backup restoration.**
+
+## 2026-10-26 migration progress
+- `LegacyFinancialLinkAudit.kt` now audits source identifiers, reference links, duplicate invoice numbers, cash entries mirrored by sales/repairs/purchases/expenses/withdrawals, and counts partner withdrawals by their original month.
+- `LegacySnapshotImport.kt` retains the audit result in the restore metadata. This is a non-posting validation step.
+- `MainActivity.kt` now exposes read-only historical invoice search and linked payments within the invoice section; historical supplier ledger is accessible from suppliers; cash mirror and partner-month audit can be run from staged legacy backup inspection.
+- Remaining blocker: finance has not been migrated to operational ledger, and no APK build or 60 MB restore test has been run. Do not describe this work as completed restore.
