@@ -53,7 +53,7 @@ class LegacyInvoicePdf(private val context: Context, private val store: Store) {
             .obtain(value, 0, value.length, paint, textWidth)
             .setAlignment(Layout.Alignment.ALIGN_CENTER)
             .setIncludePad(false).build()
-        val title = "الصفا للساعات"
+        val title = "الصفا للساعات - Alsafa Watches"
         val lines = rows.flatMap { listOf(layout(it.first), layout(it.second)) }
         val height = 115 + lines.sumOf { it.height + 5 } + 45
         val document = PdfDocument()
