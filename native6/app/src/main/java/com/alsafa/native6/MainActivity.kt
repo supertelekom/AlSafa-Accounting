@@ -933,7 +933,7 @@ open class MainActivity:Activity() {
             val savedW=prefs.getInt("label_width",50)
             val savedH=prefs.getInt("label_height",30)
             val initial=sizes.indexOf("$savedW × $savedH").let { if(it<0) sizes.lastIndex else it }
-            fun printLabel(w:Int,h:Int) {
+            fun printLabel(w:Int,h:Int,copies:Int) {
                 require(w in 20..82 && h in 15..150)
                 prefs.edit().putInt("label_width",w).putInt("label_height",h).apply()
                 choosePrinter { address ->
@@ -944,7 +944,7 @@ open class MainActivity:Activity() {
                                 val code=store.ensureProductBarcode(p.id)
                                 val image=BluetoothReceiptPrinter.labelImage(
                                     p.name,money(p.price,p.currency),code,w,h)
-                                try { BluetoothReceiptPrinter.printLabel(this,address,image,w,h) }
+                                try { BluetoothReceiptPrinter.printLabel(this,address,image,w,h,copies=copies) }
                                 finally { image.recycle() }
                                 runOnUiThread {
                                     busy=false
@@ -956,6 +956,24 @@ open class MainActivity:Activity() {
                         }
                     }
                 }
+            }
+            fun askCopies(w:Int,h:Int) {
+                val input=EditText(this).apply {
+                    inputType=InputType.TYPE_CLASS_NUMBER
+                    setText(prefs.getInt("label_copies",1).toString())
+                    selectAll()
+                }
+                AlertDialog.Builder(this).setTitle("عدد ملصقات الباركود")
+                    .setMessage("حدد عدد النسخ المطلوب طباعتها (1–100)")
+                    .setView(input)
+                    .setPositiveButton("طباعة"){_,_->
+                        try {
+                            val copies=input.text.toString().toInt()
+                            require(copies in 1..100) { "عدد الملصقات يجب أن يكون بين 1 و100" }
+                            prefs.edit().putInt("label_copies",copies).apply()
+                            printLabel(w,h,copies)
+                        } catch(e:Exception) { error(e) }
+                    }.setNegativeButton("إلغاء",null).show()
             }
             AlertDialog.Builder(this).setTitle("اختر قياس ملصق الباركود بالملم")
                 .setSingleChoiceItems(sizes.toTypedArray(),initial){dialog,which->
@@ -978,12 +996,12 @@ open class MainActivity:Activity() {
                         layout.addView(width);layout.addView(height)
                         AlertDialog.Builder(this).setTitle("قياس رول مخصص")
                             .setView(layout).setPositiveButton("طباعة"){_,_->
-                                try { printLabel(width.text.toString().toInt(),height.text.toString().toInt()) }
+                                try { askCopies(width.text.toString().toInt(),height.text.toString().toInt()) }
                                 catch(e:Exception){error(e)}
                             }.setNegativeButton("إلغاء",null).show()
                     } else {
                         val parts=sizes[which].split(" × ")
-                        printLabel(parts[0].toInt(),parts[1].toInt())
+                        askCopies(parts[0].toInt(),parts[1].toInt())
                     }
                 }.setNegativeButton("إلغاء",null).show()
         }
