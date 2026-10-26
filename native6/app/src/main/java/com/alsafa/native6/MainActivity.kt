@@ -733,8 +733,7 @@ open class MainActivity:Activity() {
         ))
     }
     /** Keeps specialist audit tools accessible without pushing daily operations off screen. */
-    private fun collapsibleTools(title:String,build:()->Unit) {
-        val host=body
+    private fun collapsibleTools(title:String,host:LinearLayout=body,build:()->Unit) {
         val content=column().apply {
             setPadding(dp(9),dp(5),dp(9),dp(9))
             background=background(paper,12)
@@ -3036,7 +3035,7 @@ button("＋ مورد"){form("مورد جديد"){box->val n=field("الاسم",b
         openRepairs.take(openVisible).forEach{r->
             val id=r.getValue("id")
             repairIdentity(r,openList)
-            collapsibleTools("إجراءات صيانة · "+r.getValue("customer")) {
+            collapsibleTools("إجراءات صيانة · "+r.getValue("customer"),openList) {
                 if(store.repairImage(id).let { it==null || runCatching { localPhoto(it) }.isFailure })button("إضافة صورة الساعة"){photoRepairId=id;startActivityForResult(Intent(this,MediaCaptureActivity::class.java),70)};button("استخدام قطعة صيانة"){
             chooseProduct(inStockOnly=true,kind="part"){part->
                 form("تركيب قطعة للصيانة"){box->
@@ -3052,6 +3051,7 @@ button("＋ مورد"){form("مورد جديد"){box->val n=field("الاسم",b
             }
         };if(r.getValue("status")=="received")button("بدء الصيانة"){work{store.startRepair(id)}};if(r.getValue("status") in setOf("received","in_progress"))button("جاهزة للاستلام"){work{store.repairReady(id)}};if(r.getValue("status")=="ready")button("تسليم وفاتورة أجرة عمل"){form("تسليم الصيانة"){box->val c=select("العملة",Currency.entries.map{it.name},box);val n=field("أجرة العمل",box,"0",true);val paid=field("المدفوع",box,"0",true);val v=select("خزنة القبض",vaultNames,box);val delivered=field("تاريخ تسليم الساعة YYYY-MM-DD",box,Store.today());val received=field("تاريخ قبض الأجرة الفعلي YYYY-MM-DD",box,Store.today());{val curr=Currency.entries[c.selectedItemPosition];val value=amount(n,curr);val pay=amount(paid,curr);require(value>=0L){"أجرة الصيانة لا يمكن أن تكون سالبة"};require(pay>=0L && pay<=value){"المدفوع يجب أن يكون بين الصفر وأجرة الصيانة"};val vault=Store.vaults[v.selectedItemPosition];val deliveryDate=java.time.LocalDate.parse(delivered.text.toString().trim()).toString();val receiptDate=java.time.LocalDate.parse(received.text.toString().trim()).toString();work{store.deliverRepair(id,curr,value,pay,vault,deliveryDate=deliveryDate,receiptDate=receiptDate)}}}}}
             }
+        }
         if(openRepairs.size>openVisible) button("عرض المزيد من الصيانات المفتوحة",openList) {
             openVisible+=24
             showOpenRepairs()
