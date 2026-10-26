@@ -1858,6 +1858,67 @@ open class MainActivity:Activity() {
         button("بحث في الفواتير"){pageIndex=0;try{show()}catch(e:Exception){error(e)}}
         try{show()}catch(e:Exception){error(e)}
     }
+    private fun choosePrinter(onSelected:(String)->Unit) {
+        if(!BluetoothReceiptPrinter.permitted(this)) {
+            if(android.os.Build.VERSION.SDK_INT>=31)
+                requestPermissions(arrayOf(android.Manifest.permission.BLUETOOTH_CONNECT),702)
+            Toast.makeText(this,"اسمح بالبلوتوث ثم أعد الضغط على زر الطباعة",Toast.LENGTH_LONG).show()
+            return
+        }
+        try {
+            val devices=BluetoothReceiptPrinter.paired(this)
+            if(devices.isEmpty()) {
+                AlertDialog.Builder(this).setTitle("ربط الطابعة")
+                    .setMessage("اقرن الطابعة من إعدادات البلوتوث في التابلت، ثم ارجع إلى التطبيق.")
+                    .setPositiveButton("فتح إعدادات البلوتوث"){_,_->
+                        startActivity(Intent(android.provider.Settings.ACTION_BLUETOOTH_SETTINGS))
+                    }.setNegativeButton("إلغاء",null).show()
+                return
+            }
+            val prefs=getSharedPreferences("alsafa_printer",MODE_PRIVATE)
+            val saved=prefs.getString("address",null)
+            if(saved!=null && devices.any { it.address==saved }) {
+                onSelected(saved)
+                return
+            }
+            AlertDialog.Builder(this).setTitle("اختر الطابعة المقترنة")
+                .setItems(devices.map { (it.name ?: "طابعة") + " · " + it.address }.toTypedArray()) { _,which ->
+                    val address=devices[which].address
+                    prefs.edit().putString("address",address).apply()
+                    onSelected(address)
+                }.setNeutralButton("إعدادات البلوتوث"){_,_->
+                    startActivity(Intent(android.provider.Settings.ACTION_BLUETOOTH_SETTINGS))
+                }.setNegativeButton("إلغاء",null).show()
+        } catch(e:Exception) { error(e) }
+    }
+    private fun printImage(build:()->android.graphics.Bitmap) {
+        choosePrinter { address ->
+            if(busy)return@choosePrinter
+            busy=true
+            io.execute {
+                try {
+                    val bitmap=build()
+                    try { BluetoothReceiptPrinter.print(this,address,bitmap) }
+                    finally { bitmap.recycle() }
+                    runOnUiThread {
+                        busy=false
+                        Toast.makeText(this,"أُرسلت الطباعة إلى الطابعة",Toast.LENGTH_SHORT).show()
+                    }
+                } catch(e:Exception) {
+                    runOnUiThread { busy=false;error(e) }
+                }
+            }
+        }
+    }
+    private fun printInvoice(inv:Invoice) {
+        printImage {
+            val file=java.io.File.createTempFile("alsafa-print-",".pdf",cacheDir)
+            try {
+                file.outputStream().use { InvoicePdf(this,store).write(inv.id,it) }
+                BluetoothReceiptPrinter.invoiceImage(file)
+            } finally { file.delete() }
+        }
+    }
     private fun shareInvoicePdf(inv:Invoice) {
         if(busy)return
         busy=true
