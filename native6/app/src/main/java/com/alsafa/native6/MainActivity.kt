@@ -266,7 +266,7 @@ open class MainActivity:Activity() {
                         runOnUiThread {
                             if(!isFinishing&&!isDestroyed && dialog.isShowing) {
                                 bar.progress=current
-                                percent.text="$" + "{current}%"
+                                percent.text=current.toString()+"%"
                                 status.text=description
                             }
                         }
@@ -3370,9 +3370,7 @@ button("＋ مورد"){form("مورد جديد"){box->val n=field("الاسم",b
                             .setTitle("استعادة جزئية — لا تشمل الحسابات")
                             .setMessage(preview+"\\n\\nتتطلب قاعدة محاسبية فارغة، ولا تستبدل أي بيانات قائمة. هل تريد التنفيذ؟")
                             .setNegativeButton("إلغاء",null)
-                            .setPositiveButton("استعادة البيانات"){_,_->work {
-                                restoreWithProgress(payload)
-                            }}.show()
+                            .setPositiveButton("استعادة البيانات"){_,_->restoreWithProgress(payload)}.show()
                     }
                 }
             }
@@ -3410,9 +3408,7 @@ button("＋ مورد"){form("مورد جديد"){box->val n=field("الاسم",b
                     .setTitle("استعادة بيانات التطبيق القديم — جزئية حالياً")
                     .setMessage(preview+"\n\nلن تُفعّل الديون أو أرصدة الصناديق أو أرباح الشركاء. تتطلب الاستعادة قاعدة فارغة، ولن تستبدل البيانات الموجودة. هل تريد المتابعة؟")
                     .setNegativeButton("إلغاء",null)
-                    .setPositiveButton("استعادة المخزون والصيانة والموردين"){_,_->work {
-                        restoreWithProgress(payload)
-                    }}.show()
+                    .setPositiveButton("استعادة المخزون والصيانة والموردين"){_,_->restoreWithProgress(payload)}.show()
             }
         }}}
     }
