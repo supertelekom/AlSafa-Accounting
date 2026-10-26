@@ -30,7 +30,8 @@ object LegacySnapshotImport {
         for(field in listOf("photo","photo2","photo3","couplePhoto","barcodePhoto","watchPhoto")) {
             val raw=item.optString(field)
             if(raw.isBlank()) continue
-            if(!raw.startsWith("data:image/") || !raw.contains(";base64,")) continue
+            if(!raw.startsWith("data:image/")) continue
+            require(raw.contains(";base64,")) { "صورة مضمّنة دون ترميز Base64 صحيح: $field" }
             val mime=raw.substringAfter("data:").substringBefore(";base64,")
             require(mime in setOf("image/jpeg","image/png","image/webp")) { "نوع صورة غير مدعوم: $field" }
             // Avoid allocating a second multi-megabyte String via substringAfter.
@@ -47,6 +48,8 @@ object LegacySnapshotImport {
                 require(character.code<=127) { "رمز غير صالح داخل الصورة: $field" }
                 encodedBytes[index]=character.code.toByte()
             }
+            // Decode the bounded byte array, then let it become unreachable
+            // before allocating additional buffers for image verification.
             val bytes=android.util.Base64.decode(encodedBytes,android.util.Base64.DEFAULT)
             require(bytes.isNotEmpty() && bytes.size<=12*1024*1024) { "حجم صورة غير صالح: $field" }
             require((mime=="image/jpeg" && bytes.size>=3 && bytes[0]==0xFF.toByte() && bytes[1]==0xD8.toByte()) ||
