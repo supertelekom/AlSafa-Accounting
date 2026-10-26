@@ -2452,7 +2452,10 @@ button("＋ مورد"){form("مورد جديد"){box->val n=field("الاسم",b
     /** Legacy tablet list-row: 38dp image, customer/watch, problem/date, and status. */
     private fun repairIdentity(row:Map<String,String>, target:LinearLayout) {
         val id=row.getValue("id")
-        val path=store.repairImage(id)
+        // Repair lists already select the details column; avoid an extra query per card.
+        val path=runCatching {
+            org.json.JSONObject(row["details"].orEmpty()).optString("imagePath").takeIf { it.isNotBlank() }
+        }.getOrNull()
         val line=LinearLayout(this).apply {
             orientation=LinearLayout.HORIZONTAL
             layoutDirection=View.LAYOUT_DIRECTION_RTL
