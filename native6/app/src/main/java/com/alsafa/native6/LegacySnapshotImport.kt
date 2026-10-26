@@ -699,8 +699,14 @@ object LegacySnapshotImport {
                 // Compare decoded JSON paths, not SQLite substring matching:
                 // JSON escaping can change the text representation of a path.
                 val saved=store.rows(
-                    "SELECT details FROM ${owner.first} WHERE id=?",owner.second
+                    if(owner.first=="products") "SELECT details,name,barcode,model FROM products WHERE id=?"
+                    else "SELECT details,watch FROM repairs WHERE id=?",
+                    owner.second
                 ).singleOrNull() ?: error("السجل الأصلي للصورة غير موجود: ${owner.second}")
+                val label=if(owner.first=="products") {
+                    listOf(saved["name"],saved["model"],saved["barcode"]).filterNotNull()
+                        .filter { it.isNotBlank() }.joinToString(" / ")
+                } else saved["watch"].orEmpty()
                 val details=JSONObject(saved.getValue("details"))
                 val linked=HashSet<String>()
                 for(field in listOf("imagePath","watchPhotoPath","couplePhotoPath","barcodePhotoPath")) {
@@ -711,7 +717,7 @@ object LegacySnapshotImport {
                 }
                 for(path in paths) {
                     require(path in linked) {
-                        "الصورة لا تظهر في تفاصيل سجلها الأصلي: ${java.io.File(path).name} (${owner.second})"
+                        "الصورة لا تظهر في تفاصيل سجلها الأصلي: ${java.io.File(path).name} (${owner.second}) — $label"
                     }
                 }
             }
