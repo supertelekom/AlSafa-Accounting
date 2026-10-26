@@ -19,6 +19,34 @@ object BluetoothReceiptPrinter {
         check(adapter.isEnabled) { "يرجى تشغيل البلوتوث" }
         return adapter.bondedDevices.sortedBy { it.name.orEmpty() }
     }
+    private const val PREFS="alsafa_printer"
+    private const val ADDRESS="paired_printer_address"
+
+    /** Remember the chosen bonded printer until Bluetooth is switched off. */
+    fun rememberPrinter(context:Context,address:String) {
+        val matched=paired(context).any { it.address==address }
+        require(matched) { "يرجى إقران الطابعة من إعدادات البلوتوث أولاً" }
+        context.getSharedPreferences(PREFS,Context.MODE_PRIVATE).edit()
+            .putString(ADDRESS,address).apply()
+    }
+
+    fun rememberedPrinter(context:Context):String? {
+        val adapter=BluetoothAdapter.getDefaultAdapter() ?: return null
+        if(!adapter.isEnabled) {
+            context.getSharedPreferences(PREFS,Context.MODE_PRIVATE).edit()
+                .remove(ADDRESS).apply()
+            return null
+        }
+        if(!permitted(context)) return null
+        val address=context.getSharedPreferences(PREFS,Context.MODE_PRIVATE)
+            .getString(ADDRESS,null) ?: return null
+        return if(adapter.bondedDevices.any { it.address==address }) address else null
+    }
+
+    fun forgetPrinter(context:Context) {
+        context.getSharedPreferences(PREFS,Context.MODE_PRIVATE).edit()
+            .remove(ADDRESS).apply()
+    }
     @Suppress("DEPRECATION")
     fun print(context:Context,address:String,image:Bitmap) {
         check(permitted(context)) { "يجب السماح بإذن البلوتوث" }
