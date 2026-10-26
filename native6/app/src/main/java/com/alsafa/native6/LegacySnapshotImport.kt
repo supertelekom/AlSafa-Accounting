@@ -544,7 +544,7 @@ object LegacySnapshotImport {
             // own persisted record, rather than scanning every large JSON blob
             // (which can exhaust memory and incorrectly reject secondary photos).
             require(imageOwners.size==createdImages.size) {
-                "عدد الصور المرتبطة بالسجلات لا يطابق الصور المحفوظة"
+                "عدد الصور المرتبطة بالسجلات (${imageOwners.size}) لا يطابق الصور المحفوظة (${createdImages.size})"
             }
             for(image in createdImages) {
                 val owner=imageOwners[image.absolutePath]
