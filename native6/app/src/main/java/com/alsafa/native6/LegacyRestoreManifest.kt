@@ -22,6 +22,10 @@ object LegacyRestoreManifest {
         val root = JSONObject(payload)
         require(root.optString("format") == "alsafa-accounting-backup" &&
             root.optInt("formatVersion") == 2) { "صيغة النسخة الاحتياطية غير مدعومة" }
+        return inspectData(root, payload)
+    }
+
+    fun inspectData(root: JSONObject, payload: String): JSONObject {
         val data = root.getJSONObject("data")
         val counts = JSONObject()
         val missing = org.json.JSONArray()
