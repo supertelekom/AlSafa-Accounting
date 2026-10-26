@@ -1890,6 +1890,11 @@ class Store(val helper:StoreDb) {
         require(search.length<=200){"نص البحث طويل جداً"}
         return rows("SELECT * FROM repairs WHERE (?='all' OR status=?) AND (instr(lower(customer),lower(?))>0 OR instr(lower(phone),lower(?))>0 OR instr(lower(watch),lower(?))>0 OR instr(lower(problem),lower(?))>0 OR instr(lower(id),lower(?))>0) ORDER BY date DESC,id DESC",status,status,search,search,search,search,search)
     }
+    /** Page active repairs directly in SQLite; avoid materializing all historical repairs. */
+    fun openRepairPage(limit:Int=24,offset:Int=0):List<Map<String,String>> {
+        require(limit in 1..100 && offset in 0..1000000)
+        return rows("SELECT * FROM repairs WHERE status IN ('received','in_progress','ready') ORDER BY date DESC,id DESC LIMIT $limit OFFSET $offset")
+    }
     fun repairListByDates(
         query:String="",status:String="all",from:String=today(),until:String=from,
         limit:Int=100,offset:Int=0
