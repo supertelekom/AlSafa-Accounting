@@ -230,6 +230,14 @@ object LegacySnapshotImport {
         var totalNew=0
         var totalExisting=0
         val idsAcrossSections=HashSet<String>()
+        // One indexed table scan per destination instead of thousands of
+        // individual SQLite queries while examining a large legacy snapshot.
+        val existingProducts=store.rows("SELECT id,kind FROM products")
+            .associate { it.getValue("id") to it.getValue("kind") }
+        val existingSuppliers=store.rows("SELECT id FROM suppliers")
+            .mapTo(HashSet()) { it.getValue("id") }
+        val existingRepairs=store.rows("SELECT id FROM repairs")
+            .mapTo(HashSet()) { it.getValue("id") }
         for((source,table,title) in sections) {
             val array=data.optJSONArray(source) ?: continue
             var newCount=0
@@ -245,9 +253,19 @@ object LegacySnapshotImport {
                 require(idsAcrossSections.add(id)) {
                     "المعرف $id مكرر بين أقسام النسخة؛ أُوقف الفحص لمنع دمج خاطئ"
                 }
-                val matches=store.scalar("SELECT count(*) FROM $table WHERE id=?",id)
-                require(matches in 0L..1L) { "معرف مكرر داخل قاعدة البيانات: $id" }
-                if(matches==1L) existingCount++ else newCount++
+                val exists=when(table) {
+                    "products" -> {
+                        val kind=existingProducts[id]
+                        if(kind!=null) require(kind==if(source=="products") "watch" else "part") {
+                            "تعارض نوع المنتج للمعرف $id: الموجود $kind"
+                        }
+                        kind!=null
+                    }
+                    "suppliers" -> id in existingSuppliers
+                    "repairs" -> id in existingRepairs
+                    else -> error("قسم مقارنة غير مدعوم")
+                }
+                if(exists) existingCount++ else newCount++
             }
             totalNew+=newCount
             totalExisting+=existingCount
