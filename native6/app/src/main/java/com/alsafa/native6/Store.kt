@@ -653,6 +653,30 @@ class Store(val helper:StoreDb) {
         return rows("SELECT * FROM products WHERE "+filters.joinToString(" AND ")+" ORDER BY name,id",*args.toTypedArray()).map(::toProduct)
     }
 
+    fun searchCatalogPage(query:String,kind:String?=null,limit:Int=24):Pair<Long,List<Product>> {
+        require(limit in 1..500){"حجم الصفحة غير صالح"}
+        val term=query.trim()
+        require(term.length<=200){"نص البحث طويل جداً"}
+        require(kind==null || kind in setOf("watch","part")){"نوع صنف غير مدعوم"}
+        val filters=mutableListOf("archived=0")
+        val args=mutableListOf<String>()
+        if(kind!=null) {
+            filters.add("kind=?")
+            args.add(kind)
+        }
+        if(term.isNotEmpty()) {
+            // Match identity and colour metadata without loading the entire catalog.
+            // Escape SQL LIKE wildcards so a barcode containing % or _ is literal.
+            val escaped=term.replace("!", "!!").replace("%", "!%").replace("_", "!_")
+            filters.add("(name LIKE ? ESCAPE '!' COLLATE NOCASE OR barcode LIKE ? ESCAPE '!' COLLATE NOCASE OR brand LIKE ? ESCAPE '!' COLLATE NOCASE OR model LIKE ? ESCAPE '!' COLLATE NOCASE OR details LIKE ? ESCAPE '!' COLLATE NOCASE)")
+            repeat(5) { args.add("%$escaped%") }
+        }
+        val where=filters.joinToString(" AND ")
+        val total=scalar("SELECT COUNT(*) FROM products WHERE "+where,*args.toTypedArray())
+        val items=rows("SELECT * FROM products WHERE "+where+" ORDER BY name,id LIMIT $limit",*args.toTypedArray()).map(::toProduct)
+        return total to items
+    }
+
     private fun productColorLabelFromDetails(raw:String):String =
         productColorLabelFromDetails(raw,false)
 
