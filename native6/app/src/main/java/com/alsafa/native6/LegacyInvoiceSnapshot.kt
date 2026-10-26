@@ -113,7 +113,7 @@ object LegacyInvoiceSnapshot {
             outstanding[currency]=(outstanding[currency] ?: BigDecimal.ZERO)+remaining
             matches.add(JSONObject().put("archiveKey",row.getValue("legacy_id"))
                 .put("id",original.optString("id")).put("invoiceNo",original.optString("invoiceNo"))
-                .put("date",date).put("customer",original.optString("customer"))
+                .put("date",date).put("customer",original.optString("customer").ifBlank { original.optString("customerName") })
                 .put("phone",original.optString("phone").ifBlank { original.optString("customerPhone").ifBlank { original.optString("supplierPhone") } })
                 .put("supplierName",original.optString("supplierName"))
                 .put("currency",currency).put("total",total.toPlainString())
