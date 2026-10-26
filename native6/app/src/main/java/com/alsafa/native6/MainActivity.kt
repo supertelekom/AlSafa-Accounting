@@ -3268,6 +3268,25 @@ button("＋ مورد"){form("مورد جديد"){box->val n=field("الاسم",b
                     }
                 }
             }
+            button("تدقيق ازدواج النقد والسحوبات الشهرية — قراءة فقط",body) {
+                val hash=item.getValue("hash")
+                work {
+                    val result=LegacyFinancialLinkAudit.inspect(Backup(this,store).readStagedLegacy(hash))
+                    val summary=result.getJSONObject("cashMirrorEvidence")
+                    val mirrors=summary.getJSONObject("bySourceSection")
+                    val counts=result.getJSONObject("withdrawalCountsByTransactionMonth")
+                    val report="حركات النقد: "+summary.getInt("cashRows")+
+                        "\\nالفواتير/الصيانة/المصروفات ذات الحركات المرتبطة:\\n"+
+                        mirrors.toString(2)+
+                        "\\n\\nسحوبات الشركاء حسب شهر الحركة الأصلي:\\n"+counts.toString(2)+
+                        "\\n\\nتدقيق فقط، لم يُنشأ أي قيد مالي."
+                    runOnUiThread {
+                        if(!isFinishing&&!isDestroyed) AlertDialog.Builder(this)
+                            .setTitle("مطابقة تاريخية للنقد والشركاء")
+                            .setMessage(report).setPositiveButton("إغلاق",null).show()
+                    }
+                }
+            }
             button("مطابقة مراجع الفواتير وحركات الصناديق",body) {
                 val hash=item.getValue("hash")
                 work {
