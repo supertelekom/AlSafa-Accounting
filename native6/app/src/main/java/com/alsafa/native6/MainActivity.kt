@@ -2072,8 +2072,9 @@ open class MainActivity:Activity() {
             if(busy)return@choosePrinter
             busy=true
             io.execute {
-                val file=java.io.File.createTempFile("alsafa-queue-",".pdf",cacheDir)
+                var file:java.io.File?=null
                 try {
+                    file=java.io.File.createTempFile("alsafa-queue-",".pdf",cacheDir)
                     PrintQueue(this).use { it.markSending(job.id) }
                     file.outputStream().use { InvoicePdf(this,store).write(job.invoiceId,it) }
                     BluetoothReceiptPrinter.printInvoicePdf(this,address,file)
@@ -2086,7 +2087,7 @@ open class MainActivity:Activity() {
                 } catch(e:Exception) {
                     PrintQueue(this).use { it.markFailed(job.id,e.message ?: "تعذر الاتصال بالطابعة") }
                     runOnUiThread { busy=false;error(e);showPrintQueue() }
-                } finally { file.delete() }
+                } finally { file?.delete() }
             }
         }
     }
