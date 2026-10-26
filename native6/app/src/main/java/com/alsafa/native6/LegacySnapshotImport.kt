@@ -696,12 +696,21 @@ object LegacySnapshotImport {
                 require(paths.all { path -> java.io.File(path).isFile && java.io.File(path).length()>0L }) {
                     "ملف صورة مفقود لسجل ${owner.second}"
                 }
-                // SQLite instr operates on the stored TEXT without copying the
-                // complete JSON into Android's limited CursorWindow.
+                // Compare decoded JSON paths, not SQLite substring matching:
+                // JSON escaping can change the text representation of a path.
+                val saved=store.rows(
+                    "SELECT details FROM ${owner.first} WHERE id=?",owner.second
+                ).singleOrNull() ?: error("السجل الأصلي للصورة غير موجود: ${owner.second}")
+                val details=JSONObject(saved.getValue("details"))
+                val linked=HashSet<String>()
+                for(field in listOf("imagePath","watchPhotoPath","couplePhotoPath","barcodePhotoPath")) {
+                    details.optString(field).takeIf { it.isNotBlank() }?.let(linked::add)
+                }
+                details.optJSONArray("imagePaths")?.let { array ->
+                    for(index in 0 until array.length()) linked.add(array.getString(index))
+                }
                 for(path in paths) {
-                    require(store.scalar(
-                        "SELECT count(*) FROM ${owner.first} WHERE id=? AND instr(details,?)>0",
-                        owner.second,path)==1L) {
+                    require(path in linked) {
                         "الصورة لا تظهر في تفاصيل سجلها الأصلي: ${java.io.File(path).name} (${owner.second})"
                     }
                 }
