@@ -2965,9 +2965,9 @@ button("＋ مورد"){form("مورد جديد"){box->val n=field("الاسم",b
             if(key!=repairSearchKey) { repairPage=0;repairSearchKey=key }
             results.removeAllViews()
             val fetched=store.repairListByDates(search.text.toString(),states[status.selectedItemPosition],
-                from.text.toString().trim(),until.text.toString().trim(),limit=51,offset=repairPage*50)
-            val matches=fetched.take(50)
-            val hasNext=fetched.size>50
+                from.text.toString().trim(),until.text.toString().trim(),limit=21,offset=repairPage*20)
+            val matches=fetched.take(20)
+            val hasNext=fetched.size>20
             text("صفحة "+(repairPage+1)+" · عدد الطلبات المعروضة: "+matches.size,results,16f)
             if(matches.isEmpty())text("لا توجد طلبات مطابقة ضمن الفترة المختارة.",results,14f)
             matches.forEach{row->
