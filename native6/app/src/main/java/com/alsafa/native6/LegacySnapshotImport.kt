@@ -11,7 +11,11 @@ import java.math.RoundingMode
  */
 object LegacySnapshotImport {
     private fun legacyPhotos(item:JSONObject,context:android.content.Context,created:MutableList<java.io.File>):JSONObject {
-        val copy=JSONObject(item.toString())
+        // Avoid serializing the complete record (including base64 photos) just
+        // to clone it. The original source JSON is not modified: values are
+        // transferred into a new object and image fields are removed there.
+        val copy=JSONObject()
+        for(key in item.keys()) copy.put(key,item.get(key))
         val productPhotos=org.json.JSONArray()
         val directory=java.io.File(context.filesDir,"images").apply { require(isDirectory || mkdirs()) }
         for(field in listOf("photo","photo2","photo3","couplePhoto","barcodePhoto","watchPhoto")) {
