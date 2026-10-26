@@ -2382,7 +2382,7 @@ button("＋ مورد"){form("مورد جديد"){box->val n=field("الاسم",b
     private fun localPhoto(path:String):java.io.File {
         val root=java.io.File(filesDir,"images").canonicalFile
         val file=java.io.File(path).canonicalFile
-        require(file.parentFile==root && file.name.matches(Regex("[a-fA-F0-9-]{36}\\.jpg"))) {
+        require(file.parentFile==root && file.name.matches(Regex("[a-fA-F0-9-]{36}\\.(jpg|png|webp)",RegexOption.IGNORE_CASE))) {
             "مسار صورة الساعة غير آمن"
         }
         require(file.isFile && file.length() in 1L..(12L*1024*1024)) {
