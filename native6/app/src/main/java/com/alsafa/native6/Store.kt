@@ -754,6 +754,19 @@ class Store(val helper:StoreDb) {
         db.execSQL("UPDATE products SET details=? WHERE id=?",arrayOf(details.toString(),id))
         event(id(),"PRODUCT_IMAGE",today(),"تحديد الصورة الأساسية للمنتج $id")
     }
+    /** Assign a stable unique cashier barcode only if the item has none; never changes stock or price. */
+    fun ensureProductBarcode(productId:String):String = transaction {
+        val row=rows("SELECT barcode FROM products WHERE id=? AND archived=0",productId).singleOrNull()
+            ?: error("المنتج غير موجود")
+        val existing=row.getValue("barcode").trim()
+        if(existing.isNotBlank()) return@transaction existing
+        val generated="AS"+productId.replace("-","").uppercase(java.util.Locale.ROOT)
+        require(generated.length<=128 && generated.matches(Regex("[A-Z0-9]+"))){"تعذر إنشاء الباركود"}
+        require(scalar("SELECT COUNT(*) FROM products WHERE barcode=? AND id<>?",generated,productId)==0L){"الباركود موجود بالفعل"}
+        db.execSQL("UPDATE products SET barcode=? WHERE id=? AND TRIM(barcode)=''",arrayOf(generated,productId))
+        event(id(),"PRODUCT_BARCODE",today(),"إنشاء باركود للمنتج $productId")
+        generated
+    }
     fun editProduct(id:String,name:String,barcode:String,price:Long) = transaction {
         require(scalar("SELECT count(*) FROM products WHERE id=?",id)==1L){"المنتج غير موجود"}
         require(name.isNotBlank() && price>=0 && barcode.trim().length<=128);require(barcode.isBlank() || scalar("SELECT count(*) FROM products WHERE barcode=? AND id<>?",barcode.trim(),id)==0L){"الباركود مكرر"}
