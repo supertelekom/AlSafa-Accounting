@@ -213,7 +213,7 @@ object LegacySnapshotImport {
         requireRequiredCollections(d)
         // Reject invalid stock immediately, before the more expensive financial
         // reconciliation passes over the large backup.
-        val issues=LegacyImportPreflight.inspectInventory(payload)
+        val issues=LegacyImportPreflight.inspectInventoryData(d)
         require(issues.isEmpty()) { "فحص النسخة القديمة فشل: "+issues.take(5).joinToString("; ") }
         val manifest=LegacyRestoreManifest.inspect(payload)
         val readiness=LegacyRestoreReadiness.inspect(payload)
