@@ -653,8 +653,8 @@ class Store(val helper:StoreDb) {
         return rows("SELECT * FROM products WHERE "+filters.joinToString(" AND ")+" ORDER BY name,id",*args.toTypedArray()).map(::toProduct)
     }
 
-    fun searchCatalogPage(query:String,kind:String?=null,limit:Int=24):Pair<Long,List<Product>> {
-        require(limit in 1..100000){"حجم الصفحة غير صالح"}
+    fun searchCatalogPage(query:String,kind:String?=null,limit:Int=24,offset:Int=0):Pair<Long,List<Product>> {
+        require(limit in 1..100 && offset in 0..1000000){"حجم الصفحة غير صالح"}
         val term=query.trim()
         require(term.length<=200){"نص البحث طويل جداً"}
         require(kind==null || kind in setOf("watch","part")){"نوع صنف غير مدعوم"}
@@ -673,7 +673,7 @@ class Store(val helper:StoreDb) {
         }
         val where=filters.joinToString(" AND ")
         val total=scalar("SELECT COUNT(*) FROM products WHERE "+where,*args.toTypedArray())
-        val items=rows("SELECT * FROM products WHERE "+where+" ORDER BY name,id LIMIT $limit",*args.toTypedArray()).map(::toProduct)
+        val items=rows("SELECT * FROM products WHERE "+where+" ORDER BY name,id LIMIT $limit OFFSET $offset",*args.toTypedArray()).map(::toProduct)
         return total to items
     }
 
