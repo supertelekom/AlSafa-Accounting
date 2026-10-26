@@ -3310,6 +3310,8 @@ button("＋ مورد"){form("مورد جديد"){box->val n=field("الاسم",b
             .setPositiveButton("حذف البيانات وإعادة التهيئة"){_,_->
                 if(confirmation.text.toString().trim()!="تهيئة") {
                     Toast.makeText(this,"لم تتم التهيئة: يجب كتابة كلمة تهيئة تماماً",Toast.LENGTH_LONG).show()
+                } else if(busy) {
+                    Toast.makeText(this,"عملية أخرى جارية؛ أُلغيت إعادة التهيئة",Toast.LENGTH_LONG).show()
                 } else {
                     work {
                         // The database is closed before deletion; no SQL triggers
