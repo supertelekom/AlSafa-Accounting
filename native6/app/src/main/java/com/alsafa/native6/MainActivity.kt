@@ -905,15 +905,24 @@ open class MainActivity:Activity() {
         }
         card.addView(menu,LinearLayout.LayoutParams(-1,dp(44)))
         actions.visibility=View.GONE
+        var actionsInitialized=false
         menu.setOnClickListener {
-            actions.visibility=if(actions.visibility==View.VISIBLE)View.GONE else View.VISIBLE
-            menu.text=if(actions.visibility==View.VISIBLE)"إخفاء الإجراءات ▴" else "إجراءات ▾"
-        }
-        action("تعديل"){productForm(p)}
-        action("الحركات"){selectedProduct=p;go("stock-history")}
-        action("جرد"){stocktakeForm(p)}
-        if(productRow?.get("kind")=="watch" && !productDetails.has("variantParentId")) {
-            action("لون إضافي"){variantForm(p)}
+            if(actions.visibility==View.VISIBLE) {
+                actions.visibility=View.GONE
+                menu.text="إجراءات ▾"
+            } else {
+                if(!actionsInitialized) {
+                    action("تعديل"){productForm(p)}
+                    action("الحركات"){selectedProduct=p;go("stock-history")}
+                    action("جرد"){stocktakeForm(p)}
+                    if(productRow?.get("kind")=="watch" && !productDetails.has("variantParentId")) {
+                        action("لون إضافي"){variantForm(p)}
+                    }
+                    actionsInitialized=true
+                }
+                actions.visibility=View.VISIBLE
+                menu.text="إخفاء الإجراءات ▴"
+            }
         }
         card.addView(actions)
         parent.addView(card,LinearLayout.LayoutParams(-1,-2).apply {
