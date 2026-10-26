@@ -15,11 +15,20 @@ object LegacySnapshotImport {
         // to clone it. The original source JSON is not modified: values are
         // transferred into a new object and image fields are removed there.
         val copy=JSONObject()
-        for(key in item.keys()) copy.put(key,item.get(key))
+        val photoFields=setOf("photo","photo2","photo3","couplePhoto","barcodePhoto","watchPhoto")
+        // Do not put base64 image strings into the destination object. The
+        // source remains intact for audit, and photo bytes are decoded once.
+        for(key in item.keys()) {
+            if(key !in photoFields) copy.put(key,item.get(key))
+            else {
+                val raw=item.optString(key)
+                if(!raw.startsWith("data:image/")) copy.put(key,item.get(key))
+            }
+        }
         val productPhotos=org.json.JSONArray()
         val directory=java.io.File(context.filesDir,"images").apply { require(isDirectory || mkdirs()) }
         for(field in listOf("photo","photo2","photo3","couplePhoto","barcodePhoto","watchPhoto")) {
-            val raw=copy.optString(field)
+            val raw=item.optString(field)
             if(raw.isBlank()) continue
             if(!raw.startsWith("data:image/") || !raw.contains(";base64,")) continue
             val mime=raw.substringAfter("data:").substringBefore(";base64,")
