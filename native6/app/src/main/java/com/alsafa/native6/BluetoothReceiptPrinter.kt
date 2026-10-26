@@ -53,6 +53,7 @@ object BluetoothReceiptPrinter {
         val adapter=BluetoothAdapter.getDefaultAdapter() ?: error("البلوتوث غير متاح")
         val device=adapter.bondedDevices.firstOrNull { it.address==address }
             ?: error("الطابعة غير مقترنة")
+        adapter.cancelDiscovery()
         val socket=device.createRfcommSocketToServiceRecord(
             UUID.fromString("00001101-0000-1000-8000-00805F9B34FB"))
         try {
@@ -94,6 +95,7 @@ object BluetoothReceiptPrinter {
         check(adapter.isEnabled) { "البلوتوث غير مفعل" }
         val device=adapter.bondedDevices.firstOrNull { it.address==address }
             ?: error("الطابعة غير مقترنة")
+        adapter.cancelDiscovery()
         val socket=device.createRfcommSocketToServiceRecord(
             UUID.fromString("00001101-0000-1000-8000-00805F9B34FB"))
         try {
