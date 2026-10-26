@@ -976,19 +976,26 @@ open class MainActivity:Activity() {
         val list=column().apply {setPadding(0,dp(4),0,dp(4))}
         body.addView(list)
         val variantCounts=store.colorVariantCounts()
+        var visibleCount=24
         fun show(){
             list.removeAllViews()
             val results=store.searchCatalog(query.text.toString().trim(),onlyKind)
             text(if(onlyKind=="part") "قطع الصيانة: ${results.size}" else "المنتجات: ${results.size}",list,13f)
             if(results.isEmpty())text("لا توجد نتائج مطابقة.",list,14f)
-            results.take(60).forEach{p->productCard(p,list,variantCounts[p.id]?:0)}
-            if(results.size>60)text("تُعرض أول 60 نتيجة. اكتب جزءاً من الاسم أو الباركود لتضييق القائمة.",list,13f)
+            results.take(visibleCount).forEach{p->productCard(p,list,variantCounts[p.id]?:0)}
+            if(results.size>visibleCount) {
+                button("عرض المزيد (${minOf(visibleCount,results.size)} من ${results.size})",list) {
+                    visibleCount+=24
+                    show()
+                }
+            }
         }
         val searchHandler=android.os.Handler(android.os.Looper.getMainLooper())
         val refresh=Runnable { if(query.isAttachedToWindow && !isFinishing && !isDestroyed) show() }
         query.addTextChangedListener(object:android.text.TextWatcher {
             override fun beforeTextChanged(s:CharSequence?,start:Int,count:Int,after:Int){}
             override fun onTextChanged(s:CharSequence?,start:Int,before:Int,count:Int) {
+                visibleCount=24
                 searchHandler.removeCallbacks(refresh)
                 searchHandler.postDelayed(refresh,180L)
             }
