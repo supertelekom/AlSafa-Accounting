@@ -8,7 +8,9 @@ import org.json.JSONObject
  */
 object LegacyBackupFreshness {
     fun inspect(payload:String):JSONObject {
-        val root=JSONObject(payload)
+        return inspectRoot(JSONObject(payload))
+    }
+    fun inspectRoot(root:JSONObject):JSONObject {
         require(root.optString("format")=="alsafa-accounting-backup" &&
             root.optInt("formatVersion")==2) { "صيغة النسخة الاحتياطية غير مدعومة" }
         val data=root.getJSONObject("data")
@@ -29,8 +31,9 @@ object LegacyBackupFreshness {
             .put("policy","USE_SELECTED_BACKUP_ONLY")
             .put("warning","يجب اختيار أحدث نسخة عند الانتقال النهائي. لا تدمج نسخة قديمة مع نسخة جديدة.")
     }
-    fun summary(payload:String):String {
-        val report=inspect(payload)
+    fun summary(payload:String):String = summaryRoot(JSONObject(payload))
+    fun summaryRoot(root:JSONObject):String {
+        val report=inspectRoot(root)
         val c=report.getJSONObject("collectionCounts")
         fun count(key:String)=c.optInt(key,0)
         return "النسخة المختارة: ${report.getString("exportedAt")}، إصدار التطبيق: ${report.getString("appVersion")}. " +
