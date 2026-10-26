@@ -244,7 +244,8 @@ object BluetoothReceiptPrinter {
         val top=(paint.textSize*3+24f).toInt()
         val barcodeHeight=(height-top-27).coerceAtLeast(20)
         val matrix=com.google.zxing.MultiFormatWriter().encode(
-            barcode,com.google.zxing.BarcodeFormat.CODE_128,width-24,barcodeHeight)
+            barcode,com.google.zxing.BarcodeFormat.CODE_128,width-24,barcodeHeight,
+            mapOf(com.google.zxing.EncodeHintType.MARGIN to 0))
         paint.strokeWidth=1f
         for(y in 0 until matrix.height)for(x in 0 until matrix.width)
             if(matrix.get(x,y))canvas.drawPoint((12+x).toFloat(),(top+y).toFloat(),paint)
