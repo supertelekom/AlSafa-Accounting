@@ -256,7 +256,7 @@ object LegacySnapshotImport {
                 val exists=when(table) {
                     "products" -> {
                         val kind=existingProducts[id]
-                        if(kind!=null) require(kind==if(source=="products") "watch" else "part") {
+                        if(kind!=null) require(kind==(if(source=="products") "watch" else "part")) {
                             "تعارض نوع المنتج للمعرف $id: الموجود $kind"
                         }
                         kind!=null
