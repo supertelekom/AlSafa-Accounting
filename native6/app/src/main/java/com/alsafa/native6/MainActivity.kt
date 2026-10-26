@@ -1441,6 +1441,56 @@ open class MainActivity:Activity() {
                 })
             }
         }
+        button("تفاصيل فاتورة قديمة والمدفوعات المرتبطة بها — قراءة فقط") {
+            form("البحث عن فاتورة قديمة","بحث"){box->
+                val kind=select("النوع",listOf("مبيع","شراء","صيانة"),box)
+                val search=field("رقم الفاتورة أو الاسم أو رقم الهاتف",box)
+                ({
+                    val section=when(kind.selectedItemPosition){0->"sales";1->"purchases";else->"repairs"}
+                    val term=search.text.toString().trim()
+                    require(term.isNotEmpty()){"أدخل رقم الفاتورة أو اسم العميل"}
+                    work {
+                        val rows=store.legacyPage(section,term,0,50)
+                        val labels=rows.map { row ->
+                            val item=org.json.JSONObject(row.getValue("payload"))
+                            "#"+item.optString("invoiceNo")+" · "+item.optString("date")+
+                                " · "+item.optString("customer",item.optString("supplierName"))
+                        }.toTypedArray()
+                        runOnUiThread {
+                            if(!isFinishing&&!isDestroyed) {
+                                if(labels.isEmpty()) AlertDialog.Builder(this)
+                                    .setMessage("لا توجد فاتورة قديمة مطابقة")
+                                    .setPositiveButton("إغلاق",null).show()
+                                else AlertDialog.Builder(this)
+                                    .setTitle("اختر فاتورة قديمة")
+                                    .setItems(labels){_,index->
+                                        val key=rows[index].getValue("legacy_id")
+                                        work {
+                                            val details=LegacyInvoiceSnapshot.detail(store,section,key)
+                                            val invoice=details?.getJSONObject("invoice")
+                                            val payments=details?.getJSONArray("linkedPayments")
+                                            val message=if(invoice==null)"السجل غير متوفر" else
+                                                "رقم الفاتورة: "+invoice.optString("invoiceNo")+
+                                                "\\nالتاريخ: "+invoice.optString("date")+
+                                                "\\nالعميل/المورد: "+invoice.optString("customer",invoice.optString("supplierName"))+
+                                                "\\nالعملة: "+invoice.optString("currency")+
+                                                "\\nالإجمالي: "+invoice.optString("total",invoice.optString("price"))+
+                                                "\\nالمدفوع: "+invoice.optString("paid",invoice.optString("received"))+
+                                                "\\nالدفعات المرتبطة: "+(payments?.length() ?: 0)+
+                                                "\\n\\nسجل أصلي محفوظ للقراءة فقط، دون إنشاء قبض أو قيد جديد."
+                                            runOnUiThread {
+                                                if(!isFinishing&&!isDestroyed) AlertDialog.Builder(this)
+                                                    .setTitle("تفاصيل الفاتورة التاريخية")
+                                                    .setMessage(message).setPositiveButton("إغلاق",null).show()
+                                            }
+                                        }
+                                    }.setNegativeButton("رجوع",null).show()
+                            }
+                        }
+                    }
+                })
+            }
+        }
         text("البحث في الفواتير",size=20f).setTextColor(gold)
         val query=field("الاسم أو الهاتف أو المنتج أو تفاصيل الصيانة",body)
         val dateFilters=column()
