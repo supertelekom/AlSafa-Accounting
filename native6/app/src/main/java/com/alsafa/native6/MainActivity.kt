@@ -2021,11 +2021,28 @@ open class MainActivity:Activity() {
                                         layoutDirection=View.LAYOUT_DIRECTION_RTL
                                         gravity=Gravity.CENTER_VERTICAL
                                     }
-                                    text("#"+record.optString("invoiceNo")+" · "+
-                                        (if(key=="sales")"مبيع" else "شراء"),heading,16f)
+                                    val title=TextView(this).apply {
+                                        style(this)
+                                        text="#"+record.optString("invoiceNo")+" · "+
+                                            (if(key=="sales")"مبيع" else "شراء")
+                                        textSize=16f
+                                        setTextColor(ink)
+                                        setPadding(dp(5),dp(5),dp(5),dp(5))
+                                    }
+                                    heading.addView(title,LinearLayout.LayoutParams(0,-2,1f))
+                                    val state=TextView(this).apply {
+                                        style(this)
+                                        text="مسجلة"
+                                        textSize=12f
+                                        setTextColor(Color.rgb(32,111,66))
+                                        background=background(Color.rgb(235,248,237),10)
+                                        setPadding(dp(9),dp(4),dp(9),dp(4))
+                                    }
+                                    heading.addView(state)
                                     card.addView(heading)
                                     text(record.optString("customer").ifBlank {
-                                        record.optString("supplierName") },card,14f).setTextColor(ink)
+                                        record.optString("supplierName") }.ifBlank {
+                                            "عميل نقدي" },card,14f).setTextColor(ink)
                                     text("تاريخ الفاتورة: "+record.optString("date"),card,12f)
                                     text(record.optString("total")+" "+record.optString("currency"),card,17f)
                                         .setTextColor(gold)
@@ -2036,9 +2053,27 @@ open class MainActivity:Activity() {
                                         text("المتبقي للتحصيل: "+record.optString("outstanding")+" "+
                                             record.optString("currency"),card,13f)
                                             .setTextColor(Color.rgb(157,62,52))
-                                    button("⋮ خيارات الفاتورة",card) {
-                                        showRestoredInvoiceOptions(key,record)
+                                    val menu=android.widget.ImageButton(this).apply {
+                                        setImageResource(android.R.drawable.ic_menu_more)
+                                        contentDescription="خيارات الفاتورة"
+                                        background=background(sand,10)
+                                        setOnClickListener { showRestoredInvoiceOptions(key,record) }
                                     }
+                                    card.addView(menu,LinearLayout.LayoutParams(dp(46),dp(42)).apply {
+                                        gravity=Gravity.END
+                                        setMargins(0,dp(4),0,0)
+                                    })
+                                    val open=Button(this).apply {
+                                        style(this)
+                                        text="تفاصيل الفاتورة والإجراءات ▾"
+                                        textSize=13f
+                                        isAllCaps=false
+                                        background=background(sand,11)
+                                        setOnClickListener { showRestoredInvoiceOptions(key,record) }
+                                    }
+                                    card.addView(open,LinearLayout.LayoutParams(-1,dp(44)).apply {
+                                        setMargins(0,dp(7),0,0)
+                                    })
                                     restored.addView(card,LinearLayout.LayoutParams(-1,-2).apply {
                                         setMargins(0,dp(5),0,dp(5))
                                     })
