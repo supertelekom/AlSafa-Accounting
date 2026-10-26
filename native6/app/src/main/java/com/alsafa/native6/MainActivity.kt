@@ -932,7 +932,7 @@ open class MainActivity:Activity() {
             val prefs=getSharedPreferences("alsafa_printer",MODE_PRIVATE)
             val savedW=prefs.getInt("label_width",50)
             val savedH=prefs.getInt("label_height",30)
-            val initial=sizes.indexOf("$savedW × $savedH").coerceAtLeast(0)
+            val initial=sizes.indexOf("$savedW × $savedH").let { if(it<0) sizes.lastIndex else it }
             fun printLabel(w:Int,h:Int) {
                 require(w in 20..82 && h in 15..150)
                 prefs.edit().putInt("label_width",w).putInt("label_height",h).apply()
