@@ -114,7 +114,7 @@ object LegacyInvoiceSnapshot {
             matches.add(JSONObject().put("archiveKey",row.getValue("legacy_id"))
                 .put("id",original.optString("id")).put("invoiceNo",original.optString("invoiceNo"))
                 .put("date",date).put("customer",original.optString("customer"))
-                .put("phone",original.optString("phone"))
+                .put("phone",original.optString("phone").ifBlank { original.optString("customerPhone").ifBlank { original.optString("supplierPhone") } })
                 .put("supplierName",original.optString("supplierName"))
                 .put("currency",currency).put("total",total.toPlainString())
                 .put("paid",paid.toPlainString()).put("outstanding",remaining.toPlainString())
