@@ -129,6 +129,7 @@ object BluetoothReceiptPrinter {
         require(barcode.all { it.code in 32..126 }) { "الباركود يحتوي على أحرف غير مدعومة" }
         val width=widthMm*8
         val height=heightMm*8
+        require(width>=160 && height>=120) { "الملصق صغير جداً للطباعة" }
         val bitmap=Bitmap.createBitmap(width,height,Bitmap.Config.ARGB_8888)
         val canvas=android.graphics.Canvas(bitmap)
         canvas.drawColor(Color.WHITE)
