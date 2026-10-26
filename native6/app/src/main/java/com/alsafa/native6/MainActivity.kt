@@ -3324,16 +3324,21 @@ button("＋ مورد"){form("مورد جديد"){box->val n=field("الاسم",b
                                 "تعذر تنظيف مجلد $folder؛ أعد المحاولة قبل استيراد أي نسخة"
                             }
                         }
-                        store=Store(StoreDb(this@MainActivity))
-                        basket.clear()
-                        selectedProduct=null
-                        photoProductId=null
-                        photoRepairId=null
-                        intakePhotoPath=null
-                        pdfInvoice=null
-                        lastScrollY=0
-                        savedInputs=null
-                        page="home"
+                        // Recreate the empty schema before reporting completion.
+                        val fresh=Store(StoreDb(this@MainActivity))
+                        fresh.scalar("SELECT count(*) FROM events")
+                        runOnUiThread {
+                            store=fresh
+                            basket.clear()
+                            selectedProduct=null
+                            photoProductId=null
+                            photoRepairId=null
+                            intakePhotoPath=null
+                            pdfInvoice=null
+                            lastScrollY=0
+                            savedInputs=null
+                            page="home"
+                        }
                     }
                 }
             }
