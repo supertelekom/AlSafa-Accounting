@@ -2006,7 +2006,8 @@ open class MainActivity:Activity() {
                             key to LegacyInvoiceSnapshot.page(store,key,start,end,term,0,50)
                         }
                         runOnUiThread {
-                            if(isFinishing||isDestroyed || restored.parent==null)return@runOnUiThread
+                            if(isFinishing||isDestroyed || restored.parent==null ||
+                                lastSearchKey!=searchKey || pageIndex!=0)return@runOnUiThread
                             for((key,result) in pages) {
                                 val rows=result.getJSONArray("rows")
                                 for(i in 0 until rows.length()) {
