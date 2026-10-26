@@ -3390,9 +3390,20 @@ button("＋ مورد"){form("مورد جديد"){box->val n=field("الاسم",b
             when(root.optString("format")) {
                 "alsafa-native6-backup" -> backup.restore(bytes.inputStream())
                 "alsafa-accounting-backup" -> {
-                    // Reuse the legacy import confirmation path rather than reporting
-                    // an unsupported backup type to users selecting the Restore button.
-                    runOnUiThread { handleDocumentResult(105,RESULT_OK,data) }
+                    // Use the bytes already read from the document. Reopening the
+                    // SAF stream and decoding a second 66MB buffer doubles peak RAM.
+                    val payload=String(bytes,Charsets.UTF_8).removePrefix("\uFEFF")
+                    val preview=LegacySnapshotImport.quickPreview(payload)
+                    val hash=backup.stageLegacyBytes(bytes)
+                    runOnUiThread {
+                        if(!isFinishing&&!isDestroyed) AlertDialog.Builder(this)
+                            .setTitle("استعادة نسخة الصفا القديمة — جزئية حالياً")
+                            .setMessage(preview+"\n\nحُفظت النسخة الأصلية بأمان: "+hash.take(12)+
+                                "\nلن تُفعّل الأرصدة المالية القديمة. هل تريد المتابعة؟")
+                            .setNegativeButton("إلغاء",null)
+                            .setPositiveButton("استعادة المخزون والصيانة"){_,_->restoreWithProgress(payload)}
+                            .show()
+                    }
                 }
                 else -> error("نوع النسخة غير مدعوم؛ اختر ملف نسخة الصفا JSON الأصلي")
             }
