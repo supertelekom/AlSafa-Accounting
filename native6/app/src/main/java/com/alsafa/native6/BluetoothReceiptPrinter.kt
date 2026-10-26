@@ -57,6 +57,40 @@ object BluetoothReceiptPrinter {
             } finally { if(bitmap!==image)bitmap.recycle() }
         } finally { runCatching { socket.close() } }
     }
+    /** Native TSPL label output: exact roll dimensions and gap, not ESC/POS receipt scaling. */
+    @Suppress("DEPRECATION")
+    fun printLabel(context:Context,address:String,image:Bitmap,widthMm:Int,heightMm:Int,gapMm:Int=2) {
+        check(permitted(context)) { "يجب السماح بإذن البلوتوث" }
+        require(widthMm in 20..82 && heightMm in 15..150 && gapMm in 0..10)
+        val adapter=BluetoothAdapter.getDefaultAdapter() ?: error("البلوتوث غير متاح")
+        check(adapter.isEnabled) { "البلوتوث غير مفعل" }
+        val device=adapter.bondedDevices.firstOrNull { it.address==address }
+            ?: error("الطابعة غير مقترنة")
+        val socket=device.createRfcommSocketToServiceRecord(
+            UUID.fromString("00001101-0000-1000-8000-00805F9B34FB"))
+        try {
+            socket.connect()
+            val out=socket.outputStream
+            val widthBytes=(image.width+7)/8
+            val header="SIZE $widthMm mm,$heightMm mm\r\nGAP $gapMm mm,0 mm\r\nDIRECTION 1\r\nCLS\r\nBITMAP 0,0,$widthBytes,${image.height},0,"
+            out.write(header.toByteArray(Charsets.US_ASCII))
+            val pixels=IntArray(image.width)
+            val row=ByteArray(widthBytes)
+            for(y in 0 until image.height) {
+                java.util.Arrays.fill(row,0)
+                image.getPixels(pixels,0,image.width,0,y,image.width,1)
+                for(x in pixels.indices) {
+                    val c=pixels[x]
+                    val lum=(Color.red(c)*299+Color.green(c)*587+Color.blue(c)*114)/1000
+                    if(Color.alpha(c)>80 && lum<155)
+                        row[x/8]=(row[x/8].toInt() or (128 shr (x%8))).toByte()
+                }
+                out.write(row)
+            }
+            out.write("\r\nPRINT 1,1\r\n".toByteArray(Charsets.US_ASCII))
+            out.flush()
+        } finally { runCatching { socket.close() } }
+    }
     fun invoiceImage(file:java.io.File):Bitmap {
         android.os.ParcelFileDescriptor.open(file,android.os.ParcelFileDescriptor.MODE_READ_ONLY).use { descriptor ->
             android.graphics.pdf.PdfRenderer(descriptor).use { renderer ->
