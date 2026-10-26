@@ -532,12 +532,19 @@ object LegacySnapshotImport {
                 val array=d.getJSONArray(section)
                 for(index in 0 until array.length()) {
                     val original=array.getJSONObject(index)
-                    val fields=if(section=="repairs") listOf("watchPhoto") else listOf("photo","photo2","photo3")
+                    val fields=if(section=="repairs") listOf("watchPhoto")
+                        else listOf("photo","photo2","photo3","couplePhoto","barcodePhoto")
                     if(fields.none { original.optString(it).startsWith("data:image/") }) continue
                     val table=if(section=="repairs") "repairs" else "products"
                     val id=original.getString("id").trim()
-                    require(store.scalar("SELECT count(*) FROM $table WHERE id=? AND instr(details,?)>0",
-                        id,"\"imagePath\"") == 1L) { "صورة غير مرتبطة بسجلها: $section / $id" }
+                    // A product can contain only a couple or barcode image;
+                    // neither creates the primary imagePath field.
+                    val expectedPaths=if(section=="repairs") listOf("imagePath")
+                        else listOf("imagePath","couplePhotoPath","barcodePhotoPath")
+                    require(expectedPaths.any { path ->
+                        store.scalar("SELECT count(*) FROM $table WHERE id=? AND instr(details,?)>0",
+                            id,"\"$path\"")==1L
+                    }) { "صورة غير مرتبطة بسجلها: $section / $id" }
                 }
             }
             // Each extracted file has one source owner. Validate against its
