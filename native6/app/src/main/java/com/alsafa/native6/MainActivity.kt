@@ -2015,15 +2015,23 @@ open class MainActivity:Activity() {
                                         setPadding(dp(14),dp(10),dp(14),dp(10))
                                         background=background(paper,14)
                                     }
+                                    val heading=LinearLayout(this).apply {
+                                        orientation=LinearLayout.HORIZONTAL
+                                        layoutDirection=View.LAYOUT_DIRECTION_RTL
+                                        gravity=Gravity.CENTER_VERTICAL
+                                    }
                                     text("#"+record.optString("invoiceNo")+" · "+
-                                        record.optString("date")+" · "+
-                                        (if(key=="sales")"مبيع" else "شراء"),card,16f)
+                                        (if(key=="sales")"مبيع" else "شراء"),heading,16f)
+                                    card.addView(heading)
                                     text(record.optString("customer").ifBlank {
-                                        record.optString("supplierName") },card,14f)
-                                    text("الإجمالي: "+record.optString("total")+" "+
-                                        record.optString("currency"),card,14f)
-                                    text("المدفوع: "+record.optString("paid")+
-                                        " · المتبقي: "+record.optString("outstanding"),card,13f)
+                                        record.optString("supplierName") },card,14f).setTextColor(ink)
+                                    text("تاريخ الفاتورة: "+record.optString("date"),card,12f)
+                                    text(record.optString("total")+" "+record.optString("currency"),card,17f)
+                                        .setTextColor(gold)
+                                    text("المقبوض: "+record.optString("paid")+" "+
+                                        record.optString("currency"),card,13f)
+                                    text("المتبقي للتحصيل: "+record.optString("outstanding")+" "+
+                                        record.optString("currency"),card,13f)
                                     button("⋮ خيارات الفاتورة",card) {
                                         showRestoredInvoiceOptions(key,record)
                                     }
