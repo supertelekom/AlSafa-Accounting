@@ -1532,6 +1532,13 @@ open class MainActivity:Activity() {
     }
     private fun invoices(){
         sectionHeading("الفواتير والمرتجعات","البحث في الفواتير وعمليات القبض والاسترداد")
+        button("إعدادات طابعة الفواتير والملصقات") {
+            getSharedPreferences("alsafa_printer",MODE_PRIVATE).edit().remove("address").apply()
+            choosePrinter { address ->
+                Toast.makeText(this,"تم اختيار الطابعة: $address",Toast.LENGTH_SHORT).show()
+            }
+        }
+
         collapsibleTools("تقارير الفواتير والتحصيلات") {
         button("كشف الحركات المالية لفاتورة"){
             form("كشف الفاتورة","عرض"){box->
