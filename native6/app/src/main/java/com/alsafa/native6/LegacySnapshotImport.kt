@@ -528,10 +528,17 @@ object LegacySnapshotImport {
                         id,"\"imagePath\"") == 1L) { "صورة غير مرتبطة بسجلها: $section / $id" }
                 }
             }
+            // Validate every image reference, including secondary and QR/barcode
+            // photos. These are stored under imagePaths, couplePhotoPath and
+            // barcodePhotoPath, not necessarily the primary imagePath key.
             for(image in createdImages) {
-                require(store.scalar("SELECT count(*) FROM products WHERE instr(details,?)>0",image.absolutePath)+
-                    store.scalar("SELECT count(*) FROM repairs WHERE instr(details,?)>0",image.absolutePath)==1L) {
-                    "صورة غير مرتبطة بسجل واحد: "+image.name
+                val productLinks=store.scalar(
+                    "SELECT count(*) FROM products WHERE instr(details,?)>0",image.absolutePath)
+                val repairLinks=store.scalar(
+                    "SELECT count(*) FROM repairs WHERE instr(details,?)>0",image.absolutePath)
+                require(productLinks+repairLinks==1L) {
+                    "صورة غير مرتبطة بسجل واحد: "+image.name+
+                        " (منتجات=$productLinks، صيانة=$repairLinks)"
                 }
             }
             val photoCount=createdImages.size
