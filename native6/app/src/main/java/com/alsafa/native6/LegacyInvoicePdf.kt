@@ -39,6 +39,8 @@ class LegacyInvoicePdf(private val context: Context, private val store: Store) {
         val total = invoice.optString("total", "0").toBigDecimal()
         val paid = invoice.optString("paid", "0").toBigDecimal()
         rows.add("المتبقي حتى الاستعادة" to (total - paid).toPlainString() + " " + currency)
+        val notes = invoice.optString("notes").trim()
+        if (notes.isNotEmpty()) rows.add("ملاحظات" to notes.take(400))
         rows.add("حالة السجل" to "فاتورة تاريخية - قراءة فقط")
         val font = runCatching { Typeface.createFromAsset(context.assets, "Tajawal-Medium.ttf") }
             .getOrDefault(Typeface.DEFAULT)
