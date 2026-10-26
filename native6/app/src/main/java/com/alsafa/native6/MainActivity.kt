@@ -258,11 +258,13 @@ open class MainActivity:Activity() {
         dialog.show()
         work {
             var lastPercent=-1
+            var lastDescription=""
             try {
                 LegacySnapshotImport.import(store,payload,this@MainActivity) { value,description ->
                     val current=value.coerceIn(0,99)
-                    if(current!=lastPercent) {
+                    if(current!=lastPercent || description!=lastDescription) {
                         lastPercent=current
+                        lastDescription=description
                         runOnUiThread {
                             if(!isFinishing&&!isDestroyed && dialog.isShowing) {
                                 bar.progress=current
