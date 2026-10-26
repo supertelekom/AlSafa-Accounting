@@ -2001,8 +2001,6 @@ open class MainActivity:Activity() {
                     statuses[status.selectedItemPosition]!="cancelled") {
                 val restored=column()
                 output.addView(restored)
-                text("الفواتير المستعادة من النسخة الاحتياطية",restored,19f)
-                text("تظهر هنا مع الفواتير الحالية دون إنشاء مبيع أو قيد مالي مكرر.",restored,12f)
                 val sectionKeys=when(kinds[kind.selectedItemPosition]) {
                     "sale" -> listOf("sales")
                     "purchase" -> listOf("purchases")
