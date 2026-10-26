@@ -2520,6 +2520,25 @@ open class MainActivity:Activity() {
     }
     private fun paymentForm(title:String,c:Currency,max:Long,action:(Long,String,String)->Unit){form(title){box->val n=field("المبلغ ${c.name} · المتبقي ${money(max,c)}",box,"0",true);val v=select("الخزنة",vaultNames,box);val received=field("تاريخ حركة النقود الفعلي YYYY-MM-DD",box,Store.today());{val amount=amount(n,c);require(amount>0L && amount<=max){"المبلغ يجب أن يكون أكبر من الصفر وألا يتجاوز الرصيد المستحق"};val vault=Store.vaults[v.selectedItemPosition];val actualDate=java.time.LocalDate.parse(received.text.toString().trim()).toString();work{action(amount,vault,actualDate)}}}}
     private fun vaults(){sectionHeading("الخزنات والإقفال اليومي","الأرصدة الفعلية والمحاسبية بحسب الخزنة والعملة");
+        button("مطابقة الخزنات والسحوبات والمصاريف المستعادة") {
+            work {
+                try {
+                    val position=LegacyArchivedFinancialPosition.summary(store)
+                    val gate=LegacyFinancialActivationGate.inspect(store)
+                    val status=gate.optString("state")
+                    val reasons=gate.optJSONArray("blockingReasons")?.toString() ?: "[]"
+                    val message="حالة ربط الحسابات القديمة: "+status+"\nموانع التفعيل: "+reasons+"\n\n"+position
+                    runOnUiThread {
+                        if(!isFinishing&&!isDestroyed) AlertDialog.Builder(this)
+                            .setTitle("مطابقة مالية للخزنات والحركات القديمة")
+                            .setMessage(message).setPositiveButton("إغلاق",null).show()
+                    }
+                } catch(e:Exception) {
+                    runOnUiThread { if(!isFinishing&&!isDestroyed) error(e) }
+                }
+            }
+        }
+
         collapsibleTools("تقارير وتدقيق الخزنات المتقدم") {
         button("تدقيق فروقات الإقفال لجميع الخزنات"){
             form("تدقيق الإقفالات الشهري","عرض"){box->
