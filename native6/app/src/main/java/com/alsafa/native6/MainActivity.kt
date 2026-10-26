@@ -1598,9 +1598,14 @@ open class MainActivity:Activity() {
                 val popup=PopupMenu(this@MainActivity,anchor)
                 popup.menu.add("خيارات الفاتورة").setOnMenuItemClickListener {
                     AlertDialog.Builder(this@MainActivity)
-                        .setTitle("طباعة / عرض · فاتورة #"+inv.number)
-                        .setItems(arrayOf("طباعة / إعادة طباعة","عرض PDF")) { _,choice ->
-                            if(choice==0)printInvoice(inv) else viewInvoicePdf(inv)
+                        .setTitle("خيارات الفاتورة #"+inv.number)
+                        .setItems(arrayOf("تفاصيل الفاتورة","طباعة / إعادة طباعة","عرض PDF","مشاركة PDF")) { _,choice ->
+                            when(choice) {
+                                0 -> invoiceDetail(inv)
+                                1 -> printInvoice(inv)
+                                2 -> viewInvoicePdf(inv)
+                                3 -> shareInvoicePdf(inv)
+                            }
                         }.setNegativeButton("إلغاء",null).show()
                     true
                 }
