@@ -3288,9 +3288,59 @@ button("＋ مورد"){form("مورد جديد"){box->val n=field("الاسم",b
         }
     }
     private fun audit(){text("سجل العمليات",size=25f);store.rows("SELECT * FROM events ORDER BY created DESC LIMIT 250").forEach{text("${it.getValue("date")} · ${it.getValue("kind")}\n${it.getValue("memo")}")}}
+    private fun confirmFactoryReset() {
+        if(busy) {
+            Toast.makeText(this,"انتظر انتهاء العملية الجارية قبل إعادة التهيئة",Toast.LENGTH_LONG).show()
+            return
+        }
+        val confirmation=EditText(this).apply {
+            hint="اكتب تهيئة للتأكيد"
+            setSingleLine(true)
+        }
+        val wrapper=LinearLayout(this).apply {
+            orientation=LinearLayout.VERTICAL
+            setPadding(dp(20),dp(12),dp(20),0)
+            addView(confirmation)
+        }
+        AlertDialog.Builder(this)
+            .setTitle("إعادة تهيئة التطبيق بالكامل")
+            .setMessage("تحذير: ستحذف هذه العملية قاعدة البيانات المحلية، وجميع الصور، ونسخ الصفا المحفوظة داخل التطبيق. لن يمكن التراجع عنها. احفظ نسخة احتياطية خارج التطبيق أولاً. لن تُحذف الملفات الموجودة في Google Drive أو الملفات التي صدّرتها بنفسك.")
+            .setView(wrapper)
+            .setNegativeButton("إلغاء",null)
+            .setPositiveButton("حذف البيانات وإعادة التهيئة"){_,_->
+                if(confirmation.text.toString().trim()!="تهيئة") {
+                    Toast.makeText(this,"لم تتم التهيئة: يجب كتابة كلمة تهيئة تماماً",Toast.LENGTH_LONG).show()
+                } else {
+                    work {
+                        // The database is closed before deletion; no SQL triggers
+                        // or partial table deletes can leave an inconsistent ledger.
+                        store.helper.close()
+                        require(deleteDatabase("alsafa_native6.db")) { "تعذر حذف قاعدة البيانات المحلية" }
+                        for(folder in listOf("images","legacy_snapshots")) {
+                            val directory=java.io.File(filesDir,folder)
+                            if(directory.exists()) require(directory.deleteRecursively()) {
+                                "تعذر تنظيف مجلد $folder؛ أعد المحاولة قبل استيراد أي نسخة"
+                            }
+                        }
+                        store=Store(StoreDb(this@MainActivity))
+                        basket.clear()
+                        selectedProduct=null
+                        photoProductId=null
+                        photoRepairId=null
+                        intakePhotoPath=null
+                        pdfInvoice=null
+                        lastScrollY=0
+                        savedInputs=null
+                        page="home"
+                    }
+                }
+            }
+            .show()
+    }
     private fun backup(){text("النسخ الاحتياطي",size=25f);text("اختر Google Drive من منتقي Android إن كان مثبتاً. إنشاء الملف محلي؛ رفعه إلى Drive يحتاج اتصالاً.")
         button("تصدير نسخة كاملة"){startActivityForResult(Intent(Intent.ACTION_CREATE_DOCUMENT).apply{addCategory(Intent.CATEGORY_OPENABLE);type="application/json";putExtra(Intent.EXTRA_TITLE,"AlSafa-Native6-${Store.today()}.json")},101)}
         button("استعادة Native 6 إلى قاعدة فارغة"){pick(102)}
+        button("إعادة تهيئة التطبيق وحذف بياناته المحلية"){confirmFactoryReset()}
         button("فحص نسخة التطبيق القديم وحفظها معزولة"){pick(103)}
         button("اختيار نسخة الصفا القديمة واستعادة البيانات المتاحة"){pick(105)}
         button("النسخ القديمة المحفوظة للفحص"){go("legacy-audit")}
