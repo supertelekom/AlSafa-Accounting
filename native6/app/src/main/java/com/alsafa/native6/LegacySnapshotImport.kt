@@ -216,8 +216,8 @@ object LegacySnapshotImport {
         val issues=LegacyImportPreflight.inspectInventoryData(d)
         require(issues.isEmpty()) { "فحص النسخة القديمة فشل: "+issues.take(5).joinToString("; ") }
         val manifest=LegacyRestoreManifest.inspect(payload)
-        val readiness=LegacyRestoreReadiness.inspect(payload)
-        val financialWarnings=LegacyImportPreflight.inspectFinancialHistory(payload)
+        val readiness=LegacyRestoreReadiness.inspectRoot(root)
+        val financialWarnings=LegacyImportPreflight.inspectFinancialHistoryData(d)
         val closingAudit=LegacyClosingContinuity.inspectRoot(root)
         val paymentLinkAudit=LegacyPaymentLinkAudit.inspectRoot(root)
         val returnLinkAudit=LegacyReturnLinkAudit.inspectRoot(root)
