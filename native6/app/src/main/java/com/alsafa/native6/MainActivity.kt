@@ -1401,6 +1401,46 @@ open class MainActivity:Activity() {
             }
         }
         }
+        button("فواتير المبيع والشراء المستعادة من التطبيق القديم — قراءة فقط") {
+            form("الفواتير القديمة","عرض"){box->
+                val section=select("نوع الفاتورة",listOf("مبيع قديم","شراء قديم"),box)
+                val from=field("من تاريخ YYYY-MM-DD (اختياري)",box)
+                val to=field("إلى تاريخ YYYY-MM-DD (اختياري)",box)
+                val query=field("رقم الفاتورة أو العميل أو الهاتف أو الصنف",box)
+                val page=field("رقم الصفحة",box,"1",true)
+                ({
+                    val sectionKey=if(section.selectedItemPosition==0)"sales" else "purchases"
+                    val pageNumber=page.text.toString().trim().toInt()
+                    require(pageNumber in 1..100000){"رقم الصفحة غير صالح"}
+                    val fromValue=from.text.toString().trim()
+                    val toValue=to.text.toString().trim()
+                    val term=query.text.toString().trim()
+                    work {
+                        val result=LegacyInvoiceSnapshot.page(store,sectionKey,
+                            fromValue,toValue,term,(pageNumber-1)*30,30)
+                        val records=result.getJSONArray("rows")
+                        val lines=(0 until records.length()).joinToString("\\n\\n"){index->
+                            val row=records.getJSONObject(index)
+                            "#"+row.optString("invoiceNo")+" · "+row.optString("date")+
+                                "\\n"+(if(sectionKey=="sales")row.optString("customer") else row.optString("supplierName"))+
+                                "\\nالإجمالي: "+row.optString("total")+" "+row.optString("currency")+
+                                " · المدفوع: "+row.optString("paid")+
+                                " · المتبقي: "+row.optString("outstanding")
+                        }
+                        val message="عدد الفواتير المطابقة: "+result.getInt("total")+
+                            "\\nصفحة: "+pageNumber+
+                            "\\n\\n"+(if(lines.isEmpty())"لا توجد نتائج" else lines)+
+                            "\\n\\nهذه الفواتير تاريخية للقراءة فقط؛ لم تُضف إلى الرصيد التشغيلي."
+                        runOnUiThread {
+                            if(!isFinishing&&!isDestroyed) AlertDialog.Builder(this)
+                                .setTitle("فواتير التطبيق القديم")
+                                .setMessage(message)
+                                .setPositiveButton("إغلاق",null).show()
+                        }
+                    }
+                })
+            }
+        }
         text("البحث في الفواتير",size=20f).setTextColor(gold)
         val query=field("الاسم أو الهاتف أو المنتج أو تفاصيل الصيانة",body)
         val dateFilters=column()
