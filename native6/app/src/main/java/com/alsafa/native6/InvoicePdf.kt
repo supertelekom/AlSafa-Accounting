@@ -41,6 +41,15 @@ class InvoicePdf(private val context:Context,private val store:Store) {
         if(invoice.kind!="purchase") {
             rows.add("المقبوض الصافي" to money(store.paid(id),invoice.currency))
             rows.add("المتبقي" to money(store.due(id),invoice.currency))
+            val vaults=store.rows("SELECT DISTINCT vault FROM receipts WHERE invoice_id=? ORDER BY vault",id)
+                .mapNotNull { it["vault"]?.takeIf(String::isNotBlank) }
+            val method=when {
+                vaults.isEmpty()->"لم يُسجّل قبض"
+                vaults.size>1->vaults.joinToString(" + ")
+                vaults.single()=="drawer"->"نقدي"
+                else->vaults.single()
+            }
+            rows.add("طريقة الدفع" to method)
         }
         val notes=store.rows("SELECT notes FROM invoices WHERE id=?",id)
             .firstOrNull()?.get("notes").orEmpty().trim()
