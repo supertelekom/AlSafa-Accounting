@@ -2030,8 +2030,10 @@ open class MainActivity:Activity() {
                                         .setTextColor(gold)
                                     text("المقبوض: "+record.optString("paid")+" "+
                                         record.optString("currency"),card,13f)
-                                    text("المتبقي للتحصيل: "+record.optString("outstanding")+" "+
-                                        record.optString("currency"),card,13f)
+                                    if(record.optString("outstanding").toBigDecimalOrNull()?.signum()==1)
+                                        text("المتبقي للتحصيل: "+record.optString("outstanding")+" "+
+                                            record.optString("currency"),card,13f)
+                                            .setTextColor(Color.rgb(157,62,52))
                                     button("⋮ خيارات الفاتورة",card) {
                                         showRestoredInvoiceOptions(key,record)
                                     }
