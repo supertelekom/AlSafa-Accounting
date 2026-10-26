@@ -39,7 +39,7 @@ object BluetoothReceiptPrinter {
                 while(top<bitmap.height) {
                     val h=minOf(96,bitmap.height-top)
                     bitmap.getPixels(pixels,0,384,0,top,384,h)
-                    out.write(byteArrayOf(29,118,48,0,48,0,h.toByte(),0))
+                    out.write(byteArrayOf(29,118,48,0,48,0,(h and 255).toByte(),(h shr 8).toByte()))
                     val data=ByteArray(48*h)
                     for(y in 0 until h)for(x in 0 until 384) {
                         val color=pixels[y*384+x]
@@ -126,6 +126,7 @@ object BluetoothReceiptPrinter {
     fun labelImage(name:String,price:String,barcode:String,widthMm:Int=50,heightMm:Int=30):Bitmap {
         require(widthMm in 20..82 && heightMm in 15..150) { "مقاس الملصق خارج نطاق الطابعة" }
         require(barcode.isNotBlank()) { "أضف باركودًا للمنتج أولاً" }
+        require(barcode.all { it.code in 32..126 }) { "الباركود يحتوي على أحرف غير مدعومة" }
         val width=widthMm*8
         val height=heightMm*8
         val bitmap=Bitmap.createBitmap(width,height,Bitmap.Config.ARGB_8888)
@@ -140,8 +141,12 @@ object BluetoothReceiptPrinter {
         paint.textSize=minOf(21f,width/16f)
         canvas.drawText("ALSAFA",center,paint.textSize+4f,paint)
         paint.textSize=minOf(20f,width/17f)
-        val maxNameChars=maxOf(10,width/12)
-        canvas.drawText(name.take(maxNameChars),center,paint.textSize*2+8f,paint)
+        val available=width-24f
+        val cleanName=name.trim()
+        while(paint.measureText(cleanName)>available && paint.textSize>9f) paint.textSize-=1f
+        var displayed=cleanName
+        while(displayed.isNotEmpty() && paint.measureText(displayed)>available) displayed=displayed.dropLast(1)
+        canvas.drawText(displayed,center,paint.textSize*2+8f,paint)
         paint.textSize=minOf(22f,width/15f)
         canvas.drawText(price,center,paint.textSize*3+13f,paint)
         val top=(paint.textSize*3+24f).toInt()
