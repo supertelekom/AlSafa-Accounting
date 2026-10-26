@@ -227,6 +227,7 @@ object LegacySnapshotImport {
             Triple("repairs","repairs","طلبات الصيانة")
         )
         val report=StringBuilder("فحص النسخة الأحدث — قراءة فقط\n")
+        val idsAcrossSections=HashSet<String>()
         for((source,table,title) in sections) {
             val array=data.optJSONArray(source) ?: continue
             var newCount=0
@@ -238,6 +239,9 @@ object LegacySnapshotImport {
                 val id=record.optString("id").trim()
                 require(id.isNotBlank() && seen.add(id)) {
                     "معرف مفقود أو مكرر في $title عند السجل $i"
+                }
+                require(idsAcrossSections.add(id)) {
+                    "المعرف $id مكرر بين أقسام النسخة؛ أُوقف الفحص لمنع دمج خاطئ"
                 }
                 val matches=store.scalar("SELECT count(*) FROM $table WHERE id=?",id)
                 require(matches in 0L..1L) { "معرف مكرر داخل قاعدة البيانات: $id" }
