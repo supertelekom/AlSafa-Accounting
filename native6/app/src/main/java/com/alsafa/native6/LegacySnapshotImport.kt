@@ -209,6 +209,7 @@ object LegacySnapshotImport {
         progress(1,"التحقق من قاعدة البيانات")
         // Reject an occupied database before parsing and auditing a large backup.
         requireEmptyAccounting(store)
+        progress(4,"قراءة وتحليل ملف النسخة الاحتياطية")
         val root=JSONObject(payload)
         require(root.optString("format")=="alsafa-accounting-backup" &&
             root.optInt("formatVersion")==2) { "صيغة النسخة الاحتياطية غير مدعومة" }
@@ -219,7 +220,9 @@ object LegacySnapshotImport {
         progress(10,"فحص المخزون والبيانات")
         val issues=LegacyImportPreflight.inspectInventoryData(d)
         require(issues.isEmpty()) { "فحص النسخة القديمة فشل: "+issues.take(5).joinToString("; ") }
+        progress(15,"فحص سلامة الملف وبصمة النسخة")
         val manifest=LegacyRestoreManifest.inspectData(root,payload)
+        progress(20,"مراجعة المراجع والبيانات المحاسبية")
         val readiness=LegacyRestoreReadiness.inspectRoot(root)
         val financialWarnings=LegacyImportPreflight.inspectFinancialHistoryData(d)
         val closingAudit=LegacyClosingContinuity.inspectRoot(root)
