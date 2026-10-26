@@ -92,9 +92,10 @@ object BluetoothReceiptPrinter {
     }
     /** Native TSPL label output: exact roll dimensions and gap, not ESC/POS receipt scaling. */
     @Suppress("DEPRECATION")
-    fun printLabel(context:Context,address:String,image:Bitmap,widthMm:Int,heightMm:Int,gapMm:Int=2) {
+    fun printLabel(context:Context,address:String,image:Bitmap,widthMm:Int,heightMm:Int,gapMm:Int=2,copies:Int=1) {
         check(permitted(context)) { "يجب السماح بإذن البلوتوث" }
         require(widthMm in 20..82 && heightMm in 15..150 && gapMm in 0..10)
+        require(copies in 1..100) { "عدد الملصقات يجب أن يكون بين 1 و100" }
         require(image.width==widthMm*8 && image.height==heightMm*8) { "أبعاد صورة الملصق لا تطابق مقاس الرول" }
         val adapter=BluetoothAdapter.getDefaultAdapter() ?: error("البلوتوث غير متاح")
         check(adapter.isEnabled) { "البلوتوث غير مفعل" }
@@ -122,7 +123,7 @@ object BluetoothReceiptPrinter {
                 }
                 out.write(row)
             }
-            out.write("\r\nPRINT 1,1\r\n".toByteArray(Charsets.US_ASCII))
+            out.write("\r\nPRINT 1,$copies\r\n".toByteArray(Charsets.US_ASCII))
             out.flush()
         } finally { runCatching { socket.close() } }
     }
