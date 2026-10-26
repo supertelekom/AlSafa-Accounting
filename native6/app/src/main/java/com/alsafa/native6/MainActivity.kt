@@ -1590,7 +1590,8 @@ open class MainActivity:Activity() {
                     .setTextColor(gold)
             }
         }
-        if(inv.kind!="purchase") button("طباعة الفاتورة بالبلوتوث",panel) { printInvoice(inv) }
+        button("عرض PDF",panel) { viewInvoicePdf(inv) }
+        button("طباعة / إعادة طباعة",panel) { printInvoice(inv) }
         val open=Button(this).apply {
             style(this)
             text="تفاصيل الفاتورة والإجراءات ▾"
@@ -2070,6 +2071,28 @@ open class MainActivity:Activity() {
             }
         }
     }
+    private fun viewInvoicePdf(inv:Invoice) {
+        if(busy)return
+        busy=true
+        io.execute {
+            try {
+                val folder=java.io.File(cacheDir,"view_invoices").apply { mkdirs() }
+                val file=java.io.File(folder,"AlSafa-"+inv.number+"-"+java.util.UUID.randomUUID()+".pdf")
+                file.outputStream().use { InvoicePdf(this,store).write(inv.id,it) }
+                runOnUiThread {
+                    busy=false
+                    try {
+                        val uri=androidx.core.content.FileProvider.getUriForFile(this,packageName+".share",file)
+                        val intent=Intent(Intent.ACTION_VIEW).apply {
+                            setDataAndType(uri,"application/pdf")
+                            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                        }
+                        startActivity(Intent.createChooser(intent,"عرض فاتورة PDF"))
+                    } catch(e:Exception) { error(e) }
+                }
+            } catch(e:Exception) { runOnUiThread { busy=false;error(e) } }
+        }
+    }
     private fun shareInvoicePdf(inv:Invoice) {
         if(busy)return
         busy=true
@@ -2224,6 +2247,8 @@ open class MainActivity:Activity() {
             AlertDialog.Builder(this).setTitle("سجل رد النقود · فاتورة #"+inv.number)
                 .setMessage(details).setPositiveButton("حسناً",null).show()
         })
+        choices.add("عرض الفاتورة PDF" to { viewInvoicePdf(inv) })
+        choices.add("طباعة / إعادة طباعة الفاتورة" to { printInvoice(inv) })
         choices.add("مشاركة فاتورة PDF عبر واتساب" to { shareInvoicePdf(inv) })
         choices.add("حفظ فاتورة PDF" to {
             pdfInvoice=inv.id
