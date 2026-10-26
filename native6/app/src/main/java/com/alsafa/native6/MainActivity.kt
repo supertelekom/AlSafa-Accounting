@@ -1517,44 +1517,69 @@ open class MainActivity:Activity() {
             }
         }
         }
-        button("فواتير المبيع والشراء المستعادة من التطبيق القديم — قراءة فقط") {
-            form("الفواتير القديمة","عرض"){box->
-                val section=select("نوع الفاتورة",listOf("مبيع قديم","شراء قديم"),box)
+        button("فواتير الصفا القديمة — سجل منظم") {
+            form("سجل الفواتير القديمة","إغلاق"){box->
+                val section=select("نوع الفاتورة",listOf("مبيع","شراء"),box)
                 val from=field("من تاريخ YYYY-MM-DD (اختياري)",box)
                 val to=field("إلى تاريخ YYYY-MM-DD (اختياري)",box)
-                val query=field("رقم الفاتورة أو العميل أو الهاتف أو الصنف",box)
-                val page=field("رقم الصفحة",box,"1",true)
-                ({
-                    val sectionKey=if(section.selectedItemPosition==0)"sales" else "purchases"
-                    val pageNumber=page.text.toString().trim().toInt()
-                    require(pageNumber in 1..100000){"رقم الصفحة غير صالح"}
-                    val fromValue=from.text.toString().trim()
-                    val toValue=to.text.toString().trim()
+                val query=field("بحث بالرقم أو الاسم أو الهاتف أو الصنف",box)
+                val list=column()
+                val controls=LinearLayout(this).apply {
+                    orientation=LinearLayout.HORIZONTAL
+                    layoutDirection=View.LAYOUT_DIRECTION_RTL
+                }
+                box.addView(controls)
+                box.addView(list)
+                var currentPage=0
+                val pageLabel=TextView(this).apply { style(this);textSize=13f }
+                val previous=Button(this).apply { style(this);text="السابق";isAllCaps=false }
+                val next=Button(this).apply { style(this);text="التالي";isAllCaps=false }
+                controls.addView(previous,LinearLayout.LayoutParams(0,dp(44),1f))
+                controls.addView(pageLabel,LinearLayout.LayoutParams(0,dp(44),1f))
+                controls.addView(next,LinearLayout.LayoutParams(0,dp(44),1f))
+                fun load() {
+                    val key=if(section.selectedItemPosition==0)"sales" else "purchases"
+                    val pageNumber=currentPage
+                    val startDate=from.text.toString().trim()
+                    val endDate=to.text.toString().trim()
                     val term=query.text.toString().trim()
                     work {
-                        val result=LegacyInvoiceSnapshot.page(store,sectionKey,
-                            fromValue,toValue,term,(pageNumber-1)*30,30)
-                        val records=result.getJSONArray("rows")
-                        val lines=(0 until records.length()).joinToString("\\n\\n"){index->
-                            val row=records.getJSONObject(index)
-                            "#"+row.optString("invoiceNo")+" · "+row.optString("date")+
-                                "\\n"+(if(sectionKey=="sales")row.optString("customer") else row.optString("supplierName"))+
-                                "\\nالإجمالي: "+row.optString("total")+" "+row.optString("currency")+
-                                " · المدفوع: "+row.optString("paid")+
-                                " · المتبقي: "+row.optString("outstanding")
-                        }
-                        val message="عدد الفواتير المطابقة: "+result.getInt("total")+
-                            "\\nصفحة: "+pageNumber+
-                            "\\n\\n"+(if(lines.isEmpty())"لا توجد نتائج" else lines)+
-                            "\\n\\nهذه الفواتير تاريخية للقراءة فقط؛ لم تُضف إلى الرصيد التشغيلي."
+                        val result=LegacyInvoiceSnapshot.page(store,key,startDate,endDate,term,pageNumber*20,20)
+                        val rows=result.getJSONArray("rows")
+                        val total=result.optInt("total")
                         runOnUiThread {
-                            if(!isFinishing&&!isDestroyed) AlertDialog.Builder(this)
-                                .setTitle("فواتير التطبيق القديم")
-                                .setMessage(message)
-                                .setPositiveButton("إغلاق",null).show()
+                            if(isFinishing||isDestroyed)return@runOnUiThread
+                            list.removeAllViews()
+                            pageLabel.text="صفحة ${pageNumber+1} / ${maxOf(1,(total+19)/20)}"
+                            previous.isEnabled=pageNumber>0
+                            next.isEnabled=(pageNumber+1)*20<total
+                            text("عدد الفواتير: $total",list,13f)
+                            for(index in 0 until rows.length()) {
+                                val invoice=rows.getJSONObject(index)
+                                val card=column().apply {
+                                    setPadding(dp(12),dp(10),dp(12),dp(10))
+                                    background=background(paper,12)
+                                }
+                                text("#"+invoice.optString("invoiceNo")+" · "+invoice.optString("date"),card,16f)
+                                text(if(key=="sales")invoice.optString("customer") else invoice.optString("supplierName"),card,14f)
+                                text("الإجمالي: "+invoice.optString("total")+" "+invoice.optString("currency"),card,14f)
+                                val detail=column()
+                                card.addView(detail)
+                                detail.visibility=View.GONE
+                                text("المدفوع: "+invoice.optString("paid")+" · المتبقي: "+invoice.optString("outstanding"),detail,13f)
+                                button("تفاصيل ▾",card) { detail.visibility=if(detail.visibility==View.GONE)View.VISIBLE else View.GONE }
+                                list.addView(card,LinearLayout.LayoutParams(-1,-2).apply {setMargins(0,dp(4),0,dp(4))})
+                            }
+                            if(rows.length()==0)text("لا توجد فواتير مطابقة.",list,14f)
                         }
                     }
-                })
+                }
+                previous.setOnClickListener { if(currentPage>0){currentPage--;load()} }
+                next.setOnClickListener { currentPage++;load() }
+                button("بحث وعرض النتائج",box) { currentPage=0;load() }
+                load()
+                text("الفواتير التاريخية معروضة من بياناتها الأصلية؛ لا تُحتسب مرتين في الأرصدة النشطة.",box,12f)
+                ({})
             }
         }
         button("تفاصيل فاتورة قديمة والمدفوعات المرتبطة بها — قراءة فقط") {
