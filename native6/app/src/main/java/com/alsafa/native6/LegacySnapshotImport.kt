@@ -239,8 +239,9 @@ object LegacySnapshotImport {
                 require(id.isNotBlank() && seen.add(id)) {
                     "معرف مفقود أو مكرر في $title عند السجل $i"
                 }
-                if(store.scalar("SELECT count(*) FROM $table WHERE id=?",id)>0L) existingCount++
-                else newCount++
+                val matches=store.scalar("SELECT count(*) FROM $table WHERE id=?",id)
+                require(matches in 0L..1L) { "معرف مكرر داخل قاعدة البيانات: $id" }
+                if(matches==1L) existingCount++ else newCount++
             }
             report.append("$title: جديد $newCount، موجود $existingCount، إجمالي ${array.length()}\n")
         }
