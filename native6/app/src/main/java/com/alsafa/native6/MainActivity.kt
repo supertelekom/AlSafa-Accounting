@@ -994,7 +994,7 @@ open class MainActivity:Activity() {
             results.forEach{p->productCard(p,list,variantCounts[p.id]?:0)}
             if(total>visibleCount) {
                 button("عرض المزيد (${minOf(visibleCount.toLong(),total)} من ${total})",list) {
-                    visibleCount=minOf(visibleCount+24,500)
+                    visibleCount+=24
                     show()
                 }
             }
