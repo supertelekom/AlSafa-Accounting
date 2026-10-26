@@ -50,6 +50,10 @@ object LegacyFinancialLinkAudit {
             "partnerWithdrawal" to "partnerWithdrawals",
             "expense" to "expenses", "dailyClosing" to "dailyClosings",
             "return" to "returns")
+        // These references point to a workflow event, not to a single invoice.
+        // They must be reconciled with their correction/exchange chain separately.
+        val workflowReferences=setOf("currencyExchange","opening",
+            "sale-payment-correction","repair-payment-correction")
         val missingReferences=JSONArray()
         val ambiguousReferences=JSONArray()
         val linked=JSONObject()
@@ -58,12 +62,17 @@ object LegacyFinancialLinkAudit {
             var linkedCount=0
             var missingCount=0
             var ambiguousCount=0
+            var workflowCount=0
             for(index in 0 until array.length()) {
                 val row=array.optJSONObject(index) ?: continue
                 val ref=row.optString("referenceId").trim()
                 if(ref.isEmpty()) continue // Transfers/openings may have no reference.
                 val referenceType=row.optString("referenceType").trim()
                 val target=targets[referenceType]
+                if(target==null && referenceType in workflowReferences) {
+                    workflowCount++
+                    continue
+                }
                 if(target==null) {
                     ambiguousCount++
                     if(ambiguousReferences.length()<100)
@@ -80,7 +89,8 @@ object LegacyFinancialLinkAudit {
             linked.put(section,JSONObject()
                 .put("matched",linkedCount)
                 .put("missing",missingCount)
-                .put("unknownReferenceType",ambiguousCount))
+                .put("unknownReferenceType",ambiguousCount)
+                .put("workflowReferencesRequiringReconciliation",workflowCount))
         }
         // Cash transactions frequently mirror invoices, payments, supplier
         // settlements and withdrawals. Record this relationship as evidence;
