@@ -1608,6 +1608,7 @@ open class MainActivity:Activity() {
     }
     private fun invoices(){
         sectionHeading("الفواتير والمرتجعات","البحث في الفواتير وعمليات القبض والاسترداد")
+        button("عمليات الطباعة المعلقة") { showPrintQueue() }
         button("إعدادات طابعة الفواتير والملصقات") {
             BluetoothReceiptPrinter.forgetPrinter(this)
             choosePrinter { address ->
@@ -2004,20 +2005,67 @@ open class MainActivity:Activity() {
         }
     }
     private fun printInvoice(inv:Invoice) {
+        try {
+            PrintQueue(this).use { queue ->
+                queue.enqueue(inv.id,inv.number.toString())
+            }
+            Toast.makeText(this,"حُفظت الفاتورة في انتظار الطباعة",Toast.LENGTH_LONG).show()
+            showPrintQueue()
+        } catch(e:Exception) { error(e) }
+    }
+    private fun showPrintQueue() {
+        try {
+            val jobs=PrintQueue(this).use { it.list() }
+            if(jobs.isEmpty()) {
+                AlertDialog.Builder(this).setTitle("عمليات الطباعة")
+                    .setMessage("لا توجد فواتير بانتظار الطباعة")
+                    .setPositiveButton("حسناً",null).show()
+                return
+            }
+            val names=jobs.map { job ->
+                val status=when(job.status) {
+                    "pending"->"معلقة"
+                    "sending"->"إرسال غير مكتمل — راجع الطابعة"
+                    else->"أُرسلت — تأكد من خروج الورقة"
+                }
+                "فاتورة #"+job.invoiceNumber+" · "+status
+            }.toTypedArray()
+            AlertDialog.Builder(this).setTitle("عمليات الطباعة المعلقة")
+                .setItems(names) { _,index ->
+                    val job=jobs[index]
+                    AlertDialog.Builder(this).setTitle("فاتورة #"+job.invoiceNumber)
+                        .setMessage("المحاولات: "+job.attempts+
+                            (if(job.error.isNotBlank()) "\nآخر خطأ: "+job.error else "")+
+                            "\nلا تعتبر الفاتورة مطبوعة حتى تتأكد من خروج الورقة.")
+                        .setPositiveButton("طباعة / إعادة المحاولة"){_,_->sendQueuedInvoice(job)}
+                        .setNeutralButton("تأكيد خروج الورقة"){_,_->
+                            if(job.status=="sent_unconfirmed") {
+                                PrintQueue(this).use { it.confirmPrinted(job.id) }
+                                showPrintQueue()
+                            } else Toast.makeText(this,"يجب إرسال الفاتورة أولاً",Toast.LENGTH_LONG).show()
+                        }.setNegativeButton("رجوع"){_,_->showPrintQueue()}.show()
+                }.setPositiveButton("إغلاق",null).show()
+        } catch(e:Exception) { error(e) }
+    }
+    private fun sendQueuedInvoice(job:PrintQueue.Job) {
         choosePrinter { address ->
             if(busy)return@choosePrinter
             busy=true
             io.execute {
-                val file=java.io.File.createTempFile("alsafa-print-",".pdf",cacheDir)
+                val file=java.io.File.createTempFile("alsafa-queue-",".pdf",cacheDir)
                 try {
-                    file.outputStream().use { InvoicePdf(this,store).write(inv.id,it) }
+                    PrintQueue(this).use { it.markSending(job.id) }
+                    file.outputStream().use { InvoicePdf(this,store).write(job.invoiceId,it) }
                     BluetoothReceiptPrinter.printInvoicePdf(this,address,file)
+                    PrintQueue(this).use { it.markSentUnconfirmed(job.id) }
                     runOnUiThread {
                         busy=false
-                        Toast.makeText(this,"أُرسلت الفاتورة للطابعة",Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this,"أُرسلت الفاتورة؛ تحقق من خروج الورقة",Toast.LENGTH_LONG).show()
+                        showPrintQueue()
                     }
                 } catch(e:Exception) {
-                    runOnUiThread { busy=false;error(e) }
+                    PrintQueue(this).use { it.markFailed(job.id,e.message ?: "تعذر الاتصال بالطابعة") }
+                    runOnUiThread { busy=false;error(e);showPrintQueue() }
                 } finally { file.delete() }
             }
         }
