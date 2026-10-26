@@ -326,10 +326,11 @@ object LegacySnapshotImport {
                 .filter { it !in setOf("products","maintenanceParts","suppliers","repairs") }
                 .filter { d.optJSONArray(it)!=null }.toList()
             progress(70,"أرشفة الفواتير والحركات التاريخية")
-            historical.forEach { key ->
-                progress(70,"أرشفة قسم $key")
+            historical.forEachIndexed { sectionIndex,key ->
+                progress(70+sectionIndex*9/maxOf(1,historical.size),"أرشفة قسم $key (${sectionIndex+1} / ${historical.size})")
                 val array=d.optJSONArray(key) ?: return@forEach
                 for(i in 0 until array.length()) {
+                    if(i%100==0) progress(70+sectionIndex*9/maxOf(1,historical.size),"أرشفة $key: ${i+1} / ${array.length()}")
                     // Some historical sections contain scalar values or nested arrays.
                     // Preserve their exact JSON representation instead of failing the import.
                     val raw=array.get(i)
