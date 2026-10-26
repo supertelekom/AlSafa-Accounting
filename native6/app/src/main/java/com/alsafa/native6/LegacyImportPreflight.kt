@@ -13,6 +13,11 @@ object LegacyImportPreflight {
         require(root.optString("format")=="alsafa-accounting-backup")
         val data=root.getJSONObject("data")
         require(root.optInt("formatVersion")==2){"Unsupported legacy backup version"}
+        return inspectInventoryData(data)
+    }
+
+    /** Reuse the already-parsed JSON tree during actual restore. */
+    fun inspectInventoryData(data:JSONObject):List<String> {
         val problems=mutableListOf<String>()
         val inventoryIds=HashSet<String>()
         val supplierIds=HashSet<String>()
