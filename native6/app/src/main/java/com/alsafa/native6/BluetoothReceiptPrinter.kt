@@ -91,6 +91,7 @@ object BluetoothReceiptPrinter {
     fun printLabel(context:Context,address:String,image:Bitmap,widthMm:Int,heightMm:Int,gapMm:Int=2) {
         check(permitted(context)) { "يجب السماح بإذن البلوتوث" }
         require(widthMm in 20..82 && heightMm in 15..150 && gapMm in 0..10)
+        require(image.width==widthMm*8 && image.height==heightMm*8) { "أبعاد صورة الملصق لا تطابق مقاس الرول" }
         val adapter=BluetoothAdapter.getDefaultAdapter() ?: error("البلوتوث غير متاح")
         check(adapter.isEnabled) { "البلوتوث غير مفعل" }
         val device=adapter.bondedDevices.firstOrNull { it.address==address }
