@@ -11,7 +11,7 @@ import java.math.BigDecimal
  */
 object LegacyInvoiceSnapshot {
     private val allowed=setOf("sales","purchases","repairs")
-    private val invoiceSections=setOf("sales","purchases")
+    private val invoiceSections=setOf("sales","purchases","repairs")
 
     /**
      * Returns the complete source invoice, without posting another sale, purchase,
@@ -68,7 +68,7 @@ object LegacyInvoiceSnapshot {
     }
     fun page(store:Store,section:String,from:String="",to:String="",term:String="",
              offset:Int=0,limit:Int=50):JSONObject {
-        require(section in invoiceSections){"يعرض كشف الديون فواتير المبيع والشراء فقط؛ الصيانة متاحة في تفاصيل الأرشيف"}
+        require(section in invoiceSections){"نوع الفاتورة التاريخية غير مدعوم"}
         require(offset>=0 && limit in 1..200)
         if(from.isNotBlank()) java.time.LocalDate.parse(from)
         if(to.isNotBlank()) java.time.LocalDate.parse(to)
