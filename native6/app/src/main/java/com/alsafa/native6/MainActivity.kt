@@ -985,26 +985,33 @@ open class MainActivity:Activity() {
         val list=column().apply {setPadding(0,dp(4),0,dp(4))}
         body.addView(list)
         val variantCounts=store.colorVariantCounts()
-        var visibleCount=24
-        fun show(){
-            list.removeAllViews()
-            val (total,results)=store.searchCatalogPage(query.text.toString().trim(),onlyKind,visibleCount)
-            text(if(onlyKind=="part") "قطع الصيانة: ${total}" else "المنتجات: ${total}",list,13f)
-            if(results.isEmpty())text("لا توجد نتائج مطابقة.",list,14f)
-            results.forEach{p->productCard(p,list,variantCounts[p.id]?:0)}
-            if(total>visibleCount) {
-                button("عرض المزيد (${minOf(visibleCount.toLong(),total)} من ${total})",list) {
-                    visibleCount+=24
-                    show()
+        var displayed=0
+        fun loadPage() {
+            val (total,page)=store.searchCatalogPage(query.text.toString().trim(),onlyKind,24,displayed)
+            if(displayed==0) {
+                text(if(onlyKind=="part") "قطع الصيانة: ${total}" else "المنتجات: ${total}",list,13f)
+                if(page.isEmpty()) text("لا توجد نتائج مطابقة.",list,14f)
+            }
+            page.forEach { p -> productCard(p,list,variantCounts[p.id]?:0) }
+            displayed+=page.size
+            if(displayed.toLong()<total && page.isNotEmpty()) {
+                lateinit var more:Button
+                more=button("عرض المزيد (${displayed} من ${total})",list) {
+                    list.removeView(more)
+                    loadPage()
                 }
             }
+        }
+        fun show() {
+            displayed=0
+            list.removeAllViews()
+            loadPage()
         }
         val searchHandler=android.os.Handler(android.os.Looper.getMainLooper())
         val refresh=Runnable { if(query.isAttachedToWindow && !isFinishing && !isDestroyed) show() }
         query.addTextChangedListener(object:android.text.TextWatcher {
             override fun beforeTextChanged(s:CharSequence?,start:Int,count:Int,after:Int){}
             override fun onTextChanged(s:CharSequence?,start:Int,before:Int,count:Int) {
-                visibleCount=24
                 searchHandler.removeCallbacks(refresh)
                 searchHandler.postDelayed(refresh,180L)
             }
