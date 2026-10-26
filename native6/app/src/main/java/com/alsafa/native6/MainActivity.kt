@@ -738,12 +738,27 @@ open class MainActivity:Activity() {
             background=background(paper,12)
             visibility=View.GONE
         }
+        var initialized=false
         button("▸ "+title,host) {
-            content.visibility=if(content.visibility==View.VISIBLE)View.GONE else View.VISIBLE
+            if(content.visibility==View.VISIBLE) {
+                content.visibility=View.GONE
+            } else {
+                if(!initialized) {
+                    // Large supplier/repair menus should not construct hundreds of
+                    // buttons and query ledgers until the user actually opens them.
+                    val previous=body
+                    body=content
+                    try {
+                        build()
+                        initialized=true
+                    } finally {
+                        body=previous
+                    }
+                }
+                content.visibility=View.VISIBLE
+            }
         }
         host.addView(content,LinearLayout.LayoutParams(-1,-2))
-        body=content
-        try { build() } finally { body=host }
     }
     private fun sectionHeading(title:String,subtitle:String="",parent:LinearLayout=body) {
         val panel=LinearLayout(this).apply {
