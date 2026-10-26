@@ -1541,6 +1541,8 @@ open class MainActivity:Activity() {
                     try {
                         val original=LegacyInvoiceSnapshot.detail(store,section,archiveKey)
                         val invoice=original?.optJSONObject("invoice")
+                        val displayDate=invoice?.optString("date")?.take(10).orEmpty().ifBlank { summary.optString("date") }
+                        val displayPhone=invoice?.optString("phone").orEmpty().ifBlank { summary.optString("phone") }
                         val items=invoice?.optJSONArray("items")
                         val linkedPayments=original?.optJSONArray("linkedPayments")?.length() ?: 0
                         val payments=original?.optJSONArray("linkedPayments")
@@ -1565,10 +1567,10 @@ open class MainActivity:Activity() {
                         }
                         val message=if(invoice==null)"تعذر العثور على الفاتورة" else
                             "رقم الفاتورة: "+number+
-                            "\nالتاريخ: "+summary.optString("date")+
+                            "\nالتاريخ: "+displayDate+
                             "\nالعميل/المورد: "+summary.optString("customer").ifBlank {
                                 summary.optString("supplierName") }+
-                            "\nالهاتف: "+summary.optString("phone")+
+                            "\nالهاتف: "+displayPhone+
                             "\nالإجمالي: "+summary.optString("total")+" "+
                                 summary.optString("currency")+
                             "\nالمدفوع: "+summary.optString("paid")+
