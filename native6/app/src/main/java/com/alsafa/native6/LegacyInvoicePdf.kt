@@ -66,7 +66,11 @@ class LegacyInvoicePdf(private val context: Context, private val store: Store) {
             var y = 24f
             val header = layout(title)
             canvas.save(); canvas.translate(24f, y); header.draw(canvas); canvas.restore()
-            y += header.height + 15
+            y += header.height + 8
+            val kind = when (section) { "sales" -> "فاتورة مبيع"; "purchases" -> "فاتورة شراء"; else -> "فاتورة صيانة" }
+            val heading = layout(kind)
+            canvas.save(); canvas.translate(24f, y); heading.draw(canvas); canvas.restore()
+            y += heading.height + 15
             for (line in lines) {
                 canvas.save(); canvas.translate(24f, y); line.draw(canvas); canvas.restore()
                 y += line.height + 5
