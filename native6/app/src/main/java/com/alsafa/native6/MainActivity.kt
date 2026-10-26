@@ -1590,8 +1590,27 @@ open class MainActivity:Activity() {
                     .setTextColor(gold)
             }
         }
-        button("عرض PDF",panel) { viewInvoicePdf(inv) }
-        button("طباعة / إعادة طباعة",panel) { printInvoice(inv) }
+        val actionsMenu=android.widget.ImageButton(this).apply {
+            setImageResource(android.R.drawable.ic_menu_more)
+            contentDescription="خيارات الفاتورة"
+            background=background(sand,10)
+            setOnClickListener { anchor ->
+                val popup=PopupMenu(this@MainActivity,anchor)
+                popup.menu.add("طباعة / عرض").setOnMenuItemClickListener {
+                    AlertDialog.Builder(this@MainActivity)
+                        .setTitle("طباعة / عرض · فاتورة #"+inv.number)
+                        .setItems(arrayOf("طباعة / إعادة طباعة","عرض PDF")) { _,choice ->
+                            if(choice==0)printInvoice(inv) else viewInvoicePdf(inv)
+                        }.setNegativeButton("إلغاء",null).show()
+                    true
+                }
+                popup.show()
+            }
+        }
+        panel.addView(actionsMenu,LinearLayout.LayoutParams(dp(46),dp(42)).apply {
+            gravity=Gravity.END
+            setMargins(0,dp(4),0,0)
+        })
         val open=Button(this).apply {
             style(this)
             text="تفاصيل الفاتورة والإجراءات ▾"
