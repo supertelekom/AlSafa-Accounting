@@ -218,7 +218,7 @@ object LegacySnapshotImport {
         require(financialLinkAudit.getJSONArray("missingIds").length()==0) {
             "معرفات مالية مفقودة في النسخة القديمة؛ تم إيقاف الاستعادة لحماية البيانات"
         }
-        require(financialLinkAudit.getJSONArray("missingReferencesSample").length()==0) {
+        require(financialLinkAudit.getInt("missingReferenceCount")==0) {
             "توجد روابط مالية مفقودة؛ لا يمكن إكمال الاستعادة دون مطابقة المصدر"
         }
         val lists=listOf("products" to "watch","maintenanceParts" to "part")
