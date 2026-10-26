@@ -19,6 +19,13 @@ object BluetoothReceiptPrinter {
         check(adapter.isEnabled) { "يرجى تشغيل البلوتوث" }
         return adapter.bondedDevices.sortedBy { it.name.orEmpty() }
     }
+    /** Android 12+ requires BLUETOOTH_SCAN to cancel discovery. */
+    private fun stopDiscoveryIfAllowed(context:Context,adapter:BluetoothAdapter) {
+        if(Build.VERSION.SDK_INT<31 ||
+            context.checkSelfPermission(Manifest.permission.BLUETOOTH_SCAN)==PackageManager.PERMISSION_GRANTED) {
+            runCatching { adapter.cancelDiscovery() }
+        }
+    }
     private const val PREFS="alsafa_printer"
     private const val ADDRESS="paired_printer_address"
 
@@ -57,7 +64,7 @@ object BluetoothReceiptPrinter {
         check(adapter.isEnabled) { "البلوتوث غير مفعل" }
         val device=adapter.bondedDevices.firstOrNull { it.address==address }
             ?: error("الطابعة غير مقترنة")
-        adapter.cancelDiscovery()
+        stopDiscoveryIfAllowed(context,adapter)
         val socket=device.createRfcommSocketToServiceRecord(
             UUID.fromString("00001101-0000-1000-8000-00805F9B34FB"))
         try {
@@ -101,7 +108,7 @@ object BluetoothReceiptPrinter {
         check(adapter.isEnabled) { "البلوتوث غير مفعل" }
         val device=adapter.bondedDevices.firstOrNull { it.address==address }
             ?: error("الطابعة غير مقترنة")
-        adapter.cancelDiscovery()
+        stopDiscoveryIfAllowed(context,adapter)
         val socket=device.createRfcommSocketToServiceRecord(
             UUID.fromString("00001101-0000-1000-8000-00805F9B34FB"))
         try {
@@ -138,7 +145,7 @@ object BluetoothReceiptPrinter {
         android.os.ParcelFileDescriptor.open(file,android.os.ParcelFileDescriptor.MODE_READ_ONLY).use { fd ->
             android.graphics.pdf.PdfRenderer(fd).use { renderer ->
                 require(renderer.pageCount>0) { "ملف الفاتورة فارغ" }
-                adapter.cancelDiscovery()
+                stopDiscoveryIfAllowed(context,adapter)
                 val socket=device.createRfcommSocketToServiceRecord(
                     UUID.fromString("00001101-0000-1000-8000-00805F9B34FB"))
                 try {
