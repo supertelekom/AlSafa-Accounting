@@ -8,6 +8,10 @@ import java.math.BigDecimal
 object LegacyPaymentCashAudit {
     fun inspect(payload:String):JSONObject {
         val root=JSONObject(payload)
+        return inspectRoot(root)
+    }
+
+    fun inspectRoot(root:JSONObject):JSONObject {
         require(root.optString("format")=="alsafa-accounting-backup" && root.optInt("formatVersion")>=2)
         val data=root.getJSONObject("data")
         val cash=data.optJSONArray("cashTransactions") ?: JSONArray()
