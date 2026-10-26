@@ -1947,6 +1947,56 @@ open class MainActivity:Activity() {
                 }
                 invoiceCard(inv,output)
             }
+            if(pageIndex==0 && (kinds[kind.selectedItemPosition]=="all" ||
+                    kinds[kind.selectedItemPosition]=="sale" ||
+                    kinds[kind.selectedItemPosition]=="purchase") &&
+                    statuses[status.selectedItemPosition]!="cancelled") {
+                val restored=column()
+                output.addView(restored)
+                text("الفواتير المستعادة من النسخة الاحتياطية",restored,19f)
+                text("تظهر هنا مع الفواتير الحالية دون إنشاء مبيع أو قيد مالي مكرر.",restored,12f)
+                val sectionKeys=when(kinds[kind.selectedItemPosition]) {
+                    "sale" -> listOf("sales")
+                    "purchase" -> listOf("purchases")
+                    else -> listOf("sales","purchases")
+                }
+                val term=query.text.toString().trim()
+                work {
+                    try {
+                        val pages=sectionKeys.map { key ->
+                            key to LegacyInvoiceSnapshot.page(store,key,start,end,term,0,50)
+                        }
+                        runOnUiThread {
+                            if(isFinishing||isDestroyed || restored.parent==null)return@runOnUiThread
+                            for((key,result) in pages) {
+                                val rows=result.getJSONArray("rows")
+                                for(i in 0 until rows.length()) {
+                                    val record=rows.getJSONObject(i)
+                                    val card=column()
+                                    text("#"+record.optString("invoiceNo")+" · "+
+                                        record.optString("date")+" · "+
+                                        (if(key=="sales")"مبيع" else "شراء"),card,16f)
+                                    text(record.optString("customer").ifBlank {
+                                        record.optString("supplierName") },card,14f)
+                                    text("الإجمالي: "+record.optString("total")+" "+
+                                        record.optString("currency"),card,14f)
+                                    text("المدفوع: "+record.optString("paid")+
+                                        " · المتبقي: "+record.optString("outstanding"),card,13f)
+                                    button("⋮ خيارات الفاتورة",card) {
+                                        showRestoredInvoiceOptions(key,record)
+                                    }
+                                    restored.addView(card)
+                                }
+                                if(result.optInt("total")>rows.length()) {
+                                    text("توجد فواتير مستعادة إضافية؛ استخدم سجل الفواتير المستعادة للبحث التفصيلي.",restored,12f)
+                                }
+                            }
+                        }
+                    } catch(e:Exception) {
+                        runOnUiThread { if(!isFinishing&&!isDestroyed && restored.parent!=null)error(e) }
+                    }
+                }
+            }
             if(pageIndex>0)button("العودة إلى أول صفحة",output){
                 pageIndex=0
                 try{show()}catch(e:Exception){error(e)}
