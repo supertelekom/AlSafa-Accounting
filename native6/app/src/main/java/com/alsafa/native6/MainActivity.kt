@@ -2472,30 +2472,32 @@ button("＋ مورد"){form("مورد جديد"){box->val n=field("الاسم",b
             }
             clipToOutline=true
         }
-        val thumbnail=path?.let { photoPath ->
-            runCatching {
-                localPhoto(photoPath)
-                val bounds=android.graphics.BitmapFactory.Options().apply { inJustDecodeBounds=true }
-                android.graphics.BitmapFactory.decodeFile(photoPath,bounds)
-                require(bounds.outWidth>0 && bounds.outHeight>0) { "صورة غير قابلة للقراءة" }
-                var sample=1
-                while(maxOf(bounds.outWidth,bounds.outHeight)/sample>160) sample*=2
-                android.graphics.BitmapFactory.decodeFile(photoPath,
-                    android.graphics.BitmapFactory.Options().apply { inSampleSize=sample })
-            }.getOrNull()
-        }
-        if(thumbnail!=null && path!=null) {
-            icon.setImageBitmap(thumbnail)
-            icon.setOnClickListener { showRepairPhoto(path) }
-            // Keep the bitmap while the view exists: Android can detach and reattach
-            // list content during navigation, so recycling here would blank the image.
-        } else icon.setImageResource(android.R.drawable.ic_menu_gallery)
-        // A missing or damaged image should remain recoverable from the repair card.
-        if(!icon.hasOnClickListeners()) {
-            icon.contentDescription="إضافة صورة لساعة "+row.getValue("customer")
-            icon.setOnClickListener {
+        icon.setImageResource(android.R.drawable.ic_menu_gallery)
+        icon.setOnClickListener {
+            if(path!=null && runCatching { localPhoto(path) }.isSuccess) {
+                showRepairPhoto(path)
+            } else {
                 photoRepairId=id
                 startActivityForResult(Intent(this,MediaCaptureActivity::class.java),70)
+            }
+        }
+        if(path!=null) {
+            imageIo.execute {
+                val thumbnail=runCatching {
+                    val file=localPhoto(path)
+                    val bounds=android.graphics.BitmapFactory.Options().apply { inJustDecodeBounds=true }
+                    android.graphics.BitmapFactory.decodeFile(file.absolutePath,bounds)
+                    require(bounds.outWidth>0 && bounds.outHeight>0)
+                    var sample=1
+                    while(maxOf(bounds.outWidth,bounds.outHeight)/sample>160) sample*=2
+                    android.graphics.BitmapFactory.decodeFile(file.absolutePath,
+                        android.graphics.BitmapFactory.Options().apply { inSampleSize=sample })
+                }.getOrNull()
+                if(thumbnail!=null) runOnUiThread {
+                    if(!isFinishing && !isDestroyed && icon.isAttachedToWindow) {
+                        icon.setImageBitmap(thumbnail)
+                    } else thumbnail.recycle()
+                }
             }
         }
         line.addView(icon,LinearLayout.LayoutParams(dp(64),dp(64)).apply { marginEnd=dp(12) })
