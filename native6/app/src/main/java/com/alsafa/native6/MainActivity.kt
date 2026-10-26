@@ -984,9 +984,14 @@ open class MainActivity:Activity() {
             results.take(60).forEach{p->productCard(p,list,variantCounts[p.id]?:0)}
             if(results.size>60)text("تُعرض أول 60 نتيجة. اكتب جزءاً من الاسم أو الباركود لتضييق القائمة.",list,13f)
         }
+        val searchHandler=android.os.Handler(android.os.Looper.getMainLooper())
+        val refresh=Runnable { if(query.isAttachedToWindow && !isFinishing && !isDestroyed) show() }
         query.addTextChangedListener(object:android.text.TextWatcher {
             override fun beforeTextChanged(s:CharSequence?,start:Int,count:Int,after:Int){}
-            override fun onTextChanged(s:CharSequence?,start:Int,before:Int,count:Int){show()}
+            override fun onTextChanged(s:CharSequence?,start:Int,before:Int,count:Int) {
+                searchHandler.removeCallbacks(refresh)
+                searchHandler.postDelayed(refresh,180L)
+            }
             override fun afterTextChanged(s:android.text.Editable?){}
         })
         show()
