@@ -10,6 +10,10 @@ import java.time.temporal.ChronoUnit
 object LegacyClosingContinuity {
     fun inspect(payload:String):JSONObject {
         val root=JSONObject(payload)
+        return inspectRoot(root)
+    }
+
+    fun inspectRoot(root:JSONObject):JSONObject {
         require(root.optString("format")=="alsafa-accounting-backup")
         require(root.optInt("formatVersion")>=2)
         val closings=root.getJSONObject("data").optJSONArray("dailyClosings") ?: JSONArray()
