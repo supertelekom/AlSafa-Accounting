@@ -62,8 +62,7 @@ class TabletDashboardActivity : Activity() {
         }
 
     private fun open(page: String) {
-        if (page == "camera") startActivity(Intent(this, MediaCaptureActivity::class.java))
-        else if (page == "barcode") startActivityForResult(Intent(this, BarcodeScanActivity::class.java), 64)
+        if (page == "barcode") startActivityForResult(Intent(this, BarcodeScanActivity::class.java), 64)
         else startActivity(Intent(this, SectionActivity::class.java).putExtra(MainActivity.EXTRA_PAGE, page))
     }
 
@@ -158,7 +157,6 @@ class TabletDashboardActivity : Activity() {
                     Triple("الفواتير", "سجل المبيع والصيانة", "invoices"),
                     Triple("الموردون والمشتريات", "المشتريات والذمم", "suppliers"),
                     Triple("الإقفال اليومي", "الخزنات والأرصدة", "vaults"),
-                    Triple("الكاميرا والمعرض", "حفظ صور محلية", "camera"),
                     Triple("قارئ الباركود", "قراءة بكاميرا الجهاز", "barcode")
                 ))
             }
