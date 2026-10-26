@@ -861,7 +861,10 @@ open class MainActivity:Activity() {
             setPadding(dp(10),dp(7),dp(10),dp(7))
         }
         card.addView(stockInfo)
-        val colour=store.productColorLabel(p.id)
+        val colour=listOf("المينا" to "dialColor","الهيكل" to "caseColor","الحزام" to "strapColor")
+            .mapNotNull { (label,key) ->
+                productDetails.optString(key).takeIf { it.isNotBlank() }?.let { "$label: $it" }
+            }.joinToString(" · ")
         if(colour.isNotBlank()) text("الألوان: "+colour,card,12f)
         if(variantCount>0) {
             text("ألوان إضافية مستقلة: "+variantCount,card,12f)
