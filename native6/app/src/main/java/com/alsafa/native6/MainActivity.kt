@@ -2533,7 +2533,7 @@ open class MainActivity:Activity() {
                     }
                     runOnUiThread { if(!isFinishing&&!isDestroyed) AlertDialog.Builder(this)
                         .setTitle("سحوبات "+report.optString("month"))
-                        .setMessage(if(details.isBlank())"لا توجد سحوبات في الشهر المحدد" else details)
+                        .setMessage("إجمالي السحوبات حسب الشريك والعملة: "+report.getJSONObject("totalsByPartnerCurrency").toString()+"\n\n"+(if(details.isBlank())"لا توجد سحوبات في الشهر المحدد" else details)+"\n\nهذه حركات تاريخية للعرض، وليست سحوبات جديدة.")
                         .setPositiveButton("إغلاق",null).show() }
                 } catch(e:Exception) { runOnUiThread { if(!isFinishing&&!isDestroyed)error(e) } } } })
             }
