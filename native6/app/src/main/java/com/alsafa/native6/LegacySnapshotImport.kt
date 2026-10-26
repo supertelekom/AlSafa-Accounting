@@ -574,8 +574,10 @@ object LegacySnapshotImport {
                 "${receipt.getLong("repairs")} طلب صيانة، $photoCount صورة محفوظة محلياً. " +
                 "بصمة المصدر: ${receipt.getString("sourceSha256").take(16)}… " +
                 "الفواتير والحركات المالية القديمة محفوظة للقراءة فقط؛ لم تُفعّل أرصدتها أو أرباحها.\n" + financialSummary
-        } } catch (failure:Exception) {
-            createdImages.forEach { it.delete() }
+        } } catch (failure:Throwable) {
+            // SQLite transaction rolls back on failure; files are external to
+            // SQLite and must also be cleaned even after OutOfMemoryError.
+            createdImages.forEach { file -> runCatching { file.delete() } }
             throw failure
         }
     }
