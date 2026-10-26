@@ -936,9 +936,25 @@ open class MainActivity:Activity() {
             fun printLabel(w:Int,h:Int) {
                 require(w in 20..82 && h in 15..150)
                 prefs.edit().putInt("label_width",w).putInt("label_height",h).apply()
-                printImage {
-                    val code=store.ensureProductBarcode(p.id)
-                    BluetoothReceiptPrinter.labelImage(p.name,money(p.price,p.currency),code,w,h)
+                choosePrinter { address ->
+                    if(!busy) {
+                        busy=true
+                        io.execute {
+                            try {
+                                val code=store.ensureProductBarcode(p.id)
+                                val image=BluetoothReceiptPrinter.labelImage(
+                                    p.name,money(p.price,p.currency),code,w,h)
+                                try { BluetoothReceiptPrinter.printLabel(this,address,image,w,h) }
+                                finally { image.recycle() }
+                                runOnUiThread {
+                                    busy=false
+                                    Toast.makeText(this,"أُرسل ملصق الباركود للطابعة",Toast.LENGTH_SHORT).show()
+                                }
+                            } catch(e:Exception) {
+                                runOnUiThread { busy=false;error(e) }
+                            }
+                        }
+                    }
                 }
             }
             AlertDialog.Builder(this).setTitle("اختر قياس ملصق الباركود بالملم")
