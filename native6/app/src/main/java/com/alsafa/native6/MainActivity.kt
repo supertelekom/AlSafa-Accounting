@@ -1596,7 +1596,7 @@ open class MainActivity:Activity() {
             background=background(sand,10)
             setOnClickListener { anchor ->
                 val popup=PopupMenu(this@MainActivity,anchor)
-                popup.menu.add("طباعة / عرض").setOnMenuItemClickListener {
+                popup.menu.add("خيارات الفاتورة").setOnMenuItemClickListener {
                     AlertDialog.Builder(this@MainActivity)
                         .setTitle("طباعة / عرض · فاتورة #"+inv.number)
                         .setItems(arrayOf("طباعة / إعادة طباعة","عرض PDF")) { _,choice ->
