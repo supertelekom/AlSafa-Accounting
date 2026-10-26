@@ -24,11 +24,13 @@ class InvoicePdf(private val context:Context,private val store:Store) {
     fun write(id:String,output:OutputStream) {
         val invoice=store.invoice(id)
         val items=store.rows("SELECT name,qty,net FROM invoice_lines WHERE invoice_id=? ORDER BY line",id)
+        val invoiceMeta=store.rows("SELECT phone,notes FROM invoices WHERE id=?",id).firstOrNull().orEmpty()
         val date=store.rows("SELECT date FROM events WHERE id=?",id).firstOrNull()?.get("date").orEmpty()
         val rows=mutableListOf<Pair<String,String>>()
         rows.add("رقم الفاتورة" to invoice.number.toString())
         rows.add("التاريخ والوقت" to date.replace("-","/"))
         rows.add("إسم العميل / الشركة" to invoice.party.ifBlank { "عميل نقدي" })
+        invoiceMeta["phone"]?.takeIf { it.isNotBlank() }?.let { rows.add("رقم الهاتف" to it) }
         for(item in items) {
             rows.add("نوع المنتج" to item.getValue("name"))
             val qty=item.getValue("qty").toLongOrNull()?:1L
@@ -51,8 +53,7 @@ class InvoicePdf(private val context:Context,private val store:Store) {
             }
             rows.add("طريقة الدفع" to method)
         }
-        val notes=store.rows("SELECT notes FROM invoices WHERE id=?",id)
-            .firstOrNull()?.get("notes").orEmpty().trim()
+        val notes=invoiceMeta["notes"].orEmpty().trim()
         if(notes.isNotEmpty()) rows.add("ملاحظات" to notes.take(400))
         val doc=PdfDocument()
         val rowHeights=rows.map { (label,value)->
@@ -85,7 +86,7 @@ class InvoicePdf(private val context:Context,private val store:Store) {
             return layout.height
         }
         val logo=runCatching {
-            android.graphics.BitmapFactory.decodeResource(context.resources,R.drawable.alsafa_logo)
+            context.assets.open("invoice-logo.png").use { android.graphics.BitmapFactory.decodeStream(it) }
         }.getOrNull()
         if(logo!=null) {
             try {
