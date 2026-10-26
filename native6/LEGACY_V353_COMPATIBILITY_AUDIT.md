@@ -61,3 +61,11 @@
 - Duplicate IDs *within each of those collections*: **0**.
 - These are structural checks, **not** evidence that financial relationships, invoice numbering, payment totals, or screen parity are correct.
 - No Android build, instrumentation run or actual SQLite restore was performed in this audit.
+
+## 2026-10-26: Actual backup reference reconciliation
+- Read-only local Python verification of the original AlSafa Backup v2 JSON: **1,689 records** across 13 core collections checked for source ID duplication and financial references.
+- **0 duplicate IDs and 0 broken references** in those collections.
+- Payment references: **28 linked**. Return references: **2 linked**.
+- Cash references: **415 linked to source records**, **56 workflow references** (currency exchanges, opening balances and payment corrections) requiring dedicated semantic matching.
+- These results are **structural only**, not financial reconciliation. No balance activation, APK build or actual Android restore is proven by these tests.
+- Reproducible independent verifier added: `native6/tools/verify_legacy_v2.py`.
