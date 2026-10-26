@@ -1795,36 +1795,10 @@ open class MainActivity:Activity() {
                                                                 button("تفاصيل ▾",card) {
                                     detail.visibility=if(detail.visibility==View.GONE)View.VISIBLE else View.GONE
                                 }
-                                button("عرض الفاتورة الأصلية",card) {
-                                    val archiveKey=invoice.optString("archiveKey")
-                                    work {
-                                        val original=LegacyInvoiceSnapshot.detail(store,key,archiveKey)
-                                        runOnUiThread {
-                                            if(!isFinishing&&!isDestroyed) {
-                                                val record=original?.optJSONObject("invoice")
-                                                val items=record?.optJSONArray("items")
-                                                val itemText=if(items==null) "لا توجد أصناف مسجلة" else
-                                                    (0 until items.length()).joinToString("\n") { j ->
-                                                        val item=items.optJSONObject(j)
-                                                        if(item==null) "" else
-                                                            (item.optString("name").ifBlank { item.optString("productName") })+
-                                                            " × "+item.optString("quantity",item.optString("qty","1"))
-                                                    }
-                                                AlertDialog.Builder(this)
-                                                    .setTitle("الفاتورة الأصلية #"+invoice.optString("invoiceNo"))
-                                                    .setMessage("التاريخ: "+invoice.optString("date")+
-                                                        "\nالعميل/المورد: "+(if(key=="sales")invoice.optString("customer") else invoice.optString("supplierName"))+
-                                                        "\nالهاتف: "+invoice.optString("phone")+
-                                                        "\nالإجمالي: "+invoice.optString("total")+" "+invoice.optString("currency")+
-                                                        "\nالمدفوع: "+invoice.optString("paid")+
-                                                        "\nالمتبقي: "+invoice.optString("outstanding")+
-                                                        "\n\nالأصناف:\n"+itemText)
-                                                    .setPositiveButton("إغلاق",null).show()
-                                            }
-                                        }
-                                    }
+                                button("عرض تفاصيل الفاتورة",card) {
+                                    showRestoredInvoiceOptions(key,invoice)
                                 }
-                                list.addView(card,LinearLayout.LayoutParams(-1,-2).apply {setMargins(0,dp(4),0,dp(4))})
+                                                                list.addView(card,LinearLayout.LayoutParams(-1,-2).apply {setMargins(0,dp(4),0,dp(4))})
                             }
                             if(rows.length()==0)text("لا توجد فواتير مطابقة.",list,14f)
                         }
