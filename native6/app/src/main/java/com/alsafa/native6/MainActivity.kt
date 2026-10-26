@@ -1531,6 +1531,45 @@ open class MainActivity:Activity() {
         }}}}
     private fun chooseProduct(inStockOnly:Boolean=false,kind:String?=null,action:(Product)->Unit){val box=column();val search=field("الاسم أو الباركود أو REF أو اللون",box);val results=column();box.addView(results);val sc=ScrollView(this);sc.addView(box);val dialog=AlertDialog.Builder(this).setTitle("اختيار منتج").setView(sc).setNegativeButton("رجوع",null).create()
         fun show(){results.removeAllViews();val found=store.searchCatalog(search.text.toString(),kind).filter{!inStockOnly || it.stock>0};if(found.isEmpty())text("لا توجد أصناف مطابقة للبحث.",results,14f);found.take(100).forEach{p->button(p.name+" · "+store.productColorLabel(p.id)+" · "+p.barcode+" · المتوفر: "+p.stock+" · "+money(p.price,p.currency),results){dialog.dismiss();action(p)}};if(found.size>100)text("تُعرض أول 100 نتيجة. اكتب اسمًا أو باركودًا أدق.",results,13f)};button("بحث",box){show()};button("▣ مسح باركود",box){chooserBarcodeField=search;chooserRefresh={show()};startActivityForResult(Intent(this,BarcodeScanActivity::class.java),68)};dialog.setOnDismissListener{chooserBarcodeField=null;chooserRefresh=null};show();dialog.show()}
+    private fun showRestoredInvoiceOptions(section:String,summary:org.json.JSONObject) {
+        val number=summary.optString("invoiceNo")
+        val archiveKey=summary.optString("archiveKey")
+        AlertDialog.Builder(this).setTitle("خيارات الفاتورة #"+number)
+            .setItems(arrayOf("تفاصيل الفاتورة","عرض البيانات الأصلية")) { _,choice ->
+                work {
+                    try {
+                        val original=LegacyInvoiceSnapshot.detail(store,section,archiveKey)
+                        val invoice=original?.optJSONObject("invoice")
+                        val items=invoice?.optJSONArray("items")
+                        val lines=if(items==null)"" else (0 until items.length()).joinToString("\n") { index ->
+                            val item=items.optJSONObject(index)
+                            if(item==null)"" else item.optString("name").ifBlank {
+                                item.optString("productName") }+" × "+
+                                item.optString("quantity",item.optString("qty","1"))
+                        }
+                        val message=if(invoice==null)"تعذر العثور على الفاتورة" else
+                            "التاريخ: "+summary.optString("date")+
+                            "\nالعميل/المورد: "+summary.optString("customer").ifBlank {
+                                summary.optString("supplierName") }+
+                            "\nالهاتف: "+summary.optString("phone")+
+                            "\nالإجمالي: "+summary.optString("total")+" "+
+                                summary.optString("currency")+
+                            "\nالمدفوع: "+summary.optString("paid")+
+                            "\nالمتبقي: "+summary.optString("outstanding")+
+                            "\n\nالأصناف:\n"+lines+
+                            "\n\nالفاتورة مستعادة من النسخة الأصلية؛ لا يُعاد احتسابها."
+                        runOnUiThread {
+                            if(!isFinishing&&!isDestroyed) AlertDialog.Builder(this)
+                                .setTitle(if(choice==0)"تفاصيل الفاتورة #"+number
+                                    else "البيانات الأصلية للفاتورة #"+number)
+                                .setMessage(message).setPositiveButton("إغلاق",null).show()
+                        }
+                    } catch(e:Exception) {
+                        runOnUiThread { if(!isFinishing&&!isDestroyed)error(e) }
+                    }
+                }
+            }.setNegativeButton("إلغاء",null).show()
+    }
     private fun invoiceCard(inv:Invoice,parent:LinearLayout) {
         val panel=column().apply {
             setPadding(dp(14),dp(10),dp(14),dp(10))
