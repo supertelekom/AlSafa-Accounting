@@ -64,7 +64,7 @@ class LegacySnapshotImportTest {
             assertTrue(previewRejected)
             val store=Store(helper)
             var importRejected=false
-            try { LegacySnapshotImport.import(store,broken) }
+            try { LegacySnapshotImport.import(store,broken,RuntimeEnvironment.getApplication()) }
             catch(_:IllegalArgumentException) { importRejected=true }
             assertTrue(importRejected)
             assertEquals(0L,store.scalar("SELECT count(*) FROM products"))
@@ -79,7 +79,7 @@ class LegacySnapshotImportTest {
         val helper=StoreDb(context,name)
         try {
             val store=Store(helper)
-            val result=LegacySnapshotImport.import(store,payload())
+            val result=LegacySnapshotImport.import(store,payload(),RuntimeEnvironment.getApplication())
             assertTrue(result.contains("المخزون"))
             assertEquals(2L,store.scalar("SELECT count(*) FROM products"))
             assertEquals(1L,store.scalar("SELECT count(*) FROM suppliers"))
@@ -99,9 +99,9 @@ class LegacySnapshotImportTest {
         val helper=StoreDb(context,name)
         try {
             val store=Store(helper)
-            LegacySnapshotImport.import(store,payload())
+            LegacySnapshotImport.import(store,payload(),RuntimeEnvironment.getApplication())
             var rejected=false
-            try { LegacySnapshotImport.import(store,payload()) } catch(_:IllegalArgumentException) { rejected=true }
+            try { LegacySnapshotImport.import(store,payload(),RuntimeEnvironment.getApplication()) } catch(_:IllegalArgumentException) { rejected=true }
             assertTrue(rejected)
             assertEquals(2L,store.scalar("SELECT count(*) FROM products"))
         } finally { helper.close();context.deleteDatabase(name) }
@@ -119,7 +119,7 @@ class LegacySnapshotImportTest {
                 .put("id","broken-item").put("name","Bad watch").put("barcode","123")
                 .put("currency","USD").put("salePrice",10).put("cost",5).put("stock",1))
             var rejected=false
-            try { LegacySnapshotImport.import(store,root.toString()) } catch(_:Exception) { rejected=true }
+            try { LegacySnapshotImport.import(store,root.toString(),RuntimeEnvironment.getApplication()) } catch(_:Exception) { rejected=true }
             assertTrue(rejected)
             assertEquals(0L,store.scalar("SELECT count(*) FROM products"))
             assertEquals(0L,store.scalar("SELECT count(*) FROM journal"))
@@ -137,7 +137,7 @@ class LegacySnapshotImportTest {
         val targetDb=StoreDb(context,targetName)
         try {
             val source=Store(sourceDb)
-            LegacySnapshotImport.import(source,payload())
+            LegacySnapshotImport.import(source,payload(),RuntimeEnvironment.getApplication())
             val bytes=ByteArrayOutputStream()
             Backup(context,source).export(bytes)
             val target=Store(targetDb)
@@ -168,7 +168,7 @@ class LegacySnapshotImportTest {
                 .put("id","future-1").put("amount",15)))
             data.put("settings",JSONObject().put("invoiceSequenceHighWater",335))
             val store=Store(helper)
-            LegacySnapshotImport.import(store,root.toString())
+            LegacySnapshotImport.import(store,root.toString(),RuntimeEnvironment.getApplication())
             assertEquals(1L,store.scalar("SELECT count(*) FROM legacy_records WHERE category=?","futureLedger"))
             assertEquals(1L,store.scalar("SELECT count(*) FROM legacy_records WHERE category=?","configuration"))
             assertEquals(0L,store.scalar("SELECT count(*) FROM invoices"))
@@ -185,7 +185,7 @@ class LegacySnapshotImportTest {
             root.getJSONObject("data").getJSONArray("repairs")
                 .getJSONObject(0).put("status","قيد الصيانة")
             val store=Store(helper)
-            LegacySnapshotImport.import(store,root.toString())
+            LegacySnapshotImport.import(store,root.toString(),RuntimeEnvironment.getApplication())
             assertEquals(1L,store.scalar(
                 "SELECT count(*) FROM repairs WHERE status='in_progress'"))
         } finally { helper.close();context.deleteDatabase(name) }
@@ -198,7 +198,7 @@ class LegacySnapshotImportTest {
         val helper=StoreDb(context,name)
         try {
             val store=Store(helper)
-            LegacySnapshotImport.import(store,payload())
+            LegacySnapshotImport.import(store,payload(),RuntimeEnvironment.getApplication())
             var deleteBlocked=false
             try { store.db.execSQL("DELETE FROM legacy_records") }
             catch (_:android.database.SQLException) { deleteBlocked=true }
@@ -222,7 +222,7 @@ class LegacySnapshotImportTest {
                 .getJSONObject(0).put("barcode","123")
             val store=Store(helper)
             var rejected=false
-            try { LegacySnapshotImport.import(store,root.toString()) }
+            try { LegacySnapshotImport.import(store,root.toString(),RuntimeEnvironment.getApplication()) }
             catch (_:IllegalArgumentException) { rejected=true }
             assertTrue(rejected)
             assertEquals(0L,store.scalar("SELECT count(*) FROM products"))
@@ -243,7 +243,7 @@ class LegacySnapshotImportTest {
                 .getJSONObject(0).put("currency","EUR")
             val store=Store(helper)
             var rejected=false
-            try { LegacySnapshotImport.import(store,root.toString()) }
+            try { LegacySnapshotImport.import(store,root.toString(),RuntimeEnvironment.getApplication()) }
             catch (_:IllegalArgumentException) { rejected=true }
             assertTrue(rejected)
             assertEquals(0L,store.scalar("SELECT count(*) FROM products"))
@@ -262,7 +262,7 @@ class LegacySnapshotImportTest {
             root.getJSONObject("data").getJSONArray("repairs")
                 .getJSONObject(0).put("status","custom-old-state")
             val store=Store(helper)
-            LegacySnapshotImport.import(store,root.toString())
+            LegacySnapshotImport.import(store,root.toString(),RuntimeEnvironment.getApplication())
             assertEquals(1L,store.scalar(
                 "SELECT count(*) FROM repairs WHERE status='legacy_unknown'"))
         } finally { helper.close();context.deleteDatabase(name) }
@@ -278,7 +278,7 @@ class LegacySnapshotImportTest {
             root.getJSONObject("data").put("settings",
                 JSONObject().put("invoiceSequenceHighWater",335))
             val store=Store(helper)
-            LegacySnapshotImport.import(store,root.toString())
+            LegacySnapshotImport.import(store,root.toString(),RuntimeEnvironment.getApplication())
             val invoiceId=store.sale(listOf(SaleItem("legacy-product-1",1L,1790L)),
                 "Test customer","",Currency.USD,0L,"drawer")
             assertEquals(336L,store.invoice(invoiceId).number)
@@ -295,7 +295,7 @@ class LegacySnapshotImportTest {
             root.getJSONObject("data").put("settings",
                 JSONObject().put("invoiceSequenceHighWater",335))
             val store=Store(helper)
-            LegacySnapshotImport.import(store,root.toString())
+            LegacySnapshotImport.import(store,root.toString(),RuntimeEnvironment.getApplication())
             val first=store.sale(listOf(SaleItem("legacy-product-1",1L,1790L)),
                 "First","",Currency.USD,0L,"drawer")
             val second=store.sale(listOf(SaleItem("legacy-product-1",1L,1790L)),
@@ -312,7 +312,7 @@ class LegacySnapshotImportTest {
         val helper=StoreDb(context,name)
         try {
             val store=Store(helper)
-            LegacySnapshotImport.import(store,payload())
+            LegacySnapshotImport.import(store,payload(),RuntimeEnvironment.getApplication())
             store.insert("legacy_records","category" to "configuration",
                 "legacy_id" to "settings","payload" to "not-json")
             var rejected=false
