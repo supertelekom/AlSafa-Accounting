@@ -1542,6 +1542,7 @@ open class MainActivity:Activity() {
                         val original=LegacyInvoiceSnapshot.detail(store,section,archiveKey)
                         val invoice=original?.optJSONObject("invoice")
                         val items=invoice?.optJSONArray("items")
+                        val linkedPayments=original?.optJSONArray("linkedPayments")?.length() ?: 0
                         val lines=if(items==null)"" else (0 until items.length()).joinToString("\n") { index ->
                             val item=items.optJSONObject(index)
                             if(item==null)"" else {
@@ -1561,7 +1562,7 @@ open class MainActivity:Activity() {
                                 summary.optString("currency")+
                             "\nالمدفوع: "+summary.optString("paid")+
                             "\nالمتبقي: "+summary.optString("outstanding")+
-                            "\n\nالأصناف:\n"+lines
+                            "\nعمليات الدفع المرتبطة: "+linkedPayments+"\n\nالأصناف:\n"+lines
                         runOnUiThread {
                             if(isFinishing||isDestroyed)return@runOnUiThread
                             if(choice==1) {
