@@ -1666,7 +1666,7 @@ open class MainActivity:Activity() {
         })
         val open=Button(this).apply {
             style(this)
-            text="تفاصيل الفاتورة والإجراءات ▾"
+            text="تفاصيل الفاتورة"
             textSize=13f
             isAllCaps=false
             background=background(sand,11)
@@ -1737,8 +1737,8 @@ open class MainActivity:Activity() {
         }
         }
         text("الفواتير المستعادة متاحة للعرض ضمن هذه الشاشة؛ ترحيل أرصدتها إلى المحاسبة يتطلب مطابقة مستقلة.",size=13f)
-        button("الفواتير المستعادة من النسخة الاحتياطية") {
-            form("سجل الفواتير القديمة","إغلاق"){box->
+        button("بحث موسّع في الفواتير السابقة") {
+            form("البحث الموسّع في الفواتير","إغلاق"){box->
                 val section=select("نوع الفاتورة",listOf("مبيع","شراء"),box)
                 val from=field("من تاريخ YYYY-MM-DD (اختياري)",box)
                 val to=field("إلى تاريخ YYYY-MM-DD (اختياري)",box)
