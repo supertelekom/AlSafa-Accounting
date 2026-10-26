@@ -800,6 +800,37 @@ open class MainActivity:Activity() {
         }
         heading.addView(price)
         card.addView(heading)
+        // Show the first locally restored image without decoding full-size bitmaps.
+        val photoPath=store.rows("SELECT details FROM products WHERE id=?",p.id)
+            .firstOrNull()?.get("details")?.let { json ->
+                runCatching {
+                    val details=org.json.JSONObject(json)
+                    details.optString("imagePath").ifBlank {
+                        details.optJSONArray("imagePaths")?.optString(0).orEmpty()
+                    }
+                }.getOrNull()
+            }.orEmpty()
+        if(photoPath.isNotBlank()) {
+            val file=runCatching { localPhoto(photoPath) }.getOrNull()
+            if(file!=null && file.isFile) {
+                val bounds=android.graphics.BitmapFactory.Options().apply { inJustDecodeBounds=true }
+                android.graphics.BitmapFactory.decodeFile(file.absolutePath,bounds)
+                if(bounds.outWidth>0 && bounds.outHeight>0) {
+                    val options=android.graphics.BitmapFactory.Options().apply {
+                        inSampleSize=maxOf(1,maxOf(bounds.outWidth/240,bounds.outHeight/240))
+                    }
+                    val bitmap=android.graphics.BitmapFactory.decodeFile(file.absolutePath,options)
+                    if(bitmap!=null) {
+                        val photo=ImageView(this).apply {
+                            setImageBitmap(bitmap)
+                            scaleType=ImageView.ScaleType.CENTER_INSIDE
+                            contentDescription="صورة "+p.name
+                        }
+                        card.addView(photo,LinearLayout.LayoutParams(-1,dp(120)))
+                    }
+                }
+            }
+        }
         val stockInfo=TextView(this).apply {
             style(this)
             text="المتوفر: ${p.stock}   •   الباركود: ${p.barcode}"
