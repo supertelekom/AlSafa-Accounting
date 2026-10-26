@@ -818,15 +818,13 @@ open class MainActivity:Activity() {
         heading.addView(price)
         card.addView(heading)
         // Show the first locally restored image without decoding full-size bitmaps.
-        val photoPath=store.rows("SELECT details FROM products WHERE id=?",p.id)
-            .firstOrNull()?.get("details")?.let { json ->
-                runCatching {
-                    val details=org.json.JSONObject(json)
-                    details.optString("imagePath").ifBlank {
-                        details.optJSONArray("imagePaths")?.optString(0).orEmpty()
-                    }
-                }.getOrNull()
-            }.orEmpty()
+        val productRow=store.rows("SELECT kind,details FROM products WHERE id=?",p.id).firstOrNull()
+        val productDetails=runCatching {
+            org.json.JSONObject(productRow?.get("details").orEmpty())
+        }.getOrDefault(org.json.JSONObject())
+        val photoPath=productDetails.optString("imagePath").ifBlank {
+            productDetails.optJSONArray("imagePaths")?.optString(0).orEmpty()
+        }
         if(photoPath.isNotBlank()) {
             val photo=ImageView(this).apply {
                 scaleType=ImageView.ScaleType.CENTER_INSIDE
@@ -912,7 +910,7 @@ open class MainActivity:Activity() {
         action("تعديل"){productForm(p)}
         action("الحركات"){selectedProduct=p;go("stock-history")}
         action("جرد"){stocktakeForm(p)}
-        if(store.rows("SELECT kind,details FROM products WHERE id=?",p.id).single().let { it["kind"]=="watch" && !org.json.JSONObject(it.getValue("details")).has("variantParentId") }) {
+        if(productRow?.get("kind")=="watch" && !productDetails.has("variantParentId")) {
             action("لون إضافي"){variantForm(p)}
         }
         card.addView(actions)
