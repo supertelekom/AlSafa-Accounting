@@ -256,7 +256,6 @@ open class MainActivity:Activity() {
             .setCancelable(false)
             .create()
         dialog.show()
-        if(busy) { dialog.dismiss();return }
         work {
             var lastPercent=-1
             var lastDescription=""
