@@ -62,14 +62,17 @@ object LegacyFinancialOpeningReport {
     }
 
     fun inspect(payload:String):JSONObject {
-        val root=JSONObject(payload)
+        return inspectRoot(JSONObject(payload))
+    }
+
+    fun inspectRoot(root:JSONObject):JSONObject {
         require(root.optString("format")=="alsafa-accounting-backup" &&
             root.optInt("formatVersion")==2) { "صيغة النسخة القديمة غير مدعومة" }
         val data=root.getJSONObject("data")
         val debt=invoiceBalances(data,"sales")
         val payable=invoiceBalances(data,"purchases")
-        val cash=LegacyVaultSnapshot.inspect(payload)
-        val readiness=LegacyRestoreReadiness.inspect(payload)
+        val cash=LegacyVaultSnapshot.inspectRoot(root)
+        val readiness=LegacyRestoreReadiness.inspectRoot(root)
         return JSONObject()
             .put("exportedAt",root.optString("exportedAt"))
             .put("sourceAppVersion",root.optString("appVersion"))
@@ -87,8 +90,10 @@ object LegacyFinancialOpeningReport {
             .put("warning","أرصدة تقديرية للمطابقة فقط. لا تجمع الدفعات المستقلة مع المدفوع التراكمي؛ ولا تعتمد النقد دون عدّ الخزنات ومطابقة المرتجعات ودفتر الموردين.")
     }
 
-    fun summary(payload:String):String {
-        val report=inspect(payload)
+    fun summary(payload:String):String = summaryRoot(JSONObject(payload))
+
+    fun summaryRoot(root:JSONObject):String {
+        val report=inspectRoot(root)
         val lines=mutableListOf("ورقة مطابقة الوضع المالي عند تاريخ النسخة: ${report.optString("exportedAt")}")
         for(currency in currencies) {
             val customer=report.getJSONObject("customerReceivables").getJSONObject(currency)
