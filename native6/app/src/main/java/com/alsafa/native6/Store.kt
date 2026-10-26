@@ -1176,7 +1176,23 @@ class Store(val helper:StoreDb) {
         } catch (_:org.json.JSONException) {
             throw IllegalStateException("تعذر قراءة تسلسل الفواتير القديم؛ أوقف إنشاء الفاتورة لحماية الأرقام")
         }
-        return add(maxOf(existing,previous),1L)
+        // Imported invoices remain read-only, but their numbers belong to the same
+        // sequence. Never reuse a legacy number, even after restarting the app.
+        var imported=0L
+        for(section in listOf("sales","purchases","repairs")) {
+            for(record in rows("SELECT payload FROM legacy_records WHERE category=?",section)) {
+                val invoice=try { JSONObject(record.getValue("payload")) }
+                    catch (_:org.json.JSONException) {
+                        throw IllegalStateException("تعذر قراءة رقم فاتورة مستعادة؛ أوقف الترقيم لحماية التسلسل")
+                    }
+                val number=invoice.optString("invoiceNo").trim()
+                if(number.isNotEmpty()) {
+                    val parsed=number.toLongOrNull()
+                    if(parsed!=null && parsed>imported) imported=parsed
+                }
+            }
+        }
+        return add(maxOf(existing,previous,imported),1L)
     }
     fun sale(items:List<SaleItem>,party:String,phone:String,currency:Currency,paid:Long,vault:String,discount:Long=0,date:String=today(),command:String=id(),receiptDate:String=date):String=transaction {
         require(items.isNotEmpty() && items.map {it.productId}.distinct().size==items.size){"الصنف مكرر"};vault(vault)
