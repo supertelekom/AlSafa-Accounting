@@ -51,6 +51,7 @@ object BluetoothReceiptPrinter {
     fun print(context:Context,address:String,image:Bitmap) {
         check(permitted(context)) { "يجب السماح بإذن البلوتوث" }
         val adapter=BluetoothAdapter.getDefaultAdapter() ?: error("البلوتوث غير متاح")
+        check(adapter.isEnabled) { "البلوتوث غير مفعل" }
         val device=adapter.bondedDevices.firstOrNull { it.address==address }
             ?: error("الطابعة غير مقترنة")
         adapter.cancelDiscovery()
