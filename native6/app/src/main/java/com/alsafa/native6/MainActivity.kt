@@ -2076,6 +2076,38 @@ Store.vaults.forEach{v->text(v+" · إقفالات تحتاج عدّاً: "+stor
         store.rows("SELECT e.date,c.* FROM closings c JOIN events e ON e.id=c.event_id ORDER BY e.created DESC LIMIT 30").forEach{r->val c=Currency.valueOf(r.getValue("currency"));text("${r.getValue("date")} · ${r.getValue("vault")} · ${c.name}\nمتوقع ${money(r.getValue("expected").toLong(),c)} · "+(if(r["counted"].isNullOrBlank()) "إقفال تلقائي · لم يجرِ عد فعلي" else "معدود ${money(r.getValue("counted").toLong(),c)} · فرق ${money(Math.subtractExact(r.getValue("counted").toLong(),r.getValue("expected").toLong()),c)}"))}
     }
     private fun suppliers(){text("الموردون",size=25f);
+        button("دفتر الموردين المستعاد من التطبيق القديم — قراءة فقط") {
+            form("دفتر الموردين القديم","عرض"){box->
+                val supplier=field("معرف المورد (اختياري)",box)
+                val from=field("من تاريخ YYYY-MM-DD",box)
+                val to=field("إلى تاريخ YYYY-MM-DD",box)
+                ({
+                    val supplierId=supplier.text.toString().trim()
+                    val start=from.text.toString().trim()
+                    val end=to.text.toString().trim()
+                    work {
+                        val report=LegacySupplierLedgerView.page(store,supplierId,start,end,0,30)
+                        val records=report.getJSONArray("records")
+                        val lines=(0 until records.length()).joinToString("\\n"){index->
+                            val row=records.getJSONObject(index)
+                            row.optString("date")+" · "+row.optString("kind")+
+                                " · "+row.optString("amount")+" "+row.optString("currency")
+                        }
+                        val message="عدد القيود: "+report.getInt("totalMatching")+
+                            "\\nالإجماليات حسب النوع والعملة: "+
+                            report.getJSONObject("totalsByKindAndCurrency").toString()+
+                            "\\n\\n"+(if(lines.isBlank())"لا توجد نتائج" else lines)+
+                            "\\n\\nللقراءة فقط؛ لا تُضاف المبالغ إلى الدين مرة ثانية."
+                        runOnUiThread {
+                            if(!isFinishing&&!isDestroyed) AlertDialog.Builder(this)
+                                .setTitle("دفتر الموردين التاريخي")
+                                .setMessage(message).setPositiveButton("إغلاق",null).show()
+                        }
+                    }
+                })
+            }
+        }
+
         button("تدقيق أرصدة الموردين لشهر محدد"){
             form("مطابقة الموردين الشهرية","تدقيق"){box->
                 val month=field("الشهر YYYY-MM",box,YearMonth.now().toString())
