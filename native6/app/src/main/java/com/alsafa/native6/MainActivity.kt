@@ -299,6 +299,11 @@ open class MainActivity:Activity() {
     private fun label(value:String)=mapOf("sale" to "مبيع", "purchase" to "شراء", "repair" to "صيانة", "posted" to "مسجلة", "cancelled" to "ملغاة", "received" to "مستلمة", "in_progress" to "قيد الصيانة", "legacy_unknown" to "حالة قديمة تحتاج مراجعة", "ready" to "جاهزة", "delivered" to "تم التسليم")[value]?:value
     private fun money(n:Long,c:Currency)=Money(n,c).display()
     private fun amount(e:EditText,c:Currency)=Money.parse(e.text.toString(),c).minor
+    override fun onResume() {
+        super.onResume()
+        // Reconcile the remembered printer after returning from Android Bluetooth settings.
+        runCatching { BluetoothReceiptPrinter.rememberedPrinter(this) }
+    }
     override fun onDestroy() {
         io.shutdown()
         imageIo.shutdownNow()
