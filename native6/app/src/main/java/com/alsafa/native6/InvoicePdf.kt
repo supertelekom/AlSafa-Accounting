@@ -2,7 +2,6 @@ package com.alsafa.native6
 
 import android.content.Context
 import android.graphics.Color
-import android.graphics.Paint
 import android.graphics.Typeface
 import android.graphics.pdf.PdfDocument
 import android.text.Layout
@@ -10,131 +9,94 @@ import android.text.StaticLayout
 import android.text.TextPaint
 import java.io.OutputStream
 
-/** Arabic-first AlSafa customer invoice. No cost, profit or internal accounting fields. */
+/** Native reproduction of the 80mm text receipt layout from legacy assets/main.js. */
 class InvoicePdf(private val context:Context,private val store:Store) {
-    private val ink=Color.rgb(54,47,40)
-    private val gold=Color.rgb(157,115,50)
-    private val muted=Color.rgb(111,102,89)
-    private val light=Color.rgb(248,245,239)
-    private val width=420
-    private val height=595
-    private val margin=25f
+    private val black=Color.rgb(22,22,22)
+    private val gray=Color.rgb(175,175,175)
+    private val pageWidth=320 // 80mm at 4 PDF points/mm
+    private val left=24f
+    private val right=296f
     private val font:Typeface by lazy {
         runCatching { Typeface.createFromAsset(context.assets,"Tajawal-Medium.ttf") }
             .getOrElse { Typeface.DEFAULT }
     }
-
+    private fun money(amount:Long,currency:Currency)=Money(amount,currency).display()
     fun write(id:String,output:OutputStream) {
         val invoice=store.invoice(id)
         val items=store.rows("SELECT name,qty,net FROM invoice_lines WHERE invoice_id=? ORDER BY line",id)
         val date=store.rows("SELECT date FROM events WHERE id=?",id).firstOrNull()?.get("date").orEmpty()
-        val document=PdfDocument()
-        var pageNumber=0
-        var page:PdfDocument.Page?=null
-        var y=0f
-
-        fun rule(at:Float,color:Int=Color.rgb(224,217,204)) {
-            val p=Paint(Paint.ANTI_ALIAS_FLAG).apply { this.color=color;strokeWidth=0.8f }
-            page!!.canvas.drawLine(margin,at,width-margin,at,p)
+        val rows=mutableListOf<Pair<String,String>>()
+        rows.add("رقم الفاتورة" to invoice.number.toString())
+        rows.add("التاريخ والوقت" to date.replace("-","/"))
+        rows.add("إسم العميل / الشركة" to invoice.party.ifBlank { "عميل نقدي" })
+        for(item in items) {
+            rows.add("نوع المنتج" to item.getValue("name"))
+            val qty=item.getValue("qty").toLongOrNull()?:1L
+            val net=item.getValue("net").toLong()
+            rows.add("سعر المنتج الإفرادي" to money(if(qty>0)net/qty else net,invoice.currency))
+            rows.add("عدد المنتجات" to item.getValue("qty"))
         }
-        fun block(text:String,left:Float,top:Float,boxWidth:Int,size:Float=12f,
-                  color:Int=ink,align:Layout.Alignment=Layout.Alignment.ALIGN_OPPOSITE,
-                  bold:Boolean=false):Int {
-            val paint=TextPaint(Paint.ANTI_ALIAS_FLAG).apply {
-                this.color=color;textSize=size;typeface=if(bold)Typeface.create(font,Typeface.BOLD) else font
+        rows.add("الإجمالي بعد الخصم" to money(invoice.total,invoice.currency))
+        if(invoice.kind!="purchase") {
+            rows.add("المقبوض الصافي" to money(store.paid(id),invoice.currency))
+            rows.add("المتبقي" to money(store.due(id),invoice.currency))
+        }
+        val doc=PdfDocument()
+        val rowHeights=rows.map { (label,value)->
+            val measure=TextPaint().apply { textSize=11f;typeface=font }
+            val valueHeight=StaticLayout.Builder.obtain(value,0,value.length,measure,120)
+                .setAlignment(Layout.Alignment.ALIGN_CENTER).setIncludePad(false).build().height
+            maxOf(29,valueHeight+13)
+        }
+        val pageHeight=maxOf(580,212+rowHeights.sum()+65)
+        val page=doc.startPage(PdfDocument.PageInfo.Builder(pageWidth,pageHeight,1).create())
+        val canvas=page.canvas
+        canvas.drawColor(Color.WHITE)
+        val linePaint=android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
+            color=black;strokeWidth=1f
+        }
+        fun rule(y:Float,strong:Boolean=false) {
+            linePaint.color=if(strong)black else gray
+            linePaint.strokeWidth=if(strong)1.1f else .45f
+            canvas.drawLine(left,y,right,y,linePaint)
+        }
+        fun txt(text:String,x:Float,y:Float,w:Int,size:Float,alignment:Layout.Alignment=Layout.Alignment.ALIGN_CENTER,bold:Boolean=false):Int {
+            val p=TextPaint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
+                color=black;textSize=size;typeface=if(bold)Typeface.create(font,Typeface.BOLD) else font
             }
-            val layout=StaticLayout.Builder.obtain(text,0,text.length,paint,boxWidth)
-                .setAlignment(align).setIncludePad(false).build()
-            page!!.canvas.save()
-            page!!.canvas.translate(left,top)
-            layout.draw(page!!.canvas)
-            page!!.canvas.restore()
+            val layout=StaticLayout.Builder.obtain(text,0,text.length,p,w)
+                .setAlignment(alignment).setIncludePad(false).build()
+            canvas.save();canvas.translate(x,y);layout.draw(canvas);canvas.restore()
             return layout.height
         }
-        fun nextPage() {
-            page?.let { document.finishPage(it) }
-            pageNumber++
-            page=document.startPage(PdfDocument.PageInfo.Builder(width,height,pageNumber).create())
-            page!!.canvas.drawColor(Color.WHITE)
-            val stripe=Paint().apply { color=gold }
-            page!!.canvas.drawRect(0f,0f,width.toFloat(),7f,stripe)
-            y=22f
-            val logo=runCatching {
-                android.graphics.BitmapFactory.decodeResource(context.resources,R.drawable.alsafa_logo)
-            }.getOrNull()
-            if(logo!=null) {
-                try {
-                    val ratio=logo.width.toFloat()/logo.height
-                    val logoHeight=48f
-                    val logoWidth=minOf(90f,logoHeight*ratio)
-                    val destination=android.graphics.RectF((width-logoWidth)/2f,y,(width+logoWidth)/2f,y+logoHeight)
-                    page!!.canvas.drawBitmap(logo,null,destination,Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG))
-                } finally { logo.recycle() }
-                y+=52f
-            }
-            y+=block("الصفا للساعات",margin,y,(width-2*margin).toInt(),22f,gold,Layout.Alignment.ALIGN_CENTER,true)+3f
-            y+=block("ALSAFA WATCHES",margin,y,(width-2*margin).toInt(),10f,muted,Layout.Alignment.ALIGN_CENTER)+11f
-            rule(y,gold)
-            y+=12f
-            val kind=when(invoice.kind) {
-                "repair"->"فاتورة صيانة"
-                "purchase"->"فاتورة شراء"
-                else->"فاتورة مبيع"
-            }
-            y+=block("$kind  ·  رقم #${invoice.number}",margin,y,(width-2*margin).toInt(),15f,ink,Layout.Alignment.ALIGN_CENTER,true)+9f
-            y+=block("التاريخ: ${date.ifBlank { "—" }}",margin,y,(width-2*margin).toInt(),11f,muted)+4f
-            y+=block("العميل: ${invoice.party.ifBlank { "عميل نقدي" }}",margin,y,(width-2*margin).toInt(),12f,ink)+11f
-            val header=Paint().apply { color=light }
-            page!!.canvas.drawRoundRect(margin,y,width-margin,y+31f,7f,7f,header)
-            block("المنتج / الخدمة",margin+9,y+8,204,12f,ink,bold=true)
-            block("الكمية",margin+221,y+8,50,11f,ink,Layout.Alignment.ALIGN_CENTER,true)
-            block("المبلغ",margin+278,y+8,77,11f,ink,Layout.Alignment.ALIGN_CENTER,true)
-            y+=39f
+        val logo=runCatching {
+            android.graphics.BitmapFactory.decodeResource(context.resources,R.drawable.alsafa_logo)
+        }.getOrNull()
+        if(logo!=null) {
+            try {
+                val dst=android.graphics.RectF(136f,12f,184f,72f)
+                canvas.drawBitmap(logo,null,dst,android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG))
+            } finally { logo.recycle() }
         }
-        try {
-            nextPage()
-            for(item in items) {
-                val name=item.getValue("name")
-                val qty=item.getValue("qty")
-                val amount=Money(item.getValue("net").toLong(),invoice.currency).display()
-                val probe=TextPaint(Paint.ANTI_ALIAS_FLAG).apply { typeface=font;textSize=12f }
-                val itemHeight=StaticLayout.Builder.obtain(name,0,name.length,probe,204)
-                    .setAlignment(Layout.Alignment.ALIGN_OPPOSITE).setIncludePad(false).build().height
-                val rowHeight=maxOf(33f,itemHeight+13f)
-                if(y+rowHeight>height-130f)nextPage()
-                block(name,margin+9,y+5,204,12f)
-                block(qty,margin+221,y+5,50,12f,ink,Layout.Alignment.ALIGN_CENTER)
-                block(amount,margin+278,y+5,77,11f,ink,Layout.Alignment.ALIGN_CENTER)
-                y+=rowHeight
-                rule(y)
-                y+=5f
-            }
-            val totals=mutableListOf("الإجمالي" to Money(invoice.total,invoice.currency).display())
-            if(invoice.kind!="purchase") {
-                totals.add("المدفوع" to Money(store.paid(id),invoice.currency).display())
-                val returns=store.credit(id)
-                if(returns>0L)totals.add("المرتجعات" to Money(returns,invoice.currency).display())
-                totals.add("المتبقي" to Money(store.due(id),invoice.currency).display())
-                val refundable=store.refundable(id)
-                if(refundable>0L)totals.add("مستحق الرد للعميل" to Money(refundable,invoice.currency).display())
-            }
-            if(y+totals.size*29+70>height)nextPage()
-            y+=8f
-            for((index,pair) in totals.withIndex()) {
-                val important=index==0 || pair.first=="المتبقي"
-                block(pair.first,margin+210,y,145,if(important)14f else 12f,
-                    if(important)gold else muted,bold=important)
-                block(pair.second,margin,y,194,if(important)14f else 12f,
-                    if(important)ink else muted,Layout.Alignment.ALIGN_NORMAL,important)
-                y+=28f
-            }
-            y+=13f
-            rule(y,gold)
-            y+=11f
-            block("شكراً لثقتكم بالصفا للساعات",margin,y,(width-2*margin).toInt(),
-                13f,gold,Layout.Alignment.ALIGN_CENTER,true)
-            document.finishPage(page!!)
-            document.writeTo(output)
-        } finally { document.close() }
+        txt("الصفا للساعات",left,78f,272,18f,bold=true)
+        txt("Alsafa Watches",left,106f,272,10f)
+        rule(128f,true)
+        val title=when(invoice.kind){"repair"->"فاتورة صيانة";"purchase"->"فاتورة شراء";else->"فاتورة مبيع"}
+        txt(title,left,139f,272,17f,bold=true)
+        rule(170f,true)
+        var y=188f
+        rows.forEachIndexed { index,(label,value)->
+            val h=rowHeights[index].toFloat()
+            txt(label,190f,y,99,11f,Layout.Alignment.ALIGN_OPPOSITE)
+            txt(":",179f,y,12,11f)
+            txt(value,33f,y-2f,124,11f)
+            y+=h
+            rule(y-5f,label=="الإجمالي بعد الخصم")
+        }
+        y+=9f
+        rule(y,true)
+        txt("شكراً لثقتكم بنا",left,y+15f,272,14f,bold=true)
+        doc.finishPage(page)
+        try { doc.writeTo(output) } finally { doc.close() }
     }
 }
