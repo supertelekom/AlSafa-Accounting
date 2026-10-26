@@ -266,6 +266,31 @@ class Backup(private val context:Context,private val store:Store) {
         require(file.length() in 1..MAX_BYTES.toLong()) { "حجم النسخة المحفوظة غير صالح" }
         return file.readText(Charsets.UTF_8).removePrefix("\uFEFF")
     }
+    /** Stage already-previewed backup bytes without reparsing photo-heavy JSON. */
+    fun stageLegacyBytes(bytes:ByteArray):String {
+        require(bytes.isNotEmpty() && bytes.size<=MAX_BYTES) { "حجم النسخة القديمة غير صالح" }
+        val fingerprint=sha(bytes)
+        val archiveDir=java.io.File(context.filesDir,"legacy_snapshots").apply { mkdirs() }
+        val archive=java.io.File(archiveDir,"$fingerprint.json")
+        if(!archive.isFile || archive.length()!=bytes.size.toLong()) {
+            val temp=java.io.File.createTempFile("legacy-", ".tmp",archiveDir)
+            try {
+                temp.outputStream().use { it.write(bytes);it.fd.sync() }
+                require(temp.renameTo(archive)) { "تعذر حفظ النسخة القديمة" }
+            } finally { temp.delete() }
+        }
+        val summary=JSONObject()
+            .put("_source_sha256",fingerprint)
+            .put("_source_bytes",bytes.size)
+            .put("_staged_without_second_parse",true)
+        store.transaction {
+            if(store.scalar("SELECT count(*) FROM legacy_imports WHERE hash=?",fingerprint)==0L) {
+                store.insert("legacy_imports","hash" to fingerprint,"payload" to "",
+                    "created" to System.currentTimeMillis(),"summary" to summary.toString())
+            }
+        }
+        return fingerprint
+    }
     fun stageLegacy(input:InputStream):String {
         val bytes=read(input);require(bytes.isNotEmpty()){"ملف النسخة القديمة فارغ"};val text=String(bytes,Charsets.UTF_8).removePrefix("\uFEFF");val root=JSONObject(text)
         require(root.optString("format")=="alsafa-accounting-backup" && root.optInt("formatVersion")==2) { "يلزم ملف نسخة الصفا القديمة الأصلي، الإصدار الثاني" }
