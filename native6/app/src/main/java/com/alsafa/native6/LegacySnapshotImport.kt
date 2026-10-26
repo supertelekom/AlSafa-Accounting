@@ -536,17 +536,22 @@ object LegacySnapshotImport {
                         id,"\"imagePath\"") == 1L) { "صورة غير مرتبطة بسجلها: $section / $id" }
                 }
             }
-            // Validate every image reference, including secondary and QR/barcode
-            // photos. These are stored under imagePaths, couplePhotoPath and
-            // barcodePhotoPath, not necessarily the primary imagePath key.
+            // Each extracted file has one source owner. Validate against its
+            // own persisted record, rather than scanning every large JSON blob
+            // (which can exhaust memory and incorrectly reject secondary photos).
+            require(imageOwners.size==createdImages.size) {
+                "عدد الصور المرتبطة بالسجلات لا يطابق الصور المحفوظة"
+            }
             for(image in createdImages) {
-                val productLinks=store.scalar(
-                    "SELECT count(*) FROM products WHERE instr(details,?)>0",image.absolutePath)
-                val repairLinks=store.scalar(
-                    "SELECT count(*) FROM repairs WHERE instr(details,?)>0",image.absolutePath)
-                require(productLinks+repairLinks==1L) {
-                    "صورة غير مرتبطة بسجل واحد: "+image.name+
-                        " (منتجات=$productLinks، صيانة=$repairLinks)"
+                val owner=imageOwners[image.absolutePath]
+                    ?: error("صورة بلا سجل أصلي: "+image.name)
+                require(image.isFile && image.length()>0L) {
+                    "صورة غير محفوظة: "+image.name
+                }
+                require(store.scalar(
+                    "SELECT count(*) FROM ${owner.first} WHERE id=? AND instr(details,?)>0",
+                    owner.second,image.absolutePath)==1L) {
+                    "الصورة لا تظهر في تفاصيل سجلها الأصلي: "+image.name
                 }
             }
             val photoCount=createdImages.size
