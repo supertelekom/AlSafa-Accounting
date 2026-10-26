@@ -88,35 +88,37 @@ object BluetoothReceiptPrinter {
             }
         }
     }
-    fun labelImage(name:String,price:String,barcode:String):Bitmap {
+    /** Label preview in the printer's native 203-DPI resolution (8 dots per mm). */
+    fun labelImage(name:String,price:String,barcode:String,widthMm:Int=50,heightMm:Int=30):Bitmap {
+        require(widthMm in 20..82 && heightMm in 15..150) { "مقاس الملصق خارج نطاق الطابعة" }
         require(barcode.isNotBlank()) { "أضف باركودًا للمنتج أولاً" }
-        val bitmap=Bitmap.createBitmap(384,330,Bitmap.Config.ARGB_8888)
+        val width=widthMm*8
+        val height=heightMm*8
+        val bitmap=Bitmap.createBitmap(width,height,Bitmap.Config.ARGB_8888)
         val canvas=android.graphics.Canvas(bitmap)
         canvas.drawColor(Color.WHITE)
         val paint=android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
             color=Color.BLACK
             textAlign=android.graphics.Paint.Align.CENTER
         }
+        val center=width/2f
         paint.typeface=android.graphics.Typeface.DEFAULT_BOLD
-        paint.textSize=22f
-        canvas.drawText("ALSAFA WATCHES",192f,28f,paint)
-        paint.textSize=19f
-        canvas.drawText(name.take(30),192f,60f,paint)
-        paint.textSize=22f
-        canvas.drawText(price,192f,91f,paint)
+        paint.textSize=minOf(21f,width/16f)
+        canvas.drawText("ALSAFA",center,paint.textSize+4f,paint)
+        paint.textSize=minOf(20f,width/17f)
+        val maxNameChars=maxOf(10,width/12)
+        canvas.drawText(name.take(maxNameChars),center,paint.textSize*2+8f,paint)
+        paint.textSize=minOf(22f,width/15f)
+        canvas.drawText(price,center,paint.textSize*3+13f,paint)
+        val top=(paint.textSize*3+24f).toInt()
+        val barcodeHeight=(height-top-27).coerceAtLeast(20)
         val matrix=com.google.zxing.MultiFormatWriter().encode(
-            barcode,com.google.zxing.BarcodeFormat.CODE_128,344,85)
+            barcode,com.google.zxing.BarcodeFormat.CODE_128,width-24,barcodeHeight)
         paint.strokeWidth=1f
-        for(y in 0 until matrix.height) for(x in 0 until matrix.width)
-            if(matrix.get(x,y)) canvas.drawPoint((20+x).toFloat(),(104+y).toFloat(),paint)
-        paint.textSize=17f
-        canvas.drawText(barcode.take(35),192f,211f,paint)
-        // Customer-facing QR is separate from the cashier's scannable CODE128.
-        val customerText="الصفا للساعات | "+name+" | "+price+" | "+barcode
-        val qr=com.google.zxing.MultiFormatWriter().encode(
-            customerText,com.google.zxing.BarcodeFormat.QR_CODE,92,92)
-        for(y in 0 until qr.height) for(x in 0 until qr.width)
-            if(qr.get(x,y)) canvas.drawPoint((146+x).toFloat(),(227+y).toFloat(),paint)
+        for(y in 0 until matrix.height)for(x in 0 until matrix.width)
+            if(matrix.get(x,y))canvas.drawPoint((12+x).toFloat(),(top+y).toFloat(),paint)
+        paint.textSize=minOf(16f,width/22f)
+        canvas.drawText(barcode.take(maxOf(10,width/11)),center,(height-6).toFloat(),paint)
         return bitmap
     }
 }
