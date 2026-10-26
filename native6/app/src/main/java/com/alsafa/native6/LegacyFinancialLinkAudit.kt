@@ -48,7 +48,8 @@ object LegacyFinancialLinkAudit {
         val targets=mapOf("sale" to "sales","repair" to "repairs",
             "purchase" to "purchases","supplier" to "suppliers",
             "partnerWithdrawal" to "partnerWithdrawals",
-            "expense" to "expenses", "dailyClosing" to "dailyClosings")
+            "expense" to "expenses", "dailyClosing" to "dailyClosings",
+            "return" to "returns")
         val missingReferences=JSONArray()
         val ambiguousReferences=JSONArray()
         val linked=JSONObject()
