@@ -235,11 +235,16 @@ object LegacySnapshotImport {
         // individual SQLite queries while examining a large legacy snapshot.
         val productRows=store.rows("SELECT id,kind,barcode FROM products")
         val existingProducts=productRows.associate { it.getValue("id") to it.getValue("kind") }
-        val existingBarcodes=productRows
-            .mapNotNull { row ->
-                row.getValue("barcode").trim().takeIf { it.isNotEmpty() }
-                    ?.let { barcode -> barcode to row.getValue("id") }
-            }.toMap()
+        val existingBarcodes=HashMap<String,String>()
+        for(row in productRows) {
+            val barcode=row.getValue("barcode").trim()
+            if(barcode.isNotEmpty()) {
+                val owner=existingBarcodes.putIfAbsent(barcode,row.getValue("id"))
+                require(owner==null || owner==row.getValue("id")) {
+                    "قاعدة البيانات تحتوي باركوداً مرتبطاً بأكثر من منتج: $barcode"
+                }
+            }
+        }
         val incomingBarcodes=HashMap<String,String>()
         val existingSuppliers=store.rows("SELECT id FROM suppliers")
             .mapTo(HashSet()) { it.getValue("id") }
