@@ -3027,8 +3027,8 @@ button("＋ مورد"){form("مورد جديد"){box->val n=field("الاسم",b
         text("مستلمة: ${counts.getValue("received")} · قيد العمل: ${counts.getValue("in_progress")} · جاهزة: ${counts.getValue("ready")} · مسلّمة: ${counts.getValue("delivered")}",size=15f)
         val openRepairs=store.repairList().filter{it.getValue("status")!="delivered"}
         if(openRepairs.isEmpty())text("لا توجد طلبات صيانة مفتوحة حالياً.",body,14f)
-        if(openRepairs.size>100)text("تُعرض أول 100 صيانة مفتوحة. استخدم البحث للوصول إلى بقية الطلبات.",body,13f)
-        openRepairs.take(100).forEach{r->
+        if(openRepairs.size>24)text("تُعرض أول 24 صيانة مفتوحة لتسريع الشاشة؛ استخدم البحث أعلاه للوصول إلى باقي الطلبات.",body,13f)
+        openRepairs.take(24).forEach{r->
             val id=r.getValue("id")
             repairIdentity(r,body)
             collapsibleTools("إجراءات صيانة · "+r.getValue("customer")) {
