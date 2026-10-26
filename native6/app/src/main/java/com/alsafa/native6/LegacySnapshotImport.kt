@@ -220,6 +220,7 @@ object LegacySnapshotImport {
         require(root.optString("format")=="alsafa-accounting-backup" &&
             root.optInt("formatVersion")==2) { "الملف ليس نسخة الصفا القديمة المدعومة" }
         val data=root.getJSONObject("data")
+        requireRequiredCollections(data)
         val sections=listOf(
             Triple("products","products","الساعات"),
             Triple("maintenanceParts","products","قطع الصيانة"),
@@ -239,7 +240,7 @@ object LegacySnapshotImport {
         val existingRepairs=store.rows("SELECT id FROM repairs")
             .mapTo(HashSet()) { it.getValue("id") }
         for((source,table,title) in sections) {
-            val array=data.optJSONArray(source) ?: continue
+            val array=data.getJSONArray(source)
             var newCount=0
             var existingCount=0
             val seen=HashSet<String>()
