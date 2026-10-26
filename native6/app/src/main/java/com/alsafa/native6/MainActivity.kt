@@ -2851,7 +2851,36 @@ Store.vaults.forEach{v->text(v+" · إقفالات تحتاج عدّاً: "+stor
             }
         }
 button("＋ مورد"){form("مورد جديد"){box->val n=field("الاسم",box);val p=field("الهاتف",box);{val name=n.text.toString();val phone=p.text.toString();work{store.addSupplier(name,phone)}}}}
-        store.rows("SELECT * FROM suppliers ORDER BY name").forEach{r->val id=r.getValue("id");collapsibleTools("المورد: "+r.getValue("name")) { button("عرض حركات المورد القديمة"){ work { try { val report=LegacySupplierLedgerView.page(store,id,"","",0,100); val rows=report.getJSONArray("records"); val detail=(0 until rows.length()).joinToString("\n"){i-> val item=rows.getJSONObject(i); item.optString("date")+" · "+item.optString("kind")+" · "+item.optString("amount")+" "+item.optString("currency") }; runOnUiThread { if(!isFinishing&&!isDestroyed) AlertDialog.Builder(this).setTitle("حركات المورد القديمة").setMessage(if(detail.isBlank())"لا توجد حركات قديمة" else detail).setPositiveButton("إغلاق",null).show() } } catch(e:Exception) { runOnUiThread { if(!isFinishing&&!isDestroyed)error(e) } } } }; button("تسجيل دين سابق للمورد"){form("رصيد المورد الافتتاحي"){box->val c=select("العملة",Currency.entries.map{it.name},box);val n=field("الدين السابق",box,"0",true);val day=field("تاريخ الدين YYYY-MM-DD",box,Store.today());{val currency=Currency.entries[c.selectedItemPosition];val amount=amount(n,currency);val date=java.time.LocalDate.parse(day.text.toString().trim()).toString();work{store.supplierOpening(id,currency,amount,date)}}}};Currency.entries.forEach{c->val due=store.supplierDue(id,c);button("كشف المورد الكامل ${c.name}"){val lines=store.supplierLedgerWithBalances(id,c);AlertDialog.Builder(this).setTitle("كشف المورد · كامل السجل").setMessage(lines.joinToString("\n"){it.getValue("date")+" : "+it.getValue("kind")+" : "+money(Math.negateExact(it.getValue("amount").toLong()),c)+" · المتبقي "+money(it.getValue("remaining").toLong(),c)}).setPositiveButton("حسناً",null).show()};button("رصيد المورد بتاريخ محدد ${c.name}"){form("دين المورد بتاريخ","عرض"){box->val day=field("التاريخ YYYY-MM-DD",box,Store.today());{val date=day.text.toString().trim();val balance=store.supplierDueOn(id,c,date);val available=if(!java.time.LocalDate.parse(date).isAfter(java.time.LocalDate.now())) store.supplierAvailableOn(id,c,date) else 0L;AlertDialog.Builder(this).setTitle("رصيد المورد · "+date+" · "+c.name).setMessage("الدين في نهاية اليوم: "+money(balance,c)+"\nالحد المتاح لدفعة مؤرخة بهذا اليوم: "+money(available,c)).setPositiveButton("حسناً",null).show()}}};button("كشف مورد بين تاريخين ${c.name}") {
+        store.rows("SELECT * FROM suppliers ORDER BY name").forEach{r->val id=r.getValue("id");collapsibleTools("المورد: "+r.getValue("name")) { button("حركات المورد المستعادة حسب التاريخ"){
+            form("حركات المورد التاريخية","عرض"){box->
+                val from=field("من تاريخ YYYY-MM-DD (اختياري)",box)
+                val to=field("إلى تاريخ YYYY-MM-DD (اختياري)",box)
+                ({
+                    val start=from.text.toString().trim()
+                    val end=to.text.toString().trim()
+                    work { try {
+                        val report=LegacySupplierLedgerView.page(store,id,start,end,0,100)
+                        val records=report.getJSONArray("records")
+                        val lines=(0 until records.length()).joinToString("\n"){index->
+                            val item=records.getJSONObject(index)
+                            item.optString("date")+" · "+item.optString("kind")+" · "+
+                                item.optString("amount")+" "+item.optString("currency")
+                        }
+                        val total=report.optInt("totalMatching")
+                        val message="عدد الحركات المطابقة: "+total+"\n\n"+
+                            (if(lines.isBlank())"لا توجد حركات" else lines)+
+                            (if(total>100)"\nتظهر أول 100 حركة فقط؛ حدّد فترة أقصر." else "")+
+                            "\n\nالسجلات التاريخية لا تُضاف مرة أخرى إلى حساب المورد."
+                        runOnUiThread { if(!isFinishing&&!isDestroyed)
+                            AlertDialog.Builder(this).setTitle("حركات المورد التاريخية")
+                                .setMessage(message).setPositiveButton("إغلاق",null).show()
+                        }
+                    } catch(e:Exception) {
+                        runOnUiThread { if(!isFinishing&&!isDestroyed)error(e) }
+                    } }
+                })
+            }
+        }; button("تسجيل دين سابق للمورد"){form("رصيد المورد الافتتاحي"){box->val c=select("العملة",Currency.entries.map{it.name},box);val n=field("الدين السابق",box,"0",true);val day=field("تاريخ الدين YYYY-MM-DD",box,Store.today());{val currency=Currency.entries[c.selectedItemPosition];val amount=amount(n,currency);val date=java.time.LocalDate.parse(day.text.toString().trim()).toString();work{store.supplierOpening(id,currency,amount,date)}}}};Currency.entries.forEach{c->val due=store.supplierDue(id,c);button("كشف المورد الكامل ${c.name}"){val lines=store.supplierLedgerWithBalances(id,c);AlertDialog.Builder(this).setTitle("كشف المورد · كامل السجل").setMessage(lines.joinToString("\n"){it.getValue("date")+" : "+it.getValue("kind")+" : "+money(Math.negateExact(it.getValue("amount").toLong()),c)+" · المتبقي "+money(it.getValue("remaining").toLong(),c)}).setPositiveButton("حسناً",null).show()};button("رصيد المورد بتاريخ محدد ${c.name}"){form("دين المورد بتاريخ","عرض"){box->val day=field("التاريخ YYYY-MM-DD",box,Store.today());{val date=day.text.toString().trim();val balance=store.supplierDueOn(id,c,date);val available=if(!java.time.LocalDate.parse(date).isAfter(java.time.LocalDate.now())) store.supplierAvailableOn(id,c,date) else 0L;AlertDialog.Builder(this).setTitle("رصيد المورد · "+date+" · "+c.name).setMessage("الدين في نهاية اليوم: "+money(balance,c)+"\nالحد المتاح لدفعة مؤرخة بهذا اليوم: "+money(available,c)).setPositiveButton("حسناً",null).show()}}};button("كشف مورد بين تاريخين ${c.name}") {
             form("كشف المورد حسب الفترة","عرض"){box->
                 val from=field("من YYYY-MM-DD",box,java.time.LocalDate.now().withDayOfMonth(1).toString())
                 val to=field("إلى YYYY-MM-DD",box,Store.today())
