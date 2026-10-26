@@ -94,7 +94,7 @@ object LegacySnapshotImport {
     }
     fun preview(payload:String):String {
         val d=data(payload)
-        val manifest=LegacyRestoreManifest.inspect(payload)
+        val manifest=LegacyRestoreManifest.inspectData(root,payload)
         val readiness=LegacyRestoreReadiness.inspect(payload)
         val blocking=LegacyImportPreflight.inspectInventory(payload).size
         val roundedPrices=listOf("products","maintenanceParts").sumOf { section ->
