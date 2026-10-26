@@ -1535,7 +1535,7 @@ open class MainActivity:Activity() {
         val number=summary.optString("invoiceNo")
         val archiveKey=summary.optString("archiveKey")
         AlertDialog.Builder(this).setTitle("خيارات الفاتورة #"+number)
-            .setItems(arrayOf("تفاصيل الفاتورة","عرض البيانات الأصلية","نسخ بيانات الفاتورة")) { _,choice ->
+            .setItems(arrayOf("تفاصيل الفاتورة","نسخ بيانات الفاتورة")) { _,choice ->
                 work {
                     try {
                         val original=LegacyInvoiceSnapshot.detail(store,section,archiveKey)
@@ -1563,7 +1563,7 @@ open class MainActivity:Activity() {
                             "\n\nالأصناف:\n"+lines
                         runOnUiThread {
                             if(isFinishing||isDestroyed)return@runOnUiThread
-                            if(choice==2) {
+                            if(choice==1) {
                                 val clipboard=getSystemService(android.content.Context.CLIPBOARD_SERVICE)
                                     as android.content.ClipboardManager
                                 clipboard.setPrimaryClip(android.content.ClipData.newPlainText(
