@@ -81,6 +81,49 @@ object LegacyFinancialLinkAudit {
                 .put("missing",missingCount)
                 .put("unknownReferenceType",ambiguousCount))
         }
+        // Cash transactions frequently mirror invoices, payments, supplier
+        // settlements and withdrawals. Record this relationship as evidence;
+        // never add mirrored movements to cumulative invoice paid again.
+        val cashByReference=JSONObject()
+        val cashRows=data.optJSONArray("cashTransactions") ?: JSONArray()
+        val cashGroups=linkedMapOf<String,MutableList<JSONObject>>()
+        for(index in 0 until cashRows.length()) {
+            val row=cashRows.optJSONObject(index) ?: continue
+            val type=row.optString("referenceType").trim()
+            val ref=row.optString("referenceId").trim()
+            if(type.isNotEmpty() && ref.isNotEmpty()) {
+                val key="$type|$ref"
+                cashGroups.getOrPut(key){mutableListOf()}.add(row)
+            }
+        }
+        val mirrored=JSONObject()
+        for(section in listOf("sales","repairs","purchases","expenses","partnerWithdrawals")) {
+            val type=when(section) {
+                "sales" -> "sale"
+                "repairs" -> "repair"
+                "purchases" -> "purchase"
+                "expenses" -> "expense"
+                else -> "partnerWithdrawal"
+            }
+            val array=data.optJSONArray(section) ?: JSONArray()
+            var withCash=0
+            var withoutCash=0
+            var cashRowsCount=0
+            for(index in 0 until array.length()) {
+                val row=array.optJSONObject(index) ?: continue
+                val related=cashGroups["$type|"+row.optString("id")].orEmpty()
+                if(related.isEmpty()) withoutCash++ else withCash++
+                cashRowsCount+=related.size
+            }
+            mirrored.put(section,JSONObject()
+                .put("recordsWithReferencedCash",withCash)
+                .put("recordsWithoutReferencedCash",withoutCash)
+                .put("referencedCashRows",cashRowsCount))
+        }
+        cashByReference.put("bySourceSection",mirrored)
+            .put("cashRows",cashRows.length())
+            .put("groupedReferenceCount",cashGroups.size)
+            .put("deduplicationRequired",true)
         val supplierLedger=data.optJSONArray("supplierLedger") ?: JSONArray()
         var missingSuppliers=0
         for(index in 0 until supplierLedger.length()) {
@@ -98,6 +141,7 @@ object LegacyFinancialLinkAudit {
             .put("duplicateInvoiceNumbers",duplicateInvoiceNumbers)
             .put("missingIds",missingIds)
             .put("linkSummary",linked)
+            .put("cashMirrorEvidence",cashByReference)
             .put("missingReferencesSample",missingReferences)
             .put("ambiguousReferencesSample",ambiguousReferences)
             .put("missingSupplierLedgerReferences",missingSuppliers)
