@@ -259,12 +259,15 @@ open class MainActivity:Activity() {
         work {
             var lastPercent=-1
             var lastDescription=""
+            var lastUpdateAt=0L
             try {
                 LegacySnapshotImport.import(store,payload,this@MainActivity) { value,description ->
                     val current=value.coerceIn(0,99)
-                    if(current!=lastPercent || description!=lastDescription) {
+                    val now=android.os.SystemClock.uptimeMillis()
+                    if(current!=lastPercent || (description!=lastDescription && now-lastUpdateAt>=120L)) {
                         lastPercent=current
                         lastDescription=description
+                        lastUpdateAt=now
                         runOnUiThread {
                             if(!isFinishing&&!isDestroyed && dialog.isShowing) {
                                 bar.progress=current
