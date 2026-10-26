@@ -925,10 +925,51 @@ open class MainActivity:Activity() {
             }
         }
         button("توليد وطباعة ملصق باركود · الاسم والسعر",card) {
-            printImage {
-                val code=store.ensureProductBarcode(p.id)
-                BluetoothReceiptPrinter.labelImage(p.name,money(p.price,p.currency),code)
+            val sizes=listOf("25 × 15","30 × 20","30 × 25","35 × 25","40 × 20",
+                "40 × 25","40 × 30","40 × 40","50 × 25","50 × 30",
+                "50 × 40","50 × 50","60 × 30","60 × 40","60 × 50",
+                "70 × 40","70 × 50","80 × 40","80 × 50","80 × 60","مقاس مخصص")
+            val prefs=getSharedPreferences("alsafa_printer",MODE_PRIVATE)
+            val savedW=prefs.getInt("label_width",50)
+            val savedH=prefs.getInt("label_height",30)
+            val initial=sizes.indexOf("$savedW × $savedH").coerceAtLeast(0)
+            fun printLabel(w:Int,h:Int) {
+                require(w in 20..82 && h in 15..150)
+                prefs.edit().putInt("label_width",w).putInt("label_height",h).apply()
+                printImage {
+                    val code=store.ensureProductBarcode(p.id)
+                    BluetoothReceiptPrinter.labelImage(p.name,money(p.price,p.currency),code,w,h)
+                }
             }
+            AlertDialog.Builder(this).setTitle("اختر قياس ملصق الباركود بالملم")
+                .setSingleChoiceItems(sizes.toTypedArray(),initial){dialog,which->
+                    dialog.dismiss()
+                    if(which==sizes.lastIndex) {
+                        val layout=LinearLayout(this).apply {
+                            orientation=LinearLayout.VERTICAL
+                            setPadding(dp(18),dp(12),dp(18),dp(12))
+                        }
+                        val width=EditText(this).apply {
+                            inputType=InputType.TYPE_CLASS_NUMBER
+                            hint="العرض بالملم (20–82)"
+                            setText(savedW.toString())
+                        }
+                        val height=EditText(this).apply {
+                            inputType=InputType.TYPE_CLASS_NUMBER
+                            hint="الارتفاع بالملم (15–150)"
+                            setText(savedH.toString())
+                        }
+                        layout.addView(width);layout.addView(height)
+                        AlertDialog.Builder(this).setTitle("قياس رول مخصص")
+                            .setView(layout).setPositiveButton("طباعة"){_,_->
+                                try { printLabel(width.text.toString().toInt(),height.text.toString().toInt()) }
+                                catch(e:Exception){error(e)}
+                            }.setNegativeButton("إلغاء",null).show()
+                    } else {
+                        val parts=sizes[which].split(" × ")
+                        printLabel(parts[0].toInt(),parts[1].toInt())
+                    }
+                }.setNegativeButton("إلغاء",null).show()
         }
         card.addView(actions)
         parent.addView(card,LinearLayout.LayoutParams(-1,-2).apply {
