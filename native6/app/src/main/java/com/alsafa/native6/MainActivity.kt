@@ -1536,9 +1536,26 @@ open class MainActivity:Activity() {
         val invoiceKind=when(section) { "sales" -> "مبيع"; "purchases" -> "شراء"; else -> "صيانة" }
         val archiveKey=summary.optString("archiveKey")
         AlertDialog.Builder(this).setTitle("خيارات فاتورة "+invoiceKind+" #"+number)
-            .setItems(arrayOf("تفاصيل الفاتورة","نسخ بيانات الفاتورة")) { _,choice ->
+            .setItems(arrayOf("تفاصيل الفاتورة","نسخ بيانات الفاتورة","عرض PDF التاريخي")) { _,choice ->
                 work {
                     try {
+                        if(choice==2) {
+                            val directory=java.io.File(cacheDir,"restored_invoices").apply { mkdirs() }
+                            val safeKey=archiveKey.replace(Regex("[^A-Za-z0-9_-]"),"_")
+                            val file=java.io.File(directory,"historical_"+safeKey+".pdf")
+                            file.outputStream().use { LegacyInvoicePdf(this,store).write(section,archiveKey,it) }
+                            runOnUiThread {
+                                if(isFinishing||isDestroyed)return@runOnUiThread
+                                val uri=androidx.core.content.FileProvider.getUriForFile(
+                                    this,packageName+".share",file)
+                                val intent=android.content.Intent(android.content.Intent.ACTION_VIEW).apply {
+                                    setDataAndType(uri,"application/pdf")
+                                    addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                }
+                                try { startActivity(intent) } catch(e:Exception) { error(e) }
+                            }
+                            return@work
+                        }
                         val original=LegacyInvoiceSnapshot.detail(store,section,archiveKey)
                         val invoice=original?.optJSONObject("invoice")
                         val displayDate=invoice?.optString("date")?.take(10).orEmpty().ifBlank { summary.optString("date") }
