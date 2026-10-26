@@ -24,6 +24,7 @@ open class MainActivity:Activity() {
     private lateinit var body:LinearLayout
     private lateinit var font:Typeface
     private val io=Executors.newSingleThreadExecutor()
+    private val imageIo=Executors.newFixedThreadPool(2)
     private var page="home"
     @Volatile private var busy=false
     private var pdfInvoice:String?=null
@@ -300,6 +301,7 @@ open class MainActivity:Activity() {
     private fun amount(e:EditText,c:Currency)=Money.parse(e.text.toString(),c).minor
     override fun onDestroy() {
         io.shutdown()
+        imageIo.shutdownNow()
         super.onDestroy()
     }
     override fun onSaveInstanceState(out:Bundle){
@@ -826,23 +828,29 @@ open class MainActivity:Activity() {
                 }.getOrNull()
             }.orEmpty()
         if(photoPath.isNotBlank()) {
-            val file=runCatching { localPhoto(photoPath) }.getOrNull()
-            if(file!=null && file.isFile) {
-                val bounds=android.graphics.BitmapFactory.Options().apply { inJustDecodeBounds=true }
-                android.graphics.BitmapFactory.decodeFile(file.absolutePath,bounds)
-                if(bounds.outWidth>0 && bounds.outHeight>0) {
-                    val options=android.graphics.BitmapFactory.Options().apply {
-                        inSampleSize=maxOf(1,maxOf(bounds.outWidth/240,bounds.outHeight/240))
-                    }
-                    val bitmap=android.graphics.BitmapFactory.decodeFile(file.absolutePath,options)
-                    if(bitmap!=null) {
-                        val photo=ImageView(this).apply {
-                            setImageBitmap(bitmap)
-                            scaleType=ImageView.ScaleType.CENTER_INSIDE
-                            contentDescription="صورة "+p.name
+            val photo=ImageView(this).apply {
+                scaleType=ImageView.ScaleType.CENTER_INSIDE
+                contentDescription="صورة "+p.name
+            }
+            card.addView(photo,LinearLayout.LayoutParams(-1,dp(120)))
+            // Decode thumbnail off the UI thread; discard results when the card
+            // has been removed by a new search or screen navigation.
+            imageIo.execute {
+                val bitmap=runCatching {
+                    val file=localPhoto(photoPath)
+                    val bounds=android.graphics.BitmapFactory.Options().apply { inJustDecodeBounds=true }
+                    android.graphics.BitmapFactory.decodeFile(file.absolutePath,bounds)
+                    if(bounds.outWidth<=0 || bounds.outHeight<=0) null else {
+                        val options=android.graphics.BitmapFactory.Options().apply {
+                            inSampleSize=maxOf(1,maxOf(bounds.outWidth/240,bounds.outHeight/240))
                         }
-                        card.addView(photo,LinearLayout.LayoutParams(-1,dp(120)))
+                        android.graphics.BitmapFactory.decodeFile(file.absolutePath,options)
                     }
+                }.getOrNull()
+                if(bitmap!=null) runOnUiThread {
+                    if(!isFinishing && !isDestroyed && photo.isAttachedToWindow) {
+                        photo.setImageBitmap(bitmap)
+                    } else bitmap.recycle()
                 }
             }
         }
