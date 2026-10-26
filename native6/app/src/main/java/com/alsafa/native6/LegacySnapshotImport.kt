@@ -218,12 +218,12 @@ object LegacySnapshotImport {
         val manifest=LegacyRestoreManifest.inspect(payload)
         val readiness=LegacyRestoreReadiness.inspect(payload)
         val financialWarnings=LegacyImportPreflight.inspectFinancialHistory(payload)
-        val closingAudit=LegacyClosingContinuity.inspect(payload)
-        val paymentLinkAudit=LegacyPaymentLinkAudit.inspect(payload)
-        val returnLinkAudit=LegacyReturnLinkAudit.inspect(payload)
-        val supplierCashAudit=LegacySupplierCashAudit.inspect(payload)
-        val vaultSnapshot=LegacyVaultSnapshot.inspect(payload)
-        val paymentCashAudit=LegacyPaymentCashAudit.inspect(payload)
+        val closingAudit=LegacyClosingContinuity.inspectRoot(root)
+        val paymentLinkAudit=LegacyPaymentLinkAudit.inspectRoot(root)
+        val returnLinkAudit=LegacyReturnLinkAudit.inspectRoot(root)
+        val supplierCashAudit=LegacySupplierCashAudit.inspectRoot(root)
+        val vaultSnapshot=LegacyVaultSnapshot.inspectRoot(root)
+        val paymentCashAudit=LegacyPaymentCashAudit.inspectRoot(root)
         val financialLinkAudit=LegacyFinancialLinkAudit.inspectData(d)
         require(financialLinkAudit.getJSONArray("duplicateIds").length()==0) {
             "معرفات مالية مكررة في النسخة القديمة؛ تم إيقاف الاستعادة لحماية البيانات"
