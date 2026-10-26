@@ -1533,8 +1533,9 @@ open class MainActivity:Activity() {
         fun show(){results.removeAllViews();val found=store.searchCatalog(search.text.toString(),kind).filter{!inStockOnly || it.stock>0};if(found.isEmpty())text("لا توجد أصناف مطابقة للبحث.",results,14f);found.take(100).forEach{p->button(p.name+" · "+store.productColorLabel(p.id)+" · "+p.barcode+" · المتوفر: "+p.stock+" · "+money(p.price,p.currency),results){dialog.dismiss();action(p)}};if(found.size>100)text("تُعرض أول 100 نتيجة. اكتب اسمًا أو باركودًا أدق.",results,13f)};button("بحث",box){show()};button("▣ مسح باركود",box){chooserBarcodeField=search;chooserRefresh={show()};startActivityForResult(Intent(this,BarcodeScanActivity::class.java),68)};dialog.setOnDismissListener{chooserBarcodeField=null;chooserRefresh=null};show();dialog.show()}
     private fun showRestoredInvoiceOptions(section:String,summary:org.json.JSONObject) {
         val number=summary.optString("invoiceNo")
+        val invoiceKind=when(section) { "sales" -> "مبيع"; "purchases" -> "شراء"; else -> "صيانة" }
         val archiveKey=summary.optString("archiveKey")
-        AlertDialog.Builder(this).setTitle("خيارات الفاتورة #"+number)
+        AlertDialog.Builder(this).setTitle("خيارات فاتورة "+invoiceKind+" #"+number)
             .setItems(arrayOf("تفاصيل الفاتورة","نسخ بيانات الفاتورة")) { _,choice ->
                 work {
                     try {
@@ -1570,7 +1571,7 @@ open class MainActivity:Activity() {
                                     "فاتورة #"+number,message))
                                 Toast.makeText(this,"تم نسخ بيانات الفاتورة",Toast.LENGTH_SHORT).show()
                             } else AlertDialog.Builder(this)
-                                .setTitle("تفاصيل الفاتورة #"+number)
+                                .setTitle("تفاصيل فاتورة "+invoiceKind+" #"+number)
                                 .setMessage(message).setPositiveButton("إغلاق",null).show()
                         }
                     } catch(e:Exception) {
