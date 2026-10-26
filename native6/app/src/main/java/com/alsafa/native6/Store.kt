@@ -654,7 +654,7 @@ class Store(val helper:StoreDb) {
     }
 
     fun searchCatalogPage(query:String,kind:String?=null,limit:Int=24):Pair<Long,List<Product>> {
-        require(limit in 1..500){"حجم الصفحة غير صالح"}
+        require(limit in 1..100000){"حجم الصفحة غير صالح"}
         val term=query.trim()
         require(term.length<=200){"نص البحث طويل جداً"}
         require(kind==null || kind in setOf("watch","part")){"نوع صنف غير مدعوم"}
