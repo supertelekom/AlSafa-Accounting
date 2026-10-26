@@ -224,7 +224,7 @@ object LegacySnapshotImport {
         val supplierCashAudit=LegacySupplierCashAudit.inspect(payload)
         val vaultSnapshot=LegacyVaultSnapshot.inspect(payload)
         val paymentCashAudit=LegacyPaymentCashAudit.inspect(payload)
-        val financialLinkAudit=LegacyFinancialLinkAudit.inspect(payload)
+        val financialLinkAudit=LegacyFinancialLinkAudit.inspectData(d)
         require(financialLinkAudit.getJSONArray("duplicateIds").length()==0) {
             "معرفات مالية مكررة في النسخة القديمة؛ تم إيقاف الاستعادة لحماية البيانات"
         }
