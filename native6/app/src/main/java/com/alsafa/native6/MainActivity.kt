@@ -1523,6 +1523,8 @@ open class MainActivity:Activity() {
                 val from=field("من تاريخ YYYY-MM-DD (اختياري)",box)
                 val to=field("إلى تاريخ YYYY-MM-DD (اختياري)",box)
                 val query=field("بحث بالرقم أو الاسم أو الهاتف أو الصنف",box)
+                val searchButton=Button(this).apply { style(this);text="بحث وعرض النتائج";isAllCaps=false }
+                box.addView(searchButton,LinearLayout.LayoutParams(-1,dp(46)))
                 val list=column()
                 val controls=LinearLayout(this).apply {
                     orientation=LinearLayout.HORIZONTAL
@@ -1607,7 +1609,7 @@ open class MainActivity:Activity() {
                 }
                 previous.setOnClickListener { if(currentPage>0){currentPage--;load()} }
                 next.setOnClickListener { currentPage++;load() }
-                button("بحث وعرض النتائج",box) { currentPage=0;load() }
+                searchButton.setOnClickListener { currentPage=0;load() }
                 section.onItemSelectedListener=object:android.widget.AdapterView.OnItemSelectedListener {
                     override fun onItemSelected(parent:android.widget.AdapterView<*>?,view:View?,position:Int,id:Long) { currentPage=0;load() }
                     override fun onNothingSelected(parent:android.widget.AdapterView<*>?) {}
