@@ -36,11 +36,15 @@ class InvoicePdf(private val context:Context,private val store:Store) {
             rows.add("سعر المنتج الإفرادي" to money(if(qty>0)net/qty else net,invoice.currency))
             rows.add("عدد المنتجات" to item.getValue("qty"))
         }
+        // Net line totals are not original list prices; do not fabricate legacy discount/tax fields.
         rows.add("الإجمالي بعد الخصم" to money(invoice.total,invoice.currency))
         if(invoice.kind!="purchase") {
             rows.add("المقبوض الصافي" to money(store.paid(id),invoice.currency))
             rows.add("المتبقي" to money(store.due(id),invoice.currency))
         }
+        val notes=store.rows("SELECT notes FROM invoices WHERE id=?",id)
+            .firstOrNull()?.get("notes").orEmpty().trim()
+        if(notes.isNotEmpty()) rows.add("ملاحظات" to notes.take(400))
         val doc=PdfDocument()
         val rowHeights=rows.map { (label,value)->
             val measure=TextPaint().apply { textSize=11f;typeface=font }
@@ -48,7 +52,7 @@ class InvoicePdf(private val context:Context,private val store:Store) {
                 .setAlignment(Layout.Alignment.ALIGN_CENTER).setIncludePad(false).build().height
             maxOf(29,valueHeight+13)
         }
-        val pageHeight=maxOf(580,212+rowHeights.sum()+65)
+        val pageHeight=maxOf(390,212+rowHeights.sum()+65)
         val page=doc.startPage(PdfDocument.PageInfo.Builder(pageWidth,pageHeight,1).create())
         val canvas=page.canvas
         canvas.drawColor(Color.WHITE)
@@ -58,7 +62,9 @@ class InvoicePdf(private val context:Context,private val store:Store) {
         fun rule(y:Float,strong:Boolean=false) {
             linePaint.color=if(strong)black else gray
             linePaint.strokeWidth=if(strong)1.1f else .45f
+            if(!strong)linePaint.pathEffect=android.graphics.DashPathEffect(floatArrayOf(2.6f,2.6f),0f)
             canvas.drawLine(left,y,right,y,linePaint)
+            linePaint.pathEffect=null
         }
         fun txt(text:String,x:Float,y:Float,w:Int,size:Float,alignment:Layout.Alignment=Layout.Alignment.ALIGN_CENTER,bold:Boolean=false):Int {
             val p=TextPaint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
