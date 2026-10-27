@@ -48,6 +48,10 @@ object LegacyInvoiceStaging {
         val sourceHash = plan.getString("sourceSha256")
         require(sourceHash.isNotBlank()) { "بصمة النسخة القديمة مفقودة" }
         val mappings = plan.getJSONObject("invoiceMappings")
+        // Read large legacy JSON in bounded chunks; a direct payload SELECT can overflow CursorWindow.
+        val sources = listOf("sales","purchases").associateWith { section ->
+            store.legacyRows(section).associateBy { it.getValue("legacy_id") }
+        }
         val db = store.db
         db.execSQL(ddl)
         db.execSQL("CREATE TRIGGER IF NOT EXISTS legacy_invoice_staging_no_update BEFORE UPDATE ON legacy_invoice_staging BEGIN SELECT RAISE(ABORT,'Immutable staged invoice'); END")
@@ -72,7 +76,7 @@ object LegacyInvoiceStaging {
                     val m = list.getJSONObject(i)
                     val existing = store.rows("SELECT payload,source_hash,source_section,source_id,source_number,invoice_date,currency,target_number,total_minor,paid_minor,outstanding_minor FROM $table WHERE target_id=?",
                         m.getString("targetId")).singleOrNull()
-                    val sourcePayload = store.rows("SELECT payload FROM legacy_records WHERE category=? AND legacy_id=?", section, m.getString("sourceId")).singleOrNull()
+                    val sourcePayload = sources.getValue(section)[m.getString("sourceId")]
                     require(existing != null && sourcePayload != null &&
                         existing.getValue("payload")==sourcePayload.getValue("payload") &&
                         existing.getValue("source_hash")==sourceHash &&
@@ -94,7 +98,7 @@ object LegacyInvoiceStaging {
         }
         var count = 0
         for (section in listOf("sales","purchases")) {
-            val source = store.legacyRows(section).associateBy { it.getValue("legacy_id") }
+            val source = sources.getValue(section)
             val list = mappings.getJSONArray(section)
             for (i in 0 until list.length()) {
                 val m = list.getJSONObject(i)
