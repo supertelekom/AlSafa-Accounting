@@ -2931,6 +2931,65 @@ Store.vaults.forEach{v->text(v+" · إقفالات تحتاج عدّاً: "+stor
         store.rows("SELECT e.date,c.* FROM closings c JOIN events e ON e.id=c.event_id ORDER BY e.created DESC LIMIT 30").forEach{r->val c=Currency.valueOf(r.getValue("currency"));text("${r.getValue("date")} · ${r.getValue("vault")} · ${c.name}\nمتوقع ${money(r.getValue("expected").toLong(),c)} · "+(if(r["counted"].isNullOrBlank()) "إقفال تلقائي · لم يجرِ عد فعلي" else "معدود ${money(r.getValue("counted").toLong(),c)} · فرق ${money(Math.subtractExact(r.getValue("counted").toLong(),r.getValue("expected").toLong()),c)}"))}
     }
     private fun suppliers(){text("الموردون",size=25f);
+        button("فواتير المشتريات القديمة — بحث وعرض التفاصيل") {
+            form("فواتير الموردين المستعادة","إغلاق"){box->
+                val search=field("اسم المورد أو رقم الفاتورة أو اسم الساعة",box)
+                val from=field("من تاريخ YYYY-MM-DD (اختياري)",box)
+                val to=field("إلى تاريخ YYYY-MM-DD (اختياري)",box)
+                val results=column()
+                val pageLabel=TextView(this).apply { style(this);textSize=13f }
+                val controls=LinearLayout(this).apply {
+                    orientation=LinearLayout.HORIZONTAL
+                    layoutDirection=View.LAYOUT_DIRECTION_RTL
+                }
+                val previous=Button(this).apply { style(this);text="السابق";isAllCaps=false }
+                val next=Button(this).apply { style(this);text="التالي";isAllCaps=false }
+                val searchButton=Button(this).apply { style(this);text="بحث";isAllCaps=false }
+                box.addView(searchButton,LinearLayout.LayoutParams(-1,dp(46)))
+                controls.addView(previous,LinearLayout.LayoutParams(0,dp(44),1f))
+                controls.addView(pageLabel,LinearLayout.LayoutParams(0,dp(44),1f))
+                controls.addView(next,LinearLayout.LayoutParams(0,dp(44),1f))
+                box.addView(controls)
+                box.addView(results)
+                var pageIndex=0
+                fun load() {
+                    val index=pageIndex
+                    val term=search.text.toString().trim()
+                    val start=from.text.toString().trim()
+                    val end=to.text.toString().trim()
+                    work {
+                        val page=LegacyInvoiceSnapshot.page(store,"purchases",start,end,term,index*20,20)
+                        val rows=page.getJSONArray("rows")
+                        val count=page.getInt("total")
+                        runOnUiThread {
+                            if(isFinishing||isDestroyed)return@runOnUiThread
+                            results.removeAllViews()
+                            pageLabel.text="${index+1} / ${maxOf(1,(count+19)/20)}"
+                            previous.isEnabled=index>0
+                            next.isEnabled=(index+1)*20<count
+                            text("عدد الفواتير المطابقة: $count",results,13f)
+                            for(i in 0 until rows.length()) {
+                                val invoice=rows.getJSONObject(i)
+                                val card=column().apply { setPadding(dp(12),dp(8),dp(12),dp(8));background=background(paper,12) }
+                                text("#"+invoice.optString("invoiceNo")+" · "+invoice.optString("date"),card,15f)
+                                text(invoice.optString("supplierName"),card,14f)
+                                text("الإجمالي: "+invoice.optString("total")+" "+invoice.optString("currency")+
+                                    " · المدفوع: "+invoice.optString("paid")+" · المتبقي: "+invoice.optString("outstanding"),card,13f)
+                                button("عرض الفاتورة وبنودها",card) { showRestoredInvoiceOptions("purchases",invoice) }
+                                results.addView(card)
+                            }
+                            if(rows.length()==0)text("لا توجد فواتير مطابقة.",results,14f)
+                        }
+                    }
+                }
+                searchButton.setOnClickListener { pageIndex=0;load() }
+                previous.setOnClickListener { if(pageIndex>0){pageIndex--;load()} }
+                next.setOnClickListener { pageIndex++;load() }
+                load()
+                text("هذه فواتير أصلية مستعادة للعرض، ولا يُعاد تسجيل قيمها أو مدفوعاتها.",box,12f)
+                ({})
+            }
+        }
         button("دفتر الموردين المستعاد من التطبيق القديم — قراءة فقط") {
             form("دفتر الموردين القديم","عرض"){box->
                 val supplier=field("معرف المورد (اختياري)",box)
