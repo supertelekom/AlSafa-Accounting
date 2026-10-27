@@ -1019,7 +1019,7 @@ open class MainActivity:Activity() {
         dashboardTiles(listOf(
             Triple("＄","مبيع","sale"),
             Triple("◷","استلام وتسليم صيانة","repairs"),
-            Triple("▤","الفواتير وقبض الديون","invoices"),
+            Triple("▤","فواتير المبيع","sales-invoices"),
             Triple("▣","الخزنات والإقفال اليومي","vaults")
         ))
     }
@@ -1028,6 +1028,7 @@ open class MainActivity:Activity() {
         dashboardTiles(listOf(
             Triple("＄","مبيع","sale"),
             Triple("▣","المنتجات وقطع الصيانة","products"),
+            Triple("▤","فواتير المبيع","sales-invoices"),
             Triple("▤","الفواتير والمرتجعات","invoices"),
             Triple("◷","استلام وتسليم صيانة","repairs"),
             Triple("◈","الخزنات والمصاريف والإقفال","vaults"),
