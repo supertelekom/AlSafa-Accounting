@@ -12,6 +12,7 @@ object LegacyPaymentAudit {
         val paidSnapshots = mutableMapOf<String, java.math.BigDecimal>()
         val paymentTotals = mutableMapOf<String, java.math.BigDecimal>()
         val invalidPaymentAmounts = JSONArray()
+        val duplicateInvoiceIds = JSONArray()
         val currencyConflicts = JSONArray()
         for (section in listOf("sales", "purchases")) {
             for (row in store.legacyRows(section)) {
@@ -26,7 +27,6 @@ object LegacyPaymentAudit {
         val unsupportedReferenceTypes = JSONArray()
         val missingReferenceIds = JSONArray()
         val duplicatePaymentIds = JSONArray()
-        val duplicateInvoiceIds = JSONArray()
         val seenPaymentIds = mutableSetOf<String>()
         var linked = 0
         for (row in store.legacyRows("payments")) {
