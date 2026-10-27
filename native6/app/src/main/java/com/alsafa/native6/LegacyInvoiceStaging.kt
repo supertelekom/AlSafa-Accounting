@@ -126,6 +126,12 @@ object LegacyInvoiceStaging {
             }
         }
         require(count==plan.getInt("invoiceCount")) { "عدد الفواتير المجهزة غير مطابق" }
+        require(store.scalar("SELECT count(*) FROM $table")==count.toLong()) {
+            "عدد السجلات المحفوظة لا يطابق عدد الفواتير القديمة"
+        }
+        require(store.scalar("SELECT count(*) FROM $table WHERE source_hash=?",sourceHash)==count.toLong()) {
+            "بصمة مصدر الفواتير المجهزة غير متطابقة"
+        }
         JSONObject().put("staged",count).put("alreadyStaged",false)
             .put("posted",false).put("sourceSha256",sourceHash)
     }
