@@ -1345,6 +1345,12 @@ class Store(val helper:StoreDb) {
             val due=total.subtract(paid).setScale(2,java.math.RoundingMode.HALF_UP)
                 .movePointRight(2).longValueExact()
             if(due==0L) continue
+            // Legacy "paid" may be stale after a collection or return.
+            // Stop rather than inventing a customer debt.
+            val status=source.optString("paymentStatus").trim()
+            require(status !in setOf("مدفوع بالكامل","مسوّاة/مسترجعة","ملغاة","مسترجعة")) {
+                "حالة فاتورة قديمة تتعارض مع المتبقي؛ يلزم مطابقة القبض والمرتجعات قبل تفعيلها"
+            }
             val currency=runCatching { Currency.valueOf(source.optString("currency")) }
                 .getOrElse { throw IllegalArgumentException("عملة فاتورة قديمة غير مدعومة") }
             val party=source.optString("customerName").ifBlank {
