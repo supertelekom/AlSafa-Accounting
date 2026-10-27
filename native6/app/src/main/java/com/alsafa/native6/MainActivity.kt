@@ -954,7 +954,7 @@ open class MainActivity:Activity() {
     /** Tablet dashboard tiles, built with native views and the original warm AlSafa palette. */
     private fun dashboardTiles(items:List<Triple<String,String,String>>) {
         val tablet=resources.configuration.smallestScreenWidthDp>=600
-        val columns=if(tablet)3 else 2
+        val columns=if(tablet)4 else 2
         var grid:LinearLayout?=null
         items.forEachIndexed { index,item ->
             if(index%columns==0) {
@@ -968,7 +968,7 @@ open class MainActivity:Activity() {
             val tile=LinearLayout(this).apply {
                 orientation=LinearLayout.VERTICAL
                 gravity=Gravity.CENTER
-                setPadding(dp(10),dp(17),dp(10),dp(14))
+                setPadding(dp(6),dp(8),dp(6),dp(8))
                 background=background(paper,16)
                 isClickable=true
                 isFocusable=true
@@ -976,12 +976,12 @@ open class MainActivity:Activity() {
             }
             val glyph=TextView(this).apply {
                 text=item.first
-                textSize=27f
+                textSize=23f
                 gravity=Gravity.CENTER
                 setTextColor(gold)
                 typeface=font
             }
-            tile.addView(glyph,LinearLayout.LayoutParams(-1,dp(42)))
+            tile.addView(glyph,LinearLayout.LayoutParams(-1,dp(32)))
             val title=TextView(this).apply {
                 text=item.second
                 textSize=13f
@@ -990,9 +990,9 @@ open class MainActivity:Activity() {
                 gravity=Gravity.CENTER
                 maxLines=2
             }
-            tile.addView(title,LinearLayout.LayoutParams(-1,dp(44)))
+            tile.addView(title,LinearLayout.LayoutParams(-1,dp(38)))
             tile.setOnClickListener { if(!busy)go(item.third) }
-            grid!!.addView(tile,LinearLayout.LayoutParams(0,dp(123),1f).apply {
+            grid!!.addView(tile,LinearLayout.LayoutParams(0,dp(92),1f).apply {
                 setMargins(dp(4),dp(5),dp(4),dp(5))
             })
         }
