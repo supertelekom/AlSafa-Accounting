@@ -35,6 +35,9 @@ object LegacyFinancialReadiness {
                 }
             }
         }
+        if (gate.optString("state") == "NO_LEGACY_IMPORT") {
+            blockers.put("لا توجد نسخة قديمة مستعادة لفحص الترحيل")
+        }
         val eligible = gate.optBoolean("financialActive", false) &&
             linkage.getOrNull()?.optBoolean("complete", false) == true && blockers.length() == 0
         return JSONObject()
