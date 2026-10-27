@@ -12,7 +12,7 @@ object LegacyCustomerAccounts {
     private const val table="legacy_customer_accounts"
     private const val receipts="legacy_customer_receipts"
     private fun amount(s:String):BigDecimal =
-        s.toBigDecimal().also { require(it.scale()<=16 && it.signum()>=0) { "مبلغ تاريخي غير صالح" } }
+        s.toBigDecimal().also { require(it.signum()>=0 && it.precision()<=1000) { "مبلغ تاريخي غير صالح" } }
     private fun sql(store:Store) {
         store.db.execSQL("""CREATE TABLE IF NOT EXISTS $table(
             archive_id TEXT PRIMARY KEY NOT NULL,
@@ -210,6 +210,10 @@ object LegacyCustomerAccounts {
         val currency=invoice.getValue("currency")
         val amount=BigDecimal.valueOf(minor,2)
         val due=outstanding(store,archiveId)
+        val reconciliation=reconcile(store)
+        require(reconciliation.optBoolean("reconciled")) {
+            "توجد فروقات في دفتر ذمم العملاء؛ أوقفت القبض حتى تصحيحها"
+        }
         // Do not allow a receipt to drive the journal's legacy receivable account
         // negative. Opening receivables must be posted and reconciled first.
         val opening=store.scalar("SELECT coalesce(sum(amount),0) FROM journal WHERE account=? AND currency=?",
