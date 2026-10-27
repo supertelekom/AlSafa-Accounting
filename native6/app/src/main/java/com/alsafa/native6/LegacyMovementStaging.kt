@@ -47,11 +47,15 @@ object LegacyMovementStaging {
                     "حركة قديمة بلا معرف أو بيانات"
                 }
                 JSONObject(payload)
-                val prior = store.rows("SELECT payload FROM $table WHERE source_hash=? AND category=? AND source_id=?",
-                    hash,section,sourceId).singleOrNull()
-                if (prior != null) {
-                    require(prior.getValue("payload")==payload) {
-                        "حركة مجهزة تختلف عن مصدرها: $section/$sourceId"
+                // Avoid loading a potentially huge JSON payload through CursorWindow.
+                val prior = store.scalar("SELECT count(*) FROM $table WHERE source_hash=? AND category=? AND source_id=?",
+                    hash,section,sourceId)
+                require(prior in 0L..1L) { "حركة مكررة: $section/$sourceId" }
+                if (prior == 1L) {
+                    val bytes = store.scalar("SELECT length(CAST(payload AS BLOB)) FROM $table WHERE source_hash=? AND category=? AND source_id=?",
+                        hash,section,sourceId)
+                    require(bytes == payload.toByteArray(Charsets.UTF_8).size.toLong()) {
+                        "حجم الحركة المجهزة يختلف عن المصدر: $section/$sourceId"
                     }
                 } else {
                     val values = ContentValues().apply {
