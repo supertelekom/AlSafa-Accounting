@@ -226,6 +226,10 @@ object LegacySupplierInvoices {
         require(amount<=remaining(store,key)) { "الدفعة تتجاوز المتبقي للمورد" }
         // Do not post a supplier payment for an invoice whose immutable
         // archive source changed after activation.
+        val overlap=LegacySupplierOverlap.inspect(store)
+        require(overlap.getJSONArray("conflictingLedgerReferences").length()==0) {
+            "توجد مراجع فواتير شراء متعارضة في دفتر المورد القديم؛ تم إيقاف الدفع"
+        }
         val source=store.legacyRecord("purchases",key)
             ?: error("فاتورة الشراء الأصلية مفقودة من الأرشيف")
         val sourceHash=MessageDigest.getInstance("SHA-256")
