@@ -2210,7 +2210,6 @@ open class MainActivity:Activity() {
                     override fun onItemSelected(parent:android.widget.AdapterView<*>?,view:View?,position:Int,id:Long) { currentPage=0;load() }
                     override fun onNothingSelected(parent:android.widget.AdapterView<*>?) {}
                 }
-                load()
                 text("الفواتير التاريخية معروضة من بياناتها الأصلية؛ لا تُحتسب مرتين في الأرصدة النشطة.",box,12f)
                 ({})
             }
