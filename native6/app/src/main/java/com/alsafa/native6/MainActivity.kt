@@ -1640,7 +1640,12 @@ open class MainActivity:Activity() {
                                     addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
                                 }
                                 if(choice==3) CustomerShare.send(this,file,"application/pdf","فاتورة الصفا التاريخية #"+number)
-                                else try { startActivity(intent) } catch(e:Exception) { error(e) }
+                                else try { startActivity(intent) } catch(e:Exception) {
+                                    AlertDialog.Builder(this).setTitle("تعذر فتح PDF")
+                                        .setMessage("لا يوجد عارض PDF متاح أو تعذر فتح الملف. يمكن استخدام خيار مشاركة PDF لحفظه أو فتحه بتطبيق آخر.\
+"+(e.localizedMessage ?: ""))
+                                        .setPositiveButton("حسناً",null).show()
+                                }
                             }
                             return@work
                         }
@@ -1696,7 +1701,10 @@ open class MainActivity:Activity() {
                                 .setMessage(message).setPositiveButton("إغلاق",null).show()
                         }
                     } catch(e:Exception) {
-                        runOnUiThread { if(!isFinishing&&!isDestroyed)error(e) }
+                        runOnUiThread { if(!isFinishing&&!isDestroyed)
+                            AlertDialog.Builder(this).setTitle("تعذر قراءة الفاتورة المستعادة")
+                                .setMessage(e.localizedMessage ?: "خطأ غير معروف")
+                                .setPositiveButton("إغلاق",null).show() }
                     }
                 }
             }.setNegativeButton("إلغاء",null).show()
