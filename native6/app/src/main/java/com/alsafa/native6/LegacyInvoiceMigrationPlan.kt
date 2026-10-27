@@ -16,6 +16,7 @@ object LegacyInvoiceMigrationPlan {
         val proposed = JSONArray()
         val totals = JSONObject()
         val totalsBySection = JSONObject()
+        val countsBySection = JSONObject()
         val existing = store.rows("SELECT id,number FROM invoices")
         val existingIds = existing.map { it.getValue("id") }.toSet()
         val existingNumbers = existing.map { it.getValue("number") }.toSet()
@@ -26,6 +27,7 @@ object LegacyInvoiceMigrationPlan {
             require(source.size == counts.optInt(section, -1)) {
                 "عدد الفواتير القديمة غير مطابق: $section"
             }
+            countsBySection.put(section, source.size)
             for (row in source) {
                 val original = JSONObject(row.getValue("payload"))
                 val sourceId = original.optString("id").trim()
@@ -91,6 +93,7 @@ object LegacyInvoiceMigrationPlan {
         }
         return JSONObject().put("sourceSha256", meta.optString("sourceSha256"))
             .put("invoiceCount", proposed.length())
+            .put("invoiceCountsBySection", countsBySection)
             .put("financialTotalsByCurrency", totals)
             .put("financialTotalsBySection", totalsBySection)
             .put("invalid", invalid).put("collisions", collisions)
