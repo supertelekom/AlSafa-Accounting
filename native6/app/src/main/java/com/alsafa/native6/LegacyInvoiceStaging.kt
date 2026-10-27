@@ -129,6 +129,20 @@ object LegacyInvoiceStaging {
         require(store.scalar("SELECT count(*) FROM $table")==count.toLong()) {
             "عدد السجلات المحفوظة لا يطابق عدد الفواتير القديمة"
         }
+        val expectedTotals = plan.getJSONObject("financialTotalsBySection")
+        for (section in listOf("sales","purchases")) {
+            val sectionTotals = expectedTotals.optJSONObject(section) ?: JSONObject()
+            for (currency in listOf("USD","TRY","SYP")) {
+                val expected = sectionTotals.optJSONObject(currency)
+                val row = store.rows("SELECT coalesce(sum(total_minor),0) AS total,coalesce(sum(paid_minor),0) AS paid,coalesce(sum(outstanding_minor),0) AS due FROM $table WHERE source_section=? AND currency=?",section,currency).single()
+                for ((column,key) in listOf("total" to "total","paid" to "paid","due" to "outstanding")) {
+                    val target = if (expected==null) 0L else minor(expected.getString(key))
+                    require(row.getValue(column).toLong()==target) {
+                        "عدم تطابق إجمالي الفواتير المجهزة: $section/$currency/$key"
+                    }
+                }
+            }
+        }
         require(store.scalar("SELECT count(*) FROM $table WHERE source_hash=?",sourceHash)==count.toLong()) {
             "بصمة مصدر الفواتير المجهزة غير متطابقة"
         }
