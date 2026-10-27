@@ -69,7 +69,7 @@ object LegacySupplierInvoices {
             val key=record.getValue("legacy_id")
             val total=money(invoice.optString("total"))
             val paid=money(invoice.optString("paid","0"))
-            require(total>BigDecimal.ZERO && paid<=total)
+            require(total>=BigDecimal.ZERO && paid<=total)
             val currency=invoice.optString("currency")
             require(currency in setOf("USD","TRY","SYP"))
             val date=invoice.optString("date").take(10)
