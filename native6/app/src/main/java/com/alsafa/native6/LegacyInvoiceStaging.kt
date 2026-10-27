@@ -54,9 +54,15 @@ object LegacyInvoiceStaging {
                 val list = mappings.getJSONArray(section)
                 for (i in 0 until list.length()) {
                     val m = list.getJSONObject(i)
-                    val existing = store.rows("SELECT target_number,total_minor,paid_minor,outstanding_minor FROM $table WHERE target_id=?",
+                    val existing = store.rows("SELECT source_hash,source_section,source_id,source_number,invoice_date,currency,target_number,total_minor,paid_minor,outstanding_minor FROM $table WHERE target_id=?",
                         m.getString("targetId")).singleOrNull()
                     require(existing != null &&
+                        existing.getValue("source_hash")==sourceHash &&
+                        existing.getValue("source_section")==section &&
+                        existing.getValue("source_id")==m.getString("sourceId") &&
+                        existing.getValue("source_number")==m.getString("sourceNumber") &&
+                        existing.getValue("invoice_date")==m.getString("date") &&
+                        existing.getValue("currency")==m.getString("currency") &&
                         existing.getValue("target_number").toLong()==m.getLong("targetNumber") &&
                         existing.getValue("total_minor").toLong()==minor(m.getString("total")) &&
                         existing.getValue("paid_minor").toLong()==minor(m.getString("paid")) &&
