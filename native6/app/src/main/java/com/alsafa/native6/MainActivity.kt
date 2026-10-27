@@ -2614,6 +2614,19 @@ open class MainActivity:Activity() {
                 })
             }
         }
+        button("تجهيز الفواتير القديمة محلياً دون ترحيل نقد") {
+            work(refresh=false) {
+                try {
+                    val result=LegacyInvoiceStaging.stage(store)
+                    runOnUiThread { if(!isFinishing&&!isDestroyed) AlertDialog.Builder(this)
+                        .setTitle("تجهيز الفواتير القديمة")
+                        .setMessage("تم التحقق من "+result.getInt("staged")+" فاتورة.\n"+
+                            "التجهيز السابق: "+result.getBoolean("alreadyStaged")+"\n"+
+                            "لم يتم تسجيل نقد أو مخزون أو قيود مالية.")
+                        .setPositiveButton("إغلاق",null).show() }
+                } catch(e:Exception) { runOnUiThread { if(!isFinishing&&!isDestroyed)error(e) } }
+            }
+        }
         button("تقرير جاهزية الترحيل المالي") {
             work(refresh=false) {
                 try {
