@@ -3649,30 +3649,19 @@ button("＋ مورد"){form("مورد جديد"){box->val n=field("الاسم",b
                 val problem=field("المشكلة",box)
                 // Fast repair intake: one tap selects a common service while
                 // leaving the description fully editable for unusual repairs.
-                val quickRow=LinearLayout(this).apply {
-                    orientation=LinearLayout.HORIZONTAL
-                    layoutDirection=View.LAYOUT_DIRECTION_RTL
-                }
-                box.addView(quickRow,LinearLayout.LayoutParams(-1,-2))
-                listOf("تبديل بطارية","تبديل حزام","تعديل حزام","تبديل زجاج","تبديل ماكينة","تنظيف الساعة")
-                    .chunked(3).forEachIndexed { rowIndex,services ->
-                        val target=if(rowIndex==0) quickRow else LinearLayout(this).apply {
-                            orientation=LinearLayout.HORIZONTAL
-                            layoutDirection=View.LAYOUT_DIRECTION_RTL
-                            box.addView(this,LinearLayout.LayoutParams(-1,-2))
-                        }
-                        services.forEach { label ->
-                            val shortcut=Button(this).apply {
-                                style(this);text=label;textSize=11f;isAllCaps=false
-                                minHeight=dp(44)
-                                setOnClickListener {
-                                    problem.setText(label)
-                                    problem.setSelection(problem.text.length)
-                                }
-                            }
-                            target.addView(shortcut,LinearLayout.LayoutParams(0,dp(46),1f))
+                val quickServices=listOf("اختر خدمة شائعة","تبديل بطارية","تبديل حزام",
+                    "تعديل حزام","تبديل زجاج","تبديل ماكينة","تنظيف الساعة")
+                val servicePicker=select("خدمة سريعة (اختياري)",quickServices,box)
+                servicePicker.onItemSelectedListener=object:android.widget.AdapterView.OnItemSelectedListener {
+                    override fun onNothingSelected(parent:android.widget.AdapterView<*>?) {}
+                    override fun onItemSelected(parent:android.widget.AdapterView<*>?,view:View?,
+                                                position:Int,id:Long) {
+                        if(position>0) {
+                            problem.setText(quickServices[position])
+                            problem.setSelection(problem.text.length)
                         }
                     }
+                }
                 val date=field("تاريخ الاستلام YYYY-MM-DD",box,Store.today())
                 intakePhotoStatus=TextView(this).also { it.text="لم تُضف صورة";box.addView(it) }
                 intakePhotoPreview=ImageView(this).also { preview ->
