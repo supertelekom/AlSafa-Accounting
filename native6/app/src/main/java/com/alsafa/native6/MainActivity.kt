@@ -2614,6 +2614,19 @@ open class MainActivity:Activity() {
                 })
             }
         }
+        button("تقرير جاهزية الترحيل المالي") {
+            work(refresh=false) {
+                try {
+                    val report=LegacyFinancialReadiness.inspect(store)
+                    val blockers=report.getJSONArray("blockers")
+                    val lines=(0 until minOf(20,blockers.length())).joinToString("\n") { i -> blockers.optString(i) }
+                    runOnUiThread { if(!isFinishing&&!isDestroyed) AlertDialog.Builder(this)
+                        .setTitle("جاهزية الحسابات القديمة")
+                        .setMessage("العوائق: "+blockers.length()+"\n"+lines+"\nلم يتم الترحيل المالي.")
+                        .setPositiveButton("إغلاق",null).show() }
+                } catch(e:Exception) { runOnUiThread { if(!isFinishing&&!isDestroyed)error(e) } }
+            }
+        }
         button("فحص روابط المدفوعات والمرتجعات القديمة") {
             work(refresh=false) {
                 try {
