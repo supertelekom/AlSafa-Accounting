@@ -2271,7 +2271,8 @@ open class MainActivity:Activity() {
             }
         }
         text("البحث في الفواتير",size=20f).setTextColor(gold)
-        val query=field("الاسم أو الهاتف أو المنتج أو تفاصيل الصيانة",body)
+        val query=field("رقم الفاتورة أو الاسم أو الهاتف أو المنتج",body)
+        text("بدون بحث: فواتير التاريخ المحدد. عند الكتابة: البحث في جميع التواريخ كما في الصفا القديم.",body,12f)
         val dateFilters=column()
         val fromDate=field("من تاريخ YYYY-MM-DD",dateFilters,Store.today())
         val toDate=field("إلى تاريخ YYYY-MM-DD",dateFilters,Store.today())
