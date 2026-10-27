@@ -2013,6 +2013,13 @@ open class MainActivity:Activity() {
         first.addView(status)
         panel.addView(first)
         text(inv.party.ifBlank { "عميل نقدي" },panel,14f).setTextColor(ink)
+        if(inv.kind=="sale") {
+            val items=store.rows(
+                "SELECT name,qty FROM invoice_lines WHERE invoice_id=? ORDER BY line LIMIT 6",inv.id)
+            if(items.isNotEmpty()) {
+                text(items.joinToString("، ") { it.getValue("name")+" × "+it.getValue("qty") },panel,12f)
+            }
+        }
         if(inv.kind=="sale" || inv.kind=="repair") {
             val issued=store.rows("SELECT date FROM events WHERE id=?",inv.id).firstOrNull()
             if(issued!=null)text("تاريخ الفاتورة: "+issued.getValue("date"),panel,12f)
