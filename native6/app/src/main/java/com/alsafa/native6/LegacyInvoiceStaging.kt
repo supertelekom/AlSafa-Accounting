@@ -30,6 +30,16 @@ object LegacyInvoiceStaging {
     private fun minor(value:String):Long =
         value.toBigDecimal().movePointRight(2).longValueExact()
 
+    fun inspect(store:Store):JSONObject {
+        val exists = store.scalar("SELECT count(*) FROM sqlite_master WHERE type='table' AND name='legacy_invoice_staging'") > 0L
+        if (!exists) return JSONObject().put("staged",0).put("exists",false).put("posted",false)
+        val rows = store.rows("SELECT source_section,currency,count(*) AS invoice_count,sum(total_minor) AS total_minor,sum(paid_minor) AS paid_minor,sum(outstanding_minor) AS outstanding_minor FROM legacy_invoice_staging GROUP BY source_section,currency ORDER BY source_section,currency")
+        val groups = org.json.JSONArray()
+        for (row in rows) groups.put(JSONObject(row))
+        return JSONObject().put("exists",true).put("staged",store.scalar("SELECT count(*) FROM legacy_invoice_staging"))
+            .put("groups",groups).put("posted",false)
+    }
+
     fun stage(store:Store):JSONObject = store.transaction {
         val plan = LegacyInvoiceMigrationPlan.inspect(store)
         require(plan.optBoolean("identitySafe")) {
