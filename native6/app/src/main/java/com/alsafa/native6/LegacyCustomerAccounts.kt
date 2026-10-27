@@ -95,7 +95,7 @@ object LegacyCustomerAccounts {
         // decimal subledger until an explicit precision policy is approved.
         var opened=0
         var fractional=0
-        for(row in store.rows("SELECT archive_id,currency,total_exact,paid_at_import_exact FROM $table")) {
+        for(row in if(archiveId==null) store.rows("SELECT archive_id,currency,total_exact,paid_at_import_exact FROM $table") else store.rows("SELECT archive_id,currency,total_exact,paid_at_import_exact FROM $table WHERE archive_id=?",archiveId)) {
             val key=row.getValue("archive_id")
             val currency=row.getValue("currency")
             val due=amount(row.getValue("total_exact"))
@@ -139,7 +139,7 @@ object LegacyCustomerAccounts {
         return due
     }
     /** Reconcile every posted collection against its two immutable journal lines. */
-    fun reconcile(store:Store):JSONObject {
+    fun reconcile(store:Store,archiveId:String?=null):JSONObject {
         val exists=store.scalar("SELECT count(*) FROM sqlite_master WHERE type='table' AND name='$table'")
         if(exists==0L) return JSONObject().put("activated",false).put("invoices",0)
         val issues=org.json.JSONArray()
@@ -218,7 +218,7 @@ object LegacyCustomerAccounts {
         val currency=invoice.getValue("currency")
         val amount=BigDecimal.valueOf(minor,2)
         val due=outstanding(store,archiveId)
-        val reconciliation=reconcile(store)
+        val reconciliation=reconcile(store,archiveId)
         require(reconciliation.optBoolean("reconciled")) {
             "توجد فروقات في دفتر ذمم العملاء؛ أوقفت القبض حتى تصحيحها"
         }
