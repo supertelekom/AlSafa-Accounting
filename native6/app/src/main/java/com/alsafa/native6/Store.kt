@@ -844,6 +844,7 @@ class Store(val helper:StoreDb) {
                 val invoice=JSONObject(record.getValue("payload"))
                 val total=invoice.optString("total").toBigDecimalOrNull() ?: continue
                 val paid=invoice.optString("paid","0").toBigDecimalOrNull() ?: continue
+                if(total.signum()<=0 || paid.signum()<0 || paid>total) continue
                 val remaining=total.subtract(paid)
                 if(remaining.signum()<=0) continue
                 val name=invoice.optString("customer",invoice.optString("customerName"))
