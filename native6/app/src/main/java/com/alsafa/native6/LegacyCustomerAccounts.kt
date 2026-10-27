@@ -216,6 +216,17 @@ object LegacyCustomerAccounts {
             "لا يمكن إدخال قبض بتاريخ أقدم من آخر قبض مسجل"
         }
         val currency=invoice.getValue("currency")
+        val source=store.legacyRecord("sales",archiveId)
+            ?: error("فاتورة المبيع الأصلية مفقودة من الأرشيف")
+        val hash=java.security.MessageDigest.getInstance("SHA-256")
+            .digest(source.getValue("payload").toByteArray(Charsets.UTF_8))
+            .joinToString("") { "%02x".format(it.toInt() and 255) }
+        val originalHash=store.rows(
+            "SELECT source_payload_hash FROM $table WHERE archive_id=?",archiveId
+        ).single().getValue("source_payload_hash")
+        require(hash==originalHash) {
+            "مصدر فاتورة المبيع لا يطابق الذمة المفعلة؛ أوقفت القبض"
+        }
         val amount=BigDecimal.valueOf(minor,2)
         val due=outstanding(store,archiveId)
         val reconciliation=reconcile(store,archiveId)
