@@ -528,6 +528,34 @@ open class MainActivity:Activity() {
                     }
                 }.show()
         }
+        button("كشف تداخل ديون الموردين وفواتير الشراء",body) {
+            work {
+                val report=LegacySupplierOverlap.inspect(store)
+                val groups=report.getJSONArray("groups")
+                val message=buildString {
+                    append("مجموعات الموردين ذات التداخل المحتمل: ")
+                    append(report.getInt("groupsWithPossibleOverlap"))
+                    append("\\nفواتير دون معرف مورد: ")
+                    append(report.getJSONArray("unidentifiedPurchaseInvoices").length())
+                    append("\\n\\n")
+                    for(i in 0 until groups.length()) {
+                        val row=groups.getJSONObject(i)
+                        append(row.optString("supplierName").ifBlank { row.optString("supplierId") })
+                        append(" / ").append(row.optString("currency"))
+                        append("\\nفواتير الشراء: ").append(row.optString("purchaseInvoiceOutstanding"))
+                        append(" | دفتر المورد: ").append(row.optString("supplierLedgerNet"))
+                        if(row.optBoolean("possibleOverlap")) append(" — تداخل محتمل")
+                        append("\\n\\n")
+                    }
+                    append("لا تُجمع الأرصدة تلقائياً، ولا تُنشأ قيود مالية من هذا الكشف.")
+                }
+                runOnUiThread {
+                    if(!isFinishing&&!isDestroyed) AlertDialog.Builder(this)
+                        .setTitle("مطابقة تداخل ديون الموردين")
+                        .setMessage(message).setPositiveButton("إغلاق",null).show()
+                }
+            }
+        }
         button("أرصدة الموردين الافتتاحية المستقلة",body) {
             work {
                 val report=LegacySupplierOpeningDebts.snapshot(store)
