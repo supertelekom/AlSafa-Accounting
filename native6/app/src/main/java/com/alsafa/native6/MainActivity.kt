@@ -1520,6 +1520,65 @@ open class MainActivity:Activity() {
     }
     private fun sale(){
         sectionHeading("فاتورة مبيعات","اختر الأصناف، راجع السلة ثم احفظ الفاتورة")
+        button("سجل المبيعات القديمة المستعادة — بحث وعرض") {
+            form("فواتير المبيع المستعادة","إغلاق"){box->
+                val search=field("رقم الفاتورة أو اسم العميل أو الهاتف أو الساعة",box)
+                val from=field("من تاريخ YYYY-MM-DD (اختياري)",box)
+                val to=field("إلى تاريخ YYYY-MM-DD (اختياري)",box)
+                val results=column()
+                val pageLabel=TextView(this).apply { style(this);textSize=13f }
+                val controls=LinearLayout(this).apply {
+                    orientation=LinearLayout.HORIZONTAL
+                    layoutDirection=View.LAYOUT_DIRECTION_RTL
+                }
+                val previous=Button(this).apply { style(this);text="السابق";isAllCaps=false }
+                val next=Button(this).apply { style(this);text="التالي";isAllCaps=false }
+                val searchButton=Button(this).apply { style(this);text="بحث";isAllCaps=false }
+                box.addView(searchButton,LinearLayout.LayoutParams(-1,dp(46)))
+                controls.addView(previous,LinearLayout.LayoutParams(0,dp(44),1f))
+                controls.addView(pageLabel,LinearLayout.LayoutParams(0,dp(44),1f))
+                controls.addView(next,LinearLayout.LayoutParams(0,dp(44),1f))
+                box.addView(controls)
+                box.addView(results)
+                var pageIndex=0
+                fun load() {
+                    val index=pageIndex
+                    val term=search.text.toString().trim()
+                    val start=from.text.toString().trim()
+                    val end=to.text.toString().trim()
+                    work {
+                        val page=LegacyInvoiceSnapshot.page(store,"sales",start,end,term,index*20,20)
+                        val rows=page.getJSONArray("rows")
+                        val count=page.getInt("total")
+                        runOnUiThread {
+                            if(isFinishing||isDestroyed)return@runOnUiThread
+                            results.removeAllViews()
+                            pageLabel.text="${index+1} / ${maxOf(1,(count+19)/20)}"
+                            previous.isEnabled=index>0
+                            next.isEnabled=(index+1)*20<count
+                            text("عدد الفواتير المطابقة: $count",results,13f)
+                            for(i in 0 until rows.length()) {
+                                val invoice=rows.getJSONObject(i)
+                                val card=column().apply { setPadding(dp(12),dp(8),dp(12),dp(8));background=background(paper,12) }
+                                text("#"+invoice.optString("invoiceNo")+" · "+invoice.optString("date"),card,15f)
+                                text(invoice.optString("customer")+" · "+invoice.optString("phone"),card,14f)
+                                text("الإجمالي: "+invoice.optString("total")+" "+invoice.optString("currency")+
+                                    " · المدفوع: "+invoice.optString("paid")+" · المتبقي: "+invoice.optString("outstanding"),card,13f)
+                                button("عرض الفاتورة وبنودها",card) { showRestoredInvoiceOptions("sales",invoice) }
+                                results.addView(card)
+                            }
+                            if(rows.length()==0)text("لا توجد فواتير مطابقة.",results,14f)
+                        }
+                    }
+                }
+                searchButton.setOnClickListener { pageIndex=0;load() }
+                previous.setOnClickListener { if(pageIndex>0){pageIndex--;load()} }
+                next.setOnClickListener { pageIndex++;load() }
+                load()
+                text("الفواتير المستعادة للعرض فقط؛ لا تُسجل مبيعات أو قبضاً جديداً.",box,12f)
+                ({})
+            }
+        }
         button("إضافة أصناف إلى الفاتورة ▾") {
             val actions=arrayOf("اختيار ساعة من المنتجات","اختيار قطعة صيانة للبيع","مسح باركود الصنف")
             AlertDialog.Builder(this).setTitle("طريقة إضافة الصنف")
