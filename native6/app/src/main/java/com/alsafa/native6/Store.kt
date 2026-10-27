@@ -1293,6 +1293,10 @@ class Store(val helper:StoreDb) {
         }.singleOrNull { it.optString("id").trim()==legacyId }
             ?: throw IllegalArgumentException("الفاتورة القديمة غير موجودة أو مكررة")
         require(source.optString("currency")==currency.name){"عملة الذمة لا تطابق النسخة الأصلية"}
+        val status=source.optString("paymentStatus").trim()
+        require(status !in setOf("مدفوع بالكامل","مسوّاة/مسترجعة","ملغاة","مسترجعة")) {
+            "حالة الفاتورة القديمة تتعارض مع تفعيل دين العميل"
+        }
         val originalTotal=source.optString("total").toBigDecimalOrNull()
         val originalPaid=source.optString("paid").toBigDecimalOrNull()
         require(originalTotal!=null && originalPaid!=null &&
