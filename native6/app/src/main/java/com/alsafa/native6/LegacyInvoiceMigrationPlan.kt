@@ -29,12 +29,20 @@ object LegacyInvoiceMigrationPlan {
                 val sourceId = original.optString("id").trim()
                 val number = original.optString("number").trim()
                 val targetId = "legacy:$section:$sourceId"
+                val currency = original.optString("currency").trim()
+                val date = original.optString("date").take(10)
+                val total = original.optString("total").toBigDecimalOrNull()
                 val detail = JSONObject().put("section", section)
                     .put("sourceId", sourceId).put("sourceNumber", number)
                     .put("targetId", targetId)
                 if (sourceId.isBlank() || !seenIds.add(targetId)) {
                     invalid.put(detail.put("reason", "missing_or_duplicate_id"))
                     continue
+                }
+                if (currency !in setOf("USD", "TRY", "SYP") ||
+                    runCatching { java.time.LocalDate.parse(date) }.isFailure ||
+                    total == null || total.signum() < 0 || total.stripTrailingZeros().scale() > 2) {
+                    invalid.put(JSONObject(detail.toString()).put("reason", "invalid_financial_fields"))
                 }
                 if (number.isNotBlank() && !seenNumbers.add(number)) {
                     collisions.put(JSONObject(detail.toString()).put("reason", "shared_legacy_number"))
