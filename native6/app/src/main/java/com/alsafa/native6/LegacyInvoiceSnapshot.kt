@@ -79,23 +79,24 @@ object LegacyInvoiceSnapshot {
         val outstanding=linkedMapOf<String,BigDecimal>()
         val query=term.trim()
         require(query.length<=200) { "عبارة البحث طويلة جداً" }
+        var invalidRecords=0
         for(row in all) {
             val original=JSONObject(row.getValue("payload"))
             val invoiceId=original.optString("id").trim()
-            require(invoiceId.isNotEmpty() && seenInvoiceIds.add(invoiceId)) {
-                "معرف فاتورة تاريخية مفقود أو مكرر: $section"
-            }
             val date=original.optString("date").take(10)
-            require(runCatching { java.time.LocalDate.parse(date) }.isSuccess) {
-                "تاريخ فاتورة تاريخية غير صالح: $invoiceId"
-            }
-            val currency=original.optString("currency","USD")
-            require(currency in setOf("USD","TRY","SYP")){"عملة فاتورة قديمة غير معروفة: $invoiceId"}
-            val total=original.optString("total","0").toBigDecimalOrNull()
-            val paid=original.optString("paid","0").toBigDecimalOrNull()
-            require(total!=null && paid!=null && total>=BigDecimal.ZERO &&
-                paid>=BigDecimal.ZERO && paid<=total){"قيمة فاتورة قديمة غير صالحة: $invoiceId"}
-            val remaining=total-paid
+            val currency=original.optString("currency","")
+            val total=original.optString("total","").toBigDecimalOrNull()
+            val paid=original.optString("paid","").toBigDecimalOrNull()
+            val validId=invoiceId.isNotEmpty() && seenInvoiceIds.add(invoiceId)
+            val validDate=runCatching { java.time.LocalDate.parse(date) }.isSuccess
+            val validCurrency=currency in setOf("USD","TRY","SYP")
+            val validMoney=total!=null && paid!=null && total>=BigDecimal.ZERO &&
+                paid>=BigDecimal.ZERO && paid<=total
+            val financiallyValid=validId && validDate && validCurrency && validMoney
+            if(!financiallyValid) invalidRecords++
+            // Keep damaged source invoices visible for identification and repair.
+            // Never include them in financial totals or permit settlement.
+            val remaining=if(validMoney) total!!-paid!! else BigDecimal.ZERO
             if(from.isNotBlank() && (date.isBlank() || date<from)) continue
             if(to.isNotBlank() && (date.isBlank() || date>to)) continue
             if(query.isNotBlank()) {
@@ -110,14 +111,17 @@ object LegacyInvoiceSnapshot {
                 }
                 if(!found && !itemFound) continue
             }
-            outstanding[currency]=(outstanding[currency] ?: BigDecimal.ZERO)+remaining
+            if(financiallyValid) outstanding[currency]=(outstanding[currency] ?: BigDecimal.ZERO)+remaining
             matches.add(JSONObject().put("archiveKey",row.getValue("legacy_id"))
                 .put("id",original.optString("id")).put("invoiceNo",original.optString("invoiceNo").ifBlank { original.optString("number") })
                 .put("date",date).put("customer",original.optString("customer").ifBlank { original.optString("customerName") })
                 .put("phone",original.optString("phone").ifBlank { original.optString("customerPhone").ifBlank { original.optString("supplierPhone") } })
                 .put("supplierName",original.optString("supplierName"))
-                .put("currency",currency).put("total",total.toPlainString())
-                .put("paid",paid.toPlainString()).put("outstanding",remaining.toPlainString())
+                .put("currency",currency).put("total",total?.toPlainString() ?: original.optString("total"))
+                .put("paid",paid?.toPlainString() ?: original.optString("paid"))
+                .put("outstanding",if(financiallyValid) remaining.toPlainString() else "")
+                .put("financiallyValid",financiallyValid)
+                .put("validationIssue",if(financiallyValid) "" else "تتطلب الفاتورة مراجعة معرفها أو تاريخها أو عملتها أو مبالغها")
                 .put("paymentStatus",original.optString("paymentStatus"))
                 .put("isSimplifiedSale",section=="sales" && original.optString("customer").isBlank() && original.optString("customerName").isBlank() && original.optString("phone").isBlank())
                 .put("readOnly",true))
@@ -131,6 +135,7 @@ object LegacyInvoiceSnapshot {
             .thenByDescending { it.optString("id") })
         matches.drop(offset).take(limit).forEach { page.put(it) }
         return JSONObject().put("section",section).put("total",matches.size)
+            .put("invalidSourceRecords",invalidRecords)
             .put("offset",offset).put("limit",limit).put("rows",page)
             .put("outstandingByCurrency",totals)
             .put("balanceBasis","ORIGINAL_INVOICE_CUMULATIVE_PAID")
