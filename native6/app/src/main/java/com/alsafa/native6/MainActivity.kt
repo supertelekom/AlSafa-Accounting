@@ -2132,7 +2132,7 @@ open class MainActivity:Activity() {
                         store.collect(inv.id,amount,vault,date)
                     }
                 }
-                operation("مرتجع / استبدال") { returnForm(inv) }
+                operation("مرتجع جزئي") { returnForm(inv) }
                 panel.addView(operations)
             }
         }
