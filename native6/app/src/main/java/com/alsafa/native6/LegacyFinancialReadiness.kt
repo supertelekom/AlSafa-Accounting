@@ -27,7 +27,10 @@ object LegacyFinancialReadiness {
                 if (count > 0) blockers.put("$field: $count")
             }
         }
+        val eligible = gate.optBoolean("financialActive", false) &&
+            linkage.getOrNull()?.optBoolean("complete", false) == true && blockers.length() == 0
         return JSONObject()
+            .put("preflightPassed", eligible)
             .put("canActivate", false)
             .put("requiresAtomicPosting", true)
             .put("archiveIsOperationalLedger", false)
