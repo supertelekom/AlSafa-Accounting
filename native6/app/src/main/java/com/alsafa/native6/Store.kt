@@ -1310,6 +1310,56 @@ class Store(val helper:StoreDb) {
         insert("settings","key" to key,"value" to command)
         command
     }
+    /**
+     * Activate ALL outstanding archived sales in one SQLite transaction.
+     * This is deliberately opt-in: never call automatically during a trial
+     * restore, and never replay closed historical sales or old receipts.
+     */
+    fun activateLegacyCustomerBalances(cutoverDate:String):Map<String,Long>=transaction {
+        val day=LocalDate.parse(cutoverDate)
+        require(!day.isAfter(LocalDate.now())){"تاريخ الانتقال في المستقبل"}
+        require(scalar("SELECT count(*) FROM events") == 0L) {
+            "تفعيل أرصدة العملاء يتطلب قاعدة دون عمليات مالية جديدة"
+        }
+        val sources=legacyRows("sales").map { JSONObject(it.getValue("payload")) }
+        val seen=HashSet<String>()
+        data class Opening(val sourceId:String,val party:String,val phone:String,
+                           val currency:Currency,val amount:Long)
+        val openings=mutableListOf<Opening>()
+        for(source in sources) {
+            val sourceId=source.optString("id").trim()
+            require(sourceId.isNotBlank() && seen.add(sourceId)) {
+                "معرف فاتورة قديمة مفقود أو مكرر"
+            }
+            val total=source.optString("total").toBigDecimalOrNull()
+            val paid=source.optString("paid").toBigDecimalOrNull()
+            require(total!=null && paid!=null && total>=java.math.BigDecimal.ZERO &&
+                paid>=java.math.BigDecimal.ZERO && paid<=total) {
+                "قيمة أو مدفوع فاتورة قديمة غير صالح"
+            }
+            val due=total.subtract(paid).setScale(2,java.math.RoundingMode.HALF_UP)
+                .movePointRight(2).longValueExact()
+            if(due==0L) continue
+            val currency=runCatching { Currency.valueOf(source.optString("currency")) }
+                .getOrElse { throw IllegalArgumentException("عملة فاتورة قديمة غير مدعومة") }
+            val party=source.optString("customerName").ifBlank {
+                source.optString("customer").ifBlank { source.optString("party") }
+            }.trim()
+            require(party.isNotBlank()){"اسم العميل مفقود في فاتورة غير مسددة"}
+            val phone=source.optString("customerPhone").ifBlank {
+                source.optString("phone")
+            }
+            openings.add(Opening(sourceId,party,phone,currency,due))
+        }
+        var total=0L
+        for(opening in openings) {
+            openLegacyReceivable(opening.sourceId,opening.party,opening.phone,
+                opening.currency,opening.amount,day.toString())
+            total=Math.addExact(total,opening.amount)
+        }
+        mapOf("activated" to openings.size.toLong(),"minorUnitsTotal" to total)
+    }
+
     private fun collectInternal(invoiceId:String,amount:Long,v:String,date:String,command:String) {
         val inv=invoice(invoiceId);require(inv.kind=="sale" || inv.kind=="repair"){"القبض متاح لفواتير المبيع والصيانة فقط"};require(inv.status=="posted" && amount>0 && amount<=due(invoiceId)){"الدفعة تتجاوز المتبقي أو الفاتورة ملغاة"};require(!LocalDate.parse(date).isAfter(LocalDate.now())){"تاريخ التحصيل في المستقبل"};require(!LocalDate.parse(date).isBefore(LocalDate.parse(rows("SELECT date FROM events WHERE id=?",invoiceId).single().getValue("date")))){"تاريخ التحصيل يسبق الفاتورة"};require(amount<=invoiceCollectibleOn(invoiceId,date)){"الدفعة تتجاوز الذمة المتاحة بتاريخها أو في يوم لاحق"};vault(v)
         event(command,"RECEIPT",date,"قبض فاتورة ${inv.number}");insert("receipts","event_id" to command,"invoice_id" to invoiceId,"amount" to amount,"vault" to v)
