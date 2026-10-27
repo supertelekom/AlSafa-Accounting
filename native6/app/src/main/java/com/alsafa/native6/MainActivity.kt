@@ -2566,6 +2566,46 @@ open class MainActivity:Activity() {
                 } catch(e:Exception) { runOnUiThread { if(!isFinishing&&!isDestroyed)error(e) } } } })
             }
         }
+        button("الحركات المالية القديمة: مرتجعات ومدفوعات ومصاريف وإقفالات") {
+            form("سجل الحركات المالية المستعادة","عرض"){box->
+                val types=listOf("cashTransactions","payments","returns","dailyClosings")
+                val labels=listOf("الحركات النقدية والمصاريف","المدفوعات","المرتجعات","الإقفالات والمدوّر")
+                val type=select("نوع الحركة",labels,box)
+                val from=field("من تاريخ YYYY-MM-DD (اختياري)",box)
+                val to=field("إلى تاريخ YYYY-MM-DD (اختياري)",box)
+                ({
+                    val section=types[type.selectedItemPosition]
+                    val start=from.text.toString().trim()
+                    val end=to.text.toString().trim()
+                    work(refresh=false) {
+                        try {
+                            val result=LegacyFinancialActivity.page(store,section,start,end,0,50)
+                            val records=result.getJSONArray("records")
+                            val lines=(0 until records.length()).joinToString("\n\n"){i->
+                                val entry=records.getJSONObject(i)
+                                val record=entry.getJSONObject("record")
+                                entry.optString("date")+" · "+
+                                    record.optString("kind").ifBlank {record.optString("type")}+
+                                    " · "+record.optString("amount").ifBlank {record.optString("total")}+
+                                    " "+record.optString("currency")+
+                                    " · "+record.optString("note").ifBlank {record.optString("description")}
+                            }
+                            val message="عدد الحركات: "+result.optInt("total")+"\n\n"+
+                                (if(lines.isBlank())"لا توجد حركات" else lines)+
+                                (if(result.optInt("total")>50)"\nتظهر أول 50 حركة؛ حدد فترة أقصر." else "")+
+                                "\n\nالحركات محفوظة دون إعادة تسجيل مالي."
+                            runOnUiThread {
+                                if(!isFinishing&&!isDestroyed) AlertDialog.Builder(this)
+                                    .setTitle(labels[type.selectedItemPosition])
+                                    .setMessage(message).setPositiveButton("إغلاق",null).show()
+                            }
+                        } catch(e:Exception) {
+                            runOnUiThread { if(!isFinishing&&!isDestroyed)error(e) }
+                        }
+                    }
+                })
+            }
+        }
         button("مطابقة الخزنات والسحوبات والمصاريف المستعادة") {
             work {
                 try {
