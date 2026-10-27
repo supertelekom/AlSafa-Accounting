@@ -38,8 +38,9 @@ internal object SaleInvoiceFilter {
         val q = normalize(query)
         val start = from?.takeIf { it.isNotBlank() }
         val end = to?.takeIf { it.isNotBlank() }
-        require(start == null || runCatching { LocalDate.parse(start) }.isSuccess)
-        require(end == null || runCatching { LocalDate.parse(end) }.isSuccess)
+        require(runCatching { LocalDate.parse(selectedDay) }.isSuccess) { "Invalid selected day" }
+        require(start == null || runCatching { LocalDate.parse(start) }.isSuccess) { "Invalid start date" }
+        require(end == null || runCatching { LocalDate.parse(end) }.isSuccess) { "Invalid end date" }
         require(start == null || end == null || start <= end) { "Invalid date range" }
         return rows.asSequence().filter { row ->
             val dateMatches = when {
