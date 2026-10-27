@@ -17,10 +17,11 @@ object LegacyArchiveBrowser {
              offset:Int=0,limit:Int=50):JSONObject {
         require(section in sections){"قسم الأرشيف غير معروف"}
         require(offset>=0 && limit in 1..200){"حجم الصفحة غير صالح"}
+        require(query.length<=200){"عبارة البحث طويلة جداً"}
         if(from.isNotBlank()) java.time.LocalDate.parse(from)
         if(to.isNotBlank()) java.time.LocalDate.parse(to)
         require(from.isBlank() || to.isBlank() || from<=to){"نهاية الفترة تسبق بدايتها"}
-        val rows=store.rows("SELECT legacy_id,payload FROM legacy_records WHERE category=? ORDER BY CAST(substr(legacy_id,1,instr(legacy_id,':')-1) AS INTEGER)",section)
+        val rows=store.legacyRows(section)
         val filtered=rows.mapNotNull { row ->
             val data=JSONObject(row.getValue("payload"))
             val date=data.optString("date").take(10)
@@ -53,7 +54,8 @@ object LegacyArchiveBrowser {
 
     fun get(store:Store,section:String,archiveKey:String):JSONObject? {
         require(section in sections)
-        return store.rows("SELECT payload FROM legacy_records WHERE category=? AND legacy_id=?",
-            section,archiveKey).firstOrNull()?.get("payload")?.let(::JSONObject)
+        require(archiveKey.isNotBlank())
+        return store.legacyRows(section).firstOrNull { it.getValue("legacy_id")==archiveKey }
+            ?.get("payload")?.let(::JSONObject)
     }
 }
