@@ -2369,6 +2369,13 @@ open class MainActivity:Activity() {
         filters.addView(kindBox,LinearLayout.LayoutParams(0,-2,1f))
         filters.addView(statusBox,LinearLayout.LayoutParams(0,-2,1f))
         body.addView(filters)
+        button("مسح البحث وعرض فواتير اليوم") {
+            query.setText("")
+            fromDate.setText(Store.today())
+            toDate.setText(Store.today())
+            kind.setSelection(if(defaultKind=="sale")1 else 0)
+            status.setSelection(0)
+        }
         val output=column().apply{setPadding(0,dp(8),0,dp(8))}
         body.addView(output)
         val pageSize=50
