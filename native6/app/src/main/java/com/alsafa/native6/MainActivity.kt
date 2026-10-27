@@ -315,6 +315,12 @@ open class MainActivity:Activity() {
                         percent.text="100%"
                         status.text="اكتملت الاستعادة والتحقق"
                         dialog.dismiss()
+                        AlertDialog.Builder(this@MainActivity)
+                            .setTitle("تم استيراد البيانات المتاحة")
+                            .setMessage("تم نقل البيانات التي يدعمها المحوّل الحالي. الفواتير التاريخية والديون والخزنات وأرباح الشركاء لا تزال محفوظة للقراءة فقط، وليست عمليات تشغيلية. لا تعتمد الأرصدة قبل إكمال الترحيل المحاسبي.")
+                            .setPositiveButton("فحص البيانات المستعادة"){_,_->go("legacy-audit")}
+                            .setNegativeButton("إغلاق",null)
+                            .show()
                     }
                 }
             } catch(e:Throwable) {
