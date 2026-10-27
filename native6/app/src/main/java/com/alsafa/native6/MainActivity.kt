@@ -546,7 +546,11 @@ open class MainActivity:Activity() {
                         append(item["party"].orEmpty().ifBlank { "عميل غير مسمى" })
                         append(" · ").append(item["remaining_exact"]).append(" ")
                         append(item["currency"]).append("\\n")
-                        append(if(item["source"]=="legacy") "نسخة قديمة — التحصيل غير مفعل" else "فاتورة Native 6")
+                        if(item["source"]=="legacy") {
+                            append(if(item["collectionEnabled"]=="true")
+                                "نسخة قديمة — الذمة مفعلة" else "نسخة قديمة — الذمة غير مفعلة")
+                            append("\\nمعرف الفاتورة للتحصيل: ").append(item["id"])
+                        } else append("فاتورة Native 6")
                         append("\\n\\n")
                     }
                     if(items.isEmpty()) append("لا توجد ديون في هذه الصفحة.")
