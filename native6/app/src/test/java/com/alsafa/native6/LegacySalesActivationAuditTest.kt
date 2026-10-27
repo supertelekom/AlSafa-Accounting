@@ -11,7 +11,7 @@ class LegacySalesActivationAuditTest {
             .put("data", JSONObject().put("products", products).put("sales", sales))
 
     private fun sale(id: String, paid: String, productId: String): JSONObject =
-        JSONObject().put("id", id).put("total", "25.00").put("paid", paid)
+        JSONObject().put("id", id).put("invoiceNo", if (paid == "30.00") 1 else if (paid == "5") 2 else 3).put("currency", "USD").put("total", "25.00").put("paid", paid)
             .put("items", JSONArray().put(JSONObject().put("productId", productId).put("qty", 1)))
 
     @Test fun validUnpaidSaleCanBeReconciledWithoutPosting() {
