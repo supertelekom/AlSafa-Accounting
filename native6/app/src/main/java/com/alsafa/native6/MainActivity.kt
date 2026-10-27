@@ -2014,6 +2014,11 @@ open class MainActivity:Activity() {
         panel.addView(first)
         text(inv.party.ifBlank { "عميل نقدي" },panel,14f).setTextColor(ink)
         if(inv.kind=="sale") {
+            val phone=store.rows("SELECT phone FROM invoices WHERE id=?",inv.id)
+                .firstOrNull()?.get("phone").orEmpty()
+            if(phone.isNotBlank())text("هاتف العميل: "+phone,panel,12f)
+        }
+        if(inv.kind=="sale") {
             val items=store.rows(
                 "SELECT name,qty FROM invoice_lines WHERE invoice_id=? ORDER BY line LIMIT 6",inv.id)
             if(items.isNotEmpty()) {
