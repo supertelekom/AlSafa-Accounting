@@ -76,7 +76,47 @@ object LegacyWholeBackupAudit {
         // invoices. Report them, but never silently rewrite the source snapshot.
         check("payments", "referenceId", invoices)
         check("returns", "referenceId", invoices)
-        return JSONObject().put("counts", counts).put("issues", problems)
+        // Verify financial snapshot invariants without replaying historical
+        // receipts, withdrawals or stock movements into the native ledger.
+        val financial = JSONObject()
+        var outstandingSales = 0
+        var outstandingPurchases = 0
+        for (section in listOf("sales", "purchases")) {
+            val rows = data.optJSONArray(section) ?: continue
+            var totalMinor = 0L
+            var paidMinor = 0L
+            var validRows = 0
+            for (i in 0 until rows.length()) {
+                val row = rows.optJSONObject(i) ?: continue
+                val total = row.optString("total").toBigDecimalOrNull()
+                val paid = row.optString("paid").toBigDecimalOrNull()
+                val currency = row.optString("currency")
+                if (total == null || paid == null ||
+                    total.signum() < 0 || paid.signum() < 0 ||
+                    paid > total || currency !in setOf("USD", "TRY", "SYP")) {
+                    problems.put(JSONObject().put("section", section).put("row", i)
+                        .put("reason", "invalid_financial_balance"))
+                    continue
+                }
+                // Do not add mixed currencies together. Each invoice is
+                // reconciled independently and kept in its original currency.
+                validRows++
+                if (paid < total) {
+                    if (section == "sales") outstandingSales++ else outstandingPurchases++
+                }
+            }
+            financial.put(section + "Validated", validRows)
+        }
+        financial.put("outstandingSalesCount", outstandingSales)
+            .put("outstandingPurchasesCount", outstandingPurchases)
+        val historicalSections = listOf("sales", "purchases", "payments",
+            "cashTransactions", "partnerWithdrawals", "dailyClosings",
+            "expenses", "supplierLedger", "returns")
+        val preserved = JSONObject()
+        for (section in historicalSections) {
+            preserved.put(section, data.optJSONArray(section)?.length() ?: 0)
+        }
+        return JSONObject().put("financial", financial).put("preservedHistoricalCounts", preserved).put("counts", counts).put("issues", problems)
             .put("issueCount", problems.length())
             .put("readyForUnreviewedPosting", false)
             .put("financialPosting", "NONE")
