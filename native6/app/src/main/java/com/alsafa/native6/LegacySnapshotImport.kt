@@ -113,7 +113,9 @@ object LegacySnapshotImport {
         val d=root.getJSONObject("data")
         val manifest=LegacyRestoreManifest.inspectData(root,payload)
         val readiness=LegacyRestoreReadiness.inspectRoot(root)
+        val salesAudit=LegacySalesActivationAudit.inspect(root)
         val blocking=LegacyImportPreflight.inspectInventoryData(d).size
+        val salesActivationIssues=salesAudit.getJSONArray("issues").length()
         val roundedPrices=listOf("products","maintenanceParts").sumOf { section ->
             val items=d.getJSONArray(section)
             (0 until items.length()).sumOf { i ->
@@ -149,7 +151,7 @@ object LegacySnapshotImport {
         val repairs=d.getJSONArray("repairs")
         val openingWorksheet=runCatching { LegacyFinancialOpeningReport.summaryRoot(root) }
             .getOrElse { "تعذرت مطابقة الديون التاريخية: ${it.message}. ستظل البيانات المالية محفوظة دون تفعيل." }
-        return LegacyBackupFreshness.summaryRoot(root) + "\n" + openingWorksheet + "\n" + "جاهزية أرشفة النسخة: ${if(readiness.getBoolean("archiveImportPermitted")) "نعم" else "لا"}، عوائق التفعيل المالي: ${readiness.getInt("financialBlockerCount")}، حركات نقدية ذات كسور دقيقة: $vaultPrecisionWarnings، التفعيل المالي: غير مسموح قبل المطابقة. أخطاء الاستيراد: $blocking، قيم أسعار ستُقرب للسنت مع حفظ الأصل: $roundedPrices، تحذيرات مالية مؤرشفة: $warnings، فروقات إقفال فعلية: $cashIssues، تواريخ إقفال غير صالحة: $invalidClosingDates، تواريخ إقفال مكررة: $duplicateClosingDates، دفعات تحتاج مطابقة مرجع: $brokenPaymentLinks، دفعات بعملة قبض مختلفة: $crossCurrencyPaymentCount، دفعات مطابقة لحركات النقد: $matchedCashPayments، غير مطابقة: $unmatchedCashPayments، ملتبسة: $ambiguousCashPayments، مرتجعات تحتاج مطابقة مرجع: $brokenReturnLinks، سداد موردين مطابق للخزنة: $matchedSupplierPayments، غير مطابق: $unmatchedSupplierPayments. بصمة النسخة: ${manifest.getString("sha256").take(16)}…، إجمالي السجلات: ${manifest.getLong("recordCount")}. مخزون الساعات: ${products.length()}، قطع الصيانة: ${parts.length()}، الموردون: ${suppliers.length()}، سجل الصيانة: ${repairs.length()}. " +
+        return LegacyBackupFreshness.summaryRoot(root) + "\n" + openingWorksheet + "\n" + "جاهزية أرشفة النسخة: ${if(readiness.getBoolean("archiveImportPermitted")) "نعم" else "لا"}، عوائق التفعيل المالي: ${readiness.getInt("financialBlockerCount")}، حركات نقدية ذات كسور دقيقة: $vaultPrecisionWarnings، التفعيل المالي: غير مسموح قبل المطابقة. عوائق ربط فواتير المبيع: $salesActivationIssues، أخطاء الاستيراد: $blocking، قيم أسعار ستُقرب للسنت مع حفظ الأصل: $roundedPrices، تحذيرات مالية مؤرشفة: $warnings، فروقات إقفال فعلية: $cashIssues، تواريخ إقفال غير صالحة: $invalidClosingDates، تواريخ إقفال مكررة: $duplicateClosingDates، دفعات تحتاج مطابقة مرجع: $brokenPaymentLinks، دفعات بعملة قبض مختلفة: $crossCurrencyPaymentCount، دفعات مطابقة لحركات النقد: $matchedCashPayments، غير مطابقة: $unmatchedCashPayments، ملتبسة: $ambiguousCashPayments، مرتجعات تحتاج مطابقة مرجع: $brokenReturnLinks، سداد موردين مطابق للخزنة: $matchedSupplierPayments، غير مطابق: $unmatchedSupplierPayments. بصمة النسخة: ${manifest.getString("sha256").take(16)}…، إجمالي السجلات: ${manifest.getLong("recordCount")}. مخزون الساعات: ${products.length()}، قطع الصيانة: ${parts.length()}، الموردون: ${suppliers.length()}، سجل الصيانة: ${repairs.length()}. " +
             "سيُنقل المخزون والموردون والصيانة، وتُحفظ الفواتير والحركات القديمة كأرشيف قابل للقراءة فقط، دون احتسابها في الأرصدة أو الأرباح."
     }
     /**
