@@ -40,6 +40,9 @@ object LegacyInvoiceMigrationPlan {
                     invalid.put(detail.put("reason", "missing_or_duplicate_id"))
                     continue
                 }
+                if (number.isNotBlank() && (number.toLongOrNull() == null || number.toLong() <= 0L)) {
+                    invalid.put(JSONObject(detail.toString()).put("reason", "invalid_invoice_number"))
+                }
                 if (currency !in setOf("USD", "TRY", "SYP") ||
                     runCatching { java.time.LocalDate.parse(date) }.isFailure ||
                     total == null || total.signum() < 0 || total.stripTrailingZeros().scale() > 2 ||
