@@ -33,7 +33,7 @@ object LegacyInvoiceMigrationPlan {
             for (row in source) {
                 val original = JSONObject(row.getValue("payload"))
                 val sourceId = original.optString("id").trim()
-                val number = original.optString("number").trim()
+                val number = original.optString("invoiceNo").ifBlank { original.optString("number") }.trim()
                 val targetId = "legacy:$section:$sourceId"
                 val currency = original.optString("currency").trim()
                 val date = original.optString("date").take(10)
@@ -50,7 +50,7 @@ object LegacyInvoiceMigrationPlan {
                     invalid.put(detail.put("reason", "missing_or_duplicate_id"))
                     continue
                 }
-                if (number.isNotBlank() && (number.toLongOrNull() == null || number.toLong() <= 0L)) {
+                if (number.isNotBlank() && (number.toLongOrNull() == null || number.toLongOrNull()!! <= 0L)) {
                     invalid.put(JSONObject(detail.toString()).put("reason", "invalid_invoice_number"))
                 }
                 if (currency !in setOf("USD", "TRY", "SYP") ||
