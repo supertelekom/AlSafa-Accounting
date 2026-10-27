@@ -528,6 +528,31 @@ open class MainActivity:Activity() {
                     }
                 }.show()
         }
+        button("الوضع المالي التشغيلي للذمم والخزنات",body) {
+            work {
+                val snapshot=LegacyOperationalBalances.snapshot(store)
+                val message=buildString {
+                    append("ديون العملاء المستعادة: ")
+                    append(snapshot.getJSONObject("customerOutstandingExact").toString(2))
+                    append("\\n\\nديون فواتير الموردين: ")
+                    append(snapshot.getJSONObject("purchasePayablesExact").toString(2))
+                    append("\\n\\nالخزنات حسب العملة: ")
+                    append(snapshot.getJSONObject("cashByVault").toString(2))
+                    append("\\n\\nفواتير العملاء: ").append(snapshot.getLong("customerInvoices"))
+                    append(" | فواتير الموردين: ").append(snapshot.getLong("supplierPurchaseInvoices"))
+                    append("\\nمطابقة العملاء: ")
+                    append(if(snapshot.getJSONObject("customerReconciliation").optBoolean("reconciled")) "مطابق" else "غير مكتمل أو غير مطابق")
+                    append("\\nمطابقة الموردين: ")
+                    append(if(snapshot.getJSONObject("supplierReconciliation").optBoolean("reconciled")) "مطابق" else "غير مكتمل أو غير مطابق")
+                    append("\\n\\nتنبيه: رصيد دفتر المورد القديم المنفصل غير مضاف لتجنب التكرار.")
+                }
+                runOnUiThread {
+                    if(!isFinishing&&!isDestroyed) AlertDialog.Builder(this)
+                        .setTitle("الوضع المالي التشغيلي")
+                        .setMessage(message).setPositiveButton("إغلاق",null).show()
+                }
+            }
+        }
         button("تفعيل ذمم فواتير الشراء القديمة",body) {
             AlertDialog.Builder(this).setTitle("تفعيل ديون فواتير الموردين")
                 .setMessage("يُنشأ دفتر ذمم افتتاحي لفواتير الشراء دون تكرار المخزون أو النقد السابق. أرصدة دفتر الموردين المنفصلة لا تُجمع تلقائياً.")
