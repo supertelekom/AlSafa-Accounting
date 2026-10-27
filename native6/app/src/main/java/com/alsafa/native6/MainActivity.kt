@@ -528,6 +528,90 @@ open class MainActivity:Activity() {
                     }
                 }.show()
         }
+        button("تفعيل ذمم فواتير الشراء القديمة",body) {
+            AlertDialog.Builder(this).setTitle("تفعيل ديون فواتير الموردين")
+                .setMessage("يُنشأ دفتر ذمم افتتاحي لفواتير الشراء دون تكرار المخزون أو النقد السابق. أرصدة دفتر الموردين المنفصلة لا تُجمع تلقائياً.")
+                .setNegativeButton("إلغاء",null)
+                .setPositiveButton("تفعيل") { _,_ ->
+                    work {
+                        val result=LegacySupplierInvoices.activate(store)
+                        runOnUiThread {
+                            if(!isFinishing&&!isDestroyed) AlertDialog.Builder(this)
+                                .setTitle("ذمم الموردين")
+                                .setMessage("الفواتير: "+result.getInt("invoices")+
+                                    "\\nالجديدة: "+result.getInt("newAccounts")+
+                                    "\\nالقيود الافتتاحية: "+result.getInt("openingEntries")+
+                                    "\\nكسور أصغر من قرش: "+result.getInt("subCentRemainders"))
+                                .setPositiveButton("إغلاق",null).show()
+                        }
+                    }
+                }.show()
+        }
+        val supplierDebtSearch=field("بحث في ديون فواتير الموردين القديمة",body)
+        val supplierDebtPage=field("صفحة ديون الموردين (تبدأ من 1)",body,"1",true)
+        button("عرض ديون فواتير الموردين القديمة",body) {
+            val query=supplierDebtSearch.text.toString().trim()
+            val requestedPage=supplierDebtPage.text.toString().trim()
+            work {
+                val page=requestedPage.toIntOrNull() ?: 1
+                require(page in 1..10000) { "رقم الصفحة غير صالح" }
+                val rows=LegacySupplierInvoices.page(store,query,50,(page-1)*50)
+                val message=buildString {
+                    append("صفحة ").append(page).append(" — ").append(rows.size).append(" فاتورة\\n\\n")
+                    for(row in rows) {
+                        append("#").append(row["invoice_number"]).append(" · ")
+                        append(row["supplier_name"].orEmpty().ifBlank { "مورد غير مسمى" })
+                        append("\\nالمتبقي: ").append(row["remaining_exact"]).append(" ")
+                        append(row["currency"])
+                        append("\\nالمعرف: ").append(row["archive_id"]).append("\\n\\n")
+                    }
+                    if(rows.isEmpty()) append("لا توجد ذمم مطابقة.")
+                }
+                runOnUiThread {
+                    if(!isFinishing&&!isDestroyed) AlertDialog.Builder(this)
+                        .setTitle("ديون فواتير الموردين القديمة")
+                        .setMessage(message).setPositiveButton("إغلاق",null).show()
+                }
+            }
+        }
+        val oldSupplierInvoice=field("معرف فاتورة شراء قديمة للدفع",body)
+        val oldSupplierAmount=field("مبلغ الدفع بعملة الفاتورة",body)
+        val oldSupplierVault=select("الخزنة التي ستدفع منها",listOf("drawer","external","sham","bank"),body)
+        button("دفع ذمة فاتورة شراء قديمة",body) {
+            val invoiceId=oldSupplierInvoice.text.toString().trim()
+            val amountText=oldSupplierAmount.text.toString().trim()
+            val vault=oldSupplierVault.selectedItem.toString()
+            AlertDialog.Builder(this).setTitle("تأكيد دفع المورد")
+                .setMessage("ستُخصم الدفعة من الخزنة المختارة ويُخفّض دين فاتورة الشراء القديمة.")
+                .setNegativeButton("إلغاء",null)
+                .setPositiveButton("تسجيل الدفع") { _,_ ->
+                    work {
+                        val minor=amountText.toBigDecimal().movePointRight(2).longValueExact()
+                        val remaining=LegacySupplierInvoices.pay(store,invoiceId,minor,vault)
+                        runOnUiThread {
+                            if(!isFinishing&&!isDestroyed) AlertDialog.Builder(this)
+                                .setTitle("تم تسجيل دفع المورد")
+                                .setMessage("المتبقي: "+remaining.toPlainString())
+                                .setPositiveButton("إغلاق",null).show()
+                        }
+                    }
+                }.show()
+        }
+        button("مطابقة ذمم الموردين مع القيود",body) {
+            work {
+                val result=LegacySupplierInvoices.reconcile(store)
+                val message=if(!result.optBoolean("activated")) "لم تُفعّل ذمم الموردين القديمة بعد."
+                    else "الفواتير: "+result.optInt("invoices")+
+                        "\\nالدفعات الجديدة: "+result.optInt("newPayments")+
+                        "\\nالمطابقة: "+(if(result.optBoolean("reconciled")) "متطابقة" else "توجد فروقات")+
+                        "\\nالتفاصيل: "+result.optJSONArray("issues")
+                runOnUiThread {
+                    if(!isFinishing&&!isDestroyed) AlertDialog.Builder(this)
+                        .setTitle("مطابقة ذمم الموردين")
+                        .setMessage(message).setPositiveButton("إغلاق",null).show()
+                }
+            }
+        }
         val unifiedDebtSearch=field("بحث في ديون العملاء (اسم / هاتف / رقم فاتورة)",body)
         val unifiedDebtPage=field("صفحة ديون العملاء (تبدأ من 1)",body,"1",true)
         button("ديون العملاء الحالية والقديمة",body) {
