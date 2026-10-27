@@ -36,6 +36,9 @@ object LegacyInvoiceMigrationPlan {
                 val detail = JSONObject().put("section", section)
                     .put("sourceId", sourceId).put("sourceNumber", number)
                     .put("targetId", targetId)
+                if (number.isBlank()) {
+                    invalid.put(JSONObject(detail.toString()).put("reason", "missing_invoice_number"))
+                }
                 if (sourceId.isBlank() || !seenIds.add(targetId)) {
                     invalid.put(detail.put("reason", "missing_or_duplicate_id"))
                     continue
