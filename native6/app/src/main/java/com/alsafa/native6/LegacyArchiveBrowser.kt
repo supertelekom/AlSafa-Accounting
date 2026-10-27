@@ -55,7 +55,6 @@ object LegacyArchiveBrowser {
     fun get(store:Store,section:String,archiveKey:String):JSONObject? {
         require(section in sections)
         require(archiveKey.isNotBlank())
-        return store.legacyRows(section).firstOrNull { it.getValue("legacy_id")==archiveKey }
-            ?.get("payload")?.let(::JSONObject)
+        return store.legacyRecord(section,archiveKey)?.get("payload")?.let(::JSONObject)
     }
 }
