@@ -116,6 +116,13 @@ object LegacyCustomerAccounts {
         val currency=invoice.getValue("currency")
         val amount=BigDecimal.valueOf(minor,2)
         val due=outstanding(store,archiveId)
+        // Do not allow a receipt to drive the journal's legacy receivable account
+        // negative. Opening receivables must be posted and reconciled first.
+        val opening=store.scalar("SELECT coalesce(sum(amount),0) FROM journal WHERE account=? AND currency=?",
+            "legacy_receivable:$archiveId",currency)
+        require(opening>=minor) {
+            "لم يُثبت الرصيد الافتتاحي لهذه الذمة في دفتر القيود؛ تم إيقاف القبض لحماية الحسابات"
+        }
         require(amount<=due) { "الدفعة تتجاوز المتبقي" }
         require(store.scalar("SELECT count(*) FROM $receipts WHERE id=?",command)==0L) { "رقم قبض مستخدم" }
         // Legacy receivables are a separate subledger: cash is real, offset is a
