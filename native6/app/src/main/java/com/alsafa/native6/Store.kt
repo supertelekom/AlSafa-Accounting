@@ -845,7 +845,9 @@ class Store(val helper:StoreDb) {
                 val total=invoice.optString("total").toBigDecimalOrNull() ?: continue
                 val paid=invoice.optString("paid","0").toBigDecimalOrNull() ?: continue
                 if(total.signum()<=0 || paid.signum()<0 || paid>total) continue
-                val remaining=total.subtract(paid)
+                val activated=scalar("SELECT count(*) FROM sqlite_master WHERE type='table' AND name='legacy_customer_accounts'")>0L &&
+                    scalar("SELECT count(*) FROM legacy_customer_accounts WHERE archive_id=?",record.getValue("legacy_id"))>0L
+                val remaining=if(activated) LegacyCustomerAccounts.outstanding(this,record.getValue("legacy_id")) else total.subtract(paid)
                 if(remaining.signum()<=0) continue
                 val name=invoice.optString("customer",invoice.optString("customerName"))
                 val phone=invoice.optString("phone")
@@ -856,7 +858,7 @@ class Store(val helper:StoreDb) {
                     "number" to number,"party" to name,"phone" to phone,
                     "currency" to invoice.optString("currency"),
                     "remaining_exact" to remaining.toPlainString(),
-                    "collectionEnabled" to "false"))
+                    "collectionEnabled" to activated.toString()))
             }
         }
         return results.drop(offset).take(limit)
