@@ -64,7 +64,7 @@ object LegacyInvoiceStaging {
 
     fun stage(store:Store):JSONObject = store.transaction {
         val plan = LegacyInvoiceMigrationPlan.inspect(store)
-        require(plan.optBoolean("identitySafe")) {
+        require(plan.optBoolean("stagingReady")) {
             "يجب إصلاح تعارضات ومعرفات الفواتير القديمة قبل تجهيز الترحيل"
         }
         val sourceHash = plan.getString("sourceSha256")
