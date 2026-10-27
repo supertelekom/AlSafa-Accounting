@@ -18,6 +18,16 @@ object LegacyFinancialActivationGate {
             .put("financialActive",true)
         val meta=JSONObject(raw)
         val status=meta.optString("financialPostingStatus","NOT_POSTED")
+        // Metadata alone cannot certify a financial migration. Require an explicit
+        // reconciliation receipt tied to the original immutable backup digest.
+        val receipt=meta.optJSONObject("financialActivationReceipt")
+        val sourceDigest=meta.optString("sourceSha256")
+        val receiptValid=receipt!=null &&
+            receipt.optString("sourceSha256")==sourceDigest &&
+            sourceDigest.isNotBlank() &&
+            receipt.optBoolean("balancesVerified",false) &&
+            receipt.optBoolean("allMovementsLinked",false) &&
+            receipt.optBoolean("noDuplicatePosting",false)
         val cashVerified=meta.optBoolean("cashContinuityVerified",false)
         val journalCount=store.scalar("SELECT count(*) FROM journal")
         val invoiceCount=store.scalar("SELECT count(*) FROM invoices")
@@ -26,6 +36,7 @@ object LegacyFinancialActivationGate {
         val blockers=org.json.JSONArray()
         if(status!="POSTED_AND_RECONCILED") blockers.put("الفواتير والمدفوعات القديمة لم تُرحّل محاسبياً")
         if(!cashVerified) blockers.put("لم تُطابق أرصدة الخزنات والمدوّر")
+        if(!receiptValid) blockers.put("لا يوجد محضر مطابقة مالية موثق مرتبط ببصمة النسخة الأصلية")
         if(warnings>0) blockers.put("يوجد $warnings تحذيراً في التاريخ المالي")
         if(legacyCount==0L) blockers.put("السجلات المالية المصدر غير متاحة")
         // Validate each required financial collection before allowing an active ledger.
@@ -47,6 +58,7 @@ object LegacyFinancialActivationGate {
             .put("financialActive",blockers.length()==0)
             .put("financialPostingStatus",status)
             .put("cashContinuityVerified",cashVerified)
+            .put("activationReceiptVerified",receiptValid)
             .put("legacyRecordCount",legacyCount)
             .put("financialSectionCounts",sectionCounts)
             .put("nativeInvoiceCount",invoiceCount)
