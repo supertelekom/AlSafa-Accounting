@@ -1274,7 +1274,12 @@ class Store(val helper:StoreDb) {
     fun openLegacyReceivable(
         legacyId:String,party:String,phone:String,currency:Currency,
         remaining:Long,cutoverDate:String
-    ):String=transaction {
+    ):String=transaction { openLegacyReceivableInternal(legacyId,party,phone,currency,remaining,cutoverDate) }
+
+    private fun openLegacyReceivableInternal(
+        legacyId:String,party:String,phone:String,currency:Currency,
+        remaining:Long,cutoverDate:String
+    ):String {
         require(legacyId.isNotBlank() && legacyId.length<=200){"معرف الفاتورة القديمة غير صالح"}
         require(remaining>0L && party.isNotBlank()){"رصيد العميل الافتتاحي غير صالح"}
         val day=LocalDate.parse(cutoverDate)
@@ -1353,7 +1358,7 @@ class Store(val helper:StoreDb) {
         }
         var total=0L
         for(opening in openings) {
-            openLegacyReceivable(opening.sourceId,opening.party,opening.phone,
+            openLegacyReceivableInternal(opening.sourceId,opening.party,opening.phone,
                 opening.currency,opening.amount,day.toString())
             total=Math.addExact(total,opening.amount)
         }
