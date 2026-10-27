@@ -24,7 +24,7 @@ object LegacyFinancialActivity {
             val record = JSONObject(row.getValue("payload"))
             val date = listOf("actualDate", "date", "paidAt", "createdAt", "deliveredAt")
                 .map { record.optString(it).take(10) }
-                .firstOrNull { it.length == 10 && it[4] == '-' && it[7] == '-' } ?: ""
+                .firstOrNull { value -> runCatching { java.time.LocalDate.parse(value) }.isSuccess } ?: ""
             JSONObject().put("archiveKey", row.getValue("legacy_id"))
                 .put("date", date).put("record", record)
         }.filter { row ->
