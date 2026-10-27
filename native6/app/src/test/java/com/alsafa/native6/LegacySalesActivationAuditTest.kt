@@ -39,9 +39,9 @@ class LegacySalesActivationAuditTest {
         val result = LegacySalesActivationAudit.inspect(backup(
             JSONArray().put(JSONObject().put("id", "p1")),
             JSONArray().put(first).put(second)))
-        assertFalse(result.getBoolean("activationPermitted"))
-        assertEquals("duplicate_or_missing_invoice_number",
-            result.getJSONArray("issues").getJSONObject(0).getString("reason"))
+        assertTrue(result.getBoolean("activationPermitted"))
+        assertEquals("duplicate_display_invoice_number",
+            result.getJSONArray("warnings").getJSONObject(0).getString("reason"))
     }
 
     @Test fun overpaidInvoiceAndDuplicateIdAreRejected() {
