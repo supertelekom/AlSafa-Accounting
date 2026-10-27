@@ -560,6 +560,22 @@ open class MainActivity:Activity() {
                 }
             }
         }
+        button("تفعيل ذمم النسخة القديمة دفعة واحدة",body) {
+            work {
+                val result=LegacyOperationalMigration.activate(store)
+                val customer=result.getJSONObject("customerReconciliation")
+                val supplier=result.getJSONObject("supplierReconciliation")
+                val message="تم تفعيل ذمم العملاء والموردين معاً. " +
+                    "فواتير العملاء: "+customer.optInt("invoices")+
+                    "، فواتير الموردين: "+supplier.optInt("invoices")+
+                    ". لم تُكرر عمليات النقد أو المخزون أو الأرباح القديمة."
+                runOnUiThread {
+                    if(!isFinishing&&!isDestroyed) AlertDialog.Builder(this)
+                        .setTitle("تفعيل الذمم التشغيلية")
+                        .setMessage(message).setPositiveButton("إغلاق",null).show()
+                }
+            }
+        }
         button("أرصدة الموردين الافتتاحية المستقلة",body) {
             work {
                 val report=LegacySupplierOpeningDebts.snapshot(store)
