@@ -77,7 +77,7 @@ object LegacyInvoiceSnapshot {
         val matches=mutableListOf<JSONObject>()
         val seenInvoiceIds=hashSetOf<String>()
         val outstanding=linkedMapOf<String,BigDecimal>()
-        val query=term.trim()
+        val query=SaleInvoiceFilter.normalize(term)
         require(query.length<=200) { "عبارة البحث طويلة جداً" }
         var invalidRecords=0
         for(row in all) {
@@ -103,12 +103,12 @@ object LegacyInvoiceSnapshot {
             if(to.isNotBlank() && (date.isBlank() || date>to)) continue
             if(query.isNotBlank()) {
                 val fields=listOf("invoiceNo","number","customer","phone","supplierName","supplierInvoice","notes","id","reference","customerName","supplierId","customerId","customerPhone","supplierPhone","invoiceNumber","productName")
-                val found=fields.any { original.optString(it).contains(query,true) }
+                val found=fields.any { SaleInvoiceFilter.normalize(original.optString(it)).contains(query) }
                 val items=original.optJSONArray("items")
                 val itemFound=items!=null && (0 until items.length()).any { index ->
                     val item=items.optJSONObject(index)
                     item!=null && listOf("name","productName","barcode","sku","model","productId").any {
-                        item.optString(it).contains(query,true)
+                        SaleInvoiceFilter.normalize(item.optString(it)).contains(query)
                     }
                 }
                 if(!found && !itemFound) continue
