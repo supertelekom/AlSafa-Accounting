@@ -469,6 +469,34 @@ open class MainActivity:Activity() {
             "حساب الموردين","سحوبات الشركاء","المصاريف","المرتجعات","الإقفالات اليومية",
             "حركات المخزون","تاريخ تكلفة المنتجات","سجل التدقيق","سجل الولاء",
             "الإيصالات الذكية","قواعد الخصومات","خيارات تفاصيل المنتجات")
+        val unifiedDebtSearch=field("بحث في ديون العملاء (اسم / هاتف / رقم فاتورة)",body)
+        val unifiedDebtPage=field("صفحة ديون العملاء (تبدأ من 1)",body,"1",true)
+        button("ديون العملاء الحالية والقديمة",body) {
+            work {
+                val page=unifiedDebtPage.text.toString().trim().toIntOrNull() ?: 1
+                require(page in 1..10000) { "رقم الصفحة غير صالح" }
+                val items=store.unifiedCustomerDebts(
+                    query=unifiedDebtSearch.text.toString().trim(),
+                    limit=50,offset=(page-1)*50)
+                val message=buildString {
+                    append("صفحة ").append(page).append(" — ").append(items.size).append(" فاتورة\\n\\n")
+                    for (item in items) {
+                        append("#").append(item["number"]).append(" · ")
+                        append(item["party"].orEmpty().ifBlank { "عميل غير مسمى" })
+                        append(" · ").append(item["remaining_exact"]).append(" ")
+                        append(item["currency"]).append("\\n")
+                        append(if(item["source"]=="legacy") "نسخة قديمة — التحصيل غير مفعل" else "فاتورة Native 6")
+                        append("\\n\\n")
+                    }
+                    if(items.isEmpty()) append("لا توجد ديون في هذه الصفحة.")
+                }
+                runOnUiThread {
+                    if(!isFinishing&&!isDestroyed) AlertDialog.Builder(this)
+                        .setTitle("ديون العملاء — عرض موحد")
+                        .setMessage(message).setPositiveButton("إغلاق",null).show()
+                }
+            }
+        }
         button("ديون العملاء والموردين القديمة حسب الاسم",body) {
             work {
                 val message=LegacyCounterpartyDebt.summary(store)
