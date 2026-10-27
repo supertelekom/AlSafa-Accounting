@@ -16,6 +16,7 @@ object LegacyInvoiceMigrationPlan {
         val proposed = JSONArray()
         val totals = JSONObject()
         val totalsBySection = JSONObject()
+        val proposedBySection = JSONObject()
         val countsBySection = JSONObject()
         val existing = store.rows("SELECT id,number FROM invoices")
         val existingIds = existing.map { it.getValue("id") }.toSet()
@@ -28,6 +29,7 @@ object LegacyInvoiceMigrationPlan {
                 "عدد الفواتير القديمة غير مطابق: $section"
             }
             countsBySection.put(section, source.size)
+            val sectionProposals = JSONArray()
             for (row in source) {
                 val original = JSONObject(row.getValue("payload"))
                 val sourceId = original.optString("id").trim()
@@ -86,14 +88,18 @@ object LegacyInvoiceMigrationPlan {
                     sectionTotals.put(currency, sectionCurrency)
                     totalsBySection.put(section, sectionTotals)
                 }
-                proposed.put(detail.put("currency", currency).put("date", date)
+                val proposal = detail.put("currency", currency).put("date", date)
                     .put("total", original.optString("total"))
-                    .put("paid", original.optString("paid")))
+                    .put("paid", original.optString("paid"))
+                proposed.put(proposal)
+                sectionProposals.put(proposal)
             }
+            proposedBySection.put(section, sectionProposals)
         }
         return JSONObject().put("sourceSha256", meta.optString("sourceSha256"))
             .put("invoiceCount", proposed.length())
             .put("invoiceCountsBySection", countsBySection)
+            .put("invoiceMappings", proposedBySection)
             .put("financialTotalsByCurrency", totals)
             .put("financialTotalsBySection", totalsBySection)
             .put("invalid", invalid).put("collisions", collisions)
