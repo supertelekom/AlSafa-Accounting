@@ -204,7 +204,12 @@ object LegacySupplierInvoices {
             "legacy_payable:$key",currency)
         require(balance<= -minor) { "رصيد المورد في دفتر القيود غير كاف" }
         // Do not permit an overdraft on a cash account from a historical supplier payment.
-        require(store.balance(vault,Currency.valueOf(currency))>=minor) { "رصيد الخزنة غير كاف" }
+        val currentBalance=store.balance(vault,Currency.valueOf(currency))
+        require(currentBalance>=minor) { "رصيد الخزنة غير كاف" }
+        val earlierCash=store.scalar(
+            "SELECT coalesce(sum(j.amount),0) FROM journal j JOIN events e ON e.id=j.event_id WHERE j.account=? AND j.currency=? AND e.date<=?",
+            "cash:$vault",currency,day.toString())
+        require(earlierCash>=minor) { "رصيد الخزنة بتاريخ الدفعة غير كاف" }
         store.insert("events","id" to command,"kind" to "LEGACY_SUPPLIER_PAYMENT",
             "date" to day.toString(),"created" to System.currentTimeMillis(),
             "memo" to "دفع فاتورة شراء قديمة $key")
