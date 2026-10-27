@@ -15,7 +15,31 @@ object LegacyCustomerDebtReconciliation {
     fun inspect(root: JSONObject): JSONObject {
         require(root.optString("format") == "alsafa-accounting-backup" &&
             root.optInt("formatVersion") == 2)
-        val sales = root.getJSONObject("data").getJSONArray("sales")
+        val data = root.getJSONObject("data")
+        val sales = data.getJSONArray("sales")
+        val paymentsBySale = HashMap<String, BigDecimal>()
+        val returnsBySale = HashMap<String, BigDecimal>()
+        val payments = data.optJSONArray("payments") ?: JSONArray()
+        for (i in 0 until payments.length()) {
+            val payment = payments.optJSONObject(i) ?: continue
+            if (payment.optString("referenceType") != "sale") continue
+            val ref = payment.optString("referenceId")
+            val amount = payment.optString("amount").toBigDecimalOrNull() ?: continue
+            val currency = payment.optString("currency")
+            val sale = (0 until sales.length()).asSequence().map { sales.getJSONObject(it) }
+                .firstOrNull { it.optString("id") == ref } ?: continue
+            if (sale.optString("currency") != currency || amount.signum() < 0) continue
+            paymentsBySale[ref] = (paymentsBySale[ref] ?: BigDecimal.ZERO).add(amount)
+        }
+        val returns = data.optJSONArray("returns") ?: JSONArray()
+        for (i in 0 until returns.length()) {
+            val item = returns.optJSONObject(i) ?: continue
+            if (item.optString("referenceType") != "sale") continue
+            val ref = item.optString("referenceId")
+            val amount = item.optString("debtReduction").toBigDecimalOrNull() ?: continue
+            if (amount.signum() < 0) continue
+            returnsBySale[ref] = (returnsBySale[ref] ?: BigDecimal.ZERO).add(amount)
+        }
         val conflicts = JSONArray()
         val candidates = JSONArray()
         var settledConflicts = 0
@@ -31,21 +55,26 @@ object LegacyCustomerDebtReconciliation {
                     .put("sourceId", sale.optString("id")).put("reason", "invalid_amounts"))
                 continue
             }
-            val due = total.subtract(paid)
-            if (due.signum() == 0) continue
+            val ref = sale.optString("id")
+            val explicitCollections = paymentsBySale[ref] ?: BigDecimal.ZERO
+            val returnedCredit = returnsBySale[ref] ?: BigDecimal.ZERO
+            val due = total.subtract(paid.max(explicitCollections)).subtract(returnedCredit)
+            if (due.signum() <= 0) continue
             val status = sale.optString("paymentStatus").trim()
             val reason = when {
-                status in settled -> {
-                    settledConflicts++
-                    "settled_status_with_positive_due"
-                }
+                status in settled && explicitCollections.signum() == 0 &&
+                    returnedCredit.signum() == 0 -> "settled_status_without_matching_payments"
+                status in settled -> "settled_status_with_unexplained_balance"
                 else -> ""
             }
+            if (reason.isNotEmpty()) settledConflicts++
             val record = JSONObject().put("index", i)
                 .put("sourceId", sale.optString("id"))
                 .put("invoiceNo", sale.optString("invoiceNo"))
                 .put("status", status).put("currency", sale.optString("currency"))
                 .put("remaining", due.toPlainString())
+                .put("linkedPayments", explicitCollections.toPlainString())
+                .put("returnedDebtReduction", returnedCredit.toPlainString())
             if (reason.isEmpty()) candidates.put(record)
             else conflicts.put(record.put("reason", reason))
         }
