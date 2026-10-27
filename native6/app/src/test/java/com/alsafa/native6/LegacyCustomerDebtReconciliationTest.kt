@@ -27,10 +27,11 @@ class LegacyCustomerDebtReconciliationTest {
         assertFalse(result.getBoolean("safeForAutomaticActivation"))
     }
 
-    @Test fun unknownCustomerBlocksActivation() {
+    @Test fun anonymousCustomerIsAllowed() {
         val result = LegacyCustomerDebtReconciliation.inspect(
             root(invoice("a", "دفعة جزئية", "", "25")))
-        assertEquals(1, result.getInt("missingCustomerConflicts"))
+        assertEquals(1, result.getInt("candidateCount"))
+        assertEquals(0, result.getInt("conflictCount"))
     }
 
     @Test fun validUnpaidCustomerIsCandidateButNotPosted() {
