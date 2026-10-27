@@ -2325,13 +2325,16 @@ open class MainActivity:Activity() {
             text("جارٍ تحميل الفواتير...",output,14f)
             val requestedPage=pageIndex
             val requestedTerm=query.text.toString().trim()
+            // Legacy sales search spans all dates once the customer types a query.
+            val effectiveStart=if(requestedTerm.isNotBlank()) "" else start
+            val effectiveEnd=if(requestedTerm.isNotBlank()) "" else end
             val requestedKind=kinds[kind.selectedItemPosition]
             val requestedStatus=statuses[status.selectedItemPosition]
             work {
                 try {
                     val fetched=store.searchInvoices(requestedTerm,requestedKind,
                         requestedStatus,limit=pageSize+1,
-                        startDate=start,endDate=end,offset=offset)
+                        startDate=effectiveStart,endDate=effectiveEnd,offset=offset)
             val hasNext=fetched.size>pageSize
             val results=fetched.take(pageSize)
             val dates=if(results.isEmpty()) emptyMap<String,String>() else {
@@ -2394,7 +2397,7 @@ open class MainActivity:Activity() {
                 work {
                     try {
                         val pages=sectionKeys.map { key ->
-                            key to LegacyInvoiceSnapshot.page(store,key,start,end,term,0,50)
+                            key to LegacyInvoiceSnapshot.page(store,key,effectiveStart,effectiveEnd,term,0,50)
                         }
                         runOnUiThread {
                             if(isFinishing||isDestroyed || restored.parent==null ||
