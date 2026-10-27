@@ -2109,6 +2109,32 @@ open class MainActivity:Activity() {
             action("طباعة"){printInvoice(inv)}
             action("مشاركة"){shareInvoicePdf(inv)}
             panel.addView(quickActions)
+            if(inv.status=="posted") {
+                val operations=LinearLayout(this).apply {
+                    orientation=LinearLayout.HORIZONTAL
+                    layoutDirection=View.LAYOUT_DIRECTION_RTL
+                }
+                fun operation(title:String,perform:()->Unit) {
+                    val control=Button(this).apply {
+                        style(this)
+                        text=title
+                        textSize=12f
+                        isAllCaps=false
+                        background=background(sand,9)
+                        setOnClickListener { if(!busy)perform() }
+                    }
+                    operations.addView(control,LinearLayout.LayoutParams(0,dp(43),1f).apply {
+                        setMargins(dp(2),dp(3),dp(2),0)
+                    })
+                }
+                if(store.due(inv.id)>0L)operation("قبض دفعة") {
+                    paymentForm("قبض دين",inv.currency,store.due(inv.id)) { amount,vault,date ->
+                        store.collect(inv.id,amount,vault,date)
+                    }
+                }
+                operation("مرتجع / استبدال") { returnForm(inv) }
+                panel.addView(operations)
+            }
         }
         parent.addView(panel,LinearLayout.LayoutParams(-1,-2).apply {
             setMargins(0,dp(5),0,dp(5))
