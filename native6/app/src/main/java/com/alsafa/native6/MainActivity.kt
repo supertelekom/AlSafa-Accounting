@@ -2568,18 +2568,26 @@ open class MainActivity:Activity() {
         }
         button("الحركات المالية القديمة: مرتجعات ومدفوعات ومصاريف وإقفالات") {
             form("سجل الحركات المالية المستعادة","عرض"){box->
-                val types=listOf("cashTransactions","payments","returns","dailyClosings")
-                val labels=listOf("الحركات النقدية والمصاريف","المدفوعات","المرتجعات","الإقفالات والمدوّر")
+                val types=listOf("cashTransactions","payments","returns","dailyClosings",
+                    "sales","purchases","supplierLedger","partnerWithdrawals")
+                val labels=listOf("الحركات النقدية والمصاريف","المدفوعات","المرتجعات","الإقفالات والمدوّر",
+                    "فواتير البيع","فواتير الشراء","دفتر الموردين","سحوبات الشركاء")
                 val type=select("نوع الحركة",labels,box)
                 val from=field("من تاريخ YYYY-MM-DD (اختياري)",box)
                 val to=field("إلى تاريخ YYYY-MM-DD (اختياري)",box)
+                val pageNumber=field("رقم الصفحة (كل صفحة 50 حركة)",box,"1")
                 ({
                     val section=types[type.selectedItemPosition]
                     val start=from.text.toString().trim()
                     val end=to.text.toString().trim()
+                    val pageIndex=pageNumber.text.toString().trim().toIntOrNull()
+                    if(pageIndex==null || pageIndex !in 1..20001) {
+                        Toast.makeText(this,"رقم الصفحة غير صالح",Toast.LENGTH_LONG).show()
+                        throw IllegalArgumentException("رقم الصفحة غير صالح")
+                    }
                     work(refresh=false) {
                         try {
-                            val result=LegacyFinancialActivity.page(store,section,start,end,0,50)
+                            val result=LegacyFinancialActivity.page(store,section,start,end,(pageIndex-1)*50,50)
                             val records=result.getJSONArray("records")
                             val lines=(0 until records.length()).joinToString("\n\n"){i->
                                 val entry=records.getJSONObject(i)
@@ -2590,9 +2598,9 @@ open class MainActivity:Activity() {
                                     " "+record.optString("currency")+
                                     " · "+record.optString("note").ifBlank {record.optString("description")}
                             }
-                            val message="عدد الحركات: "+result.optInt("total")+"\n\n"+
+                            val message="عدد الحركات: "+result.optInt("total")+" · الصفحة "+pageIndex+"\n\n"+
                                 (if(lines.isBlank())"لا توجد حركات" else lines)+
-                                (if(result.optInt("total")>50)"\nتظهر أول 50 حركة؛ حدد فترة أقصر." else "")+
+                                (if(result.optBoolean("hasMore"))"\nتوجد صفحة تالية." else "")+
                                 "\n\nالحركات محفوظة دون إعادة تسجيل مالي."
                             runOnUiThread {
                                 if(!isFinishing&&!isDestroyed) AlertDialog.Builder(this)
