@@ -95,7 +95,7 @@ object LegacyCustomerAccounts {
         // decimal subledger until an explicit precision policy is approved.
         var opened=0
         var fractional=0
-        for(row in if(archiveId==null) store.rows("SELECT archive_id,currency,total_exact,paid_at_import_exact FROM $table") else store.rows("SELECT archive_id,currency,total_exact,paid_at_import_exact FROM $table WHERE archive_id=?",archiveId)) {
+        for(row in store.rows("SELECT archive_id,currency,total_exact,paid_at_import_exact FROM $table")) {
             val key=row.getValue("archive_id")
             val currency=row.getValue("currency")
             val due=amount(row.getValue("total_exact"))
