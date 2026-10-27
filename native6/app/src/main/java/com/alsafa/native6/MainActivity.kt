@@ -2349,6 +2349,7 @@ open class MainActivity:Activity() {
         val fromDate=field("من تاريخ YYYY-MM-DD",dateFilters,Store.today())
         val toDate=field("إلى تاريخ YYYY-MM-DD",dateFilters,Store.today())
         body.addView(dateFilters)
+        var dateRangeExplicit=false
         button("اختيار التاريخ من التقويم ▾") {
             AlertDialog.Builder(this).setTitle("اختر التاريخ المطلوب")
                 .setItems(arrayOf("تاريخ البداية","تاريخ النهاية")){_,which->
@@ -2356,6 +2357,7 @@ open class MainActivity:Activity() {
                     val current=runCatching { java.time.LocalDate.parse(target.text.toString().trim()) }.getOrElse { java.time.LocalDate.now() }
                     android.app.DatePickerDialog(this,{_,year,month,day->
                         target.setText(java.time.LocalDate.of(year,month+1,day).toString())
+                        dateRangeExplicit=true
                     },current.year,current.monthValue-1,current.dayOfMonth).apply { datePicker.maxDate=System.currentTimeMillis() }.show()
                 }.setNegativeButton("رجوع",null).show()
         }
@@ -2379,6 +2381,7 @@ open class MainActivity:Activity() {
             query.setText("")
             fromDate.setText(Store.today())
             toDate.setText(Store.today())
+            dateRangeExplicit=false
             kind.setSelection(if(defaultKind=="sale")1 else 0)
             status.setSelection(0)
         }
@@ -2408,7 +2411,7 @@ open class MainActivity:Activity() {
             val requestedTerm=query.text.toString().trim()
             // A typed query spans all dates only while the date controls remain
             // at their default (today). An explicitly chosen range must be honored.
-            val isDefaultDay=start==Store.today() && end==Store.today()
+            val isDefaultDay=!dateRangeExplicit && start==Store.today() && end==Store.today()
             val searchAllDates=requestedTerm.isNotBlank() && isDefaultDay
             val effectiveStart=if(searchAllDates) "0001-01-01" else start
             val effectiveEnd=if(searchAllDates) Store.today() else end
@@ -2626,6 +2629,7 @@ open class MainActivity:Activity() {
                     }
                     fromDate.setText(from.toString())
                     toDate.setText(to.toString())
+                    dateRangeExplicit=true
                     pageIndex=0
                     try{show()}catch(e:Exception){error(e)}
                 }.setNegativeButton("رجوع",null).show()
