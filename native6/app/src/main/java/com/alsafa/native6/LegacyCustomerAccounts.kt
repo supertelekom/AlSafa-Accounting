@@ -154,7 +154,15 @@ object LegacyCustomerAccounts {
                 "SELECT coalesce(sum(amount),0) FROM journal WHERE account=? AND currency=? AND event_id=?",
                 "legacy_receivable:$id",currency,"legacy:opening:$id")
             val expected=due.movePointRight(2).setScale(0,java.math.RoundingMode.DOWN).longValueExact()
-            if(opening!=expected) issues.put("Opening receivable mismatch: $id")
+            val openingId="legacy:opening:$id"
+            val equity=store.scalar(
+                "SELECT coalesce(sum(amount),0) FROM journal WHERE account=? AND currency=? AND event_id=?",
+                "equity:legacy_receivable_opening",currency,openingId)
+            val openingLines=store.scalar("SELECT count(*) FROM journal WHERE event_id=?",openingId)
+            if(opening!=expected || (expected>0L && (equity != -expected || openingLines!=2L)) ||
+                (expected==0L && openingLines!=0L)) {
+                issues.put("Opening receivable mismatch: $id")
+            }
             var received=BigDecimal.ZERO
             for(receipt in store.rows("SELECT * FROM $receipts WHERE archive_id=?",id)) {
                 collected++
