@@ -9,7 +9,7 @@ import org.json.JSONObject
  */
 object LegacyOperationalMigration {
     fun activate(store:Store):JSONObject=store.transaction {
-        val source=LegacyArchivedDebtReport.verifyArchiveCounts(store)
+        LegacyArchivedDebtReport.verifyArchiveCounts(store)
         val customer=LegacyCustomerAccounts.activate(store)
         val supplier=LegacySupplierInvoices.activate(store)
         val customerCheck=LegacyCustomerAccounts.reconcile(store)
