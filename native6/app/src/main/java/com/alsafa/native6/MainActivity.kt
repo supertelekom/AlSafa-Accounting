@@ -2613,6 +2613,30 @@ open class MainActivity:Activity() {
                 })
             }
         }
+        button("فحص روابط المدفوعات والمرتجعات القديمة") {
+            work(refresh=false) {
+                try {
+                    val audit=LegacyFinancialLinkage.inspect(store)
+                    val missing=audit.getJSONArray("missingReferences")
+                    val unresolved=audit.getJSONArray("unresolvedReferences")
+                    val duplicates=audit.getJSONArray("duplicateMovementIds")
+                    val invoiceDuplicates=audit.getJSONArray("duplicateInvoiceIds")
+                    val summary="روابط مفقودة: "+missing.length()+
+                        "\nروابط غير معروفة: "+unresolved.length()+
+                        "\nحركات مكررة: "+duplicates.length()+
+                        "\nمعرفات فواتير مكررة: "+invoiceDuplicates.length()+
+                        "\n\n"+(if(audit.optBoolean("complete"))"الروابط الأولية سليمة" else "توجد مشاكل تمنع الاعتماد المالي")+
+                        "\n\nهذا فحص فقط ولا يغير الأرصدة."
+                    runOnUiThread {
+                        if(!isFinishing&&!isDestroyed) AlertDialog.Builder(this)
+                            .setTitle("مطابقة المدفوعات والمرتجعات")
+                            .setMessage(summary).setPositiveButton("إغلاق",null).show()
+                    }
+                } catch(e:Exception) {
+                    runOnUiThread { if(!isFinishing&&!isDestroyed)error(e) }
+                }
+            }
+        }
         button("مطابقة الخزنات والسحوبات والمصاريف المستعادة") {
             work {
                 try {
