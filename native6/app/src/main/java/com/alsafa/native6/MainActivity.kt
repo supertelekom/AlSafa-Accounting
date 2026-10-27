@@ -2406,9 +2406,12 @@ open class MainActivity:Activity() {
             text("جارٍ تحميل الفواتير...",output,14f)
             val requestedPage=pageIndex
             val requestedTerm=query.text.toString().trim()
-            // Legacy sales search spans all dates once the customer types a query.
-            val effectiveStart=if(requestedTerm.isNotBlank()) "0001-01-01" else start
-            val effectiveEnd=if(requestedTerm.isNotBlank()) Store.today() else end
+            // A typed query spans all dates only while the date controls remain
+            // at their default (today). An explicitly chosen range must be honored.
+            val isDefaultDay=start==Store.today() && end==Store.today()
+            val searchAllDates=requestedTerm.isNotBlank() && isDefaultDay
+            val effectiveStart=if(searchAllDates) "0001-01-01" else start
+            val effectiveEnd=if(searchAllDates) Store.today() else end
             val requestedKind=kinds[kind.selectedItemPosition]
             val requestedStatus=statuses[status.selectedItemPosition]
             work {
