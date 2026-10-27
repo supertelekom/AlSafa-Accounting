@@ -23,6 +23,7 @@ object LegacyInvoiceMigrationPlan {
         val existingNumbers = existing.map { it.getValue("number") }.toSet()
         val seenIds = mutableSetOf<String>()
         val seenNumbers = mutableSetOf<String>()
+        var nextNativeNumber = existingNumbers.mapNotNull { it.toLongOrNull() }.maxOrNull() ?: 0L
         for (section in listOf("sales", "purchases")) {
             val source = store.legacyRows(section)
             require(source.size == counts.optInt(section, -1)) {
@@ -88,7 +89,9 @@ object LegacyInvoiceMigrationPlan {
                     sectionTotals.put(currency, sectionCurrency)
                     totalsBySection.put(section, sectionTotals)
                 }
-                val proposal = detail.put("currency", currency).put("date", date)
+                nextNativeNumber = Math.addExact(nextNativeNumber, 1L)
+                val proposal = detail.put("targetNumber", nextNativeNumber)
+                    .put("currency", currency).put("date", date)
                     .put("total", original.optString("total"))
                     .put("paid", original.optString("paid"))
                 proposed.put(proposal)
@@ -100,6 +103,7 @@ object LegacyInvoiceMigrationPlan {
             .put("invoiceCount", proposed.length())
             .put("invoiceCountsBySection", countsBySection)
             .put("invoiceMappings", proposedBySection)
+            .put("preservesOriginalNumberAsMetadata", true)
             .put("financialTotalsByCurrency", totals)
             .put("financialTotalsBySection", totalsBySection)
             .put("invalid", invalid).put("collisions", collisions)
