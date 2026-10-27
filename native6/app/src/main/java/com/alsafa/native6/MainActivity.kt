@@ -1917,7 +1917,7 @@ open class MainActivity:Activity() {
                                 if(choice==3) CustomerShare.send(this,file,"application/pdf","فاتورة الصفا التاريخية #"+number)
                                 else try { startActivity(intent) } catch(e:Exception) {
                                     AlertDialog.Builder(this).setTitle("تعذر فتح PDF")
-                                        .setMessage("لا يوجد عارض PDF متاح أو تعذر فتح الملف. يمكن استخدام خيار مشاركة PDF لحفظه أو فتحه بتطبيق آخر.\n"+(e.localizedMessage ?: ""))
+                                        .setMessage("تعذر فتح PDF: "+(e.localizedMessage ?: "لا يوجد عارض PDF متاح"))
                                         .setPositiveButton("حسناً",null).show()
                                 }
                             }
