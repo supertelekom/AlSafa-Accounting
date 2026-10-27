@@ -15,6 +15,7 @@ object LegacyInvoiceMigrationPlan {
         val invalid = JSONArray()
         val proposed = JSONArray()
         val totals = JSONObject()
+        val totalsBySection = JSONObject()
         val existing = store.rows("SELECT id,number FROM invoices")
         val existingIds = existing.map { it.getValue("id") }.toSet()
         val existingNumbers = existing.map { it.getValue("number") }.toSet()
@@ -69,6 +70,19 @@ object LegacyInvoiceMigrationPlan {
                     addMoney("paid", paid)
                     addMoney("outstanding", total.subtract(paid))
                     totals.put(currency, current)
+                    val sectionTotals = totalsBySection.optJSONObject(section) ?: JSONObject()
+                    val sectionCurrency = sectionTotals.optJSONObject(currency) ?: JSONObject()
+                        .put("total", "0").put("paid", "0").put("outstanding", "0")
+                    for (key in listOf("total", "paid", "outstanding")) {
+                        val value = when(key) {
+                            "total" -> total
+                            "paid" -> paid
+                            else -> total.subtract(paid)
+                        }
+                        sectionCurrency.put(key, sectionCurrency.getString(key).toBigDecimal().add(value).toPlainString())
+                    }
+                    sectionTotals.put(currency, sectionCurrency)
+                    totalsBySection.put(section, sectionTotals)
                 }
                 proposed.put(detail.put("currency", currency).put("date", date)
                     .put("total", original.optString("total"))
@@ -78,6 +92,7 @@ object LegacyInvoiceMigrationPlan {
         return JSONObject().put("sourceSha256", meta.optString("sourceSha256"))
             .put("invoiceCount", proposed.length())
             .put("financialTotalsByCurrency", totals)
+            .put("financialTotalsBySection", totalsBySection)
             .put("invalid", invalid).put("collisions", collisions)
             .put("identitySafe", invalid.length() == 0 && collisions.length() == 0)
             .put("stockRepostingAllowed", false)
