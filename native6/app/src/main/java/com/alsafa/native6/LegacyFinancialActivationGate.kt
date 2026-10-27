@@ -28,12 +28,27 @@ object LegacyFinancialActivationGate {
         if(!cashVerified) blockers.put("لم تُطابق أرصدة الخزنات والمدوّر")
         if(warnings>0) blockers.put("يوجد $warnings تحذيراً في التاريخ المالي")
         if(legacyCount==0L) blockers.put("السجلات المالية المصدر غير متاحة")
+        // Validate each required financial collection before allowing an active ledger.
+        // A partial archive must never be treated as a reconciled balance.
+        val requiredSections=listOf("sales","purchases","payments","cashTransactions",
+            "supplierLedger","partnerWithdrawals","dailyClosings","returns")
+        val sectionCounts=JSONObject()
+        val sourceCounts=meta.optJSONObject("sourceCollections")
+        for(section in requiredSections) {
+            val expected=sourceCounts?.optLong(section,-1L) ?: -1L
+            val actual=store.scalar("SELECT count(*) FROM legacy_records WHERE category=?",section)
+            sectionCounts.put(section,JSONObject().put("expected",expected).put("archived",actual)
+                .put("complete",expected>=0L && actual==expected))
+            if(expected<0L || actual!=expected)
+                blockers.put("قسم "+section+" غير مطابق للنسخة الأصلية: "+actual+" / "+expected)
+        }
         return JSONObject()
             .put("state",if(blockers.length()==0)"ACTIVE" else "PENDING_RECONCILIATION")
             .put("financialActive",blockers.length()==0)
             .put("financialPostingStatus",status)
             .put("cashContinuityVerified",cashVerified)
             .put("legacyRecordCount",legacyCount)
+            .put("financialSectionCounts",sectionCounts)
             .put("nativeInvoiceCount",invoiceCount)
             .put("nativeJournalEntryCount",journalCount)
             .put("sourceSha256",meta.optString("sourceSha256"))
