@@ -1264,6 +1264,39 @@ class Store(val helper:StoreDb) {
         post(command,listOf(Posting("receivable:$command",currency,total),Posting("revenue:sales",currency,-total),Posting("expense:cogs",currency,cost),Posting("inventory",currency,-cost)))
         if(paid>0) collectInternal(command,paid,vault,receiptDate,"$command-receipt");command
     }
+    /**
+     * Import an outstanding customer balance as a NEW opening receivable,
+     * without replaying historic sales, stock or previously received cash.
+     * Original invoice remains in legacy_records for audit. The opening
+     * invoice can be collected through the ordinary receipt workflow.
+     * Do not use this for invoices requiring historical return-line handling.
+     */
+    fun openLegacyReceivable(
+        legacyId:String,party:String,phone:String,currency:Currency,
+        remaining:Long,cutoverDate:String
+    ):String=transaction {
+        require(legacyId.isNotBlank() && legacyId.length<=200){"معرف الفاتورة القديمة غير صالح"}
+        require(remaining>0L && party.isNotBlank()){"رصيد العميل الافتتاحي غير صالح"}
+        val day=LocalDate.parse(cutoverDate)
+        require(!day.isAfter(LocalDate.now())){"تاريخ الانتقال في المستقبل"}
+        val key="legacy-sale:"+legacyId
+        require(scalar("SELECT count(*) FROM settings WHERE key=?",key)==0L) {
+            "هذه الفاتورة القديمة سبق تفعيلها"
+        }
+        require(scalar("SELECT count(*) FROM legacy_records WHERE category=? AND legacy_id LIKE ?",
+            "sales","%:"+legacyId)>0L){"الفاتورة القديمة غير موجودة في الأرشيف"}
+        val command=id()
+        event(command,"OPENING_RECEIVABLE",day.toString(),"ذمة افتتاحية من فاتورة قديمة")
+        insert("invoices","id" to command,"number" to nextNumber(),
+            "kind" to "sale","party" to party,"phone" to phone,
+            "currency" to currency.name,"total" to remaining,
+            "cost" to 0L,"notes" to key)
+        post(command,listOf(
+            Posting("receivable:$command",currency,remaining),
+            Posting("equity:opening",currency,-remaining)))
+        insert("settings","key" to key,"value" to command)
+        command
+    }
     private fun collectInternal(invoiceId:String,amount:Long,v:String,date:String,command:String) {
         val inv=invoice(invoiceId);require(inv.kind=="sale" || inv.kind=="repair"){"القبض متاح لفواتير المبيع والصيانة فقط"};require(inv.status=="posted" && amount>0 && amount<=due(invoiceId)){"الدفعة تتجاوز المتبقي أو الفاتورة ملغاة"};require(!LocalDate.parse(date).isAfter(LocalDate.now())){"تاريخ التحصيل في المستقبل"};require(!LocalDate.parse(date).isBefore(LocalDate.parse(rows("SELECT date FROM events WHERE id=?",invoiceId).single().getValue("date")))){"تاريخ التحصيل يسبق الفاتورة"};require(amount<=invoiceCollectibleOn(invoiceId,date)){"الدفعة تتجاوز الذمة المتاحة بتاريخها أو في يوم لاحق"};vault(v)
         event(command,"RECEIPT",date,"قبض فاتورة ${inv.number}");insert("receipts","event_id" to command,"invoice_id" to invoiceId,"amount" to amount,"vault" to v)
