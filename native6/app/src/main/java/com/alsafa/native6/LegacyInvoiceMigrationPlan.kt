@@ -20,7 +20,6 @@ object LegacyInvoiceMigrationPlan {
         val countsBySection = JSONObject()
         val existing = store.rows("SELECT id,number FROM invoices")
         val existingIds = existing.map { it.getValue("id") }.toSet()
-        val seenSourceIds = mutableSetOf<String>()
         val existingNumbers = existing.map { it.getValue("number") }.toSet()
         val seenIds = mutableSetOf<String>()
         var nextNativeNumber = existingNumbers.mapNotNull { it.toLongOrNull() }.maxOrNull() ?: 0L
@@ -47,7 +46,7 @@ object LegacyInvoiceMigrationPlan {
                 if (number.isBlank()) {
                     invalid.put(JSONObject(detail.toString()).put("reason", "missing_invoice_number"))
                 }
-                if (sourceId.isBlank() || !seenIds.add(targetId) || !seenSourceIds.add(targetId)) {
+                if (sourceId.isBlank() || !seenIds.add(targetId)) {
                     invalid.put(detail.put("reason", "missing_or_duplicate_id"))
                     continue
                 }
