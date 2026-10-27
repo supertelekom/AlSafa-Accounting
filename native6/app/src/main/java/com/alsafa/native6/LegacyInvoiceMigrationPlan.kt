@@ -23,6 +23,7 @@ object LegacyInvoiceMigrationPlan {
         val existingNumbers = existing.map { it.getValue("number") }.toSet()
         val seenIds = mutableSetOf<String>()
         val seenOriginalNumbers = mutableMapOf<String, MutableSet<String>>()
+        val repeatedOriginalNumbers = JSONArray()
         var nextNativeNumber = existingNumbers.mapNotNull { it.toLongOrNull() }.maxOrNull() ?: 0L
         for (section in listOf("sales", "purchases")) {
             val source = store.legacyRows(section)
@@ -45,7 +46,7 @@ object LegacyInvoiceMigrationPlan {
                     .put("sourceId", sourceId).put("sourceNumber", number)
                     .put("targetId", targetId)
                 if (number.isNotBlank() && !seenOriginalNumbers.getOrPut(section) { mutableSetOf() }.add(number)) {
-                    invalid.put(JSONObject(detail.toString()).put("reason", "duplicate_invoice_number"))
+                    repeatedOriginalNumbers.put(JSONObject(detail.toString()).put("reason", "duplicate_invoice_number"))
                 }
                 if (number.isBlank()) {
                     invalid.put(JSONObject(detail.toString()).put("reason", "missing_invoice_number"))
@@ -112,6 +113,7 @@ object LegacyInvoiceMigrationPlan {
             .put("financialTotalsBySection", totalsBySection)
             .put("historicalOutstandingIsNotNewCash", true)
             .put("invalid", invalid).put("collisions", collisions)
+            .put("repeatedOriginalNumbersForReview", repeatedOriginalNumbers)
             .put("identitySafe", invalid.length() == 0 && collisions.length() == 0)
             .put("stockRepostingAllowed", false)
             .put("cashRepostingAllowed", false)
