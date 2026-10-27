@@ -10,8 +10,12 @@ import org.json.JSONObject
 object LegacyOperationalMigration {
     fun activate(store:Store):JSONObject=store.transaction {
         LegacyArchivedDebtReport.verifyArchiveCounts(store)
+        val salesCount=store.legacyRows("sales").size
+        val purchasesCount=store.legacyRows("purchases").size
         val customer=LegacyCustomerAccounts.activate(store)
         val supplier=LegacySupplierInvoices.activate(store)
+        require(store.scalar("SELECT count(*) FROM legacy_customer_accounts")==salesCount.toLong())
+        require(store.scalar("SELECT count(*) FROM legacy_purchase_payables")==purchasesCount.toLong())
         val customerCheck=LegacyCustomerAccounts.reconcile(store)
         val supplierCheck=LegacySupplierInvoices.reconcile(store)
         require(customerCheck.optBoolean("reconciled")) {
