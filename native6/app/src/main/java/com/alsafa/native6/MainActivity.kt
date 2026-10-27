@@ -481,7 +481,9 @@ open class MainActivity:Activity() {
                             if(!isFinishing&&!isDestroyed) AlertDialog.Builder(this)
                                 .setTitle("تم تجهيز ذمم العملاء")
                                 .setMessage("الفواتير: "+result.getInt("invoices")+
-                                    "\\nالجديدة: "+result.getInt("added"))
+                                    "\\nالجديدة: "+result.getInt("added")+
+                                    "\\nقيود الذمم الافتتاحية: "+result.getInt("openingReceivableEntries")+
+                                    "\\nفواتير فيها كسور أصغر من قرش: "+result.getInt("subCentRemainders"))
                                 .setPositiveButton("إغلاق",null).show()
                         }
                     }
