@@ -489,6 +489,22 @@ open class MainActivity:Activity() {
                     }
                 }.show()
         }
+        button("مطابقة الذمم المفعلة مع الخزنات",body) {
+            work {
+                val result=LegacyCustomerAccounts.reconcile(store)
+                val issues=result.optJSONArray("issues")
+                val message=if(!result.optBoolean("activated")) "لم يتم تفعيل ذمم العملاء القديمة بعد."
+                    else "الفواتير: "+result.optInt("invoices")+
+                        "\\nالتحصيلات الجديدة: "+result.optInt("newReceipts")+
+                        "\\nنتيجة المطابقة: "+(if(result.optBoolean("reconciled")) "متطابقة" else "توجد فروقات")+
+                        "\\nالتفاصيل: "+(issues?.toString() ?: "[]")
+                runOnUiThread {
+                    if(!isFinishing&&!isDestroyed) AlertDialog.Builder(this)
+                        .setTitle("مطابقة الذمم المحاسبية")
+                        .setMessage(message).setPositiveButton("إغلاق",null).show()
+                }
+            }
+        }
         val oldDebtId=field("معرف فاتورة قديمة للتحصيل (من كشف الديون)",body)
         val oldDebtAmount=field("مبلغ التحصيل بعملة الفاتورة",body)
         val oldDebtVault=select("الخزنة التي استلمت المبلغ",listOf("drawer","external","sham","bank"),body)
