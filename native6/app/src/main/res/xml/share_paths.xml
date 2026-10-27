@@ -3,4 +3,5 @@
     <files-path name="photos" path="images/" />
     <cache-path name="camera" path="camera/" />
     <cache-path name="invoices" path="shared_invoices/" />
+    <cache-path name="restored-invoices" path="restored_invoices/" />
 </paths>
