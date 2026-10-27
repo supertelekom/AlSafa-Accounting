@@ -456,7 +456,7 @@ open class MainActivity:Activity() {
         }
         scroll.addView(body)
         root.addView(scroll,LinearLayout.LayoutParams(-1,0,1f))
-        when(page){"home"->home();"simple"->simple();"advanced"->advanced();"products"->products();"maintenance-parts"->products("part");"inventory"->inventoryDashboard();"stock-history"->if(selectedProduct!=null)stockHistory(selectedProduct!!) else {text("لم يتم اختيار منتج لعرض حركاته.");button("العودة إلى المنتجات"){go("products")}};"stocktake-history"->stocktakeHistoryScreen();"sale"->sale();"invoices"->invoices();"vaults"->vaults();"suppliers"->suppliers();"repairs"->repairs();"reports"->reports();"period-reports"->periodReports();"trial-balance"->trialBalanceScreen();"account-ledger"->accountLedgerScreen();"journal-integrity"->journalIntegrityScreen();"structural-audit"->structuralAuditScreen();"partners"->partners();"backup"->backup();"legacy-audit"->legacyAudit();"legacy-history"->legacyHistory();"audit"->audit();else->{text("هذه الصفحة غير متاحة في النسخة الحالية.");button("العودة إلى الرئيسية"){homePage()}}}
+        when(page){"home"->home();"simple"->simple();"advanced"->advanced();"products"->products();"maintenance-parts"->products("part");"inventory"->inventoryDashboard();"stock-history"->if(selectedProduct!=null)stockHistory(selectedProduct!!) else {text("لم يتم اختيار منتج لعرض حركاته.");button("العودة إلى المنتجات"){go("products")}};"stocktake-history"->stocktakeHistoryScreen();"sale"->sale();"invoices"->invoices();"sales-invoices"->invoices("sale");"vaults"->vaults();"suppliers"->suppliers();"repairs"->repairs();"reports"->reports();"period-reports"->periodReports();"trial-balance"->trialBalanceScreen();"account-ledger"->accountLedgerScreen();"journal-integrity"->journalIntegrityScreen();"structural-audit"->structuralAuditScreen();"partners"->partners();"backup"->backup();"legacy-audit"->legacyAudit();"legacy-history"->legacyHistory();"audit"->audit();else->{text("هذه الصفحة غير متاحة في النسخة الحالية.");button("العودة إلى الرئيسية"){homePage()}}}
     }
     private fun legacyHistory() {
         text("أرشيف العمليات القديمة — قراءة فقط",size=25f)
@@ -2083,8 +2083,8 @@ open class MainActivity:Activity() {
             setMargins(0,dp(5),0,dp(5))
         })
     }
-    private fun invoices(){
-        sectionHeading("الفواتير والمرتجعات","البحث في الفواتير وعمليات القبض والاسترداد")
+    private fun invoices(defaultKind:String="all"){
+        sectionHeading(if(defaultKind=="sale")"المبيعات والفواتير" else "الفواتير والمرتجعات","البحث في الفواتير وعمليات القبض والاسترداد")
         button("عمليات الطباعة المعلقة") { showPrintQueue() }
         button("إعدادات طابعة الفواتير والملصقات") {
             BluetoothReceiptPrinter.forgetPrinter(this)
@@ -2298,6 +2298,7 @@ open class MainActivity:Activity() {
         val kindBox=column().apply {setPadding(dp(4),0,dp(4),0)}
         val statusBox=column().apply {setPadding(dp(4),0,dp(4),0)}
         val kind=select("نوع الفاتورة",listOf("الكل","مبيع","شراء","صيانة"),kindBox)
+        if(defaultKind=="sale")kind.setSelection(1)
         val status=select("حالة الفاتورة",listOf("الكل","مرحلة","ملغاة"),statusBox)
         filters.addView(kindBox,LinearLayout.LayoutParams(0,-2,1f))
         filters.addView(statusBox,LinearLayout.LayoutParams(0,-2,1f))
