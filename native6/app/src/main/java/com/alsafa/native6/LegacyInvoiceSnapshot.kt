@@ -87,7 +87,9 @@ object LegacyInvoiceSnapshot {
             val currency=original.optString("currency","")
             val total=original.optString("total","").toBigDecimalOrNull()
             val paid=original.optString("paid","").toBigDecimalOrNull()
-            val validId=invoiceId.isNotEmpty() && seenInvoiceIds.add(invoiceId)
+            val validId=invoiceId.isNotEmpty() &&
+                row.getValue("legacy_id").substringAfter(":",missingDelimiterValue="")==invoiceId &&
+                seenInvoiceIds.add(invoiceId)
             val validDate=runCatching { java.time.LocalDate.parse(date) }.isSuccess
             val validCurrency=currency in setOf("USD","TRY","SYP")
             val validMoney=total!=null && paid!=null && total>=BigDecimal.ZERO &&
