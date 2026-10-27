@@ -2322,11 +2322,14 @@ open class MainActivity:Activity() {
             output.removeAllViews()
             text("جارٍ تحميل الفواتير...",output,14f)
             val requestedPage=pageIndex
+            val requestedTerm=query.text.toString().trim()
+            val requestedKind=kinds[kind.selectedItemPosition]
+            val requestedStatus=statuses[status.selectedItemPosition]
             work {
                 try {
-            val fetched=store.searchInvoices(query.text.toString(),kinds[kind.selectedItemPosition],
-                statuses[status.selectedItemPosition],limit=pageSize+1,
-                startDate=start,endDate=end,offset=offset)
+                    val fetched=store.searchInvoices(requestedTerm,requestedKind,
+                        requestedStatus,limit=pageSize+1,
+                        startDate=start,endDate=end,offset=offset)
             val hasNext=fetched.size>pageSize
             val results=fetched.take(pageSize)
             val dates=if(results.isEmpty()) emptyMap<String,String>() else {
