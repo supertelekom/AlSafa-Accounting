@@ -23,9 +23,7 @@ object LegacyInvoiceSnapshot {
         require(archiveKey.isNotBlank()){"معرف الفاتورة مطلوب"}
         LegacyArchivedDebtReport.verifyArchiveCounts(store)
         // Legacy invoices can include embedded photos: use bounded reads.
-        val row=store.legacyRows(section).firstOrNull {
-            it.getValue("legacy_id")==archiveKey
-        } ?: return null
+        val row=store.legacyRecord(section,archiveKey) ?: return null
         val source=JSONObject(row.getValue("payload"))
         val id=source.optString("id").trim()
         require(id.isNotEmpty()) { "معرف الفاتورة التاريخية مفقود" }
