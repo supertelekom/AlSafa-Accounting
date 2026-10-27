@@ -18,6 +18,7 @@ object LegacyInvoiceMigrationPlan {
         val totalsBySection = JSONObject()
         val proposedBySection = JSONObject()
         val countsBySection = JSONObject()
+        val historicalOutstanding = JSONObject()
         val existing = store.rows("SELECT id,number FROM invoices")
         val existingIds = existing.map { it.getValue("id") }.toSet()
         val existingNumbers = existing.map { it.getValue("number") }.toSet()
@@ -39,6 +40,7 @@ object LegacyInvoiceMigrationPlan {
                 val date = original.optString("date").take(10)
                 val total = original.optString("total").toBigDecimalOrNull()
                 val paid = original.optString("paid").toBigDecimalOrNull()
+                val outstanding = if (total != null && paid != null) total.subtract(paid) else null
                 val detail = JSONObject().put("section", section)
                     .put("sourceId", sourceId).put("sourceNumber", number)
                     .put("targetId", targetId)
@@ -90,6 +92,7 @@ object LegacyInvoiceMigrationPlan {
                     .put("currency", currency).put("date", date)
                     .put("total", original.optString("total"))
                     .put("paid", original.optString("paid"))
+                    .put("outstanding", outstanding?.toPlainString() ?: "")
                 proposed.put(proposal)
                 sectionProposals.put(proposal)
             }
@@ -102,6 +105,7 @@ object LegacyInvoiceMigrationPlan {
             .put("preservesOriginalNumberAsMetadata", true)
             .put("financialTotalsByCurrency", totals)
             .put("financialTotalsBySection", totalsBySection)
+            .put("historicalOutstandingIsNotNewCash", true)
             .put("invalid", invalid).put("collisions", collisions)
             .put("identitySafe", invalid.length() == 0 && collisions.length() == 0)
             .put("stockRepostingAllowed", false)
