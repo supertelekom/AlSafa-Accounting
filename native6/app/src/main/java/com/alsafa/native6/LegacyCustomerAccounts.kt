@@ -148,6 +148,18 @@ object LegacyCustomerAccounts {
         val invoice=store.rows("SELECT currency,invoice_date FROM $table WHERE archive_id=?",archiveId)
             .singleOrNull() ?: error("يجب تفعيل الفواتير القديمة قبل القبض")
         require(!day.isBefore(LocalDate.parse(invoice.getValue("invoice_date"))))
+        val openingDate=store.rows(
+            "SELECT date FROM events WHERE id=?", "legacy:opening:$archiveId"
+        ).singleOrNull()?.getValue("date") ?: error("القيد الافتتاحي لهذه الذمة غير موجود")
+        require(!day.isBefore(LocalDate.parse(openingDate))) {
+            "لا يمكن تسجيل قبض قبل تاريخ ترحيل الرصيد الافتتاحي"
+        }
+        val lastReceipt=store.rows(
+            "SELECT max(date) AS last_date FROM $receipts WHERE archive_id=?",archiveId
+        ).single().getValue("last_date")
+        require(lastReceipt.isBlank() || day.toString()>=lastReceipt) {
+            "لا يمكن إدخال قبض بتاريخ أقدم من آخر قبض مسجل"
+        }
         val currency=invoice.getValue("currency")
         val amount=BigDecimal.valueOf(minor,2)
         val due=outstanding(store,archiveId)
