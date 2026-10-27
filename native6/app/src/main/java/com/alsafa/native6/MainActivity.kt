@@ -472,11 +472,13 @@ open class MainActivity:Activity() {
         val unifiedDebtSearch=field("بحث في ديون العملاء (اسم / هاتف / رقم فاتورة)",body)
         val unifiedDebtPage=field("صفحة ديون العملاء (تبدأ من 1)",body,"1",true)
         button("ديون العملاء الحالية والقديمة",body) {
+            val searchText=unifiedDebtSearch.text.toString().trim()
+            val requestedPage=unifiedDebtPage.text.toString().trim()
             work {
-                val page=unifiedDebtPage.text.toString().trim().toIntOrNull() ?: 1
+                val page=requestedPage.toIntOrNull() ?: 1
                 require(page in 1..10000) { "رقم الصفحة غير صالح" }
                 val items=store.unifiedCustomerDebts(
-                    query=unifiedDebtSearch.text.toString().trim(),
+                    query=searchText,
                     limit=50,offset=(page-1)*50)
                 val message=buildString {
                     append("صفحة ").append(page).append(" — ").append(items.size).append(" فاتورة\\n\\n")
