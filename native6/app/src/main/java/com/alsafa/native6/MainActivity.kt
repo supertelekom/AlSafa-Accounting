@@ -2600,6 +2600,7 @@ open class MainActivity:Activity() {
                             val message="عدد الحركات: "+result.optInt("total")+" · الصفحة "+pageIndex+"\n\n"+
                                 (if(lines.isBlank())"لا توجد حركات" else lines)+
                                 (if(result.optBoolean("hasMore"))"\nتوجد صفحة تالية." else "")+
+                                (if(result.optBoolean("dateFilterMayExcludeRecords"))"\nتنبيه: "+result.optInt("missingDateCount")+" حركة بلا تاريخ صالح لم تدخل نتائج الفترة." else "")+
                                 "\n\nالحركات محفوظة دون إعادة تسجيل مالي."
                             runOnUiThread {
                                 if(!isFinishing&&!isDestroyed) AlertDialog.Builder(this)
