@@ -22,7 +22,6 @@ object LegacyInvoiceMigrationPlan {
         val existingIds = existing.map { it.getValue("id") }.toSet()
         val existingNumbers = existing.map { it.getValue("number") }.toSet()
         val seenIds = mutableSetOf<String>()
-        val seenNumbers = mutableSetOf<String>()
         var nextNativeNumber = existingNumbers.mapNotNull { it.toLongOrNull() }.maxOrNull() ?: 0L
         for (section in listOf("sales", "purchases")) {
             val source = store.legacyRows(section)
@@ -59,10 +58,7 @@ object LegacyInvoiceMigrationPlan {
                     paid == null || paid.signum() < 0 || paid > total || paid.stripTrailingZeros().scale() > 2) {
                     invalid.put(JSONObject(detail.toString()).put("reason", "invalid_financial_fields"))
                 }
-                if (number.isNotBlank() && !seenNumbers.add(number)) {
-                    collisions.put(JSONObject(detail.toString()).put("reason", "shared_legacy_number"))
-                }
-                if (targetId in existingIds || (number.isNotBlank() && number in existingNumbers)) {
+                if (targetId in existingIds) {
                     collisions.put(detail)
                 }
                 if (total != null && paid != null && paid >= java.math.BigDecimal.ZERO && paid <= total) {
