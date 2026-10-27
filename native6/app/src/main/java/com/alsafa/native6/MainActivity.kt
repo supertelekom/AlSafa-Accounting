@@ -2326,8 +2326,8 @@ open class MainActivity:Activity() {
             val requestedPage=pageIndex
             val requestedTerm=query.text.toString().trim()
             // Legacy sales search spans all dates once the customer types a query.
-            val effectiveStart=if(requestedTerm.isNotBlank()) "" else start
-            val effectiveEnd=if(requestedTerm.isNotBlank()) "" else end
+            val effectiveStart=if(requestedTerm.isNotBlank()) "0001-01-01" else start
+            val effectiveEnd=if(requestedTerm.isNotBlank()) Store.today() else end
             val requestedKind=kinds[kind.selectedItemPosition]
             val requestedStatus=statuses[status.selectedItemPosition]
             work {
