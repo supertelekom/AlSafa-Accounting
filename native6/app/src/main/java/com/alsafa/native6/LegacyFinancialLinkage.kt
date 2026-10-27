@@ -12,7 +12,11 @@ object LegacyFinancialLinkage {
         val duplicates = JSONArray()
         for (section in listOf("sales", "purchases", "repairs")) {
             if (section == "repairs") {
-                val repairIds = store.rows("SELECT id FROM repairs").map { it.getValue("id") }
+                val repairIds = store.rows("SELECT id,details FROM repairs")
+                    .filter { row -> runCatching {
+                        JSONObject(row["details"].orEmpty()).optBoolean("_legacyImported",false)
+                    }.getOrDefault(false) }
+                    .map { it.getValue("id") }
                 require(repairIds.size == counts.optInt("repairs", -1))
                 require(repairIds.distinct().size == repairIds.size) { "معرفات الصيانة المستعادة مكررة" }
                 identifiers[section] = repairIds.toSet()
