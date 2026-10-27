@@ -2573,7 +2573,13 @@ open class MainActivity:Activity() {
                     val gate=LegacyFinancialActivationGate.inspect(store)
                     val status=gate.optString("state")
                     val reasons=gate.optJSONArray("blockingReasons")?.toString() ?: "[]"
-                    val message="حالة ربط الحسابات القديمة: "+status+"\nموانع التفعيل: "+reasons+"\n\n"+position
+                    val counts=gate.optJSONObject("financialSectionCounts")
+                    val archiveStatus=if(counts==null) "" else counts.keys().asSequence().toList().sorted().joinToString("\n"){section->
+                        val item=counts.getJSONObject(section)
+                        section+": "+item.optLong("archived")+" / "+item.optLong("expected")+
+                            (if(item.optBoolean("complete"))" ✓" else " — غير مطابق")
+                    }
+                    val message="حالة ربط الحسابات القديمة: "+status+"\nموانع التفعيل: "+reasons+"\n\nمطابقة أقسام النسخة:\n"+archiveStatus+"\n\n"+position
                     runOnUiThread {
                         if(!isFinishing&&!isDestroyed) AlertDialog.Builder(this)
                             .setTitle("مطابقة مالية للخزنات والحركات القديمة")
