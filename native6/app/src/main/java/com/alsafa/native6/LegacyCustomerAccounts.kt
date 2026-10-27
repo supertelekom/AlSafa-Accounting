@@ -145,7 +145,9 @@ object LegacyCustomerAccounts {
         val issues=org.json.JSONArray()
         var total=0
         var collected=0
-        for(row in store.rows("SELECT archive_id,currency,total_exact,paid_at_import_exact FROM $table")) {
+        for(row in if(archiveId==null)
+            store.rows("SELECT archive_id,currency,total_exact,paid_at_import_exact FROM $table")
+            else store.rows("SELECT archive_id,currency,total_exact,paid_at_import_exact FROM $table WHERE archive_id=?",archiveId)) {
             total++
             val id=row.getValue("archive_id")
             val currency=row.getValue("currency")
