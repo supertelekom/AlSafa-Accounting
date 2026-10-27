@@ -77,6 +77,11 @@ object LegacyInvoiceStaging {
                     .also { require(it.isNotBlank()) { "معرف فاتورة قديمة مفقود: $section" } }
             }
         }
+        for (section in listOf("sales", "purchases")) {
+            require(sources.getValue(section).size == plan.getJSONObject("invoiceCountsBySection").getInt(section)) {
+                "Duplicate legacy invoice source IDs: $section"
+            }
+        }
         val db = store.db
         db.execSQL(ddl)
         db.execSQL("CREATE TRIGGER IF NOT EXISTS legacy_invoice_staging_no_update BEFORE UPDATE ON legacy_invoice_staging BEGIN SELECT RAISE(ABORT,'Immutable staged invoice'); END")
