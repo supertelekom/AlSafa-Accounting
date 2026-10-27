@@ -138,6 +138,53 @@ object LegacyCustomerAccounts {
         require(due.signum()>=0) { "التحصيلات تجاوزت رصيد الفاتورة القديمة" }
         return due
     }
+    /** Reconcile every posted collection against its two immutable journal lines. */
+    fun reconcile(store:Store):JSONObject {
+        val exists=store.scalar("SELECT count(*) FROM sqlite_master WHERE type='table' AND name='$table'")
+        if(exists==0L) return JSONObject().put("activated",false).put("invoices",0)
+        val issues=org.json.JSONArray()
+        var total=0
+        var collected=0
+        for(row in store.rows("SELECT archive_id,currency,total_exact,paid_at_import_exact FROM $table")) {
+            total++
+            val id=row.getValue("archive_id")
+            val currency=row.getValue("currency")
+            val due=amount(row.getValue("total_exact")).subtract(amount(row.getValue("paid_at_import_exact")))
+            val opening=store.scalar(
+                "SELECT coalesce(sum(amount),0) FROM journal WHERE account=? AND currency=? AND event_id=?",
+                "legacy_receivable:$id",currency,"legacy:opening:$id")
+            val expected=due.movePointRight(2).setScale(0,java.math.RoundingMode.DOWN).longValueExact()
+            if(opening!=expected) issues.put("Opening receivable mismatch: $id")
+            var received=BigDecimal.ZERO
+            for(receipt in store.rows("SELECT * FROM $receipts WHERE archive_id=?",id)) {
+                collected++
+                val receiptId=receipt.getValue("id")
+                val cash=store.scalar("SELECT coalesce(sum(amount),0) FROM journal WHERE event_id=? AND account=? AND currency=?",
+                    receiptId,"cash:"+receipt.getValue("vault"),currency)
+                val receivable=store.scalar("SELECT coalesce(sum(amount),0) FROM journal WHERE event_id=? AND account=? AND currency=?",
+                    receiptId,"legacy_receivable:$id",currency)
+                val value=amount(receipt.getValue("amount_exact"))
+                val minor=runCatching { value.movePointRight(2).longValueExact() }.getOrNull()
+                if(minor==null || cash!=minor || receivable!= -cash ||
+                    receipt.getValue("currency")!=currency ||
+                    store.scalar("SELECT count(*) FROM journal WHERE event_id=?",receiptId)!=2L) {
+                    issues.put("Receipt journal mismatch: $receiptId")
+                }
+                received=received.add(value)
+            }
+            val remaining=due.subtract(received)
+            val journalBalance=store.scalar(
+                "SELECT coalesce(sum(amount),0) FROM journal WHERE account=? AND currency=?",
+                "legacy_receivable:$id",currency)
+            val expectedBalance=remaining.movePointRight(2).setScale(0,java.math.RoundingMode.DOWN).longValueExact()
+            if(remaining.signum()<0 || journalBalance!=expectedBalance) {
+                issues.put("Outstanding receivable mismatch: $id")
+            }
+        }
+        return JSONObject().put("activated",true).put("invoices",total)
+            .put("newReceipts",collected).put("issues",issues)
+            .put("reconciled",issues.length()==0)
+    }
     /** Post only new money received after migration; never replay historical payments. */
     fun collect(store:Store,archiveId:String,minor:Long,vault:String,date:String=Store.today(),
                 command:String=Store.id()):BigDecimal=store.transaction {
