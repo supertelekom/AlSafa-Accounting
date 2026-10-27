@@ -37,7 +37,7 @@ object LegacyInvoiceMigrationPlan {
                     continue
                 }
                 if (number.isNotBlank() && !seenNumbers.add(number)) {
-                    invalid.put(JSONObject(detail.toString()).put("reason", "duplicate_number"))
+                    collisions.put(JSONObject(detail.toString()).put("reason", "shared_legacy_number"))
                 }
                 if (targetId in existingIds || (number.isNotBlank() && number in existingNumbers)) {
                     collisions.put(detail)
