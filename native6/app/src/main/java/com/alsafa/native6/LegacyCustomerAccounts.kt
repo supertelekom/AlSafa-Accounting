@@ -59,7 +59,7 @@ object LegacyCustomerAccounts {
             val invoice=JSONObject(record.getValue("payload"))
             val total=amount(invoice.optString("total"))
             val paid=amount(invoice.optString("paid","0"))
-            require(total>BigDecimal.ZERO && paid<=total) { "مبالغ الفاتورة القديمة غير متسقة" }
+            require(total>=BigDecimal.ZERO && paid<=total) { "مبالغ الفاتورة القديمة غير متسقة" }
             val currency=invoice.optString("currency")
             require(currency in listOf("USD","TRY","SYP")) { "عملة فاتورة قديمة غير معروفة" }
             val date=invoice.optString("date").take(10)
