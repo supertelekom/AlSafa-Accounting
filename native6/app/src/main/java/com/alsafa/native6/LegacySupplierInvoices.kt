@@ -52,6 +52,12 @@ object LegacySupplierInvoices {
         LegacyArchivedDebtReport.verifyArchiveCounts(store)
         schema(store)
         val archive=store.legacyRows("purchases")
+        // A supplier ledger entry that explicitly references a purchase but
+        // disagrees on supplier or currency makes financial activation unsafe.
+        val overlap=LegacySupplierOverlap.inspect(store)
+        require(overlap.getJSONArray("conflictingLedgerReferences").length()==0) {
+            "تعارض في مرجع فاتورة شراء مع المورد أو العملة في دفتر المورد القديم"
+        }
         require(store.scalar("SELECT count(*) FROM $accounts") in listOf(0L,archive.size.toLong())) {
             "دفتر مشتريات قديم غير مكتمل"
         }
