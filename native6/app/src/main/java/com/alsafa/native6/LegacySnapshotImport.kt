@@ -524,6 +524,25 @@ object LegacySnapshotImport {
             require(store.scalar("SELECT count(*) FROM receipts")==0L) { "استعادة الأرشيف لا يجوز أن تنشئ مقبوضات" }
             require(store.scalar("SELECT count(*) FROM returns")==0L && store.scalar("SELECT count(*) FROM refunds")==0L) { "استعادة الأرشيف لا يجوز أن تنشئ مرتجعات أو ردّ أموال محاسبي" }
             require(store.scalar("SELECT count(*) FROM closings")==0L) { "استعادة الأرشيف لا يجوز أن تنشئ إقفالات تشغيلية" }
+            // Verify every archived collection, not only selected financial
+            // categories. A partially written section must roll back the
+            // entire SQLite restore transaction.
+            historical.forEach { section ->
+                val expected=d.getJSONArray(section).length().toLong()
+                val actual=store.scalar(
+                    "SELECT count(*) FROM legacy_records WHERE category=?",section)
+                require(actual==expected) {
+                    "عدد سجلات $section بعد الاستعادة غير مطابق: $actual / $expected"
+                }
+            }
+            // Verify the complete non-array configuration snapshot is present.
+            (configurationKeys+scalarKeys).forEach { key ->
+                require(store.scalar(
+                    "SELECT count(*) FROM legacy_records WHERE category=? AND legacy_id=?",
+                    "configuration",key)==1L) {
+                    "إعدادات النسخة القديمة غير مكتملة: $key"
+                }
+            }
             val actualArchive=store.scalar("SELECT count(*) FROM legacy_records")
             val expectedFinancialCategories=historical.filter {
                 it in setOf("sales","purchases","payments","cashTransactions",
