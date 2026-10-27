@@ -33,7 +33,7 @@ object LegacyFinancialActivity {
             val date = row.optString("date")
             (from.isBlank() || (date.isNotBlank() && date >= from)) &&
                 (to.isBlank() || (date.isNotBlank() && date <= to))
-        }.sortedWith(compareByDescending<JSONObject> { it.optString("date") }
+        }.toList().sortedWith(compareByDescending<JSONObject> { it.optString("date") }
             .thenByDescending { it.optString("archiveKey") })
         val page = JSONArray()
         matching.drop(offset).take(limit).forEach { page.put(it) }
