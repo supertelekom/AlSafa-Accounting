@@ -24,6 +24,7 @@ object LegacyInvoiceMigrationPlan {
         val seenIds = mutableSetOf<String>()
         val seenOriginalNumbers = mutableMapOf<String, MutableSet<String>>()
         val repeatedOriginalNumbers = JSONArray()
+        val precisionIssues = JSONArray()
         var nextNativeNumber = existingNumbers.mapNotNull { it.toLongOrNull() }.maxOrNull() ?: 0L
         for (section in listOf("sales", "purchases")) {
             val source = store.legacyRows(section)
@@ -57,6 +58,15 @@ object LegacyInvoiceMigrationPlan {
                 }
                 if (number.isNotBlank() && (number.toLongOrNull() == null || number.toLongOrNull()!! <= 0L)) {
                     invalid.put(JSONObject(detail.toString()).put("reason", "invalid_invoice_number"))
+                }
+                // Keep original high-precision legacy values untouched. Report them separately:
+                // rounding them silently would alter historical cash, debt or profit.
+                if ((total != null && total.stripTrailingZeros().scale() > 2) ||
+                    (paid != null && paid.stripTrailingZeros().scale() > 2)) {
+                    precisionIssues.put(JSONObject(detail.toString())
+                        .put("totalOriginal", original.optString("total"))
+                        .put("paidOriginal", original.optString("paid"))
+                        .put("reason", "legacy_amount_precision_exceeds_cents"))
                 }
                 if (currency !in setOf("USD", "TRY", "SYP") ||
                     runCatching { java.time.LocalDate.parse(date) }.isFailure ||
@@ -114,6 +124,7 @@ object LegacyInvoiceMigrationPlan {
             .put("historicalOutstandingIsNotNewCash", true)
             .put("invalid", invalid).put("collisions", collisions)
             .put("repeatedOriginalNumbersForReview", repeatedOriginalNumbers)
+            .put("precisionIssuesForReview", precisionIssues)
             .put("identitySafe", invalid.length() == 0 && collisions.length() == 0)
             .put("stockRepostingAllowed", false)
             .put("cashRepostingAllowed", false)
