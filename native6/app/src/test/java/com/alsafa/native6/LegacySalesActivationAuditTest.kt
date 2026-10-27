@@ -33,6 +33,17 @@ class LegacySalesActivationAuditTest {
             result.getJSONArray("issues").getJSONObject(0).getString("reason"))
     }
 
+    @Test fun duplicateInvoiceNumberIsRejectedEvenWithDifferentIds() {
+        val first = sale("s1", "10.00", "p1").put("invoiceNo", 500)
+        val second = sale("s2", "10.00", "p1").put("invoiceNo", 500)
+        val result = LegacySalesActivationAudit.inspect(backup(
+            JSONArray().put(JSONObject().put("id", "p1")),
+            JSONArray().put(first).put(second)))
+        assertFalse(result.getBoolean("activationPermitted"))
+        assertEquals("duplicate_or_missing_invoice_number",
+            result.getJSONArray("issues").getJSONObject(0).getString("reason"))
+    }
+
     @Test fun overpaidInvoiceAndDuplicateIdAreRejected() {
         val result = LegacySalesActivationAudit.inspect(backup(
             JSONArray().put(JSONObject().put("id", "p1")),
