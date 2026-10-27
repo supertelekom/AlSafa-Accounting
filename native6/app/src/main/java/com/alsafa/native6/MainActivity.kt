@@ -528,6 +528,31 @@ open class MainActivity:Activity() {
                     }
                 }.show()
         }
+        button("أرصدة الموردين الافتتاحية المستقلة",body) {
+            work {
+                val report=LegacySupplierOpeningDebts.snapshot(store)
+                val rows=report.getJSONArray("supplierBalances")
+                val message=buildString {
+                    append("حركات دفتر الموردين: ").append(report.getInt("sourceRows"))
+                    append("\\n\\n")
+                    for(i in 0 until rows.length()) {
+                        val item=rows.getJSONObject(i)
+                        append(item.optString("supplierName")).append(" — ")
+                        append(item.optString("netOpeningDebtExact")).append(" ")
+                        append(item.optString("currency"))
+                        if(item.optBoolean("possibleAdvance")) append(" (رصيد سلفة محتمل)")
+                        append("\\n")
+                    }
+                    if(rows.length()==0) append("لا توجد أرصدة افتتاحية مستقلة.")
+                    append("\\nهذه الأرصدة للعرض فقط، ولم تُضف إلى ديون فواتير الشراء.")
+                }
+                runOnUiThread {
+                    if(!isFinishing&&!isDestroyed) AlertDialog.Builder(this)
+                        .setTitle("أرصدة الموردين الافتتاحية")
+                        .setMessage(message).setPositiveButton("إغلاق",null).show()
+                }
+            }
+        }
         button("الوضع المالي التشغيلي للذمم والخزنات",body) {
             work {
                 val snapshot=LegacyOperationalBalances.snapshot(store)
