@@ -117,6 +117,7 @@ object LegacyArchivedDebtReport {
             archiveCounts.put(section, actual)
         }
         report.put("relatedArchiveCounts", archiveCounts)
+        report.put("paymentReferenceAudit", LegacyPaymentAudit.inspect(store))
         return report.put("readOnly", true)
             .put("financialPosting", "NONE")
             .put("supplierLedgerReconciled", false)
