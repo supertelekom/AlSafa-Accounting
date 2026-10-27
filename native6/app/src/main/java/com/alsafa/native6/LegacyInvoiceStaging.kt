@@ -40,6 +40,8 @@ object LegacyInvoiceStaging {
         val mappings = plan.getJSONObject("invoiceMappings")
         val db = store.db
         db.execSQL(ddl)
+        db.execSQL("CREATE TRIGGER IF NOT EXISTS legacy_invoice_staging_no_update BEFORE UPDATE ON legacy_invoice_staging BEGIN SELECT RAISE(ABORT,'Immutable staged invoice'); END")
+        db.execSQL("CREATE TRIGGER IF NOT EXISTS legacy_invoice_staging_no_delete BEFORE DELETE ON legacy_invoice_staging BEGIN SELECT RAISE(ABORT,'Immutable staged invoice'); END")
         val staged = store.scalar("SELECT count(*) FROM $table")
         if (staged != 0L) {
             require(store.scalar("SELECT count(*) FROM $table WHERE source_hash=?",sourceHash)==staged) {
