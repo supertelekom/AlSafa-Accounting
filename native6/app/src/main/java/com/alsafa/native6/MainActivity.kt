@@ -2164,7 +2164,9 @@ open class MainActivity:Activity() {
                 controls.addView(previous,LinearLayout.LayoutParams(0,dp(44),1f))
                 controls.addView(pageLabel,LinearLayout.LayoutParams(0,dp(44),1f))
                 controls.addView(next,LinearLayout.LayoutParams(0,dp(44),1f))
+                var searchGeneration=0
                 fun load() {
+                    val generation=++searchGeneration
                     val key=if(section.selectedItemPosition==0)"sales" else "purchases"
                     val pageNumber=currentPage
                     val startDate=from.text.toString().trim()
@@ -2179,7 +2181,7 @@ open class MainActivity:Activity() {
                         val rows=result.getJSONArray("rows")
                         val total=result.optInt("total")
                         runOnUiThread {
-                            if(isFinishing||isDestroyed)return@runOnUiThread
+                            if(isFinishing||isDestroyed||generation!=searchGeneration)return@runOnUiThread
                             list.removeAllViews()
                             pageLabel.text="صفحة ${pageNumber+1} / ${maxOf(1,(total+19)/20)}"
                             previous.isEnabled=pageNumber>0
