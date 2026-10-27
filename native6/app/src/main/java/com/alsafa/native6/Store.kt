@@ -1382,13 +1382,13 @@ class Store(val helper:StoreDb) {
             }
             openings.add(Opening(sourceId,party,phone,currency,due))
         }
-        var total=0L
+        val totals=linkedMapOf<Currency,Long>()
         for(opening in openings) {
             openLegacyReceivableInternal(opening.sourceId,opening.party,opening.phone,
                 opening.currency,opening.amount,day.toString())
-            total=Math.addExact(total,opening.amount)
+            totals[opening.currency]=Math.addExact(totals[opening.currency] ?: 0L,opening.amount)
         }
-        mapOf("activated" to openings.size.toLong(),"minorUnitsTotal" to total)
+        mapOf("activated" to openings.size.toLong()) + totals.mapKeys { "minorUnits"+it.key.name }
     }
 
     private fun collectInternal(invoiceId:String,amount:Long,v:String,date:String,command:String) {
