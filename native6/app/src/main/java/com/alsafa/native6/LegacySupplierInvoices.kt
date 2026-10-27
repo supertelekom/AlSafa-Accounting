@@ -146,6 +146,21 @@ object LegacySupplierInvoices {
         val issues=JSONArray()
         var invoices=0
         var paymentsCount=0
+        val archive=store.legacyRows("purchases")
+        val archivedIds=archive.map { it.getValue("legacy_id") }.toSet()
+        val activatedIds=store.rows("SELECT archive_id FROM $accounts")
+            .map { it.getValue("archive_id") }.toSet()
+        if(archivedIds!=activatedIds) issues.put("Archived purchase invoice identity mismatch")
+        for(source in archive) {
+            val key=source.getValue("legacy_id")
+            val hash=MessageDigest.getInstance("SHA-256")
+                .digest(source.getValue("payload").toByteArray(Charsets.UTF_8))
+                .joinToString("") { "%02x".format(it.toInt() and 255) }
+            val stored=store.rows("SELECT payload_hash FROM $accounts WHERE archive_id=?",key)
+                .singleOrNull()
+            if(stored==null || stored.getValue("payload_hash")!=hash)
+                issues.put("Archived purchase invoice source mismatch: $key")
+        }
         for(row in store.rows("SELECT * FROM $accounts")) {
             invoices++
             val key=row.getValue("archive_id")
