@@ -2463,6 +2463,11 @@ open class MainActivity:Activity() {
                     kinds[kind.selectedItemPosition]=="purchase") &&
                     statuses[status.selectedItemPosition]!="cancelled") {
                 val restored=column()
+                sectionHeading("فواتير الصفا المستعادة",
+                    "هذه الفواتير محفوظة من التطبيق القديم ولا يُعاد احتساب المبيع أو المخزون أو المقبوض عند عرضها.",restored)
+                button("تصفح جميع السجلات القديمة والفواتير المستعادة",restored) {
+                    go("legacy-history")
+                }
                 output.addView(restored)
                 val sectionKeys=when(kinds[kind.selectedItemPosition]) {
                     "sale" -> listOf("sales")
