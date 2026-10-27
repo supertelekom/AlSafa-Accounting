@@ -52,6 +52,12 @@ object LegacyInvoiceStaging {
         db.execSQL(ddl)
         db.execSQL("CREATE TRIGGER IF NOT EXISTS legacy_invoice_staging_no_update BEFORE UPDATE ON legacy_invoice_staging BEGIN SELECT RAISE(ABORT,'Immutable staged invoice'); END")
         db.execSQL("CREATE TRIGGER IF NOT EXISTS legacy_invoice_staging_no_delete BEFORE DELETE ON legacy_invoice_staging BEGIN SELECT RAISE(ABORT,'Immutable staged invoice'); END")
+        require(store.scalar("SELECT count(*) FROM $table WHERE total_minor!=paid_minor+outstanding_minor")==0L) {
+            "المبالغ المجهزة غير متوازنة"
+        }
+        require(store.scalar("SELECT count(*) FROM $table WHERE source_section NOT IN ('sales','purchases')")==0L) {
+            "نوع فاتورة مجهزة غير معروف"
+        }
         val staged = store.scalar("SELECT count(*) FROM $table")
         if (staged != 0L) {
             require(store.scalar("SELECT count(*) FROM $table WHERE source_hash=?",sourceHash)==staged) {
