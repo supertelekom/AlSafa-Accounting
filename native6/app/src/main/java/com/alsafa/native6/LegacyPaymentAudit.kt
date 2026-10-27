@@ -8,10 +8,18 @@ object LegacyPaymentAudit {
     fun inspect(store: Store): JSONObject {
         LegacyArchivedDebtReport.verifyArchiveCounts(store)
         val ids = mutableSetOf<String>()
+        val currencies = mutableMapOf<String, String>()
+        val paidSnapshots = mutableMapOf<String, java.math.BigDecimal>()
+        val paymentTotals = mutableMapOf<String, java.math.BigDecimal>()
+        val invalidPaymentAmounts = JSONArray()
+        val currencyConflicts = JSONArray()
         for (section in listOf("sales", "purchases")) {
             for (row in store.legacyRows(section)) {
                 val invoice = JSONObject(row.getValue("payload"))
-                ids.add(section + ":" + invoice.optString("id"))
+                val key = section + ":" + invoice.optString("id")
+                ids.add(key)
+                currencies[key] = invoice.optString("currency")
+                invoice.optString("paid").toBigDecimalOrNull()?.let { paidSnapshots[key] = it }
             }
         }
         val missing = JSONArray()
@@ -24,9 +32,31 @@ object LegacyPaymentAudit {
                 else -> continue
             }
             val key = section + ":" + payment.optString("referenceId")
-            if (key in ids) linked++ else missing.put(row.getValue("legacy_id"))
+            if (key in ids) {
+                linked++
+                val amount = payment.optString("amount").toBigDecimalOrNull()
+                if (amount == null || amount.signum() <= 0) {
+                    invalidPaymentAmounts.put(row.getValue("legacy_id"))
+                } else if (payment.optString("currency") != currencies[key]) {
+                    currencyConflicts.put(row.getValue("legacy_id"))
+                } else {
+                    paymentTotals[key] = (paymentTotals[key] ?: java.math.BigDecimal.ZERO).add(amount)
+                }
+            } else missing.put(row.getValue("legacy_id"))
+        }
+        val differences = JSONArray()
+        for ((key, total) in paymentTotals) {
+            val snapshot = paidSnapshots[key]
+            if (snapshot == null || snapshot.compareTo(total) != 0) {
+                differences.put(JSONObject().put("invoice", key)
+                    .put("paidSnapshot", snapshot?.toPlainString() ?: "missing")
+                    .put("paymentEvidenceTotal", total.toPlainString()))
+            }
         }
         return JSONObject().put("linkedEvidenceCount", linked)
+            .put("invalidPaymentAmounts", invalidPaymentAmounts)
+            .put("paymentCurrencyConflicts", currencyConflicts)
+            .put("paymentSnapshotDifferences", differences)
             .put("unlinkedEvidenceKeys", missing)
             .put("readOnly", true).put("cashPosted", false)
     }
