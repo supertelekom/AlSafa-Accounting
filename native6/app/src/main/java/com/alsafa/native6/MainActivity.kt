@@ -2170,6 +2170,10 @@ open class MainActivity:Activity() {
                     val startDate=from.text.toString().trim()
                     val endDate=to.text.toString().trim()
                     val term=query.text.toString().trim()
+                    list.removeAllViews()
+                    text("جارٍ البحث في الفواتير المستعادة...",list,13f)
+                    previous.isEnabled=false
+                    next.isEnabled=false
                     work {
                         val result=LegacyInvoiceSnapshot.page(store,key,startDate,endDate,term,pageNumber*20,20)
                         val rows=result.getJSONArray("rows")
