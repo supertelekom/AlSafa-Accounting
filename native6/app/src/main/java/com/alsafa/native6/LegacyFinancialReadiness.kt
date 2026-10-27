@@ -24,7 +24,15 @@ object LegacyFinancialReadiness {
             for (field in listOf("missingReferences", "unresolvedReferences",
                 "duplicateInvoiceIds", "duplicateMovementIds")) {
                 val count = result.optJSONArray(field)?.length() ?: 0
-                if (count > 0) blockers.put("$field: $count")
+                if (count > 0) {
+                    val label = when(field) {
+                        "missingReferences" -> "حركات بلا رقم فاتورة"
+                        "unresolvedReferences" -> "حركات لا تطابق فاتورة موجودة"
+                        "duplicateInvoiceIds" -> "معرفات فواتير مكررة"
+                        else -> "معرفات حركات مكررة"
+                    }
+                    blockers.put("$label: $count")
+                }
             }
         }
         val eligible = gate.optBoolean("financialActive", false) &&
