@@ -22,6 +22,7 @@ object LegacyInvoiceMigrationPlan {
         val existingIds = existing.map { it.getValue("id") }.toSet()
         val existingNumbers = existing.map { it.getValue("number") }.toSet()
         val seenIds = mutableSetOf<String>()
+        val seenOriginalNumbers = mutableMapOf<String, MutableSet<String>>()
         var nextNativeNumber = existingNumbers.mapNotNull { it.toLongOrNull() }.maxOrNull() ?: 0L
         for (section in listOf("sales", "purchases")) {
             val source = store.legacyRows(section)
@@ -43,6 +44,9 @@ object LegacyInvoiceMigrationPlan {
                 val detail = JSONObject().put("section", section)
                     .put("sourceId", sourceId).put("sourceNumber", number)
                     .put("targetId", targetId)
+                if (number.isNotBlank() && !seenOriginalNumbers.getOrPut(section) { mutableSetOf() }.add(number)) {
+                    invalid.put(JSONObject(detail.toString()).put("reason", "duplicate_invoice_number"))
+                }
                 if (number.isBlank()) {
                     invalid.put(JSONObject(detail.toString()).put("reason", "missing_invoice_number"))
                 }
