@@ -23,15 +23,27 @@ object LegacyPaymentAudit {
             }
         }
         val missing = JSONArray()
+        val unsupportedReferenceTypes = JSONArray()
+        val missingReferenceIds = JSONArray()
+        val duplicatePaymentIds = JSONArray()
+        val seenPaymentIds = mutableSetOf<String>()
         var linked = 0
         for (row in store.legacyRows("payments")) {
             val payment = JSONObject(row.getValue("payload"))
-            val section = when (payment.optString("referenceType").lowercase()) {
+            val paymentId = payment.optString("id").trim()
+            if (paymentId.isNotEmpty() && !seenPaymentIds.add(paymentId)) duplicatePaymentIds.put(paymentId)
+            val section = when (payment.optString("referenceType").trim().lowercase()) {
                 "sale", "sales" -> "sales"
                 "purchase", "purchases" -> "purchases"
-                else -> continue
+                else -> {
+                    unsupportedReferenceTypes.put(JSONObject().put("archiveKey", row.getValue("legacy_id"))
+                        .put("referenceType", payment.optString("referenceType")))
+                    continue
+                }
             }
-            val key = section + ":" + payment.optString("referenceId")
+            val referenceId = payment.optString("referenceId").trim()
+            if (referenceId.isEmpty()) missingReferenceIds.put(row.getValue("legacy_id"))
+            val key = section + ":" + referenceId
             if (key in ids) {
                 linked++
                 val amount = payment.optString("amount").toBigDecimalOrNull()
@@ -62,6 +74,9 @@ object LegacyPaymentAudit {
         }
         return JSONObject().put("linkedEvidenceCount", linked)
             .put("invalidPaymentAmounts", invalidPaymentAmounts)
+            .put("unsupportedReferenceTypes", unsupportedReferenceTypes)
+            .put("missingReferenceIds", missingReferenceIds)
+            .put("duplicatePaymentIds", duplicatePaymentIds)
             .put("paymentCurrencyConflicts", currencyConflicts)
             .put("paymentSnapshotDifferences", differences)
             .put("paidSnapshotsWithoutEvidence", snapshotsWithoutPaymentEvidence)
