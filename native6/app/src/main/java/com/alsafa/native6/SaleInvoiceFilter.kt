@@ -17,6 +17,17 @@ internal object SaleInvoiceFilter {
         val productNames: List<String> = emptyList()
     )
 
+    /** Normalize Arabic/Persian digits and common Arabic letter variants for invoice search. */
+    internal fun normalize(value: String): String = buildString {
+        for (char in value.trim().lowercase()) append(when (char) {
+            in '٠'..'٩' -> ('0'.code + char.code - '٠'.code).toChar()
+            in '۰'..'۹' -> ('0'.code + char.code - '۰'.code).toChar()
+            'أ', 'إ', 'آ' -> 'ا'
+            'ى' -> 'ي'
+            else -> char
+        })
+    }
+
     fun filter(
         rows: List<Row>,
         query: String,
@@ -24,7 +35,7 @@ internal object SaleInvoiceFilter {
         from: String? = null,
         to: String? = null
     ): List<Row> {
-        val q = query.trim().lowercase()
+        val q = normalize(query)
         val start = from?.takeIf { it.isNotBlank() }
         val end = to?.takeIf { it.isNotBlank() }
         require(start == null || runCatching { LocalDate.parse(start) }.isSuccess)
@@ -38,7 +49,7 @@ internal object SaleInvoiceFilter {
             }
             dateMatches && (q.isEmpty() || sequenceOf(
                 row.invoiceNumber, row.customer, row.phone, *row.productNames.toTypedArray()
-            ).any { it.lowercase().contains(q) })
+            ).any { normalize(it).contains(q) })
         }.sortedWith(compareByDescending<Row> { it.date }
             .thenByDescending { it.time }.thenByDescending { it.id }).toList()
     }
