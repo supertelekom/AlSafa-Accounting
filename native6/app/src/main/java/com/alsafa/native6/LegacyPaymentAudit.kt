@@ -45,6 +45,13 @@ object LegacyPaymentAudit {
             } else missing.put(row.getValue("legacy_id"))
         }
         val differences = JSONArray()
+        val snapshotsWithoutPaymentEvidence = JSONArray()
+        for ((key, paid) in paidSnapshots) {
+            if (paid.signum() > 0 && key !in paymentTotals) {
+                snapshotsWithoutPaymentEvidence.put(JSONObject().put("invoice", key)
+                    .put("paidSnapshot", paid.toPlainString()))
+            }
+        }
         for ((key, total) in paymentTotals) {
             val snapshot = paidSnapshots[key]
             if (snapshot == null || snapshot.compareTo(total) != 0) {
@@ -57,6 +64,8 @@ object LegacyPaymentAudit {
             .put("invalidPaymentAmounts", invalidPaymentAmounts)
             .put("paymentCurrencyConflicts", currencyConflicts)
             .put("paymentSnapshotDifferences", differences)
+            .put("paidSnapshotsWithoutEvidence", snapshotsWithoutPaymentEvidence)
+            .put("evidenceDoesNotCreateCash", true)
             .put("unlinkedEvidenceKeys", missing)
             .put("readOnly", true).put("cashPosted", false)
     }
