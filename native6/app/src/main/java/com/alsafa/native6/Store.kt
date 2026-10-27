@@ -1283,8 +1283,21 @@ class Store(val helper:StoreDb) {
         require(scalar("SELECT count(*) FROM settings WHERE key=?",key)==0L) {
             "هذه الفاتورة القديمة سبق تفعيلها"
         }
-        require(scalar("SELECT count(*) FROM legacy_records WHERE category=? AND legacy_id LIKE ?",
-            "sales","%:"+legacyId)>0L){"الفاتورة القديمة غير موجودة في الأرشيف"}
+        val source=legacyRows("sales").mapNotNull { row ->
+            runCatching { JSONObject(row.getValue("payload")) }.getOrNull()
+        }.singleOrNull { it.optString("id").trim()==legacyId }
+            ?: throw IllegalArgumentException("الفاتورة القديمة غير موجودة أو مكررة")
+        require(source.optString("currency")==currency.name){"عملة الذمة لا تطابق النسخة الأصلية"}
+        val originalTotal=source.optString("total").toBigDecimalOrNull()
+        val originalPaid=source.optString("paid").toBigDecimalOrNull()
+        require(originalTotal!=null && originalPaid!=null &&
+            originalTotal>=java.math.BigDecimal.ZERO &&
+            originalPaid>=java.math.BigDecimal.ZERO && originalPaid<=originalTotal) {
+            "القيمة أو المدفوع القديم غير صالح"
+        }
+        val originalDue=originalTotal.subtract(originalPaid)
+            .movePointRight(2).setScale(0,java.math.RoundingMode.HALF_UP).longValueExact()
+        require(originalDue==remaining){"المتبقي لا يطابق النسخة القديمة"}
         val command=id()
         event(command,"OPENING_RECEIVABLE",day.toString(),"ذمة افتتاحية من فاتورة قديمة")
         insert("invoices","id" to command,"number" to nextNumber(),
