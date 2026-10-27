@@ -30,6 +30,28 @@ object LegacyInvoiceStaging {
     private fun minor(value:String):Long =
         value.toBigDecimal().movePointRight(2).longValueExact()
 
+    /** Compare immutable staged JSON in bounded BLOB chunks, never a full CursorWindow row. */
+    private fun sameStagedPayload(store:Store,targetId:String,original:String):Boolean {
+        val bytes=original.toByteArray(Charsets.UTF_8)
+        if(store.scalar("SELECT length(CAST(payload AS BLOB)) FROM $table WHERE target_id=?",targetId)!=bytes.size.toLong()) return false
+        val digits="0123456789ABCDEF"
+        var offset=0
+        while(offset<bytes.size) {
+            val size=minOf(4096,bytes.size-offset)
+            val actual=store.rows("SELECT hex(substr(CAST(payload AS BLOB),?,?)) AS part FROM $table WHERE target_id=?",
+                (offset+1).toString(),size.toString(),targetId).single().getValue("part")
+            val expected=buildString(size*2) {
+                for(i in offset until offset+size) {
+                    val b=bytes[i].toInt() and 255
+                    append(digits[b ushr 4]);append(digits[b and 15])
+                }
+            }
+            if(actual!=expected)return false
+            offset+=size
+        }
+        return true
+    }
+
     fun inspect(store:Store):JSONObject {
         val exists = store.scalar("SELECT count(*) FROM sqlite_master WHERE type='table' AND name='legacy_invoice_staging'") > 0L
         if (!exists) return JSONObject().put("staged",0).put("exists",false).put("posted",false)
@@ -50,7 +72,10 @@ object LegacyInvoiceStaging {
         val mappings = plan.getJSONObject("invoiceMappings")
         // Read large legacy JSON in bounded chunks; a direct payload SELECT can overflow CursorWindow.
         val sources = listOf("sales","purchases").associateWith { section ->
-            store.legacyRows(section).associateBy { it.getValue("legacy_id") }
+            store.legacyRows(section).associateBy { row ->
+                JSONObject(row.getValue("payload")).getString("id").trim()
+                    .also { require(it.isNotBlank()) { "معرف فاتورة قديمة مفقود: $section" } }
+            }
         }
         val db = store.db
         db.execSQL(ddl)
@@ -74,11 +99,11 @@ object LegacyInvoiceStaging {
                 val list = mappings.getJSONArray(section)
                 for (i in 0 until list.length()) {
                     val m = list.getJSONObject(i)
-                    val existing = store.rows("SELECT payload,source_hash,source_section,source_id,source_number,invoice_date,currency,target_number,total_minor,paid_minor,outstanding_minor FROM $table WHERE target_id=?",
+                    val existing = store.rows("SELECT source_hash,source_section,source_id,source_number,invoice_date,currency,target_number,total_minor,paid_minor,outstanding_minor FROM $table WHERE target_id=?",
                         m.getString("targetId")).singleOrNull()
                     val sourcePayload = sources.getValue(section)[m.getString("sourceId")]
                     require(existing != null && sourcePayload != null &&
-                        existing.getValue("payload")==sourcePayload.getValue("payload") &&
+                        sameStagedPayload(store,m.getString("targetId"),sourcePayload.getValue("payload")) &&
                         existing.getValue("source_hash")==sourceHash &&
                         existing.getValue("source_section")==section &&
                         existing.getValue("source_id")==m.getString("sourceId") &&
