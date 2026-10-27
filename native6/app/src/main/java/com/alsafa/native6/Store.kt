@@ -50,6 +50,13 @@ class Store(val helper:StoreDb) {
             mapOf("legacy_id" to id,"payload" to payload)
         }
     }
+    /** Load exactly one restored record without decoding the entire archive section. */
+    fun legacyRecord(category:String,archiveKey:String):Map<String,String>? {
+        require(archiveKey.isNotBlank()) { "معرف الأرشيف مطلوب" }
+        val matching=rows("SELECT legacy_id,length(CAST(payload AS BLOB)) AS bytes FROM legacy_records WHERE category=? AND legacy_id=?",category,archiveKey)
+        require(matching.size<=1) { "معرف أرشيف مكرر" }
+        return decodeLegacyRecords(category,matching).firstOrNull()
+    }
     fun legacyRows(category:String):List<Map<String,String>> {
         val ids=rows("SELECT legacy_id,length(CAST(payload AS BLOB)) AS bytes FROM legacy_records WHERE category=? ORDER BY CAST(substr(legacy_id,1,instr(legacy_id,':')-1) AS INTEGER)",category)
         return decodeLegacyRecords(category,ids)
