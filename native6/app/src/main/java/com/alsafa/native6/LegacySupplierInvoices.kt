@@ -205,6 +205,9 @@ object LegacySupplierInvoices {
         val row=store.rows("SELECT currency,invoice_date FROM $accounts WHERE archive_id=?",key)
             .singleOrNull() ?: error("فاتورة شراء غير مفعلة")
         val currency=row.getValue("currency")
+        require(store.scalar("SELECT count(*) FROM events WHERE id=?",command)==0L) {
+            "معرف عملية الدفع مستخدم مسبقاً"
+        }
         val openingDate=store.rows("SELECT date FROM events WHERE id=?", "legacy:purchase:opening:$key")
             .singleOrNull()?.getValue("date") ?: error("رصيد مورد افتتاحي غير مثبت")
         require(!day.isBefore(LocalDate.parse(openingDate)) &&
@@ -215,6 +218,16 @@ object LegacySupplierInvoices {
         require(reconcile(store).optBoolean("reconciled")) { "دفتر ديون الموردين غير متطابق" }
         val amount=BigDecimal.valueOf(minor,2)
         require(amount<=remaining(store,key)) { "الدفعة تتجاوز المتبقي للمورد" }
+        // Do not post a supplier payment for an invoice whose immutable
+        // archive source changed after activation.
+        val source=store.legacyRecord("purchases",key)
+            ?: error("فاتورة الشراء الأصلية مفقودة من الأرشيف")
+        val sourceHash=MessageDigest.getInstance("SHA-256")
+            .digest(source.getValue("payload").toByteArray(Charsets.UTF_8))
+            .joinToString("") { "%02x".format(it.toInt() and 255) }
+        val storedHash=store.rows("SELECT payload_hash FROM $accounts WHERE archive_id=?",key)
+            .single().getValue("payload_hash")
+        require(sourceHash==storedHash) { "مصدر فاتورة الشراء لا يطابق الرصيد المفعل" }
         val balance=store.scalar("SELECT coalesce(sum(amount),0) FROM journal WHERE account=? AND currency=?",
             "legacy_payable:$key",currency)
         require(balance<= -minor) { "رصيد المورد في دفتر القيود غير كاف" }
