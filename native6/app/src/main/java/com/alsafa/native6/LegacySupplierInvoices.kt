@@ -146,17 +146,17 @@ object LegacySupplierInvoices {
         }
         return result.drop(offset).take(limit)
     }
-    fun reconcile(store:Store):JSONObject {
+    fun reconcile(store:Store,keyFilter:String?=null):JSONObject {
         if(store.scalar("SELECT count(*) FROM sqlite_master WHERE type='table' AND name='$accounts'")==0L)
             return JSONObject().put("activated",false)
         val issues=JSONArray()
         var invoices=0
         var paymentsCount=0
-        val archive=store.legacyRows("purchases")
+        val archive=if(keyFilter==null)store.legacyRows("purchases") else emptyList()
         val archivedIds=archive.map { it.getValue("legacy_id") }.toSet()
         val activatedIds=store.rows("SELECT archive_id FROM $accounts")
             .map { it.getValue("archive_id") }.toSet()
-        if(archivedIds!=activatedIds) issues.put("Archived purchase invoice identity mismatch")
+        if(keyFilter==null && archivedIds!=activatedIds) issues.put("Archived purchase invoice identity mismatch")
         for(source in archive) {
             val key=source.getValue("legacy_id")
             val hash=MessageDigest.getInstance("SHA-256")
@@ -167,7 +167,7 @@ object LegacySupplierInvoices {
             if(stored==null || stored.getValue("payload_hash")!=hash)
                 issues.put("Archived purchase invoice source mismatch: $key")
         }
-        for(row in store.rows("SELECT * FROM $accounts")) {
+        for(row in if(keyFilter==null) store.rows("SELECT * FROM $accounts") else store.rows("SELECT * FROM $accounts WHERE archive_id=?",keyFilter)) {
             invoices++
             val key=row.getValue("archive_id")
             val currency=row.getValue("currency")
@@ -221,7 +221,7 @@ object LegacySupplierInvoices {
         val last=store.rows("SELECT max(date) AS last_date FROM $payments WHERE archive_id=?",key)
             .single().getValue("last_date")
         require(last.isBlank() || day.toString()>=last)
-        require(reconcile(store).optBoolean("reconciled")) { "دفتر ديون الموردين غير متطابق" }
+        require(reconcile(store,key).optBoolean("reconciled")) { "دفتر ديون الموردين غير متطابق" }
         val amount=BigDecimal.valueOf(minor,2)
         require(amount<=remaining(store,key)) { "الدفعة تتجاوز المتبقي للمورد" }
         // Do not post a supplier payment for an invoice whose immutable
