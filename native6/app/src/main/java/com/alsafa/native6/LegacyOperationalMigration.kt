@@ -13,6 +13,7 @@ object LegacyOperationalMigration {
         val salesCount=store.legacyRows("sales").size
         val purchasesCount=store.legacyRows("purchases").size
         require(store.legacyRows("sales").distinctBy { it["legacy_id"] }.size==salesCount)
+        require(store.legacyRows("purchases").distinctBy { it["legacy_id"] }.size==purchasesCount)
         val customer=LegacyCustomerAccounts.activate(store)
         val supplier=LegacySupplierInvoices.activate(store)
         require(store.scalar("SELECT count(*) FROM legacy_customer_accounts")==salesCount.toLong())
