@@ -1276,6 +1276,38 @@ class Store(val helper:StoreDb) {
         remaining:Long,cutoverDate:String
     ):String=transaction { openLegacyReceivableInternal(legacyId,party,phone,currency,remaining,cutoverDate) }
 
+    /** Remaining old sale after linked collections and debt-reducing returns. */
+    private fun reconciledLegacySaleDue(source:JSONObject):Long {
+        val ref=source.optString("id")
+        val currency=source.optString("currency")
+        val total=source.optString("total").toBigDecimalOrNull()
+        val paid=source.optString("paid").toBigDecimalOrNull()
+        require(total!=null && paid!=null && total>=java.math.BigDecimal.ZERO &&
+            paid>=java.math.BigDecimal.ZERO && paid<=total){"فاتورة قديمة بمبالغ غير صالحة"}
+        var linked=java.math.BigDecimal.ZERO
+        for(row in legacyRows("payments")) {
+            val p=JSONObject(row.getValue("payload"))
+            if(p.optString("referenceType")!="sale" || p.optString("referenceId")!=ref) continue
+            require(p.optString("currency")==currency){"قبض بعملة مختلفة؛ يلزم مطابقة يدوية"}
+            val amount=p.optString("amount").toBigDecimalOrNull()
+            require(amount!=null && amount>=java.math.BigDecimal.ZERO){"قبض قديم غير صالح"}
+            linked=linked.add(amount)
+        }
+        var returned=java.math.BigDecimal.ZERO
+        for(row in legacyRows("returns")) {
+            val r=JSONObject(row.getValue("payload"))
+            if(r.optString("referenceType")!="sale" || r.optString("referenceId")!=ref) continue
+            require(r.optString("currency")==currency){"مرتجع بعملة مختلفة"}
+            val amount=r.optString("debtReduction").toBigDecimalOrNull()
+            require(amount!=null && amount>=java.math.BigDecimal.ZERO){"تسوية مرتجع غير صالحة"}
+            returned=returned.add(amount)
+        }
+        val due=total.subtract(paid.max(linked)).subtract(returned)
+        require(due>=java.math.BigDecimal.ZERO){"تحصيل أو مرتجع يتجاوز قيمة الفاتورة"}
+        return due.setScale(2,java.math.RoundingMode.HALF_UP)
+            .movePointRight(2).longValueExact()
+    }
+
     private fun openLegacyReceivableInternal(
         legacyId:String,party:String,phone:String,currency:Currency,
         remaining:Long,cutoverDate:String
@@ -1297,15 +1329,7 @@ class Store(val helper:StoreDb) {
         require(status !in setOf("مدفوع بالكامل","مسوّاة/مسترجعة","ملغاة","مسترجعة")) {
             "حالة الفاتورة القديمة تتعارض مع تفعيل دين العميل"
         }
-        val originalTotal=source.optString("total").toBigDecimalOrNull()
-        val originalPaid=source.optString("paid").toBigDecimalOrNull()
-        require(originalTotal!=null && originalPaid!=null &&
-            originalTotal>=java.math.BigDecimal.ZERO &&
-            originalPaid>=java.math.BigDecimal.ZERO && originalPaid<=originalTotal) {
-            "القيمة أو المدفوع القديم غير صالح"
-        }
-        val originalDue=originalTotal.subtract(originalPaid)
-            .movePointRight(2).setScale(0,java.math.RoundingMode.HALF_UP).longValueExact()
+        val originalDue=reconciledLegacySaleDue(source)
         require(originalDue==remaining){"المتبقي لا يطابق النسخة القديمة"}
         val command=id()
         event(command,"OPENING_RECEIVABLE",day.toString(),"ذمة افتتاحية من فاتورة قديمة")
@@ -1340,14 +1364,7 @@ class Store(val helper:StoreDb) {
             require(sourceId.isNotBlank() && seen.add(sourceId)) {
                 "معرف فاتورة قديمة مفقود أو مكرر"
             }
-            val total=source.optString("total").toBigDecimalOrNull()
-            val paid=source.optString("paid").toBigDecimalOrNull()
-            require(total!=null && paid!=null && total>=java.math.BigDecimal.ZERO &&
-                paid>=java.math.BigDecimal.ZERO && paid<=total) {
-                "قيمة أو مدفوع فاتورة قديمة غير صالح"
-            }
-            val due=total.subtract(paid).setScale(2,java.math.RoundingMode.HALF_UP)
-                .movePointRight(2).longValueExact()
+            val due=reconciledLegacySaleDue(source)
             if(due==0L) continue
             // Legacy "paid" may be stale after a collection or return.
             // Stop rather than inventing a customer debt.
