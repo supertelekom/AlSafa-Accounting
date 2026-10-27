@@ -210,6 +210,21 @@ object LegacySupplierInvoices {
             "SELECT coalesce(sum(j.amount),0) FROM journal j JOIN events e ON e.id=j.event_id WHERE j.account=? AND j.currency=? AND e.date<=?",
             "cash:$vault",currency,day.toString())
         require(earlierCash>=minor) { "رصيد الخزنة بتاريخ الدفعة غير كاف" }
+        // Backdated supplier payments must not make any subsequent day's cash
+        // position negative, even if today's vault balance is sufficient.
+        val futureDaily=store.rows("""
+            SELECT e.date AS day,coalesce(sum(j.amount),0) AS change_amount
+            FROM journal j JOIN events e ON e.id=j.event_id
+            WHERE j.account=? AND j.currency=? AND e.date>?
+            GROUP BY e.date ORDER BY e.date
+        """.trimIndent(),"cash:$vault",currency,day.toString())
+        var running=earlierCash-minor
+        for(daily in futureDaily) {
+            running=Math.addExact(running,daily.getValue("change_amount").toLong())
+            require(running>=0L) {
+                "دفعة المورد تجعل رصيد الخزنة سالباً بتاريخ "+daily.getValue("day")
+            }
+        }
         store.insert("events","id" to command,"kind" to "LEGACY_SUPPLIER_PAYMENT",
             "date" to day.toString(),"created" to System.currentTimeMillis(),
             "memo" to "دفع فاتورة شراء قديمة $key")
