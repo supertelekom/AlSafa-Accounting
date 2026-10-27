@@ -469,6 +469,47 @@ open class MainActivity:Activity() {
             "حساب الموردين","سحوبات الشركاء","المصاريف","المرتجعات","الإقفالات اليومية",
             "حركات المخزون","تاريخ تكلفة المنتجات","سجل التدقيق","سجل الولاء",
             "الإيصالات الذكية","قواعد الخصومات","خيارات تفاصيل المنتجات")
+        button("تفعيل ذمم العملاء المستعادة",body) {
+            AlertDialog.Builder(this)
+                .setTitle("تفعيل ذمم العملاء القديمة")
+                .setMessage("سيُنشأ دفتر ذمم للمبيعات القديمة دون إعادة قبض المبالغ السابقة أو تحريك المخزون. هل تريد المتابعة؟")
+                .setNegativeButton("إلغاء",null)
+                .setPositiveButton("تفعيل") { _,_ ->
+                    work {
+                        val result=LegacyCustomerAccounts.activate(store)
+                        runOnUiThread {
+                            if(!isFinishing&&!isDestroyed) AlertDialog.Builder(this)
+                                .setTitle("تم تجهيز ذمم العملاء")
+                                .setMessage("الفواتير: "+result.getInt("invoices")+
+                                    "\\nالجديدة: "+result.getInt("added"))
+                                .setPositiveButton("إغلاق",null).show()
+                        }
+                    }
+                }.show()
+        }
+        val oldDebtId=field("معرف فاتورة قديمة للتحصيل (من كشف الديون)",body)
+        val oldDebtAmount=field("مبلغ التحصيل بعملة الفاتورة",body)
+        val oldDebtVault=select("الخزنة التي استلمت المبلغ",listOf("drawer","external","sham","bank"),body)
+        button("قبض دفعة من فاتورة قديمة",body) {
+            val invoiceId=oldDebtId.text.toString().trim()
+            val amountText=oldDebtAmount.text.toString().trim()
+            val vault=oldDebtVault.selectedItem.toString()
+            AlertDialog.Builder(this).setTitle("تأكيد قبض ذمة قديمة")
+                .setMessage("تأكد من أن النقد استُلم فعلاً، لأن العملية ستضيفه إلى الخزنة المحددة.")
+                .setNegativeButton("إلغاء",null)
+                .setPositiveButton("تسجيل القبض") { _,_ ->
+                    work {
+                        val minor=amountText.toBigDecimal().movePointRight(2).longValueExact()
+                        val remaining=LegacyCustomerAccounts.collect(store,invoiceId,minor,vault)
+                        runOnUiThread {
+                            if(!isFinishing&&!isDestroyed) AlertDialog.Builder(this)
+                                .setTitle("تم تسجيل القبض")
+                                .setMessage("المتبقي من الفاتورة: "+remaining.toPlainString())
+                                .setPositiveButton("إغلاق",null).show()
+                        }
+                    }
+                }.show()
+        }
         val unifiedDebtSearch=field("بحث في ديون العملاء (اسم / هاتف / رقم فاتورة)",body)
         val unifiedDebtPage=field("صفحة ديون العملاء (تبدأ من 1)",body,"1",true)
         button("ديون العملاء الحالية والقديمة",body) {
