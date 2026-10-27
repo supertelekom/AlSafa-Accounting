@@ -816,6 +816,31 @@ class Store(val helper:StoreDb) {
             arrayOf(brand.trim(),model.trim(),details.toString(),id))
         event(id(),"PRODUCT_DESCRIPTION",today(),"تعديل مواصفات المنتج $id")
     }
+    /** Outstanding historical customer debts alongside native debts, without double posting. */
+    fun unifiedCustomerDebts():List<Map<String,String>> {
+        val native = rows("""SELECT i.id,i.number,i.party,i.phone,i.currency,
+            i.total,coalesce((SELECT sum(r.amount) FROM receipts r WHERE r.invoice_id=i.id),0) paid
+            FROM invoices i WHERE i.kind='sale' AND i.status='posted'""").map { row ->
+            val remaining=Math.subtractExact(row.getValue("total").toLong(),row.getValue("paid").toLong())
+            row + mapOf("source" to "native", "remaining_minor" to remaining.toString())
+        }.filter { it.getValue("remaining_minor").toLong()>0L }
+        if (scalar("SELECT count(*) FROM legacy_records WHERE category='sales'")==0L) return native
+        LegacyArchivedDebtReport.verifyArchiveCounts(this)
+        val historical=legacyRows("sales").mapNotNull { record ->
+            val invoice=JSONObject(record.getValue("payload"))
+            val total=invoice.optString("total").toBigDecimalOrNull() ?: return@mapNotNull null
+            val paid=invoice.optString("paid","0").toBigDecimalOrNull() ?: return@mapNotNull null
+            val due=total.subtract(paid)
+            if (due.signum()<=0) return@mapNotNull null
+            mapOf("source" to "legacy", "id" to record.getValue("legacy_id"),
+                "number" to invoice.optString("number"),
+                "party" to invoice.optString("customer",invoice.optString("customerName")),
+                "phone" to invoice.optString("phone"), "currency" to invoice.optString("currency"),
+                "remaining_exact" to due.toPlainString(),
+                "collectionEnabled" to "false")
+        }
+        return native + historical
+    }
     fun invoices()=rows("SELECT * FROM invoices ORDER BY number DESC").map { Invoice(it.getValue("id"),it.getValue("number").toLong(),it.getValue("kind"),it.getValue("party"),Currency.valueOf(it.getValue("currency")),it.getValue("total").toLong(),it.getValue("status")) }
     /** Date-scoped invoice lookup; matches customers, sold items, repaired watches and repair parts. */
     fun searchInvoices(
