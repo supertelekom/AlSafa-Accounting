@@ -1915,10 +1915,15 @@ open class MainActivity:Activity() {
                                     setDataAndType(uri,"application/pdf")
                                     addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
                                 }
-                                if(choice==3) CustomerShare.send(this,file,"application/pdf","فاتورة الصفا التاريخية #"+number)
-                                else try { startActivity(intent) } catch(e:Exception) {
-                                    AlertDialog.Builder(this).setTitle("تعذر فتح PDF")
-                                        .setMessage("تعذر فتح PDF: "+(e.localizedMessage ?: "لا يوجد عارض PDF متاح"))
+                                try {
+                                    if(choice==3) {
+                                        CustomerShare.send(this,file,"application/pdf",
+                                            "فاتورة الصفا التاريخية #"+number)
+                                    } else startActivity(intent)
+                                } catch(e:Exception) {
+                                    AlertDialog.Builder(this)
+                                        .setTitle(if(choice==3)"تعذرت مشاركة الفاتورة" else "تعذر فتح PDF")
+                                        .setMessage(e.localizedMessage ?: "تحقق من تطبيقات PDF والمشاركة المثبتة.")
                                         .setPositiveButton("حسناً",null).show()
                                 }
                             }
