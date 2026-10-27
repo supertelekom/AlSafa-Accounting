@@ -2061,18 +2061,19 @@ open class MainActivity:Activity() {
             background=background(sand,10)
             setOnClickListener { anchor ->
                 val popup=PopupMenu(this@MainActivity,anchor)
-                popup.menu.add("خيارات الفاتورة").setOnMenuItemClickListener {
-                    AlertDialog.Builder(this@MainActivity)
-                        .setTitle("خيارات الفاتورة #"+inv.number)
-                        .setItems(arrayOf("تفاصيل الفاتورة","طباعة / إعادة طباعة","عرض PDF","مشاركة PDF")) { _,choice ->
-                            when(choice) {
-                                0 -> invoiceDetail(inv)
-                                1 -> printInvoice(inv)
-                                2 -> viewInvoicePdf(inv)
-                                3 -> shareInvoicePdf(inv)
-                            }
-                        }.setNegativeButton("إلغاء",null).show()
-                    true
+                val actions=listOf<Pair<String,()->Unit>>(
+                    "تفاصيل الفاتورة" to { invoiceDetail(inv) },
+                    "عرض PDF" to { viewInvoicePdf(inv) },
+                    "طباعة / إعادة طباعة" to { printInvoice(inv) },
+                    "مشاركة PDF" to { shareInvoicePdf(inv) }
+                )
+                actions.forEach { (title,action) ->
+                    popup.menu.add(title).setOnMenuItemClickListener {
+                        if(!busy) {
+                            try { action() } catch(e:Exception) { error(e) }
+                        }
+                        true
+                    }
                 }
                 popup.show()
             }
