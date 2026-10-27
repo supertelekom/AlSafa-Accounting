@@ -20,11 +20,13 @@ object LegacyFinancialActivity {
         val expected = metadata.getJSONObject("sourceCollections").optInt(category, 0)
         val rows = store.legacyRows(category)
         require(rows.size == expected) { "أرشيف الحركات غير مكتمل" }
+        var missingDateCount = 0
         val matching = rows.map { row ->
             val record = JSONObject(row.getValue("payload"))
             val date = listOf("actualDate", "date", "paidAt", "createdAt", "deliveredAt")
                 .map { record.optString(it).take(10) }
                 .firstOrNull { value -> runCatching { java.time.LocalDate.parse(value) }.isSuccess } ?: ""
+            if (date.isBlank()) missingDateCount++
             JSONObject().put("archiveKey", row.getValue("legacy_id"))
                 .put("date", date).put("record", record)
         }.filter { row ->
@@ -37,6 +39,9 @@ object LegacyFinancialActivity {
         matching.drop(offset).take(limit).forEach { page.put(it) }
         return JSONObject().put("category", category).put("total", matching.size)
             .put("records", page).put("offset", offset).put("limit", limit)
-            .put("hasMore", offset + page.length() < matching.size).put("readOnly", true).put("posting", "NONE")
+            .put("hasMore", offset + page.length() < matching.size)
+            .put("missingDateCount", missingDateCount)
+            .put("dateFilterMayExcludeRecords", missingDateCount > 0 && (from.isNotBlank() || to.isNotBlank()))
+            .put("readOnly", true).put("posting", "NONE")
     }
 }
