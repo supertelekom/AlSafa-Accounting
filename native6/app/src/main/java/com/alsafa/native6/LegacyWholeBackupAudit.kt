@@ -83,8 +83,6 @@ object LegacyWholeBackupAudit {
         var outstandingPurchases = 0
         for (section in listOf("sales", "purchases")) {
             val rows = data.optJSONArray(section) ?: continue
-            var totalMinor = 0L
-            var paidMinor = 0L
             var validRows = 0
             for (i in 0 until rows.length()) {
                 val row = rows.optJSONObject(i) ?: continue
@@ -107,6 +105,25 @@ object LegacyWholeBackupAudit {
             }
             financial.put(section + "Validated", validRows)
         }
+        // Keep independent balances by currency: mixed-currency totals are
+        // never meaningful, especially when TRY and SYP are present.
+        val outstandingByCurrency = JSONObject()
+        for (section in listOf("sales", "purchases")) {
+            val byCurrency = JSONObject()
+            val rows = data.optJSONArray(section) ?: continue
+            for (i in 0 until rows.length()) {
+                val row = rows.optJSONObject(i) ?: continue
+                val currency = row.optString("currency")
+                if (currency !in setOf("USD", "TRY", "SYP")) continue
+                val total = row.optString("total").toBigDecimalOrNull() ?: continue
+                val paid = row.optString("paid").toBigDecimalOrNull() ?: continue
+                if (total < paid || paid.signum() < 0 || total.signum() < 0) continue
+                val existing = byCurrency.optString(currency, "0").toBigDecimal()
+                byCurrency.put(currency, existing.add(total.subtract(paid)).toPlainString())
+            }
+            outstandingByCurrency.put(section, byCurrency)
+        }
+        financial.put("outstandingByCurrency", outstandingByCurrency)
         financial.put("outstandingSalesCount", outstandingSales)
             .put("outstandingPurchasesCount", outstandingPurchases)
         val historicalSections = listOf("sales", "purchases", "payments",
