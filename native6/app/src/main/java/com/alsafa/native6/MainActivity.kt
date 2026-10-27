@@ -2627,6 +2627,25 @@ open class MainActivity:Activity() {
                 } catch(e:Exception) { runOnUiThread { if(!isFinishing&&!isDestroyed)error(e) } }
             }
         }
+        button("عرض أرصدة الفواتير القديمة المجهزة") {
+            work(refresh=false) {
+                try {
+                    val report=LegacyInvoiceStaging.inspect(store)
+                    val groups=report.optJSONArray("groups")
+                    val lines=if(groups==null) "" else (0 until groups.length()).joinToString("\n") { i ->
+                        val g=groups.getJSONObject(i)
+                        g.optString("source_section")+" / "+g.optString("currency")+
+                            ": "+g.optString("invoice_count")+" فاتورة، المتبقي "+
+                            g.optString("outstanding_minor")+" جزء من المئة"
+                    }
+                    runOnUiThread { if(!isFinishing&&!isDestroyed) AlertDialog.Builder(this)
+                        .setTitle("أرصدة الفواتير المجهزة")
+                        .setMessage("العدد: "+report.optInt("staged")+"\n"+lines+
+                            "\nهذه بيانات تجهيز وليست أرصدة خزنات تشغيلية.")
+                        .setPositiveButton("إغلاق",null).show() }
+                } catch(e:Exception) { runOnUiThread { if(!isFinishing&&!isDestroyed)error(e) } }
+            }
+        }
         button("تقرير جاهزية الترحيل المالي") {
             work(refresh=false) {
                 try {
