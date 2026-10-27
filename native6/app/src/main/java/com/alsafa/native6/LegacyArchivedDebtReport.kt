@@ -28,7 +28,9 @@ object LegacyArchivedDebtReport {
         val counts = metadata.optJSONObject("sourceCollections")
             ?: throw IllegalStateException("قائمة أقسام النسخة مفقودة")
         for (section in listOf("sales", "purchases", "payments", "supplierLedger",
-            "returns", "cashTransactions", "partnerWithdrawals", "dailyClosings")) {
+            "returns", "cashTransactions", "partnerWithdrawals", "dailyClosings",
+            "expenses", "inventoryMovements", "productCostHistory", "loyaltyLedger",
+            "customerOrders", "usedWatchTransactions", "shiftHandovers")) {
             val expected = if (counts.has(section)) counts.getInt(section) else 0
             require(expected >= 0) { "عدد السجلات المتوقع غير صالح: $section" }
             val actual = store.scalar(
@@ -102,7 +104,9 @@ object LegacyArchivedDebtReport {
                 .put("invoiceCount", rows.size)
                 .put("currencies", sectionReport))
         }
-        val pending = listOf("payments", "supplierLedger", "returns", "cashTransactions", "partnerWithdrawals", "dailyClosings")
+        val pending = listOf("payments", "supplierLedger", "returns", "cashTransactions", "partnerWithdrawals", "dailyClosings",
+            "expenses", "inventoryMovements", "productCostHistory", "loyaltyLedger",
+            "customerOrders", "usedWatchTransactions", "shiftHandovers")
         val archiveCounts = JSONObject()
         for (section in pending) {
             val counts = metadata.optJSONObject("sourceCollections")
