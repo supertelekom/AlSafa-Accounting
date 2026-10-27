@@ -90,8 +90,43 @@ object LegacyCustomerAccounts {
         require(store.scalar("SELECT count(*) FROM $table")==archived.size.toLong()) {
             "لم يكتمل إنشاء دفتر الذمم القديمة"
         }
+        // Establish journal-backed opening receivables without touching cash or stock.
+        // The journal stores cents; exact sub-cent remainders remain in the immutable
+        // decimal subledger until an explicit precision policy is approved.
+        var opened=0
+        var fractional=0
+        for(row in store.rows("SELECT archive_id,currency,total_exact,paid_at_import_exact FROM $table")) {
+            val key=row.getValue("archive_id")
+            val currency=row.getValue("currency")
+            val due=amount(row.getValue("total_exact"))
+                .subtract(amount(row.getValue("paid_at_import_exact")))
+            val cents=due.movePointRight(2).setScale(0,java.math.RoundingMode.DOWN).longValueExact()
+            if(due.movePointRight(2).stripTrailingZeros().scale()>0) fractional++
+            val openingId="legacy:opening:$key"
+            val already=store.scalar("SELECT count(*) FROM events WHERE id=?",openingId)
+            if(already>0L) {
+                require(store.scalar("SELECT coalesce(sum(amount),0) FROM journal WHERE account=? AND currency=? AND event_id=?",
+                    "legacy_receivable:$key",currency,openingId)==cents) {
+                    "قيد افتتاحي تاريخي لا يطابق ذمة العميل"
+                }
+                continue
+            }
+            require(store.scalar("SELECT count(*) FROM $receipts WHERE archive_id=?",key)==0L) {
+                "لا يمكن إنشاء رصيد افتتاحي بعد تسجيل قبض سابق"
+            }
+            if(cents==0L) continue
+            store.insert("events","id" to openingId,"kind" to "LEGACY_RECEIVABLE_OPENING",
+                "date" to Store.today(),"created" to System.currentTimeMillis(),
+                "memo" to "ذمة افتتاحية من النسخة القديمة $key")
+            store.insert("journal","event_id" to openingId,"line" to 0,
+                "account" to "legacy_receivable:$key","currency" to currency,"amount" to cents)
+            store.insert("journal","event_id" to openingId,"line" to 1,
+                "account" to "equity:legacy_receivable_opening","currency" to currency,"amount" to -cents)
+            opened++
+        }
         JSONObject().put("invoices",archived.size).put("added",added)
             .put("openingCashPosted",false).put("stockReposted",false)
+            .put("openingReceivableEntries",opened).put("subCentRemainders",fractional)
     }
     fun outstanding(store:Store,archiveId:String):BigDecimal {
         val row=store.rows("SELECT total_exact,paid_at_import_exact FROM $table WHERE archive_id=?",archiveId)
