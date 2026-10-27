@@ -1281,7 +1281,7 @@ class Store(val helper:StoreDb) {
         remaining:Long,cutoverDate:String
     ):String {
         require(legacyId.isNotBlank() && legacyId.length<=200){"معرف الفاتورة القديمة غير صالح"}
-        require(remaining>0L && party.isNotBlank()){"رصيد العميل الافتتاحي غير صالح"}
+        require(remaining>0L){"رصيد العميل الافتتاحي غير صالح"}
         val day=LocalDate.parse(cutoverDate)
         require(!day.isAfter(LocalDate.now())){"تاريخ الانتقال في المستقبل"}
         val key="legacy-sale:"+legacyId
@@ -1360,7 +1360,6 @@ class Store(val helper:StoreDb) {
             val party=source.optString("customerName").ifBlank {
                 source.optString("customer").ifBlank { source.optString("party") }
             }.trim()
-            require(party.isNotBlank()){"اسم العميل مفقود في فاتورة غير مسددة"}
             val phone=source.optString("customerPhone").ifBlank {
                 source.optString("phone")
             }
