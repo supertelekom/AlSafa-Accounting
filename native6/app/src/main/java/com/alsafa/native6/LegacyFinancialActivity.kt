@@ -21,7 +21,7 @@ object LegacyFinancialActivity {
         val rows = store.legacyRows(category)
         require(rows.size == expected) { "أرشيف الحركات غير مكتمل" }
         var missingDateCount = 0
-        val matching = rows.map { row ->
+        val matching = rows.asSequence().map { row ->
             val record = JSONObject(row.getValue("payload"))
             val date = listOf("actualDate", "date", "paidAt", "createdAt", "deliveredAt")
                 .map { record.optString(it).take(10) }
