@@ -18,7 +18,6 @@ object LegacyInvoiceMigrationPlan {
         val totalsBySection = JSONObject()
         val proposedBySection = JSONObject()
         val countsBySection = JSONObject()
-        val historicalOutstanding = JSONObject()
         val existing = store.rows("SELECT id,number FROM invoices")
         val existingIds = existing.map { it.getValue("id") }.toSet()
         val existingNumbers = existing.map { it.getValue("number") }.toSet()
