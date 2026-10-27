@@ -22,9 +22,9 @@ object LegacyFinancialActivity {
         require(rows.size == expected) { "أرشيف الحركات غير مكتمل" }
         val matching = rows.map { row ->
             val record = JSONObject(row.getValue("payload"))
-            val date = record.optString("date").take(10).ifBlank {
-                record.optString("createdAt").take(10)
-            }
+            val date = listOf("actualDate", "date", "paidAt", "createdAt", "deliveredAt")
+                .map { record.optString(it).take(10) }
+                .firstOrNull { it.length == 10 && it[4] == '-' && it[7] == '-' } ?: ""
             JSONObject().put("archiveKey", row.getValue("legacy_id"))
                 .put("date", date).put("record", record)
         }.filter { row ->
