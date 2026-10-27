@@ -3033,7 +3033,7 @@ button("＋ مورد"){form("مورد جديد"){box->val n=field("الاسم",b
                         android.graphics.BitmapFactory.Options().apply { inSampleSize=sample })
                 }.getOrNull()
                 if(thumbnail!=null) runOnUiThread {
-                    if(!isFinishing && !isDestroyed && icon.isAttachedToWindow) {
+                    if(!isFinishing && !isDestroyed) {
                         icon.setImageBitmap(thumbnail)
                     } else thumbnail.recycle()
                 }
