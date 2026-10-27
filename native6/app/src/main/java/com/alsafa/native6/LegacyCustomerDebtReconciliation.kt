@@ -19,7 +19,6 @@ object LegacyCustomerDebtReconciliation {
         val conflicts = JSONArray()
         val candidates = JSONArray()
         var settledConflicts = 0
-        var missingCustomer = 0
         var invalidAmounts = 0
         for (i in 0 until sales.length()) {
             val sale = sales.getJSONObject(i)
@@ -35,15 +34,10 @@ object LegacyCustomerDebtReconciliation {
             val due = total.subtract(paid)
             if (due.signum() == 0) continue
             val status = sale.optString("paymentStatus").trim()
-            val customer = sale.optString("customer").trim()
             val reason = when {
                 status in settled -> {
                     settledConflicts++
                     "settled_status_with_positive_due"
-                }
-                customer.isEmpty() -> {
-                    missingCustomer++
-                    "missing_customer_for_open_balance"
                 }
                 else -> ""
             }
@@ -58,7 +52,6 @@ object LegacyCustomerDebtReconciliation {
         return JSONObject().put("candidateCount", candidates.length())
             .put("conflictCount", conflicts.length())
             .put("settledStatusConflicts", settledConflicts)
-            .put("missingCustomerConflicts", missingCustomer)
             .put("invalidAmountConflicts", invalidAmounts)
             .put("candidates", candidates).put("conflicts", conflicts)
             .put("safeForAutomaticActivation", conflicts.length() == 0)
