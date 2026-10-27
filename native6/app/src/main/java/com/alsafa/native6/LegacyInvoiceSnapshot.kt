@@ -62,6 +62,8 @@ object LegacyInvoiceSnapshot {
             .put("readOnly",true)
             .put("financialPosting","NONE")
             .put("paymentsAreEvidenceOnly",true)
+            .put("isSimplifiedSale",section=="sales" && source.optString("customer").isBlank() && source.optString("customerName").isBlank() && source.optString("phone").isBlank())
+            .put("paidSnapshotIsCumulative",true)
     }
     fun page(store:Store,section:String,from:String="",to:String="",term:String="",
              offset:Int=0,limit:Int=50):JSONObject {
@@ -117,6 +119,7 @@ object LegacyInvoiceSnapshot {
                 .put("currency",currency).put("total",total.toPlainString())
                 .put("paid",paid.toPlainString()).put("outstanding",remaining.toPlainString())
                 .put("paymentStatus",original.optString("paymentStatus"))
+                .put("isSimplifiedSale",section=="sales" && original.optString("customer").isBlank() && original.optString("customerName").isBlank() && original.optString("phone").isBlank())
                 .put("readOnly",true))
         }
         val totals=JSONObject()
