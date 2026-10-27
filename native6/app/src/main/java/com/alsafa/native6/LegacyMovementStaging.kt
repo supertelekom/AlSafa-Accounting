@@ -54,8 +54,31 @@ object LegacyMovementStaging {
                 if (prior == 1L) {
                     val bytes = store.scalar("SELECT length(CAST(payload AS BLOB)) FROM $table WHERE source_hash=? AND category=? AND source_id=?",
                         hash,section,sourceId)
-                    require(bytes == payload.toByteArray(Charsets.UTF_8).size.toLong()) {
+                    val originalBytes = payload.toByteArray(Charsets.UTF_8)
+                    require(bytes == originalBytes.size.toLong()) {
                         "حجم الحركة المجهزة يختلف عن المصدر: $section/$sourceId"
+                    }
+                    // Verify every byte of an already-staged movement, in bounded
+                    // chunks. Equal length alone does not establish identity.
+                    var offset = 0
+                    while (offset < originalBytes.size) {
+                        val count = minOf(4096, originalBytes.size - offset)
+                        val chunk = store.rows(
+                            "SELECT hex(substr(CAST(payload AS BLOB),?,?)) AS chunk FROM $table WHERE source_hash=? AND category=? AND source_id=?",
+                            (offset + 1).toString(), count.toString(), hash, section, sourceId
+                        ).single().getValue("chunk")
+                        val expectedHex = buildString(count * 2) {
+                            val digits = "0123456789ABCDEF"
+                            for (i in offset until offset + count) {
+                                val byte = originalBytes[i].toInt() and 255
+                                append(digits[byte ushr 4])
+                                append(digits[byte and 15])
+                            }
+                        }
+                        require(chunk == expectedHex) {
+                            "محتوى الحركة المجهزة يختلف عن المصدر: $section/$sourceId"
+                        }
+                        offset += count
                     }
                 } else {
                     val values = ContentValues().apply {
