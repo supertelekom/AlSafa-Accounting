@@ -47,6 +47,27 @@ object LegacySupplierOverlap {
             ledgerByParty[id to item.getString("currency")]=
                 item.getString("netOpeningDebtExact").toBigDecimal()
         }
+        // Explicit source references are stronger evidence than matching supplier
+        // names or currencies. They are still evidence, never automatic postings.
+        val invoiceIds=store.legacyRows("purchases").map {
+            JSONObject(it.getValue("payload")).optString("id") }.filter { it.isNotBlank() }.toSet()
+        val linkedLedger=JSONArray()
+        val unresolvedLedger=JSONArray()
+        for(record in store.legacyRows("supplierLedger")) {
+            val row=JSONObject(record.getValue("payload"))
+            val kind=row.optString("kind")
+            if(kind!="payment" && kind!="opening-debt") continue
+            val reference=row.optString("referenceId").trim()
+                .ifBlank { row.optString("invoiceId").trim() }
+            if(reference.isBlank()) continue
+            val evidence=JSONObject().put("ledgerId",record.getValue("legacy_id"))
+                .put("supplierId",row.optString("supplierId"))
+                .put("kind",kind).put("referenceId",reference)
+                .put("amountExact",row.optString("amount","0"))
+                .put("currency",row.optString("currency"))
+            if(reference in invoiceIds) linkedLedger.put(evidence)
+            else unresolvedLedger.put(evidence)
+        }
         val groups=JSONArray()
         var overlapCount=0
         for(key in (invoiceByParty.keys+ledgerByParty.keys).distinct().sortedWith(
@@ -65,6 +86,8 @@ object LegacySupplierOverlap {
                 .put("automaticallyCombined",false))
         }
         return JSONObject().put("groups",groups)
+            .put("explicitInvoiceLinkedLedgerEntries",linkedLedger)
+            .put("unresolvedLedgerReferences",unresolvedLedger)
             .put("groupsWithPossibleOverlap",overlapCount)
             .put("unidentifiedPurchaseInvoices",unidentified)
             .put("supplierLedgerRows",ledger.getInt("sourceRows"))
