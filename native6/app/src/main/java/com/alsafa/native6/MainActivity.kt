@@ -2501,7 +2501,7 @@ open class MainActivity:Activity() {
                                     heading.addView(title,LinearLayout.LayoutParams(0,-2,1f))
                                     val state=TextView(this).apply {
                                         style(this)
-                                        text="مسجلة"
+                                        text="مستعادة · محفوظة"
                                         textSize=12f
                                         setTextColor(Color.rgb(32,111,66))
                                         background=background(Color.rgb(235,248,237),10)
@@ -2512,6 +2512,8 @@ open class MainActivity:Activity() {
                                     text(record.optString("customer").ifBlank {
                                         record.optString("supplierName") }.ifBlank {
                                             "عميل نقدي" },card,14f).setTextColor(ink)
+                                    if(record.optString("phone").isNotBlank())
+                                        text("هاتف العميل: "+record.optString("phone"),card,12f)
                                     text("تاريخ الفاتورة: "+record.optString("date"),card,12f)
                                     text(record.optString("total")+" "+record.optString("currency"),card,17f)
                                         .setTextColor(gold)
@@ -2558,6 +2560,8 @@ open class MainActivity:Activity() {
                                         setMargins(0,dp(5),0,dp(5))
                                     })
                                 }
+                                text("الفواتير المستعادة المطابقة: "+result.optInt("total")+
+                                    " · المعروض: "+rows.length(),restored,12f)
                                 if(result.optInt("total")>rows.length()) {
                                     text("توجد فواتير مستعادة إضافية؛ استخدم سجل الفواتير المستعادة للبحث التفصيلي.",restored,12f)
                                 }
