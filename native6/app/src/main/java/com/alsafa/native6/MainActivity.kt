@@ -2194,10 +2194,7 @@ open class MainActivity:Activity() {
                                 card.addView(detail)
                                 detail.visibility=View.GONE
                                 text("المدفوع: "+invoice.optString("paid")+" · المتبقي: "+invoice.optString("outstanding"),detail,13f)
-                                button("⋮ خيارات الفاتورة",card) {
-                                    showRestoredInvoiceOptions(key,invoice)
-                                }
-                                                                button("تفاصيل الفاتورة",card) {
+                                button("عرض الفاتورة وخياراتها",card) {
                                     showRestoredInvoiceOptions(key,invoice)
                                 }
                                 list.addView(card,LinearLayout.LayoutParams(-1,-2).apply {setMargins(0,dp(4),0,dp(4))})
