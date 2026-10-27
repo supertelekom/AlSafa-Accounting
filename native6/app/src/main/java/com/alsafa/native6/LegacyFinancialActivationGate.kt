@@ -27,7 +27,9 @@ object LegacyFinancialActivationGate {
             sourceDigest.isNotBlank() &&
             receipt.optBoolean("balancesVerified",false) &&
             receipt.optBoolean("allMovementsLinked",false) &&
-            receipt.optBoolean("noDuplicatePosting",false)
+            receipt.optBoolean("noDuplicatePosting",false) &&
+            receipt.optString("migrationId").isNotBlank() &&
+            receipt.optString("reconciledAt").isNotBlank()
         val cashVerified=meta.optBoolean("cashContinuityVerified",false)
         val journalCount=store.scalar("SELECT count(*) FROM journal")
         val invoiceCount=store.scalar("SELECT count(*) FROM invoices")
