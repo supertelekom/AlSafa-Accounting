@@ -14,6 +14,7 @@ object LegacyInvoiceMigrationPlan {
         val collisions = JSONArray()
         val invalid = JSONArray()
         val proposed = JSONArray()
+        val totals = JSONObject()
         val existing = store.rows("SELECT id,number FROM invoices")
         val existingIds = existing.map { it.getValue("id") }.toSet()
         val existingNumbers = existing.map { it.getValue("number") }.toSet()
@@ -58,11 +59,25 @@ object LegacyInvoiceMigrationPlan {
                 if (targetId in existingIds || (number.isNotBlank() && number in existingNumbers)) {
                     collisions.put(detail)
                 }
-                proposed.put(detail)
+                if (total != null && paid != null && paid >= java.math.BigDecimal.ZERO && paid <= total) {
+                    val current = totals.optJSONObject(currency) ?: JSONObject()
+                        .put("total", "0").put("paid", "0").put("outstanding", "0")
+                    fun addMoney(key:String, amount:java.math.BigDecimal) {
+                        current.put(key, current.getString(key).toBigDecimal().add(amount).toPlainString())
+                    }
+                    addMoney("total", total)
+                    addMoney("paid", paid)
+                    addMoney("outstanding", total.subtract(paid))
+                    totals.put(currency, current)
+                }
+                proposed.put(detail.put("currency", currency).put("date", date)
+                    .put("total", original.optString("total"))
+                    .put("paid", original.optString("paid")))
             }
         }
         return JSONObject().put("sourceSha256", meta.optString("sourceSha256"))
             .put("invoiceCount", proposed.length())
+            .put("financialTotalsByCurrency", totals)
             .put("invalid", invalid).put("collisions", collisions)
             .put("identitySafe", invalid.length() == 0 && collisions.length() == 0)
             .put("stockRepostingAllowed", false)
