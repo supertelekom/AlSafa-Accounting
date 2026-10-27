@@ -2369,7 +2369,7 @@ open class MainActivity:Activity() {
         filters.addView(kindBox,LinearLayout.LayoutParams(0,-2,1f))
         filters.addView(statusBox,LinearLayout.LayoutParams(0,-2,1f))
         body.addView(filters)
-        button("مسح البحث وعرض فواتير اليوم") {
+        button("إعادة ضبط فلاتر فواتير اليوم") {
             query.setText("")
             fromDate.setText(Store.today())
             toDate.setText(Store.today())
