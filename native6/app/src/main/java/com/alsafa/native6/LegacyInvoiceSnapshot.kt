@@ -22,9 +22,10 @@ object LegacyInvoiceSnapshot {
         require(section in allowed){"نوع الفاتورة غير مدعوم"}
         require(archiveKey.isNotBlank()){"معرف الفاتورة مطلوب"}
         LegacyArchivedDebtReport.verifyArchiveCounts(store)
-        val row=store.rows(
-            "SELECT payload FROM legacy_records WHERE category=? AND legacy_id=?",
-            section,archiveKey).firstOrNull() ?: return null
+        // Legacy invoices can include embedded photos: use bounded reads.
+        val row=store.legacyRows(section).firstOrNull {
+            it.getValue("legacy_id")==archiveKey
+        } ?: return null
         val source=JSONObject(row.getValue("payload"))
         val id=source.optString("id").trim()
         require(id.isNotEmpty()) { "معرف الفاتورة التاريخية مفقود" }
@@ -42,9 +43,7 @@ object LegacyInvoiceSnapshot {
         }
         val linked=JSONArray()
         if(id.isNotBlank()) {
-            val payments=store.rows(
-                "SELECT legacy_id,payload FROM legacy_records WHERE category=?",
-                "payments")
+            val payments=store.legacyRows("payments")
             for(payment in payments) {
                 val original=JSONObject(payment.getValue("payload"))
                 val ref=original.optString("referenceId")
@@ -74,7 +73,7 @@ object LegacyInvoiceSnapshot {
         if(to.isNotBlank()) java.time.LocalDate.parse(to)
         require(from.isBlank() || to.isBlank() || from<=to)
         LegacyArchivedDebtReport.verifyArchiveCounts(store)
-        val all=store.rows("SELECT legacy_id,payload FROM legacy_records WHERE category=? ORDER BY legacy_id",section)
+        val all=store.legacyRows(section)
         val matches=mutableListOf<JSONObject>()
         val seenInvoiceIds=hashSetOf<String>()
         val outstanding=linkedMapOf<String,BigDecimal>()
