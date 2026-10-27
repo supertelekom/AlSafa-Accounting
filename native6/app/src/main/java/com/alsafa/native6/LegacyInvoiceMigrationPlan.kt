@@ -125,6 +125,8 @@ object LegacyInvoiceMigrationPlan {
             .put("invalid", invalid).put("collisions", collisions)
             .put("repeatedOriginalNumbersForReview", repeatedOriginalNumbers)
             .put("precisionIssuesForReview", precisionIssues)
+            .put("stagingReady", invalid.length() == 0 && collisions.length() == 0 && precisionIssues.length() == 0)
+            .put("stagingBlockerCount", invalid.length() + collisions.length() + precisionIssues.length())
             .put("identitySafe", invalid.length() == 0 && collisions.length() == 0)
             .put("stockRepostingAllowed", false)
             .put("cashRepostingAllowed", false)
