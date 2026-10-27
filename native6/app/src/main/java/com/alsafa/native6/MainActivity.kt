@@ -136,7 +136,7 @@ open class MainActivity:Activity() {
         // setOnShowListener is invoked by show(); keep validation errors on screen.
     }
     private fun error(e:Exception){AlertDialog.Builder(this).setTitle("لم تُحفظ العملية").setMessage(e.message?:"حدث خطأ").setPositiveButton("حسناً",null).show()}
-    private fun work(task:()->Unit){
+    private fun work(refresh:Boolean=true,task:()->Unit){
         if(busy){
             android.util.Log.w("AlSafaRestore","Background action ignored because another action is still busy")
             Toast.makeText(this,"العملية السابقة لم تنتهِ بعد، انتظر قليلاً",Toast.LENGTH_LONG).show()
@@ -150,8 +150,7 @@ open class MainActivity:Activity() {
                     runOnUiThread {
                         busy=false
                         if(!isFinishing&&!isDestroyed) {
-                            // A read-only query must not rebuild the whole screen or
-                            // display a success toast: both can restart UI workflows.
+                            if(refresh) safeRender()
                         }
                     }
                 } catch(e:Exception) {
@@ -1566,7 +1565,7 @@ open class MainActivity:Activity() {
         val archiveKey=summary.optString("archiveKey")
         AlertDialog.Builder(this).setTitle("خيارات فاتورة "+invoiceKind+" #"+number)
             .setItems(arrayOf("تفاصيل الفاتورة","نسخ بيانات الفاتورة","عرض PDF التاريخي","مشاركة PDF التاريخي")) { _,choice ->
-                work {
+                work(refresh=false) {
                     try {
                         if(choice==2 || choice==3) {
                             val directory=java.io.File(cacheDir,"restored_invoices").apply { mkdirs() }
