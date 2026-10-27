@@ -11,6 +11,12 @@ object LegacyFinancialLinkage {
         val identifiers = linkedMapOf<String, Set<String>>()
         val duplicates = JSONArray()
         for (section in listOf("sales", "purchases", "repairs")) {
+            if (section == "repairs") {
+                val repairIds = store.rows("SELECT id FROM repairs").map { it.getValue("id") }
+                require(repairIds.size == counts.optInt("repairs", -1))
+                identifiers[section] = repairIds.toSet()
+                continue
+            }
             val rows = store.legacyRows(section)
             val expected = counts.optInt(section, -1)
             require(expected >= 0 && rows.size == expected) { "قسم غير مكتمل: $section" }
