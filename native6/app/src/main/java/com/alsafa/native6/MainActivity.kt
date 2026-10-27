@@ -2319,6 +2319,11 @@ open class MainActivity:Activity() {
             }
             val offset=Math.multiplyExact(pageIndex,pageSize)
             // Fetch one extra row to detect a following page without counting the entire database.
+            output.removeAllViews()
+            text("جارٍ تحميل الفواتير...",output,14f)
+            val requestedPage=pageIndex
+            work {
+                try {
             val fetched=store.searchInvoices(query.text.toString(),kinds[kind.selectedItemPosition],
                 statuses[status.selectedItemPosition],limit=pageSize+1,
                 startDate=start,endDate=end,offset=offset)
@@ -2330,6 +2335,9 @@ open class MainActivity:Activity() {
                 store.rows("""SELECT id,date FROM events WHERE id IN ($placeholders)""",*ids.toTypedArray())
                     .associate { it.getValue("id") to it.getValue("date") }
             }
+                    runOnUiThread {
+                        if(isFinishing || isDestroyed || lastSearchKey!=searchKey ||
+                            pageIndex!=requestedPage || output.parent==null)return@runOnUiThread
             output.removeAllViews()
             text("الفترة: "+start+" ← "+end+" · الصفحة "+(pageIndex+1)+
                 " · الفواتير المعروضة: "+results.size,output,14f)
@@ -2484,6 +2492,13 @@ open class MainActivity:Activity() {
             if(hasNext)button("الصفحة التالية ▶",output){
                 pageIndex++
                 try{show()}catch(e:Exception){error(e)}
+            }
+                    }
+                } catch(e:Exception) {
+                    runOnUiThread {
+                        if(!isFinishing && !isDestroyed && output.parent!=null)error(e)
+                    }
+                }
             }
         }
         button("اختيار الفترة السريعة ▾") {
