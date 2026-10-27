@@ -78,6 +78,7 @@ object LegacyInvoiceSnapshot {
         val seenInvoiceIds=hashSetOf<String>()
         val outstanding=linkedMapOf<String,BigDecimal>()
         val query=term.trim()
+        require(query.length<=200) { "عبارة البحث طويلة جداً" }
         for(row in all) {
             val original=JSONObject(row.getValue("payload"))
             val invoiceId=original.optString("id").trim()
@@ -98,7 +99,7 @@ object LegacyInvoiceSnapshot {
             if(from.isNotBlank() && (date.isBlank() || date<from)) continue
             if(to.isNotBlank() && (date.isBlank() || date>to)) continue
             if(query.isNotBlank()) {
-                val fields=listOf("invoiceNo","customer","phone","supplierName","supplierInvoice","notes","id","reference","customerName","supplierId","customerId","customerPhone","supplierPhone","invoiceNumber","productName")
+                val fields=listOf("invoiceNo","number","customer","phone","supplierName","supplierInvoice","notes","id","reference","customerName","supplierId","customerId","customerPhone","supplierPhone","invoiceNumber","productName")
                 val found=fields.any { original.optString(it).contains(query,true) }
                 val items=original.optJSONArray("items")
                 val itemFound=items!=null && (0 until items.length()).any { index ->
@@ -111,7 +112,7 @@ object LegacyInvoiceSnapshot {
             }
             outstanding[currency]=(outstanding[currency] ?: BigDecimal.ZERO)+remaining
             matches.add(JSONObject().put("archiveKey",row.getValue("legacy_id"))
-                .put("id",original.optString("id")).put("invoiceNo",original.optString("invoiceNo"))
+                .put("id",original.optString("id")).put("invoiceNo",original.optString("invoiceNo").ifBlank { original.optString("number") })
                 .put("date",date).put("customer",original.optString("customer").ifBlank { original.optString("customerName") })
                 .put("phone",original.optString("phone").ifBlank { original.optString("customerPhone").ifBlank { original.optString("supplierPhone") } })
                 .put("supplierName",original.optString("supplierName"))
