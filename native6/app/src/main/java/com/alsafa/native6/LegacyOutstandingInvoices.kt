@@ -22,7 +22,6 @@ object LegacyOutstandingInvoices {
         LegacyArchivedDebtReport.verifyArchiveCounts(store)
         // Read legacy payloads in bounded chunks; invoices can contain large images.
         val rows = store.legacyRows(section)
-        var matchedCount = 0
         var scanned = 0
         val pageRows = JSONArray()
         val outstandingTotals = linkedMapOf<String, BigDecimal>()
@@ -59,7 +58,7 @@ object LegacyOutstandingInvoices {
             if (from.isNotEmpty() && (date.isEmpty() || date < from)) continue
             if (to.isNotEmpty() && (date.isEmpty() || date > to)) continue
             if (search.isNotEmpty()) {
-                val fields = listOf("id", "invoiceNo", "customer", "customerName", "phone",
+                val fields = listOf("id", "invoiceNo", "number", "customer", "customerName", "phone",
                     "supplierName", "supplierId", "notes")
                 val direct = fields.any { invoice.optString(it).contains(search, ignoreCase = true) }
                 val items = invoice.optJSONArray("items")
@@ -76,15 +75,15 @@ object LegacyOutstandingInvoices {
                 .put("invoiceId", id)
                 .put("invoiceNo", invoice.optString("invoiceNo").ifBlank { invoice.optString("number") })
                 .put("date", invoice.optString("date"))
-                .put("customer", invoice.optString("customer"))
+                .put("customer", invoice.optString("customer").ifBlank { invoice.optString("customerName") })
                 .put("supplierName", invoice.optString("supplierName"))
-                .put("phone", invoice.optString("phone"))
+                .put("phone", invoice.optString("phone").ifBlank { invoice.optString("customerPhone") })
                 .put("currency", unit)
                 .put("total", total.toPlainString())
                 .put("paidSnapshot", paid.toPlainString())
                 .put("outstandingSnapshot", due.toPlainString()))
-            matchedCount++
         }
+        val matchedCount = matched.size
         matched.sortWith(compareByDescending<JSONObject> { it.optString("date") }
             .thenByDescending { it.optString("invoiceNo") }
             .thenByDescending { it.optString("invoiceId") })
