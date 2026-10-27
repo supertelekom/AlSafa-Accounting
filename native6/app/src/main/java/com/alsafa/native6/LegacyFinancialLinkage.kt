@@ -17,7 +17,7 @@ object LegacyFinancialLinkage {
                         JSONObject(row["details"].orEmpty()).optBoolean("_legacyImported",false)
                     }.getOrDefault(false) }
                     .map { it.getValue("id") }
-                require(repairIds.size == counts.optInt("repairs", -1))
+                require(repairIds.size == counts.optInt("repairs", -1)) { "عدد الصيانة المستعادة لا يطابق النسخة الأصلية" }
                 require(repairIds.distinct().size == repairIds.size) { "معرفات الصيانة المستعادة مكررة" }
                 identifiers[section] = repairIds.toSet()
                 continue
