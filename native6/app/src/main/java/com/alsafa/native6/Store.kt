@@ -816,30 +816,49 @@ class Store(val helper:StoreDb) {
             arrayOf(brand.trim(),model.trim(),details.toString(),id))
         event(id(),"PRODUCT_DESCRIPTION",today(),"تعديل مواصفات المنتج $id")
     }
-    /** Outstanding historical customer debts alongside native debts, without double posting. */
-    fun unifiedCustomerDebts():List<Map<String,String>> {
-        val native = rows("""SELECT i.id,i.number,i.party,i.phone,i.currency,
-            i.total,coalesce((SELECT sum(r.amount) FROM receipts r WHERE r.invoice_id=i.id),0) paid
-            FROM invoices i WHERE i.kind='sale' AND i.status='posted'""").map { row ->
-            val remaining=Math.subtractExact(row.getValue("total").toLong(),row.getValue("paid").toLong())
-            row + mapOf("source" to "native", "remaining_minor" to remaining.toString())
-        }.filter { it.getValue("remaining_minor").toLong()>0L }
-        if (scalar("SELECT count(*) FROM legacy_records WHERE category='sales'")==0L) return native
-        LegacyArchivedDebtReport.verifyArchiveCounts(this)
-        val historical=legacyRows("sales").mapNotNull { record ->
-            val invoice=JSONObject(record.getValue("payload"))
-            val total=invoice.optString("total").toBigDecimalOrNull() ?: return@mapNotNull null
-            val paid=invoice.optString("paid","0").toBigDecimalOrNull() ?: return@mapNotNull null
-            val due=total.subtract(paid)
-            if (due.signum()<=0) return@mapNotNull null
-            mapOf("source" to "legacy", "id" to record.getValue("legacy_id"),
-                "number" to invoice.optString("number"),
-                "party" to invoice.optString("customer",invoice.optString("customerName")),
-                "phone" to invoice.optString("phone"), "currency" to invoice.optString("currency"),
-                "remaining_exact" to due.toPlainString(),
-                "collectionEnabled" to "false")
+    /** Combined customer receivables; legacy values remain exact decimal strings. */
+    fun unifiedCustomerDebts(query:String="", limit:Int=100, offset:Int=0):List<Map<String,String>> {
+        require(limit in 1..200 && offset>=0)
+        val needle=query.trim()
+        require(needle.length<=200)
+        val results=mutableListOf<Map<String,String>>()
+        val nativeInvoices=rows("""SELECT i.id,i.number,i.party,i.phone,i.currency,i.total
+            FROM invoices i WHERE i.kind='sale' AND i.status='posted' ORDER BY i.number DESC""")
+        for (row in nativeInvoices) {
+            val id=row.getValue("id")
+            val due=due(id)
+            if(due<=0L) continue
+            val name=row.getValue("party")
+            val phone=row.getValue("phone")
+            if(needle.isNotEmpty() && !name.contains(needle,true) &&
+                !phone.contains(needle,true) && !row.getValue("number").contains(needle)) continue
+            results.add(mapOf("source" to "native","id" to id,
+                "number" to row.getValue("number"),"party" to name,
+                "phone" to phone,"currency" to row.getValue("currency"),
+                "remaining_exact" to java.math.BigDecimal.valueOf(due,2).toPlainString(),
+                "collectionEnabled" to "true"))
         }
-        return native + historical
+        if (scalar("SELECT count(*) FROM legacy_records WHERE category='sales'")>0L) {
+            LegacyArchivedDebtReport.verifyArchiveCounts(this)
+            for (record in legacyRows("sales")) {
+                val invoice=JSONObject(record.getValue("payload"))
+                val total=invoice.optString("total").toBigDecimalOrNull() ?: continue
+                val paid=invoice.optString("paid","0").toBigDecimalOrNull() ?: continue
+                val remaining=total.subtract(paid)
+                if(remaining.signum()<=0) continue
+                val name=invoice.optString("customer",invoice.optString("customerName"))
+                val phone=invoice.optString("phone")
+                val number=invoice.optString("number")
+                if(needle.isNotEmpty() && !name.contains(needle,true) &&
+                    !phone.contains(needle,true) && !number.contains(needle)) continue
+                results.add(mapOf("source" to "legacy","id" to record.getValue("legacy_id"),
+                    "number" to number,"party" to name,"phone" to phone,
+                    "currency" to invoice.optString("currency"),
+                    "remaining_exact" to remaining.toPlainString(),
+                    "collectionEnabled" to "false"))
+            }
+        }
+        return results.drop(offset).take(limit)
     }
     fun invoices()=rows("SELECT * FROM invoices ORDER BY number DESC").map { Invoice(it.getValue("id"),it.getValue("number").toLong(),it.getValue("kind"),it.getValue("party"),Currency.valueOf(it.getValue("currency")),it.getValue("total").toLong(),it.getValue("status")) }
     /** Date-scoped invoice lookup; matches customers, sold items, repaired watches and repair parts. */
