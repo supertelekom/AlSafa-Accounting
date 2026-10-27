@@ -21,6 +21,7 @@ object LegacyArchiveBrowser {
         if(from.isNotBlank()) java.time.LocalDate.parse(from)
         if(to.isNotBlank()) java.time.LocalDate.parse(to)
         require(from.isBlank() || to.isBlank() || from<=to){"نهاية الفترة تسبق بدايتها"}
+        LegacyArchivedDebtReport.verifyArchiveCounts(store)
         val rows=store.legacyRows(section)
         val filtered=rows.mapNotNull { row ->
             val data=JSONObject(row.getValue("payload"))
@@ -29,7 +30,7 @@ object LegacyArchiveBrowser {
             if(to.isNotBlank() && (date.isBlank() || date>to)) return@mapNotNull null
             if(query.isNotBlank()) {
                 val term=query.trim()
-                val fields=listOf("customer","phone","name","supplierName","invoiceNo",
+                val fields=listOf("customer","customerName","customerPhone","phone","name","supplierName","invoiceNo","number",
                     "referenceId","referenceType","itemName","notes","kind","id",
                     "watch","problem","productName","partName","barcode")
                 val direct=fields.any { data.optString(it).contains(term,ignoreCase=true) }
@@ -55,6 +56,7 @@ object LegacyArchiveBrowser {
     fun get(store:Store,section:String,archiveKey:String):JSONObject? {
         require(section in sections)
         require(archiveKey.isNotBlank())
+        LegacyArchivedDebtReport.verifyArchiveCounts(store)
         return store.legacyRecord(section,archiveKey)?.get("payload")?.let(::JSONObject)
     }
 }
