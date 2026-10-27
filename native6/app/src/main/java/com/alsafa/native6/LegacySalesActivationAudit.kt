@@ -23,6 +23,7 @@ object LegacySalesActivationAudit {
         }
         val invoiceIds = HashSet<String>()
         val invoiceNumbers = HashSet<Long>()
+        val warnings = JSONArray()
         val currencies = setOf("USD", "TRY", "SYP")
         val issues = JSONArray()
         var unpaid = 0
@@ -34,8 +35,12 @@ object LegacySalesActivationAudit {
                 issues.put(JSONObject().put("row", i).put("reason", "duplicate_or_missing_invoice_id"))
             }
             val number = sale.optString("invoiceNo").toLongOrNull()
-            if (number == null || number <= 0 || !invoiceNumbers.add(number)) {
-                issues.put(JSONObject().put("row", i).put("reason", "duplicate_or_missing_invoice_number"))
+            if (number == null || number <= 0) {
+                issues.put(JSONObject().put("row", i).put("reason", "missing_invoice_number"))
+            } else if (!invoiceNumbers.add(number)) {
+                // Real legacy backups can reuse printed invoice numbers. The
+                // immutable source ID, not the display number, is the key.
+                warnings.put(JSONObject().put("row", i).put("reason", "duplicate_display_invoice_number"))
             }
             if (sale.optString("currency") !in currencies) {
                 issues.put(JSONObject().put("row", i).put("reason", "invalid_invoice_currency"))
@@ -74,6 +79,7 @@ object LegacySalesActivationAudit {
             .put("unpaidInvoices", unpaid)
             .put("linkedProductLines", linkedLines)
             .put("issues", issues)
+            .put("warnings", warnings)
             .put("activationPermitted", issues.length() == 0)
             .put("financialPosting", "NONE")
     }
