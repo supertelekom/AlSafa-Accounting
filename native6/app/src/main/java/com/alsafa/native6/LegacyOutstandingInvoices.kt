@@ -20,9 +20,8 @@ object LegacyOutstandingInvoices {
         require(from.isEmpty() || to.isEmpty() || from <= to) { "نطاق التاريخ غير صالح" }
         // Verify the complete archive and import metadata before displaying any balances.
         LegacyArchivedDebtReport.verifyArchiveCounts(store)
-        val rows = store.rows(
-            "SELECT legacy_id,payload FROM legacy_records WHERE category=? ORDER BY legacy_id", section
-        )
+        // Read legacy payloads in bounded chunks; invoices can contain large images.
+        val rows = store.legacyRows(section)
         var matchedCount = 0
         var scanned = 0
         val pageRows = JSONArray()
@@ -30,6 +29,7 @@ object LegacyOutstandingInvoices {
         val search = query.trim()
         require(search.length <= 200) { "عبارة البحث طويلة جداً" }
         val seen = HashSet<String>()
+        val matched = mutableListOf<JSONObject>()
         for (row in rows) {
             scanned++
             val invoice = JSONObject(row.getValue("payload"))
@@ -71,9 +71,10 @@ object LegacyOutstandingInvoices {
                 if (!direct && !nested) continue
             }
             outstandingTotals[unit] = (outstandingTotals[unit] ?: BigDecimal.ZERO).add(due)
-            if (matchedCount >= offset && matchedCount.toLong() < offset.toLong() + limit) pageRows.put(JSONObject()
+            matched.add(JSONObject()
                 .put("archiveKey", row.getValue("legacy_id"))
                 .put("invoiceId", id)
+                .put("invoiceNo", invoice.optString("invoiceNo").ifBlank { invoice.optString("number") })
                 .put("date", invoice.optString("date"))
                 .put("customer", invoice.optString("customer"))
                 .put("supplierName", invoice.optString("supplierName"))
@@ -84,6 +85,10 @@ object LegacyOutstandingInvoices {
                 .put("outstandingSnapshot", due.toPlainString()))
             matchedCount++
         }
+        matched.sortWith(compareByDescending<JSONObject> { it.optString("date") }
+            .thenByDescending { it.optString("invoiceNo") }
+            .thenByDescending { it.optString("invoiceId") })
+        matched.drop(offset).take(limit).forEach { pageRows.put(it) }
         val totalsJson = JSONObject()
         for ((unit, amount) in outstandingTotals) totalsJson.put(unit, amount.toPlainString())
         return JSONObject()
