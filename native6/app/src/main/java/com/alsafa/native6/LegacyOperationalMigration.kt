@@ -12,6 +12,7 @@ object LegacyOperationalMigration {
         LegacyArchivedDebtReport.verifyArchiveCounts(store)
         val salesCount=store.legacyRows("sales").size
         val purchasesCount=store.legacyRows("purchases").size
+        require(store.legacyRows("sales").distinctBy { it["legacy_id"] }.size==salesCount)
         val customer=LegacyCustomerAccounts.activate(store)
         val supplier=LegacySupplierInvoices.activate(store)
         require(store.scalar("SELECT count(*) FROM legacy_customer_accounts")==salesCount.toLong())
