@@ -2442,6 +2442,10 @@ open class MainActivity:Activity() {
                                         text("المتبقي للتحصيل: "+record.optString("outstanding")+" "+
                                             record.optString("currency"),card,13f)
                                             .setTextColor(Color.rgb(157,62,52))
+                                    if(!record.optBoolean("financiallyValid",true)) {
+                                        text("تنبيه: بيانات هذه الفاتورة تحتاج مراجعة، ولا تدخل في الأرصدة.",card,13f)
+                                            .setTextColor(Color.rgb(157,62,52))
+                                    }
                                     val menu=android.widget.ImageButton(this).apply {
                                         setImageResource(android.R.drawable.ic_menu_more)
                                         contentDescription="خيارات الفاتورة"
