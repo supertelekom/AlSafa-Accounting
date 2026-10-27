@@ -535,6 +535,10 @@ open class MainActivity:Activity() {
                 val message=buildString {
                     append("مجموعات الموردين ذات التداخل المحتمل: ")
                     append(report.getInt("groupsWithPossibleOverlap"))
+                    append(" | حركات مرتبطة بفواتير: ")
+                    append(report.getJSONArray("explicitInvoiceLinkedLedgerEntries").length())
+                    append(" | مراجع غير معروفة: ")
+                    append(report.getJSONArray("unresolvedLedgerReferences").length())
                     append("\\nفواتير دون معرف مورد: ")
                     append(report.getJSONArray("unidentifiedPurchaseInvoices").length())
                     append("\\n\\n")
