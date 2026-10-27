@@ -32,6 +32,7 @@ object LegacyInvoiceMigrationPlan {
                 val currency = original.optString("currency").trim()
                 val date = original.optString("date").take(10)
                 val total = original.optString("total").toBigDecimalOrNull()
+                val paid = original.optString("paid").toBigDecimalOrNull()
                 val detail = JSONObject().put("section", section)
                     .put("sourceId", sourceId).put("sourceNumber", number)
                     .put("targetId", targetId)
@@ -41,7 +42,8 @@ object LegacyInvoiceMigrationPlan {
                 }
                 if (currency !in setOf("USD", "TRY", "SYP") ||
                     runCatching { java.time.LocalDate.parse(date) }.isFailure ||
-                    total == null || total.signum() < 0 || total.stripTrailingZeros().scale() > 2) {
+                    total == null || total.signum() < 0 || total.stripTrailingZeros().scale() > 2 ||
+                    paid == null || paid.signum() < 0 || paid > total || paid.stripTrailingZeros().scale() > 2) {
                     invalid.put(JSONObject(detail.toString()).put("reason", "invalid_financial_fields"))
                 }
                 if (number.isNotBlank() && !seenNumbers.add(number)) {
