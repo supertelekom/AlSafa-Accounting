@@ -17,7 +17,7 @@ object LegacyPaymentAudit {
             for (row in store.legacyRows(section)) {
                 val invoice = JSONObject(row.getValue("payload"))
                 val key = section + ":" + invoice.optString("id")
-                ids.add(key)
+                if (!ids.add(key)) duplicateInvoiceIds.put(key)
                 currencies[key] = invoice.optString("currency")
                 invoice.optString("paid").toBigDecimalOrNull()?.let { paidSnapshots[key] = it }
             }
@@ -26,6 +26,7 @@ object LegacyPaymentAudit {
         val unsupportedReferenceTypes = JSONArray()
         val missingReferenceIds = JSONArray()
         val duplicatePaymentIds = JSONArray()
+        val duplicateInvoiceIds = JSONArray()
         val seenPaymentIds = mutableSetOf<String>()
         var linked = 0
         for (row in store.legacyRows("payments")) {
@@ -77,6 +78,11 @@ object LegacyPaymentAudit {
             .put("unsupportedReferenceTypes", unsupportedReferenceTypes)
             .put("missingReferenceIds", missingReferenceIds)
             .put("duplicatePaymentIds", duplicatePaymentIds)
+            .put("duplicateInvoiceIds", duplicateInvoiceIds)
+            .put("requiresManualReconciliation", missing.length() > 0 ||
+                invalidPaymentAmounts.length() > 0 || currencyConflicts.length() > 0 ||
+                differences.length() > 0 || duplicatePaymentIds.length() > 0 ||
+                duplicateInvoiceIds.length() > 0 || missingReferenceIds.length() > 0)
             .put("paymentCurrencyConflicts", currencyConflicts)
             .put("paymentSnapshotDifferences", differences)
             .put("paidSnapshotsWithoutEvidence", snapshotsWithoutPaymentEvidence)
