@@ -2080,6 +2080,29 @@ open class MainActivity:Activity() {
         panel.addView(open,LinearLayout.LayoutParams(-1,dp(44)).apply {
             setMargins(0,dp(7),0,0)
         })
+        if(inv.kind=="sale") {
+            val quickActions=LinearLayout(this).apply {
+                orientation=LinearLayout.HORIZONTAL
+                layoutDirection=View.LAYOUT_DIRECTION_RTL
+            }
+            fun action(label:String,perform:()->Unit) {
+                val control=Button(this).apply {
+                    style(this)
+                    text=label
+                    textSize=12f
+                    isAllCaps=false
+                    background=background(sand,9)
+                    setOnClickListener { if(!busy)perform() }
+                }
+                quickActions.addView(control,LinearLayout.LayoutParams(0,dp(43),1f).apply {
+                    setMargins(dp(2),dp(3),dp(2),0)
+                })
+            }
+            action("PDF"){viewInvoicePdf(inv)}
+            action("طباعة"){printInvoice(inv)}
+            action("مشاركة"){shareInvoicePdf(inv)}
+            panel.addView(quickActions)
+        }
         parent.addView(panel,LinearLayout.LayoutParams(-1,-2).apply {
             setMargins(0,dp(5),0,dp(5))
         })
