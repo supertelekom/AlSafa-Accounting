@@ -38,6 +38,16 @@ object LegacyFinancialReadiness {
         if (gate.optString("state") == "NO_LEGACY_IMPORT") {
             blockers.put("لا توجد نسخة قديمة مستعادة لفحص الترحيل")
         }
+        val invoicePlan = runCatching { LegacyInvoiceMigrationPlan.inspect(store) }
+        if (invoicePlan.isFailure) {
+            blockers.put("تعذر فحص هوية الفواتير القديمة: "+(invoicePlan.exceptionOrNull()?.message ?: ""))
+        } else {
+            val plan = invoicePlan.getOrThrow()
+            val invalid = plan.getJSONArray("invalid").length()
+            val collisions = plan.getJSONArray("collisions").length()
+            if(invalid>0) blockers.put("فواتير قديمة بمعرفات أو أرقام غير صالحة: $invalid")
+            if(collisions>0) blockers.put("فواتير قديمة تتعارض مع فواتير التطبيق: $collisions")
+        }
         val eligible = gate.optBoolean("financialActive", false) &&
             linkage.getOrNull()?.optBoolean("complete", false) == true && blockers.length() == 0
         return JSONObject()
@@ -47,6 +57,7 @@ object LegacyFinancialReadiness {
             .put("archiveIsOperationalLedger", false)
             .put("blockers", blockers)
             .put("linkage", linkage.getOrNull() ?: JSONObject())
+            .put("invoiceMigrationPlan", invoicePlan.getOrNull() ?: JSONObject())
             .put("gate", gate)
             .put("posting", "NONE")
     }
