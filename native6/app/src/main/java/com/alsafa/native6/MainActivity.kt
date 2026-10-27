@@ -2583,9 +2583,8 @@ open class MainActivity:Activity() {
                     val pageIndex=pageNumber.text.toString().trim().toIntOrNull()
                     if(pageIndex==null || pageIndex !in 1..20001) {
                         Toast.makeText(this,"رقم الصفحة غير صالح",Toast.LENGTH_LONG).show()
-                        throw IllegalArgumentException("رقم الصفحة غير صالح")
                     }
-                    work(refresh=false) {
+                    if(pageIndex!=null && pageIndex in 1..20001) work(refresh=false) {
                         try {
                             val result=LegacyFinancialActivity.page(store,section,start,end,(pageIndex-1)*50,50)
                             val records=result.getJSONArray("records")
