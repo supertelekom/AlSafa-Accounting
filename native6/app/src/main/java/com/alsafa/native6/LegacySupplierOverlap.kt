@@ -49,8 +49,13 @@ object LegacySupplierOverlap {
         }
         // Explicit source references are stronger evidence than matching supplier
         // names or currencies. They are still evidence, never automatic postings.
-        val invoiceIds=store.legacyRows("purchases").map {
-            JSONObject(it.getValue("payload")).optString("id") }.filter { it.isNotBlank() }.toSet()
+        val invoicesById=store.legacyRows("purchases").associate { record ->
+            val invoice=JSONObject(record.getValue("payload"))
+            invoice.optString("id") to invoice
+        }
+        require(invoicesById.size==store.legacyRows("purchases").size &&
+            !invoicesById.containsKey("")) { "معرف فاتورة شراء مكرر أو مفقود" }
+        val invoiceIds=invoicesById.keys
         val linkedLedger=JSONArray()
         val unresolvedLedger=JSONArray()
         for(record in store.legacyRows("supplierLedger")) {
@@ -65,8 +70,22 @@ object LegacySupplierOverlap {
                 .put("kind",kind).put("referenceId",reference)
                 .put("amountExact",row.optString("amount","0"))
                 .put("currency",row.optString("currency"))
-            if(reference in invoiceIds) linkedLedger.put(evidence)
-            else unresolvedLedger.put(evidence)
+            if(reference in invoiceIds) {
+                val invoice=invoicesById.getValue(reference)
+                val supplierMatches=invoice.optString("supplierId").trim()==
+                    row.optString("supplierId").trim()
+                val currencyMatches=invoice.optString("currency")==row.optString("currency")
+                evidence.put("supplierMatches",supplierMatches)
+                    .put("currencyMatches",currencyMatches)
+                    .put("referenceType",row.optString("referenceType"))
+                linkedLedger.put(evidence)
+            } else unresolvedLedger.put(evidence)
+        }
+        val conflictingReferences=JSONArray()
+        for(i in 0 until linkedLedger.length()) {
+            val entry=linkedLedger.getJSONObject(i)
+            if(!entry.optBoolean("supplierMatches") || !entry.optBoolean("currencyMatches"))
+                conflictingReferences.put(entry)
         }
         val groups=JSONArray()
         var overlapCount=0
@@ -88,6 +107,7 @@ object LegacySupplierOverlap {
         return JSONObject().put("groups",groups)
             .put("explicitInvoiceLinkedLedgerEntries",linkedLedger)
             .put("unresolvedLedgerReferences",unresolvedLedger)
+            .put("conflictingLedgerReferences",conflictingReferences)
             .put("groupsWithPossibleOverlap",overlapCount)
             .put("unidentifiedPurchaseInvoices",unidentified)
             .put("supplierLedgerRows",ledger.getInt("sourceRows"))
