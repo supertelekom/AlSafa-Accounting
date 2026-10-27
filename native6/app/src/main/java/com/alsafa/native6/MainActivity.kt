@@ -2614,6 +2614,17 @@ open class MainActivity:Activity() {
                 })
             }
         }
+        button("تجهيز الحركات المالية القديمة دون ترحيل أرصدة") {
+            work(refresh=false) {
+                try {
+                    val result=LegacyMovementStaging.stage(store)
+                    runOnUiThread { if(!isFinishing&&!isDestroyed) AlertDialog.Builder(this)
+                        .setTitle("تجهيز الحركات المالية")
+                        .setMessage("تم التحقق من "+result.getLong("verified")+" حركة محفوظة.\nلم يتم ترحيل نقد أو قيود مالية.")
+                        .setPositiveButton("إغلاق",null).show() }
+                } catch(e:Exception) { runOnUiThread { if(!isFinishing&&!isDestroyed)error(e) } }
+            }
+        }
         button("تجهيز الفواتير القديمة محلياً دون ترحيل نقد") {
             work(refresh=false) {
                 try {
