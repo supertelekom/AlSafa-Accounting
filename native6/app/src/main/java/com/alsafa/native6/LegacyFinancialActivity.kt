@@ -1,0 +1,38 @@
+package com.alsafa.native6
+
+import org.json.JSONArray
+import org.json.JSONObject
+
+/** Verified historical movements, never re-posted as new transactions. */
+object LegacyFinancialActivity {
+    private val categories = setOf("returns", "cashTransactions", "payments", "dailyClosings")
+
+    fun page(store: Store, category: String, from: String = "", to: String = "",
+             offset: Int = 0, limit: Int = 50): JSONObject {
+        require(category in categories)
+        require(offset >= 0 && limit in 1..100)
+        if (from.isNotBlank()) java.time.LocalDate.parse(from)
+        if (to.isNotBlank()) java.time.LocalDate.parse(to)
+        require(from.isBlank() || to.isBlank() || from <= to)
+        val metadata = LegacyArchivedDebtReport.verifyArchiveCounts(store)
+        val expected = metadata.getJSONObject("sourceCollections").optInt(category, 0)
+        val rows = store.legacyRows(category)
+        require(rows.size == expected) { "أرشيف الحركات غير مكتمل" }
+        val matching = rows.map { row ->
+            val record = JSONObject(row.getValue("payload"))
+            val date = record.optString("date").take(10).ifBlank {
+                record.optString("createdAt").take(10)
+            }
+            JSONObject().put("archiveKey", row.getValue("legacy_id"))
+                .put("date", date).put("record", record)
+        }.filter { row ->
+            val date = row.optString("date")
+            (from.isBlank() || date >= from) && (to.isBlank() || date <= to)
+        }.sortedWith(compareByDescending<JSONObject> { it.optString("date") }
+            .thenByDescending { it.optString("archiveKey") })
+        val page = JSONArray()
+        matching.drop(offset).take(limit).forEach { page.put(it) }
+        return JSONObject().put("category", category).put("total", matching.size)
+            .put("records", page).put("readOnly", true).put("posting", "NONE")
+    }
+}
