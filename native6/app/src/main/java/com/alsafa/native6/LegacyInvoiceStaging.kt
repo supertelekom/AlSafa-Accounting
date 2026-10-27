@@ -54,9 +54,11 @@ object LegacyInvoiceStaging {
                 val list = mappings.getJSONArray(section)
                 for (i in 0 until list.length()) {
                     val m = list.getJSONObject(i)
-                    val existing = store.rows("SELECT source_hash,source_section,source_id,source_number,invoice_date,currency,target_number,total_minor,paid_minor,outstanding_minor FROM $table WHERE target_id=?",
+                    val existing = store.rows("SELECT payload,source_hash,source_section,source_id,source_number,invoice_date,currency,target_number,total_minor,paid_minor,outstanding_minor FROM $table WHERE target_id=?",
                         m.getString("targetId")).singleOrNull()
-                    require(existing != null &&
+                    val sourcePayload = store.rows("SELECT payload FROM legacy_records WHERE category=? AND legacy_id=?", section, m.getString("sourceId")).singleOrNull()
+                    require(existing != null && sourcePayload != null &&
+                        existing.getValue("payload")==sourcePayload.getValue("payload") &&
                         existing.getValue("source_hash")==sourceHash &&
                         existing.getValue("source_section")==section &&
                         existing.getValue("source_id")==m.getString("sourceId") &&
