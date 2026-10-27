@@ -2108,7 +2108,11 @@ open class MainActivity:Activity() {
         })
     }
     private fun invoices(defaultKind:String="all"){
-        sectionHeading(if(defaultKind=="sale")"المبيعات والفواتير" else "الفواتير والمرتجعات","البحث في الفواتير وعمليات القبض والاسترداد")
+        sectionHeading(if(defaultKind=="sale")"المبيعات والفواتير" else "الفواتير والمرتجعات",
+            if(defaultKind=="sale")"رقم الفاتورة ظاهر ويمكن البحث به وتعديل بياناتها بأمان." else "البحث في الفواتير وعمليات القبض والاسترداد")
+        if(defaultKind=="sale") {
+            button("＋ فاتورة مبيع جديدة"){go("sale")}
+        }
         button("عمليات الطباعة المعلقة") { showPrintQueue() }
         button("إعدادات طابعة الفواتير والملصقات") {
             BluetoothReceiptPrinter.forgetPrinter(this)
