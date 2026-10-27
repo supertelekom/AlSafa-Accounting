@@ -22,6 +22,8 @@ object LegacySalesActivationAudit {
             require(id.isNotEmpty() && ids.add(id)) { "معرف منتج مفقود أو مكرر" }
         }
         val invoiceIds = HashSet<String>()
+        val invoiceNumbers = HashSet<Long>()
+        val currencies = setOf("USD", "TRY", "SYP")
         val issues = JSONArray()
         var unpaid = 0
         var linkedLines = 0
@@ -30,6 +32,13 @@ object LegacySalesActivationAudit {
             val id = sale.optString("id").trim()
             if (id.isEmpty() || !invoiceIds.add(id)) {
                 issues.put(JSONObject().put("row", i).put("reason", "duplicate_or_missing_invoice_id"))
+            }
+            val number = sale.optString("invoiceNo").toLongOrNull()
+            if (number == null || number <= 0 || !invoiceNumbers.add(number)) {
+                issues.put(JSONObject().put("row", i).put("reason", "duplicate_or_missing_invoice_number"))
+            }
+            if (sale.optString("currency") !in currencies) {
+                issues.put(JSONObject().put("row", i).put("reason", "invalid_invoice_currency"))
             }
             val total = sale.optString("total").toBigDecimalOrNull()
             val paid = sale.optString("paid").toBigDecimalOrNull()
