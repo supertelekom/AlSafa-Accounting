@@ -1573,7 +1573,8 @@ class MainActivity : Activity() {
             orientation=LinearLayout.HORIZONTAL
             layoutDirection=View.LAYOUT_DIRECTION_RTL
             gravity=Gravity.CENTER_VERTICAL
-            setPadding(dp(18),dp(18),dp(18),dp(16))
+            if(resources.configuration.screenWidthDp>=720) setPadding(dp(25),dp(19),dp(25),dp(19))
+            else setPadding(dp(18),dp(18),dp(18),dp(16))
             background=GradientDrawable(Orientation.TL_BR,
                 intArrayOf(Color.rgb(249,243,232),Color.rgb(234,217,185))).apply {
                 setStroke(dp(1),Color.rgb(229,208,170))
@@ -1584,7 +1585,7 @@ class MainActivity : Activity() {
             layoutDirection=View.LAYOUT_DIRECTION_RTL
             gravity=Gravity.CENTER_VERTICAL
         }
-        val mark=text("◷",20f,Color.rgb(122,81,24)).apply {
+        val mark=text("◷",18f,Color.rgb(122,81,24)).apply {
             gravity=Gravity.CENTER
             background=GradientDrawable().apply {
                 setColor(Color.rgb(249,243,232))
