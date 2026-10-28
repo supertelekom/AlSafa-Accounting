@@ -370,6 +370,23 @@ class Store(val helper:StoreDb) {
         return result
     }
 
+    /** Full restore section-count comparison, without posting historic cash. */
+    fun archivedFullRestoreVerification(expected:Map<String,Long>):Map<String,String> {
+        val actual=archivedFullRestoreCounts()
+        val unknown=expected.keys.filter { it !in actual }
+        require(unknown.isEmpty()) { "أقسام غير معروفة: "+unknown.joinToString(",") }
+        val mismatches=expected.filter { (key,count) -> actual[key]!=count }
+        return mapOf(
+            "state" to if(mismatches.isEmpty()) "COUNTS_MATCH" else "COUNTS_DIFFER",
+            "checked_sections" to expected.size.toString(),
+            "mismatched_sections" to mismatches.size.toString(),
+            "details" to mismatches.entries.joinToString("; ") {
+                it.key+": expected="+it.value+", actual="+actual[it.key]
+            },
+            "financial_activation" to "NOT_POSTED"
+        )
+    }
+
     /** Paginated repair history with bounded BLOB reads for old embedded watch photos. */
     fun repairPage(term:String,limit:Int,offset:Int):List<Map<String,String>> {
         require(limit in 1..100 && offset>=0)
