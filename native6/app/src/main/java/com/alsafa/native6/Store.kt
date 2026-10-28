@@ -1602,12 +1602,21 @@ class Store(val helper:StoreDb) {
         // Imported invoices remain read-only, but their numbers belong to the same
         // sequence. Never reuse a legacy number, even after restarting the app.
         var imported=0L
+        val importedIds=HashSet<String>()
         for(section in listOf("sales","purchases","repairs")) {
             for(record in legacyRows(section)) {
                 val invoice=try { JSONObject(record.getValue("payload")) }
                     catch (_:org.json.JSONException) {
                         throw IllegalStateException("تعذر قراءة رقم فاتورة مستعادة؛ أوقف الترقيم لحماية التسلسل")
                     }
+                val historicalId=invoice.optString("id").trim()
+                require(historicalId.isNotEmpty() && importedIds.add(section+":"+historicalId)) {
+                    "معرف فاتورة تاريخية مفقود أو مكرر؛ أوقف إصدار فاتورة جديدة"
+                }
+                val archiveId=record.getValue("legacy_id").substringAfter(":",missingDelimiterValue="")
+                require(archiveId==historicalId) {
+                    "معرف الفاتورة التاريخية لا يطابق سجل الاستعادة"
+                }
                 val number=invoice.optString("invoiceNo").trim()
                 if(number.isNotEmpty()) {
                     val parsed=number.toLongOrNull()
