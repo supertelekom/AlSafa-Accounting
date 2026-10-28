@@ -1666,14 +1666,14 @@ class Store(val helper:StoreDb) {
         require(receipts.isNotEmpty() && receipts.all { it.second>=0L }) {
             "حدد دفعة واحدة على الأقل بمبلغ غير سالب"
         }
-        require(receipts.any { it.second>0L } || receipts.size==1) {
-            "لا تضف عدة خزنات بلا أي مبلغ قبض"
-        }
-        require(receipts.filter { it.second>0L }.map { it.first }.distinct().size ==
-            receipts.count { it.second>0L }) {
+        // The sale screen always submits two fields. Empty optional fields are
+        // not financial receipts and must not prevent a fully unpaid sale.
+        val actualReceipts=receipts.filter { it.second>0L }
+        require(actualReceipts.map { it.first }.distinct().size==actualReceipts.size) {
             "الخزنة مكررة في الدفعات؛ اجمع مبالغها في دفعة واحدة"
         }
-        receipts.forEach { vault(it.first) }
+        (if(actualReceipts.isEmpty()) receipts.take(1) else actualReceipts)
+            .forEach { vault(it.first) }
         LocalDate.parse(date)
         if(receipts.any { it.second>0L }) {
             require(!LocalDate.parse(receiptDate).isAfter(LocalDate.now())) { "تاريخ القبض في المستقبل" }
@@ -1683,8 +1683,8 @@ class Store(val helper:StoreDb) {
         val invoiceId=sale(items,party,phone,currency,0L,receipts.first().first,discount,date,
             notes=notes,saleType=saleType,warrantyMonths=warrantyMonths,warrantyStart=warrantyStart)
         require(totalPaid<=due(invoiceId))
-        receipts.forEachIndexed { index,entry->
-            if(entry.second>0L) collectInternal(invoiceId,entry.second,entry.first,receiptDate,
+        actualReceipts.forEachIndexed { index,entry->
+            collectInternal(invoiceId,entry.second,entry.first,receiptDate,
                 invoiceId+"-receipt-"+index)
         }
         invoiceId
