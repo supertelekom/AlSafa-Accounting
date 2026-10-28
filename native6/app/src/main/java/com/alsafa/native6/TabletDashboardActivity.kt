@@ -19,14 +19,14 @@ import android.widget.TextView
  * SectionActivity and therefore retains the current SQLite-backed business logic.
  */
 class TabletDashboardActivity : Activity() {
-    private val ink = Color.rgb(58, 48, 39)
-    private val gold = Color.rgb(166, 116, 38)
-    private val paper = Color.rgb(248, 244, 236)
+    private val ink = Color.rgb(62, 52, 41)
+    private val gold = Color.rgb(169, 121, 41)
+    private val paper = Color.rgb(248, 243, 235)
     private var mode = "home"
     private lateinit var font: Typeface
 
     private fun dp(n: Int) = (n * resources.displayMetrics.density + 0.5f).toInt()
-    private fun shape(fill: Int, stroke: Int = Color.rgb(226, 211, 188)) =
+    private fun shape(fill: Int, stroke: Int = Color.rgb(234, 223, 206)) =
         GradientDrawable().apply {
             setColor(fill)
             cornerRadius = dp(17).toFloat()
@@ -87,7 +87,7 @@ class TabletDashboardActivity : Activity() {
             gravity = Gravity.CENTER_VERTICAL
             layoutDirection = View.LAYOUT_DIRECTION_RTL
             setPadding(dp(12), dp(8), dp(12), dp(8))
-            background = shape(Color.WHITE)
+            background = shape(Color.rgb(255, 253, 249))
             isClickable = true
             isFocusable = true
             setOnClickListener { action() }
@@ -164,23 +164,20 @@ class TabletDashboardActivity : Activity() {
                 ))
             }
             else -> {
-                content.addView(title("إدارة المحل", 25f, gold))
+                content.addView(title("الوضع الكامل", 25f, gold))
+                content.addView(title("كل عمليات المتجر والإدارة.", 15f))
                 grid(content, listOf(
-                    Triple("المبيع", "فواتير البيع", "sale"),
-                    Triple("المنتجات", "الساعات والألوان والمواصفات", "products"),
-                    Triple("قطع الصيانة", "قطع الصيانة ومخزونها", "maintenance-parts"),
-                    Triple("الفواتير", "القبض والمرتجعات", "invoices"),
-                    Triple("الصيانة", "الاستلام والتسليم", "repairs"),
-                    Triple("الخزنات", "الأرصدة والإقفال", "vaults"),
-                    Triple("الموردون", "المشتريات والديون", "suppliers"),
-                    Triple("التقارير", "تقرير شهر محدد", "reports"),
-                    Triple("تقارير الفترة", "بين تاريخين", "period-reports"),
-                    Triple("الشركاء", "الأرباح والسحوبات", "partners"),
-                    Triple("المخزون", "التقييم والتنبيهات", "inventory"),
-                    Triple("سجل العمليات", "تدقيق العمليات", "audit"),
-                    Triple("النسخ الاحتياطي", "التصدير والاستعادة", "backup")
+                    Triple("اليوم", "ملخص وتنبيهات العمل الآن", "reports"),
+                    Triple("مبيع", "شاشة المبيع الكاملة", "sale"),
+                    Triple("استلام صيانة", "طلب صيانة كامل", "repairs"),
+                    Triple("تسليم صيانة", "طلبات قيد المتابعة", "repairs"),
+                    Triple("قبض دين", "المبالغ المستحقة", "invoices"),
+                    Triple("مصروف", "تسجيل مصروف", "vaults"),
+                    Triple("بحث", "عميل، هاتف، طلب أو منتج", "invoices")
                 ))
+                content.addView(title("آخر العمليات", 19f, gold))
             }
+
         }
     }
 
