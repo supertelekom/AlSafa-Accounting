@@ -1319,6 +1319,10 @@ class Store(val helper:StoreDb) {
             val source=JSONObject(row.getValue("payload"))
             val due=reconciledLegacySaleDue(source,settlements)
             if(due==0L) return@mapNotNull null
+            require(source.optString("paymentStatus").trim() !in
+                setOf("مدفوع بالكامل","مسوّاة/مسترجعة","ملغاة","مسترجعة")) {
+                "حالة الفاتورة القديمة تشير إلى تسوية أو إلغاء رغم وجود ذمة"
+            }
             require(settlements.returns[source.optString("id")].isNullOrEmpty()) {
                 "فاتورة بها مرتجع: يلزم مطابقة كلفة وكمية المرتجع قبل حساب الربح المتبقي"
             }
