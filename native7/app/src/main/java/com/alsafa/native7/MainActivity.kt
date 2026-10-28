@@ -676,6 +676,18 @@ class MainActivity : Activity() {
         field(parent,"بحث برقم الفاتورة أو العميل أو الهاتف")
         parent.addView(text("الضمانات لا تُحسب قبل استعادة بيانات الفواتير.",13f))
     }
+    private fun lowStockPreview(parent:LinearLayout) {
+        parent.addView(text("نقص المخزون",26f,gold))
+        field(parent,"بحث باسم المنتج أو القطعة")
+        parent.addView(text("لم تُحمّل بيانات المخزون بعد.",13f))
+    }
+    private fun stockMovementPreview(parent:LinearLayout) {
+        parent.addView(text("حركة المخزون",26f,gold))
+        field(parent,"من تاريخ","YYYY-MM-DD")
+        field(parent,"إلى تاريخ","YYYY-MM-DD")
+        field(parent,"بحث باسم المنتج أو الباركود")
+        parent.addView(text("حركات المخزون غير متصلة بالبيانات بعد.",13f))
+    }
     private fun render() {
         val root=LinearLayout(this).apply {
             orientation=LinearLayout.VERTICAL; layoutDirection=View.LAYOUT_DIRECTION_RTL
@@ -788,6 +800,8 @@ class MainActivity : Activity() {
             "preview:إقفال اليوم" -> dailyClosingPreview(body)
             "preview:طلبات العملاء" -> customerOrdersPreview(body)
             "preview:الضمانات" -> warrantyPreview(body)
+            "preview:نقص المخزون" -> lowStockPreview(body)
+            "preview:حركة المخزون" -> stockMovementPreview(body)
             "preview:تسليم الوردية" -> handoverPreview(body)
             "preview:صيانة سريعة" -> quickRepairPreview(body)
             "preview:تسليم الساعات" -> deliveryPreview(body)
