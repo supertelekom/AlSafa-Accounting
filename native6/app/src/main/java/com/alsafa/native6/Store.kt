@@ -1585,7 +1585,7 @@ class Store(val helper:StoreDb) {
     }
     private fun nextNumber():Long {
         val existing=scalar("SELECT coalesce(max(number),0) FROM invoices")
-        val raw=rows("SELECT payload FROM legacy_records WHERE category=? AND legacy_id=?","configuration","settings").firstOrNull()?.get("payload")
+        val raw=legacyRecord("configuration","settings")?.get("payload")
         val previous=if(raw==null) 0L else try {
             JSONObject(raw).optLong("invoiceSequenceHighWater",0L).coerceAtLeast(0L)
         } catch (_:org.json.JSONException) {
@@ -1603,7 +1603,10 @@ class Store(val helper:StoreDb) {
                 val number=invoice.optString("invoiceNo").trim()
                 if(number.isNotEmpty()) {
                     val parsed=number.toLongOrNull()
-                    if(parsed!=null && parsed>imported) imported=parsed
+                    require(parsed!=null && parsed>=0L) {
+                        "رقم فاتورة تاريخية غير صالح؛ أوقف إصدار فاتورة جديدة لحماية التسلسل"
+                    }
+                    if(parsed>imported) imported=parsed
                 }
             }
         }
