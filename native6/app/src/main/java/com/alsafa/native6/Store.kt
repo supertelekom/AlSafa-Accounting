@@ -2068,6 +2068,42 @@ class Store(val helper:StoreDb) {
         event(command,"RECEIPT",date,"قبض فاتورة ${inv.number}");insert("receipts","event_id" to command,"invoice_id" to invoiceId,"amount" to amount,"vault" to v)
         post(command,listOf(Posting("cash:$v",inv.currency,amount),Posting("receivable:$invoiceId",inv.currency,-amount)))
     }
+    /**
+     * Collect a sale in another currency using the two explicit amounts agreed
+     * at the counter. No inferred FX rate and no replay of legacy payments.
+     * invoiceAmount is denominated in the invoice currency; cashAmount in cashCurrency.
+     */
+    fun collectConverted(invoiceId:String,invoiceAmount:Long,cashCurrency:Currency,
+        cashAmount:Long,v:String,date:String=today(),command:String=id()):String=transaction {
+        require(invoiceAmount>0L && cashAmount>0L) { "مبلغ القبض أو المقابل غير صالح" }
+        val inv=invoice(invoiceId)
+        require(inv.kind=="sale" && inv.status=="posted") { "القبض متاح لفاتورة مبيع نشطة فقط" }
+        require(cashCurrency!=inv.currency) { "استخدم القبض العادي عند تطابق العملة" }
+        require(invoiceAmount<=due(invoiceId)) { "المبلغ يتجاوز المتبقي" }
+        val day=LocalDate.parse(date).toString()
+        require(!LocalDate.parse(day).isAfter(LocalDate.now())) { "تاريخ القبض في المستقبل" }
+        require(!LocalDate.parse(day).isBefore(LocalDate.parse(
+            rows("SELECT date FROM events WHERE id=?",invoiceId).single().getValue("date")
+        ))) { "تاريخ القبض يسبق الفاتورة" }
+        require(invoiceAmount<=invoiceCollectibleOn(invoiceId,day)) {
+            "المبلغ يتجاوز الذمة المتاحة بتاريخ القبض"
+        }
+        require(!rows("SELECT notes FROM invoices WHERE id=?",invoiceId).single()
+            .get("notes").orEmpty().startsWith("legacy-sale:")) {
+            "قبض الفاتورة القديمة موقوف حتى ترحيل أساس الكلفة والربح"
+        }
+        vault(v)
+        event(command,"RECEIPT",day,"قبض فاتورة ${inv.number} بعملة مختلفة")
+        insert("receipts","event_id" to command,"invoice_id" to invoiceId,
+            "amount" to invoiceAmount,"vault" to v)
+        post(command,listOf(
+            Posting("receivable:$invoiceId",inv.currency,-invoiceAmount),
+            Posting("fx:clearing",inv.currency,invoiceAmount),
+            Posting("cash:$v",cashCurrency,cashAmount),
+            Posting("fx:clearing",cashCurrency,-cashAmount)
+        ))
+        command
+    }
     fun collect(invoiceId:String,amount:Long,v:String,date:String=today(),command:String=id())=transaction {collectInternal(invoiceId,amount,v,date,command)}
     fun returnSale(invoiceId:String,quantities:Map<Int,Long>,reason:String,date:String=today(),command:String=id()):String=transaction {
         val inv=invoice(invoiceId);require(inv.kind=="sale" && inv.status=="posted"){"المرتجع متاح لفاتورة مبيع نشطة فقط"}
