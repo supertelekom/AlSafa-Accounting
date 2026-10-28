@@ -360,7 +360,7 @@ class MainActivity : Activity() {
             setPadding(dp(2),0,dp(2),0)
         }
         parent.addView(heading,LinearLayout.LayoutParams(-1,-2).apply {
-            topMargin=dp(20)
+            topMargin=dp(if(parent.childCount==0) 0 else 20)
             bottomMargin=dp(14)
         })
     }
