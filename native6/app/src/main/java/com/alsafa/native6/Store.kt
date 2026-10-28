@@ -1703,6 +1703,26 @@ class Store(val helper:StoreDb) {
         db.execSQL("INSERT OR REPLACE INTO discount_rules(id,name,kind,amount,minimum,currency,enabled) VALUES(?,?,?,?,?,?,?)",
             arrayOf(ruleId,name,kind,amount,minimum,currency.name,if(enabled)1 else 0))
     }
+    /** Import the exact rule objects from legacy backup data.discountRules. */
+    fun importLegacyDiscountRules(source:org.json.JSONArray):Int=transaction {
+        var imported=0
+        for(i in 0 until source.length()) {
+            val rule=source.getJSONObject(i)
+            val id=rule.getString("id")
+            val name=rule.getString("name")
+            val kind=rule.getString("type")
+            val currency=Currency.valueOf(rule.getString("currency"))
+            val value=java.math.BigDecimal(rule.get("value").toString())
+            val minimum=java.math.BigDecimal(rule.get("minTotal").toString())
+            val scaled=if(kind=="percent")
+                value.multiply(java.math.BigDecimal(100)).longValueExact()
+            else Money.parse(value.toPlainString(),currency).minor
+            val threshold=Money.parse(minimum.toPlainString(),currency).minor
+            saveDiscountRule(id,name,kind,scaled,threshold,currency,rule.optBoolean("active",true))
+            imported++
+        }
+        imported
+    }
     fun discountRules():List<Map<String,String>> =
         rows("SELECT id,name,kind,amount,minimum,currency,enabled FROM discount_rules ORDER BY name")
     fun discountFor(ruleId:String,gross:Long,currency:Currency):Long {
