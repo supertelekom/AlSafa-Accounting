@@ -147,7 +147,7 @@ object LegacyInvoiceSnapshot {
             .put("invalidSourceRecords",invalidRecords)
             .put("offset",offset).put("limit",limit).put("rows",page)
             .put("outstandingByCurrency",totals)
-            .put("balanceBasis","ORIGINAL_INVOICE_CUMULATIVE_PAID")
+            .put("balanceBasis","RECONCILED_PAYMENTS_AND_RETURNS_FOR_SALES")
             .put("financialPosting","NONE")
     }
 }
