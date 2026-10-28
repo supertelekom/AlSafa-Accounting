@@ -48,6 +48,7 @@ object LegacyInvoiceSnapshot {
             }
         }
         val linked=JSONArray()
+        val seenPaymentIds=HashSet<String>()
         if(id.isNotBlank()) {
             val payments=store.legacyRows("payments")
             for(payment in payments) {
@@ -56,6 +57,10 @@ object LegacyInvoiceSnapshot {
                 val type=original.optString("referenceType")
                 val expected=when(section) { "sales" -> "sale"; "repairs" -> "repair"; else -> "purchase" }
                 if(ref==id && (type.equals(expected,ignoreCase=true) || type.equals(section,ignoreCase=true))) {
+                    val paymentId=original.optString("id").trim()
+                    require(paymentId.isNotEmpty() && seenPaymentIds.add(paymentId)) {
+                        "معرف قبض تاريخي مفقود أو مكرر للفاتورة"
+                    }
                     linked.put(JSONObject()
                         .put("archiveKey",payment.getValue("legacy_id"))
                         .put("record",original))
@@ -65,6 +70,7 @@ object LegacyInvoiceSnapshot {
         // Returns are historical records linked to the original invoice. Keep their
         // source amounts and dates intact; never post them again during display.
         val linkedReturns=JSONArray()
+        val seenReturnIds=HashSet<String>()
         if(section=="sales" || section=="repairs") {
             for(returnRow in store.legacyRows("returns")) {
                 val original=JSONObject(returnRow.getValue("payload"))
@@ -72,6 +78,10 @@ object LegacyInvoiceSnapshot {
                 val expected=if(section=="sales") "sale" else "repair"
                 if(original.optString("referenceId")==id &&
                     (type.equals(expected,ignoreCase=true) || type.equals(section,ignoreCase=true))) {
+                    val returnId=original.optString("id").trim()
+                    require(returnId.isNotEmpty() && seenReturnIds.add(returnId)) {
+                        "معرف مرتجع تاريخي مفقود أو مكرر للفاتورة"
+                    }
                     linkedReturns.put(JSONObject()
                         .put("archiveKey",returnRow.getValue("legacy_id"))
                         .put("record",original))
