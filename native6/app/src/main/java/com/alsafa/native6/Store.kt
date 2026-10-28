@@ -2952,6 +2952,16 @@ class Store(val helper:StoreDb) {
      * Older balances are displayed separately and never applied to current-month drawings.
      * Start month is explicit: no assumption about the beginning of store history.
      */
+    /** Historical drawings are separate from newly posted journal drawings. */
+    fun legacyPartnerMonthDrawings(month:String,c:Currency):List<Map<String,String>> {
+        val period=java.time.YearMonth.parse(month)
+        return rows("""SELECT m.id partner_id,m.name partner_name,
+            coalesce(sum(d.amount_minor),0) amount_minor
+            FROM partner_members m LEFT JOIN legacy_partner_drawings d
+              ON d.partner_id=m.id AND d.currency=? AND d.actual_date>=? AND d.actual_date<?
+            GROUP BY m.id,m.name ORDER BY m.name""",c.name,period.atDay(1).toString(),
+            period.plusMonths(1).atDay(1).toString())
+    }
     fun partnerBalanceSummary(
         selectedMonth:String,
         firstMonth:String,
