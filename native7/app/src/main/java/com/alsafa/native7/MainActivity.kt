@@ -632,8 +632,28 @@ class MainActivity : Activity() {
         parent.addView(text("تسجيل مصروف",26f,gold))
         parent.addView(text("يسجل المصروف في التقرير ويُخصم فوراً من الحافظة التي تختارها.",14f))
         disabledAction(parent,"القائمة")
-        field(parent,"التاريخ *","YYYY-MM-DD")
-        field(parent,"الوقت *","HH:MM")
+        field(parent,"التاريخ *","YYYY-MM-DD").apply {
+            setText(java.time.LocalDate.now().toString())
+            isFocusable=false
+            isClickable=true
+            setOnClickListener {
+                val today=runCatching { java.time.LocalDate.parse(text.toString()) }.getOrDefault(java.time.LocalDate.now())
+                android.app.DatePickerDialog(this@MainActivity,{ _,y,m,d ->
+                    setText(java.time.LocalDate.of(y,m+1,d).toString())
+                },today.year,today.monthValue-1,today.dayOfMonth).show()
+            }
+        }
+        field(parent,"الوقت *","HH:MM").apply {
+            setText(java.time.LocalTime.now().format(java.time.format.DateTimeFormatter.ofPattern("HH:mm")))
+            isFocusable=false
+            isClickable=true
+            setOnClickListener {
+                val now=runCatching { java.time.LocalTime.parse(text.toString()) }.getOrDefault(java.time.LocalTime.now())
+                android.app.TimePickerDialog(this@MainActivity,{ _,h,m ->
+                    setText(String.format(java.util.Locale.US,"%02d:%02d",h,m))
+                },now.hour,now.minute,true).show()
+            }
+        }
         select(parent,"العملة",listOf("USD","TRY","SYP"))
         field(parent,"المبلغ *").inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
         select(parent,"دُفع من",listOf("نقدي","شام كاش"))
