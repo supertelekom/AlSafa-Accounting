@@ -693,6 +693,28 @@ object LegacySnapshotImport {
                 store.scalar("SELECT count(*) FROM partner_share_lines")==3L) {
                 "تعذر التحقق من تسجيل الشركاء ونسبهم"
             }
+            val withdrawalIds=hashSetOf<String>()
+            val historicalWithdrawals=d.getJSONArray("partnerWithdrawals")
+            for(index in 0 until historicalWithdrawals.length()) {
+                val item=historicalWithdrawals.getJSONObject(index)
+                val sourceId=item.getString("id").trim()
+                val partnerId=item.getString("partnerId").trim()
+                val date=java.time.LocalDate.parse(item.getString("date").take(10)).toString()
+                val currency=item.getString("currency")
+                val amount=item.getString("amount").toBigDecimal()
+                require(sourceId.isNotEmpty() && withdrawalIds.add(sourceId)){"سحب شريك مكرر"}
+                require(partnerShares.containsKey(partnerId)){"سحب مرتبط بشريك غير معروف"}
+                require(currency in setOf("USD","TRY","SYP") && amount.signum()>0 &&
+                    amount.scale()<=2){"مبلغ أو عملة سحب غير صالح"}
+                val minor=amount.movePointRight(2).longValueExact()
+                store.insert("legacy_partner_drawings","source_id" to sourceId,
+                    "partner_id" to partnerId,"actual_date" to date,
+                    "currency" to currency,"amount_minor" to minor,
+                    "source_payload" to item.toString())
+            }
+            require(store.scalar("SELECT count(*) FROM legacy_partner_drawings")==historicalWithdrawals.length().toLong()) {
+                "سحوبات الشركاء المستعادة غير مكتملة"
+            }
             store.insert("settings","key" to "legacy_snapshot_import","value" to JSONObject()
                 .put("scope","inventory_suppliers_repairs_only")
                 .put("financialWarningCount",financialWarnings.size)
