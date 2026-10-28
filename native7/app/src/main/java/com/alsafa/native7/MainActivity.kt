@@ -716,6 +716,22 @@ class MainActivity : Activity() {
         disabledAction(parent,"حفظ الأرصدة الافتتاحية")
         parent.addView(text("هذه معاينة فقط؛ لا تُحفظ أرصدة ولا تُنشأ حركات مالية.",12f))
     }
+    private fun usedWatchesPreview(parent:LinearLayout) {
+        parent.addView(text("الساعات المستعملة",26f,gold))
+        parent.addView(text("شراء مستعمل أو استبداله بساعة جديدة مع الربط المحاسبي",14f))
+        field(parent,"بحث باسم الساعة أو رقم الفاتورة")
+        parent.addView(text("لا توجد بيانات مستوردة بعد.",13f))
+    }
+    private fun thermalPrinterPreview(parent:LinearLayout) {
+        parent.addView(text("الطابعة الحرارية",26f,gold))
+        parent.addView(text("Bluetooth · اختيار الطابعة وعرض الورق",14f))
+        parent.addView(text("إعدادات الطابعة والورق غير مفعلة في معاينة الواجهة.",13f))
+    }
+    private fun inventoryAnalysisPreview(parent:LinearLayout) {
+        parent.addView(text("تحليل المخزون",26f,gold))
+        parent.addView(text("القيمة والراكد والأكثر مبيعاً والمنخفض",14f))
+        parent.addView(text("تحتاج هذه المؤشرات إلى بيانات المخزون والفواتير الفعلية.",13f))
+    }
     private fun render() {
         val root=LinearLayout(this).apply {
             orientation=LinearLayout.VERTICAL; layoutDirection=View.LAYOUT_DIRECTION_RTL
@@ -833,6 +849,9 @@ class MainActivity : Activity() {
             "preview:سجل التدقيق" -> auditPreview(body)
             "preview:ملفات العملاء" -> customersPreview(body)
             "preview:الأرصدة الافتتاحية" -> openingBalancesPreview(body)
+            "preview:الساعات المستعملة" -> usedWatchesPreview(body)
+            "preview:الطابعة الحرارية" -> thermalPrinterPreview(body)
+            "preview:تحليل المخزون" -> inventoryAnalysisPreview(body)
             "preview:تسليم الوردية" -> handoverPreview(body)
             "preview:صيانة سريعة" -> quickRepairPreview(body)
             "preview:تسليم الساعات" -> deliveryPreview(body)
