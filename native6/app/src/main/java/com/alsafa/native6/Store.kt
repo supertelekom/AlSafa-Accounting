@@ -292,6 +292,16 @@ class Store(val helper:StoreDb) {
         )
     }
 
+    /** A single read-only dossier for one archived sale and its settlements. */
+    fun archivedSaleReview(archiveKey:String):Map<String,String> {
+        val invoice=archivedInvoiceDetail("sales",archiveKey)
+        val settlement=archivedSaleSettlementDetail(archiveKey)
+        val basis=archivedSaleCostDetail(archiveKey)
+        return invoice+settlement.mapKeys { "settlement_"+it.key }+
+            basis.mapKeys { "cost_"+it.key }+
+            mapOf("activation_state" to "READ_ONLY")
+    }
+
     /** Paginated repair history with bounded BLOB reads for old embedded watch photos. */
     fun repairPage(term:String,limit:Int,offset:Int):List<Map<String,String>> {
         require(limit in 1..100 && offset>=0)
