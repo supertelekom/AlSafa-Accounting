@@ -2881,6 +2881,16 @@ open class MainActivity:Activity() {
                 else->"لا توجد ذمة مستحقة حالياً"
             }
             text("حالة التحصيل: "+paymentState,box,14f).setTextColor(gold)
+            val receiptRows=store.rows("""SELECT e.date,r.amount,r.vault FROM receipts r
+                JOIN events e ON e.id=r.event_id WHERE r.invoice_id=?
+                ORDER BY e.date,e.created,e.id""",inv.id)
+            if(receiptRows.isNotEmpty()) {
+                text("تفصيل المقبوضات:",box,15f).setTextColor(gold)
+                receiptRows.forEach { receipt ->
+                    text(receipt.getValue("date")+" · "+receipt.getValue("vault")+" · "+
+                        money(receipt.getValue("amount").toLong(),inv.currency),box,14f)
+                }
+            }
         }
         if(inv.kind=="sale") {
             val lines=store.rows("""SELECT l.name,l.qty,l.net,l.cost,
