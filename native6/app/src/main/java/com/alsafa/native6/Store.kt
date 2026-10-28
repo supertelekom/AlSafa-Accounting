@@ -2953,6 +2953,30 @@ class Store(val helper:StoreDb) {
      * Start month is explicit: no assumption about the beginning of store history.
      */
     /** Historical drawings are separate from newly posted journal drawings. */
+    /** Original expenses are evidence only; never charge cash or profit twice. */
+    fun legacyExpenseMonth(month:String,c:Currency):List<Map<String,String>> {
+        val period=java.time.YearMonth.parse(month)
+        val from=period.atDay(1)
+        val until=period.plusMonths(1).atDay(1)
+        val seen=HashSet<String>()
+        return legacyRows("expenses").map { row ->
+            val item=JSONObject(row.getValue("payload"))
+            val id=item.optString("id").trim()
+            require(id.isNotEmpty() && seen.add(id)){"مصروف قديم مكرر أو دون معرف"}
+            val date=LocalDate.parse(item.getString("date").take(10))
+            val currency=item.getString("currency")
+            require(currency in setOf("USD","TRY","SYP")){"عملة مصروف غير مدعومة"}
+            val amount=item.getString("amount").toBigDecimal()
+            require(amount.signum()>=0){"مبلغ مصروف سالب"}
+            mapOf("id" to id,"date" to date.toString(),"currency" to currency,
+                "amount" to amount.toPlainString(),
+                "category" to item.optString("category"),
+                "description" to item.optString("description"),
+                "vault" to item.optString("vault"))
+        }.filter { LocalDate.parse(it.getValue("date"))>=from &&
+            LocalDate.parse(it.getValue("date"))<until && it["currency"]==c.name }
+            .sortedWith(compareBy({it.getValue("date")},{it.getValue("id")}))
+    }
     fun legacyPartnerMonthDrawings(month:String,c:Currency):List<Map<String,String>> {
         val period=java.time.YearMonth.parse(month)
         return rows("""SELECT m.id partner_id,m.name partner_name,
