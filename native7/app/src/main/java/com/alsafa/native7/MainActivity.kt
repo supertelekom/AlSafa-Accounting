@@ -140,7 +140,7 @@ class MainActivity : Activity() {
             background=panel(if(dark) Color.rgb(46,40,34) else paper,26)
             setPadding(dp(14),dp(18),dp(14),dp(18))
             isClickable=true
-            setOnClickListener { screen=target;render() }
+            setOnClickListener { navigateTo(target) }
         }
         card.addView(text(title,23f,if(dark) Color.WHITE else ink))
         card.addView(text(description,13f,if(dark) Color.rgb(231,216,197) else ink))
