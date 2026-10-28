@@ -1646,6 +1646,16 @@ class Store(val helper:StoreDb) {
      * Read-only cutover review. Currency totals are separate and no cash/profit
      * is posted by this method. Requires the historical collections to reconcile.
      */
+    /** Read-only settled balances for archived sales, indexed once per invoice page. */
+    fun legacySaleDueSnapshot():Map<String,Long?> {
+        val settlements=legacySettlementIndex()
+        return legacyRows("sales").associate { row ->
+            val source=JSONObject(row.getValue("payload"))
+            source.optString("id") to
+                runCatching { reconciledLegacySaleDue(source,settlements) }.getOrNull()
+        }
+    }
+
     fun legacyOnlineReceivablesPreview():List<Map<String,String>> {
         val sales=legacyRows("sales").map { JSONObject(it.getValue("payload")) }
         val settlementIndex=legacySettlementIndex()
