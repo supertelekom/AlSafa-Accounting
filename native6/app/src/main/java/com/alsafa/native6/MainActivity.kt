@@ -1807,6 +1807,10 @@ open class MainActivity:Activity() {
                 val search=field("رقم الفاتورة أو اسم العميل أو الهاتف أو الساعة",box)
                 val from=field("من تاريخ YYYY-MM-DD (اختياري)",box)
                 val to=field("إلى تاريخ YYYY-MM-DD (اختياري)",box)
+                val dateControls=LinearLayout(this).apply {
+                    orientation=LinearLayout.HORIZONTAL
+                    layoutDirection=View.LAYOUT_DIRECTION_RTL
+                }
                 val results=column()
                 val pageLabel=TextView(this).apply { style(this);textSize=13f }
                 val controls=LinearLayout(this).apply {
@@ -1821,6 +1825,7 @@ open class MainActivity:Activity() {
                 controls.addView(pageLabel,LinearLayout.LayoutParams(0,dp(44),1f))
                 controls.addView(next,LinearLayout.LayoutParams(0,dp(44),1f))
                 box.addView(controls)
+                box.addView(dateControls)
                 box.addView(results)
                 var pageIndex=0
                 fun load() {
@@ -1853,6 +1858,20 @@ open class MainActivity:Activity() {
                         }
                     }
                 }
+                fun dateShortcut(label:String,daysAgo:Long?) {
+                    val action=Button(this).apply { style(this);text=label;isAllCaps=false }
+                    dateControls.addView(action,LinearLayout.LayoutParams(0,dp(44),1f))
+                    action.setOnClickListener {
+                        val day=daysAgo?.let { java.time.LocalDate.now().minusDays(it).toString() }.orEmpty()
+                        from.setText(day)
+                        to.setText(day)
+                        pageIndex=0
+                        load()
+                    }
+                }
+                dateShortcut("اليوم",0L)
+                dateShortcut("أمس",1L)
+                dateShortcut("كل التواريخ",null)
                 searchButton.setOnClickListener { pageIndex=0;load() }
                 previous.setOnClickListener { if(pageIndex>0){pageIndex--;load()} }
                 next.setOnClickListener { pageIndex++;load() }
