@@ -2405,6 +2405,83 @@ class Store(val helper:StoreDb) {
             "candidateDue" to due.toPlainString(),"nativeDueMinor" to supplierDue(supplier,c).toString(),
             "postingAllowed" to "false")
     }
+    fun legacySupplierVerifiedBalance(supplier:String,c:Currency):Long {
+        val source=rows("SELECT payload FROM legacy_records WHERE category='source_suppliers' AND legacy_id=?",supplier)
+            .singleOrNull()?.get("payload") ?: error("سجل المورد الأصلي غير موجود")
+        val original=JSONObject(source)
+        fun minor(value:Any?):Long {
+            val number=value.toString().toBigDecimal()
+            require(number.signum()>=0 && number.scale()<=2){"قيمة مورد غير صالحة"}
+            return number.movePointRight(2).longValueExact()
+        }
+        var invoiceDue=0L
+        for(row in legacyRows("purchases")) {
+            val p=JSONObject(row.getValue("payload"))
+            if(p.optString("supplierId")!=supplier || p.optString("currency")!=c.name) continue
+            val total=minor(p.get("total"))
+            val paid=minor(p.get("paid"))
+            require(paid<=total){"دفعة فاتورة شراء تتجاوز الإجمالي"}
+            invoiceDue=Math.addExact(invoiceDue,total-paid)
+        }
+        val openingIds=HashSet<String>()
+        var opening=0L
+        val debts=original.optJSONArray("openingDebts")
+        if(debts!=null) for(i in 0 until debts.length()) {
+            val row=debts.getJSONObject(i)
+            if(row.optString("currency")!=c.name)continue
+            require(openingIds.add(row.getString("id"))){"دين افتتاحي مكرر"}
+            opening=Math.addExact(opening,minor(row.get("amount")))
+        }
+        val ledgerOpeningIds=HashSet<String>()
+        for(row in legacyRows("supplierLedger")) {
+            val entry=JSONObject(row.getValue("payload"))
+            if(entry.optString("supplierId")!=supplier || entry.optString("currency")!=c.name)continue
+            if(entry.optString("kind")=="opening-debt") {
+                require(ledgerOpeningIds.add(entry.getString("id"))){"قيد افتتاحي مكرر"}
+                require(entry.getString("id") in openingIds){"قيد افتتاحي لا يطابق سجل المورد"}
+                val debt=(0 until (debts?.length() ?: 0)).map { debts!!.getJSONObject(it) }
+                    .single { it.optString("id")==entry.getString("id") }
+                require(minor(entry.get("amount"))==minor(debt.get("amount"))){"مبلغ افتتاحي مختلف بين المصدرين"}
+            } else require(entry.optString("kind")!="payment") {
+                "دفعة مستقلة في دفتر المورد تتطلب مطابقة منفصلة"
+            }
+        }
+        var direct=0L
+        val paymentIds=HashSet<String>()
+        val payments=original.optJSONArray("directPayments")
+        if(payments!=null) for(i in 0 until payments.length()) {
+            val payment=payments.getJSONObject(i)
+            if(payment.optString("currency")!=c.name)continue
+            require(paymentIds.add(payment.getString("id"))){"دفعة مباشرة مكررة"}
+            direct=Math.addExact(direct,minor(payment.get("amount")))
+        }
+        val result=Math.subtractExact(Math.addExact(invoiceDue,opening),direct)
+        require(result>=0){"سلفة مورد تحتاج معالجة منفصلة"}
+        return result
+    }
+    fun activateVerifiedLegacySupplierBalances():Int=transaction {
+        require(scalar("SELECT count(*) FROM settings WHERE key=?","legacy_snapshot_import")==1L) {
+            "استعادة النسخة الأصلية مطلوبة أولاً"
+        }
+        val suppliers=rows("SELECT id FROM suppliers").map { it.getValue("id") }
+        val balances=suppliers.flatMap { supplier ->
+            Currency.values().map { currency -> Triple(supplier,currency,legacySupplierVerifiedBalance(supplier,currency)) }
+        }
+        require(scalar("SELECT count(*) FROM journal WHERE account LIKE 'payable:%'")==0L) {
+            "توجد حركات مورد نشطة؛ لا يمكن ترحيل رصيد افتتاحي فوقها"
+        }
+        var count=0
+        for((supplier,currency,balance) in balances) {
+            if(balance==0L)continue
+            val command="legacy-supplier-opening:"+supplier+":"+currency.name
+            require(scalar("SELECT count(*) FROM events WHERE id=?",command)==0L){"تم ترحيل هذا المورد مسبقاً"}
+            event(command,"SUPPLIER_OPENING",today(),"رصيد المورد من النسخة الاحتياطية")
+            post(command,listOf(Posting("equity:opening",currency,balance),
+                Posting("payable:$supplier",currency,-balance)))
+            count++
+        }
+        count
+    }
     fun supplierLedgerBreakdown(supplier:String,c:Currency):List<Map<String,String>> = rows("SELECT e.date,e.kind,e.id event_id,coalesce(sum(j.amount),0) amount FROM journal j JOIN events e ON e.id=j.event_id WHERE j.account=? AND j.currency=? GROUP BY e.id,e.date,e.kind ORDER BY e.date,e.created,e.id","payable:$supplier",c.name)
     fun supplierLedgerWithBalances(supplier:String,c:Currency):List<Map<String,String>> {
         require(scalar("SELECT count(*) FROM suppliers WHERE id=?",supplier)==1L){"المورد غير موجود"}
