@@ -102,6 +102,17 @@ class MainActivity : Activity() {
     @Deprecated("Deprecated in Java")
     override fun onActivityResult(requestCode:Int,resultCode:Int,data:android.content.Intent?) {
         super.onActivityResult(requestCode,resultCode,data)
+        if(requestCode==702 && resultCode==Activity.RESULT_OK) {
+            @Suppress("DEPRECATION")
+            val thumbnail=data?.extras?.get("data") as? android.graphics.Bitmap
+            if(thumbnail!=null) {
+                snapshotRepairDraft()
+                repairCameraPreview=thumbnail
+                repairPhotoUri=null
+                render()
+                restoreRepairDraft()
+            }
+        }
         if(requestCode==701 && resultCode==Activity.RESULT_OK) {
             val uri=data?.data
             if(uri!=null) {
