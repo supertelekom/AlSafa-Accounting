@@ -1105,8 +1105,7 @@ class MainActivity : Activity() {
         }
         if(screen!="chooser") body.addView(text("العودة",17f,gold).apply {
             isClickable=true;setOnClickListener {
-                screen=if(screen.startsWith("preview:")) previousScreen else "chooser"
-                render()
+                returnToPrevious()
             }
         })
     }
