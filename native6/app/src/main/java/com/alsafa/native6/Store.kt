@@ -1308,6 +1308,50 @@ class Store(val helper:StoreDb) {
         }
     }
 
+    /**
+     * Audit the original item cost without using current stock valuation.
+     * This is deliberately read-only; returned quantities and historical profit
+     * must be reconciled before any opening balance is posted.
+     */
+    fun legacyOnlineCostPreview():List<Map<String,String>> {
+        val settlements=legacySettlementIndex()
+        return legacyRows("sales").mapNotNull { row ->
+            val source=JSONObject(row.getValue("payload"))
+            val due=reconciledLegacySaleDue(source,settlements)
+            if(due==0L) return@mapNotNull null
+            val items=source.optJSONArray("items")
+                ?: throw IllegalArgumentException("فاتورة قديمة بلا أصناف: "+source.optString("id"))
+            require(items.length()>0){"فاتورة قديمة بلا أصناف"}
+            var originalCost=java.math.BigDecimal.ZERO
+            for(i in 0 until items.length()) {
+                val item=items.getJSONObject(i)
+                val qty=item.optString("qty").toBigDecimalOrNull()
+                val unitCost=item.optString("cost").toBigDecimalOrNull()
+                require(qty!=null && unitCost!=null && qty>java.math.BigDecimal.ZERO &&
+                    unitCost>=java.math.BigDecimal.ZERO){"كلفة أو كمية صنف قديم غير صالحة"}
+                originalCost=originalCost.add(qty.multiply(unitCost))
+            }
+            val total=source.optString("total").toBigDecimalOrNull()
+                ?: throw IllegalArgumentException("إجمالي فاتورة غير صالح")
+            require(total>java.math.BigDecimal.ZERO){"إجمالي فاتورة غير موجب"}
+            val originalMinor=originalCost.setScale(2,java.math.RoundingMode.HALF_UP)
+                .movePointRight(2).longValueExact()
+            val totalMinor=total.setScale(2,java.math.RoundingMode.HALF_UP)
+                .movePointRight(2).longValueExact()
+            val pendingCost=java.math.BigInteger.valueOf(originalMinor)
+                .multiply(java.math.BigInteger.valueOf(due))
+                .divide(java.math.BigInteger.valueOf(totalMinor)).longValueExact()
+            mapOf("source_id" to source.optString("id"),
+                "invoice_no" to source.optString("invoiceNo"),
+                "currency" to source.optString("currency"),
+                "original_cost_minor" to originalMinor.toString(),
+                "outstanding_minor" to due.toString(),
+                "estimated_pending_cost_minor" to pendingCost.toString(),
+                "estimated_pending_profit_minor" to Math.subtractExact(due,pendingCost).toString(),
+                "basis_state" to "PREVIEW_REQUIRES_RETURN_AND_PAYMENT_AUDIT")
+        }
+    }
+
     private data class LegacySettlementIndex(
         val payments:Map<String,List<JSONObject>>,
         val returns:Map<String,List<JSONObject>>
