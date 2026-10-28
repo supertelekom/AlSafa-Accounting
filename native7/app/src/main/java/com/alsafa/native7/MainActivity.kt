@@ -342,6 +342,17 @@ class MainActivity : Activity() {
             return
         }
     }
+    /** Original .form-card visual treatment. */
+    private fun legacyFormCard(parent:LinearLayout,content:(LinearLayout)->Unit) {
+        val card=LinearLayout(this).apply {
+            orientation=LinearLayout.VERTICAL
+            layoutDirection=View.LAYOUT_DIRECTION_RTL
+            background=panel(paper,17,Color.rgb(234,223,206))
+            setPadding(dp(15),dp(15),dp(15),dp(15))
+        }
+        parent.addView(card,LinearLayout.LayoutParams(-1,-2))
+        content(card)
+    }
     private fun formSection(parent:LinearLayout,label:String) {
         val heading=text(label,13f,Color.rgb(122,81,24)).apply {
             gravity=Gravity.RIGHT or Gravity.CENTER_VERTICAL
@@ -1740,9 +1751,9 @@ class MainActivity : Activity() {
             }
             "preview:بحث" -> globalSearchPreview(body)
             "preview:مبيع" -> salePreview(body)
-            "preview:مبيع كامل" -> fullSalePreview(body)
-            "preview:استلام صيانة" -> repairFormPreview(body)
-            "preview:طلب صيانة" -> repairFormPreview(body)
+            "preview:مبيع كامل" -> legacyFormCard(body) { fullSalePreview(it) }
+            "preview:استلام صيانة" -> legacyFormCard(body) { repairFormPreview(it) }
+            "preview:طلب صيانة" -> legacyFormCard(body) { repairFormPreview(it) }
             "preview:تسليم صيانة" -> invoiceArchivePreview(body,true)
             "preview:كل الصيانة" -> invoiceArchivePreview(body,true)
             "preview:الفواتير السابقة" -> invoiceArchivePreview(body,false)
@@ -1750,7 +1761,7 @@ class MainActivity : Activity() {
             "preview:مصروف" -> expenseFormPreview(body)
             "preview:المصاريف" -> expenseFormPreview(body)
             "preview:المشتريات والموردون" -> supplierPurchasesPreview(body)
-            "preview:فاتورة شراء" -> purchaseInvoicePreview(body)
+            "preview:فاتورة شراء" -> legacyFormCard(body) { purchaseInvoicePreview(it) }
             "preview:المنتجات والمخزون" -> productsPreview(body)
             "preview:إضافة منتج جديد" -> productFormPreview(body)
             "preview:قطع الصيانة" -> maintenancePartsPreview(body)
