@@ -262,8 +262,8 @@ class MainActivity : Activity() {
     private fun deliveryPreview(parent:LinearLayout) {
         parent.addView(text("تسليم الساعات",26f,gold))
         parent.addView(text("الساعات الجاهزة أو المتبقية لدينا بانتظار العميل.",14f))
-        parent.addView(text("لا توجد ساعات في قائمة الانتظار حالياً.",16f))
-        parent.addView(text("معاينة شكلية فقط — لم تُربط قاعدة البيانات بعد.",12f))
+        parent.addView(text("لا توجد ساعات بانتظار التسليم.",16f))
+        parent.addView(text("هذه قائمة غير متصلة بالبيانات بعد، ولا تعكس حالة الساعات الفعلية.",12f))
     }
     private fun fullSalePreview(parent:LinearLayout) {
         parent.addView(text("مبيع",26f,gold))
@@ -332,7 +332,7 @@ class MainActivity : Activity() {
                     Triple("بحث","عميل، هاتف، طلب أو منتج","🔎")
                 ),false)
                 body.addView(text("آخر العمليات",20f,gold))
-                body.addView(text("لا توجد عمليات مسجلة بعد.",14f))
+                body.addView(text("آخر العمليات غير متصلة بالبيانات بعد.",14f))
                 body.addView(text("الإدارة",17f,gold).apply { isClickable=true;setOnClickListener { screen="management";render() } })
             }
             "management" -> {
