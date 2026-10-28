@@ -40,6 +40,7 @@ class MainActivity : Activity() {
     private var selectedQuickRepair: String? = null
     private var repairPhotoUri:android.net.Uri? = null
     private var repairCameraPreview:android.graphics.Bitmap? = null
+    private var cameraPreviewPath:String? = null
     private var selectedQuickPrice: Int? = null
     private var activeRoot:View? = null
     private var repairDraftTexts:List<String>? = null
