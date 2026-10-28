@@ -666,6 +666,16 @@ class MainActivity : Activity() {
         disabledAction(parent,"إقفال اليوم وترحيل الأرصدة")
         parent.addView(text("لا تُجرى أي حركة نقدية في معاينة Native 7.",12f))
     }
+    private fun customerOrdersPreview(parent:LinearLayout) {
+        parent.addView(text("طلبات العملاء",26f,gold))
+        field(parent,"بحث باسم العميل أو الهاتف أو الساعة")
+        parent.addView(text("الطلبات غير متصلة بالبيانات بعد.",13f))
+    }
+    private fun warrantyPreview(parent:LinearLayout) {
+        parent.addView(text("الضمانات",26f,gold))
+        field(parent,"بحث برقم الفاتورة أو العميل أو الهاتف")
+        parent.addView(text("الضمانات لا تُحسب قبل استعادة بيانات الفواتير.",13f))
+    }
     private fun render() {
         val root=LinearLayout(this).apply {
             orientation=LinearLayout.VERTICAL; layoutDirection=View.LAYOUT_DIRECTION_RTL
@@ -776,6 +786,8 @@ class MainActivity : Activity() {
             "preview:التقارير" -> reportsPreview(body)
             "preview:الإعدادات" -> settingsPreview(body)
             "preview:إقفال اليوم" -> dailyClosingPreview(body)
+            "preview:طلبات العملاء" -> customerOrdersPreview(body)
+            "preview:الضمانات" -> warrantyPreview(body)
             "preview:تسليم الوردية" -> handoverPreview(body)
             "preview:صيانة سريعة" -> quickRepairPreview(body)
             "preview:تسليم الساعات" -> deliveryPreview(body)
