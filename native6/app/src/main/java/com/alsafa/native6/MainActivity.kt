@@ -2044,6 +2044,13 @@ open class MainActivity:Activity() {
                                 "\nالوقت: "+invoice.optString("time")+
                                 "\nحالة الدفع: "+invoice.optString("paymentStatus")+
                                 "\nطريقة الدفع: "+invoice.optString("paymentMethod")+
+                                "\nقناة واتساب: "+invoice.optString("whatsappChannel")+
+                                "\nحالة طلب الأونلاين: "+invoice.optString("onlineStatus")+
+                                "\nقاعدة الخصم: "+invoice.optString("discountRuleName")+
+                                "\nنوع قاعدة الخصم: "+invoice.optString("discountRuleType")+
+                                "\nقيمة قاعدة الخصم: "+invoice.optString("discountRuleValue")+
+                                "\nخصم القاعدة: "+invoice.optString("discountRuleAmount")+
+                                "\nإجمالي الأصناف قبل الخصم: "+invoice.optString("subtotal")+
                                 "\nالضمان بالأشهر: "+invoice.optString("warrantyMonths")+
                                 "\nبداية الضمان: "+invoice.optString("warrantyStart")+
                                 "\nالخصم اليدوي: "+invoice.optString("manualDiscount")+
