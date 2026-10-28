@@ -3671,6 +3671,28 @@ Store.vaults.forEach{v->text(v+" · إقفالات تحتاج عدّاً: "+stor
             }
         }
         }
+        sectionHeading("مصاريف النسخة القديمة","عرض حسب الشهر والعملة دون إعادة خصمها")
+        val expenseMonth=field("شهر المصاريف YYYY-MM",body,YearMonth.now().toString())
+        val expenseCurrency=select("عملة المصاريف",Currency.entries.map { it.name },body)
+        button("عرض المصاريف القديمة"){
+            try {
+                val month=YearMonth.parse(expenseMonth.text.toString().trim()).toString()
+                val curr=Currency.entries[expenseCurrency.selectedItemPosition]
+                val entries=store.legacyExpenseMonth(month,curr)
+                val total=entries.fold(java.math.BigDecimal.ZERO){sum,item->
+                    sum.add(item.getValue("amount").toBigDecimal())
+                }
+                val lines=entries.take(100).joinToString("\\n"){item->
+                    item.getValue("date")+" · "+item.getValue("amount")+" "+curr.name+
+                        " · "+item.getValue("category")+" · "+item.getValue("description")
+                }
+                AlertDialog.Builder(this).setTitle("مصاريف "+month+" · "+curr.name)
+                    .setMessage("عدد الحركات: "+entries.size+"\\nالإجمالي: "+total.toPlainString()+
+                        " "+curr.name+"\\n"+(if(entries.isEmpty())"لا توجد مصاريف" else lines)+
+                        "\\nهذه مصاريف تاريخية للقراءة فقط؛ لم تخصم من الخزنة مجدداً.")
+                    .setPositiveButton("إغلاق",null).show()
+            }catch(e:Exception){error(e)}
+        }
         sectionHeading("عمليات الخزنة اليومية","إضافة الحركات المالية والصرف والإقفال")
         button("إضافة رصيد / مصروف / سحب / نقل"){form("حركة مالية"){box->val type=select("نوع العملية",listOf("رصيد افتتاحي","مصروف","سحب شريك","نقل بين الخزنات"),box);val v=select("الخزنة",vaultNames,box);val c=select("العملة",Currency.entries.map{it.name},box);val n=field("المبلغ",box,"0",true);val dest=select("إلى خزنة (للنقل)",vaultNames,box);val partnerRows=store.rows("SELECT id,name FROM partner_members ORDER BY name");val partner=select("الشريك (للسحب)",if(partnerRows.isEmpty())listOf("لا يوجد شركاء مسجلون") else partnerRows.map{it.getValue("name")},box);val note=field("البيان",box);val date=field("تاريخ الحركة YYYY-MM-DD",box,Store.today());
             {val currency=Currency.entries[c.selectedItemPosition];val amount=amount(n,currency);val source=Store.vaults[v.selectedItemPosition];val kind=listOf("opening","expense","withdrawal","transfer")[type.selectedItemPosition];val destination=if(kind=="withdrawal"){require(partnerRows.isNotEmpty()){"أضف الشريك أولاً من شاشة الشركاء"};partnerRows[partner.selectedItemPosition].getValue("id")}else Store.vaults[dest.selectedItemPosition];val memo=note.text.toString();val day=date.text.toString();work{store.cash(kind,source,currency,amount,memo,day,destination)}}}}
