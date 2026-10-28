@@ -80,11 +80,13 @@ class MainActivity : Activity() {
         }) }
     }
 
+    private val legacyTypeface by lazy { Typeface.createFromAsset(assets,"Tajawal-Medium.ttf") }
+
     private fun dp(value:Int) = (value * resources.displayMetrics.density + 0.5f).toInt()
     private fun text(value:String, size:Float, color:Int = ink):TextView = TextView(this).apply {
         text = value; textSize = size; setTextColor(color); gravity = Gravity.CENTER
         setPadding(dp(9),dp(8),dp(9),dp(8))
-        typeface = try { Typeface.createFromAsset(assets,"Tajawal-Medium.ttf") } catch (_:Exception) { Typeface.DEFAULT }
+        typeface = legacyTypeface
     }
     private fun panel(color:Int, radius:Int=20, border:Int=Color.rgb(234,223,206)) =
         GradientDrawable().apply { setColor(color); cornerRadius=dp(radius).toFloat(); setStroke(dp(1),border) }
@@ -419,6 +421,7 @@ class MainActivity : Activity() {
         })
         return EditText(this).apply {
             this.hint=hint
+            typeface=legacyTypeface
             textSize=14f
             gravity=Gravity.RIGHT or Gravity.CENTER_VERTICAL
             setTextColor(ink)
@@ -448,7 +451,18 @@ class MainActivity : Activity() {
             background=panel(Color.rgb(255,252,247),10,Color.rgb(234,223,206))
             setPadding(dp(10),dp(9),dp(10),dp(9))
         }
-        spinner.adapter=ArrayAdapter(this,android.R.layout.simple_spinner_dropdown_item,options)
+        spinner.adapter=object:ArrayAdapter<String>(this,android.R.layout.simple_spinner_dropdown_item,options) {
+            private fun style(view:View):View = view.apply {
+                (this as? TextView)?.let { label ->
+                    label.typeface=legacyTypeface;label.textSize=14f;label.setTextColor(ink)
+                    label.gravity=Gravity.RIGHT or Gravity.CENTER_VERTICAL
+                }
+            }
+            override fun getView(position:Int,convertView:View?,parent:android.view.ViewGroup):View =
+                style(super.getView(position,convertView,parent))
+            override fun getDropDownView(position:Int,convertView:View?,parent:android.view.ViewGroup):View =
+                style(super.getDropDownView(position,convertView,parent))
+        }
         parent.addView(spinner,LinearLayout.LayoutParams(-1,dp(42)).apply { bottomMargin=dp(11) })
         return spinner
     }
@@ -984,120 +998,9 @@ class MainActivity : Activity() {
                     android.widget.Toast.makeText(this@MainActivity,"فشل حفظ الطلب: "+e.message,android.widget.Toast.LENGTH_LONG).show()
                 }
             }
-        })
-        
-    }        formPair(parent,{ right ->
-        },{ left ->
-        })
-        select(parent,"عملة الصيانة / القبض *",listOf("USD","TRY","SYP"))
-        parent.addView(text("المبلغ يدخل صندوق هذه العملة نفسها.",12f))
-        select(parent,"طريقة الدفع الأولى *",listOf("نقدي","شام كاش","تحويل بنكي"))
-        parent.addView(text("اختر نقدي أو شام كاش قبل الحفظ.",12f))
-        formPair(parent,{ field(it,"اسم العميل *") },{ field(it,"رقم واتساب العميل","09xxxxxxxx").inputType=InputType.TYPE_CLASS_PHONE })
-        select(parent,"حالة الطلب",listOf("قيد الصيانة","بانتظار القطعة","جاهز للاستلام"))
-        formSection(parent,"تفاصيل الساعة والتكلفة")
-        formPair(parent,{ field(it,"الماركة / نوع الساعة *","مثال: كاسيو") },{ field(it,"الموديل أو الرقم") })
-        multilineField(parent,"العطل أو المطلوب *","مثال: تغيير بطارية وإصلاح السوار")
-        multilineField(parent,"نتيجة الفحص أو تحديث العميل","اختياري — اكتب هنا أي مشكلة تظهر لاحقاً ليتم إرسالها للعميل")
-        parent.addView(text("صورة ساعة العميل عند الاستلام",16f,gold))
-        parent.addView(text("📷 الكاميرا",16f,gold).apply {
-            isClickable=true
-            setOnClickListener {
-                snapshotRepairDraft()
-                val values=android.content.ContentValues().apply {
-                    put(android.provider.MediaStore.Images.Media.DISPLAY_NAME,"alsafa_repair_"+System.currentTimeMillis()+".jpg")
-                    put(android.provider.MediaStore.Images.Media.MIME_TYPE,"image/jpeg")
-                    put(android.provider.MediaStore.Images.Media.RELATIVE_PATH,"Pictures/AlSafa")
-                }
-                val uri=contentResolver.insert(android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI,values)
-                if(uri==null) {
-                    android.widget.Toast.makeText(this@MainActivity,"تعذر إنشاء ملف الصورة",android.widget.Toast.LENGTH_SHORT).show()
-                } else {
-                    pendingCameraUri=uri
-                    val camera=android.content.Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE).apply {
-                        putExtra(android.provider.MediaStore.EXTRA_OUTPUT,uri)
-                        addFlags(android.content.Intent.FLAG_GRANT_WRITE_URI_PERMISSION or android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                    }
-                    try { startActivityForResult(camera,702) }
-                    catch(e:Exception) {
-                        pendingCameraUri=null
-                        contentResolver.delete(uri,null,null)
-                        android.widget.Toast.makeText(this@MainActivity,"تعذر تشغيل الكاميرا",android.widget.Toast.LENGTH_SHORT).show()
-                    }
-                }
-            }
-        })
-        parent.addView(text("🖼️ اختيار من الاستوديو",16f,gold).apply {
-            isClickable=true
-            setOnClickListener {
-                val intent=android.content.Intent(android.content.Intent.ACTION_OPEN_DOCUMENT).apply {
-                    addCategory(android.content.Intent.CATEGORY_OPENABLE)
-                    type="image/*"
-                }
-                startActivityForResult(intent,701)
-            }
-        })
-        parent.addView(text("حذف الصورة",16f,gold).apply {
-            isClickable=true
-            setOnClickListener { snapshotRepairDraft();repairPhotoUri=null;render();restoreRepairDraft() }
-        })
-        repairPhotoUri?.let { uri ->
-            parent.addView(android.widget.ImageView(this).apply {
-                setImageURI(uri)
-                adjustViewBounds=true
-                maxHeight=dp(200)
-                isClickable=true
-                setOnClickListener {
-                    val photo=android.widget.ImageView(this@MainActivity).apply {
-                        setImageURI(uri)
-                        adjustViewBounds=true
-                        scaleType=android.widget.ImageView.ScaleType.FIT_CENTER
-                    }
-                    android.app.AlertDialog.Builder(this@MainActivity)
-                        .setView(photo)
-                        .setPositiveButton("✕ إغلاق"){ dialog,_ -> dialog.dismiss() }
-                        .show()
-                }
-            })
-        }
-        parent.addView(text("تُحفظ داخل طلب الصيانة وتُرسل مع رسالة الاستلام عند اختيار واتساب.",12f))
-        formSection(parent,"قطع الصيانة المستخدمة")
-        parent.addView(text("اختيار قطع الصيانة اختياري عند الاستلام.",14f))
-        field(parent,"نسبة الضريبة %","0").inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
-        parent.addView(text("اختياري ومجهز للمستقبل. اتركه 0 حالياً.",12f))
-        field(parent,"المبلغ المقبوض الآن","0").inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
-        parent.addView(text("عملة الصيانة والتحصيل",16f))
-        parent.addView(text("هي نفسها عملة الفاتورة المختارة أعلاه، وتدخل إلى صندوق العملة نفسها.",12f))
-        select(parent,"حالة الدفع",listOf("عند الاستلام","مدفوع جزئياً","مدفوع بالكامل"))
-        multilineField(parent,"ملاحظات","لون السوار، موعد التسليم، تفاصيل مهمة")
-        parent.addView(text("عند وجود رقم العميل تُفتح محادثته في واتساب أعمال مع صورة الساعة ورسالة الاستلام بعد الحفظ.",12f))
-        parent.addView(text("اختيار قطع الصيانة اختياري عند الاستلام. يمكنك حفظ الطلب بدون قطع، ثم بعد الفحص تحديث ما تم عمله وأجرة العمل، وإضافة القطع عند معرفتها.",12f))
-        parent.addView(text("إلغاء",16f,gold).apply { isClickable=true;setOnClickListener { returnToPrevious() } })
-        parent.addView(text("حفظ طلب الصيانة",18f,gold).apply {
-            background=panel(Color.rgb(239,228,208),12)
-            isClickable=true
-            setOnClickListener {
-                snapshotRepairDraft()
-                val values=repairDraftTexts ?: emptyList()
-                val customer=values.getOrNull(2)?.trim().orEmpty()
-                val watch=values.getOrNull(4)?.trim().orEmpty()
-                if(customer.isBlank() || watch.isBlank()) {
-                    android.widget.Toast.makeText(this@MainActivity,"تحقق من بيانات العميل والساعة",android.widget.Toast.LENGTH_LONG).show()
-                } else try {
-                    val payload=org.json.JSONObject().apply {
-                        put("form_texts",org.json.JSONArray(values))
-                        put("form_selections",org.json.JSONArray(repairDraftSelections ?: emptyList<Int>()))
-                    }
-                    val photo=repairPhotoUri?.toString()
-                    val id=repairStore.save(payload,photo,"قيد الصيانة")
-                    android.widget.Toast.makeText(this@MainActivity,"تم حفظ طلب الصيانة رقم $id محلياً",android.widget.Toast.LENGTH_LONG).show()
-                } catch(e:Exception) {
-                    android.widget.Toast.makeText(this@MainActivity,"فشل حفظ الطلب: "+e.message,android.widget.Toast.LENGTH_LONG).show()
-                }
-            }
         },LinearLayout.LayoutParams(0,dp(45),1f))
+        
         parent.addView(repairActions,LinearLayout.LayoutParams(-1,-2).apply { topMargin=dp(18) })
-
     }
     private fun invoiceArchivePreview(parent:LinearLayout,repair:Boolean) {
         parent.addView(text(if(repair) "قسم الصيانة" else "المبيعات والفواتير",26f,gold))
@@ -1263,68 +1166,240 @@ class MainActivity : Activity() {
         field(parent,"ابحث باسم المنتج أو الباركود أو REF / Model...")
         parent.addView(text("لم يتم تحميل المنتجات بعد.",15f))
     }
-    private fun productFormPreview(parent:LinearLayout) {
-        parent.addView(text("إضافة منتج جديد",26f,gold))
-        field(parent,"اسم الساعة / المنتج *")
-        field(parent,"الماركة")
-        field(parent,"REF / الموديل (اختياري عند استخدام الرابط)","يُستخرج تلقائياً من صفحة المنتج عند توفره")
-        select(parent,"فئة ساعة كاسيو",listOf("تلقائي من REF","كاسيو","Edifice","G-Shock","Baby-G","Pro Trek","Sheen","Oceanus","Vintage"))
-        field(parent,"رابط صفحة المنتج (اختياري)","الصق رابط صفحة الساعة من أي ماركة").inputType=InputType.TYPE_TEXT_VARIATION_URI
-        disabledAction(parent,"لصق الرابط")
-        parent.addView(text("عند وضع الرابط يجلب من الصفحة نفسها فقط، دون تغيير محرك بحث الماركة الأساسي.",12f))
-        disabledAction(parent,"✦ جلب معلومات الساعة تلقائيًا")
-        parent.addView(text("أدخل الماركة وREF ثم اضغط مرة واحدة. يجلب المعلومات والمستشار والصور المتاحة في عملية واحدة، مع الحفاظ على أي بيانات أدخلتها يدويًا.",12f))
-        field(parent,"كود المنتج")
-        field(parent,"باركود المنتج","امسحه بالكاميرا أو اكتبه")
-        disabledAction(parent,"⌁ قراءة بالكاميرا")
-        parent.addView(text("يحفظ مرة واحدة ويستخدم لاستدعاء المنتج والسعر عند البيع.",12f))
-        listOf("الصورة الرئيسية للساعة","صورة إضافية 1 (اختيارية)","صورة إضافية 2 (اختيارية)","صورة الباركود (اختيارية)").forEach { label ->
-            parent.addView(text(label,16f,gold))
-            disabledAction(parent,"📷 الكاميرا")
-            disabledAction(parent,"🖼️ اختيار من الاستوديو")
-            disabledAction(parent,"حذف الصورة")
+    // v3.9.359 assets/main.js: WATCH_DETAIL_DEFAULTS (same order and labels).
+    private val originalWatchDetails = mapOf(
+        "watchType" to listOf("عادية","إسلامية","ذكية","رياضية"),
+        "gender" to listOf("رجالي","نسائي","أطفال","للجنسين"),
+        "color" to listOf("أسود","فضي","ذهبي","ذهبي وردي","أبيض","أزرق","أخضر","أحمر","بني","رمادي","بيج","وردي","بنفسجي","متعدد الألوان"),
+        "dialColor" to listOf("أسود","أبيض","فضي","ذهبي","شمبانيا","أزرق","أخضر","أحمر","بني","رمادي","بيج","وردي","بنفسجي","متعدد الألوان"),
+        "movement" to listOf("كوارتز","أوتوماتيك","ميكانيكية","سولار","رقمية","ذكية"),
+        "displayType" to listOf("عقارب","رقمية","هجينة"),
+        "diameter" to listOf("أقل من 30 mm","30 mm","32 mm","34 mm","36 mm","38 mm","40 mm","42 mm","44 mm","46 mm","48 mm","50 mm","أكبر من 50 mm"),
+        "caseMaterial" to listOf("ستانلس ستيل","راتنج","بلاستيك","تيتانيوم","معدن","ألمنيوم","سيراميك","مزيج مواد"),
+        "strapMaterial" to listOf("ستانلس ستيل","جلد","سيليكون","راتنج","مطاط","قماش","نايلون","تيتانيوم","سيراميك","معدن"),
+        "strapColor" to listOf("أسود","فضي","ذهبي","ذهبي وردي","أبيض","أزرق","أخضر","أحمر","بني","رمادي","بيج","وردي","بنفسجي","متعدد الألوان"),
+        "glassType" to listOf("معدني","سافاير","أكريليك","ريزن","زجاج مقوى","Hardlex"),
+        "waterResistance" to listOf("غير مقاومة للماء","مقاومة للرذاذ","30 متر / 3 ATM","50 متر / 5 ATM","100 متر / 10 ATM","200 متر / 20 ATM","300 متر / 30 ATM"),
+        "warrantyMonths" to listOf("0","3","6","12","18","24","36","60")
+    )
+
+    private fun productHelp(parent:LinearLayout,message:String) {
+        parent.addView(text(message,11f,Color.rgb(138,123,108)).apply {
+            gravity=Gravity.RIGHT
+            setPadding(0,dp(4),0,dp(10))
+        })
+    }
+    private fun previewOnly() {
+        android.widget.Toast.makeText(this,"هذه الوظيفة غير مفعلة في معاينة Native 7",android.widget.Toast.LENGTH_SHORT).show()
+    }
+    /** Original photoPicker: preview beside camera/gallery/clear, not three full-width rows. */
+    private fun productPhotoPicker(parent:LinearLayout,label:String,help:String,
+        empty:String="لا توجد صورة",camera:String="📷 الكاميرا") {
+        parent.addView(text(label,11f,Color.rgb(138,123,108)).apply { gravity=Gravity.RIGHT })
+        val row=LinearLayout(this).apply {
+            orientation=LinearLayout.HORIZONTAL
+            layoutDirection=View.LAYOUT_DIRECTION_RTL
+            gravity=Gravity.CENTER_VERTICAL
         }
-        field(parent,"الكمية بالمخزون *","1").inputType=InputType.TYPE_CLASS_NUMBER
-        field(parent,"حد التنبيه الأدنى","1").inputType=InputType.TYPE_CLASS_NUMBER
-        select(parent,"عملة الأسعار",listOf("USD","TRY","SYP"))
-        field(parent,"سعر البيع *").inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
+        row.addView(text(empty,11f,Color.rgb(138,123,108)).apply {
+            background=panel(Color.rgb(255,250,242),12)
+        },LinearLayout.LayoutParams(dp(116),dp(84)).apply { marginEnd=dp(12) })
+        val actions=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL }
+        listOf(camera,"🖼️ اختيار من الاستوديو","حذف الصورة").forEach { disabledAction(actions,it) }
+        row.addView(actions,LinearLayout.LayoutParams(0,-2,1f))
+        parent.addView(row,LinearLayout.LayoutParams(-1,-2))
+        if(help.isNotEmpty()) productHelp(parent,help)
+    }
+    private fun originalDetailChoice(parent:LinearLayout,label:String,key:String,variant:Boolean=false):Spinner {
+        val values=mutableListOf(if(variant) "اختر اللون" else "غير محدد")
+        values.addAll(originalWatchDetails.getValue(key).map {
+            if(key=="warrantyMonths") { if(it=="0") "حسب الفاتورة" else "$it شهر" } else it
+        })
+        val addLabel=if(variant) "＋ إضافة لون جديد…" else "＋ إضافة خيار جديد…"
+        values.add(addLabel)
+        val spinner=select(parent,label,values)
+        if(key=="warrantyMonths") spinner.setSelection(1)
+        var previous=if(key=="warrantyMonths") 1 else 0
+        spinner.onItemSelectedListener=object:android.widget.AdapterView.OnItemSelectedListener {
+            override fun onNothingSelected(parent:android.widget.AdapterView<*>?) {}
+            override fun onItemSelected(parent:android.widget.AdapterView<*>?,view:View?,position:Int,id:Long) {
+                if(position!=values.lastIndex) { previous=position;return }
+                val input=EditText(this@MainActivity).apply {
+                    typeface=legacyTypeface
+                    if(key=="warrantyMonths") inputType=InputType.TYPE_CLASS_NUMBER
+                }
+                android.app.AlertDialog.Builder(this@MainActivity)
+                    .setTitle("أدخل خياراً جديداً لـ $label")
+                    .setView(input)
+                    .setNegativeButton("إلغاء") { _,_ -> spinner.setSelection(previous) }
+                    .setPositiveButton("إضافة") { _,_ ->
+                        val value=input.text.toString().trim()
+                        if(value.isNotEmpty()) {
+                            val display=if(key=="warrantyMonths") "$value شهر" else value
+                            var index=values.indexOf(display)
+                            if(index<0) {
+                                index=values.lastIndex
+                                values.add(index,display)
+                                (spinner.adapter as ArrayAdapter<*>).notifyDataSetChanged()
+                            }
+                            spinner.setSelection(index)
+                        } else spinner.setSelection(previous)
+                    }
+                    .setOnCancelListener { spinner.setSelection(previous) }.show()
+            }
+        }
+        return spinner
+    }
+    private fun productProfileChoices(parent:LinearLayout,label:String,values:List<String>) {
+        parent.addView(text(label,11f,Color.rgb(138,123,108)).apply { gravity=Gravity.RIGHT })
+        val columns=if(resources.configuration.screenWidthDp>=720) 4 else 2
+        values.chunked(columns).forEach { chunk ->
+            val row=LinearLayout(this).apply { orientation=LinearLayout.HORIZONTAL;layoutDirection=View.LAYOUT_DIRECTION_RTL }
+            chunk.forEachIndexed { index,value ->
+                row.addView(android.widget.CheckBox(this).apply {
+                    text=value;typeface=legacyTypeface;textSize=12f;setTextColor(ink)
+                    layoutDirection=View.LAYOUT_DIRECTION_RTL
+                    background=panel(Color.rgb(255,252,247),10)
+                    setPadding(dp(5),dp(6),dp(5),dp(6))
+                },LinearLayout.LayoutParams(0,-2,1f).apply { if(index<chunk.lastIndex) marginEnd=dp(7) })
+            }
+            repeat(columns-chunk.size) { row.addView(View(this),LinearLayout.LayoutParams(0,1,1f)) }
+            parent.addView(row,LinearLayout.LayoutParams(-1,-2).apply { bottomMargin=dp(7) })
+        }
+    }
+    private fun productVariantPreview(parent:LinearLayout) {
+        val card=LinearLayout(this).apply {
+            orientation=LinearLayout.VERTICAL;layoutDirection=View.LAYOUT_DIRECTION_RTL
+            background=panel(paper,10);setPadding(dp(8),dp(8),dp(8),dp(8))
+        }
+        parent.addView(card,LinearLayout.LayoutParams(-1,-2).apply { topMargin=dp(8);bottomMargin=dp(8) })
+        formPair(card,{ originalDetailChoice(it,"اللون العام الإضافي *","color",true) },{
+            field(it,"الكمية *").apply { inputType=InputType.TYPE_CLASS_NUMBER;setText("1") }
+        })
+        field(card,"باركود اللون","اختياري الآن").inputType=InputType.TYPE_CLASS_NUMBER
+        card.addView(text("حذف",12f,Color.rgb(184,88,75)).apply {
+            background=panel(Color.rgb(250,241,227),7)
+            isClickable=true;setOnClickListener { parent.removeView(card) }
+        },LinearLayout.LayoutParams(-2,dp(36)))
+        formPair(card,{ originalDetailChoice(it,"لون الهيكل","color") },{ originalDetailChoice(it,"لون المينا","dialColor") })
+        formPair(card,{ originalDetailChoice(it,"لون الحزام","strapColor") },{
+            field(it,"سعر بيع الإضافي","فارغ = سعر الأساسي").inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
+        })
+        field(card,"كلفة شراء الإضافي","فارغ = كلفة الأساسي").inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
+        productPhotoPicker(card,"صورة هذا اللون (اختيارية)","إذا تركتها فارغة سيستخدم التطبيق صورة الموديل الرئيسية تلقائياً.",
+            "لا توجد صورة خاصة لهذا اللون","📷 تصوير اللون")
+        productPhotoPicker(card,"صورة إضافية لهذا اللون (اختيارية)","","لا توجد صورة إضافية لهذا اللون","📷 تصوير صورة إضافية")
+    }
+    private fun productFormPreview(parent:LinearLayout) {
+        val header=LinearLayout(this).apply { orientation=LinearLayout.HORIZONTAL;layoutDirection=View.LAYOUT_DIRECTION_RTL }
+        header.addView(text("إضافة منتج جديد",18f).apply { gravity=Gravity.RIGHT;typeface=Typeface.create(typeface,Typeface.BOLD) },LinearLayout.LayoutParams(0,-2,1f))
+        header.addView(text("×",19f,Color.rgb(122,81,24)).apply {
+            background=panel(Color.rgb(247,237,221),10)
+            contentDescription="إغلاق"
+            isClickable=true;setOnClickListener { returnToPrevious() }
+        },LinearLayout.LayoutParams(dp(36),dp(36)))
+        parent.addView(header,LinearLayout.LayoutParams(-1,-2).apply { bottomMargin=dp(14) })
+        lateinit var brand:Spinner
+        lateinit var customBrand:LinearLayout
+        lateinit var casio:LinearLayout
+        formPair(parent,{ field(it,"اسم الساعة / المنتج *") },{ column ->
+            brand=select(column,"الماركة",listOf("اختر الماركة","فيترون","SKMEI","كاسيو","فوسيل","تومي هيلفيغر","سيتيزن","بوس","بوليس","سيروتي 1881","إمبوريو أرماني","أرماني إكستشينج","مايكل كورس","لاكوست","تيمبرلاند","كالفن كلاين","＋ إنشاء ماركة جديدة"))
+            customBrand=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL;visibility=View.GONE }
+            field(customBrand,"","اكتب اسم الماركة الجديدة")
+            disabledAction(customBrand,"حفظ الماركة")
+            column.addView(customBrand)
+        })
+        formPair(parent,{
+            field(it,"REF / الموديل (اختياري عند استخدام الرابط)","يُستخرج تلقائياً من صفحة المنتج عند توفره")
+        },{
+            casio=it
+            select(it,"فئة ساعة كاسيو",listOf("تلقائي من REF","كاسيو","Edifice","G-Shock","Baby-G","Pro Trek","Sheen","Oceanus","Vintage"))
+            productHelp(it,"اختياري — تحديدها يسرّع بحث كاسيو.")
+            it.visibility=View.GONE
+        })
+        brand.onItemSelectedListener=object:android.widget.AdapterView.OnItemSelectedListener {
+            override fun onNothingSelected(parent:android.widget.AdapterView<*>?) {}
+            override fun onItemSelected(parent:android.widget.AdapterView<*>?,view:View?,position:Int,id:Long) {
+                casio.visibility=if(brand.selectedItem=="كاسيو") View.VISIBLE else View.GONE
+                customBrand.visibility=if(position==brand.count-1) View.VISIBLE else View.GONE
+            }
+        }
+        field(parent,"رابط صفحة المنتج (اختياري)","الصق رابط صفحة الساعة من أي ماركة").inputType=InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_URI
+        disabledAction(parent,"لصق الرابط")
+        productHelp(parent,"عند وضع الرابط يجلب من الصفحة نفسها فقط، دون تغيير محرك بحث الماركة الأساسي.")
+        disabledAction(parent,"✦ جلب معلومات الساعة تلقائيًا")
+        productHelp(parent,"أدخل الماركة وREF ثم اضغط مرة واحدة. يجلب المعلومات والمستشار والصور المتاحة في عملية واحدة، مع الحفاظ على أي بيانات أدخلتها يدويًا.")
+        field(parent,"كود المنتج")
+        field(parent,"باركود المنتج","امسحه بالكاميرا أو اكتبه").inputType=InputType.TYPE_CLASS_NUMBER
+        disabledAction(parent,"⌁ قراءة بالكاميرا")
+        productHelp(parent,"يحفظ مرة واحدة ويستخدم لاستدعاء المنتج والسعر عند البيع.")
+        productPhotoPicker(parent,"الصورة الرئيسية للساعة","ستظهر أولاً في بطاقة QR للعميل.")
+        productPhotoPicker(parent,"صورة إضافية 1 (اختيارية)","زاوية أخرى للساعة أو العلبة.")
+        productPhotoPicker(parent,"صورة إضافية 2 (اختيارية)","صورة ثالثة اختيارية للعرض للعميل.")
+        productPhotoPicker(parent,"صورة الباركود (اختيارية)","هذه الصورة تحفظ كمرجع داخلي ولا تظهر للعميل.")
+        formPair(parent,{
+            field(it,"الكمية بالمخزون *").apply { inputType=InputType.TYPE_CLASS_NUMBER;setText("1") }
+        },{
+            field(it,"حد التنبيه الأدنى").apply { inputType=InputType.TYPE_CLASS_NUMBER;setText("1") }
+        })
+        formPair(parent,{
+            // The source uses a disabled display-currency control; no invented setting/rate.
+            field(it,"عملة الأسعار").apply { setText("—");isEnabled=false }
+        },{
+            field(it,"سعر البيع *").inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
+        })
         field(parent,"كلفة الشراء للقطعة").inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
         formSection(parent,"كابلز (اختياري)")
-        parent.addView(text("اربط الرجالي والنسائي فقط إذا كانا يباعان منفردين أو كطقم بسعر خاص. لا يؤثر هذا الربط على مجموعات الألوان.",12f))
-        select(parent,"نوع القطعة في الكابلز",listOf("ليست كابلز","رجالي","نسائي"))
-        select(parent,"القطعة المرتبطة",listOf("بدون ربط"))
+        productHelp(parent,"اربط الرجالي والنسائي فقط إذا كانا يباعان منفردين أو كطقم بسعر خاص. لا يؤثر هذا الربط على مجموعات الألوان.")
+        formPair(parent,{
+            select(it,"نوع القطعة في الكابلز",listOf("ليست كابلز","رجالي","نسائي"))
+        },{ select(it,"القطعة المرتبطة",listOf("بدون ربط")) })
         field(parent,"سعر الكابلز كاملًا").inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
-        parent.addView(text("صورة الكابلز معًا (اختيارية)",16f,gold))
-        disabledAction(parent,"📷 الكاميرا")
-        disabledAction(parent,"🖼️ اختيار من الاستوديو")
-        formSection(parent,"الشراكة الخارجية")
-        parent.addView(text("استخدمها فقط للبضاعة التي رأس مالها من أحد الشريكين الخارجيين.",12f))
-        select(parent,"مصدر رأس المال",listOf("بضاعة المحل — بدون شريك خارجي"))
-        field(parent,"نسبة الشريك من الربح/الخسارة %").inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
+        productHelp(parent,"مثال: كل قطعة 20$، وسعر الكابلز كاملًا 38$.")
+        productPhotoPicker(parent,"صورة الكابلز معًا (اختيارية)","صورة الرجالي والنسائي معًا، وتُحفظ على القطعتين المرتبطتين.")
+        // External partners intentionally excluded by the user's existing project instruction.
         formSection(parent,"تفاصيل الساعة للعميل")
-        parent.addView(text("هذه المعلومات تظهر في صفحة QR العامة للساعة.",12f))
-        field(parent,"وصف الساعة","وصف قصير وجميل يظهر للعميل")
-        field(parent,"مواصفات إضافية","مثال: تاريخ، منبه، إضاءة، كرونوغراف...")
-        parent.addView(text("المجموعات والألوان تُنقل وفق بنية المنتج الأصلية، ولا تُحذف ألوان محفوظة عند التعديل.",12f))
-        select(parent,"نوع القطعة في الكابلز",listOf("ليست كابلز","رجالي","نسائي"))
-        select(parent,"القطعة المرتبطة",listOf("بدون قطعة مرتبطة"))
-        field(parent,"سعر الكابلز كاملًا").inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
-        parent.addView(text("الشراكات الخارجية",20f,gold))
-        select(parent,"مصدر رأس المال",listOf("بضاعة المحل — بدون شريك خارجي"))
-        field(parent,"نسبة الشريك من الربح/الخسارة %").inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
-        field(parent,"وصف الساعة","وصف قصير وجميل يظهر للعميل")
-        field(parent,"مواصفات إضافية","مثال: تاريخ، منبه، إضاءة، كرونوغراف...")
-        parent.addView(text("تعريف الساعة للمستشار",20f,gold))
-        select(parent,"الجنس المناسب",listOf("تلقائي من بيانات المنتج","ذكر","أنثى","مناسب للجميع"))
-        select(parent,"الحجم البصري",listOf("تلقائي","ناعم وصغير","متوسط ومتوازن","كبير وملفت"))
-        listOf("الفئات العمرية المناسبة","الاستخدام المناسب","الأسلوب").forEach { parent.addView(text(it,15f)) }
-        select(parent,"درجة اللفت",listOf("غير محدد","هادئ","متوازن","ملفت"))
-        select(parent,"مناسبة كهدية",listOf("غير محدد","نعم","لا"))
-        field(parent,"ملاحظات داخلية")
-        parent.addView(text("إلغاء",16f,gold).apply { isClickable=true;setOnClickListener { returnToPrevious() } })
-        disabledAction(parent,"⚡ حفظ + إضافة التالي")
-        disabledAction(parent,"حفظ المنتج")
-        parent.addView(text("معاينة شكلية فقط — لا تتم إضافة المنتج إلى المخزون.",12f))
+        productHelp(parent,"هذه المعلومات تظهر في صفحة QR العامة للساعة.")
+        formPair(parent,{ originalDetailChoice(it,"نوع الساعة","watchType") },{ originalDetailChoice(it,"الجنس / الفئة","gender") })
+        formPair(parent,{ originalDetailChoice(it,"اللون العام للمنتج الأساسي","color") },{ originalDetailChoice(it,"لون الهيكل","color") })
+        formPair(parent,{ originalDetailChoice(it,"لون المينا","dialColor") },{ originalDetailChoice(it,"نوع الحركة","movement") })
+        formPair(parent,{ originalDetailChoice(it,"شكل عرض الوقت","displayType") },{ originalDetailChoice(it,"المقاس / أبعاد الهيكل","diameter") })
+        formPair(parent,{ originalDetailChoice(it,"مادة الهيكل","caseMaterial") },{ originalDetailChoice(it,"مادة السوار","strapMaterial") })
+        formPair(parent,{ originalDetailChoice(it,"لون السوار","strapColor") },{ originalDetailChoice(it,"نوع الزجاج","glassType") })
+        formPair(parent,{ originalDetailChoice(it,"مقاومة الماء","waterResistance") },{ originalDetailChoice(it,"مدة الضمان بالأشهر","warrantyMonths") })
+        formSection(parent,"منتجات/ألوان إضافية لنفس الموديل")
+        productHelp(parent,"الحقول الرئيسية في النموذج تخص المنتج الأساسي. أضف هنا فقط المنتج الإضافي، ولكل إضافي كمية وباركود وصورتان وألوان مستقلة.")
+        val variants=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL }
+        parent.addView(variants)
+        parent.addView(text("＋ إضافة منتج/لون آخر",13f,Color.rgb(122,81,24)).apply {
+            background=panel(Color.rgb(247,237,221),12,Color.rgb(223,201,164))
+            isClickable=true;setOnClickListener { productVariantPreview(variants) }
+        },LinearLayout.LayoutParams(-1,dp(44)))
+        productHelp(parent,"الأساسي وكل إضافي يُحفظان كسجلات مخزون مستقلة، لكنهم يتبعون مجموعة موديل واحدة ولا يُعتبرون أسماء مكررة.")
+        multilineField(parent,"وصف الساعة","وصف قصير وجميل يظهر للعميل")
+        multilineField(parent,"مواصفات إضافية","مثال: تاريخ، منبه، إضاءة، كرونوغراف...")
+        formSection(parent,"تعريف الساعة للمستشار")
+        productHelp(parent,"حدّد ما ينطبق على الساعة. يمكن اختيار أكثر من فئة أو استخدام؛ هذه البيانات هي التي تجعل ترشيحات المستشار دقيقة.")
+        formPair(parent,{
+            select(it,"الجنس المناسب",listOf("تلقائي من بيانات المنتج","ذكر","أنثى","مناسب للجميع"))
+        },{ select(it,"الحجم البصري",listOf("تلقائي","ناعم وصغير","متوسط ومتوازن","كبير وملفت")) })
+        productProfileChoices(parent,"الفئات العمرية المناسبة",listOf("طفل","شاب","رجل","طفلة","فتاة","امرأة","أكبر سنًا"))
+        productProfileChoices(parent,"الاستخدام المناسب",listOf("يومي","عمل","اجتماعات ورسمية","مناسبات","رياضة","جامعة","مدرسة","خروج وسهر","سفر وخروج","لعب ونشاط","زيارات وخروج","متعدد الاستخدامات"))
+        productProfileChoices(parent,"الأسلوب",listOf("كلاسيكي","عصري","شبابي","فاخر","رياضي","رسمي","ناعم وأنيق","مرح وملون","لطيف وملون","بسيط وهادئ","يشبه ساعات الكبار"))
+        formPair(parent,{
+            select(it,"درجة اللفت",listOf("غير محدد","هادئ","متوازن","ملفت"))
+        },{ select(it,"مناسبة كهدية",listOf("غير محدد","نعم","لا")) })
+        multilineField(parent,"ملاحظات داخلية")
+        val actions=LinearLayout(this).apply { orientation=LinearLayout.HORIZONTAL;layoutDirection=View.LAYOUT_DIRECTION_RTL }
+        listOf("إلغاء","⚡ حفظ + إضافة التالي","حفظ المنتج").forEachIndexed { index,label ->
+            actions.addView(text(label,13f,if(index==2) Color.WHITE else Color.rgb(122,81,24)).apply {
+                background=if(index==2) GradientDrawable(Orientation.TL_BR,intArrayOf(Color.rgb(179,131,50),Color.rgb(139,96,31))).apply { cornerRadius=dp(12).toFloat() }
+                    else panel(Color.rgb(247,237,221),12,Color.rgb(223,201,164))
+                isClickable=true
+                setOnClickListener { if(index==0) returnToPrevious() else previewOnly() }
+            },LinearLayout.LayoutParams(0,-2,1f).apply { height=dp(48);if(index<2) marginEnd=dp(9) })
+        }
+        parent.addView(actions,LinearLayout.LayoutParams(-1,-2).apply { topMargin=dp(18) })
     }
     private fun maintenancePartsPreview(parent:LinearLayout) {
         parent.addView(text("قطع الصيانة",26f,gold))
@@ -1777,7 +1852,7 @@ class MainActivity : Activity() {
             "preview:المشتريات والموردون" -> supplierPurchasesPreview(body)
             "preview:فاتورة شراء" -> legacyFormCard(body) { purchaseInvoicePreview(it) }
             "preview:المنتجات والمخزون" -> productsPreview(body)
-            "preview:إضافة منتج جديد" -> productFormPreview(body)
+            "preview:إضافة منتج جديد" -> legacyFormCard(body) { productFormPreview(it) }
             "preview:قطع الصيانة" -> maintenancePartsPreview(body)
             "preview:فواتير المرتجع" -> returnsPreview(body)
             "preview:الخزائن والأرصدة" -> vaultsPreview(body)
@@ -1820,3 +1895,4 @@ class MainActivity : Activity() {
     }
 
 }
+

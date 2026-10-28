@@ -1,6 +1,7 @@
 package com.alsafa.native7
 
 import android.content.Context
+import android.graphics.Typeface
 import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
 import android.view.Gravity
@@ -52,6 +53,7 @@ internal class LegacyNavigation(context: Context) : LinearLayout(context) {
             }
             val label = TextView(context).apply {
                 text = title
+                typeface = Typeface.createFromAsset(context.assets, "Tajawal-Medium.ttf")
                 textSize = 12f
                 gravity = Gravity.CENTER
                 setTextColor(Color.rgb(62, 52, 41))
@@ -62,3 +64,4 @@ internal class LegacyNavigation(context: Context) : LinearLayout(context) {
         }
     }
 }
+
