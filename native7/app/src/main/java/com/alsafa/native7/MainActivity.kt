@@ -173,13 +173,13 @@ class MainActivity : Activity() {
         }
         card.addView(text(symbol,22f,if(dark) Color.rgb(234,217,192) else gold).apply {
             background=panel(if(dark) Color.rgb(75,68,60) else Color.rgb(245,230,203),18)
-        },LinearLayout.LayoutParams(dp(54),dp(54)))
+        },LinearLayout.LayoutParams(dp(58),dp(58)))
         val labels=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL }
         labels.addView(text(title,20f,if(dark) Color.WHITE else ink).apply { gravity=Gravity.RIGHT })
         labels.addView(text(description,11f,if(dark) Color.rgb(213,201,187) else Color.rgb(138,123,108)).apply { gravity=Gravity.RIGHT })
         card.addView(labels,LinearLayout.LayoutParams(0,-2,1f))
         card.addView(text("دخول",10f,if(dark) Color.rgb(213,185,143) else gold))
-        parent.addView(card,LinearLayout.LayoutParams(0,dp(142),1f))
+        parent.addView(card,LinearLayout.LayoutParams(0,dp(122),1f))
     }
     private fun actionGrid(parent:LinearLayout,items:List<Triple<String,String,String>>,simple:Boolean,management:Boolean=false) {
         val columns=if(!simple && !management && resources.configuration.screenWidthDp>=720) 4 else 2
@@ -1637,7 +1637,7 @@ class MainActivity : Activity() {
         if(sidebar) {
             val nav=LegacyNavigation(this)
             nav.show(true,screen) { navigateTo(it) }
-            workArea.addView(nav,LinearLayout.LayoutParams(dp(if(resources.configuration.screenWidthDp>=1200) 230 else 200),-1))
+            workArea.addView(nav,LinearLayout.LayoutParams(dp(if(resources.configuration.screenWidthDp>=1080) 245 else 200),-1))
         }
         val scroll=ScrollView(this).apply { isFillViewport=true }
         workArea.addView(scroll,LinearLayout.LayoutParams(0,-1,1f))
