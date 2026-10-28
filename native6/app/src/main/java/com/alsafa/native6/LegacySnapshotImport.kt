@@ -436,6 +436,13 @@ object LegacySnapshotImport {
                         if(paths!=null) for(n in 0 until paths.length()) imageOwners[paths.getString(n)]="repairs" to id
                     }.put("_legacyImported",true).toString())
             }
+            // Preserve the original repair invoice independently of the operational repair row.
+            for(i in 0 until repairs.length()) {
+                val original=repairs.getJSONObject(i)
+                store.insert("legacy_records","category" to "repairs",
+                    "legacy_id" to (i.toString()+":"+original.getString("id").trim()),
+                    "payload" to original.toString())
+            }
             // Preserve historical financial records verbatim for accurate later ledger
             // reconstruction. They are NOT booked as new income or cash movements.
             // Archive every other array from the original backup, including
