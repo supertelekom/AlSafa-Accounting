@@ -189,7 +189,7 @@ class MainActivity : Activity() {
             pair.forEachIndexed { index,item ->
                 val box=LinearLayout(this).apply {
                     orientation=if(simple || management) LinearLayout.VERTICAL else LinearLayout.HORIZONTAL
-                    gravity=if(management) Gravity.CENTER_VERTICAL else Gravity.CENTER
+                    gravity=if(management) Gravity.CENTER_VERTICAL else Gravity.CENTER_VERTICAL
                     layoutDirection=View.LAYOUT_DIRECTION_RTL
                     background=panel(if(simple) Color.rgb(255,250,242) else paper,
                         if(simple) 24 else if(management) 16 else 14,
@@ -222,7 +222,7 @@ class MainActivity : Activity() {
                         })
                     }
                     else -> {
-                        box.addView(text(item.third,20f,gold),LinearLayout.LayoutParams(dp(32),dp(32)))
+                        box.addView(text(item.third,20f,gold).apply { gravity=Gravity.CENTER },LinearLayout.LayoutParams(dp(32),dp(32)))
                         val labels=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL;gravity=Gravity.CENTER_VERTICAL }
                         labels.addView(text(item.first,13f).apply { gravity=Gravity.RIGHT;setPadding(dp(8),0,dp(8),0) })
                         labels.addView(text(item.second,10f,Color.rgb(138,123,108)).apply { gravity=Gravity.RIGHT;setPadding(dp(8),dp(4),dp(8),0) })
