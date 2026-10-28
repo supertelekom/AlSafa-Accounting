@@ -316,6 +316,32 @@ class MainActivity : Activity() {
             i++
         }
     }
+    /** Preserve the original Cancel / Save action order in one horizontal row. */
+    private fun arrangeOriginalFormActions(body:LinearLayout) {
+        for(i in 0 until body.childCount-1) {
+            val cancel=body.getChildAt(i) as? TextView ?: continue
+            val save=body.getChildAt(i+1) as? TextView ?: continue
+            if(cancel.text.toString()!="إلغاء" ||
+                save.text.toString() !in listOf("حفظ الفاتورة","حفظ طلب الصيانة")) continue
+            body.removeViewAt(i+1)
+            body.removeViewAt(i)
+            val actions=LinearLayout(this).apply {
+                orientation=LinearLayout.HORIZONTAL
+                layoutDirection=View.LAYOUT_DIRECTION_RTL
+                gravity=Gravity.CENTER_VERTICAL
+            }
+            cancel.background=panel(paper,11)
+            cancel.gravity=Gravity.CENTER
+            save.gravity=Gravity.CENTER
+            actions.addView(cancel,LinearLayout.LayoutParams(0,dp(48),1f).apply { marginEnd=dp(10) })
+            actions.addView(save,LinearLayout.LayoutParams(0,dp(48),1f))
+            body.addView(actions,i,LinearLayout.LayoutParams(-1,-2).apply {
+                topMargin=dp(14)
+                bottomMargin=dp(12)
+            })
+            return
+        }
+    }
     private fun formSection(parent:LinearLayout,label:String) {
         val heading=text(label,13f,Color.rgb(122,81,24)).apply {
             gravity=Gravity.RIGHT or Gravity.CENTER_VERTICAL
@@ -1396,6 +1422,8 @@ class MainActivity : Activity() {
         }
         if(screen in listOf("preview:مبيع كامل","preview:طلب صيانة","preview:استلام صيانة","preview:فاتورة شراء"))
             arrangeOriginalFormGrid(body)
+        if(screen in listOf("preview:مبيع كامل","preview:طلب صيانة","preview:استلام صيانة"))
+            arrangeOriginalFormActions(body)
         if(screen!="chooser") body.addView(text("العودة",17f,gold).apply {
             isClickable=true;setOnClickListener {
                 returnToPrevious()
