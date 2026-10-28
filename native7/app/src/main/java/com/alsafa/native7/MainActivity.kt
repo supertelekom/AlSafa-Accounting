@@ -1199,9 +1199,25 @@ class MainActivity : Activity() {
                     Triple("مصروف","تسجيل مصروف","📤"),
                     Triple("بحث","عميل، هاتف، طلب أو منتج","🔎")
                 ),false)
-                body.addView(text("آخر العمليات",20f,gold))
-                body.addView(text("آخر العمليات غير متصلة بالبيانات بعد.",14f))
-                body.addView(text("الإدارة",17f,gold).apply { isClickable=true;setOnClickListener { navigateTo("management") } })
+                val recent=LinearLayout(this).apply {
+                    orientation=LinearLayout.VERTICAL
+                    background=panel(paper,17)
+                }
+                val heading=LinearLayout(this).apply {
+                    orientation=LinearLayout.HORIZONTAL
+                    layoutDirection=View.LAYOUT_DIRECTION_RTL
+                    gravity=Gravity.CENTER_VERTICAL
+                    setPadding(dp(15),dp(10),dp(15),dp(10))
+                }
+                heading.addView(text("آخر العمليات",15f).apply { gravity=Gravity.RIGHT },
+                    LinearLayout.LayoutParams(0,-2,1f))
+                heading.addView(text("الإدارة",12f,gold).apply {
+                    isClickable=true
+                    setOnClickListener { navigateTo("management") }
+                })
+                recent.addView(heading)
+                recent.addView(text("لا توجد عمليات مسجلة بعد.",13f,Color.rgb(138,123,108)))
+                body.addView(recent,LinearLayout.LayoutParams(-1,-2).apply { topMargin=dp(14) })
             }
             "management" -> {
                 body.addView(text("الإدارة",25f,gold))
