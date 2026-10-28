@@ -4,10 +4,12 @@ import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 
-class StoreDb(context: Context, name: String = "alsafa_native6.db") : SQLiteOpenHelper(context,name,null,7) {
+class StoreDb(context: Context, name: String = "alsafa_native6.db") : SQLiteOpenHelper(context,name,null,8) {
     override fun onConfigure(db: SQLiteDatabase) { db.setForeignKeyConstraintsEnabled(true); db.execSQL("PRAGMA synchronous=FULL") }
     override fun onCreate(db: SQLiteDatabase) {
         schema.forEach(db::execSQL)
+        db.execSQL(manualInvoiceLinesTable)
+        db.execSQL(discountRulesTable)
         db.execSQL(legacyRecordsTable)
         db.execSQL(legacyRecordsNoUpdate)
         db.execSQL(legacyRecordsNoDelete)
@@ -18,9 +20,12 @@ class StoreDb(context: Context, name: String = "alsafa_native6.db") : SQLiteOpen
         db.execSQL("CREATE TRIGGER IF NOT EXISTS closings_count_guard BEFORE INSERT ON closings BEGIN SELECT CASE WHEN (SELECT kind FROM events WHERE id=NEW.event_id)='AUTO_CLOSING' AND NEW.counted IS NOT NULL THEN RAISE(ABORT,'Automatic closing has no physical count') WHEN (SELECT kind FROM events WHERE id=NEW.event_id)='CLOSING' AND NEW.counted IS NULL THEN RAISE(ABORT,'Manual closing requires a count') END; END")
     }
     override fun onUpgrade(db: SQLiteDatabase,old: Int,new: Int) {
-        require(old in 1..6 && new == 7) {
+        require(old in 1..7 && new == 8) {
             "Unsupported migration $old → $new; database preserved"
         }
+        db.execSQL(manualInvoiceLinesTable)
+        db.execSQL(discountRulesTable)
+        if (old == 7) return
         if (old == 6) {
             db.execSQL("ALTER TABLE invoices ADD COLUMN sale_type TEXT NOT NULL DEFAULT 'store'")
             db.execSQL("ALTER TABLE invoices ADD COLUMN warranty_months INTEGER NOT NULL DEFAULT 0")
@@ -52,6 +57,8 @@ class StoreDb(context: Context, name: String = "alsafa_native6.db") : SQLiteOpen
         db.execSQL("CREATE TRIGGER IF NOT EXISTS closings_count_guard BEFORE INSERT ON closings BEGIN SELECT CASE WHEN (SELECT kind FROM events WHERE id=NEW.event_id)='AUTO_CLOSING' AND NEW.counted IS NOT NULL THEN RAISE(ABORT,'Automatic closing has no physical count') WHEN (SELECT kind FROM events WHERE id=NEW.event_id)='CLOSING' AND NEW.counted IS NULL THEN RAISE(ABORT,'Manual closing requires a count') END; END")
     }
     companion object {
+        val manualInvoiceLinesTable = "CREATE TABLE IF NOT EXISTS manual_invoice_lines(invoice_id TEXT NOT NULL REFERENCES invoices(id),line INTEGER NOT NULL,name TEXT NOT NULL,model TEXT NOT NULL DEFAULT '',qty INTEGER NOT NULL CHECK(qty>0),net INTEGER NOT NULL CHECK(net>=0),cost INTEGER NOT NULL DEFAULT 0 CHECK(cost>=0),PRIMARY KEY(invoice_id,line))"
+        val discountRulesTable = "CREATE TABLE IF NOT EXISTS discount_rules(id TEXT PRIMARY KEY NOT NULL,name TEXT NOT NULL,kind TEXT NOT NULL CHECK(kind IN ('percent','fixed')),amount INTEGER NOT NULL CHECK(amount>=0),minimum INTEGER NOT NULL DEFAULT 0 CHECK(minimum>=0),currency TEXT NOT NULL CHECK(currency IN ('USD','TRY','SYP')),enabled INTEGER NOT NULL DEFAULT 1 CHECK(enabled IN (0,1)))"
         val autoClosingReviewsTable = "CREATE TABLE IF NOT EXISTS auto_closing_reviews(event_id TEXT NOT NULL REFERENCES events(id),closing_event_id TEXT NOT NULL REFERENCES events(id),vault TEXT NOT NULL,currency TEXT NOT NULL CHECK(currency IN ('USD','TRY','SYP')),review_date TEXT NOT NULL,book_balance INTEGER NOT NULL,actual_count INTEGER NOT NULL CHECK(actual_count>=0),note TEXT NOT NULL,PRIMARY KEY(closing_event_id,currency))"
         val reviewTriggers = listOf("UPDATE","DELETE").map { action -> "CREATE TRIGGER IF NOT EXISTS auto_closing_reviews_"+action.lowercase()+" BEFORE "+action+" ON auto_closing_reviews BEGIN SELECT RAISE(ABORT,'Immutable cash review'); END" }
         val immutableTriggers = listOf("events","journal","stock_moves","invoice_lines","receipts","returns","refunds","closings").flatMap { table -> listOf("UPDATE","DELETE").map { action -> "CREATE TRIGGER IF NOT EXISTS "+table+"_"+action.lowercase()+" BEFORE "+action+" ON "+table+" BEGIN SELECT RAISE(ABORT,'Immutable accounting record'); END" } }
