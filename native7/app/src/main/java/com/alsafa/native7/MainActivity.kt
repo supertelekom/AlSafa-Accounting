@@ -25,6 +25,7 @@ class MainActivity : Activity() {
     private val paper = Color.rgb(255,253,249)
     private var screen = "chooser"
     private var previousScreen = "chooser"
+    private val navigationHistory=mutableListOf<String>()
     private var selectedQuickRepair: String? = null
     private var repairPhotoUri:android.net.Uri? = null
     private var selectedQuickPrice: Int? = null
