@@ -451,12 +451,11 @@ class MainActivity : Activity() {
         parent.addView(options)
     }
     private fun salePreview(parent:LinearLayout) {
-        parent.addView(text("مبيع سريع",26f,gold))
-        parent.addView(text("ابحث عن الساعة أو امسح الباركود، ثم اختر طريقة الدفع وعملة البيع.",14f))
+        formHeader(parent,"مبيع سريع","ابحث عن الساعة أو امسح الباركود، ثم اختر طريقة الدفع وعملة البيع.","رجوع","simple")
         val steps=listOf("اختر الساعة","سعر البيع النهائي","طريقة الدفع")
-        parent.addView(text("1  "+steps[0],20f,gold))
+        formSection(parent,"1  "+steps[0])
         field(parent,"بحث بالاسم أو REF أو الرقم أو الباركود","مثال: CASIO أو MTP أو 002")
-        field(parent,"الباركود","امسح أو اكتب الباركود")
+        field(parent,"","امسح أو اكتب الباركود")
         val barcodeActions=LinearLayout(this).apply { orientation=LinearLayout.HORIZONTAL;layoutDirection=View.LAYOUT_DIRECTION_RTL }
         listOf("📷 قراءة الباركود","إضافة").forEach { label ->
             val action=text(label,15f,gold).apply { background=panel(paper,12);isClickable=true;setOnClickListener { android.widget.Toast.makeText(this@MainActivity,"قارئ الباركود وربط المخزون لم يُنفذا بعد",android.widget.Toast.LENGTH_SHORT).show() } }
@@ -464,9 +463,9 @@ class MainActivity : Activity() {
         }
         parent.addView(barcodeActions)
         parent.addView(text("لم يتم اختيار ساعة بعد",15f))
-        parent.addView(text("2  "+steps[1],20f,gold))
+        formSection(parent,"2  "+steps[1])
         finalAmountCurrency(parent,"USD")
-        parent.addView(text("3  "+steps[2],20f,gold))
+        formSection(parent,"3  "+steps[2])
         paymentChoices(parent)
         parent.addView(text("✓ إتمام الفاتورة",19f).apply {
             background=panel(Color.rgb(234,223,206),16)
@@ -648,7 +647,7 @@ class MainActivity : Activity() {
         field(parent,"بحث سريع عن المنتج","اكتب جزءاً من الاسم أو REF أو الرقم أو الباركود")
         select(parent,"اختر المنتج",listOf("لا توجد منتجات محمّلة بعد"))
         disabledAction(parent,"＋ إضافة المنتج")
-        field(parent,"الباركود","امسح أو اكتب باركود الساعة")
+        field(parent,"","امسح أو اكتب باركود الساعة")
         disabledAction(parent,"⌁ قراءة بالكاميرا")
         disabledAction(parent,"إضافة بالباركود")
         parent.addView(text("عند العثور على الباركود يضاف المنتج بسعره وبياناته المحفوظة تلقائياً.",12f))
