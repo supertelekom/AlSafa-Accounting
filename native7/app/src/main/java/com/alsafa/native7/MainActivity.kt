@@ -281,7 +281,7 @@ class MainActivity : Activity() {
         parent.addView(text("لا توجد ساعات بانتظار التسليم.",16f))
         parent.addView(text("هذه قائمة غير متصلة بالبيانات بعد، ولا تعكس حالة الساعات الفعلية.",12f))
     }
-    private fun manualSaleItemPreview(parent:LinearLayout,index:Int,removable:Boolean) {
+    private fun manualSaleItemPreview(parent:LinearLayout,index:Int,removable:Boolean,onChange:()->Unit = {}) {
         val item=LinearLayout(this).apply {
             orientation=LinearLayout.VERTICAL
             background=panel(paper,16)
@@ -298,12 +298,14 @@ class MainActivity : Activity() {
             inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
         }
         val total=text("إجمالي الصنف: —",14f)
+        item.tag=Pair(qty,price)
         item.addView(total)
         val update=object:android.text.TextWatcher {
             override fun beforeTextChanged(s:CharSequence?,start:Int,count:Int,after:Int) {}
             override fun onTextChanged(s:CharSequence?,start:Int,before:Int,count:Int) {
                 val q=qty.text.toString().toIntOrNull()
                 val p=price.text.toString().toBigDecimalOrNull()
+                onChange()
                 total.text=if(q!=null && q>=1 && p!=null && p.signum()>=0)
                     "إجمالي الصنف: "+p.multiply(java.math.BigDecimal(q)).stripTrailingZeros().toPlainString()
                     else "إجمالي الصنف: —"
@@ -314,7 +316,7 @@ class MainActivity : Activity() {
         price.addTextChangedListener(update)
         if(removable) item.addView(text("حذف الصنف",14f,gold).apply {
             isClickable=true
-            setOnClickListener { parent.removeView(item) }
+            setOnClickListener { parent.removeView(item);onChange() }
         })
         parent.addView(item,LinearLayout.LayoutParams(-1,-2).apply { bottomMargin=dp(12) })
     }
@@ -343,12 +345,28 @@ class MainActivity : Activity() {
         parent.addView(text("أصناف الفاتورة",21f,gold))
         val lines=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL }
         parent.addView(lines)
-        manualSaleItemPreview(lines,1,false)
+        val liveSubtotal=text("مجموع الأصناف: —",16f,gold)
+        val updateSubtotal= {
+            var sum=java.math.BigDecimal.ZERO
+            var valid=false
+            for(i in 0 until lines.childCount) {
+                val pair=lines.getChildAt(i).tag as? Pair<*,*> ?: continue
+                val qty=(pair.first as? EditText)?.text?.toString()?.toIntOrNull()
+                val price=(pair.second as? EditText)?.text?.toString()?.toBigDecimalOrNull()
+                if(qty!=null && qty>0 && price!=null && price.signum()>=0) {
+                    sum=sum.add(price.multiply(java.math.BigDecimal(qty)))
+                    valid=true
+                }
+            }
+            liveSubtotal.text=if(valid) "مجموع الأصناف: "+sum.stripTrailingZeros().toPlainString() else "مجموع الأصناف: —"
+        }
+        manualSaleItemPreview(lines,1,false,updateSubtotal)
         var nextLine=2
         parent.addView(text("＋ إضافة صنف يدوي",16f,gold).apply {
             isClickable=true
-            setOnClickListener { manualSaleItemPreview(lines,nextLine++,true) }
+            setOnClickListener { manualSaleItemPreview(lines,nextLine++,true,updateSubtotal);updateSubtotal() }
         })
+        parent.addView(liveSubtotal)
         parent.addView(text("الدفع والإرسال",21f,gold))
         select(parent,"حالة الدفع",listOf("مدفوع بالكامل","مدفوع جزئياً","عند الاستلام"))
         select(parent,"قاعدة الخصم",listOf("بدون قاعدة خصم"))
