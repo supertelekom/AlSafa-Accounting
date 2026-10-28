@@ -199,6 +199,29 @@ class TabletDashboardActivity : Activity() {
                     Triple("تسليم الوردية", "النقود والمحجوزات والمنتظر", "vaults")
                 ))
             }
+            "management" -> {
+                content.addView(title("الإدارة", 25f, gold))
+                content.addView(title("الخيارات التي تحتاجها أنت، بعيداً عن شاشة الاستخدام اليومي.", 15f))
+                grid(content, listOf(
+                    Triple("الأرصدة الافتتاحية", "البضاعة والقطع والنقود قبل بدء العمل", "opening"),
+                    Triple("المنتجات والمخزون", "الساعات والكميات", "products"),
+                    Triple("قطع الصيانة", "بطاريات وأحزمة وزجاج وقطع الغيار", "maintenance-parts"),
+                    Triple("المشتريات والموردون", "فاتورة شراء تزيد المخزون دون تكرار المصروف", "suppliers"),
+                    Triple("الفواتير السابقة", "عرض PDF وإعادة الإرسال", "invoices"),
+                    Triple("فواتير المرتجع", "الاسترجاع والاستبدال", "returns"),
+                    Triple("كل الصيانة", "الحالات والتسليم والمتابعة", "repairs"),
+                    Triple("الخزائن والأرصدة", "الدرج والصندوق الخارجي وشام كاش والبنك", "vaults"),
+                    Triple("إقفال اليوم", "عدّ الدرج ونقل الفائض وتجهيز الغد", "vaults"),
+                    Triple("الديون", "المبالغ المستحقة والتحصيل", "invoices"),
+                    Triple("المصاريف", "مراجعة المصاريف المسجلة", "expenses"),
+                    Triple("ملفات العملاء", "المبيعات والصيانة والضمانات", "customers"),
+                    Triple("التقارير", "المبيعات والأرباح والفترات", "reports"),
+                    Triple("الشركاء والسحوبات", "الحصص الشهرية والسحوبات والأرصدة", "partners"),
+                    Triple("نقص المخزون", "الساعات والقطع التي تحتاج تعبئة", "inventory"),
+                    Triple("حركة المخزون", "كل زيادة ونقص مع التاريخ", "inventory"),
+                    Triple("الإعدادات", "العملات والنسخ الاحتياطي والمتجر", "backup")
+                ))
+            }
             else -> {
                 content.addView(title("الوضع الكامل", 25f, gold))
                 content.addView(title("كل عمليات المتجر والإدارة.", 15f))
@@ -212,6 +235,7 @@ class TabletDashboardActivity : Activity() {
                     Triple("بحث", "عميل، هاتف، طلب أو منتج", "invoices")
                 ))
                 content.addView(title("آخر العمليات", 19f, gold))
+                content.addView(Button(this).apply { text = "الإدارة"; isAllCaps = false; typeface = font; setOnClickListener { mode = "management"; render() } })
             }
 
         }
