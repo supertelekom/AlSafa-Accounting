@@ -1346,10 +1346,30 @@ class Store(val helper:StoreDb) {
                 .multiply(java.math.BigInteger.valueOf(collectedMinor))
                 .divide(java.math.BigInteger.valueOf(totalMinor)).longValueExact()
             val pendingCost=Math.subtractExact(originalMinor,recognizedCost)
+            val historicalPayments=settlements.payments[source.optString("id")].orEmpty()
+            val linkedPaid=historicalPayments.fold(java.math.BigDecimal.ZERO) { acc,p ->
+                val amount=p.optString("amount").toBigDecimalOrNull()
+                    ?: throw IllegalArgumentException("مبلغ قبض قديم غير صالح")
+                require(amount>=java.math.BigDecimal.ZERO &&
+                    p.optString("currency")==source.optString("currency")) {
+                    "عملة أو مبلغ قبض قديم غير صالح"
+                }
+                acc.add(amount)
+            }
+            val sourcePaid=source.optString("paid").toBigDecimalOrNull()
+                ?: throw IllegalArgumentException("حقل المدفوع الأصلي غير صالح")
+            val recognizedPaid=sourcePaid.max(linkedPaid)
+            val paidMinor=recognizedPaid.setScale(2,java.math.RoundingMode.HALF_UP)
+                .movePointRight(2).longValueExact()
+            require(Math.addExact(paidMinor,due)==totalMinor) {
+                "مبالغ التحصيل والذمة لا تتطابق مع الإجمالي"
+            }
             mapOf("source_id" to source.optString("id"),
                 "invoice_no" to source.optString("invoiceNo"),
                 "currency" to source.optString("currency"),
                 "original_cost_minor" to originalMinor.toString(),
+                "historical_collected_minor" to paidMinor.toString(),
+                "historical_recognized_cost_minor" to recognizedCost.toString(),
                 "outstanding_minor" to due.toString(),
                 "estimated_pending_cost_minor" to pendingCost.toString(),
                 "estimated_pending_profit_minor" to Math.subtractExact(due,pendingCost).toString(),
