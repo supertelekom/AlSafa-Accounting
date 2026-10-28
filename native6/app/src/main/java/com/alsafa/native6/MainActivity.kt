@@ -1941,6 +1941,7 @@ open class MainActivity:Activity() {
                         val displayPhone=if(section=="sales") invoice?.optString("phone").orEmpty() else ""
                         val items=invoice?.optJSONArray("items")
                         val linkedPayments=original?.optJSONArray("linkedPayments")?.length() ?: 0
+                        val linkedReturns=original?.optJSONArray("linkedReturns")?.length() ?: 0
                         val returns=original?.optJSONArray("linkedReturns")
                         val returnLines=if(returns==null || returns.length()==0) "" else
                             (0 until returns.length()).joinToString("\n") { index ->
@@ -1986,6 +1987,7 @@ open class MainActivity:Activity() {
                             "\nالمدفوع: "+invoice.optString("paid")+
                             "\nالمتبقي: "+summary.optString("outstanding")+
                             "\nعمليات الدفع المرتبطة: "+linkedPayments+
+                            (if(linkedReturns==0) "" else "\nعدد المرتجعات المرتبطة: "+linkedReturns)+
                             (if(returnLines.isBlank()) "" else "\nالمرتجعات المرتبطة:\n"+returnLines)+
                             (if(paymentLines.isBlank()) "" else "\n"+paymentLines)+
                             "\n\nالأصناف:\n"+lines
