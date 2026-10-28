@@ -150,12 +150,14 @@ object LegacyInvoiceSnapshot {
             if(from.isNotBlank() && (date.isBlank() || date<from)) continue
             if(to.isNotBlank() && (date.isBlank() || date>to)) continue
             if(query.isNotBlank()) {
-                val fields=if(section=="sales") listOf("invoiceNo","customer","phone","notes","id") else listOf("supplierInvoice","supplierName","supplierId","notes","id")
+                val fields=if(section=="sales")
+                    listOf("invoiceNo","customer","phone","notes","id","saleType","paymentStatus","paymentMethod")
+                else listOf("supplierInvoice","supplierName","supplierId","notes","id")
                 val found=fields.any { SaleInvoiceFilter.normalize(original.optString(it)).contains(query) }
                 val items=original.optJSONArray("items")
                 val itemFound=items!=null && (0 until items.length()).any { index ->
                     val item=items.optJSONObject(index)
-                    item!=null && listOf("name","productName","barcode","sku","model","productId").any {
+                    item!=null && listOf("name","productName","barcode","sku","model","productId","color","ref","reference","variantName").any {
                         SaleInvoiceFilter.normalize(item.optString(it)).contains(query)
                     }
                 }
@@ -175,6 +177,9 @@ object LegacyInvoiceSnapshot {
                 .put("financiallyValid",financiallyValid)
                 .put("validationIssue",if(financiallyValid) "" else "تتطلب الفاتورة مراجعة معرفها أو تاريخها أو عملتها أو تحصيلاتها أو مرتجعاتها")
                 .put("paymentStatus",original.optString("paymentStatus"))
+                .put("saleType",original.optString("saleType"))
+                .put("paymentMethod",original.optString("paymentMethod"))
+                .put("hasLinkedDebtReconciliation",section=="sales" && reconciled!=null)
                 .put("isSimplifiedSale",section=="sales" && original.optString("customer").isBlank() && original.optString("phone").isBlank())
                 .put("readOnly",true))
         }
@@ -190,7 +195,7 @@ object LegacyInvoiceSnapshot {
             .put("invalidSourceRecords",invalidRecords)
             .put("offset",offset).put("limit",limit).put("rows",page)
             .put("outstandingByCurrency",totals)
-            .put("balanceBasis","ORIGINAL_INVOICE_CUMULATIVE_PAID")
+            .put("balanceBasis",if(section=="sales") "RECONCILED_ORIGINAL_PAYMENTS_AND_RETURNS" else "ORIGINAL_INVOICE_CUMULATIVE_PAID")
             .put("financialPosting","NONE")
     }
 }
