@@ -405,9 +405,9 @@ class MainActivity : Activity() {
             textSize=14f
             setTextColor(ink)
             setHintTextColor(Color.rgb(138,123,108))
-            background=panel(Color.rgb(255,252,247),11)
+            background=panel(Color.rgb(255,252,247),10)
             setPadding(dp(10),dp(8),dp(10),dp(8))
-            parent.addView(this,LinearLayout.LayoutParams(-1,dp(44)).apply { bottomMargin=dp(11) })
+            parent.addView(this,LinearLayout.LayoutParams(-1,dp(42)).apply { bottomMargin=dp(11) })
         }
     }
     private fun select(parent:LinearLayout,label:String,options:List<String>):Spinner {
@@ -421,7 +421,7 @@ class MainActivity : Activity() {
             setPadding(dp(8),dp(3),dp(8),dp(3))
         }
         spinner.adapter=ArrayAdapter(this,android.R.layout.simple_spinner_dropdown_item,options)
-        parent.addView(spinner,LinearLayout.LayoutParams(-1,dp(44)).apply { bottomMargin=dp(11) })
+        parent.addView(spinner,LinearLayout.LayoutParams(-1,dp(42)).apply { bottomMargin=dp(11) })
         return spinner
     }
     private fun finalAmountCurrency(parent:LinearLayout, defaultCurrency:String) {
