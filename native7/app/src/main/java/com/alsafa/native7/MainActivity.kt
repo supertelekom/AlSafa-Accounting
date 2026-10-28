@@ -75,7 +75,10 @@ class MainActivity : Activity() {
         screen=savedInstanceState?.getString("screen") ?: "chooser"
         previousScreen=savedInstanceState?.getString("previousScreen") ?: "chooser"
         repairPhotoUri=savedInstanceState?.getString("repairPhotoUri")?.let(android.net.Uri::parse)
+        repairDraftTexts=savedInstanceState?.getStringArrayList("repairDraftTexts")
+        repairDraftSelections=savedInstanceState?.getIntegerArrayList("repairDraftSelections")
         render()
+        restoreRepairDraft()
     }
     @Deprecated("Deprecated in Java")
     override fun onActivityResult(requestCode:Int,resultCode:Int,data:android.content.Intent?) {
@@ -98,6 +101,9 @@ class MainActivity : Activity() {
         }
     }
     override fun onSaveInstanceState(outState:Bundle) {
+        snapshotRepairDraft()
+        outState.putStringArrayList("repairDraftTexts",repairDraftTexts?.let { ArrayList(it) })
+        outState.putIntegerArrayList("repairDraftSelections",repairDraftSelections?.let { ArrayList(it) })
         outState.putString("screen",screen)
         outState.putString("previousScreen",previousScreen)
         outState.putString("repairPhotoUri",repairPhotoUri?.toString())
