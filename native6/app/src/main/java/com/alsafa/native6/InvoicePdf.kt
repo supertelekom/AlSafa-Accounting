@@ -76,6 +76,16 @@ class InvoicePdf(private val context:Context,private val store:Store) {
                 else->vaults.single()
             }
             rows.add("طريقة الدفع" to method)
+            val receipts=store.rows("""SELECT e.date,r.amount,r.vault FROM receipts r
+                JOIN events e ON e.id=r.event_id WHERE r.invoice_id=?
+                ORDER BY e.date,e.created,e.id""",id)
+            if(receipts.size>1) {
+                receipts.forEach { receipt ->
+                    rows.add("دفعة "+receipt.getValue("date") to
+                        money(receipt.getValue("amount").toLong(),invoice.currency)+
+                        " · "+receipt.getValue("vault"))
+                }
+            }
         }
         val notes=invoiceMeta["notes"].orEmpty().trim()
         if(notes.isNotEmpty()) rows.add("ملاحظات" to notes.take(400))
