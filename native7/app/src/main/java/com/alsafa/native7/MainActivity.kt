@@ -184,7 +184,7 @@ class MainActivity : Activity() {
     private fun actionGrid(parent:LinearLayout,items:List<Triple<String,String,String>>,simple:Boolean) {
         items.chunked(2).forEach { pair ->
             val row=LinearLayout(this).apply { orientation=LinearLayout.HORIZONTAL;layoutDirection=View.LAYOUT_DIRECTION_RTL }
-            parent.addView(row,LinearLayout.LayoutParams(-1,-2).apply { bottomMargin=dp(if(simple) 14 else 11) })
+            parent.addView(row,LinearLayout.LayoutParams(-1,-2).apply { bottomMargin=dp(if(simple) 7 else 11) })
             pair.forEachIndexed { index,item ->
                 val box=LinearLayout(this).apply {
                     orientation=if(simple) LinearLayout.VERTICAL else LinearLayout.HORIZONTAL
@@ -192,14 +192,14 @@ class MainActivity : Activity() {
                     layoutDirection=View.LAYOUT_DIRECTION_RTL
                     background=panel(if(simple) Color.rgb(255,250,242) else paper,if(simple) 24 else 18,
                         if(simple) Color.rgb(216,189,136) else Color.rgb(234,223,206))
-                    setPadding(dp(if(simple) 18 else 14),dp(if(simple) 18 else 12),dp(if(simple) 18 else 14),dp(if(simple) 18 else 12))
+                    setPadding(dp(if(simple) 9 else 14),dp(if(simple) 9 else 12),dp(if(simple) 18 else 14),dp(if(simple) 18 else 12))
                     isClickable=true
                     setOnClickListener { navigateTo(if(screen=="full" && item.first=="مبيع") "preview:مبيع كامل" else "preview:" + item.first) }
                 }
                 if(simple) {
-                    box.addView(text(item.third,51f,gold))
-                    box.addView(text(item.first,24f))
-                    box.addView(text(item.second,11f,Color.rgb(138,123,108)))
+                    box.addView(text(item.third,27f,gold))
+                    box.addView(text(item.first,16f))
+                    box.addView(text(item.second,9f,Color.rgb(138,123,108)))
                 } else {
                     box.addView(text(item.third,25f,gold).apply {
                         background=panel(Color.rgb(248,237,219),14)
@@ -209,7 +209,7 @@ class MainActivity : Activity() {
                     labels.addView(text(item.second,11f,Color.rgb(138,123,108)).apply { gravity=Gravity.RIGHT;setPadding(dp(8),dp(4),dp(8),0) })
                     box.addView(labels,LinearLayout.LayoutParams(0,-2,1f))
                 }
-                row.addView(box,LinearLayout.LayoutParams(0,dp(if(simple) 185 else 104),1f).apply {
+                row.addView(box,LinearLayout.LayoutParams(0,dp(if(simple) 93 else 104),1f).apply {
                     if(index==0) marginEnd=dp(if(simple) 14 else 11)
                 })
             }
