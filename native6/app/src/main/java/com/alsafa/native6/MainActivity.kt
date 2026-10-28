@@ -912,7 +912,7 @@ open class MainActivity:Activity() {
                     "فواتير مبيع تحتاج مراجعة: "+report.getValue("unresolved_online_sales"),
                     report.getValue("cutover_error"),
                     "لم يتم تفعيل أرصدة مالية أو إعادة تسجيل قبض."
-                ).filter { it.isNotBlank() }.joinToString("\\n")
+                ).filter { it.isNotBlank() }.joinToString("\n")
                 runOnUiThread {
                     if(!isFinishing&&!isDestroyed) AlertDialog.Builder(this)
                         .setTitle("تدقيق النسخة القديمة")
