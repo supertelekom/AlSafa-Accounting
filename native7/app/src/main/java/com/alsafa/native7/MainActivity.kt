@@ -366,7 +366,7 @@ class MainActivity : Activity() {
     }
     /** Two-column field row follows the original .form-grid layout (11px gap). */
     private fun formPair(parent:LinearLayout,first:(LinearLayout)->Unit,second:(LinearLayout)->Unit) {
-        val narrow=resources.configuration.screenWidthDp<600
+        val narrow=resources.configuration.screenWidthDp<=380
         val row=LinearLayout(this).apply {
             orientation=if(narrow) LinearLayout.VERTICAL else LinearLayout.HORIZONTAL
             layoutDirection=View.LAYOUT_DIRECTION_RTL
