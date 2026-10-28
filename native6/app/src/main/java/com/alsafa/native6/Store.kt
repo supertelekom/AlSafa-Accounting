@@ -74,7 +74,7 @@ class Store(val helper:StoreDb) {
             mapOf("archive_key" to row.getValue("legacy_id"),
                 "source_id" to item.optString("id"),
                 "invoice_no" to item.optString("invoiceNo"),
-                "date" to item.optString("date").ifBlank { item.optString("createdAt") },
+                "date" to item.optString("date"),
                 "currency" to item.optString("currency"),
                 "total" to item.optString("total"),
                 "paid" to item.optString("paid"),
@@ -89,7 +89,7 @@ class Store(val helper:StoreDb) {
             val item=JSONObject(row.getValue("payload"))
             mapOf("archive_key" to row.getValue("legacy_id"),
                 "source_id" to item.optString("id"),
-                "date" to item.optString("date").ifBlank { item.optString("createdAt") },
+                "date" to item.optString("date"),
                 "reference_id" to item.optString("referenceId"),
                 "reference_type" to item.optString("referenceType"),
                 "currency" to item.optString("currency"),
