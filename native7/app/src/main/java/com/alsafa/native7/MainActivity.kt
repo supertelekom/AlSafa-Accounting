@@ -561,7 +561,15 @@ class MainActivity : Activity() {
         field(parent,"العطل أو المطلوب *","مثال: تغيير بطارية وإصلاح السوار")
         field(parent,"نتيجة الفحص أو تحديث العميل","اختياري — اكتب هنا أي مشكلة تظهر لاحقاً ليتم إرسالها للعميل")
         parent.addView(text("صورة ساعة العميل عند الاستلام",16f,gold))
-        disabledAction(parent,"📷 الكاميرا")
+        parent.addView(text("📷 الكاميرا",16f,gold).apply {
+            isClickable=true
+            setOnClickListener {
+                snapshotRepairDraft()
+                val camera=android.content.Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE)
+                if(camera.resolveActivity(packageManager)!=null) startActivityForResult(camera,702)
+                else android.widget.Toast.makeText(this@MainActivity,"الكاميرا غير متاحة",android.widget.Toast.LENGTH_SHORT).show()
+            }
+        })
         parent.addView(text("🖼️ اختيار من الاستوديو",16f,gold).apply {
             isClickable=true
             setOnClickListener {
