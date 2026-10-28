@@ -2269,6 +2269,27 @@ open class MainActivity:Activity() {
                         store.collect(inv.id,amount,vault,date)
                     }
                 }
+                if(inv.kind=="sale" && store.due(inv.id)>0L)operation("قبض بعملة أخرى") {
+                    form("قبض بعملة أخرى"){box->
+                        val invoicePaid=field("المبلغ المحسوب من الفاتورة ${inv.currency.name}",box,"0",true)
+                        val otherCurrency=select("عملة النقد المقبوض",
+                            Currency.values().filter { it!=inv.currency }.map { it.name },box)
+                        val cashPaid=field("مبلغ النقد المقبوض بالعملة المختارة",box,"0",true)
+                        val receivingVault=select("الخزنة",vaultNames,box)
+                        val receiptDay=field("تاريخ القبض الفعلي YYYY-MM-DD",box,Store.today())
+                        {
+                            val currency=Currency.valueOf(otherCurrency.selectedItem.toString())
+                            val invoiceAmount=amount(invoicePaid,inv.currency)
+                            val cashAmount=amount(cashPaid,currency)
+                            require(invoiceAmount>0L && invoiceAmount<=store.due(inv.id) && cashAmount>0L) {
+                                "أدخل المبلغ المحسوب من الفاتورة والمبلغ المقبوض فعلياً"
+                            }
+                            val vault=Store.vaults[receivingVault.selectedItemPosition]
+                            val date=java.time.LocalDate.parse(receiptDay.text.toString().trim()).toString()
+                            work { store.collectConverted(inv.id,invoiceAmount,currency,cashAmount,vault,date) }
+                        }
+                    }
+                }
                 operation("مرتجع جزئي") { returnForm(inv) }
                 panel.addView(operations)
             }
