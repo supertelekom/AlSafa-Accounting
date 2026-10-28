@@ -1277,6 +1277,28 @@ class Store(val helper:StoreDb) {
     ):String=transaction { openLegacyReceivableInternal(legacyId,party,phone,currency,remaining,cutoverDate) }
 
     /** Remaining old sale after linked collections and debt-reducing returns. */
+    /**
+     * Read-only cutover review. Currency totals are separate and no cash/profit
+     * is posted by this method. Requires the historical collections to reconcile.
+     */
+    fun legacyOnlineReceivablesPreview():List<Map<String,String>> {
+        val sales=legacyRows("sales").map { JSONObject(it.getValue("payload")) }
+        return sales.mapNotNull { source ->
+            val remaining=reconciledLegacySaleDue(source)
+            if(remaining==0L) null else mapOf(
+                "source_id" to source.optString("id"),
+                "invoice_no" to source.optString("invoiceNo"),
+                "currency" to source.optString("currency"),
+                "remaining_minor" to remaining.toString(),
+                "customer" to source.optString("customerName").ifBlank {
+                    source.optString("customer")
+                },
+                "status" to source.optString("paymentStatus"),
+                "activation_state" to "REVIEW_ONLY"
+            )
+        }
+    }
+
     private fun reconciledLegacySaleDue(source:JSONObject):Long {
         val ref=source.optString("id")
         val currency=source.optString("currency")
