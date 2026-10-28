@@ -1459,6 +1459,42 @@ class MainActivity : Activity() {
         parent.addView(text("القرارات، العرض، الولاء، الاستلام الذكي والمزيد",14f))
         parent.addView(text("هذه الأقسام تحتاج إلى نقل قواعدها من المصدر الأصلي قبل تفعيلها.",13f))
     }
+    /** Labels and placement copied from renderSearch() in original v3.9.359. */
+    private fun globalSearchPreview(parent:LinearLayout) {
+        parent.addView(text("بحث سريع",20f,ink).apply { gravity=Gravity.RIGHT })
+        parent.addView(text("ابحث في المبيعات والصيانة والمخزون من مكان واحد.",12f,Color.rgb(138,123,108)).apply { gravity=Gravity.RIGHT })
+        val searchBox=LinearLayout(this).apply {
+            orientation=LinearLayout.HORIZONTAL
+            layoutDirection=View.LAYOUT_DIRECTION_RTL
+            gravity=Gravity.CENTER_VERTICAL
+            background=panel(paper,12)
+            setPadding(dp(8),dp(4),dp(8),dp(4))
+        }
+        searchBox.addView(text("🔎",19f,gold))
+        val query=EditText(this).apply {
+            hint="رقم الفاتورة، اسم العميل، الهاتف أو الباركود"
+            textSize=14f
+            setSingleLine(true)
+            background=null
+        }
+        searchBox.addView(query,LinearLayout.LayoutParams(0,dp(48),1f))
+        parent.addView(searchBox,LinearLayout.LayoutParams(-1,-2).apply { topMargin=dp(14);bottomMargin=dp(12) })
+        val results=LinearLayout(this).apply {
+            orientation=LinearLayout.VERTICAL
+            background=panel(paper,17)
+            setPadding(dp(12),dp(12),dp(12),dp(12))
+        }
+        val hint=text("لا توجد نتائج.",13f,Color.rgb(138,123,108))
+        results.addView(hint)
+        parent.addView(results)
+        query.addTextChangedListener(object:android.text.TextWatcher {
+            override fun beforeTextChanged(s:CharSequence?,start:Int,count:Int,after:Int) {}
+            override fun onTextChanged(s:CharSequence?,start:Int,before:Int,count:Int) {
+                hint.text=if(s.isNullOrBlank()) "لا توجد نتائج." else "البحث في المبيعات والمخزون غير متصل بالبيانات بعد."
+            }
+            override fun afterTextChanged(s:android.text.Editable?) {}
+        })
+    }
     private fun cashWalletPreview(parent:LinearLayout) {
         parent.addView(text("الحافظة",26f,gold))
         parent.addView(text("النقدي وشام كاش والتحصيلات",14f))
@@ -1641,6 +1677,7 @@ class MainActivity : Activity() {
                     Triple("الإعدادات","العملات والنسخ الاحتياطي والمتجر","⚙️")
                 ),false,true)
             }
+            "preview:بحث" -> globalSearchPreview(body)
             "preview:مبيع" -> salePreview(body)
             "preview:مبيع كامل" -> fullSalePreview(body)
             "preview:استلام صيانة" -> repairFormPreview(body)
