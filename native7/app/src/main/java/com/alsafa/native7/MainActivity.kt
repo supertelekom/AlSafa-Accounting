@@ -392,6 +392,70 @@ class MainActivity : Activity() {
         disabledAction(parent,"حفظ وخصم المصروف")
         parent.addView(text("معاينة فقط — لا تُخصم أي مبالغ.",12f))
     }
+    private fun supplierPurchasesPreview(parent:LinearLayout) {
+        parent.addView(text("المشتريات والموردون",26f,gold))
+        parent.addView(text("فاتورة المورد الواحدة يمكن أن تحتوي عدة أصناف. الشراء يزيد المخزون ولا يُسجل كمصروف تشغيلي.",14f))
+        disabledAction(parent,"＋ مورد")
+        val go=text("＋ فاتورة شراء",17f,gold).apply {
+            isClickable=true;setOnClickListener { previousScreen=screen;screen="preview:فاتورة شراء";render() }
+        }
+        parent.addView(go)
+        listOf("قيمة المخزون بالتكلفة","ديون الموردين","رأس المال المحاسبي التقريبي").forEach { parent.addView(text(it+"    —",16f)) }
+        parent.addView(text("مخزون + خزائن + ديون لنا − ديون الموردين",12f))
+        parent.addView(text("الموردون",21f,gold))
+        parent.addView(text("لم يتم تحميل بيانات الموردين بعد.",14f))
+        parent.addView(text("فواتير الشراء",21f,gold))
+        parent.addView(text("لم يتم تحميل فواتير الشراء بعد.",14f))
+    }
+    private fun purchaseInvoicePreview(parent:LinearLayout) {
+        parent.addView(text("فاتورة شراء متعددة الأصناف",26f,gold))
+        parent.addView(text("أضف كل منتجات المورد في فاتورة واحدة وسيُحسب الإجمالي تلقائياً.",14f))
+        parent.addView(text("القائمة",15f,gold).apply { isClickable=true;setOnClickListener { screen="preview:المشتريات والموردون";render() } })
+        field(parent,"التاريخ *","YYYY-MM-DD")
+        field(parent,"الوقت *","HH:MM")
+        select(parent,"المورد",listOf("اختر المورد"))
+        field(parent,"رقم فاتورة المورد")
+        select(parent,"عملة الفاتورة",listOf("USD","TRY","SYP"))
+        parent.addView(text("أصناف الفاتورة",21f,gold))
+        disabledAction(parent,"⚡ إضافة سريعة")
+        disabledAction(parent,"＋ إضافة منتج آخر لنفس الفاتورة")
+        parent.addView(text("الدفع والإجمالي",21f,gold))
+        listOf("إجمالي الفاتورة تلقائياً","المدفوع الآن","المتبقي للمورد").forEach { field(parent,it,"0").inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL }
+        select(parent,"مصدر دفع الفاتورة",listOf("المحل"))
+        parent.addView(text("اختر المحل أو أحد الشريكين الخارجيين الممولين للبضاعة.",12f))
+        select(parent,"الدفع من خزنة المحل",listOf("درج المحل","الصندوق الخارجي","شام كاش","الحساب البنكي"))
+        parent.addView(text("يظهر فقط عندما يكون مصدر الدفع هو المحل.",12f))
+        field(parent,"ملاحظات")
+        parent.addView(text("يمكنك اختيار صنف موجود أو إنشاء منتج/قطعة جديدة من الفاتورة.",12f))
+        disabledAction(parent,"حفظ فاتورة الشراء كاملة")
+    }
+    private fun productsPreview(parent:LinearLayout) {
+        parent.addView(text("المنتجات والمخزون",26f,gold))
+        parent.addView(text("أضف ساعاتك وأسعارها وكمياتها وباركودها، ثم اخترها مباشرة في الفاتورة.",14f))
+        disabledAction(parent,"↻ تحديث")
+        disabledAction(parent,"⬆ استيراد آمن")
+        disabledAction(parent,"＋ منتج")
+        parent.addView(text("لم يتم تحميل المنتجات بعد.",15f))
+    }
+    private fun vaultsPreview(parent:LinearLayout) {
+        parent.addView(text("الخزائن والأرصدة",26f,gold))
+        parent.addView(text("ملخص البيع والتحصيل مع الأرصدة الفعلية لكل خزنة.",14f))
+        disabledAction(parent,"إقفال اليوم")
+        disabledAction(parent,"＋ حركة مالية")
+        parent.addView(text("حالة إقفال اليوم غير معروفة حتى ربط البيانات.",13f))
+        listOf("درج المحل","الصندوق الخارجي","شام كاش","الحساب البنكي").forEach { name ->
+            parent.addView(text(name,19f,gold))
+            val allowed=if(name=="شام كاش") listOf("USD","SYP") else listOf("USD","SYP","TRY")
+            parent.addView(text(allowed.joinToString("    ") { "$it —" },14f))
+        }
+        parent.addView(text("سجل الحركات",20f,gold))
+        parent.addView(text("لم يتم تحميل سجل الحركات بعد.",14f))
+    }
+    private fun debtsPreview(parent:LinearLayout) {
+        parent.addView(text("الديون والتحصيل",26f,gold))
+        parent.addView(text("القيمة الإجمالية التقريبية: —",16f))
+        parent.addView(text("سجلات الديون غير متصلة بالبيانات بعد.",14f))
+    }
     private fun render() {
         val root=LinearLayout(this).apply {
             orientation=LinearLayout.VERTICAL; layoutDirection=View.LAYOUT_DIRECTION_RTL
@@ -476,6 +540,12 @@ class MainActivity : Activity() {
             "preview:المبيعات والفواتير" -> invoiceArchivePreview(body,false)
             "preview:مصروف" -> expenseFormPreview(body)
             "preview:المصاريف" -> expenseFormPreview(body)
+            "preview:المشتريات والموردون" -> supplierPurchasesPreview(body)
+            "preview:فاتورة شراء" -> purchaseInvoicePreview(body)
+            "preview:المنتجات والمخزون" -> productsPreview(body)
+            "preview:الخزائن والأرصدة" -> vaultsPreview(body)
+            "preview:الديون" -> debtsPreview(body)
+            "preview:قبض دين" -> debtsPreview(body)
             "preview:تسليم الوردية" -> handoverPreview(body)
             "preview:صيانة سريعة" -> quickRepairPreview(body)
             "preview:تسليم الساعات" -> deliveryPreview(body)
