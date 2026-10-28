@@ -256,12 +256,18 @@ class MainActivity : Activity() {
         }
     }
     private fun field(parent:LinearLayout,label:String,hint:String=""):EditText {
-        parent.addView(text(label,15f).apply { gravity=Gravity.RIGHT })
+        parent.addView(text(label,11f,Color.rgb(138,123,108)).apply {
+            gravity=Gravity.RIGHT
+            setPadding(dp(2),dp(5),dp(2),dp(6))
+        })
         return EditText(this).apply {
-            this.hint=hint; textSize=17f
-            background=panel(paper,12)
-            setPadding(dp(13),dp(10),dp(13),dp(10))
-            parent.addView(this,LinearLayout.LayoutParams(-1,dp(52)).apply { bottomMargin=dp(12) })
+            this.hint=hint
+            textSize=14f
+            setTextColor(ink)
+            setHintTextColor(Color.rgb(138,123,108))
+            background=panel(Color.rgb(255,252,247),11)
+            setPadding(dp(10),dp(8),dp(10),dp(8))
+            parent.addView(this,LinearLayout.LayoutParams(-1,dp(44)).apply { bottomMargin=dp(11) })
         }
     }
     private fun select(parent:LinearLayout,label:String,options:List<String>):Spinner {
