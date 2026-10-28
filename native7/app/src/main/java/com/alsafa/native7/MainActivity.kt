@@ -396,8 +396,8 @@ class MainActivity : Activity() {
             setPadding(0,dp(5),0,0)
         })
         heading.addView(labels,LinearLayout.LayoutParams(0,-2,1f))
-        heading.addView(text(backLabel,13f,gold).apply {
-            background=panel(paper,11)
+        heading.addView(text(backLabel,12f,Color.rgb(122,81,24)).apply {
+            background=panel(Color.rgb(247,237,221),12,Color.rgb(223,201,164))
             isClickable=true
             setOnClickListener { navigateTo(target) }
         })
@@ -427,7 +427,7 @@ class MainActivity : Activity() {
         input.gravity=Gravity.TOP or Gravity.RIGHT
         input.minLines=3
         input.maxLines=6
-        input.layoutParams=LinearLayout.LayoutParams(-1,dp(92)).apply { bottomMargin=dp(11) }
+        input.layoutParams=LinearLayout.LayoutParams(-1,dp(78)).apply { bottomMargin=dp(11) }
         return input
     }
     private fun select(parent:LinearLayout,label:String,options:List<String>):Spinner {
@@ -437,7 +437,7 @@ class MainActivity : Activity() {
         })
         val spinner=Spinner(this).apply {
             layoutDirection=View.LAYOUT_DIRECTION_RTL
-            background=panel(Color.rgb(255,252,247),11)
+            background=panel(Color.rgb(255,252,247),10,Color.rgb(234,223,206))
             setPadding(dp(8),dp(3),dp(8),dp(3))
         }
         spinner.adapter=ArrayAdapter(this,android.R.layout.simple_spinner_dropdown_item,options)
