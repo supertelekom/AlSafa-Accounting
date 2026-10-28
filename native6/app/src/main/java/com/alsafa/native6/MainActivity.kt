@@ -1956,9 +1956,11 @@ open class MainActivity:Activity() {
                             val item=items.optJSONObject(index)
                             if(item==null)"" else {
                                 val name=item.optString("name").ifBlank { item.optString("productName") }
-                                val qty=item.optString("quantity",item.optString("qty","1"))
+                                val model=item.optString("model")
+                                val qty=item.optString("qty",item.optString("quantity","1"))
                                 val price=item.optString("price",item.optString("unitPrice",""))
-                                name+" × "+qty+(if(price.isBlank())"" else " · "+price)+
+                                name+(if(model.isBlank()) "" else " · "+model)+
+                                    " × "+qty+(if(price.isBlank())"" else " · "+price)+
                                     (if(section=="sales" && item.has("cost") && !item.isNull("cost")) " · الكلفة: "+item.optString("cost") else "")
                             }
                         }
