@@ -131,7 +131,7 @@ class MainActivity : Activity() {
         super.onSaveInstanceState(outState)
     }
     @Deprecated("Deprecated in Java")
-    override fun onBackPressed() { if(screen!="chooser"){screen=if(screen.startsWith("preview:")) previousScreen else "chooser";render()}else super.onBackPressed() }
+    override fun onBackPressed() { if(screen!="chooser") returnToPrevious() else super.onBackPressed() }
     private fun card(parent:LinearLayout, title:String, description:String, target:String, dark:Boolean=false) {
         val card=LinearLayout(this).apply {
             orientation=LinearLayout.VERTICAL
