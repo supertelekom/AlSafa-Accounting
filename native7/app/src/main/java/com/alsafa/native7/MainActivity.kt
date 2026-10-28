@@ -459,10 +459,31 @@ class MainActivity : Activity() {
         }
         parent.addView(options)
     }
+    /** Legacy father-step: 31dp numbered circle, 17sp title, 10dp gap. */
+    private fun quickStep(parent:LinearLayout,number:Int,label:String) {
+        val row=LinearLayout(this).apply {
+            orientation=LinearLayout.HORIZONTAL
+            layoutDirection=View.LAYOUT_DIRECTION_RTL
+            gravity=Gravity.CENTER_VERTICAL
+        }
+        row.addView(text(number.toString(),16f,Color.rgb(122,81,24)).apply {
+            background=panel(Color.rgb(243,227,197),30,Color.rgb(243,227,197))
+            typeface=Typeface.create(typeface,Typeface.BOLD)
+            setPadding(0,0,0,0)
+        },LinearLayout.LayoutParams(dp(31),dp(31)))
+        row.addView(text(label,17f,ink).apply {
+            gravity=Gravity.RIGHT or Gravity.CENTER_VERTICAL
+            typeface=Typeface.create(typeface,Typeface.BOLD)
+            setPadding(dp(10),0,0,0)
+        },LinearLayout.LayoutParams(0,-2,1f))
+        parent.addView(row,LinearLayout.LayoutParams(-1,-2).apply {
+            topMargin=dp(4);bottomMargin=dp(12)
+        })
+    }
     private fun salePreview(parent:LinearLayout) {
         formHeader(parent,"مبيع سريع","ابحث عن الساعة أو امسح الباركود، ثم اختر طريقة الدفع وعملة البيع.","رجوع","simple")
         val steps=listOf("اختر الساعة","سعر البيع النهائي","طريقة الدفع")
-        formSection(parent,"1  "+steps[0])
+        quickStep(parent,1,steps[0])
         field(parent,"بحث بالاسم أو REF أو الرقم أو الباركود","مثال: CASIO أو MTP أو 002")
         field(parent,"","امسح أو اكتب الباركود")
         val barcodeActions=LinearLayout(this).apply { orientation=LinearLayout.HORIZONTAL;layoutDirection=View.LAYOUT_DIRECTION_RTL }
@@ -471,10 +492,12 @@ class MainActivity : Activity() {
             barcodeActions.addView(action,LinearLayout.LayoutParams(0,dp(54),1f).apply { marginEnd=dp(6) })
         }
         parent.addView(barcodeActions)
-        parent.addView(text("لم يتم اختيار ساعة بعد",15f))
-        formSection(parent,"2  "+steps[1])
+        parent.addView(text("لم يتم اختيار ساعة بعد",15f,Color.rgb(138,123,108)).apply {
+            background=panel(Color.rgb(255,250,242),15,Color.rgb(212,189,146))
+        },LinearLayout.LayoutParams(-1,dp(64)).apply { topMargin=dp(12);bottomMargin=dp(21) })
+        quickStep(parent,2,steps[1])
         finalAmountCurrency(parent,"USD")
-        formSection(parent,"3  "+steps[2])
+        quickStep(parent,3,steps[2])
         paymentChoices(parent)
         parent.addView(text("✓ إتمام الفاتورة",13f,Color.WHITE).apply {
             background=panel(Color.rgb(139,96,31),12)
@@ -495,8 +518,7 @@ class MainActivity : Activity() {
         parent.addView(text("معاينة شكلية فقط — لا يتم تسجيل تسليم.",12f))
     }
     private fun quickRepairPreview(parent:LinearLayout) {
-        parent.addView(text("صيانة سريعة",26f,gold))
-        parent.addView(text("اضغط على الخدمة ثم اختر الدفع والعملة.",14f))
+        formHeader(parent,"صيانة سريعة","اضغط على الخدمة ثم اختر الدفع والعملة.","رجوع","simple")
         val chosen=text("اختر خدمة من الأعلى",16f)
         val finalAmount=EditText(this).apply { hint="أدخل المبلغ النهائي"; inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL }
         val custom=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL;visibility=View.GONE }
