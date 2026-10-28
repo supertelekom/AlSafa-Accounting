@@ -1943,7 +1943,7 @@ open class MainActivity:Activity() {
                         val linkedPayments=original?.optJSONArray("linkedPayments")?.length() ?: 0
                         val returns=original?.optJSONArray("linkedReturns")
                         val returnLines=if(returns==null || returns.length()==0) "" else
-                            (0 until returns.length()).joinToString("\\n") { index ->
+                            (0 until returns.length()).joinToString("\n") { index ->
                                 val row=returns.optJSONObject(index)?.optJSONObject("record")
                                 if(row==null) "" else {
                                     row.optString("date")+" · "+row.optString("itemName")+
@@ -1984,11 +1984,8 @@ open class MainActivity:Activity() {
                                 invoice.optString("currency")+
                             "\nالمدفوع: "+invoice.optString("paid")+
                             "\nالمتبقي: "+summary.optString("outstanding")+
-                            "
-عمليات الدفع المرتبطة: "+linkedPayments+
-                            (if(returnLines.isBlank()) "" else "
-المرتجعات المرتبطة:
-"+returnLines)+
+                            "\nعمليات الدفع المرتبطة: "+linkedPayments+
+                            (if(returnLines.isBlank()) "" else "\nالمرتجعات المرتبطة:\n"+returnLines)+
                             (if(paymentLines.isBlank()) "" else "\n"+paymentLines)+
                             "\n\nالأصناف:\n"+lines
                         runOnUiThread {
