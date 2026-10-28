@@ -387,6 +387,24 @@ class Store(val helper:StoreDb) {
         )
     }
 
+    /** Confirm original archived invoice references without writing financial entries. */
+    fun archivedSaleReferenceAudit():Map<String,String> {
+        val identity=archivedInvoiceIdentityAudit("sales")
+        val broken=legacyOnlineSettlementReferenceIssues()
+        return mapOf(
+            "sales" to identity.getValue("total").toString(),
+            "missing_sale_ids" to identity.getValue("missing_ids").toString(),
+            "duplicate_sale_ids" to identity.getValue("duplicate_ids").toString(),
+            "invalid_sale_dates" to identity.getValue("invalid_dates").toString(),
+            "unmatched_settlement_references" to broken.size.toString(),
+            "state" to if(identity.getValue("missing_ids")==0 &&
+                identity.getValue("duplicate_ids")==0 &&
+                identity.getValue("invalid_dates")==0 && broken.isEmpty())
+                "REFERENCES_VALID" else "NEEDS_REVIEW",
+            "activation" to "NOT_POSTED"
+        )
+    }
+
     /** Paginated repair history with bounded BLOB reads for old embedded watch photos. */
     fun repairPage(term:String,limit:Int,offset:Int):List<Map<String,String>> {
         require(limit in 1..100 && offset>=0)
