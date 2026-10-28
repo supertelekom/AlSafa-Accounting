@@ -274,14 +274,14 @@ class MainActivity : Activity() {
         }
     }
     private fun formSection(parent:LinearLayout,label:String) {
-        val heading=text(label,16f,Color.rgb(122,81,24)).apply {
+        val heading=text(label,13f,Color.rgb(122,81,24)).apply {
             gravity=Gravity.RIGHT or Gravity.CENTER_VERTICAL
-            background=panel(Color.rgb(247,238,223),10,Color.rgb(234,223,206))
-            setPadding(dp(13),dp(10),dp(13),dp(10))
+            typeface=Typeface.create(typeface,Typeface.BOLD)
+            setPadding(dp(2),0,dp(2),0)
         }
-        parent.addView(heading,LinearLayout.LayoutParams(-1,dp(45)).apply {
-            topMargin=dp(15)
-            bottomMargin=dp(13)
+        parent.addView(heading,LinearLayout.LayoutParams(-1,-2).apply {
+            topMargin=dp(20)
+            bottomMargin=dp(14)
         })
     }
     private fun formHeader(parent:LinearLayout,title:String,description:String,backLabel:String,target:String) {
@@ -329,13 +329,6 @@ class MainActivity : Activity() {
         spinner.adapter=ArrayAdapter(this,android.R.layout.simple_spinner_dropdown_item,options)
         parent.addView(spinner,LinearLayout.LayoutParams(-1,dp(44)).apply { bottomMargin=dp(11) })
         return spinner
-    }
-    private fun originalFormSection(parent:LinearLayout,label:String) {
-        parent.addView(text(label,13f,Color.rgb(122,81,24)).apply {
-            gravity=Gravity.RIGHT
-            background=panel(Color.rgb(250,241,226),10,Color.rgb(234,223,206))
-            setPadding(dp(12),dp(11),dp(12),dp(11))
-        },LinearLayout.LayoutParams(-1,-2).apply { topMargin=dp(13);bottomMargin=dp(12) })
     }
     private fun finalAmountCurrency(parent:LinearLayout, defaultCurrency:String) {
         parent.addView(text("المبلغ النهائي وعملته",15f).apply { gravity=Gravity.RIGHT })
