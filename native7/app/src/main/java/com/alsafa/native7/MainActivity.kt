@@ -442,8 +442,28 @@ class MainActivity : Activity() {
         parent.addView(text("سجل الاستلام، الأجرة، كلفة الصيانة، وحالة الدفع.",14f))
         disabledAction(parent,"الطلبات")
         parent.addView(text("بيانات العميل",21f,gold))
-        field(parent,"التاريخ *","YYYY-MM-DD")
-        field(parent,"وقت الاستلام *","HH:MM")
+        field(parent,"التاريخ *","YYYY-MM-DD").apply {
+            setText(java.time.LocalDate.now().toString())
+            isFocusable=false
+            isClickable=true
+            setOnClickListener {
+                val today=runCatching { java.time.LocalDate.parse(text.toString()) }.getOrDefault(java.time.LocalDate.now())
+                android.app.DatePickerDialog(this@MainActivity,{ _,y,m,d ->
+                    setText(java.time.LocalDate.of(y,m+1,d).toString())
+                },today.year,today.monthValue-1,today.dayOfMonth).show()
+            }
+        }
+        field(parent,"وقت الاستلام *","HH:MM").apply {
+            setText(java.time.LocalTime.now().format(java.time.format.DateTimeFormatter.ofPattern("HH:mm")))
+            isFocusable=false
+            isClickable=true
+            setOnClickListener {
+                val now=runCatching { java.time.LocalTime.parse(text.toString()) }.getOrDefault(java.time.LocalTime.now())
+                android.app.TimePickerDialog(this@MainActivity,{ _,h,m ->
+                    setText(String.format(java.util.Locale.US,"%02d:%02d",h,m))
+                },now.hour,now.minute,true).show()
+            }
+        }
         select(parent,"عملة الصيانة / القبض *",listOf("USD","TRY","SYP"))
         select(parent,"طريقة الدفع الأولى *",listOf("نقدي","شام كاش"))
         field(parent,"اسم العميل *")
