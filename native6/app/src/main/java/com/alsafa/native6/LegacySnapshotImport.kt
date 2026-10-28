@@ -670,6 +670,29 @@ object LegacySnapshotImport {
             require(store.scalar("SELECT count(*) FROM repairs")==repairs.length().toLong()) {
                 "عدد سجلات الصيانة لا يطابق النسخة الأصلية"
             }
+            // Register the exact three partners from the original backup, without
+            // creating cash withdrawals or re-posting historical profits.
+            val originalPartners=d.getJSONObject("settings").getJSONArray("partners")
+            require(originalPartners.length()==3){"عدد الشركاء في النسخة القديمة غير مطابق"}
+            val partnerShares=linkedMapOf<String,java.math.BigDecimal>()
+            val partnerRegistry=com.alsafa.native6.accounting.PartnerRegistry(store.db)
+            for(index in 0 until originalPartners.length()) {
+                val partner=originalPartners.getJSONObject(index)
+                val partnerId=partner.getString("id").trim()
+                val name=partner.getString("name").trim()
+                val share=partner.getString("share").toBigDecimal()
+                require(partnerId.isNotBlank() && name.isNotBlank() && !partnerShares.containsKey(partnerId))
+                partnerRegistry.addPartner(name,partnerId)
+                partnerShares[partnerId]=share
+            }
+            require(partnerShares.values.fold(java.math.BigDecimal.ZERO,java.math.BigDecimal::add)
+                .compareTo(java.math.BigDecimal("100"))==0){"مجموع نسب الشركاء غير صحيح"}
+            partnerRegistry.setShares(java.time.LocalDate.of(2000,1,1),partnerShares,
+                "نسب الشركاء المحفوظة في النسخة القديمة")
+            require(store.scalar("SELECT count(*) FROM partner_members")==3L &&
+                store.scalar("SELECT count(*) FROM partner_share_lines")==3L) {
+                "تعذر التحقق من تسجيل الشركاء ونسبهم"
+            }
             store.insert("settings","key" to "legacy_snapshot_import","value" to JSONObject()
                 .put("scope","inventory_suppliers_repairs_only")
                 .put("financialWarningCount",financialWarnings.size)
