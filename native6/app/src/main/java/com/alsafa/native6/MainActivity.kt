@@ -2396,7 +2396,7 @@ open class MainActivity:Activity() {
                         val cashPaid=field("مبلغ النقد المقبوض بالعملة المختارة",box,"0",true)
                         val receivingVault=select("الخزنة",vaultNames,box)
                         val receiptDay=field("تاريخ القبض الفعلي YYYY-MM-DD",box,Store.today())
-                        {
+                        ({
                             val currency=Currency.valueOf(otherCurrency.selectedItem.toString())
                             val invoiceAmount=amount(invoicePaid,inv.currency)
                             val cashAmount=amount(cashPaid,currency)
@@ -2406,7 +2406,7 @@ open class MainActivity:Activity() {
                             val vault=Store.vaults[receivingVault.selectedItemPosition]
                             val date=java.time.LocalDate.parse(receiptDay.text.toString().trim()).toString()
                             work { store.collectConverted(inv.id,invoiceAmount,currency,cashAmount,vault,date) }
-                        }
+                        })
                     }
                 }
                 operation("مرتجع جزئي") { returnForm(inv) }
