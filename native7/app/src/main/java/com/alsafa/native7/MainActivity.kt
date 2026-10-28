@@ -431,8 +431,54 @@ class MainActivity : Activity() {
         parent.addView(text("أضف ساعاتك وأسعارها وكمياتها وباركودها، ثم اخترها مباشرة في الفاتورة.",14f))
         disabledAction(parent,"↻ تحديث")
         disabledAction(parent,"⬆ استيراد آمن")
-        disabledAction(parent,"＋ منتج")
+        parent.addView(text("＋ منتج",18f,gold).apply {
+            isClickable=true
+            setOnClickListener { previousScreen=screen;screen="preview:إضافة منتج جديد";render() }
+        })
+        field(parent,"ابحث باسم المنتج أو الباركود أو REF / Model...")
         parent.addView(text("لم يتم تحميل المنتجات بعد.",15f))
+    }
+    private fun productFormPreview(parent:LinearLayout) {
+        parent.addView(text("إضافة منتج جديد",26f,gold))
+        field(parent,"اسم الساعة / المنتج *")
+        field(parent,"الماركة")
+        field(parent,"REF / الموديل (اختياري عند استخدام الرابط)","يُستخرج تلقائياً من صفحة المنتج عند توفره")
+        select(parent,"فئة ساعة كاسيو",listOf("تلقائي من REF","كاسيو","Edifice","G-Shock","Baby-G","Pro Trek","Sheen","Oceanus","Vintage"))
+        field(parent,"رابط صفحة المنتج (اختياري)","الصق رابط صفحة الساعة من أي ماركة").inputType=InputType.TYPE_TEXT_VARIATION_URI
+        disabledAction(parent,"لصق الرابط")
+        disabledAction(parent,"✦ جلب معلومات الساعة تلقائيًا")
+        parent.addView(text("أدخل الماركة وREF ثم اضغط مرة واحدة. يجلب المعلومات والمستشار والصور المتاحة في عملية واحدة، مع الحفاظ على أي بيانات أدخلتها يدويًا.",12f))
+        field(parent,"كود المنتج")
+        field(parent,"باركود المنتج","امسحه بالكاميرا أو اكتبه")
+        disabledAction(parent,"⌁ قراءة بالكاميرا")
+        parent.addView(text("يحفظ مرة واحدة ويستخدم لاستدعاء المنتج والسعر عند البيع.",12f))
+        listOf("الصورة الرئيسية للساعة","صورة إضافية 1 (اختيارية)","صورة إضافية 2 (اختيارية)","صورة الباركود (اختيارية)").forEach { label ->
+            parent.addView(text(label,16f,gold))
+            disabledAction(parent,"📷 الكاميرا")
+            disabledAction(parent,"🖼️ اختيار من الاستوديو")
+        }
+        field(parent,"الكمية بالمخزون *","1").inputType=InputType.TYPE_CLASS_NUMBER
+        field(parent,"حد التنبيه الأدنى","1").inputType=InputType.TYPE_CLASS_NUMBER
+        select(parent,"عملة الأسعار",listOf("USD","TRY","SYP"))
+        field(parent,"سعر البيع *").inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
+        field(parent,"كلفة الشراء للقطعة").inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
+        parent.addView(text("كابلز (اختياري)",20f,gold))
+        parent.addView(text("المجموعات والألوان تُنقل وفق بنية المنتج الأصلية، ولا تُحذف ألوان محفوظة عند التعديل.",12f))
+        disabledAction(parent,"حفظ المنتج")
+        parent.addView(text("معاينة شكلية فقط — لا تتم إضافة المنتج إلى المخزون.",12f))
+    }
+    private fun maintenancePartsPreview(parent:LinearLayout) {
+        parent.addView(text("قطع الصيانة",26f,gold))
+        parent.addView(text("بطاريات، أحزمة، زجاج وقطع غيار مع متابعة المخزون.",14f))
+        disabledAction(parent,"＋ إضافة قطعة")
+        field(parent,"ابحث باسم قطعة الصيانة أو الباركود...")
+        parent.addView(text("لم يتم تحميل قطع الصيانة بعد.",15f))
+    }
+    private fun returnsPreview(parent:LinearLayout) {
+        parent.addView(text("فواتير المرتجع والاستبدال",26f,gold))
+        parent.addView(text("كل مرتجع محفوظ كمستند مستقل ومرتبط بفاتورته الأصلية.",14f))
+        parent.addView(text("الأرشيف غير متصل بالبيانات بعد.",15f))
+        parent.addView(text("لا تُنفذ أي إعادة للمخزون أو الخزنة من هذه المعاينة.",12f))
     }
     private fun vaultsPreview(parent:LinearLayout) {
         parent.addView(text("الخزائن والأرصدة",26f,gold))
@@ -629,6 +675,9 @@ class MainActivity : Activity() {
             "preview:المشتريات والموردون" -> supplierPurchasesPreview(body)
             "preview:فاتورة شراء" -> purchaseInvoicePreview(body)
             "preview:المنتجات والمخزون" -> productsPreview(body)
+            "preview:إضافة منتج جديد" -> productFormPreview(body)
+            "preview:قطع الصيانة" -> maintenancePartsPreview(body)
+            "preview:فواتير المرتجع" -> returnsPreview(body)
             "preview:الخزائن والأرصدة" -> vaultsPreview(body)
             "preview:الديون" -> debtsPreview(body)
             "preview:قبض دين" -> debtsPreview(body)
