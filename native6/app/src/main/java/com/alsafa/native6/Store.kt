@@ -8,6 +8,7 @@ import org.json.JSONObject
 
 data class Product(val id:String,val name:String,val barcode:String,val currency:Currency,val price:Long,val cost:Long,val stock:Long,val kind:String,val value:Long)
 data class SaleItem(val productId:String,val qty:Long,val unitPrice:Long)
+data class ManualSaleItem(val name:String,val model:String,val qty:Long,val unitPrice:Long)
 data class Invoice(val id:String,val number:Long,val kind:String,val party:String,val currency:Currency,val total:Long,val status:String)
 class Store(val helper:StoreDb) {
     val db:SQLiteDatabase get()=helper.writableDatabase
@@ -1633,7 +1634,7 @@ class Store(val helper:StoreDb) {
         }
         return Math.addExact(highWater,1L)
     }
-    fun sale(items:List<SaleItem>,party:String,phone:String,currency:Currency,paid:Long,vault:String,discount:Long=0,date:String=today(),command:String=id(),receiptDate:String=date,notes:String="",saleType:String="store",warrantyMonths:Int=0,warrantyStart:String=date):String=transaction {
+    fun sale(items:List<SaleItem>,party:String,phone:String,currency:Currency,paid:Long,vault:String,discount:Long=0,date:String=today(),command:String=id(),receiptDate:String=date,notes:String="",saleType:String="store",warrantyMonths:Int=0,warrantyStart:String=date,manualItems:List<ManualSaleItem> = emptyList()):String=transaction {
         require(saleType in setOf("store","online"))
         // A restored sale retains its original ID in the archive. Never allow a
         // new native sale to reuse that identity and post a second stock/cash entry.
@@ -1643,18 +1644,23 @@ class Store(val helper:StoreDb) {
         }
         require(warrantyMonths in 0..120)
         if(warrantyMonths>0) LocalDate.parse(warrantyStart)
-        require(items.isNotEmpty() && items.map {it.productId}.distinct().size==items.size){"الصنف مكرر"};vault(vault)
+        require((items.isNotEmpty() || manualItems.isNotEmpty()) && items.map {it.productId}.distinct().size==items.size){"الصنف مكرر"};vault(vault)
         val products=items.map { product(it.productId) };require(products.all {it.kind in setOf("watch","part")}){"صنف المبيع غير مدعوم"};require(products.all {it.currency==currency}){"اختلاف عملة المنتج: يلزم تحويل مسجل قبل هذه العملية"}
-        require(items.all {it.qty>0&&it.unitPrice>=0}){"الكمية والسعر غير صالحين"};val gross=items.fold(0L){a,i->add(a,mul(i.qty,i.unitPrice))};require(gross>0){"لا يمكن إنشاء فاتورة بإجمالي صفر"};require(discount>=0 && discount<gross){"الخصم غير صالح"}
+        require(items.all {it.qty>0&&it.unitPrice>=0}){"الكمية والسعر غير صالحين"};require(manualItems.all { it.name.isNotBlank() && it.qty>0L && it.unitPrice>=0L }){"الصنف اليدوي غير صالح"};val gross=manualItems.fold(items.fold(0L){a,i->add(a,mul(i.qty,i.unitPrice))}){a,i->add(a,mul(i.qty,i.unitPrice))};require(gross>0){"لا يمكن إنشاء فاتورة بإجمالي صفر"};require(discount>=0 && discount<gross){"الخصم غير صالح"}
         val total=Math.subtractExact(gross,discount);require(paid in 0..total){"المدفوع يتجاوز قيمة الفاتورة"};// Anonymous sales are valid, including online sales collected later.
         require(!LocalDate.parse(date).isAfter(LocalDate.now())){"لا يمكن تسجيل مبيع بتاريخ مستقبلي"}
         if(paid>0L) require(!LocalDate.parse(receiptDate).isAfter(LocalDate.now()) && !LocalDate.parse(receiptDate).isBefore(LocalDate.parse(date))){"تاريخ قبض البيع يجب أن يكون من تاريخ الفاتورة وحتى اليوم"}
-        val nets=allocateInvoiceNet(items.map { mul(it.qty,it.unitPrice) },discount)
+        val nets=allocateInvoiceNet(items.map { mul(it.qty,it.unitPrice) }+manualItems.map { mul(it.qty,it.unitPrice) },discount)
         val costs=items.indices.map {i->require(items[i].qty<=products[i].stock){"المخزون غير كافٍ"};proportional(products[i].value,items[i].qty,products[i].stock)}
         val cost=costs.fold(0L,::add)
         event(command,"SALE",date,"مبيع $party")
         insert("invoices","id" to command,"number" to nextNumber(),"kind" to "sale","party" to party,"phone" to phone,"currency" to currency.name,"total" to total,"cost" to cost,"notes" to notes.trim(),"sale_type" to saleType,"warranty_months" to warrantyMonths,"warranty_start" to (if(warrantyMonths>0) warrantyStart else ""))
         items.forEachIndexed {i,item->val p=products[i];insert("invoice_lines","invoice_id" to command,"line" to i,"product_id" to p.id,"name" to (p.name + productColorLabel(p.id).takeIf { it.isNotBlank() }?.let { " · $it" }.orEmpty()),"qty" to item.qty,"net" to nets[i],"cost" to costs[i]);stock(command,i,p,-item.qty,-costs[i])}
+        manualItems.forEachIndexed { index,item ->
+            insert("manual_invoice_lines","invoice_id" to command,"line" to (items.size+index),
+                "name" to item.name.trim(),"model" to item.model.trim(),"qty" to item.qty,
+                "net" to nets[items.size+index],"cost" to 0L)
+        }
         post(command,listOf(Posting("receivable:$command",currency,total),Posting("revenue:sales",currency,-total),Posting("expense:cogs",currency,cost),Posting("inventory",currency,-cost)))
         if(paid>0) collectInternal(command,paid,vault,receiptDate,"$command-receipt");command
     }
@@ -1662,7 +1668,7 @@ class Store(val helper:StoreDb) {
     fun saleWithReceipts(items:List<SaleItem>,party:String,phone:String,currency:Currency,
         receipts:List<Pair<String,Long>>,discount:Long=0,date:String=today(),
         receiptDate:String=date,notes:String="",saleType:String="store",
-        warrantyMonths:Int=0,warrantyStart:String=date):String=transaction {
+        warrantyMonths:Int=0,warrantyStart:String=date,manualItems:List<ManualSaleItem> = emptyList()):String=transaction {
         require(receipts.isNotEmpty() && receipts.all { it.second>=0L }) {
             "حدد دفعة واحدة على الأقل بمبلغ غير سالب"
         }
@@ -1681,7 +1687,7 @@ class Store(val helper:StoreDb) {
         }
         val totalPaid=receipts.fold(0L){acc,entry->Math.addExact(acc,entry.second)}
         val invoiceId=sale(items,party,phone,currency,0L,receipts.first().first,discount,date,
-            notes=notes,saleType=saleType,warrantyMonths=warrantyMonths,warrantyStart=warrantyStart)
+            notes=notes,saleType=saleType,warrantyMonths=warrantyMonths,warrantyStart=warrantyStart,manualItems=manualItems)
         require(totalPaid<=due(invoiceId))
         actualReceipts.forEachIndexed { index,entry->
             collectInternal(invoiceId,entry.second,entry.first,receiptDate,
@@ -1743,7 +1749,7 @@ class Store(val helper:StoreDb) {
         convertedInvoiceAmount:Long,convertedCurrency:Currency,
         convertedCashAmount:Long,convertedVault:String,discount:Long=0,
         date:String=today(),receiptDate:String=date,notes:String="",
-        saleType:String="store",warrantyMonths:Int=0,warrantyStart:String=date):String=transaction {
+        saleType:String="store",warrantyMonths:Int=0,warrantyStart:String=date,manualItems:List<ManualSaleItem> = emptyList()):String=transaction {
         require(convertedInvoiceAmount>0L && convertedCashAmount>0L) {
             "حدد المبلغ المحسوب من الفاتورة والنقد المقبوض بالعملة الأخرى"
         }
@@ -1753,7 +1759,7 @@ class Store(val helper:StoreDb) {
             Math.addExact(sum,receipt.second)
         }
         val invoiceId=saleWithReceipts(items,party,phone,currency,receipts,
-            discount,date,receiptDate,notes,saleType,warrantyMonths,warrantyStart)
+            discount,date,receiptDate,notes,saleType,warrantyMonths,warrantyStart,manualItems)
         require(Math.addExact(sameCurrencyPaid,convertedInvoiceAmount)<=
             invoice(invoiceId).total) { "الدفعات تتجاوز قيمة الفاتورة" }
         collectConverted(invoiceId,convertedInvoiceAmount,convertedCurrency,
