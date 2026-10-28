@@ -219,14 +219,14 @@ class MainActivity : Activity() {
         }
     }
     private fun currencySummary(parent:LinearLayout) {
-        val titles=listOf("↪" to "المدوّر من الإقفال السابق", "🛒" to "مبيعات اليوم", "🔧" to "صيانة اليوم")
-        val ledger=LinearLayout(this).apply {
-            orientation=if(resources.displayMetrics.widthPixels < dp(760)) LinearLayout.VERTICAL else LinearLayout.HORIZONTAL
+        // Original style.css: three ledger blocks on tablet, one column below 760px.
+        val columns=if(resources.displayMetrics.widthPixels>=dp(760)) 3 else 1
+        val row=LinearLayout(this).apply {
+            orientation=if(columns==3) LinearLayout.HORIZONTAL else LinearLayout.VERTICAL
             layoutDirection=View.LAYOUT_DIRECTION_RTL
         }
-        parent.addView(ledger,LinearLayout.LayoutParams(-1,-2).apply {
-            topMargin=dp(14);bottomMargin=dp(18)
-        })
+        parent.addView(row,LinearLayout.LayoutParams(-1,-2).apply { topMargin=dp(14);bottomMargin=dp(18) })
+        val titles=listOf("↪" to "المدوّر من الإقفال السابق", "🛒" to "مبيعات اليوم", "🔧" to "صيانة اليوم")
         titles.forEachIndexed { index,(symbol,label) ->
             val section=LinearLayout(this).apply {
                 orientation=LinearLayout.VERTICAL
@@ -234,37 +234,25 @@ class MainActivity : Activity() {
                 background=panel(paper,16,Color.rgb(234,223,206))
                 setPadding(dp(12),dp(12),dp(12),dp(12))
             }
-            section.addView(text("$symbol  $label",13f,gold).apply {
-                gravity=Gravity.RIGHT
-                setPadding(0,0,0,dp(10))
-            })
-            val currencies=LinearLayout(this).apply {
-                orientation=LinearLayout.HORIZONTAL
-                layoutDirection=View.LAYOUT_DIRECTION_RTL
-            }
+            section.addView(text("$symbol  $label",13f,gold).apply { gravity=Gravity.RIGHT })
+            val currencies=LinearLayout(this).apply { orientation=LinearLayout.HORIZONTAL;layoutDirection=View.LAYOUT_DIRECTION_RTL }
             listOf("USD","SYP","TRY").forEachIndexed { currencyIndex,currency ->
                 val cell=LinearLayout(this).apply {
                     orientation=LinearLayout.VERTICAL
                     gravity=Gravity.CENTER
-                    background=panel(Color.rgb(247,245,241),10,Color.TRANSPARENT)
+                    background=panel(Color.rgb(245,243,240),10,Color.rgb(245,243,240))
                     setPadding(dp(5),dp(8),dp(5),dp(8))
                 }
                 cell.addView(text(currency,11f,Color.rgb(138,123,108)))
-                cell.addView(text("—",15f,gold))
+                cell.addView(text("—",14f,gold))
                 currencies.addView(cell,LinearLayout.LayoutParams(0,-2,1f).apply {
                     if(currencyIndex>0) marginStart=dp(6)
                 })
             }
             section.addView(currencies)
-            if(ledger.orientation==LinearLayout.VERTICAL) {
-                ledger.addView(section,LinearLayout.LayoutParams(-1,-2).apply {
-                    if(index>0) topMargin=dp(12)
-                })
-            } else {
-                ledger.addView(section,LinearLayout.LayoutParams(0,-2,1f).apply {
-                    if(index>0) marginStart=dp(12)
-                })
-            }
+            row.addView(section,if(columns==3)
+                LinearLayout.LayoutParams(0,-2,1f).apply { if(index>0) marginStart=dp(12) }
+                else LinearLayout.LayoutParams(-1,-2).apply { if(index>0) topMargin=dp(12) })
         }
     }
     private fun field(parent:LinearLayout,label:String,hint:String=""):EditText {
