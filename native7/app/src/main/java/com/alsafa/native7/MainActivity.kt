@@ -410,6 +410,15 @@ class MainActivity : Activity() {
             parent.addView(this,LinearLayout.LayoutParams(-1,dp(42)).apply { bottomMargin=dp(11) })
         }
     }
+    private fun multilineField(parent:LinearLayout,label:String,hint:String=""):EditText {
+        val input=field(parent,label,hint)
+        input.inputType=InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_MULTI_LINE
+        input.gravity=Gravity.TOP or Gravity.RIGHT
+        input.minLines=3
+        input.maxLines=6
+        input.layoutParams=LinearLayout.LayoutParams(-1,dp(92)).apply { bottomMargin=dp(11) }
+        return input
+    }
     private fun select(parent:LinearLayout,label:String,options:List<String>):Spinner {
         parent.addView(text(label,11f,Color.rgb(138,123,108)).apply {
             gravity=Gravity.RIGHT
@@ -708,7 +717,7 @@ class MainActivity : Activity() {
                 mixedPayment.visibility=if(position==1) View.VISIBLE else View.GONE
             }
         }
-        field(parent,"ملاحظات","تفاصيل الضمان أو اللون أو أي ملاحظة")
+        multilineField(parent,"ملاحظات","تفاصيل الضمان أو اللون أو أي ملاحظة")
         parent.addView(text("عند وجود رقم العميل تُرسل الفاتورة تلقائياً عبر واتساب أعمال بعد الحفظ.",12f))
         listOf("خصم قاعدة الخصم","خصم إضافي يدوي","خصم الولاء","إجمالي الفاتورة","المتبقي على العميل").forEach {
             parent.addView(text("$it     —",16f))
@@ -761,8 +770,8 @@ class MainActivity : Activity() {
         select(parent,"حالة الطلب",listOf("قيد الصيانة","بانتظار القطعة","جاهز للاستلام"))
         formSection(parent,"تفاصيل الساعة والتكلفة")
         formPair(parent,{ field(it,"الماركة / نوع الساعة *","مثال: كاسيو") },{ field(it,"الموديل أو الرقم") })
-        field(parent,"العطل أو المطلوب *","مثال: تغيير بطارية وإصلاح السوار")
-        field(parent,"نتيجة الفحص أو تحديث العميل","اختياري — اكتب هنا أي مشكلة تظهر لاحقاً ليتم إرسالها للعميل")
+        multilineField(parent,"العطل أو المطلوب *","مثال: تغيير بطارية وإصلاح السوار")
+        multilineField(parent,"نتيجة الفحص أو تحديث العميل","اختياري — اكتب هنا أي مشكلة تظهر لاحقاً ليتم إرسالها للعميل")
         parent.addView(text("صورة ساعة العميل عند الاستلام",16f,gold))
         parent.addView(text("📷 الكاميرا",16f,gold).apply {
             isClickable=true
@@ -833,7 +842,7 @@ class MainActivity : Activity() {
         parent.addView(text("عملة الصيانة والتحصيل",16f))
         parent.addView(text("هي نفسها عملة الفاتورة المختارة أعلاه، وتدخل إلى صندوق العملة نفسها.",12f))
         select(parent,"حالة الدفع",listOf("عند الاستلام","مدفوع جزئياً","مدفوع بالكامل"))
-        field(parent,"ملاحظات","لون السوار، موعد التسليم، تفاصيل مهمة")
+        multilineField(parent,"ملاحظات","لون السوار، موعد التسليم، تفاصيل مهمة")
         parent.addView(text("عند وجود رقم العميل تُفتح محادثته في واتساب أعمال مع صورة الساعة ورسالة الاستلام بعد الحفظ.",12f))
         parent.addView(text("اختيار قطع الصيانة اختياري عند الاستلام. يمكنك حفظ الطلب بدون قطع، ثم بعد الفحص تحديث ما تم عمله وأجرة العمل، وإضافة القطع عند معرفتها.",12f))
         parent.addView(text("إلغاء",16f,gold).apply { isClickable=true;setOnClickListener { returnToPrevious() } })
