@@ -834,8 +834,31 @@ class MainActivity : Activity() {
         parent.addView(text("لا يوجد أي اقتراح تلقائي. اكتب ما عددته فعلياً ثم اكتب المبلغ الذي تريد تركه للغد؛ مبلغ النقل يُحسب فقط من اختيارك.",12f))
         listOf("USD","SYP","TRY").forEach { c ->
             parent.addView(text(c,18f,gold))
-            field(parent,"المبلغ المعدود فعلياً")
-            field(parent,"المبلغ الذي سيبقى للغد")
+            val counted=field(parent,"المبلغ المعدود فعلياً").apply {
+                inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
+            }
+            val carry=field(parent,"المبلغ الذي سيبقى للغد").apply {
+                inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
+            }
+            val transfer=text("المبلغ المنقول: —",15f,gold)
+            parent.addView(transfer)
+            val refresh= {
+                val actual=counted.text.toString().toBigDecimalOrNull()
+                val left=carry.text.toString().toBigDecimalOrNull()
+                transfer.text=when {
+                    actual==null || left==null -> "المبلغ المنقول: —"
+                    actual.signum()<0 || left.signum()<0 -> "تحقق من المبالغ المدخلة"
+                    left>actual -> "المبلغ المدوّر يتجاوز المبلغ المعدود"
+                    else -> "المبلغ المنقول: "+actual.subtract(left).stripTrailingZeros().toPlainString()+" "+c
+                }
+            }
+            listOf(counted,carry).forEach { edit ->
+                edit.addTextChangedListener(object:android.text.TextWatcher {
+                    override fun beforeTextChanged(s:CharSequence?,start:Int,count:Int,after:Int) {}
+                    override fun onTextChanged(s:CharSequence?,start:Int,before:Int,count:Int) { refresh() }
+                    override fun afterTextChanged(s:android.text.Editable?) {}
+                })
+            }
         }
         parent.addView(text("مطابقة شام كاش",20f,gold))
         field(parent,"رصيد شام كاش USD الفعلي")
