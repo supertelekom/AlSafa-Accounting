@@ -1657,7 +1657,7 @@ class MainActivity : Activity() {
         val tablet=resources.configuration.screenWidthDp>=720
         val landscape=resources.configuration.orientation==android.content.res.Configuration.ORIENTATION_LANDSCAPE
         val wideLandscape=resources.configuration.screenWidthDp>=1200 && landscape
-        val maxWidth=dp(if(wideLandscape) 1440 else if(tablet) 1280 else 680)
+        val maxWidth=dp(if(tablet) 1280 else 680)
         val sidebarWidth=if(sidebar) dp(if(resources.configuration.screenWidthDp>=1080) 245 else 220) else 0
         val available=width-sidebarWidth
         // v3.9.359 style.css: main padding 28px from 720px, 34px 38px from 1080px.
