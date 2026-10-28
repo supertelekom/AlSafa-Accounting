@@ -423,9 +423,9 @@ class Store(val helper:StoreDb) {
             "state" to if(clear) "AUDIT_READY_ONLY" else "AUDIT_BLOCKED",
             "sale_references" to references.getValue("state"),
             "purchase_identity_errors" to (
-                purchases.getValue("missing_ids")+
-                purchases.getValue("duplicate_ids")+
-                purchases.getValue("invalid_dates")).toString(),
+                purchases.getValue("missing_ids").toInt()+
+                purchases.getValue("duplicate_ids").toInt()+
+                purchases.getValue("invalid_dates").toInt()).toString(),
             "unresolved_online_sales" to unresolved.toString(),
             "cutover_error" to (review.exceptionOrNull()?.message ?: ""),
             "financial_activation" to "NOT_POSTED"
