@@ -724,7 +724,7 @@ class MainActivity : Activity() {
         disabledAction(parent,"⬆ استيراد آمن")
         parent.addView(text("＋ منتج",18f,gold).apply {
             isClickable=true
-            setOnClickListener { previousScreen=screen;screen="preview:إضافة منتج جديد";render() }
+            setOnClickListener { navigateTo("preview:إضافة منتج جديد") }
         })
         field(parent,"ابحث باسم المنتج أو الباركود أو REF / Model...")
         parent.addView(text("لم يتم تحميل المنتجات بعد.",15f))
