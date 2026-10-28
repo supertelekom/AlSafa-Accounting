@@ -709,7 +709,55 @@ class MainActivity : Activity() {
             override fun onTextChanged(s:CharSequence?,start:Int,before:Int,count:Int) { update() }
             override fun afterTextChanged(s:android.text.Editable?) {}
         })
-        parent.addView(text("الأرشيف غير متصل بالبيانات بعد؛ لا يمكن الاستنتاج أن الفواتير غير موجودة.",14f))
+        if(repair) {
+            val entries=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL }
+            parent.addView(entries)
+            val refresh= {
+                entries.removeAllViews()
+                try {
+                    val rows=repairStore.list()
+                    var shown=0
+                    for(i in 0 until rows.length()) {
+                        val item=rows.getJSONObject(i)
+                        val payload=item.getJSONObject("payload")
+                        val values=payload.optJSONArray("form_texts")
+                        val name=values?.optString(2).orEmpty()
+                        val watch=values?.optString(4).orEmpty()
+                        val phone=values?.optString(3).orEmpty()
+                        val dateValue=values?.optString(0).orEmpty()
+                        val query=search.text.toString().trim()
+                        if(query.isEmpty() && dateValue!=date.text.toString()) continue
+                        if(query.isNotEmpty() && !listOf(name,watch,phone,item.getLong("id").toString()).any { it.contains(query,true) }) continue
+                        shown++
+                        val id=item.getLong("id")
+                        entries.addView(text("#$id — $name — $watch — $dateValue — "+item.getString("status"),15f))
+                        if(item.isNull("delivered_at")) {
+                            entries.addView(text("تسليم",15f,gold).apply {
+                                isClickable=true
+                                setOnClickListener {
+                                    android.app.AlertDialog.Builder(this@MainActivity)
+                                        .setMessage("تأكيد تسليم طلب الصيانة رقم $id؟ لا يتم تسجيل قبض تلقائي.")
+                                        .setNegativeButton("إلغاء",null)
+                                        .setPositiveButton("تأكيد"){ _,_ ->
+                                            try { repairStore.deliver(id); render() }
+                                            catch(e:Exception) { android.widget.Toast.makeText(this@MainActivity,e.message,android.widget.Toast.LENGTH_LONG).show() }
+                                        }.show()
+                                }
+                            })
+                        }
+                    }
+                    if(shown==0) entries.addView(text("لا توجد طلبات مطابقة للبحث.",14f))
+                } catch(e:Exception) { entries.addView(text("تعذر قراءة طلبات الصيانة: "+e.message,14f)) }
+            }
+            refresh()
+            val watcher=object:android.text.TextWatcher {
+                override fun beforeTextChanged(s:CharSequence?,start:Int,count:Int,after:Int) {}
+                override fun onTextChanged(s:CharSequence?,start:Int,before:Int,count:Int) { refresh() }
+                override fun afterTextChanged(s:android.text.Editable?) {}
+            }
+            search.addTextChangedListener(watcher)
+            date.addTextChangedListener(watcher)
+        } else parent.addView(text("الأرشيف غير متصل بالبيانات بعد؛ لا يمكن الاستنتاج أن الفواتير غير موجودة.",14f))
     }
     private fun expenseFormPreview(parent:LinearLayout) {
         parent.addView(text("تسجيل مصروف",26f,gold))
