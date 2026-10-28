@@ -443,6 +443,10 @@ object LegacySnapshotImport {
                     "legacy_id" to (i.toString()+":"+original.getString("id").trim()),
                     "payload" to original.toString())
             }
+            require(store.scalar("SELECT count(*) FROM repairs")==repairs.length().toLong() &&
+                store.scalar("SELECT count(*) FROM legacy_records WHERE category='repairs'")==repairs.length().toLong()) {
+                "عدد فواتير الصيانة المستعادة لا يطابق الأرشيف الأصلي"
+            }
             // Preserve historical financial records verbatim for accurate later ledger
             // reconstruction. They are NOT booked as new income or cash movements.
             // Archive every other array from the original backup, including
