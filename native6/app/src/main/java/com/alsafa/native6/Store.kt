@@ -2347,6 +2347,36 @@ class Store(val helper:StoreDb) {
         insert("refunds","event_id" to command,"invoice_id" to invoiceId,"amount" to amount,"vault" to v);post(command,listOf(Posting("refund:$invoiceId",inv.currency,amount),Posting("cash:$v",inv.currency,-amount)))
     }
     fun addSupplier(name:String,phone:String):String=transaction { require(name.isNotBlank());val id=id();insert("suppliers","id" to id,"name" to name,"phone" to phone);id }
+    /** Original supplier evidence remains separate from newly posted native debt. */
+    fun restoredSupplierStatement(supplierId:String):Map<String,Any> {
+        require(scalar("SELECT count(*) FROM suppliers WHERE id=?",supplierId)==1L) {
+            "المورد غير موجود"
+        }
+        val source=rows("SELECT payload FROM legacy_records WHERE category='source_suppliers' AND legacy_id=?",supplierId)
+            .singleOrNull()?.get("payload")?.let { JSONObject(it) }
+        val purchases=legacyRows("purchases").map { JSONObject(it.getValue("payload")) }
+            .filter { it.optString("supplierId")==supplierId }
+        val ledger=legacyRows("supplierLedger").map { JSONObject(it.getValue("payload")) }
+            .filter { it.optString("supplierId")==supplierId }
+        val payments=legacyRows("payments").map { JSONObject(it.getValue("payload")) }
+            .filter { it.optString("referenceType")=="supplier" && it.optString("referenceId")==supplierId }
+        val ids=HashSet<String>()
+        for(record in purchases+ledger+payments) {
+            val id=record.optString("id")
+            require(id.isNotBlank() && ids.add(id)) { "معرف حركة مورد قديمة مفقود أو مكرر" }
+        }
+        return mapOf(
+            "supplier_id" to supplierId,
+            "source" to (source?.toString() ?: ""),
+            "purchases" to purchases.map { it.toString() },
+            "ledger" to ledger.map { it.toString() },
+            "payments" to payments.map { it.toString() },
+            "native_USD_due" to supplierDue(supplierId,Currency.USD),
+            "native_TRY_due" to supplierDue(supplierId,Currency.TRY),
+            "native_SYP_due" to supplierDue(supplierId,Currency.SYP),
+            "historical_posted_to_native" to false
+        )
+    }
     fun supplierLedgerBreakdown(supplier:String,c:Currency):List<Map<String,String>> = rows("SELECT e.date,e.kind,e.id event_id,coalesce(sum(j.amount),0) amount FROM journal j JOIN events e ON e.id=j.event_id WHERE j.account=? AND j.currency=? GROUP BY e.id,e.date,e.kind ORDER BY e.date,e.created,e.id","payable:$supplier",c.name)
     fun supplierLedgerWithBalances(supplier:String,c:Currency):List<Map<String,String>> {
         require(scalar("SELECT count(*) FROM suppliers WHERE id=?",supplier)==1L){"المورد غير موجود"}
