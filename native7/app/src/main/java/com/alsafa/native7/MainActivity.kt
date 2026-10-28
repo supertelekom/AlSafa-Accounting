@@ -456,6 +456,27 @@ class MainActivity : Activity() {
         parent.addView(text("القيمة الإجمالية التقريبية: —",16f))
         parent.addView(text("سجلات الديون غير متصلة بالبيانات بعد.",14f))
     }
+    private fun partnersPreview(parent:LinearLayout) {
+        parent.addView(text("الشركاء والسحوبات",26f,gold))
+        parent.addView(text("أرباح الفترة وسحوباتها مع المستحق المتراكم لكل شريك.",14f))
+        field(parent,"شهر التقرير","YYYY-MM")
+        field(parent,"من تاريخ","YYYY-MM-DD")
+        field(parent,"إلى تاريخ","YYYY-MM-DD")
+        parent.addView(text("الحصص والمستحقات",21f,gold))
+        parent.addView(text("لم تُستورد أسماء الشركاء وحصصهم من النسخة الأصلية بعد.",14f))
+        listOf("حصة الفترة","سحوبات الفترة","الفرق خلال الفترة","الرصيد المتراكم حتى اليوم").forEach { parent.addView(text("$it    —",15f)) }
+        disabledAction(parent,"تسجيل سحب")
+        parent.addView(text("لا يُحسب أي ربح أو سحب دون البيانات الفعلية وتواريخ العمليات.",12f))
+    }
+    private fun reportsPreview(parent:LinearLayout) {
+        parent.addView(text("التقارير",26f,gold))
+        field(parent,"من تاريخ","YYYY-MM-DD")
+        field(parent,"إلى تاريخ","YYYY-MM-DD")
+        listOf("المبيعات","الصيانة","المصاريف","المرتجعات","الربح الصافي").forEach {
+            parent.addView(text("$it    —",17f))
+        }
+        parent.addView(text("لا توجد حسابات فعلية في معاينة الواجهة.",12f))
+    }
     private fun render() {
         val root=LinearLayout(this).apply {
             orientation=LinearLayout.VERTICAL; layoutDirection=View.LAYOUT_DIRECTION_RTL
@@ -546,6 +567,8 @@ class MainActivity : Activity() {
             "preview:الخزائن والأرصدة" -> vaultsPreview(body)
             "preview:الديون" -> debtsPreview(body)
             "preview:قبض دين" -> debtsPreview(body)
+            "preview:الشركاء والسحوبات" -> partnersPreview(body)
+            "preview:التقارير" -> reportsPreview(body)
             "preview:تسليم الوردية" -> handoverPreview(body)
             "preview:صيانة سريعة" -> quickRepairPreview(body)
             "preview:تسليم الساعات" -> deliveryPreview(body)
