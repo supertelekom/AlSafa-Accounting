@@ -590,7 +590,7 @@ class MainActivity : Activity() {
                     }
                     android.app.AlertDialog.Builder(this@MainActivity)
                         .setView(photo)
-                        .setPositiveButton("إغلاق"){ dialog,_ -> dialog.dismiss() }
+                        .setPositiveButton("✕ إغلاق"){ dialog,_ -> dialog.dismiss() }
                         .show()
                 }
             })
