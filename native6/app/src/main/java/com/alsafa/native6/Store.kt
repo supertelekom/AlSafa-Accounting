@@ -60,6 +60,30 @@ class Store(val helper:StoreDb) {
     }
     /** Read a restored invoice as source data, never as a newly posted native sale. */
     /** Reconcile legacy return eligibility without altering historical or native ledgers. */
+    /** Source-side reconciliation only; never infer missing cost or replay old stock. */
+    fun legacySaleLineAudit(sourceId:String):List<Map<String,String>> {
+        val sale=restoredSaleById(sourceId) ?: throw IllegalArgumentException("الفاتورة القديمة غير موجودة")
+        val lines=sale.optJSONArray("items") ?: return emptyList()
+        val result=mutableListOf<Map<String,String>>()
+        for(i in 0 until lines.length()) {
+            val line=lines.optJSONObject(i)
+            if(line==null) {
+                result.add(mapOf("line" to i.toString(),"valid" to "false","reason" to "سطر غير صالح"))
+                continue
+            }
+            val qtyText=line.optString("qty").ifBlank { line.optString("quantity") }
+            val qty=qtyText.toBigDecimalOrNull()
+            val costText=line.optString("cost").ifBlank { line.optString("unitCost") }
+            val cost=costText.toBigDecimalOrNull()
+            val valid=qty!=null && qty>java.math.BigDecimal.ZERO &&
+                cost!=null && cost>=java.math.BigDecimal.ZERO
+            result.add(mapOf("line" to i.toString(),
+                "name" to line.optString("name").ifBlank { line.optString("productName") },
+                "quantity" to qtyText,"cost" to costText,"valid" to valid.toString(),
+                "reason" to if(valid) "" else "كمية أو تكلفة أصلية غير مثبتة"))
+        }
+        return result
+    }
     fun legacyReturnEligibility(sourceId:String):Map<String,String> {
         val source=restoredSaleById(sourceId)
             ?: throw IllegalArgumentException("الفاتورة القديمة غير موجودة")
