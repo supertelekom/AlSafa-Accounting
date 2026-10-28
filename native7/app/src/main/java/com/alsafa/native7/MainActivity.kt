@@ -45,6 +45,7 @@ class MainActivity : Activity() {
     private var repairDraftTexts:List<String>? = null
     private var repairDraftSelections:List<Int>? = null
     private var repairDraftScreen:String? = null
+    private val repairStore by lazy { RepairStore(this) }
 
     private fun walkForm(view:View,edit:(EditText)->Unit,spin:(Spinner)->Unit) {
         when(view) {
@@ -614,7 +615,7 @@ class MainActivity : Activity() {
         })
         parent.addView(text("حذف الصورة",16f,gold).apply {
             isClickable=true
-            setOnClickListener { snapshotRepairDraft();repairPhotoUri=null;repairCameraPreview=null;render();restoreRepairDraft() }
+            setOnClickListener { snapshotRepairDraft();repairPhotoUri=null;render();restoreRepairDraft() }
         })
         repairPhotoUri?.let { uri ->
             parent.addView(android.widget.ImageView(this).apply {
@@ -645,8 +646,30 @@ class MainActivity : Activity() {
         field(parent,"ملاحظات","لون السوار، موعد التسليم، تفاصيل مهمة")
         parent.addView(text("عند وجود رقم العميل تُفتح محادثته في واتساب أعمال مع صورة الساعة ورسالة الاستلام بعد الحفظ.",12f))
         parent.addView(text("اختيار قطع الصيانة اختياري عند الاستلام. يمكنك حفظ الطلب بدون قطع، ثم بعد الفحص تحديث ما تم عمله وأجرة العمل، وإضافة القطع عند معرفتها.",12f))
-        disabledAction(parent,"حفظ طلب الصيانة")
-        parent.addView(text("معاينة واجهة فقط — لا يتم حفظ طلبات أو صور.",12f))
+        parent.addView(text("حفظ طلب الصيانة",18f,gold).apply {
+            background=panel(Color.rgb(239,228,208),12)
+            isClickable=true
+            setOnClickListener {
+                snapshotRepairDraft()
+                val values=repairDraftTexts ?: emptyList()
+                val customer=values.getOrNull(2)?.trim().orEmpty()
+                val watch=values.getOrNull(4)?.trim().orEmpty()
+                if(customer.isBlank() || watch.isBlank()) {
+                    android.widget.Toast.makeText(this@MainActivity,"تحقق من بيانات العميل والساعة",android.widget.Toast.LENGTH_LONG).show()
+                } else try {
+                    val payload=org.json.JSONObject().apply {
+                        put("form_texts",org.json.JSONArray(values))
+                        put("form_selections",org.json.JSONArray(repairDraftSelections ?: emptyList<Int>()))
+                    }
+                    val photo=repairPhotoUri?.toString()
+                    val id=repairStore.save(payload,photo,"قيد الصيانة")
+                    android.widget.Toast.makeText(this@MainActivity,"تم حفظ طلب الصيانة رقم $id محلياً",android.widget.Toast.LENGTH_LONG).show()
+                } catch(e:Exception) {
+                    android.widget.Toast.makeText(this@MainActivity,"فشل حفظ الطلب: "+e.message,android.widget.Toast.LENGTH_LONG).show()
+                }
+            }
+        })
+        parent.addView(text("يتم حفظ الطلب محلياً. لا يتم تسجيل قبض أو أرباح عند الاستلام.",12f))
     }
     private fun invoiceArchivePreview(parent:LinearLayout,repair:Boolean) {
         parent.addView(text(if(repair) "قسم الصيانة" else "المبيعات والفواتير",26f,gold))
