@@ -282,19 +282,57 @@ class MainActivity : Activity() {
         parent.addView(text("هذه قائمة غير متصلة بالبيانات بعد، ولا تعكس حالة الساعات الفعلية.",12f))
     }
     private fun fullSalePreview(parent:LinearLayout) {
-        parent.addView(text("مبيع",26f,gold))
-        parent.addView(text("واجهة المبيع الكامل — نقل تدريجي من التطبيق الأصلي",14f))
-        field(parent,"اسم العميل","")
-        field(parent,"رقم الهاتف","")
-        parent.addView(text("الأصناف",20f,gold))
-        field(parent,"بحث عن صنف","الاسم أو الموديل أو الباركود")
-        parent.addView(text("لا توجد أصناف مضافة للفاتورة",14f))
-        parent.addView(text("المبلغ الإجمالي",18f,gold))
-        parent.addView(text("—",20f))
-        parent.addView(text("القبض",20f,gold))
-        finalAmountCurrency(parent,"USD")
-        paymentChoices(parent)
-        parent.addView(text("معاينة فقط — الحفظ غير متاح.",13f))
+        parent.addView(text("فاتورة مبيعات",26f,gold))
+        parent.addView(text("اختر من المنتجات أو امسح الباركود بالكاميرا لإضافة الساعة فوراً.",14f))
+        parent.addView(text("قائمة الفواتير",15f,gold).apply { isClickable=true;setOnClickListener { previousScreen=screen;screen="preview:المبيعات والفواتير";render() } })
+        parent.addView(text("بيانات الفاتورة",21f,gold))
+        select(parent,"نوع البيع *",listOf("بيع من المحل","بيع أونلاين"))
+        parent.addView(text("الأونلاين يخرج من المخزون فوراً، والمال يدخل الخزنة فقط عند التحصيل.",12f))
+        field(parent,"التاريخ *","YYYY-MM-DD").inputType=InputType.TYPE_CLASS_DATETIME
+        field(parent,"الوقت *","HH:MM").inputType=InputType.TYPE_CLASS_DATETIME
+        select(parent,"عملة البيع / القبض *",listOf("USD","TRY","SYP"))
+        select(parent,"طريقة الدفع *",listOf("نقدي","شام كاش"))
+        field(parent,"اسم العميل","مهم للضمان والفاتورة")
+        field(parent,"رقم واتساب العميل","مثال: 09xxxxxxxx").inputType=InputType.TYPE_CLASS_PHONE
+        select(parent,"مدة الضمان",listOf("بدون ضمان","3 أشهر","6 أشهر","سنة","سنتان"))
+        parent.addView(text("إضافة من المخزون",21f,gold))
+        field(parent,"بحث سريع عن المنتج","اكتب جزءاً من الاسم أو REF أو الرقم أو الباركود")
+        select(parent,"اختر المنتج",listOf("لا توجد منتجات محمّلة بعد"))
+        disabledAction(parent,"＋ إضافة المنتج")
+        field(parent,"الباركود","امسح أو اكتب باركود الساعة")
+        disabledAction(parent,"⌁ قراءة بالكاميرا")
+        disabledAction(parent,"إضافة بالباركود")
+        parent.addView(text("عند العثور على الباركود يضاف المنتج بسعره وبياناته المحفوظة تلقائياً.",12f))
+        parent.addView(text("أصناف الفاتورة",21f,gold))
+        parent.addView(text("لا توجد أصناف مضافة",14f))
+        disabledAction(parent,"＋ إضافة صنف يدوي")
+        parent.addView(text("الدفع والإرسال",21f,gold))
+        select(parent,"حالة الدفع",listOf("مدفوع بالكامل","مدفوع جزئياً","عند الاستلام"))
+        select(parent,"قاعدة الخصم",listOf("بدون قاعدة خصم"))
+        disabledAction(parent,"＋ إنشاء قاعدة خصم")
+        field(parent,"خصم الفاتورة اليدوي","0").inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
+        field(parent,"نقاط الولاء المستخدمة","0").apply { isEnabled=false }
+        parent.addView(text("برنامج الولاء لم يُربط بعد.",12f))
+        field(parent,"نسبة الضريبة %","0").inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
+        select(parent,"نوع القبض",listOf("عملة واحدة","دفع مختلط (أكثر من عملة)"))
+        field(parent,"المبلغ المقبوض الآن","0").inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
+        parent.addView(text("المبالغ المقبوضة فعلياً — عند الدفع المختلط",16f,gold))
+        listOf("USD","TRY","SYP").forEach { field(parent,it,"0").inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL }
+        field(parent,"ملاحظات","تفاصيل الضمان أو اللون أو أي ملاحظة")
+        parent.addView(text("عند وجود رقم العميل تُرسل الفاتورة تلقائياً عبر واتساب أعمال بعد الحفظ.",12f))
+        listOf("خصم قاعدة الخصم","خصم إضافي يدوي","خصم الولاء","إجمالي الفاتورة","المتبقي على العميل").forEach {
+            parent.addView(text("$it     —",16f))
+        }
+        disabledAction(parent,"حفظ الفاتورة")
+        parent.addView(text("هذه معاينة حقول فقط. الحفظ والحسابات وإرسال واتساب غير متاحة.",12f))
+    }
+    private fun disabledAction(parent:LinearLayout,label:String) {
+        val action=text(label,16f,gold).apply {
+            background=panel(Color.rgb(239,228,208),12)
+            setOnClickListener { android.widget.Toast.makeText(this@MainActivity,"هذه الوظيفة غير مفعلة في معاينة Native 7",android.widget.Toast.LENGTH_SHORT).show() }
+            isClickable=true
+        }
+        parent.addView(action,LinearLayout.LayoutParams(-1,dp(49)).apply { bottomMargin=dp(8) })
     }
     private fun render() {
         val root=LinearLayout(this).apply {
