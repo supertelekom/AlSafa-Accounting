@@ -166,6 +166,39 @@ class MainActivity : Activity() {
         parent.addView(text("تأكيد التسليم والاستلام",18f,gold))
         parent.addView(text("معاينة شكلية فقط — لا يتم تسجيل تسليم.",12f))
     }
+    private fun quickRepairPreview(parent:LinearLayout) {
+        parent.addView(text("صيانة سريعة",26f,gold))
+        parent.addView(text("اضغط على الخدمة ثم اختر الدفع والعملة.",14f))
+        actionGrid(parent,listOf(
+            Triple("بطارية","50 ليرة","🔋"),
+            Triple("بطارية","70 ليرة","🔋"),
+            Triple("بطارية","100 ليرة","🔋"),
+            Triple("بطارية","150 ليرة","🔋"),
+            Triple("حزام بلاستك","100 ليرة","⌚"),
+            Triple("حزام جلد","250 ليرة","⌚"),
+            Triple("قفل ساعة جلد","30 ليرة","🔗"),
+            Triple("قفل ساعة قلاب","70 ليرة","🔗"),
+            Triple("صيانة مشكلة","مبلغ يدوي","🛠️")
+        ),false)
+        parent.addView(text("اختر خدمة من الأعلى",16f))
+        parent.addView(text("2  حالة تسليم الساعة",20f,gold))
+        select(parent,"حالة التسليم",listOf("تم تسليم الساعة","ترك الساعة لدينا"))
+        field(parent,"اسم العميل *","إذا بقيت الساعة لدينا")
+        field(parent,"رقم الهاتف","اختياري")
+        parent.addView(text("3  مبلغ الصيانة النهائي",20f,gold))
+        field(parent,"المبلغ النهائي","")
+        select(parent,"عملة الصيانة",listOf("TRY","USD","SYP"))
+        parent.addView(text("4  طريقة الدفع",20f,gold))
+        select(parent,"طريقة الدفع",listOf("💵 نقدي","📱 شام كاش"))
+        parent.addView(text("✓ إتمام العملية",19f,gold))
+        parent.addView(text("معاينة شكلية فقط — لا يتم حفظ صيانة أو خصم قطع.",12f))
+    }
+    private fun deliveryPreview(parent:LinearLayout) {
+        parent.addView(text("تسليم الساعات",26f,gold))
+        parent.addView(text("الساعات الجاهزة أو المتبقية لدينا بانتظار العميل.",14f))
+        parent.addView(text("لا توجد ساعات في قائمة الانتظار حالياً.",16f))
+        parent.addView(text("معاينة شكلية فقط — لم تُربط قاعدة البيانات بعد.",12f))
+    }
     private fun render() {
         val root=LinearLayout(this).apply {
             orientation=LinearLayout.VERTICAL; layoutDirection=View.LAYOUT_DIRECTION_RTL
@@ -242,6 +275,8 @@ class MainActivity : Activity() {
             }
             "preview:مبيع" -> salePreview(body)
             "preview:تسليم الوردية" -> handoverPreview(body)
+            "preview:صيانة سريعة" -> quickRepairPreview(body)
+            "preview:تسليم الساعات" -> deliveryPreview(body)
             else -> {
                 body.addView(text(screen.removePrefix("preview:"),23f,gold))
                 body.addView(text("واجهة قيد المطابقة مع التطبيق القديم — لا توجد عمليات حفظ في هذه النسخة.",15f))
