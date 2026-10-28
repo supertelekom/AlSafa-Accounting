@@ -1316,9 +1316,16 @@ class Store(val helper:StoreDb) {
     fun legacyOnlineCostPreview():List<Map<String,String>> {
         val settlements=legacySettlementIndex()
         return legacyRows("sales").mapNotNull { row ->
-            val source=JSONObject(row.getValue("payload"))
+            legacyOnlineCostForSale(JSONObject(row.getValue("payload")),settlements)
+        }
+    }
+
+    private fun legacyOnlineCostForSale(
+        source:JSONObject,settlements:LegacySettlementIndex
+    ):Map<String,String>? {
+
             val due=reconciledLegacySaleDue(source,settlements)
-            if(due==0L) return@mapNotNull null
+            if(due==0L) return null
             require(source.optString("paymentStatus").trim() !in
                 setOf("مدفوع بالكامل","مسوّاة/مسترجعة","ملغاة","مسترجعة")) {
                 "حالة الفاتورة القديمة تشير إلى تسوية أو إلغاء رغم وجود ذمة"
@@ -1378,7 +1385,6 @@ class Store(val helper:StoreDb) {
                 "estimated_pending_cost_minor" to pendingCost.toString(),
                 "estimated_pending_profit_minor" to Math.subtractExact(due,pendingCost).toString(),
                 "basis_state" to "PREVIEW_REQUIRES_RETURN_AND_PAYMENT_AUDIT")
-        }
     }
 
     /**
@@ -1392,8 +1398,6 @@ class Store(val helper:StoreDb) {
         require(brokenReferences.isEmpty()) {
             "حركات قبض أو مرتجعات تشير إلى فواتير غير موجودة: "+brokenReferences.size
         }
-        val costRows=runCatching { legacyOnlineCostPreview() }
-        val costById=costRows.getOrNull()?.associateBy { it.getValue("source_id") }
         return legacyRows("sales").map { row ->
             val source=JSONObject(row.getValue("payload"))
             val ref=source.optString("id")
@@ -1405,11 +1409,19 @@ class Store(val helper:StoreDb) {
                 onSuccess={ due ->
                     if(due==0L) base+mapOf("state" to "CLOSED","remaining_minor" to "0")
                     else {
-                        val cost=costById?.get(ref)
-                        if(cost!=null) base+cost+mapOf("state" to "COST_REVIEW")
-                        else base+mapOf("state" to "NEEDS_COST_AUDIT",
-                            "remaining_minor" to due.toString(),
-                            "reason" to (costRows.exceptionOrNull()?.message ?: "Cost basis unavailable"))
+                        val cost=runCatching { legacyOnlineCostForSale(source,settlements) }
+                        cost.fold(
+                            onSuccess={ details ->
+                                if(details==null) base+mapOf("state" to "NEEDS_COST_AUDIT",
+                                    "remaining_minor" to due.toString())
+                                else base+details+mapOf("state" to "COST_REVIEW")
+                            },
+                            onFailure={ error ->
+                                base+mapOf("state" to "NEEDS_COST_AUDIT",
+                                    "remaining_minor" to due.toString(),
+                                    "reason" to (error.message ?: "Cost basis unavailable"))
+                            }
+                        )
                     }
                 },
                 onFailure={ error ->
