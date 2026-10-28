@@ -26,6 +26,17 @@ class MainActivity : Activity() {
     private var screen = "chooser"
     private var previousScreen = "chooser"
     private val navigationHistory=mutableListOf<String>()
+    private fun navigateTo(target:String) {
+        if(target==screen) return
+        navigationHistory.add(screen)
+        screen=target
+        render()
+    }
+    private fun returnToPrevious() {
+        screen=if(navigationHistory.isNotEmpty()) navigationHistory.removeAt(navigationHistory.lastIndex)
+            else if(screen.startsWith("preview:")) previousScreen else "chooser"
+        render()
+    }
     private var selectedQuickRepair: String? = null
     private var repairPhotoUri:android.net.Uri? = null
     private var selectedQuickPrice: Int? = null
