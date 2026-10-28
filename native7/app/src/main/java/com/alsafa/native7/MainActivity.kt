@@ -39,7 +39,7 @@ class MainActivity : Activity() {
     }
     private var selectedQuickRepair: String? = null
     private var repairPhotoUri:android.net.Uri? = null
-    private var repairCameraPreview:android.graphics.Bitmap? = null
+    private var pendingCameraPath:String? = null
     private var cameraPreviewPath:String? = null
     private var selectedQuickPrice: Int? = null
     private var activeRoot:View? = null
@@ -97,22 +97,24 @@ class MainActivity : Activity() {
         repairDraftScreen=savedInstanceState?.getString("repairDraftScreen")
         repairDraftTexts=savedInstanceState?.getStringArrayList("repairDraftTexts")
         repairDraftSelections=savedInstanceState?.getIntegerArrayList("repairDraftSelections")
+        pendingCameraPath=savedInstanceState?.getString("pendingCameraPath")
+        cameraPreviewPath=savedInstanceState?.getString("cameraPreviewPath")
         render()
         restoreRepairDraft()
     }
     @Deprecated("Deprecated in Java")
     override fun onActivityResult(requestCode:Int,resultCode:Int,data:android.content.Intent?) {
         super.onActivityResult(requestCode,resultCode,data)
-        if(requestCode==702 && resultCode==Activity.RESULT_OK) {
-            @Suppress("DEPRECATION")
-            val thumbnail=data?.extras?.get("data") as? android.graphics.Bitmap
-            if(thumbnail!=null) {
+        if(requestCode==702) {
+            val pending=pendingCameraPath
+            pendingCameraPath=null
+            if(resultCode==Activity.RESULT_OK && pending!=null && java.io.File(pending).length()>0L) {
                 snapshotRepairDraft()
-                repairCameraPreview=thumbnail
-                repairPhotoUri=null
+                repairPhotoUri=android.net.Uri.fromFile(java.io.File(pending))
+                cameraPreviewPath=pending
                 render()
                 restoreRepairDraft()
-            }
+            } else if(pending!=null) java.io.File(pending).delete()
         }
         if(requestCode==701 && resultCode==Activity.RESULT_OK) {
             val uri=data?.data
@@ -126,7 +128,7 @@ class MainActivity : Activity() {
                 }
                 snapshotRepairDraft()
                 repairPhotoUri=uri
-                repairCameraPreview=null
+                cameraPreviewPath=null
                 render()
                 restoreRepairDraft()
             }
@@ -141,6 +143,8 @@ class MainActivity : Activity() {
         outState.putString("previousScreen",previousScreen)
         outState.putStringArrayList("navigationHistory",ArrayList(navigationHistory))
         outState.putString("repairPhotoUri",repairPhotoUri?.toString())
+        outState.putString("pendingCameraPath",pendingCameraPath)
+        outState.putString("cameraPreviewPath",cameraPreviewPath)
         super.onSaveInstanceState(outState)
     }
     @Deprecated("Deprecated in Java")
@@ -579,9 +583,17 @@ class MainActivity : Activity() {
             isClickable=true
             setOnClickListener {
                 snapshotRepairDraft()
-                val camera=android.content.Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE)
-                if(camera.resolveActivity(packageManager)!=null) startActivityForResult(camera,702)
-                else android.widget.Toast.makeText(this@MainActivity,"الكاميرا غير متاحة",android.widget.Toast.LENGTH_SHORT).show()
+                val photo=java.io.File.createTempFile("repair_", ".jpg",filesDir)
+                pendingCameraPath=photo.absolutePath
+                val camera=android.content.Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE).apply {
+                    putExtra(android.provider.MediaStore.EXTRA_OUTPUT,android.net.Uri.fromFile(photo))
+                }
+                try { startActivityForResult(camera,702) }
+                catch(e:Exception) {
+                    pendingCameraPath=null
+                    photo.delete()
+                    android.widget.Toast.makeText(this@MainActivity,"تعذر تشغيل الكاميرا",android.widget.Toast.LENGTH_SHORT).show()
+                }
             }
         })
         parent.addView(text("🖼️ اختيار من الاستوديو",16f,gold).apply {
@@ -598,25 +610,6 @@ class MainActivity : Activity() {
             isClickable=true
             setOnClickListener { snapshotRepairDraft();repairPhotoUri=null;repairCameraPreview=null;render();restoreRepairDraft() }
         })
-        repairCameraPreview?.let { bitmap ->
-            parent.addView(android.widget.ImageView(this).apply {
-                setImageBitmap(bitmap)
-                adjustViewBounds=true
-                maxHeight=dp(200)
-                isClickable=true
-                setOnClickListener {
-                    val photo=android.widget.ImageView(this@MainActivity).apply {
-                        setImageBitmap(bitmap)
-                        adjustViewBounds=true
-                        scaleType=android.widget.ImageView.ScaleType.FIT_CENTER
-                    }
-                    android.app.AlertDialog.Builder(this@MainActivity)
-                        .setView(photo)
-                        .setPositiveButton("✕ إغلاق"){ dialog,_ -> dialog.dismiss() }
-                        .show()
-                }
-            })
-        }
         repairPhotoUri?.let { uri ->
             parent.addView(android.widget.ImageView(this).apply {
                 setImageURI(uri)
