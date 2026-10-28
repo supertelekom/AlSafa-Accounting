@@ -73,7 +73,7 @@ class Store(val helper:StoreDb) {
             val item=JSONObject(row.getValue("payload"))
             mapOf("archive_key" to row.getValue("legacy_id"),
                 "source_id" to item.optString("id"),
-                "invoice_no" to item.optString("invoiceNo"),
+                "invoice_no" to if(kind=="sales") item.optString("invoiceNo") else item.optString("supplierInvoice"),
                 "date" to item.optString("date"),
                 "currency" to item.optString("currency"),
                 "total" to item.optString("total"),
@@ -187,17 +187,13 @@ class Store(val helper:StoreDb) {
         return mapOf(
             "archive_key" to archiveKey,
             "source_id" to original.optString("id"),
-            "invoice_no" to original.optString("invoiceNo"),
+            "invoice_no" to if(kind=="sales") original.optString("invoiceNo") else original.optString("supplierInvoice"),
             "date" to original.optString("date"),
             "currency" to original.optString("currency"),
             "total" to original.optString("total"),
             "paid_source_field" to original.optString("paid"),
-            "customer" to original.optString("customerName").ifBlank {
-                original.optString("customer")
-            },
-            "phone" to original.optString("customerPhone").ifBlank {
-                original.optString("phone")
-            },
+            "customer" to original.optString("customer"),
+            "phone" to original.optString("phone"),
             "supplier_id" to original.optString("supplierId"),
             "item_count" to (lines?.length() ?: 0).toString(),
             "items_json" to (lines?.toString() ?: "[]"),
@@ -344,7 +340,7 @@ class Store(val helper:StoreDb) {
         return mapOf(
             "archive_key" to archived.getValue("legacy_id"),
             "source_id" to sourceId,
-            "invoice_no" to source.optString("invoiceNo"),
+            "invoice_no" to if(kind=="sales") source.optString("invoiceNo") else source.optString("supplierInvoice"),
             "date" to source.optString("date"),
             "currency" to source.optString("currency"),
             "total" to source.optString("total"),
