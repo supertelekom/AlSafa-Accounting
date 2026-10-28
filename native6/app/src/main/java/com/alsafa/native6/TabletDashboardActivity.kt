@@ -138,36 +138,29 @@ class TabletDashboardActivity : Activity() {
         scroll.addView(content)
         when (mode) {
             "home" -> {
-                content.addView(title("مرحباً بك في الصفا", 25f))
-                content.addView(title("اختر طريقة العمل المناسبة للوردية", 16f))
+                content.addView(title("ALSAFA WATCHES", 13f, gold))
+                content.addView(title("كيف تريد أن تبدأ؟", 25f))
+                content.addView(title("اختر بيئة العمل المناسبة، أو افتح مستشار اختيار الساعة أمام العميل.", 15f))
                 val row = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
                 content.addView(row, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(22) })
-                row.addView(tile("الوضع المبسط", "المبيع والصيانة والفواتير والإقفال", "⚡") {
+                row.addView(tile("الوضع المبسط", "بيع وصيانة وتسليم سريع", "⚡") {
                     mode = "simple"; render()
                 }, LinearLayout.LayoutParams(0, dp(144), 1f).apply { marginEnd = dp(12) })
-                row.addView(tile("الوضع الكامل", "المخزون والمحاسبة والموردون والتقارير", "◆") {
+                row.addView(tile("الوضع الكامل", "الإدارة والمخزون والحسابات", "◆") {
                     mode = "advanced"; render()
                 }, LinearLayout.LayoutParams(0, dp(144), 1f))
-                content.addView(title("وصول سريع", 21f, gold))
-                grid(content, listOf(
-                    Triple("المبيع", "فاتورة جديدة", "sale"),
-                    Triple("الصيانة", "استلام وتسليم", "repairs"),
-                    Triple("المنتجات", "الأصناف والمخزون", "products"),
-                    Triple("قطع الصيانة", "القطع والباركود والكميات", "maintenance-parts"),
-                    Triple("الفواتير", "سجل المبيع والصيانة", "invoices"),
-                    Triple("الموردون والمشتريات", "المشتريات والذمم", "suppliers"),
-                    Triple("الإقفال اليومي", "الخزنات والأرصدة", "vaults"),
-                    Triple("قارئ الباركود", "قراءة بكاميرا الجهاز", "barcode")
-                ))
+                content.addView(tile("ساعدني أختار ساعتي", "اختيارات من الساعات المتوفرة فعلياً الآن", "✦") {
+                    open("watch-advisor")
+                }, LinearLayout.LayoutParams(-1, dp(112)).apply { topMargin = dp(14) })
             }
             "simple" -> {
                 content.addView(title("العمل السريع", 25f, gold))
+                content.addView(title("اختر العملية فقط.", 15f))
                 grid(content, listOf(
-                    Triple("مبيع", "إصدار فاتورة", "sale"),
-                    Triple("الصيانة", "استلام وتسليم", "repairs"),
-                    Triple("قطع الصيانة", "البحث عن القطع والمخزون", "maintenance-parts"),
-                    Triple("الفواتير", "القبض والمرتجعات", "invoices"),
-                    Triple("الخزنات", "الإقفال اليومي", "vaults")
+                    Triple("مبيع", "بيع سريع", "simple-sale"),
+                    Triple("صيانة سريعة", "استلام أو تسليم مباشر", "repairs"),
+                    Triple("تسليم الساعات", "الساعات التي بقيت لدينا", "repairs"),
+                    Triple("تسليم الوردية", "النقود والمحجوزات والمنتظر", "vaults")
                 ))
             }
             else -> {
