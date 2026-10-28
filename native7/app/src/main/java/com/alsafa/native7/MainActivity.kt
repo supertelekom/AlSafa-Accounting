@@ -182,7 +182,8 @@ class MainActivity : Activity() {
         parent.addView(card,LinearLayout.LayoutParams(0,dp(142),1f))
     }
     private fun actionGrid(parent:LinearLayout,items:List<Triple<String,String,String>>,simple:Boolean) {
-        items.chunked(2).forEach { pair ->
+        val columns=if(simple || resources.displayMetrics.widthPixels < dp(720)) 2 else 3
+        items.chunked(columns).forEach { pair ->
             val row=LinearLayout(this).apply { orientation=LinearLayout.HORIZONTAL;layoutDirection=View.LAYOUT_DIRECTION_RTL }
             parent.addView(row,LinearLayout.LayoutParams(-1,-2).apply { bottomMargin=dp(if(simple) 7 else 11) })
             pair.forEachIndexed { index,item ->
@@ -210,7 +211,7 @@ class MainActivity : Activity() {
                     box.addView(labels,LinearLayout.LayoutParams(0,-2,1f))
                 }
                 row.addView(box,LinearLayout.LayoutParams(0,dp(if(simple) 93 else 104),1f).apply {
-                    if(index==0) marginEnd=dp(if(simple) 14 else 11)
+                    if(index>0) marginStart=dp(if(simple) 14 else 11)
                 })
             }
         }
