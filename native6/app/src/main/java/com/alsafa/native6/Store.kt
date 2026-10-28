@@ -1283,8 +1283,9 @@ class Store(val helper:StoreDb) {
      */
     fun legacyOnlineReceivablesPreview():List<Map<String,String>> {
         val sales=legacyRows("sales").map { JSONObject(it.getValue("payload")) }
+        val settlementIndex=legacySettlementIndex()
         return sales.mapNotNull { source ->
-            val remaining=reconciledLegacySaleDue(source)
+            val remaining=reconciledLegacySaleDue(source,settlementIndex)
             if(remaining==0L) null else mapOf(
                 "source_id" to source.optString("id"),
                 "invoice_no" to source.optString("invoiceNo"),
@@ -1299,7 +1300,20 @@ class Store(val helper:StoreDb) {
         }
     }
 
-    private fun reconciledLegacySaleDue(source:JSONObject):Long {
+    private data class LegacySettlementIndex(
+        val payments:Map<String,List<JSONObject>>,
+        val returns:Map<String,List<JSONObject>>
+    )
+    private fun legacySettlementIndex():LegacySettlementIndex {
+        fun grouped(category:String):Map<String,List<JSONObject>> =
+            legacyRows(category).map { JSONObject(it.getValue("payload")) }
+                .filter { it.optString("referenceType")=="sale" &&
+                    it.optString("referenceId").isNotBlank() }
+                .groupBy { it.optString("referenceId") }
+        return LegacySettlementIndex(grouped("payments"),grouped("returns"))
+    }
+
+    private fun reconciledLegacySaleDue(source:JSONObject,index:LegacySettlementIndex=legacySettlementIndex()):Long {
         val ref=source.optString("id")
         val currency=source.optString("currency")
         val total=source.optString("total").toBigDecimalOrNull()
@@ -1307,8 +1321,7 @@ class Store(val helper:StoreDb) {
         require(total!=null && paid!=null && total>=java.math.BigDecimal.ZERO &&
             paid>=java.math.BigDecimal.ZERO && paid<=total){"فاتورة قديمة بمبالغ غير صالحة"}
         var linked=java.math.BigDecimal.ZERO
-        for(row in legacyRows("payments")) {
-            val p=JSONObject(row.getValue("payload"))
+        for(p in index.payments[ref].orEmpty()) {
             if(p.optString("referenceType")!="sale" || p.optString("referenceId")!=ref) continue
             require(p.optString("currency")==currency){"قبض بعملة مختلفة؛ يلزم مطابقة يدوية"}
             val amount=p.optString("amount").toBigDecimalOrNull()
@@ -1316,8 +1329,7 @@ class Store(val helper:StoreDb) {
             linked=linked.add(amount)
         }
         var returned=java.math.BigDecimal.ZERO
-        for(row in legacyRows("returns")) {
-            val r=JSONObject(row.getValue("payload"))
+        for(r in index.returns[ref].orEmpty()) {
             if(r.optString("referenceType")!="sale" || r.optString("referenceId")!=ref) continue
             require(r.optString("currency")==currency){"مرتجع بعملة مختلفة"}
             val amount=r.optString("debtReduction").toBigDecimalOrNull()
@@ -1385,6 +1397,7 @@ class Store(val helper:StoreDb) {
             "تفعيل أرصدة العملاء يتطلب قاعدة دون عمليات مالية جديدة"
         }
         val sources=legacyRows("sales").map { JSONObject(it.getValue("payload")) }
+        val settlementIndex=legacySettlementIndex()
         val seen=HashSet<String>()
         data class Opening(val sourceId:String,val party:String,val phone:String,
                            val currency:Currency,val amount:Long)
@@ -1394,7 +1407,7 @@ class Store(val helper:StoreDb) {
             require(sourceId.isNotBlank() && seen.add(sourceId)) {
                 "معرف فاتورة قديمة مفقود أو مكرر"
             }
-            val due=reconciledLegacySaleDue(source)
+            val due=reconciledLegacySaleDue(source,settlementIndex)
             if(due==0L) continue
             // Legacy "paid" may be stale after a collection or return.
             // Stop rather than inventing a customer debt.
