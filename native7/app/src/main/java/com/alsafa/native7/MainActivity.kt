@@ -1656,7 +1656,7 @@ class MainActivity : Activity() {
         val landscape=resources.configuration.orientation==android.content.res.Configuration.ORIENTATION_LANDSCAPE
         val wideLandscape=resources.configuration.screenWidthDp>=1200 && landscape
         val maxWidth=dp(if(wideLandscape) 1440 else if(tablet) 1280 else 680)
-        val sidebarWidth=if(sidebar) dp(220) else 0
+        val sidebarWidth=if(sidebar) dp(if(resources.configuration.screenWidthDp>=1080) 245 else 220) else 0
         val available=width-sidebarWidth
         body.setPadding(dp(if(tablet) { if(resources.configuration.screenWidthDp>=1200) 28 else 20 } else 15),dp(if(tablet) { if(resources.configuration.screenWidthDp>=1200) 24 else 20 } else 17),
             dp(if(tablet) { if(resources.configuration.screenWidthDp>=1200) 28 else 20 } else 15),dp(10))
