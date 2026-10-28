@@ -208,9 +208,16 @@ object LegacyArchivedFinancialPosition {
         val report=monthlyPartnerWithdrawals(store,period.toString())
         val totals=report.getJSONObject("totalsByPartnerCurrency")
         val result=JSONArray()
-        for((id,name,percent) in listOf(
-            Triple("father","بابا",40),Triple("me","عبد الكريم",35),
-            Triple("brother","يزن",25))) {
+        val partners=store.rows("""SELECT m.id,m.name,l.percent FROM partner_members m
+            JOIN partner_share_lines l ON l.partner_id=m.id
+            JOIN partner_share_periods p ON p.id=l.period_id
+            WHERE p.effective_date=(SELECT max(effective_date) FROM partner_share_periods
+                WHERE effective_date<=?) ORDER BY m.id""",period.atEndOfMonth().toString())
+        require(partners.size==3){"نسب الشركاء المستعادة غير مكتملة"}
+        for(partner in partners) {
+            val id=partner.getValue("id")
+            val name=partner.getValue("name")
+            val percent=partner.getValue("percent").toBigDecimal()
             val currencies=JSONObject()
             for(currency in this.currencies) {
                 currencies.put(currency,totals.optString("$id|$currency","0.00"))
