@@ -24,13 +24,21 @@ class InvoicePdf(private val context:Context,private val store:Store) {
     fun write(id:String,output:OutputStream) {
         val invoice=store.invoice(id)
         val items=store.rows("SELECT name,qty,net FROM invoice_lines WHERE invoice_id=? ORDER BY line",id)
-        val invoiceMeta=store.rows("SELECT phone,notes FROM invoices WHERE id=?",id).firstOrNull().orEmpty()
+        val invoiceMeta=store.rows("SELECT phone,notes,sale_type,warranty_months,warranty_start FROM invoices WHERE id=?",id).firstOrNull().orEmpty()
         val date=store.rows("SELECT date FROM events WHERE id=?",id).firstOrNull()?.get("date").orEmpty()
         val rows=mutableListOf<Pair<String,String>>()
         rows.add("رقم الفاتورة" to invoice.number.toString())
         rows.add("التاريخ والوقت" to date.replace("-","/"))
         rows.add("إسم العميل / الشركة" to invoice.party.ifBlank { "عميل نقدي" })
         invoiceMeta["phone"]?.takeIf { it.isNotBlank() }?.let { rows.add("رقم الهاتف" to it) }
+        if(invoice.kind=="sale") {
+            rows.add("نوع البيع" to if(invoiceMeta["sale_type"]=="online")"أونلاين" else "محل")
+            val months=invoiceMeta["warranty_months"]?.toIntOrNull() ?: 0
+            if(months>0) {
+                rows.add("مدة الضمان" to "$months شهر")
+                invoiceMeta["warranty_start"]?.takeIf { it.isNotBlank() }?.let { rows.add("بداية الضمان" to it) }
+            }
+        }
         if(invoice.kind=="repair") {
             val repair=store.rows(
                 "SELECT watch,problem,status,date FROM repairs WHERE invoice_id=? LIMIT 1",id
