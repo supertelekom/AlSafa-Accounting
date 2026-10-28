@@ -476,9 +476,9 @@ class MainActivity : Activity() {
         finalAmountCurrency(parent,"USD")
         formSection(parent,"3  "+steps[2])
         paymentChoices(parent)
-        parent.addView(text("✓ إتمام الفاتورة",19f).apply {
-            background=panel(Color.rgb(234,223,206),16)
-        })
+        parent.addView(text("✓ إتمام الفاتورة",13f,Color.WHITE).apply {
+            background=panel(Color.rgb(139,96,31),12)
+        },LinearLayout.LayoutParams(-1,dp(44)))
         parent.addView(text("معاينة شكلية فقط — لا يتم حفظ أي فاتورة.",12f))
     }
     private fun handoverPreview(parent:LinearLayout) {
@@ -544,7 +544,7 @@ class MainActivity : Activity() {
         }
         parent.addView(custom)
         parent.addView(chosen)
-        parent.addView(text("2  حالة تسليم الساعة",20f,gold))
+        formSection(parent,"2  حالة تسليم الساعة")
         val customerFields=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL;visibility=View.GONE }
         field(customerFields,"اسم العميل *")
         field(customerFields,"رقم الهاتف")
@@ -558,16 +558,16 @@ class MainActivity : Activity() {
         }
         parent.addView(delivered)
         parent.addView(customerFields)
-        parent.addView(text("3  مبلغ الصيانة النهائي",20f,gold))
+        formSection(parent,"3  مبلغ الصيانة النهائي")
         parent.addView(text("المبلغ النهائي وعملته",15f).apply { gravity=Gravity.RIGHT })
         finalAmount.background=panel(paper,12)
         finalAmount.setPadding(dp(13),dp(10),dp(13),dp(10))
         parent.addView(finalAmount,LinearLayout.LayoutParams(-1,dp(52)))
         select(parent,"عملة التحصيل",listOf("₺ تركية","$ دولار","ل.س سورية"))
         parent.addView(text("يمكن تعديل السعر بعد تحويله. يُسجّل المبلغ النهائي بالعملة المختارة.",12f))
-        parent.addView(text("4  طريقة الدفع",20f,gold))
+        formSection(parent,"4  طريقة الدفع")
         select(parent,"طريقة الدفع",listOf("💵 نقدي","📱 شام كاش"))
-        parent.addView(text("✓ إتمام العملية",19f,gold))
+        parent.addView(text("✓ إتمام العملية",13f,Color.WHITE).apply { background=panel(Color.rgb(139,96,31),12) },LinearLayout.LayoutParams(-1,dp(44)))
         parent.addView(text("معاينة فقط — لا يتم حفظ صيانة أو خصم قطع.",12f))
     }
     private fun deliveryPreview(parent:LinearLayout) {
@@ -881,8 +881,8 @@ class MainActivity : Activity() {
         select(parent,"حالة الطلب",listOf("قيد الصيانة","بانتظار القطعة","جاهز للاستلام"))
         formSection(parent,"تفاصيل الساعة والتكلفة")
         formPair(parent,{ field(it,"الماركة / نوع الساعة *","مثال: كاسيو") },{ field(it,"الموديل أو الرقم") })
-        field(parent,"العطل أو المطلوب *","مثال: تغيير بطارية وإصلاح السوار")
-        field(parent,"نتيجة الفحص أو تحديث العميل","اختياري — اكتب هنا أي مشكلة تظهر لاحقاً ليتم إرسالها للعميل")
+        multilineField(parent,"العطل أو المطلوب *","مثال: تغيير بطارية وإصلاح السوار")
+        multilineField(parent,"نتيجة الفحص أو تحديث العميل","اختياري — اكتب هنا أي مشكلة تظهر لاحقاً ليتم إرسالها للعميل")
         parent.addView(text("صورة ساعة العميل عند الاستلام",16f,gold))
         parent.addView(text("📷 الكاميرا",16f,gold).apply {
             isClickable=true
@@ -953,7 +953,7 @@ class MainActivity : Activity() {
         parent.addView(text("عملة الصيانة والتحصيل",16f))
         parent.addView(text("هي نفسها عملة الفاتورة المختارة أعلاه، وتدخل إلى صندوق العملة نفسها.",12f))
         select(parent,"حالة الدفع",listOf("عند الاستلام","مدفوع جزئياً","مدفوع بالكامل"))
-        field(parent,"ملاحظات","لون السوار، موعد التسليم، تفاصيل مهمة")
+        multilineField(parent,"ملاحظات","لون السوار، موعد التسليم، تفاصيل مهمة")
         parent.addView(text("عند وجود رقم العميل تُفتح محادثته في واتساب أعمال مع صورة الساعة ورسالة الاستلام بعد الحفظ.",12f))
         parent.addView(text("اختيار قطع الصيانة اختياري عند الاستلام. يمكنك حفظ الطلب بدون قطع، ثم بعد الفحص تحديث ما تم عمله وأجرة العمل، وإضافة القطع عند معرفتها.",12f))
         parent.addView(text("إلغاء",16f,gold).apply { isClickable=true;setOnClickListener { returnToPrevious() } })
