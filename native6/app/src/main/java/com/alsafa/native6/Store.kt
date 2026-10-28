@@ -1432,6 +1432,31 @@ class Store(val helper:StoreDb) {
         }
     }
 
+    /** Currency-isolated, read-only summary; unresolved records never count as ready. */
+    fun legacyOnlineCutoverSummary():List<Map<String,String>> {
+        val audit=legacyOnlineCutoverAudit()
+        return audit.groupBy { it.getValue("currency") }.map { (currency,rows) ->
+            val ready=rows.filter { it["state"]=="COST_REVIEW" }
+            val unresolved=rows.count { it["state"]=="NEEDS_COST_AUDIT" ||
+                it["state"]=="INVALID_SETTLEMENT" }
+            val outstanding=ready.fold(0L) { total,row ->
+                Math.addExact(total,row.getValue("outstanding_minor").toLong())
+            }
+            val pendingCost=ready.fold(0L) { total,row ->
+                Math.addExact(total,row.getValue("estimated_pending_cost_minor").toLong())
+            }
+            mapOf("currency" to currency,
+                "total_invoices" to rows.size.toString(),
+                "closed_invoices" to rows.count { it["state"]=="CLOSED" }.toString(),
+                "cost_review_invoices" to ready.size.toString(),
+                "unresolved_invoices" to unresolved.toString(),
+                "review_outstanding_minor" to outstanding.toString(),
+                "review_pending_cost_minor" to pendingCost.toString(),
+                "review_pending_profit_minor" to Math.subtractExact(outstanding,pendingCost).toString(),
+                "activation_state" to "READ_ONLY_NOT_POSTED")
+        }
+    }
+
     private data class LegacySettlementIndex(
         val payments:Map<String,List<JSONObject>>,
         val returns:Map<String,List<JSONObject>>
