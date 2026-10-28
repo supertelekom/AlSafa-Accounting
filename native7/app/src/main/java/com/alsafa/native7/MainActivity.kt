@@ -861,8 +861,8 @@ class MainActivity : Activity() {
             }
         }
         parent.addView(text("مطابقة شام كاش",20f,gold))
-        field(parent,"رصيد شام كاش USD الفعلي")
-        field(parent,"رصيد شام كاش SYP الفعلي")
+        field(parent,"رصيد شام كاش USD الفعلي").inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
+        field(parent,"رصيد شام كاش SYP الفعلي").inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
         field(parent,"ملاحظة الإقفال")
         parent.addView(text("اكتب ما عددته فعلياً، ثم حدد ما تنقله للصندوق الخارجي. المتبقي يصبح رصيد بداية الغد.",12f))
         disabledAction(parent,"إقفال اليوم وترحيل الأرصدة")
