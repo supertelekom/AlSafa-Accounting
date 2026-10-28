@@ -58,6 +58,13 @@ class Store(val helper:StoreDb) {
         require(matching.size<=1) { "معرف أرشيف مكرر" }
         return decodeLegacyRecords(category,matching).firstOrNull()
     }
+    /** Read a restored invoice as source data, never as a newly posted native sale. */
+    fun restoredSaleById(sourceId:String):org.json.JSONObject? {
+        require(sourceId.isNotBlank())
+        val record=rows("SELECT payload FROM legacy_records WHERE category='sales' AND substr(legacy_id,instr(legacy_id,':')+1)=? LIMIT 1",sourceId).singleOrNull()
+            ?: return null
+        return org.json.JSONObject(record.getValue("payload"))
+    }
     fun legacyRows(category:String):List<Map<String,String>> {
         val ids=rows("SELECT legacy_id,length(CAST(payload AS BLOB)) AS bytes FROM legacy_records WHERE category=? ORDER BY CAST(substr(legacy_id,1,instr(legacy_id,':')-1) AS INTEGER)",category)
         return decodeLegacyRecords(category,ids)
