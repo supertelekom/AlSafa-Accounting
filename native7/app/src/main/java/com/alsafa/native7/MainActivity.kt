@@ -26,6 +26,7 @@ class MainActivity : Activity() {
     private var screen = "chooser"
     private var previousScreen = "chooser"
     private var selectedQuickRepair: String? = null
+    private var repairPhotoUri:android.net.Uri? = null
     private var selectedQuickPrice: Int? = null
     private fun dp(value:Int) = (value * resources.displayMetrics.density + 0.5f).toInt()
     private fun text(value:String, size:Float, color:Int = ink):TextView = TextView(this).apply {
@@ -40,6 +41,14 @@ class MainActivity : Activity() {
         screen=savedInstanceState?.getString("screen") ?: "chooser"
         previousScreen=savedInstanceState?.getString("previousScreen") ?: "chooser"
         render()
+    }
+    @Deprecated("Deprecated in Java")
+    override fun onActivityResult(requestCode:Int,resultCode:Int,data:android.content.Intent?) {
+        super.onActivityResult(requestCode,resultCode,data)
+        if(requestCode==701 && resultCode==Activity.RESULT_OK) {
+            repairPhotoUri=data?.data
+            render()
+        }
     }
     override fun onSaveInstanceState(outState:Bundle) {
         outState.putString("screen",screen)
@@ -479,8 +488,39 @@ class MainActivity : Activity() {
         field(parent,"نتيجة الفحص أو تحديث العميل","اختياري — اكتب هنا أي مشكلة تظهر لاحقاً ليتم إرسالها للعميل")
         parent.addView(text("صورة ساعة العميل عند الاستلام",16f,gold))
         disabledAction(parent,"📷 الكاميرا")
-        disabledAction(parent,"🖼️ اختيار من الاستوديو")
-        disabledAction(parent,"حذف الصورة")
+        parent.addView(text("🖼️ اختيار من الاستوديو",16f,gold).apply {
+            isClickable=true
+            setOnClickListener {
+                val intent=android.content.Intent(android.content.Intent.ACTION_OPEN_DOCUMENT).apply {
+                    addCategory(android.content.Intent.CATEGORY_OPENABLE)
+                    type="image/*"
+                }
+                startActivityForResult(intent,701)
+            }
+        })
+        parent.addView(text("حذف الصورة",16f,gold).apply {
+            isClickable=true
+            setOnClickListener { repairPhotoUri=null;render() }
+        })
+        repairPhotoUri?.let { uri ->
+            parent.addView(android.widget.ImageView(this).apply {
+                setImageURI(uri)
+                adjustViewBounds=true
+                maxHeight=dp(200)
+                isClickable=true
+                setOnClickListener {
+                    val photo=android.widget.ImageView(this@MainActivity).apply {
+                        setImageURI(uri)
+                        adjustViewBounds=true
+                        scaleType=android.widget.ImageView.ScaleType.FIT_CENTER
+                    }
+                    android.app.AlertDialog.Builder(this@MainActivity)
+                        .setView(photo)
+                        .setPositiveButton("إغلاق"){ dialog,_ -> dialog.dismiss() }
+                        .show()
+                }
+            })
+        }
         parent.addView(text("تُحفظ داخل طلب الصيانة وتُرسل مع رسالة الاستلام عند اختيار واتساب.",12f))
         parent.addView(text("قطع الصيانة المستخدمة",21f,gold))
         parent.addView(text("لم تُحمّل قطع الصيانة بعد.",14f))
