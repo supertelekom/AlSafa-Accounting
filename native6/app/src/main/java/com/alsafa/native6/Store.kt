@@ -2971,7 +2971,7 @@ class Store(val helper:StoreDb) {
             mapOf("id" to id,"date" to date.toString(),"currency" to currency,
                 "amount" to amount.toPlainString(),
                 "category" to item.optString("category"),
-                "description" to item.optString("description"),
+                "description" to item.optString("notes",item.optString("description")),
                 "vault" to item.optString("vault"))
         }.filter { LocalDate.parse(it.getValue("date"))>=from &&
             LocalDate.parse(it.getValue("date"))<until && it["currency"]==c.name }
