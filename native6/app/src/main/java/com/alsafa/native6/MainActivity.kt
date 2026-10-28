@@ -1967,7 +1967,8 @@ open class MainActivity:Activity() {
                                     date+" · "+value+" "+currency+
                                         (if(actualAmount.isNotBlank() && actualCurrency.isNotBlank() &&
                                             (actualAmount!=value || actualCurrency!=currency))
-                                            " · "+actualAmount+" "+actualCurrency else "")
+                                            " · "+actualAmount+" "+actualCurrency else "")+
+                                        (if(row.optString("vault").isNotBlank()) " · "+row.optString("vault") else "")
                                 }
                             }
                         val lines=if(items==null)"" else (0 until items.length()).joinToString("\n") { index ->
