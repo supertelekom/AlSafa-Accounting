@@ -161,40 +161,56 @@ class MainActivity : Activity() {
         parent.addView(card,LinearLayout.LayoutParams(-1,dp(138)).apply { bottomMargin=dp(13) })
     }
     private fun chooserCard(parent:LinearLayout,title:String,description:String,symbol:String,target:String,dark:Boolean) {
-        val background=if(dark) GradientDrawable(Orientation.TL_BR,intArrayOf(Color.rgb(37,33,30),Color.rgb(64,55,48)))
-            else GradientDrawable().apply { setColor(paper) }
-        background.cornerRadius=dp(26).toFloat()
         val card=LinearLayout(this).apply {
-            orientation=LinearLayout.VERTICAL; gravity=Gravity.CENTER_VERTICAL
-            layoutDirection=View.LAYOUT_DIRECTION_RTL; setPadding(dp(20),dp(12),dp(20),dp(12))
-            this.background=background; isClickable=true
+            orientation=LinearLayout.HORIZONTAL
+            gravity=Gravity.CENTER_VERTICAL
+            layoutDirection=View.LAYOUT_DIRECTION_RTL
+            background=panel(if(dark) Color.rgb(46,40,34) else Color.rgb(255,250,242),26,
+                if(dark) Color.rgb(47,41,36) else Color.rgb(216,189,136))
+            setPadding(dp(14),dp(16),dp(14),dp(16))
+            isClickable=true
             setOnClickListener { navigateTo(target) }
         }
-        val badge=text(symbol,22f,if(dark) Color.rgb(234,217,192) else gold).apply {
+        card.addView(text(symbol,22f,if(dark) Color.rgb(234,217,192) else gold).apply {
             background=panel(if(dark) Color.rgb(75,68,60) else Color.rgb(245,230,203),18)
-        }
-        card.addView(badge,LinearLayout.LayoutParams(dp(54),dp(54)))
-        card.addView(text(title,20f,if(dark) Color.WHITE else ink).apply { gravity=Gravity.RIGHT })
-        card.addView(text(description,11f,if(dark) Color.rgb(213,201,187) else ink).apply { gravity=Gravity.RIGHT })
-        card.addView(text("دخول",10f,if(dark) Color.rgb(213,185,143) else gold).apply { gravity=Gravity.LEFT })
-        parent.addView(card,LinearLayout.LayoutParams(0,dp(165),1f))
+        },LinearLayout.LayoutParams(dp(54),dp(54)))
+        val labels=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL }
+        labels.addView(text(title,20f,if(dark) Color.WHITE else ink).apply { gravity=Gravity.RIGHT })
+        labels.addView(text(description,11f,if(dark) Color.rgb(213,201,187) else Color.rgb(138,123,108)).apply { gravity=Gravity.RIGHT })
+        card.addView(labels,LinearLayout.LayoutParams(0,-2,1f))
+        card.addView(text("دخول",10f,if(dark) Color.rgb(213,185,143) else gold))
+        parent.addView(card,LinearLayout.LayoutParams(0,dp(142),1f))
     }
     private fun actionGrid(parent:LinearLayout,items:List<Triple<String,String,String>>,simple:Boolean) {
         items.chunked(2).forEach { pair ->
             val row=LinearLayout(this).apply { orientation=LinearLayout.HORIZONTAL;layoutDirection=View.LAYOUT_DIRECTION_RTL }
-            parent.addView(row,LinearLayout.LayoutParams(-1,-2).apply { bottomMargin=dp(13) })
+            parent.addView(row,LinearLayout.LayoutParams(-1,-2).apply { bottomMargin=dp(if(simple) 14 else 11) })
             pair.forEachIndexed { index,item ->
                 val box=LinearLayout(this).apply {
-                    orientation=LinearLayout.VERTICAL;gravity=Gravity.CENTER
-                    background=panel(paper,if(simple) 24 else 18)
-                    setPadding(dp(10),dp(12),dp(10),dp(12))
-                    isClickable=true;setOnClickListener { navigateTo(if(screen=="full" && item.first=="مبيع") "preview:مبيع كامل" else "preview:" + item.first) }
+                    orientation=if(simple) LinearLayout.VERTICAL else LinearLayout.HORIZONTAL
+                    gravity=Gravity.CENTER
+                    layoutDirection=View.LAYOUT_DIRECTION_RTL
+                    background=panel(if(simple) Color.rgb(255,250,242) else paper,if(simple) 24 else 18,
+                        if(simple) Color.rgb(216,189,136) else Color.rgb(234,223,206))
+                    setPadding(dp(if(simple) 18 else 14),dp(if(simple) 18 else 12),dp(if(simple) 18 else 14),dp(if(simple) 18 else 12))
+                    isClickable=true
+                    setOnClickListener { navigateTo(if(screen=="full" && item.first=="مبيع") "preview:مبيع كامل" else "preview:" + item.first) }
                 }
-                box.addView(text(item.third,if(simple) 42f else 28f,gold))
-                box.addView(text(item.first,if(simple) 20f else 18f))
-                box.addView(text(item.second,11f))
-                row.addView(box,LinearLayout.LayoutParams(0,dp(if(simple) 210 else 130),1f).apply {
-                    if(index==0) marginEnd=dp(13)
+                if(simple) {
+                    box.addView(text(item.third,51f,gold))
+                    box.addView(text(item.first,24f))
+                    box.addView(text(item.second,11f,Color.rgb(138,123,108)))
+                } else {
+                    box.addView(text(item.third,25f,gold).apply {
+                        background=panel(Color.rgb(248,237,219),14)
+                    },LinearLayout.LayoutParams(dp(46),dp(46)))
+                    val labels=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL;gravity=Gravity.CENTER_VERTICAL }
+                    labels.addView(text(item.first,17f).apply { gravity=Gravity.RIGHT;setPadding(dp(8),0,dp(8),0) })
+                    labels.addView(text(item.second,11f,Color.rgb(138,123,108)).apply { gravity=Gravity.RIGHT;setPadding(dp(8),dp(4),dp(8),0) })
+                    box.addView(labels,LinearLayout.LayoutParams(0,-2,1f))
+                }
+                row.addView(box,LinearLayout.LayoutParams(0,dp(if(simple) 185 else 104),1f).apply {
+                    if(index==0) marginEnd=dp(if(simple) 14 else 11)
                 })
             }
         }
