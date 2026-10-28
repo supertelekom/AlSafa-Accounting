@@ -850,9 +850,7 @@ class MainActivity : Activity() {
         } else parent.addView(text("الأرشيف غير متصل بالبيانات بعد؛ لا يمكن الاستنتاج أن الفواتير غير موجودة.",14f))
     }
     private fun expenseFormPreview(parent:LinearLayout) {
-        parent.addView(text("تسجيل مصروف",26f,gold))
-        parent.addView(text("يسجل المصروف في التقرير ويُخصم فوراً من الحافظة التي تختارها.",14f))
-        disabledAction(parent,"القائمة")
+        formHeader(parent,"تسجيل مصروف","يسجل المصروف في التقرير ويُخصم فوراً من الحافظة التي تختارها.","القائمة","preview:المصاريف")
         field(parent,"التاريخ *","YYYY-MM-DD").apply {
             setText(java.time.LocalDate.now().toString())
             isFocusable=false
@@ -899,18 +897,16 @@ class MainActivity : Activity() {
         parent.addView(text("لم يتم تحميل فواتير الشراء بعد.",14f))
     }
     private fun purchaseInvoicePreview(parent:LinearLayout) {
-        parent.addView(text("فاتورة شراء متعددة الأصناف",26f,gold))
-        parent.addView(text("أضف كل منتجات المورد في فاتورة واحدة وسيُحسب الإجمالي تلقائياً.",14f))
-        parent.addView(text("القائمة",15f,gold).apply { isClickable=true;setOnClickListener { navigateTo("preview:المشتريات والموردون") } })
+        formHeader(parent,"فاتورة شراء متعددة الأصناف","أضف كل منتجات المورد في فاتورة واحدة وسيُحسب الإجمالي تلقائياً.","القائمة","preview:المشتريات والموردون")
         field(parent,"التاريخ *","YYYY-MM-DD")
         field(parent,"الوقت *","HH:MM")
         select(parent,"المورد",listOf("اختر المورد"))
         field(parent,"رقم فاتورة المورد")
         select(parent,"عملة الفاتورة",listOf("USD","TRY","SYP"))
-        parent.addView(text("أصناف الفاتورة",21f,gold))
+        formSection(parent,"أصناف الفاتورة")
         disabledAction(parent,"⚡ إضافة سريعة")
         disabledAction(parent,"＋ إضافة منتج آخر لنفس الفاتورة")
-        parent.addView(text("الدفع والإجمالي",21f,gold))
+        formSection(parent,"الدفع والإجمالي")
         listOf("إجمالي الفاتورة تلقائياً","المدفوع الآن","المتبقي للمورد").forEach { field(parent,it,"0").inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL }
         select(parent,"الدفع من خزنة المحل",listOf("درج المحل","الصندوق الخارجي","شام كاش","الحساب البنكي"))
         field(parent,"ملاحظات")
