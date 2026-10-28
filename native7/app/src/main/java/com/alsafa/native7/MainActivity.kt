@@ -769,12 +769,13 @@ class MainActivity : Activity() {
         
     }
     private fun disabledAction(parent:LinearLayout,label:String) {
-        val action=text(label,16f,gold).apply {
-            background=panel(Color.rgb(239,228,208),12)
+        val action=text(label,13f,Color.rgb(122,81,24)).apply {
+            typeface=Typeface.create(typeface,Typeface.BOLD)
+            background=panel(Color.rgb(247,237,221),12,Color.rgb(223,201,164))
             setOnClickListener { android.widget.Toast.makeText(this@MainActivity,"هذه الوظيفة غير مفعلة في معاينة Native 7",android.widget.Toast.LENGTH_SHORT).show() }
             isClickable=true
         }
-        parent.addView(action,LinearLayout.LayoutParams(-1,dp(49)).apply { bottomMargin=dp(8) })
+        parent.addView(action,LinearLayout.LayoutParams(-1,dp(44)).apply { bottomMargin=dp(9) })
     }
     private fun repairFormPreview(parent:LinearLayout) {
         formHeader(parent,"طلب صيانة","سجل الاستلام، الأجرة، كلفة الصيانة، وحالة الدفع.","الطلبات","preview:كل الصيانة")
