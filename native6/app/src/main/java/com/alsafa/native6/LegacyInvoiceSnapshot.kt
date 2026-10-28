@@ -74,6 +74,7 @@ object LegacyInvoiceSnapshot {
         require(from.isBlank() || to.isBlank() || from<=to)
         LegacyArchivedDebtReport.verifyArchiveCounts(store)
         val all=store.legacyRows(section)
+        val reconciledSales=if(section=="sales") store.legacySaleDueSnapshot() else emptyMap<String,Long?>()
         val matches=mutableListOf<JSONObject>()
         val seenInvoiceIds=hashSetOf<String>()
         val outstanding=linkedMapOf<String,BigDecimal>()
@@ -94,11 +95,15 @@ object LegacyInvoiceSnapshot {
             val validCurrency=currency in setOf("USD","TRY","SYP")
             val validMoney=total!=null && paid!=null && total>=BigDecimal.ZERO &&
                 paid>=BigDecimal.ZERO && paid<=total
-            val financiallyValid=validId && validDate && validCurrency && validMoney
+            val reconciledDue=if(section=="sales") reconciledSales[invoiceId] else null
+            val financiallyValid=validId && validDate && validCurrency && validMoney &&
+                (section!="sales" || reconciledDue!=null)
             if(!financiallyValid) invalidRecords++
             // Keep damaged source invoices visible for identification and repair.
             // Never include them in financial totals or permit settlement.
-            val remaining=if(validMoney) total!!-paid!! else BigDecimal.ZERO
+            val remaining=if(section=="sales") {
+                if(reconciledDue!=null) BigDecimal.valueOf(reconciledDue,2) else BigDecimal.ZERO
+            } else if(validMoney) total!!-paid!! else BigDecimal.ZERO
             if(from.isNotBlank() && (date.isBlank() || date<from)) continue
             if(to.isNotBlank() && (date.isBlank() || date>to)) continue
             if(query.isNotBlank()) {
@@ -122,10 +127,10 @@ object LegacyInvoiceSnapshot {
                 .put("phone",original.optString("phone"))
                 .put("supplierName",original.optString("supplierName"))
                 .put("currency",currency).put("total",total?.toPlainString() ?: original.optString("total"))
-                .put("paid",paid?.toPlainString() ?: original.optString("paid"))
+                .put("paid",if(section=="sales" && financiallyValid) (total!!-remaining).toPlainString() else (paid?.toPlainString() ?: original.optString("paid")))
                 .put("outstanding",if(financiallyValid) remaining.toPlainString() else "")
                 .put("financiallyValid",financiallyValid)
-                .put("validationIssue",if(financiallyValid) "" else "تتطلب الفاتورة مراجعة معرفها أو تاريخها أو عملتها أو مبالغها")
+                .put("validationIssue",if(financiallyValid) "" else "تتطلب الفاتورة مراجعة معرفها أو تاريخها أو عملتها أو تحصيلاتها أو مرتجعاتها")
                 .put("paymentStatus",original.optString("paymentStatus"))
                 .put("isSimplifiedSale",section=="sales" && original.optString("customer").isBlank() && original.optString("phone").isBlank())
                 .put("readOnly",true))
