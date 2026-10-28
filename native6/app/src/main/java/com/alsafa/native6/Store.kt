@@ -1972,7 +1972,7 @@ class Store(val helper:StoreDb) {
             require(Math.addExact(paidMinor,due)==totalMinor) {
                 "مبالغ التحصيل والذمة لا تتطابق مع الإجمالي"
             }
-            mapOf("source_id" to source.optString("id"),
+            return mapOf("source_id" to source.optString("id"),
                 "invoice_no" to source.optString("invoiceNo"),
                 "currency" to source.optString("currency"),
                 "original_cost_minor" to originalMinor.toString(),
@@ -2161,7 +2161,7 @@ class Store(val helper:StoreDb) {
             Posting("receivable:$command",currency,remaining),
             Posting("equity:opening",currency,-remaining)))
         insert("settings","key" to key,"value" to command)
-        command
+        return command
     }
     /**
      * Activate ALL outstanding archived sales in one SQLite transaction.
