@@ -1579,7 +1579,8 @@ class MainActivity : Activity() {
             orientation=LinearLayout.HORIZONTAL
             layoutDirection=View.LAYOUT_DIRECTION_RTL
             gravity=Gravity.CENTER_VERTICAL
-            if(resources.configuration.screenWidthDp>=720) setPadding(dp(25),dp(19),dp(25),dp(19))
+            if(resources.configuration.screenWidthDp in 720..1199) setPadding(dp(20),dp(15),dp(20),dp(15))
+            else if(resources.configuration.screenWidthDp>=1200) setPadding(dp(25),dp(19),dp(25),dp(19))
             else setPadding(dp(18),dp(18),dp(18),dp(16))
             background=GradientDrawable(Orientation.TL_BR,
                 intArrayOf(Color.rgb(249,243,232),Color.rgb(234,217,185))).apply {
