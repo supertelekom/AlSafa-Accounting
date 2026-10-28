@@ -1964,8 +1964,7 @@ open class MainActivity:Activity() {
                         val message=if(invoice==null)"تعذر العثور على الفاتورة" else
                             "رقم الفاتورة: "+number+
                             "\nالتاريخ: "+displayDate+
-                            "\nالعميل/المورد: "+summary.optString("customer").ifBlank {
-                                summary.optString("supplierName") }+
+                            (if(section=="purchases") "\nالمورد: "+summary.optString("supplierName") else "\nالعميل: "+summary.optString("customer"))+
                             "\nالهاتف: "+displayPhone+
                             "\nالإجمالي: "+summary.optString("total")+" "+
                                 summary.optString("currency")+
