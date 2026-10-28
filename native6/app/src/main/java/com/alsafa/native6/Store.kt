@@ -1648,7 +1648,16 @@ class Store(val helper:StoreDb) {
         receipts:List<Pair<String,Long>>,discount:Long=0,date:String=today(),
         receiptDate:String=date,notes:String="",saleType:String="store",
         warrantyMonths:Int=0,warrantyStart:String=date):String=transaction {
-        require(receipts.isNotEmpty() && receipts.all { it.second>=0L })
+        require(receipts.isNotEmpty() && receipts.all { it.second>=0L }) {
+            "حدد دفعة واحدة على الأقل بمبلغ غير سالب"
+        }
+        require(receipts.any { it.second>0L } || receipts.size==1) {
+            "لا تضف عدة خزنات بلا أي مبلغ قبض"
+        }
+        require(receipts.filter { it.second>0L }.map { it.first }.distinct().size ==
+            receipts.count { it.second>0L }) {
+            "الخزنة مكررة في الدفعات؛ اجمع مبالغها في دفعة واحدة"
+        }
         receipts.forEach { vault(it.first) }
         require(!LocalDate.parse(receiptDate).isAfter(LocalDate.now()))
         require(!LocalDate.parse(receiptDate).isBefore(LocalDate.parse(date)))
