@@ -182,18 +182,19 @@ class MainActivity : Activity() {
         parent.addView(card,LinearLayout.LayoutParams(0,dp(142),1f))
     }
     private fun actionGrid(parent:LinearLayout,items:List<Triple<String,String,String>>,simple:Boolean) {
-        val columns=if(simple || resources.displayMetrics.widthPixels < dp(720)) 2 else 3
-        items.chunked(columns).forEach { pair ->
+        // Original v3.9.359: father-simple-four = 2 columns; advanced-home = 3 columns on tablet.
+        val columns=if(simple) 2 else if(resources.displayMetrics.widthPixels>=dp(720)) 3 else 2
+        items.chunked(columns).forEach { group ->
             val row=LinearLayout(this).apply { orientation=LinearLayout.HORIZONTAL;layoutDirection=View.LAYOUT_DIRECTION_RTL }
             parent.addView(row,LinearLayout.LayoutParams(-1,-2).apply { bottomMargin=dp(if(simple) 7 else 11) })
-            pair.forEachIndexed { index,item ->
+            group.forEachIndexed { index,item ->
                 val box=LinearLayout(this).apply {
                     orientation=if(simple) LinearLayout.VERTICAL else LinearLayout.HORIZONTAL
                     gravity=Gravity.CENTER
                     layoutDirection=View.LAYOUT_DIRECTION_RTL
-                    background=panel(if(simple) Color.rgb(255,250,242) else paper,if(simple) 24 else 18,
+                    background=panel(if(simple) paper else paper,if(simple) 24 else 18,
                         if(simple) Color.rgb(216,189,136) else Color.rgb(234,223,206))
-                    setPadding(dp(if(simple) 9 else 14),dp(if(simple) 9 else 12),dp(if(simple) 18 else 14),dp(if(simple) 18 else 12))
+                    setPadding(dp(if(simple) 9 else 14),dp(if(simple) 9 else 12),dp(if(simple) 9 else 14),dp(if(simple) 9 else 12))
                     isClickable=true
                     setOnClickListener { navigateTo(if(screen=="full" && item.first=="مبيع") "preview:مبيع كامل" else "preview:" + item.first) }
                 }
@@ -211,13 +212,12 @@ class MainActivity : Activity() {
                     box.addView(labels,LinearLayout.LayoutParams(0,-2,1f))
                 }
                 row.addView(box,LinearLayout.LayoutParams(0,dp(if(simple) 93 else 104),1f).apply {
-                    if(index>0) marginStart=dp(if(simple) 14 else 11)
+                    if(index>0) marginStart=dp(if(simple) 7 else 11)
                 })
             }
+            repeat(columns-group.size) { row.addView(View(this),LinearLayout.LayoutParams(0,dp(1),1f)) }
         }
     }
-    // Original v3.9.359: three ledger cards, each containing three currency cells.
-    // No synthetic amounts are displayed until the local accounting data is connected.
     private fun currencySummary(parent:LinearLayout) {
         val titles=listOf("↪" to "المدوّر من الإقفال السابق", "🛒" to "مبيعات اليوم", "🔧" to "صيانة اليوم")
         val ledger=LinearLayout(this).apply {
