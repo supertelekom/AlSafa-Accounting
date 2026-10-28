@@ -1401,6 +1401,11 @@ class Store(val helper:StoreDb) {
 
     private fun collectInternal(invoiceId:String,amount:Long,v:String,date:String,command:String) {
         val inv=invoice(invoiceId);require(inv.kind=="sale" || inv.kind=="repair"){"القبض متاح لفواتير المبيع والصيانة فقط"};require(inv.status=="posted" && amount>0 && amount<=due(invoiceId)){"الدفعة تتجاوز المتبقي أو الفاتورة ملغاة"};require(!LocalDate.parse(date).isAfter(LocalDate.now())){"تاريخ التحصيل في المستقبل"};require(!LocalDate.parse(date).isBefore(LocalDate.parse(rows("SELECT date FROM events WHERE id=?",invoiceId).single().getValue("date")))){"تاريخ التحصيل يسبق الفاتورة"};require(amount<=invoiceCollectibleOn(invoiceId,date)){"الدفعة تتجاوز الذمة المتاحة بتاريخها أو في يوم لاحق"};vault(v)
+        val legacyOpening=rows("SELECT notes FROM invoices WHERE id=?",invoiceId)
+            .singleOrNull()?.get("notes").orEmpty().startsWith("legacy-sale:")
+        require(!legacyOpening) {
+            "تحصيل الفاتورة القديمة موقوف حتى تفعيل ترحيل الكلفة والربح؛ لا يجوز قيد قبض بلا ربح صحيح"
+        }
         event(command,"RECEIPT",date,"قبض فاتورة ${inv.number}");insert("receipts","event_id" to command,"invoice_id" to invoiceId,"amount" to amount,"vault" to v)
         post(command,listOf(Posting("cash:$v",inv.currency,amount),Posting("receivable:$invoiceId",inv.currency,-amount)))
     }
