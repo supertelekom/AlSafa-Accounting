@@ -732,6 +732,22 @@ class MainActivity : Activity() {
         parent.addView(text("القيمة والراكد والأكثر مبيعاً والمنخفض",14f))
         parent.addView(text("تحتاج هذه المؤشرات إلى بيانات المخزون والفواتير الفعلية.",13f))
     }
+    private fun securityPreview(parent:LinearLayout) {
+        parent.addView(text("الأمان والأجهزة",26f,gold))
+        parent.addView(text("PIN واسم الجهاز وسجل النشاط",14f))
+        parent.addView(text("Native 7 مخصص للتابلت ويعمل دون مزامنة بين الأجهزة.",13f))
+        parent.addView(text("لا يوجد PIN مفعّل في معاينة الواجهة.",13f))
+    }
+    private fun modernCenterPreview(parent:LinearLayout) {
+        parent.addView(text("مركز الصفا الحديث",26f,gold))
+        parent.addView(text("القرارات، العرض، الولاء، الاستلام الذكي والمزيد",14f))
+        parent.addView(text("هذه الأقسام تحتاج إلى نقل قواعدها من المصدر الأصلي قبل تفعيلها.",13f))
+    }
+    private fun cashWalletPreview(parent:LinearLayout) {
+        parent.addView(text("الحافظة",26f,gold))
+        parent.addView(text("النقدي وشام كاش والتحصيلات",14f))
+        parent.addView(text("لم تُحمّل الأرصدة والتحصيلات بعد.",13f))
+    }
     private fun render() {
         val root=LinearLayout(this).apply {
             orientation=LinearLayout.VERTICAL; layoutDirection=View.LAYOUT_DIRECTION_RTL
@@ -852,6 +868,9 @@ class MainActivity : Activity() {
             "preview:الساعات المستعملة" -> usedWatchesPreview(body)
             "preview:الطابعة الحرارية" -> thermalPrinterPreview(body)
             "preview:تحليل المخزون" -> inventoryAnalysisPreview(body)
+            "preview:الأمان والأجهزة" -> securityPreview(body)
+            "preview:مركز الصفا الحديث" -> modernCenterPreview(body)
+            "preview:الحافظة" -> cashWalletPreview(body)
             "preview:تسليم الوردية" -> handoverPreview(body)
             "preview:صيانة سريعة" -> quickRepairPreview(body)
             "preview:تسليم الساعات" -> deliveryPreview(body)
