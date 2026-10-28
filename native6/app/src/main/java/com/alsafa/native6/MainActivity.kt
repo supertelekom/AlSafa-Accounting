@@ -463,7 +463,7 @@ open class MainActivity:Activity() {
         }
         scroll.addView(body)
         root.addView(scroll,LinearLayout.LayoutParams(-1,0,1f))
-        when(page){"home"->home();"simple"->simple();"advanced"->advanced();"products"->products();"maintenance-parts"->products("part");"inventory"->inventoryDashboard();"stock-history"->if(selectedProduct!=null)stockHistory(selectedProduct!!) else {text("لم يتم اختيار منتج لعرض حركاته.");button("العودة إلى المنتجات"){go("products")}};"stocktake-history"->stocktakeHistoryScreen();"sale"->sale();"invoices"->invoices();"sales-invoices"->invoices("sale");"vaults"->vaults();"suppliers"->suppliers();"repairs"->repairs();"reports"->reports();"period-reports"->periodReports();"trial-balance"->trialBalanceScreen();"account-ledger"->accountLedgerScreen();"journal-integrity"->journalIntegrityScreen();"structural-audit"->structuralAuditScreen();"partners"->partners();"backup"->backup();"legacy-audit"->legacyAudit();"legacy-history"->legacyHistory();"audit"->audit();else->{text("هذه الصفحة غير متاحة في النسخة الحالية.");button("العودة إلى الرئيسية"){homePage()}}}
+        when(page){"home"->home();"simple"->simple();"advanced"->advanced();"products"->products();"maintenance-parts"->products("part");"inventory"->inventoryDashboard();"stock-history"->if(selectedProduct!=null)stockHistory(selectedProduct!!) else {text("لم يتم اختيار منتج لعرض حركاته.");button("العودة إلى المنتجات"){go("products")}};"stocktake-history"->stocktakeHistoryScreen();"sale"->sale();"simple-sale"->simpleSale();"invoices"->invoices();"sales-invoices"->invoices("sale");"vaults"->vaults();"suppliers"->suppliers();"repairs"->repairs();"reports"->reports();"period-reports"->periodReports();"trial-balance"->trialBalanceScreen();"account-ledger"->accountLedgerScreen();"journal-integrity"->journalIntegrityScreen();"structural-audit"->structuralAuditScreen();"partners"->partners();"backup"->backup();"legacy-audit"->legacyAudit();"legacy-history"->legacyHistory();"audit"->audit();else->{text("هذه الصفحة غير متاحة في النسخة الحالية.");button("العودة إلى الرئيسية"){homePage()}}}
     }
     private fun legacyHistory() {
         text("أرشيف العمليات القديمة — قراءة فقط",size=25f)
@@ -1046,7 +1046,7 @@ open class MainActivity:Activity() {
     private fun simple(){
         text("العمل السريع",size=23f)
         dashboardTiles(listOf(
-            Triple("＄","مبيع","sale"),
+            Triple("＄","مبيع","simple-sale"),
             Triple("◷","استلام وتسليم صيانة","repairs"),
             Triple("▤","فواتير المبيع","sales-invoices"),
             Triple("▣","الخزنات والإقفال اليومي","vaults")
@@ -1822,6 +1822,39 @@ open class MainActivity:Activity() {
         body.addView(panel,LinearLayout.LayoutParams(-1,-2).apply {
             setMargins(0,dp(4),0,dp(4))
         })
+    }
+    private fun simpleSale() {
+        sectionHeading("المبيع المبسط","اختر الساعة ثم حدد السعر والعملة وطريقة الدفع.")
+        button("بحث عن ساعة بالاسم أو الباركود") {
+            chooseProduct(inStockOnly=true,kind="watch") { p -> simpleSaleProduct(p) }
+        }
+        button("مسح باركود الساعة") {
+            startActivityForResult(Intent(this,BarcodeScanActivity::class.java),66)
+        }
+    }
+    private fun simpleSaleProduct(p:Product) {
+        form("المبيع المبسط · "+p.name) { box ->
+            text("المتوفر: "+p.stock+" · تكلفة المخزون: "+money(p.value,p.currency),box,14f)
+            val price=field("مبلغ البيع",box,Money(p.price,p.currency).display().substringBefore(' '),true)
+            val currency=select("العملة",Currency.values().map { it.name },box)
+            currency.setSelection(Currency.values().indexOf(p.currency))
+            val vault=select("نوع الدفع / الخزنة",vaultNames,box)
+            ({
+                val chosen=Currency.values()[currency.selectedItemPosition]
+                require(chosen==p.currency){"تغيير عملة السعر يحتاج تحويل قيمة الساعة أولاً؛ لا يمكن تغيير رمز العملة فقط"}
+                val unit=amount(price,chosen)
+                require(unit>0L && store.product(p.id).stock>0L){"السعر أو المخزون غير صالح"}
+                val destination=Store.vaults[vault.selectedItemPosition]
+                work {
+                    val invoiceId=store.saleWithReceipts(listOf(SaleItem(p.id,1L,unit)),
+                        "","",chosen,listOf(destination to unit))
+                    runOnUiThread {
+                        if(isFinishing||isDestroyed)return@runOnUiThread
+                        invoiceDetail(store.invoice(invoiceId))
+                    }
+                }
+            })
+        }
     }
     private fun sale(){
         sectionHeading("فاتورة مبيعات","اختر من المنتجات أو امسح الباركود بالكاميرا لإضافة الساعة فوراً.")
