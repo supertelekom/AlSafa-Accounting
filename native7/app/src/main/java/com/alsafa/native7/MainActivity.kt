@@ -688,7 +688,7 @@ class MainActivity : Activity() {
         parent.addView(text("فاتورة المورد الواحدة يمكن أن تحتوي عدة أصناف. الشراء يزيد المخزون ولا يُسجل كمصروف تشغيلي.",14f))
         disabledAction(parent,"＋ مورد")
         val go=text("＋ فاتورة شراء",17f,gold).apply {
-            isClickable=true;setOnClickListener { previousScreen=screen;screen="preview:فاتورة شراء";render() }
+            isClickable=true;setOnClickListener { navigateTo("preview:فاتورة شراء") }
         }
         parent.addView(go)
         listOf("قيمة المخزون بالتكلفة","ديون الموردين","رأس المال المحاسبي التقريبي").forEach { parent.addView(text(it+"    —",16f)) }
