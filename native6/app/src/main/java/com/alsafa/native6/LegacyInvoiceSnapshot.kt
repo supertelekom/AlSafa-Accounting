@@ -64,7 +64,6 @@ object LegacyInvoiceSnapshot {
             .put("paymentsAreEvidenceOnly",true)
             .put("isSimplifiedSale",section=="sales" && source.optString("customer").isBlank() && source.optString("phone").isBlank())
             .put("paidSnapshotIsCumulative",true)
-            .put("linkedPaymentsRequireReconciliation",section=="sales")
     }
     fun page(store:Store,section:String,from:String="",to:String="",term:String="",
              offset:Int=0,limit:Int=50):JSONObject {
@@ -75,7 +74,6 @@ object LegacyInvoiceSnapshot {
         require(from.isBlank() || to.isBlank() || from<=to)
         LegacyArchivedDebtReport.verifyArchiveCounts(store)
         val all=store.legacyRows(section)
-        val reconciledSales=if(section=="sales") store.legacySaleDueSnapshot() else emptyMap<String,Long?>()
         val matches=mutableListOf<JSONObject>()
         val seenInvoiceIds=hashSetOf<String>()
         val outstanding=linkedMapOf<String,BigDecimal>()
@@ -96,15 +94,11 @@ object LegacyInvoiceSnapshot {
             val validCurrency=currency in setOf("USD","TRY","SYP")
             val validMoney=total!=null && paid!=null && total>=BigDecimal.ZERO &&
                 paid>=BigDecimal.ZERO && paid<=total
-            val reconciledDue=if(section=="sales") reconciledSales[invoiceId] else null
-            val financiallyValid=validId && validDate && validCurrency && validMoney &&
-                (section!="sales" || reconciledDue!=null)
+            val financiallyValid=validId && validDate && validCurrency && validMoney
             if(!financiallyValid) invalidRecords++
             // Keep damaged source invoices visible for identification and repair.
             // Never include them in financial totals or permit settlement.
-            val remaining=if(section=="sales") {
-                if(reconciledDue!=null) BigDecimal.valueOf(reconciledDue,2) else BigDecimal.ZERO
-            } else if(validMoney) total!!-paid!! else BigDecimal.ZERO
+            val remaining=if(validMoney) total!!-paid!! else BigDecimal.ZERO
             if(from.isNotBlank() && (date.isBlank() || date<from)) continue
             if(to.isNotBlank() && (date.isBlank() || date>to)) continue
             if(query.isNotBlank()) {
@@ -129,7 +123,6 @@ object LegacyInvoiceSnapshot {
                 .put("supplierName",original.optString("supplierName"))
                 .put("currency",currency).put("total",total?.toPlainString() ?: original.optString("total"))
                 .put("paid",paid?.toPlainString() ?: original.optString("paid"))
-                .put("settledIncludingReturns",if(section=="sales" && financiallyValid) (total!!-remaining).toPlainString() else "")
                 .put("outstanding",if(financiallyValid) remaining.toPlainString() else "")
                 .put("financiallyValid",financiallyValid)
                 .put("validationIssue",if(financiallyValid) "" else "تتطلب الفاتورة مراجعة معرفها أو تاريخها أو عملتها أو تحصيلاتها أو مرتجعاتها")
@@ -149,7 +142,7 @@ object LegacyInvoiceSnapshot {
             .put("invalidSourceRecords",invalidRecords)
             .put("offset",offset).put("limit",limit).put("rows",page)
             .put("outstandingByCurrency",totals)
-            .put("balanceBasis","RECONCILED_PAYMENTS_AND_RETURNS_FOR_SALES")
+            .put("balanceBasis","ORIGINAL_INVOICE_CUMULATIVE_PAID")
             .put("financialPosting","NONE")
     }
 }
