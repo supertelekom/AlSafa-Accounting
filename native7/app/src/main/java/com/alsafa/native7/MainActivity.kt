@@ -485,13 +485,30 @@ class MainActivity : Activity() {
         val steps=listOf("اختر الساعة","سعر البيع النهائي","طريقة الدفع")
         quickStep(parent,1,steps[0])
         field(parent,"بحث بالاسم أو REF أو الرقم أو الباركود","مثال: CASIO أو MTP أو 002")
-        field(parent,"","امسح أو اكتب الباركود")
-        val barcodeActions=LinearLayout(this).apply { orientation=LinearLayout.HORIZONTAL;layoutDirection=View.LAYOUT_DIRECTION_RTL }
-        listOf("📷 قراءة الباركود","إضافة").forEach { label ->
-            val action=text(label,15f,gold).apply { background=panel(paper,12);isClickable=true;setOnClickListener { android.widget.Toast.makeText(this@MainActivity,"قارئ الباركود وربط المخزون لم يُنفذا بعد",android.widget.Toast.LENGTH_SHORT).show() } }
-            barcodeActions.addView(action,LinearLayout.LayoutParams(0,dp(54),1f).apply { marginEnd=dp(6) })
+        val barcodeActions=LinearLayout(this).apply {
+            orientation=LinearLayout.HORIZONTAL
+            layoutDirection=View.LAYOUT_DIRECTION_RTL
+            gravity=Gravity.CENTER_VERTICAL
         }
-        parent.addView(barcodeActions)
+        parent.addView(barcodeActions,LinearLayout.LayoutParams(-1,-2))
+        val barcodeInput=EditText(this).apply {
+            hint="امسح أو اكتب الباركود"
+            textSize=14f
+            background=panel(Color.rgb(255,252,247),10)
+            setPadding(dp(10),dp(8),dp(10),dp(8))
+            inputType=InputType.TYPE_CLASS_NUMBER
+        }
+        barcodeActions.addView(barcodeInput,LinearLayout.LayoutParams(0,dp(58),1f))
+        listOf("📷 قراءة الباركود","إضافة").forEach { label ->
+            val action=text(label,13f,gold).apply {
+                background=panel(Color.rgb(247,237,221),12,Color.rgb(223,201,164))
+                isClickable=true
+                setOnClickListener {
+                    android.widget.Toast.makeText(this@MainActivity,"قارئ الباركود وربط المخزون لم يُنفذا بعد",android.widget.Toast.LENGTH_SHORT).show()
+                }
+            }
+            barcodeActions.addView(action,LinearLayout.LayoutParams(-2,dp(58)).apply { marginStart=dp(8) })
+        }
         parent.addView(text("لم يتم اختيار ساعة بعد",15f,Color.rgb(138,123,108)).apply {
             background=panel(Color.rgb(255,250,242),15,Color.rgb(212,189,146))
         },LinearLayout.LayoutParams(-1,dp(64)).apply { topMargin=dp(12);bottomMargin=dp(21) })
