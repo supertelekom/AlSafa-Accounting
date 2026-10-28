@@ -1938,7 +1938,7 @@ open class MainActivity:Activity() {
                         val original=LegacyInvoiceSnapshot.detail(store,section,archiveKey)
                         val invoice=original?.optJSONObject("invoice")
                         val displayDate=invoice?.optString("date")?.take(10).orEmpty().ifBlank { summary.optString("date") }
-                        val displayPhone=invoice?.optString("phone").orEmpty().ifBlank { summary.optString("phone") }
+                        val displayPhone=if(section=="sales") invoice?.optString("phone").orEmpty() else ""
                         val items=invoice?.optJSONArray("items")
                         val linkedPayments=original?.optJSONArray("linkedPayments")?.length() ?: 0
                         val payments=original?.optJSONArray("linkedPayments")
@@ -1965,7 +1965,7 @@ open class MainActivity:Activity() {
                             "رقم الفاتورة: "+number+
                             "\nالتاريخ: "+displayDate+
                             (if(section=="purchases") "\nالمورد: "+summary.optString("supplierName") else "\nالعميل: "+summary.optString("customer"))+
-                            "\nالهاتف: "+displayPhone+
+                            (if(section=="sales") "\nالهاتف: "+displayPhone else "")+
                             "\nالإجمالي: "+summary.optString("total")+" "+
                                 summary.optString("currency")+
                             "\nالمدفوع: "+summary.optString("paid")+
