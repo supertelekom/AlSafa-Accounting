@@ -4,7 +4,7 @@ import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 
-class StoreDb(context: Context, name: String = "alsafa_native6.db") : SQLiteOpenHelper(context,name,null,6) {
+class StoreDb(context: Context, name: String = "alsafa_native6.db") : SQLiteOpenHelper(context,name,null,7) {
     override fun onConfigure(db: SQLiteDatabase) { db.setForeignKeyConstraintsEnabled(true); db.execSQL("PRAGMA synchronous=FULL") }
     override fun onCreate(db: SQLiteDatabase) {
         schema.forEach(db::execSQL)
@@ -18,8 +18,14 @@ class StoreDb(context: Context, name: String = "alsafa_native6.db") : SQLiteOpen
         db.execSQL("CREATE TRIGGER IF NOT EXISTS closings_count_guard BEFORE INSERT ON closings BEGIN SELECT CASE WHEN (SELECT kind FROM events WHERE id=NEW.event_id)='AUTO_CLOSING' AND NEW.counted IS NOT NULL THEN RAISE(ABORT,'Automatic closing has no physical count') WHEN (SELECT kind FROM events WHERE id=NEW.event_id)='CLOSING' AND NEW.counted IS NULL THEN RAISE(ABORT,'Manual closing requires a count') END; END")
     }
     override fun onUpgrade(db: SQLiteDatabase,old: Int,new: Int) {
-        require(old in 1..5 && new == 6) {
+        require(old in 1..6 && new == 7) {
             "Unsupported migration $old → $new; database preserved"
+        }
+        if (old == 6) {
+            db.execSQL("ALTER TABLE invoices ADD COLUMN sale_type TEXT NOT NULL DEFAULT 'store'")
+            db.execSQL("ALTER TABLE invoices ADD COLUMN warranty_months INTEGER NOT NULL DEFAULT 0")
+            db.execSQL("ALTER TABLE invoices ADD COLUMN warranty_start TEXT NOT NULL DEFAULT ''")
+            return
         }
         if (old <= 2) {
             com.alsafa.native6.accounting.PartnerSchema.statements.forEach(db::execSQL)
@@ -40,6 +46,9 @@ class StoreDb(context: Context, name: String = "alsafa_native6.db") : SQLiteOpen
         db.execSQL("DROP TABLE closings")
         db.execSQL("ALTER TABLE closings_v6 RENAME TO closings")
         immutableTriggers.filter { it.contains("closings_") }.forEach(db::execSQL)
+        db.execSQL("ALTER TABLE invoices ADD COLUMN sale_type TEXT NOT NULL DEFAULT 'store'")
+        db.execSQL("ALTER TABLE invoices ADD COLUMN warranty_months INTEGER NOT NULL DEFAULT 0")
+        db.execSQL("ALTER TABLE invoices ADD COLUMN warranty_start TEXT NOT NULL DEFAULT ''")
         db.execSQL("CREATE TRIGGER IF NOT EXISTS closings_count_guard BEFORE INSERT ON closings BEGIN SELECT CASE WHEN (SELECT kind FROM events WHERE id=NEW.event_id)='AUTO_CLOSING' AND NEW.counted IS NOT NULL THEN RAISE(ABORT,'Automatic closing has no physical count') WHEN (SELECT kind FROM events WHERE id=NEW.event_id)='CLOSING' AND NEW.counted IS NULL THEN RAISE(ABORT,'Manual closing requires a count') END; END")
     }
     companion object {
@@ -57,7 +66,7 @@ class StoreDb(context: Context, name: String = "alsafa_native6.db") : SQLiteOpen
             "CREATE INDEX product_barcode ON products(barcode)",
             "CREATE TABLE stock_moves(event_id TEXT NOT NULL REFERENCES events(id),line INTEGER NOT NULL,product_id TEXT NOT NULL REFERENCES products(id),quantity INTEGER NOT NULL CHECK(quantity<>0),value_delta INTEGER NOT NULL,PRIMARY KEY(event_id,line))",
             "CREATE TABLE suppliers(id TEXT PRIMARY KEY NOT NULL,name TEXT NOT NULL,phone TEXT NOT NULL)",
-            "CREATE TABLE invoices(id TEXT PRIMARY KEY NOT NULL REFERENCES events(id),number INTEGER NOT NULL UNIQUE,kind TEXT NOT NULL CHECK(kind IN ('sale','purchase','repair')),party TEXT NOT NULL,phone TEXT NOT NULL,currency TEXT NOT NULL,total INTEGER NOT NULL CHECK(total>0),cost INTEGER NOT NULL CHECK(cost>=0),status TEXT NOT NULL DEFAULT 'posted',notes TEXT NOT NULL)",
+            "CREATE TABLE invoices(id TEXT PRIMARY KEY NOT NULL REFERENCES events(id),number INTEGER NOT NULL UNIQUE,kind TEXT NOT NULL CHECK(kind IN ('sale','purchase','repair')),party TEXT NOT NULL,phone TEXT NOT NULL,currency TEXT NOT NULL,total INTEGER NOT NULL CHECK(total>0),cost INTEGER NOT NULL CHECK(cost>=0),status TEXT NOT NULL DEFAULT 'posted',notes TEXT NOT NULL,sale_type TEXT NOT NULL DEFAULT 'store',warranty_months INTEGER NOT NULL DEFAULT 0,warranty_start TEXT NOT NULL DEFAULT '')",
             "CREATE TABLE invoice_lines(invoice_id TEXT NOT NULL REFERENCES invoices(id),line INTEGER NOT NULL,product_id TEXT NOT NULL REFERENCES products(id),name TEXT NOT NULL,qty INTEGER NOT NULL CHECK(qty>0),net INTEGER NOT NULL CHECK(net>=0),cost INTEGER NOT NULL CHECK(cost>=0),PRIMARY KEY(invoice_id,line))",
             "CREATE TABLE receipts(event_id TEXT PRIMARY KEY NOT NULL REFERENCES events(id),invoice_id TEXT NOT NULL REFERENCES invoices(id),amount INTEGER NOT NULL CHECK(amount>0),vault TEXT NOT NULL)",
             "CREATE TABLE returns(event_id TEXT NOT NULL REFERENCES events(id),invoice_id TEXT NOT NULL REFERENCES invoices(id),line INTEGER NOT NULL,qty INTEGER NOT NULL CHECK(qty>0),credit INTEGER NOT NULL CHECK(credit>=0),cost INTEGER NOT NULL CHECK(cost>=0),PRIMARY KEY(event_id,line),FOREIGN KEY(invoice_id,line) REFERENCES invoice_lines(invoice_id,line))",
