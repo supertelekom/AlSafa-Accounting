@@ -306,7 +306,7 @@ class MainActivity : Activity() {
                     layoutDirection=View.LAYOUT_DIRECTION_RTL
                 }
                 cell.addView(pair.first,LinearLayout.LayoutParams(-1,-2))
-                cell.addView(pair.second,LinearLayout.LayoutParams(-1,dp(44)).apply { bottomMargin=dp(11) })
+                cell.addView(pair.second,LinearLayout.LayoutParams(-1,dp(42)).apply { bottomMargin=dp(11) })
                 row.addView(cell,LinearLayout.LayoutParams(0,-2,1f).apply {
                     if(index==0) marginEnd=dp(11)
                 })
