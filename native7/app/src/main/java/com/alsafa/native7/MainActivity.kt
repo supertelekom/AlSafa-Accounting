@@ -15,6 +15,7 @@ import android.widget.EditText
 import android.widget.Spinner
 import android.widget.ArrayAdapter
 import android.widget.Button
+import android.text.InputType
 
 /** UI-only prototype. No accounting transactions, persistence or network calls. */
 class MainActivity : Activity() {
@@ -134,6 +135,32 @@ class MainActivity : Activity() {
         spinner.adapter=ArrayAdapter(this,android.R.layout.simple_spinner_dropdown_item,options)
         parent.addView(spinner,LinearLayout.LayoutParams(-1,dp(52)).apply { bottomMargin=dp(12) })
     }
+    private fun finalAmountCurrency(parent:LinearLayout, defaultCurrency:String) {
+        parent.addView(text("المبلغ النهائي وعملته",15f).apply { gravity=Gravity.RIGHT })
+        val amount=field(parent,"","أدخل المبلغ النهائي")
+        amount.inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
+        select(parent,"عملة التحصيل",listOf("₺ تركية","$ دولار","ل.س سورية").let { if(defaultCurrency=="USD") listOf("$ دولار","₺ تركية","ل.س سورية") else it })
+        parent.addView(text("يمكن تعديل السعر بعد تحويله. يُسجّل المبلغ النهائي بالعملة المختارة.",12f))
+        parent.addView(text("اختر الصنف أو الخدمة أولاً",13f,gold))
+    }
+    private fun paymentChoices(parent:LinearLayout) {
+        val options=LinearLayout(this).apply { orientation=LinearLayout.HORIZONTAL;layoutDirection=View.LAYOUT_DIRECTION_RTL }
+        var selected=0
+        val cells=mutableListOf<TextView>()
+        listOf("💵 نقدي","📱 شام كاش").forEachIndexed { index,label ->
+            val choice=text(label,16f).apply {
+                background=panel(if(index==0) Color.rgb(239,228,208) else paper,14)
+                isClickable=true
+                setOnClickListener {
+                    selected=index
+                    cells.forEachIndexed { i,view -> view.background=panel(if(i==selected) Color.rgb(239,228,208) else paper,14) }
+                }
+            }
+            cells.add(choice)
+            options.addView(choice,LinearLayout.LayoutParams(0,dp(56),1f).apply { marginEnd=dp(6) })
+        }
+        parent.addView(options)
+    }
     private fun salePreview(parent:LinearLayout) {
         parent.addView(text("مبيع سريع",26f,gold))
         parent.addView(text("ابحث عن الساعة أو امسح الباركود، ثم اختر طريقة الدفع وعملة البيع.",14f))
@@ -144,10 +171,9 @@ class MainActivity : Activity() {
         parent.addView(text("📷 قراءة الباركود     إضافة",15f,gold))
         parent.addView(text("لم يتم اختيار ساعة بعد",15f))
         parent.addView(text("2  "+steps[1],20f,gold))
-        field(parent,"المبلغ النهائي وعملته","أدخل المبلغ النهائي").inputType=android.text.InputType.TYPE_CLASS_NUMBER or android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL
-        select(parent,"عملة التحصيل",listOf("USD","TRY","SYP"))
+        finalAmountCurrency(parent,"USD")
         parent.addView(text("3  "+steps[2],20f,gold))
-        select(parent,"طريقة الدفع",listOf("💵 نقدي","📱 شام كاش"))
+        paymentChoices(parent)
         parent.addView(text("✓ إتمام الفاتورة",19f).apply {
             background=panel(Color.rgb(234,223,206),16)
         })
@@ -222,7 +248,7 @@ class MainActivity : Activity() {
         parent.addView(delivered)
         parent.addView(customerFields)
         parent.addView(text("3  مبلغ الصيانة النهائي",20f,gold))
-        select(parent,"عملة الصيانة",listOf("TRY","USD","SYP"))
+        finalAmountCurrency(parent,"TRY")
         parent.addView(text("4  طريقة الدفع",20f,gold))
         select(parent,"طريقة الدفع",listOf("💵 نقدي","📱 شام كاش"))
         parent.addView(text("✓ إتمام العملية",19f,gold))
