@@ -273,6 +273,49 @@ class MainActivity : Activity() {
                 else LinearLayout.LayoutParams(-1,-2).apply { if(index>0) topMargin=dp(12) })
         }
     }
+    /**
+     * Original v3.9.359 form-grid: two columns on the tablet.
+     * Only pairs created by field()/select() are grouped; headings, notes and
+     * actions retain their original sequence and labels.
+     */
+    private fun arrangeOriginalFormGrid(body:LinearLayout) {
+        fun isPair(index:Int):Boolean {
+            if(index+1>=body.childCount) return false
+            val label=body.getChildAt(index) as? TextView ?: return false
+            val control=body.getChildAt(index+1)
+            if(control !is EditText && control !is Spinner) return false
+            return label.currentTextColor==Color.rgb(138,123,108)
+        }
+        var i=0
+        while(i<body.childCount-3) {
+            if(!isPair(i) || !isPair(i+2)) { i++;continue }
+            val firstLabel=body.getChildAt(i)
+            val firstControl=body.getChildAt(i+1)
+            val secondLabel=body.getChildAt(i+2)
+            val secondControl=body.getChildAt(i+3)
+            body.removeViewAt(i+3)
+            body.removeViewAt(i+2)
+            body.removeViewAt(i+1)
+            body.removeViewAt(i)
+            val row=LinearLayout(this).apply {
+                orientation=LinearLayout.HORIZONTAL
+                layoutDirection=View.LAYOUT_DIRECTION_RTL
+            }
+            listOf(firstLabel to firstControl,secondLabel to secondControl).forEachIndexed { index,pair ->
+                val cell=LinearLayout(this).apply {
+                    orientation=LinearLayout.VERTICAL
+                    layoutDirection=View.LAYOUT_DIRECTION_RTL
+                }
+                cell.addView(pair.first,LinearLayout.LayoutParams(-1,-2))
+                cell.addView(pair.second,LinearLayout.LayoutParams(-1,dp(44)).apply { bottomMargin=dp(11) })
+                row.addView(cell,LinearLayout.LayoutParams(0,-2,1f).apply {
+                    if(index==0) marginEnd=dp(11)
+                })
+            }
+            body.addView(row,i,LinearLayout.LayoutParams(-1,-2))
+            i++
+        }
+    }
     private fun formSection(parent:LinearLayout,label:String) {
         val heading=text(label,13f,Color.rgb(122,81,24)).apply {
             gravity=Gravity.RIGHT or Gravity.CENTER_VERTICAL
@@ -1351,6 +1394,8 @@ class MainActivity : Activity() {
                 body.addView(text("واجهة قيد المطابقة مع التطبيق القديم — لا توجد عمليات حفظ في هذه النسخة.",15f))
             }
         }
+        if(screen in listOf("preview:مبيع كامل","preview:طلب صيانة","preview:استلام صيانة","preview:فاتورة شراء"))
+            arrangeOriginalFormGrid(body)
         if(screen!="chooser") body.addView(text("العودة",17f,gold).apply {
             isClickable=true;setOnClickListener {
                 returnToPrevious()
