@@ -595,7 +595,7 @@ class MainActivity : Activity() {
         })
         parent.addView(text("حذف الصورة",16f,gold).apply {
             isClickable=true
-            setOnClickListener { snapshotRepairDraft();repairPhotoUri=null;render();restoreRepairDraft() }
+            setOnClickListener { snapshotRepairDraft();repairPhotoUri=null;repairCameraPreview=null;render();restoreRepairDraft() }
         })
         repairPhotoUri?.let { uri ->
             parent.addView(android.widget.ImageView(this).apply {
