@@ -397,7 +397,10 @@ class MainActivity : Activity() {
         select(parent,"قاعدة الخصم",listOf("بدون قاعدة خصم"))
         disabledAction(parent,"＋ إنشاء قاعدة خصم")
         field(parent,"خصم الفاتورة اليدوي","0").inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
-        field(parent,"نقاط الولاء المستخدمة","0").apply { isEnabled=false }
+        field(parent,"نقاط الولاء المستخدمة","0").apply {
+            isEnabled=false
+            inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
+        }
         parent.addView(text("برنامج الولاء لم يُربط بعد.",12f))
         field(parent,"نسبة الضريبة %","0").inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
         val collectionMode=select(parent,"نوع القبض",listOf("عملة واحدة","دفع مختلط (أكثر من عملة)"))
