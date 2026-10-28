@@ -1901,7 +1901,7 @@ open class MainActivity:Activity() {
     private fun chooseProduct(inStockOnly:Boolean=false,kind:String?=null,action:(Product)->Unit){val box=column();val search=field("الاسم أو الباركود أو REF أو اللون",box);val results=column();box.addView(results);val sc=ScrollView(this);sc.addView(box);val dialog=AlertDialog.Builder(this).setTitle("اختيار منتج").setView(sc).setNegativeButton("رجوع",null).create()
         fun show(){results.removeAllViews();val found=store.searchCatalog(search.text.toString(),kind).filter{!inStockOnly || it.stock>0};if(found.isEmpty())text("لا توجد أصناف مطابقة للبحث.",results,14f);found.take(100).forEach{p->button(p.name+" · "+store.productColorLabel(p.id)+" · "+p.barcode+" · المتوفر: "+p.stock+" · "+money(p.price,p.currency),results){dialog.dismiss();action(p)}};if(found.size>100)text("تُعرض أول 100 نتيجة. اكتب اسمًا أو باركودًا أدق.",results,13f)};button("بحث",box){show()};button("▣ مسح باركود",box){chooserBarcodeField=search;chooserRefresh={show()};startActivityForResult(Intent(this,BarcodeScanActivity::class.java),68)};dialog.setOnDismissListener{chooserBarcodeField=null;chooserRefresh=null};show();dialog.show()}
     private fun showRestoredInvoiceOptions(section:String,summary:org.json.JSONObject) {
-        val number=summary.optString("invoiceNo")
+        val number=if(section=="purchases") summary.optString("supplierInvoice") else summary.optString("invoiceNo")
         val invoiceKind=when(section) { "sales" -> "مبيع"; "purchases" -> "شراء"; else -> "صيانة" }
         val archiveKey=summary.optString("archiveKey")
         AlertDialog.Builder(this).setTitle("خيارات فاتورة "+invoiceKind+" #"+number)
