@@ -39,7 +39,7 @@ class MainActivity : Activity() {
         }
     }
     private fun snapshotRepairDraft() {
-        if(screen!="preview:طلب صيانة") return
+        if(screen !in listOf("preview:طلب صيانة","preview:استلام صيانة")) return
         val texts=mutableListOf<String>()
         val selections=mutableListOf<Int>()
         activeRoot?.let { walkForm(it,{ texts.add(it.text.toString()) },{ selections.add(it.selectedItemPosition) }) }
@@ -47,7 +47,7 @@ class MainActivity : Activity() {
         repairDraftSelections=selections
     }
     private fun restoreRepairDraft() {
-        if(screen!="preview:طلب صيانة") return
+        if(screen !in listOf("preview:طلب صيانة","preview:استلام صيانة")) return
         val texts=repairDraftTexts ?: return
         val selections=repairDraftSelections ?: emptyList()
         var editIndex=0
