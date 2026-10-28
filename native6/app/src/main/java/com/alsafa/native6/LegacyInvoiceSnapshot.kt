@@ -113,6 +113,7 @@ object LegacyInvoiceSnapshot {
         require(from.isBlank() || to.isBlank() || from<=to)
         LegacyArchivedDebtReport.verifyArchiveCounts(store)
         val all=store.legacyRows(section)
+        val settlementIndex=if(section=="sales") store.legacySettlementIndex() else null
         val matches=mutableListOf<JSONObject>()
         val seenInvoiceIds=hashSetOf<String>()
         val outstanding=linkedMapOf<String,BigDecimal>()
@@ -133,11 +134,19 @@ object LegacyInvoiceSnapshot {
             val validCurrency=currency in setOf("USD","TRY","SYP")
             val validMoney=total!=null && paid!=null && total>=BigDecimal.ZERO &&
                 paid>=BigDecimal.ZERO && paid<=total
-            val financiallyValid=validId && validDate && validCurrency && validMoney
+            // For sales, historical returns and separate collections can change the
+            // actual receivable. Never present total-minus-paid as the reconciled debt.
+            val reconciled=if(section=="sales" && validId && validDate && validCurrency && validMoney)
+                runCatching { store.reconciledLegacySaleDue(original,settlementIndex!!) }.getOrNull()
+            else null
+            val financiallyValid=validId && validDate && validCurrency && validMoney &&
+                (section!="sales" || reconciled!=null)
             if(!financiallyValid) invalidRecords++
-            // Keep damaged source invoices visible for identification and repair.
-            // Never include them in financial totals or permit settlement.
-            val remaining=if(validMoney) total!!-paid!! else BigDecimal.ZERO
+            // Unreconciled historical sales stay visible but never enter debt totals.
+            val remaining=if(section=="sales") {
+                if(reconciled==null) BigDecimal.ZERO else
+                    BigDecimal.valueOf(reconciled,2)
+            } else if(validMoney) total!!-paid!! else BigDecimal.ZERO
             if(from.isNotBlank() && (date.isBlank() || date<from)) continue
             if(to.isNotBlank() && (date.isBlank() || date>to)) continue
             if(query.isNotBlank()) {
