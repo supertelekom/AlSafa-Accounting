@@ -1381,6 +1381,41 @@ class Store(val helper:StoreDb) {
         }
     }
 
+    /**
+     * Preflight every archived sale separately. One malformed historical invoice
+     * must not hide the remaining valid invoices from the operator.
+     * No mutation or activation is performed.
+     */
+    fun legacyOnlineCutoverAudit():List<Map<String,String>> {
+        val settlements=legacySettlementIndex()
+        val costRows=runCatching { legacyOnlineCostPreview() }
+        val costById=costRows.getOrNull()?.associateBy { it.getValue("source_id") }
+        return legacyRows("sales").map { row ->
+            val source=JSONObject(row.getValue("payload"))
+            val ref=source.optString("id")
+            val base=mapOf("source_id" to ref,
+                "invoice_no" to source.optString("invoiceNo"),
+                "currency" to source.optString("currency"))
+            val result=runCatching { reconciledLegacySaleDue(source,settlements) }
+            result.fold(
+                onSuccess={ due ->
+                    if(due==0L) base+mapOf("state" to "CLOSED","remaining_minor" to "0")
+                    else {
+                        val cost=costById?.get(ref)
+                        if(cost!=null) base+cost+mapOf("state" to "COST_REVIEW")
+                        else base+mapOf("state" to "NEEDS_COST_AUDIT",
+                            "remaining_minor" to due.toString(),
+                            "reason" to (costRows.exceptionOrNull()?.message ?: "Cost basis unavailable"))
+                    }
+                },
+                onFailure={ error ->
+                    base+mapOf("state" to "INVALID_SETTLEMENT",
+                        "reason" to (error.message ?: "Invalid historical settlement"))
+                }
+            )
+        }
+    }
+
     private data class LegacySettlementIndex(
         val payments:Map<String,List<JSONObject>>,
         val returns:Map<String,List<JSONObject>>
