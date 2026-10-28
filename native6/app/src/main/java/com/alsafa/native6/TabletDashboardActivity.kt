@@ -182,14 +182,14 @@ class TabletDashboardActivity : Activity() {
     }
 
     private fun grid(parent: LinearLayout, items: List<Triple<String, String, String>>) {
-        val columns = if (resources.configuration.smallestScreenWidthDp >= 840) 4 else if (resources.configuration.smallestScreenWidthDp >= 600) 3 else 2
+        val columns = 2
         items.chunked(columns).forEach { group ->
             val row = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
-            parent.addView(row, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(12) })
+            parent.addView(row, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(if (mode == "simple") 14 else 11) })
             group.forEach { (label, detail, route) ->
                 row.addView(tile(label, detail, "◈") { open(route) },
-                    LinearLayout.LayoutParams(0, dp(108), 1f).apply {
-                        marginEnd = dp(10)
+                    LinearLayout.LayoutParams(0, dp(if (mode == "simple") 185 else 104), 1f).apply {
+                        marginEnd = dp(if (mode == "simple") 14 else 11)
                     })
             }
             repeat(columns - group.size) {
