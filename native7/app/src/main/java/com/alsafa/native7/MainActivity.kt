@@ -353,6 +353,21 @@ class MainActivity : Activity() {
             bottomMargin=dp(14)
         })
     }
+    /** Two-column field row follows the original .form-grid layout (11px gap). */
+    private fun formPair(parent:LinearLayout,first:(LinearLayout)->Unit,second:(LinearLayout)->Unit) {
+        val row=LinearLayout(this).apply {
+            orientation=LinearLayout.HORIZONTAL
+            layoutDirection=View.LAYOUT_DIRECTION_RTL
+            gravity=Gravity.TOP
+        }
+        val right=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL }
+        val left=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL }
+        row.addView(right,LinearLayout.LayoutParams(0,-2,1f).apply { marginEnd=dp(11) })
+        row.addView(left,LinearLayout.LayoutParams(0,-2,1f))
+        parent.addView(row)
+        first(right)
+        second(left)
+    }
     private fun formHeader(parent:LinearLayout,title:String,description:String,backLabel:String,target:String) {
         val heading=LinearLayout(this).apply {
             orientation=LinearLayout.HORIZONTAL
@@ -623,8 +638,7 @@ class MainActivity : Activity() {
         parent.addView(text("المبلغ يدخل صندوق هذه العملة نفسها.",12f))
         select(parent,"طريقة الدفع *",listOf("نقدي","شام كاش"))
         parent.addView(text("اختر نقدي أو شام كاش قبل حفظ الفاتورة.",12f))
-        field(parent,"اسم العميل","مهم للضمان والفاتورة")
-        field(parent,"رقم واتساب العميل","مثال: 09xxxxxxxx").inputType=InputType.TYPE_CLASS_PHONE
+        formPair(parent,{ field(it,"اسم العميل","مهم للضمان والفاتورة") },{ field(it,"رقم واتساب العميل","مثال: 09xxxxxxxx").inputType=InputType.TYPE_CLASS_PHONE })
         select(parent,"مدة الضمان",listOf("بدون ضمان","3 أشهر","6 أشهر","سنة","سنتان"))
         parent.addView(text("يرتبط الضمان تلقائياً بالعميل والفاتورة.",12f))
         formSection(parent,"إضافة من المخزون")
@@ -738,12 +752,10 @@ class MainActivity : Activity() {
         parent.addView(text("المبلغ يدخل صندوق هذه العملة نفسها.",12f))
         select(parent,"طريقة الدفع الأولى *",listOf("نقدي","شام كاش"))
         parent.addView(text("اختر نقدي أو شام كاش قبل الحفظ.",12f))
-        field(parent,"اسم العميل *")
-        field(parent,"رقم واتساب العميل","09xxxxxxxx").inputType=InputType.TYPE_CLASS_PHONE
+        formPair(parent,{ field(it,"اسم العميل *") },{ field(it,"رقم واتساب العميل","09xxxxxxxx").inputType=InputType.TYPE_CLASS_PHONE })
         select(parent,"حالة الطلب",listOf("قيد الصيانة","بانتظار القطعة","جاهز للاستلام"))
         formSection(parent,"تفاصيل الساعة والتكلفة")
-        field(parent,"الماركة / نوع الساعة *","مثال: كاسيو")
-        field(parent,"الموديل أو الرقم")
+        formPair(parent,{ field(it,"الماركة / نوع الساعة *","مثال: كاسيو") },{ field(it,"الموديل أو الرقم") })
         field(parent,"العطل أو المطلوب *","مثال: تغيير بطارية وإصلاح السوار")
         field(parent,"نتيجة الفحص أو تحديث العميل","اختياري — اكتب هنا أي مشكلة تظهر لاحقاً ليتم إرسالها للعميل")
         parent.addView(text("صورة ساعة العميل عند الاستلام",16f,gold))
