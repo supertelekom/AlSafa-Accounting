@@ -216,24 +216,31 @@ class MainActivity : Activity() {
         }
     }
     private fun currencySummary(parent:LinearLayout) {
+        val row=LinearLayout(this).apply {
+            orientation=LinearLayout.HORIZONTAL
+            layoutDirection=View.LAYOUT_DIRECTION_RTL
+        }
+        parent.addView(row,LinearLayout.LayoutParams(-1,-2).apply { topMargin=dp(14);bottomMargin=dp(18) })
         val titles=listOf("↪" to "المدوّر من الإقفال السابق", "🛒" to "مبيعات اليوم", "🔧" to "صيانة اليوم")
-        titles.forEach { (symbol,label) ->
+        titles.forEachIndexed { index,(symbol,label) ->
             val section=LinearLayout(this).apply {
                 orientation=LinearLayout.VERTICAL
                 layoutDirection=View.LAYOUT_DIRECTION_RTL
-                background=panel(paper,17)
-                setPadding(dp(10),dp(9),dp(10),dp(9))
+                background=panel(paper,16,Color.rgb(234,223,206))
+                setPadding(dp(8),dp(12),dp(8),dp(12))
             }
-            section.addView(text("$symbol  $label",16f,gold).apply { gravity=Gravity.RIGHT })
-            val values=LinearLayout(this).apply { orientation=LinearLayout.HORIZONTAL;layoutDirection=View.LAYOUT_DIRECTION_RTL }
+            section.addView(text("$symbol  $label",13f,gold).apply { gravity=Gravity.RIGHT })
             listOf("USD","SYP","TRY").forEach { currency ->
-                val cell=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL;gravity=Gravity.CENTER }
-                cell.addView(text(currency,12f,ink))
-                cell.addView(text("—",17f,gold))
-                values.addView(cell,LinearLayout.LayoutParams(0,-2,1f))
+                val line=LinearLayout(this).apply {
+                    orientation=LinearLayout.HORIZONTAL
+                    layoutDirection=View.LAYOUT_DIRECTION_RTL
+                    gravity=Gravity.CENTER_VERTICAL
+                }
+                line.addView(text(currency,11f,Color.rgb(138,123,108)),LinearLayout.LayoutParams(0,-2,1f))
+                line.addView(text("—",14f,gold))
+                section.addView(line)
             }
-            section.addView(values)
-            parent.addView(section,LinearLayout.LayoutParams(-1,-2).apply { bottomMargin=dp(10) })
+            row.addView(section,LinearLayout.LayoutParams(0,-2,1f).apply { if(index>0) marginStart=dp(12) })
         }
     }
     private fun field(parent:LinearLayout,label:String,hint:String=""):EditText {
@@ -1110,7 +1117,11 @@ class MainActivity : Activity() {
             orientation=LinearLayout.VERTICAL; layoutDirection=View.LAYOUT_DIRECTION_RTL
             setPadding(dp(20),dp(22),dp(20),dp(24))
         }
-        scroll.addView(body)
+        val maxWidth=dp(if(screen=="chooser") 920 else 680)
+        val width=resources.displayMetrics.widthPixels
+        scroll.addView(body,android.widget.FrameLayout.LayoutParams(
+            if(width>maxWidth) maxWidth else -1,-2,Gravity.TOP or Gravity.CENTER_HORIZONTAL
+        ))
         when(screen) {
             "chooser" -> {
                 body.addView(text("ALSAFA WATCHES",13f,gold))
