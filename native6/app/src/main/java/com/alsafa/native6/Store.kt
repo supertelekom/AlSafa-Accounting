@@ -1274,7 +1274,11 @@ class Store(val helper:StoreDb) {
     fun openLegacyReceivable(
         legacyId:String,party:String,phone:String,currency:Currency,
         remaining:Long,cutoverDate:String
-    ):String=transaction { openLegacyReceivableInternal(legacyId,party,phone,currency,remaining,cutoverDate) }
+    ):String {
+        // Public single-invoice activation must not bypass the bulk cutover gate.
+        // Its current opening journal does not carry the original COGS basis.
+        throw IllegalStateException("تفعيل ذمة فاتورة قديمة متوقف حتى اكتمال قيد كلفة وربح التحصيل")
+    }
 
     /** Remaining old sale after linked collections and debt-reducing returns. */
     /**
