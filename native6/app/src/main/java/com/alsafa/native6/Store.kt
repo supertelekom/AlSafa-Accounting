@@ -346,6 +346,13 @@ class Store(val helper:StoreDb) {
         return found
     }
 
+    /** Full read-only invoice dossier addressable by its original backup ID. */
+    fun archivedSaleReviewBySourceId(sourceId:String):Map<String,String> {
+        val invoice=archivedInvoiceBySourceId("sales",sourceId)
+            ?: throw IllegalArgumentException("فاتورة المبيع القديمة غير موجودة")
+        return archivedSaleReview(invoice.getValue("archive_key"))
+    }
+
     /** Paginated repair history with bounded BLOB reads for old embedded watch photos. */
     fun repairPage(term:String,limit:Int,offset:Int):List<Map<String,String>> {
         require(limit in 1..100 && offset>=0)
