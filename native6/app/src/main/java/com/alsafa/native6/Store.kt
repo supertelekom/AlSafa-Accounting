@@ -139,6 +139,16 @@ class Store(val helper:StoreDb) {
         return results
     }
 
+    /** Read-only archive counts for the restore verification screen. */
+    fun archivedSectionCounts():Map<String,Long> {
+        val sections=listOf("sales","purchases","payments","cashTransactions",
+            "supplierLedger","partnerWithdrawals","dailyClosings","returns",
+            "source_suppliers")
+        return sections.associateWith { category ->
+            scalar("SELECT count(*) FROM legacy_records WHERE category=?",category)
+        }
+    }
+
     /** Paginated repair history with bounded BLOB reads for old embedded watch photos. */
     fun repairPage(term:String,limit:Int,offset:Int):List<Map<String,String>> {
         require(limit in 1..100 && offset>=0)
