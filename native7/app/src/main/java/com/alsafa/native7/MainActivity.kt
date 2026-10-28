@@ -1420,6 +1420,53 @@ class MainActivity : Activity() {
         parent.addView(text("النقدي وشام كاش والتحصيلات",14f))
         parent.addView(text("لم تُحمّل الأرصدة والتحصيلات بعد.",13f))
     }
+    /** Native equivalent of the original .topbar, .brand-mark and .brand CSS. */
+    private fun originalTopbar(parent:LinearLayout) {
+        val bar=LinearLayout(this).apply {
+            orientation=LinearLayout.HORIZONTAL
+            layoutDirection=View.LAYOUT_DIRECTION_RTL
+            gravity=Gravity.CENTER_VERTICAL
+            setPadding(dp(18),dp(18),dp(18),dp(16))
+            background=GradientDrawable(Orientation.TL_BR,
+                intArrayOf(Color.rgb(249,243,232),Color.rgb(234,217,185))).apply {
+                setStroke(dp(1),Color.rgb(229,208,170))
+            }
+        }
+        val brand=LinearLayout(this).apply {
+            orientation=LinearLayout.HORIZONTAL
+            layoutDirection=View.LAYOUT_DIRECTION_RTL
+            gravity=Gravity.CENTER_VERTICAL
+        }
+        val mark=text("◷",20f,Color.rgb(122,81,24)).apply {
+            gravity=Gravity.CENTER
+            background=GradientDrawable().apply {
+                setColor(Color.rgb(249,243,232))
+                cornerRadius=dp(22).toFloat()
+                setStroke(dp(2),gold)
+            }
+        }
+        brand.addView(mark,LinearLayout.LayoutParams(dp(43),dp(43)))
+        val labels=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL }
+        labels.addView(text("الصفا للساعات",19f,Color.rgb(122,81,24)).apply {
+            gravity=Gravity.RIGHT
+            typeface=Typeface.create(typeface,Typeface.BOLD)
+            setPadding(0,0,0,0)
+        })
+        labels.addView(text("Alsafa Watches",11f,Color.rgb(138,123,108)).apply {
+            gravity=Gravity.RIGHT
+            setPadding(0,dp(3),0,0)
+        })
+        brand.addView(labels,LinearLayout.LayoutParams(-2,-2).apply { marginStart=dp(11) })
+        bar.addView(brand,LinearLayout.LayoutParams(0,-2,1f))
+        if(screen!="chooser") {
+            bar.addView(text("رجوع",12f,gold).apply {
+                background=panel(Color.rgb(255,253,249),10)
+                isClickable=true
+                setOnClickListener { returnToPrevious() }
+            })
+        }
+        parent.addView(bar,LinearLayout.LayoutParams(-1,-2))
+    }
     private fun render() {
         val root=LinearLayout(this).apply {
             orientation=LinearLayout.VERTICAL; layoutDirection=View.LAYOUT_DIRECTION_RTL
@@ -1427,6 +1474,7 @@ class MainActivity : Activity() {
         }
         setContentView(root)
         activeRoot=root
+        originalTopbar(root)
         val scroll=ScrollView(this).apply { isFillViewport=true }
         root.addView(scroll,LinearLayout.LayoutParams(-1,-1))
         val body=LinearLayout(this).apply {
