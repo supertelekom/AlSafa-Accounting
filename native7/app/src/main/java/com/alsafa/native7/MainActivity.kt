@@ -273,6 +273,34 @@ class MainActivity : Activity() {
                 else LinearLayout.LayoutParams(-1,-2).apply { if(index>0) topMargin=dp(12) })
         }
     }
+    private fun formSection(parent:LinearLayout,label:String) {
+        val heading=text(label,16f,Color.rgb(122,81,24)).apply {
+            gravity=Gravity.RIGHT or Gravity.CENTER_VERTICAL
+            background=panel(Color.rgb(247,238,223),10,Color.rgb(234,223,206))
+            setPadding(dp(13),dp(10),dp(13),dp(10))
+        }
+        parent.addView(heading,LinearLayout.LayoutParams(-1,dp(45)).apply {
+            topMargin=dp(15)
+            bottomMargin=dp(13)
+        })
+    }
+    private fun formHeader(parent:LinearLayout,title:String,description:String,backLabel:String,target:String) {
+        val heading=LinearLayout(this).apply {
+            orientation=LinearLayout.HORIZONTAL
+            layoutDirection=View.LAYOUT_DIRECTION_RTL
+            gravity=Gravity.CENTER_VERTICAL
+        }
+        val labels=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL }
+        labels.addView(text(title,23f,gold).apply { gravity=Gravity.RIGHT })
+        labels.addView(text(description,13f).apply { gravity=Gravity.RIGHT })
+        heading.addView(labels,LinearLayout.LayoutParams(0,-2,1f))
+        heading.addView(text(backLabel,13f,gold).apply {
+            background=panel(paper,11)
+            isClickable=true
+            setOnClickListener { navigateTo(target) }
+        })
+        parent.addView(heading,LinearLayout.LayoutParams(-1,-2).apply { bottomMargin=dp(15) })
+    }
     private fun field(parent:LinearLayout,label:String,hint:String=""):EditText {
         parent.addView(text(label,11f,Color.rgb(138,123,108)).apply {
             gravity=Gravity.RIGHT
@@ -486,10 +514,8 @@ class MainActivity : Activity() {
         parent.addView(item,LinearLayout.LayoutParams(-1,-2).apply { bottomMargin=dp(12) })
     }
     private fun fullSalePreview(parent:LinearLayout) {
-        parent.addView(text("فاتورة مبيعات",26f,gold))
-        parent.addView(text("اختر من المنتجات أو امسح الباركود بالكاميرا لإضافة الساعة فوراً.",14f))
-        parent.addView(text("قائمة الفواتير",15f,gold).apply { isClickable=true;setOnClickListener { navigateTo("preview:المبيعات والفواتير") } })
-        parent.addView(text("بيانات الفاتورة",13f,Color.rgb(122,81,24)))
+        formHeader(parent,"فاتورة مبيعات","اختر من المنتجات أو امسح الباركود بالكاميرا لإضافة الساعة فوراً.","قائمة الفواتير","preview:المبيعات والفواتير")
+        formSection(parent,"بيانات الفاتورة")
         select(parent,"نوع البيع *",listOf("بيع من المحل","بيع أونلاين"))
         parent.addView(text("الأونلاين يخرج من المخزون فوراً، والمال يدخل الخزنة فقط عند التحصيل.",12f))
         field(parent,"التاريخ *","YYYY-MM-DD").apply {
@@ -519,7 +545,7 @@ class MainActivity : Activity() {
         field(parent,"اسم العميل","مهم للضمان والفاتورة")
         field(parent,"رقم واتساب العميل","مثال: 09xxxxxxxx").inputType=InputType.TYPE_CLASS_PHONE
         select(parent,"مدة الضمان",listOf("بدون ضمان","3 أشهر","6 أشهر","سنة","سنتان"))
-        parent.addView(text("إضافة من المخزون",13f,Color.rgb(122,81,24)))
+        formSection(parent,"إضافة من المخزون")
         field(parent,"بحث سريع عن المنتج","اكتب جزءاً من الاسم أو REF أو الرقم أو الباركود")
         select(parent,"اختر المنتج",listOf("لا توجد منتجات محمّلة بعد"))
         disabledAction(parent,"＋ إضافة المنتج")
@@ -527,7 +553,7 @@ class MainActivity : Activity() {
         disabledAction(parent,"⌁ قراءة بالكاميرا")
         disabledAction(parent,"إضافة بالباركود")
         parent.addView(text("عند العثور على الباركود يضاف المنتج بسعره وبياناته المحفوظة تلقائياً.",12f))
-        parent.addView(text("أصناف الفاتورة",13f,Color.rgb(122,81,24)))
+        formSection(parent,"أصناف الفاتورة")
         val lines=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL }
         parent.addView(lines)
         val liveSubtotal=text("مجموع الأصناف: —",16f,gold)
@@ -598,13 +624,8 @@ class MainActivity : Activity() {
         parent.addView(action,LinearLayout.LayoutParams(-1,dp(49)).apply { bottomMargin=dp(8) })
     }
     private fun repairFormPreview(parent:LinearLayout) {
-        parent.addView(text("طلب صيانة",26f,gold))
-        parent.addView(text("سجل الاستلام، الأجرة، كلفة الصيانة، وحالة الدفع.",14f))
-        parent.addView(text("الطلبات",16f,gold).apply {
-            isClickable=true
-            setOnClickListener { navigateTo("preview:كل الصيانة") }
-        })
-        parent.addView(text("بيانات العميل",13f,Color.rgb(122,81,24)))
+        formHeader(parent,"طلب صيانة","سجل الاستلام، الأجرة، كلفة الصيانة، وحالة الدفع.","الطلبات","preview:كل الصيانة")
+        formSection(parent,"بيانات العميل")
         field(parent,"التاريخ *","YYYY-MM-DD").apply {
             setText(java.time.LocalDate.now().toString())
             isFocusable=false
@@ -632,7 +653,7 @@ class MainActivity : Activity() {
         field(parent,"اسم العميل *")
         field(parent,"رقم واتساب العميل","09xxxxxxxx").inputType=InputType.TYPE_CLASS_PHONE
         select(parent,"حالة الطلب",listOf("قيد الصيانة","بانتظار القطعة","جاهز للاستلام"))
-        parent.addView(text("تفاصيل الساعة والتكلفة",13f,Color.rgb(122,81,24)))
+        formSection(parent,"تفاصيل الساعة والتكلفة")
         field(parent,"الماركة / نوع الساعة *","مثال: كاسيو")
         field(parent,"الموديل أو الرقم")
         field(parent,"العطل أو المطلوب *","مثال: تغيير بطارية وإصلاح السوار")
