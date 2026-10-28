@@ -176,6 +176,36 @@ class Store(val helper:StoreDb) {
         return result
     }
 
+    /**
+     * Inspect an archived invoice and its original item lines without
+     * creating a second operational invoice or altering the ledger.
+     */
+    fun archivedInvoiceDetail(kind:String,archiveKey:String):Map<String,String> {
+        require(kind=="sales" || kind=="purchases")
+        val original=JSONObject(archivedRecordDetail(kind,archiveKey))
+        val lines=original.optJSONArray("items")
+        return mapOf(
+            "archive_key" to archiveKey,
+            "source_id" to original.optString("id"),
+            "invoice_no" to original.optString("invoiceNo"),
+            "date" to original.optString("date"),
+            "currency" to original.optString("currency"),
+            "total" to original.optString("total"),
+            "paid_source_field" to original.optString("paid"),
+            "customer" to original.optString("customerName").ifBlank {
+                original.optString("customer")
+            },
+            "phone" to original.optString("customerPhone").ifBlank {
+                original.optString("phone")
+            },
+            "supplier_id" to original.optString("supplierId"),
+            "item_count" to (lines?.length() ?: 0).toString(),
+            "items_json" to (lines?.toString() ?: "[]"),
+            "original_json" to original.toString(),
+            "state" to "ARCHIVED_ONLY"
+        )
+    }
+
     /** Paginated repair history with bounded BLOB reads for old embedded watch photos. */
     fun repairPage(term:String,limit:Int,offset:Int):List<Map<String,String>> {
         require(limit in 1..100 && offset>=0)
