@@ -1637,8 +1637,8 @@ class Store(val helper:StoreDb) {
         require(saleType in setOf("store","online"))
         // A restored sale retains its original ID in the archive. Never allow a
         // new native sale to reuse that identity and post a second stock/cash entry.
-        require(scalar("SELECT count(*) FROM legacy_records WHERE category='sales' AND legacy_id LIKE ?",
-            "%:"+command)==0L) {
+        require(scalar("SELECT count(*) FROM legacy_records WHERE category='sales' AND substr(legacy_id,instr(legacy_id,':')+1)=?",
+            command)==0L) {
             "معرف فاتورة المبيع مستخدم في الأرشيف القديم؛ أوقف التسجيل منعاً للتكرار"
         }
         require(warrantyMonths in 0..120)
