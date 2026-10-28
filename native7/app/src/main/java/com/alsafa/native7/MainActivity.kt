@@ -182,7 +182,8 @@ class MainActivity : Activity() {
         parent.addView(card,LinearLayout.LayoutParams(0,dp(142),1f))
     }
     private fun actionGrid(parent:LinearLayout,items:List<Triple<String,String,String>>,simple:Boolean,management:Boolean=false) {
-        items.chunked(2).forEach { pair ->
+        val columns=if(!simple && !management && resources.configuration.screenWidthDp>=720) 4 else 2
+        items.chunked(columns).forEach { pair ->
             val row=LinearLayout(this).apply { orientation=LinearLayout.HORIZONTAL;layoutDirection=View.LAYOUT_DIRECTION_RTL }
             parent.addView(row,LinearLayout.LayoutParams(-1,-2).apply { bottomMargin=dp(if(simple) 7 else if(management) 10 else 9) })
             pair.forEachIndexed { index,item ->
@@ -195,8 +196,8 @@ class MainActivity : Activity() {
                         if(simple) Color.rgb(216,189,136) else Color.rgb(234,223,206))
                     setPadding(dp(if(simple) 9 else if(management) 15 else 13),
                         dp(if(simple) 9 else if(management) 15 else 13),
-                        dp(if(simple) 9 else if(management) 15 else 14),
-                        dp(if(simple) 9 else if(management) 15 else 12))
+                        dp(if(simple) 9 else if(management) 15 else 13),
+                        dp(if(simple) 9 else if(management) 15 else 13))
                     isClickable=true
                     setOnClickListener { navigateTo(if(screen=="full" && item.first=="مبيع") "preview:مبيع كامل" else "preview:" + item.first) }
                 }
