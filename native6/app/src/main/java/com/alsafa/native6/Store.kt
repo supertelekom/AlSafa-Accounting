@@ -1587,9 +1587,17 @@ class Store(val helper:StoreDb) {
         val existing=scalar("SELECT coalesce(max(number),0) FROM invoices")
         val raw=legacyRecord("configuration","settings")?.get("payload")
         val previous=if(raw==null) 0L else try {
-            JSONObject(raw).optLong("invoiceSequenceHighWater",0L).coerceAtLeast(0L)
-        } catch (_:org.json.JSONException) {
-            throw IllegalStateException("تعذر قراءة تسلسل الفواتير القديم؛ أوقف إنشاء الفاتورة لحماية الأرقام")
+            val settings=JSONObject(raw)
+            if(!settings.has("invoiceSequenceHighWater") || settings.isNull("invoiceSequenceHighWater")) 0L
+            else {
+                val sequence=settings.get("invoiceSequenceHighWater").toString().trim().toLongOrNull()
+                require(sequence!=null && sequence>=0L) {
+                    "تسلسل الفواتير في النسخة الاحتياطية غير صالح؛ لا يمكن إصدار رقم جديد"
+                }
+                sequence
+            }
+        } catch (error:org.json.JSONException) {
+            throw IllegalStateException("تعذر قراءة تسلسل الفواتير القديم؛ أوقف إنشاء الفاتورة لحماية الأرقام",error)
         }
         // Imported invoices remain read-only, but their numbers belong to the same
         // sequence. Never reuse a legacy number, even after restarting the app.
