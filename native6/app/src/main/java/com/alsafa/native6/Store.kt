@@ -269,6 +269,29 @@ class Store(val helper:StoreDb) {
         )
     }
 
+    /** Read-only review of a specific historical sale's cost basis. */
+    fun archivedSaleCostDetail(archiveKey:String):Map<String,String> {
+        val source=JSONObject(archivedRecordDetail("sales",archiveKey))
+        val settlements=legacySettlementIndex()
+        val result=runCatching { legacyOnlineCostForSale(source,settlements) }
+        return result.fold(
+            onSuccess={ basis ->
+                if(basis==null) mapOf(
+                    "source_id" to source.optString("id"),
+                    "state" to "NO_OUTSTANDING_BALANCE",
+                    "financial_activation" to "NOT_POSTED")
+                else basis+mapOf("state" to "COST_REVIEW",
+                    "financial_activation" to "NOT_POSTED")
+            },
+            onFailure={ error -> mapOf(
+                "source_id" to source.optString("id"),
+                "state" to "COST_BASIS_INVALID",
+                "reason" to (error.message ?: "Unknown cost error"),
+                "financial_activation" to "NOT_POSTED")
+            }
+        )
+    }
+
     /** Paginated repair history with bounded BLOB reads for old embedded watch photos. */
     fun repairPage(term:String,limit:Int,offset:Int):List<Map<String,String>> {
         require(limit in 1..100 && offset>=0)
