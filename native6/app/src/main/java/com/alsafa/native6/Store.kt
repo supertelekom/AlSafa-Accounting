@@ -1674,8 +1674,11 @@ class Store(val helper:StoreDb) {
             "الخزنة مكررة في الدفعات؛ اجمع مبالغها في دفعة واحدة"
         }
         receipts.forEach { vault(it.first) }
-        require(!LocalDate.parse(receiptDate).isAfter(LocalDate.now()))
-        require(!LocalDate.parse(receiptDate).isBefore(LocalDate.parse(date)))
+        LocalDate.parse(date)
+        if(receipts.any { it.second>0L }) {
+            require(!LocalDate.parse(receiptDate).isAfter(LocalDate.now())) { "تاريخ القبض في المستقبل" }
+            require(!LocalDate.parse(receiptDate).isBefore(LocalDate.parse(date))) { "تاريخ القبض يسبق الفاتورة" }
+        }
         val totalPaid=receipts.fold(0L){acc,entry->Math.addExact(acc,entry.second)}
         val invoiceId=sale(items,party,phone,currency,0L,receipts.first().first,discount,date,
             notes=notes,saleType=saleType,warrantyMonths=warrantyMonths,warrantyStart=warrantyStart)
