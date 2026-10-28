@@ -1609,7 +1609,10 @@ class Store(val helper:StoreDb) {
         }
         return add(maxOf(existing,previous,imported),1L)
     }
-    fun sale(items:List<SaleItem>,party:String,phone:String,currency:Currency,paid:Long,vault:String,discount:Long=0,date:String=today(),command:String=id(),receiptDate:String=date,notes:String=""):String=transaction {
+    fun sale(items:List<SaleItem>,party:String,phone:String,currency:Currency,paid:Long,vault:String,discount:Long=0,date:String=today(),command:String=id(),receiptDate:String=date,notes:String="",saleType:String="store",warrantyMonths:Int=0,warrantyStart:String=date):String=transaction {
+        require(saleType in setOf("store","online"))
+        require(warrantyMonths in 0..120)
+        if(warrantyMonths>0) LocalDate.parse(warrantyStart)
         require(items.isNotEmpty() && items.map {it.productId}.distinct().size==items.size){"الصنف مكرر"};vault(vault)
         val products=items.map { product(it.productId) };require(products.all {it.kind in setOf("watch","part")}){"صنف المبيع غير مدعوم"};require(products.all {it.currency==currency}){"اختلاف عملة المنتج: يلزم تحويل مسجل قبل هذه العملية"}
         require(items.all {it.qty>0&&it.unitPrice>=0}){"الكمية والسعر غير صالحين"};val gross=items.fold(0L){a,i->add(a,mul(i.qty,i.unitPrice))};require(gross>0){"لا يمكن إنشاء فاتورة بإجمالي صفر"};require(discount>=0 && discount<gross){"الخصم غير صالح"}
@@ -1620,7 +1623,7 @@ class Store(val helper:StoreDb) {
         val costs=items.indices.map {i->require(items[i].qty<=products[i].stock){"المخزون غير كافٍ"};proportional(products[i].value,items[i].qty,products[i].stock)}
         val cost=costs.fold(0L,::add)
         event(command,"SALE",date,"مبيع $party")
-        insert("invoices","id" to command,"number" to nextNumber(),"kind" to "sale","party" to party,"phone" to phone,"currency" to currency.name,"total" to total,"cost" to cost,"notes" to notes.trim())
+        insert("invoices","id" to command,"number" to nextNumber(),"kind" to "sale","party" to party,"phone" to phone,"currency" to currency.name,"total" to total,"cost" to cost,"notes" to notes.trim(),"sale_type" to saleType,"warranty_months" to warrantyMonths,"warranty_start" to (if(warrantyMonths>0) warrantyStart else ""))
         items.forEachIndexed {i,item->val p=products[i];insert("invoice_lines","invoice_id" to command,"line" to i,"product_id" to p.id,"name" to (p.name + productColorLabel(p.id).takeIf { it.isNotBlank() }?.let { " · $it" }.orEmpty()),"qty" to item.qty,"net" to nets[i],"cost" to costs[i]);stock(command,i,p,-item.qty,-costs[i])}
         post(command,listOf(Posting("receivable:$command",currency,total),Posting("revenue:sales",currency,-total),Posting("expense:cogs",currency,cost),Posting("inventory",currency,-cost)))
         if(paid>0) collectInternal(command,paid,vault,receiptDate,"$command-receipt");command
