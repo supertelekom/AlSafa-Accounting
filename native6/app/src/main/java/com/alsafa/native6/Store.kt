@@ -149,6 +149,33 @@ class Store(val helper:StoreDb) {
         }
     }
 
+    fun archivedFinanceByDate(
+        kind:String,from:String,to:String,query:String="",limit:Int=30,offset:Int=0
+    ):List<Map<String,String>> {
+        require(limit in 1..100 && offset>=0)
+        val first=java.time.LocalDate.parse(from)
+        val last=java.time.LocalDate.parse(to)
+        require(!first.isAfter(last))
+        val result=ArrayList<Map<String,String>>()
+        var scanned=0
+        var matched=0
+        while(true) {
+            val batch=archivedFinancePage(kind,query,100,scanned)
+            if(batch.isEmpty()) break
+            for(row in batch) {
+                val day=runCatching {
+                    java.time.LocalDate.parse(row.getValue("date").take(10))
+                }.getOrNull() ?: continue
+                if(day.isBefore(first) || day.isAfter(last)) continue
+                if(matched++<offset) continue
+                result.add(row)
+                if(result.size==limit) return result
+            }
+            scanned=Math.addExact(scanned,batch.size)
+        }
+        return result
+    }
+
     /** Paginated repair history with bounded BLOB reads for old embedded watch photos. */
     fun repairPage(term:String,limit:Int,offset:Int):List<Map<String,String>> {
         require(limit in 1..100 && offset>=0)
