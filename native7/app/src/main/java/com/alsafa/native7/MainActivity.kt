@@ -271,14 +271,17 @@ class MainActivity : Activity() {
         }
     }
     private fun select(parent:LinearLayout,label:String,options:List<String>):Spinner {
-        parent.addView(text(label,15f).apply { gravity=Gravity.RIGHT })
+        parent.addView(text(label,11f,Color.rgb(138,123,108)).apply {
+            gravity=Gravity.RIGHT
+            setPadding(dp(2),dp(5),dp(2),dp(6))
+        })
         val spinner=Spinner(this).apply {
             layoutDirection=View.LAYOUT_DIRECTION_RTL
-            background=panel(paper,12)
+            background=panel(Color.rgb(255,252,247),11)
             setPadding(dp(8),dp(3),dp(8),dp(3))
         }
         spinner.adapter=ArrayAdapter(this,android.R.layout.simple_spinner_dropdown_item,options)
-        parent.addView(spinner,LinearLayout.LayoutParams(-1,dp(52)).apply { bottomMargin=dp(12) })
+        parent.addView(spinner,LinearLayout.LayoutParams(-1,dp(44)).apply { bottomMargin=dp(11) })
         return spinner
     }
     private fun finalAmountCurrency(parent:LinearLayout, defaultCurrency:String) {
@@ -468,7 +471,7 @@ class MainActivity : Activity() {
         parent.addView(text("فاتورة مبيعات",26f,gold))
         parent.addView(text("اختر من المنتجات أو امسح الباركود بالكاميرا لإضافة الساعة فوراً.",14f))
         parent.addView(text("قائمة الفواتير",15f,gold).apply { isClickable=true;setOnClickListener { navigateTo("preview:المبيعات والفواتير") } })
-        parent.addView(text("بيانات الفاتورة",21f,gold))
+        parent.addView(text("بيانات الفاتورة",13f,Color.rgb(122,81,24)))
         select(parent,"نوع البيع *",listOf("بيع من المحل","بيع أونلاين"))
         parent.addView(text("الأونلاين يخرج من المخزون فوراً، والمال يدخل الخزنة فقط عند التحصيل.",12f))
         field(parent,"التاريخ *","YYYY-MM-DD").apply {
@@ -498,7 +501,7 @@ class MainActivity : Activity() {
         field(parent,"اسم العميل","مهم للضمان والفاتورة")
         field(parent,"رقم واتساب العميل","مثال: 09xxxxxxxx").inputType=InputType.TYPE_CLASS_PHONE
         select(parent,"مدة الضمان",listOf("بدون ضمان","3 أشهر","6 أشهر","سنة","سنتان"))
-        parent.addView(text("إضافة من المخزون",21f,gold))
+        parent.addView(text("إضافة من المخزون",13f,Color.rgb(122,81,24)))
         field(parent,"بحث سريع عن المنتج","اكتب جزءاً من الاسم أو REF أو الرقم أو الباركود")
         select(parent,"اختر المنتج",listOf("لا توجد منتجات محمّلة بعد"))
         disabledAction(parent,"＋ إضافة المنتج")
@@ -506,7 +509,7 @@ class MainActivity : Activity() {
         disabledAction(parent,"⌁ قراءة بالكاميرا")
         disabledAction(parent,"إضافة بالباركود")
         parent.addView(text("عند العثور على الباركود يضاف المنتج بسعره وبياناته المحفوظة تلقائياً.",12f))
-        parent.addView(text("أصناف الفاتورة",21f,gold))
+        parent.addView(text("أصناف الفاتورة",13f,Color.rgb(122,81,24)))
         val lines=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL }
         parent.addView(lines)
         val liveSubtotal=text("مجموع الأصناف: —",16f,gold)
@@ -583,7 +586,7 @@ class MainActivity : Activity() {
             isClickable=true
             setOnClickListener { navigateTo("preview:كل الصيانة") }
         })
-        parent.addView(text("بيانات العميل",21f,gold))
+        parent.addView(text("بيانات العميل",13f,Color.rgb(122,81,24)))
         field(parent,"التاريخ *","YYYY-MM-DD").apply {
             setText(java.time.LocalDate.now().toString())
             isFocusable=false
@@ -611,7 +614,7 @@ class MainActivity : Activity() {
         field(parent,"اسم العميل *")
         field(parent,"رقم واتساب العميل","09xxxxxxxx").inputType=InputType.TYPE_CLASS_PHONE
         select(parent,"حالة الطلب",listOf("قيد الصيانة","بانتظار القطعة","جاهز للاستلام"))
-        parent.addView(text("تفاصيل الساعة والتكلفة",21f,gold))
+        parent.addView(text("تفاصيل الساعة والتكلفة",13f,Color.rgb(122,81,24)))
         field(parent,"الماركة / نوع الساعة *","مثال: كاسيو")
         field(parent,"الموديل أو الرقم")
         field(parent,"العطل أو المطلوب *","مثال: تغيير بطارية وإصلاح السوار")
