@@ -1560,7 +1560,7 @@ class MainActivity : Activity() {
             screen=="preview:صيانة سريعة" || screen=="preview:تسليم الساعات" ||
             screen=="preview:تسليم الوردية"
         val showNavigation=!simpleMode && screen!="advisor"
-        val sidebar=showNavigation && width>=dp(720)
+        val sidebar=showNavigation && resources.configuration.screenWidthDp>=720
         val workArea=LinearLayout(this).apply {
             orientation=LinearLayout.HORIZONTAL
             layoutDirection=View.LAYOUT_DIRECTION_RTL
@@ -1569,7 +1569,7 @@ class MainActivity : Activity() {
         if(sidebar) {
             val nav=LegacyNavigation(this)
             nav.show(true,screen) { navigateTo(it) }
-            workArea.addView(nav,LinearLayout.LayoutParams(dp(220),-1))
+            workArea.addView(nav,LinearLayout.LayoutParams(dp(if(resources.configuration.screenWidthDp>=1200) 230 else 200),-1))
         }
         val scroll=ScrollView(this).apply { isFillViewport=true }
         workArea.addView(scroll,LinearLayout.LayoutParams(0,-1,1f))
@@ -1577,8 +1577,13 @@ class MainActivity : Activity() {
             orientation=LinearLayout.VERTICAL; layoutDirection=View.LAYOUT_DIRECTION_RTL
             setPadding(dp(15),dp(17),dp(15),dp(24))
         }
-        val maxWidth=dp(680)
-        val available=width-if(sidebar) dp(220) else 0
+        // Match original v3.9.359 Honor Pad X8b tablet breakpoints.
+        val tablet=resources.configuration.screenWidthDp>=720
+        val maxWidth=dp(if(tablet) 1440 else 680)
+        val sidebarWidth=if(sidebar) dp(if(resources.configuration.screenWidthDp>=1200) 230 else 200) else 0
+        val available=width-sidebarWidth
+        body.setPadding(dp(if(tablet) 20 else 15),dp(if(tablet) 20 else 17),
+            dp(if(tablet) 20 else 15),dp(10))
         scroll.addView(body,android.widget.FrameLayout.LayoutParams(
             if(available>maxWidth) maxWidth else -1,-2,Gravity.TOP or Gravity.CENTER_HORIZONTAL
         ))
