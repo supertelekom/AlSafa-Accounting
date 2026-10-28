@@ -302,6 +302,32 @@ class Store(val helper:StoreDb) {
             mapOf("activation_state" to "READ_ONLY")
     }
 
+    fun archivedInvoiceIdentityAudit(kind:String):Map<String,Int> {
+        require(kind=="sales" || kind=="purchases")
+        val seen=HashSet<String>()
+        var missing=0
+        var duplicates=0
+        var invalidDates=0
+        var count=0
+        var offset=0
+        while(true) {
+            val batch=archivedInvoicePage(kind,"",100,offset)
+            if(batch.isEmpty()) break
+            for(row in batch) {
+                count++
+                val id=row.getValue("source_id").trim()
+                if(id.isEmpty()) missing++
+                else if(!seen.add(id)) duplicates++
+                if(runCatching {
+                    java.time.LocalDate.parse(row.getValue("date").take(10))
+                }.isFailure) invalidDates++
+            }
+            offset=Math.addExact(offset,batch.size)
+        }
+        return mapOf("total" to count,"missing_ids" to missing,
+            "duplicate_ids" to duplicates,"invalid_dates" to invalidDates)
+    }
+
     /** Paginated repair history with bounded BLOB reads for old embedded watch photos. */
     fun repairPage(term:String,limit:Int,offset:Int):List<Map<String,String>> {
         require(limit in 1..100 && offset>=0)
