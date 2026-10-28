@@ -1338,9 +1338,11 @@ class Store(val helper:StoreDb) {
                 .movePointRight(2).longValueExact()
             val totalMinor=total.setScale(2,java.math.RoundingMode.HALF_UP)
                 .movePointRight(2).longValueExact()
-            val pendingCost=java.math.BigInteger.valueOf(originalMinor)
-                .multiply(java.math.BigInteger.valueOf(due))
+            val collectedMinor=Math.subtractExact(totalMinor,due)
+            val recognizedCost=java.math.BigInteger.valueOf(originalMinor)
+                .multiply(java.math.BigInteger.valueOf(collectedMinor))
                 .divide(java.math.BigInteger.valueOf(totalMinor)).longValueExact()
+            val pendingCost=Math.subtractExact(originalMinor,recognizedCost)
             mapOf("source_id" to source.optString("id"),
                 "invoice_no" to source.optString("invoiceNo"),
                 "currency" to source.optString("currency"),
