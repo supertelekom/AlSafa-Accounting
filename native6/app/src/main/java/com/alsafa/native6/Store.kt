@@ -332,18 +332,25 @@ class Store(val helper:StoreDb) {
     fun archivedInvoiceBySourceId(kind:String,sourceId:String):Map<String,String>? {
         require(kind=="sales" || kind=="purchases")
         require(sourceId.isNotBlank())
-        var offset=0
-        var found:Map<String,String>?=null
-        while(true) {
-            val batch=archivedInvoicePage(kind,"",100,offset)
-            if(batch.isEmpty()) break
-            for(row in batch) if(row["source_id"]==sourceId) {
-                require(found==null) { "معرف فاتورة قديمة مكرر" }
-                found=row
-            }
-            offset=Math.addExact(offset,batch.size)
-        }
-        return found
+        val matches=rows(
+            "SELECT legacy_id,length(CAST(payload AS BLOB)) AS bytes FROM legacy_records "+
+                "WHERE category=? AND substr(legacy_id,instr(legacy_id,':')+1)=?",
+            kind,sourceId
+        )
+        require(matches.size<=1) { "معرف فاتورة قديمة مكرر" }
+        val archived=decodeLegacyRecords(kind,matches).singleOrNull() ?: return null
+        val source=JSONObject(archived.getValue("payload"))
+        require(source.optString("id")==sourceId) { "عدم تطابق معرف الفاتورة الأصلية" }
+        return mapOf(
+            "archive_key" to archived.getValue("legacy_id"),
+            "source_id" to sourceId,
+            "invoice_no" to source.optString("invoiceNo"),
+            "date" to source.optString("date"),
+            "currency" to source.optString("currency"),
+            "total" to source.optString("total"),
+            "paid" to source.optString("paid"),
+            "state" to "ARCHIVED_ONLY"
+        )
     }
 
     /** Full read-only invoice dossier addressable by its original backup ID. */
