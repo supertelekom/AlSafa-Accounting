@@ -181,41 +181,59 @@ class MainActivity : Activity() {
         card.addView(text("دخول",10f,if(dark) Color.rgb(213,185,143) else gold))
         parent.addView(card,LinearLayout.LayoutParams(0,dp(142),1f))
     }
-    private fun actionGrid(parent:LinearLayout,items:List<Triple<String,String,String>>,simple:Boolean) {
-        // Original v3.9.359: father-simple-four = 2 columns; advanced-home = 3 columns on tablet.
-        val columns=if(simple) 2 else if(resources.displayMetrics.widthPixels>=dp(720)) 3 else 2
-        items.chunked(columns).forEach { group ->
+    private fun actionGrid(parent:LinearLayout,items:List<Triple<String,String,String>>,simple:Boolean,management:Boolean=false) {
+        items.chunked(2).forEach { pair ->
             val row=LinearLayout(this).apply { orientation=LinearLayout.HORIZONTAL;layoutDirection=View.LAYOUT_DIRECTION_RTL }
-            parent.addView(row,LinearLayout.LayoutParams(-1,-2).apply { bottomMargin=dp(if(simple) 7 else 11) })
-            group.forEachIndexed { index,item ->
+            parent.addView(row,LinearLayout.LayoutParams(-1,-2).apply { bottomMargin=dp(if(simple) 7 else if(management) 10 else 11) })
+            pair.forEachIndexed { index,item ->
                 val box=LinearLayout(this).apply {
-                    orientation=if(simple) LinearLayout.VERTICAL else LinearLayout.HORIZONTAL
-                    gravity=Gravity.CENTER
+                    orientation=if(simple || management) LinearLayout.VERTICAL else LinearLayout.HORIZONTAL
+                    gravity=if(management) Gravity.CENTER_VERTICAL else Gravity.CENTER
                     layoutDirection=View.LAYOUT_DIRECTION_RTL
-                    background=panel(if(simple) paper else paper,if(simple) 24 else 18,
+                    background=panel(if(simple) Color.rgb(255,250,242) else paper,
+                        if(simple) 24 else if(management) 16 else 18,
                         if(simple) Color.rgb(216,189,136) else Color.rgb(234,223,206))
-                    setPadding(dp(if(simple) 9 else 14),dp(if(simple) 9 else 12),dp(if(simple) 9 else 14),dp(if(simple) 9 else 12))
+                    setPadding(dp(if(simple) 9 else if(management) 15 else 14),
+                        dp(if(simple) 9 else if(management) 15 else 12),
+                        dp(if(simple) 9 else if(management) 15 else 14),
+                        dp(if(simple) 9 else if(management) 15 else 12))
                     isClickable=true
                     setOnClickListener { navigateTo(if(screen=="full" && item.first=="مبيع") "preview:مبيع كامل" else "preview:" + item.first) }
                 }
-                if(simple) {
-                    box.addView(text(item.third,27f,gold))
-                    box.addView(text(item.first,16f))
-                    box.addView(text(item.second,9f,Color.rgb(138,123,108)))
-                } else {
-                    box.addView(text(item.third,25f,gold).apply {
-                        background=panel(Color.rgb(248,237,219),14)
-                    },LinearLayout.LayoutParams(dp(46),dp(46)))
-                    val labels=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL;gravity=Gravity.CENTER_VERTICAL }
-                    labels.addView(text(item.first,17f).apply { gravity=Gravity.RIGHT;setPadding(dp(8),0,dp(8),0) })
-                    labels.addView(text(item.second,11f,Color.rgb(138,123,108)).apply { gravity=Gravity.RIGHT;setPadding(dp(8),dp(4),dp(8),0) })
-                    box.addView(labels,LinearLayout.LayoutParams(0,-2,1f))
+                when {
+                    simple -> {
+                        box.addView(text(item.third,27f,gold))
+                        box.addView(text(item.first,16f))
+                        box.addView(text(item.second,9f,Color.rgb(138,123,108)))
+                    }
+                    management -> {
+                        box.addView(text(item.third,25f,gold).apply {
+                            gravity=Gravity.RIGHT
+                            setPadding(0,0,0,dp(8))
+                        })
+                        box.addView(text(item.first,14f).apply {
+                            gravity=Gravity.RIGHT
+                            setPadding(0,0,0,0)
+                        })
+                        box.addView(text(item.second,10f,Color.rgb(138,123,108)).apply {
+                            gravity=Gravity.RIGHT
+                            setPadding(0,dp(5),0,0)
+                        })
+                    }
+                    else -> {
+                        box.addView(text(item.third,25f,gold).apply {
+                            background=panel(Color.rgb(248,237,219),14)
+                        },LinearLayout.LayoutParams(dp(46),dp(46)))
+                        val labels=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL;gravity=Gravity.CENTER_VERTICAL }
+                        labels.addView(text(item.first,17f).apply { gravity=Gravity.RIGHT;setPadding(dp(8),0,dp(8),0) })
+                        labels.addView(text(item.second,11f,Color.rgb(138,123,108)).apply { gravity=Gravity.RIGHT;setPadding(dp(8),dp(4),dp(8),0) })
+                        box.addView(labels,LinearLayout.LayoutParams(0,-2,1f))
+                    }
                 }
-                row.addView(box,LinearLayout.LayoutParams(0,dp(if(simple) 93 else 104),1f).apply {
-                    if(index>0) marginStart=dp(if(simple) 7 else 11)
+                row.addView(box,LinearLayout.LayoutParams(0,dp(if(simple) 93 else if(management) 115 else 104),1f).apply {
+                    if(index==0) marginEnd=dp(if(simple) 7 else if(management) 10 else 11)
                 })
             }
-            repeat(columns-group.size) { row.addView(View(this),LinearLayout.LayoutParams(0,dp(1),1f)) }
         }
     }
     private fun currencySummary(parent:LinearLayout) {
@@ -1215,7 +1233,7 @@ class MainActivity : Activity() {
                     Triple("الأمان والأجهزة","PIN واسم الجهاز وسجل النشاط","🛡️"),
                     Triple("مركز الصفا الحديث","القرارات، العرض، الولاء، الاستلام الذكي والمزيد","✦"),
                     Triple("الإعدادات","العملات والنسخ الاحتياطي والمتجر","⚙️")
-                ),false)
+                ),false,true)
             }
             "preview:مبيع" -> salePreview(body)
             "preview:مبيع كامل" -> fullSalePreview(body)
