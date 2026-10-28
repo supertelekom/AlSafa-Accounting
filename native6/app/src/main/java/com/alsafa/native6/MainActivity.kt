@@ -1958,7 +1958,8 @@ open class MainActivity:Activity() {
                                 val name=item.optString("name").ifBlank { item.optString("productName") }
                                 val qty=item.optString("quantity",item.optString("qty","1"))
                                 val price=item.optString("price",item.optString("unitPrice",""))
-                                name+" × "+qty+(if(price.isBlank())"" else " · "+price)
+                                name+" × "+qty+(if(price.isBlank())"" else " · "+price)+
+                                    (if(section=="sales" && item.has("cost") && !item.isNull("cost")) " · الكلفة: "+item.optString("cost") else "")
                             }
                         }
                         val message=if(invoice==null)"تعذر العثور على الفاتورة" else
