@@ -1361,6 +1361,28 @@ class Store(val helper:StoreDb) {
         val payments:Map<String,List<JSONObject>>,
         val returns:Map<String,List<JSONObject>>
     )
+    /** Reject payment/return references that point to no archived sale. */
+    fun legacyOnlineSettlementReferenceIssues():List<Map<String,String>> {
+        val known=legacyRows("sales").map {
+            JSONObject(it.getValue("payload")).optString("id")
+        }.toHashSet()
+        val index=legacySettlementIndex()
+        val issues=mutableListOf<Map<String,String>>()
+        for((category,grouped) in listOf(
+            "payments" to index.payments,"returns" to index.returns
+        )) {
+            for((reference,records) in grouped) {
+                if(reference !in known) {
+                    for(record in records) issues.add(mapOf(
+                        "category" to category,
+                        "record_id" to record.optString("id"),
+                        "missing_sale_id" to reference))
+                }
+            }
+        }
+        return issues
+    }
+
     private fun legacySettlementIndex():LegacySettlementIndex {
         fun grouped(category:String):Map<String,List<JSONObject>> {
             val seen=HashSet<String>()
