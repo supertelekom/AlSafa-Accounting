@@ -29,3 +29,16 @@ Implemented as UI previews: mode chooser, simplified/advanced home, navigation, 
 Not implemented: exact visual equivalence, original logo and Tajawal asset bundling, settings-driven repair configuration, full original forms and archive, barcode camera, validated currency conversion, persistence, data migration, printing, build/device tests.
 
 **Never activate preview submission controls as real accounting operations.** No new database until source UI behavior and structure have been verified.
+
+## Sale line verification — 2026-10-28
+
+Checked exact `saleLine(item,index)` implementation from the original `assets/main.js`:
+
+- Name required; model optional; quantity required integer with minimum 1; price required numeric minimum 0 with 0.01 step.
+- Original line total is quantity × price, and may show a product-stock badge only when the line refers to a real inventory product.
+- Original cost is hidden in the form; it is not a manually typed sales-line field.
+- Native 7 now provides interactive manual-line add/remove and live exact-decimal multiplication. It does **not** yet apply original currency formatting or the source's full invoice totals and discounts.
+
+Original `renderSaleForm()` label order confirmed: نوع البيع, التاريخ, الوقت, عملة البيع / القبض, طريقة الدفع, اسم العميل, رقم واتساب العميل, مدة الضمان, بحث سريع عن المنتج, حالة الدفع, قاعدة الخصم, خصم الفاتورة اليدوي, نقاط الولاء المستخدمة, نسبة الضريبة %, نوع القبض, المبلغ المقبوض الآن, المبالغ المقبوضة فعلياً, USD, TRY, SYP, ملاحظات.
+
+**Do not add the unused external partners to Native 7.** User explicitly confirmed they have no operations in the legacy backup. This does not remove the three actual shop partners.
