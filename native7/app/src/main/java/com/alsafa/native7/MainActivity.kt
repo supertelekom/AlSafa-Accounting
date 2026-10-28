@@ -31,6 +31,9 @@ class MainActivity : Activity() {
     private var activeRoot:View? = null
     private var repairDraftTexts:List<String>? = null
     private var repairDraftSelections:List<Int>? = null
+    private var repairDraftScreen:String? = null
+    private fun isRepairScreen(value:String)=value=="preview:طلب صيانة" || value=="preview:استلام صيانة"
+
     private fun walkForm(view:View,edit:(EditText)->Unit,spin:(Spinner)->Unit) {
         when(view) {
             is EditText -> edit(view)
@@ -45,9 +48,11 @@ class MainActivity : Activity() {
         activeRoot?.let { walkForm(it,{ texts.add(it.text.toString()) },{ selections.add(it.selectedItemPosition) }) }
         repairDraftTexts=texts
         repairDraftSelections=selections
+        repairDraftScreen=screen
     }
     private fun restoreRepairDraft() {
         if(screen !in listOf("preview:طلب صيانة","preview:استلام صيانة")) return
+        if(repairDraftScreen!=screen) return
         val texts=repairDraftTexts ?: return
         val selections=repairDraftSelections ?: emptyList()
         var editIndex=0
@@ -75,6 +80,7 @@ class MainActivity : Activity() {
         screen=savedInstanceState?.getString("screen") ?: "chooser"
         previousScreen=savedInstanceState?.getString("previousScreen") ?: "chooser"
         repairPhotoUri=savedInstanceState?.getString("repairPhotoUri")?.let(android.net.Uri::parse)
+        repairDraftScreen=savedInstanceState?.getString("repairDraftScreen")
         repairDraftTexts=savedInstanceState?.getStringArrayList("repairDraftTexts")
         repairDraftSelections=savedInstanceState?.getIntegerArrayList("repairDraftSelections")
         render()
@@ -102,6 +108,7 @@ class MainActivity : Activity() {
     }
     override fun onSaveInstanceState(outState:Bundle) {
         snapshotRepairDraft()
+        outState.putString("repairDraftScreen",repairDraftScreen)
         outState.putStringArrayList("repairDraftTexts",repairDraftTexts?.let { ArrayList(it) })
         outState.putIntegerArrayList("repairDraftSelections",repairDraftSelections?.let { ArrayList(it) })
         outState.putString("screen",screen)
