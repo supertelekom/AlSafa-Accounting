@@ -98,6 +98,14 @@ class Store(val helper:StoreDb) {
         }
     }
 
+    fun archivedRecordDetail(kind:String,archiveKey:String):String {
+        require(kind in setOf("sales","purchases","payments","cashTransactions",
+            "supplierLedger","partnerWithdrawals","dailyClosings","returns"))
+        require(archiveKey.isNotBlank())
+        return legacyRecord(kind,archiveKey)?.getValue("payload")
+            ?: throw IllegalArgumentException("السجل القديم غير موجود")
+    }
+
     /** Paginated repair history with bounded BLOB reads for old embedded watch photos. */
     fun repairPage(term:String,limit:Int,offset:Int):List<Map<String,String>> {
         require(limit in 1..100 && offset>=0)
