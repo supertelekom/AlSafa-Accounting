@@ -1962,7 +1962,12 @@ open class MainActivity:Activity() {
                                     val date=row.optString("date").take(10)
                                     val value=row.optString("amount").ifBlank { row.optString("paid") }
                                     val currency=row.optString("currency",summary.optString("currency"))
-                                    date+" · "+value+" "+currency
+                                    val actualAmount=row.optString("paymentAmount")
+                                    val actualCurrency=row.optString("paymentCurrency")
+                                    date+" · "+value+" "+currency+
+                                        (if(actualAmount.isNotBlank() && actualCurrency.isNotBlank() &&
+                                            (actualAmount!=value || actualCurrency!=currency))
+                                            " · "+actualAmount+" "+actualCurrency else "")
                                 }
                             }
                         val lines=if(items==null)"" else (0 until items.length()).joinToString("\n") { index ->
