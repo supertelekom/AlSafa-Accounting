@@ -1948,8 +1948,8 @@ open class MainActivity:Activity() {
                                 if(row==null) "" else {
                                     row.optString("date")+" · "+row.optString("itemName")+
                                         " · الكمية: "+row.optString("qty")+
-                                        " · تخفيض الدين: "+row.optString("debtReduction")+
-                                        " · المبلغ المعاد: "+row.optString("refundAmount")+
+                                        (if(row.has("debtReduction") && !row.isNull("debtReduction")) " · تخفيض الدين: "+row.optString("debtReduction") else "")+
+                                        (if(row.has("refundAmount") && !row.isNull("refundAmount")) " · المبلغ المعاد: "+row.optString("refundAmount") else "")+
                                         " "+row.optString("currency")
                                 }
                             }
