@@ -799,20 +799,20 @@ class MainActivity : Activity() {
             orientation=LinearLayout.HORIZONTAL
             layoutDirection=View.LAYOUT_DIRECTION_RTL
         }
-        val cancelButton=text("إلغاء",14f,Color.rgb(122,81,24)).apply {
-            background=panel(Color.rgb(247,237,221),11,Color.rgb(223,201,164))
+        val cancelButton=text("إلغاء",13f,Color.rgb(122,81,24)).apply {
+            background=panel(Color.rgb(247,237,221),12,Color.rgb(223,201,164))
             isClickable=true
             setOnClickListener { cancel() }
         }
-        val saveButton=text(saveLabel,14f,Color.WHITE).apply {
+        val saveButton=text(saveLabel,13f,Color.WHITE).apply {
             background=GradientDrawable(Orientation.TL_BR,intArrayOf(Color.rgb(179,131,50),Color.rgb(139,96,31))).apply {
-                cornerRadius=dp(11).toFloat()
+                cornerRadius=dp(12).toFloat()
             }
             isClickable=true
             setOnClickListener { onSave() }
         }
-        actions.addView(cancelButton,LinearLayout.LayoutParams(0,dp(45),1f).apply { marginEnd=dp(9) })
-        actions.addView(saveButton,LinearLayout.LayoutParams(0,dp(45),1f))
+        actions.addView(cancelButton,LinearLayout.LayoutParams(0,dp(44),1f).apply { marginEnd=dp(9) })
+        actions.addView(saveButton,LinearLayout.LayoutParams(0,dp(44),1f))
         parent.addView(actions,LinearLayout.LayoutParams(-1,-2).apply { topMargin=dp(18) })
     }
     /** Original .calculation-box: dashed sand border and five rows. */
