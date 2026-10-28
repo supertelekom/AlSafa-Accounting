@@ -184,17 +184,17 @@ class MainActivity : Activity() {
     private fun actionGrid(parent:LinearLayout,items:List<Triple<String,String,String>>,simple:Boolean,management:Boolean=false) {
         items.chunked(2).forEach { pair ->
             val row=LinearLayout(this).apply { orientation=LinearLayout.HORIZONTAL;layoutDirection=View.LAYOUT_DIRECTION_RTL }
-            parent.addView(row,LinearLayout.LayoutParams(-1,-2).apply { bottomMargin=dp(if(simple) 7 else if(management) 10 else 11) })
+            parent.addView(row,LinearLayout.LayoutParams(-1,-2).apply { bottomMargin=dp(if(simple) 7 else if(management) 10 else 9) })
             pair.forEachIndexed { index,item ->
                 val box=LinearLayout(this).apply {
                     orientation=if(simple || management) LinearLayout.VERTICAL else LinearLayout.HORIZONTAL
                     gravity=if(management) Gravity.CENTER_VERTICAL else Gravity.CENTER
                     layoutDirection=View.LAYOUT_DIRECTION_RTL
                     background=panel(if(simple) Color.rgb(255,250,242) else paper,
-                        if(simple) 24 else if(management) 16 else 18,
+                        if(simple) 24 else if(management) 16 else 14,
                         if(simple) Color.rgb(216,189,136) else Color.rgb(234,223,206))
-                    setPadding(dp(if(simple) 9 else if(management) 15 else 14),
-                        dp(if(simple) 9 else if(management) 15 else 12),
+                    setPadding(dp(if(simple) 9 else if(management) 15 else 13),
+                        dp(if(simple) 9 else if(management) 15 else 13),
                         dp(if(simple) 9 else if(management) 15 else 14),
                         dp(if(simple) 9 else if(management) 15 else 12))
                     isClickable=true
@@ -221,17 +221,15 @@ class MainActivity : Activity() {
                         })
                     }
                     else -> {
-                        box.addView(text(item.third,25f,gold).apply {
-                            background=panel(Color.rgb(248,237,219),14)
-                        },LinearLayout.LayoutParams(dp(46),dp(46)))
+                        box.addView(text(item.third,20f,gold),LinearLayout.LayoutParams(dp(32),dp(32)))
                         val labels=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL;gravity=Gravity.CENTER_VERTICAL }
-                        labels.addView(text(item.first,17f).apply { gravity=Gravity.RIGHT;setPadding(dp(8),0,dp(8),0) })
-                        labels.addView(text(item.second,11f,Color.rgb(138,123,108)).apply { gravity=Gravity.RIGHT;setPadding(dp(8),dp(4),dp(8),0) })
+                        labels.addView(text(item.first,13f).apply { gravity=Gravity.RIGHT;setPadding(dp(8),0,dp(8),0) })
+                        labels.addView(text(item.second,10f,Color.rgb(138,123,108)).apply { gravity=Gravity.RIGHT;setPadding(dp(8),dp(4),dp(8),0) })
                         box.addView(labels,LinearLayout.LayoutParams(0,-2,1f))
                     }
                 }
-                row.addView(box,LinearLayout.LayoutParams(0,dp(if(simple) 93 else if(management) 115 else 104),1f).apply {
-                    if(index==0) marginEnd=dp(if(simple) 7 else if(management) 10 else 11)
+                row.addView(box,LinearLayout.LayoutParams(0,dp(if(simple) 93 else if(management) 115 else 72),1f).apply {
+                    if(index==0) marginEnd=dp(if(simple) 7 else if(management) 10 else 9)
                 })
             }
         }
