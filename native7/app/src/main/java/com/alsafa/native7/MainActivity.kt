@@ -91,6 +91,7 @@ class MainActivity : Activity() {
         super.onCreate(savedInstanceState)
         screen=savedInstanceState?.getString("screen") ?: "chooser"
         previousScreen=savedInstanceState?.getString("previousScreen") ?: "chooser"
+        navigationHistory.addAll(savedInstanceState?.getStringArrayList("navigationHistory") ?: emptyList())
         repairPhotoUri=savedInstanceState?.getString("repairPhotoUri")?.let(android.net.Uri::parse)
         repairDraftScreen=savedInstanceState?.getString("repairDraftScreen")
         repairDraftTexts=savedInstanceState?.getStringArrayList("repairDraftTexts")
