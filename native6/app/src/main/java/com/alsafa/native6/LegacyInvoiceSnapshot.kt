@@ -115,7 +115,9 @@ object LegacyInvoiceSnapshot {
             }
             if(financiallyValid) outstanding[currency]=(outstanding[currency] ?: BigDecimal.ZERO)+remaining
             matches.add(JSONObject().put("archiveKey",row.getValue("legacy_id"))
-                .put("id",original.optString("id")).put("invoiceNo",original.optString("invoiceNo").ifBlank { original.optString("number") })
+                .put("id",original.optString("id"))
+                .put("invoiceNo",original.optString("invoiceNo"))
+                .put("supplierInvoice",original.optString("supplierInvoice"))
                 .put("date",date).put("customer",original.optString("customer").ifBlank { original.optString("customerName") })
                 .put("phone",original.optString("phone").ifBlank { original.optString("customerPhone").ifBlank { original.optString("supplierPhone") } })
                 .put("supplierName",original.optString("supplierName"))
@@ -133,7 +135,7 @@ object LegacyInvoiceSnapshot {
         val page=JSONArray()
         // Show the newest transaction day first, preserving a stable order for pagination.
         matches.sortWith(compareByDescending<JSONObject> { it.optString("date") }
-            .thenByDescending { it.optString("invoiceNo") }
+            .thenByDescending { if(section=="purchases") it.optString("supplierInvoice") else it.optString("invoiceNo") }
             .thenByDescending { it.optString("id") })
         matches.drop(offset).take(limit).forEach { page.put(it) }
         return JSONObject().put("section",section).put("total",matches.size)
