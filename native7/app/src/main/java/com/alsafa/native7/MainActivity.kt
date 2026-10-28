@@ -1635,11 +1635,11 @@ class MainActivity : Activity() {
         }
         // Match original v3.9.359 Honor Pad X8b tablet breakpoints.
         val tablet=resources.configuration.screenWidthDp>=720
-        val maxWidth=dp(if(tablet) 1440 else 680)
+        val maxWidth=dp(if(tablet) 1280 else 680)
         val sidebarWidth=if(sidebar) dp(if(resources.configuration.screenWidthDp>=1200) 230 else 200) else 0
         val available=width-sidebarWidth
-        body.setPadding(dp(if(tablet) 20 else 15),dp(if(tablet) 20 else 17),
-            dp(if(tablet) 20 else 15),dp(10))
+        body.setPadding(dp(if(tablet) 28 else 15),dp(if(tablet) 28 else 17),
+            dp(if(tablet) 28 else 15),dp(10))
         scroll.addView(body,android.widget.FrameLayout.LayoutParams(
             if(available>maxWidth) maxWidth else -1,-2,Gravity.TOP or Gravity.CENTER_HORIZONTAL
         ))
