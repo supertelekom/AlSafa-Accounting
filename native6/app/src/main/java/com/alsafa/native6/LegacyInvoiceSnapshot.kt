@@ -41,10 +41,14 @@ object LegacyInvoiceSnapshot {
         }
         // A restored invoice must never silently share an identity with a posted
         // native invoice. This check is read-only and creates no accounting entries.
-        if(section=="sales") {
+        if(section in invoiceSections || section=="repairs") {
             val nativeCollision=store.rows("SELECT id FROM invoices WHERE id=? LIMIT 1",id)
             require(nativeCollision.isEmpty()) {
-                "معرف فاتورة المبيع المستعادة مستخدم في قاعدة الفواتير النشطة"
+                "معرف الفاتورة المستعادة مستخدم في قاعدة الفواتير النشطة"
+            }
+            val postedCollision=store.rows("SELECT id FROM events WHERE id=? LIMIT 1",id)
+            require(postedCollision.isEmpty()) {
+                "معرف الفاتورة المستعادة مرتبط بحركة مالية نشطة"
             }
         }
         val linked=JSONArray()
