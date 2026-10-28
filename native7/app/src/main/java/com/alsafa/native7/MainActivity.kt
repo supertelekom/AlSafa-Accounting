@@ -28,6 +28,40 @@ class MainActivity : Activity() {
     private var selectedQuickRepair: String? = null
     private var repairPhotoUri:android.net.Uri? = null
     private var selectedQuickPrice: Int? = null
+    private var activeRoot:View? = null
+    private var repairDraftTexts:List<String>? = null
+    private var repairDraftSelections:List<Int>? = null
+    private fun walkForm(view:View,edit:(EditText)->Unit,spin:(Spinner)->Unit) {
+        when(view) {
+            is EditText -> edit(view)
+            is Spinner -> spin(view)
+            is android.view.ViewGroup -> for(i in 0 until view.childCount) walkForm(view.getChildAt(i),edit,spin)
+        }
+    }
+    private fun snapshotRepairDraft() {
+        if(screen!="preview:طلب صيانة") return
+        val texts=mutableListOf<String>()
+        val selections=mutableListOf<Int>()
+        activeRoot?.let { walkForm(it,{ texts.add(it.text.toString()) },{ selections.add(it.selectedItemPosition) }) }
+        repairDraftTexts=texts
+        repairDraftSelections=selections
+    }
+    private fun restoreRepairDraft() {
+        if(screen!="preview:طلب صيانة") return
+        val texts=repairDraftTexts ?: return
+        val selections=repairDraftSelections ?: emptyList()
+        var editIndex=0
+        var spinIndex=0
+        activeRoot?.let { walkForm(it,{
+            if(editIndex<texts.size) it.setText(texts[editIndex])
+            editIndex++
+        },{
+            if(spinIndex<selections.size && selections[spinIndex] in 0 until it.count)
+                it.setSelection(selections[spinIndex])
+            spinIndex++
+        }) }
+    }
+
     private fun dp(value:Int) = (value * resources.displayMetrics.density + 0.5f).toInt()
     private fun text(value:String, size:Float, color:Int = ink):TextView = TextView(this).apply {
         text = value; textSize = size; setTextColor(color); gravity = Gravity.CENTER
@@ -56,8 +90,10 @@ class MainActivity : Activity() {
                 } catch (_:SecurityException) {
                     // Some document providers grant only temporary access.
                 }
+                snapshotRepairDraft()
                 repairPhotoUri=uri
                 render()
+                restoreRepairDraft()
             }
         }
     }
@@ -512,7 +548,7 @@ class MainActivity : Activity() {
         })
         parent.addView(text("حذف الصورة",16f,gold).apply {
             isClickable=true
-            setOnClickListener { repairPhotoUri=null;render() }
+            setOnClickListener { snapshotRepairDraft();repairPhotoUri=null;render();restoreRepairDraft() }
         })
         repairPhotoUri?.let { uri ->
             parent.addView(android.widget.ImageView(this).apply {
@@ -871,6 +907,7 @@ class MainActivity : Activity() {
             setBackgroundColor(pearl)
         }
         setContentView(root)
+        activeRoot=root
         val scroll=ScrollView(this).apply { isFillViewport=true }
         root.addView(scroll,LinearLayout.LayoutParams(-1,-1))
         val body=LinearLayout(this).apply {
