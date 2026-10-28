@@ -2007,6 +2007,15 @@ open class MainActivity:Activity() {
                             "\nالتاريخ: "+displayDate+
                             (if(section=="purchases") "\nالمورد: "+invoice.optString("supplierName") else "\nالعميل: "+invoice.optString("customer"))+
                             (if(section=="sales") "\nالهاتف: "+displayPhone else "")+
+                            (if(section=="sales") "\nنوع البيع: "+invoice.optString("saleType")+
+                                "\nالوقت: "+invoice.optString("time")+
+                                "\nحالة الدفع: "+invoice.optString("paymentStatus")+
+                                "\nطريقة الدفع: "+invoice.optString("paymentMethod")+
+                                "\nالضمان بالأشهر: "+invoice.optString("warrantyMonths")+
+                                "\nبداية الضمان: "+invoice.optString("warrantyStart")+
+                                "\nالخصم: "+invoice.optString("discount")+
+                                "\nالضريبة: "+invoice.optString("tax")+
+                                "\nملاحظات: "+invoice.optString("notes") else "")+
                             "\nالإجمالي: "+invoice.optString("total")+" "+
                                 invoice.optString("currency")+
                             "\nالمدفوع: "+invoice.optString("paid")+
