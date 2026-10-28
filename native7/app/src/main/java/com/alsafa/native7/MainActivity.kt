@@ -701,7 +701,7 @@ class MainActivity : Activity() {
     private fun purchaseInvoicePreview(parent:LinearLayout) {
         parent.addView(text("فاتورة شراء متعددة الأصناف",26f,gold))
         parent.addView(text("أضف كل منتجات المورد في فاتورة واحدة وسيُحسب الإجمالي تلقائياً.",14f))
-        parent.addView(text("القائمة",15f,gold).apply { isClickable=true;setOnClickListener { screen="preview:المشتريات والموردون";render() } })
+        parent.addView(text("القائمة",15f,gold).apply { isClickable=true;setOnClickListener { navigateTo("preview:المشتريات والموردون") } })
         field(parent,"التاريخ *","YYYY-MM-DD")
         field(parent,"الوقت *","HH:MM")
         select(parent,"المورد",listOf("اختر المورد"))
