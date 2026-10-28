@@ -330,6 +330,13 @@ class MainActivity : Activity() {
         parent.addView(spinner,LinearLayout.LayoutParams(-1,dp(44)).apply { bottomMargin=dp(11) })
         return spinner
     }
+    private fun originalFormSection(parent:LinearLayout,label:String) {
+        parent.addView(text(label,13f,Color.rgb(122,81,24)).apply {
+            gravity=Gravity.RIGHT
+            background=panel(Color.rgb(250,241,226),10,Color.rgb(234,223,206))
+            setPadding(dp(12),dp(11),dp(12),dp(11))
+        },LinearLayout.LayoutParams(-1,-2).apply { topMargin=dp(13);bottomMargin=dp(12) })
+    }
     private fun finalAmountCurrency(parent:LinearLayout, defaultCurrency:String) {
         parent.addView(text("المبلغ النهائي وعملته",15f).apply { gravity=Gravity.RIGHT })
         val amount=field(parent,"","أدخل المبلغ النهائي")
