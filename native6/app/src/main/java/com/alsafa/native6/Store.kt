@@ -1628,6 +1628,22 @@ class Store(val helper:StoreDb) {
         post(command,listOf(Posting("receivable:$command",currency,total),Posting("revenue:sales",currency,-total),Posting("expense:cogs",currency,cost),Posting("inventory",currency,-cost)))
         if(paid>0) collectInternal(command,paid,vault,receiptDate,"$command-receipt");command
     }
+    /** A single sale and its same-currency receipts commit together or not at all. */
+    fun saleWithReceipts(items:List<SaleItem>,party:String,phone:String,currency:Currency,
+        receipts:List<Pair<String,Long>>,discount:Long=0,date:String=today(),
+        receiptDate:String=date,notes:String="",saleType:String="store",
+        warrantyMonths:Int=0,warrantyStart:String=date):String=transaction {
+        require(receipts.isNotEmpty() && receipts.all { it.second>=0L })
+        val totalPaid=receipts.fold(0L){acc,entry->Math.addExact(acc,entry.second)}
+        val invoiceId=sale(items,party,phone,currency,0L,receipts.first().first,discount,date,
+            notes=notes,saleType=saleType,warrantyMonths=warrantyMonths,warrantyStart=warrantyStart)
+        require(totalPaid<=due(invoiceId))
+        receipts.forEachIndexed { index,entry->
+            if(entry.second>0L) collectInternal(invoiceId,entry.second,entry.first,receiptDate,
+                invoiceId+"-receipt-"+index)
+        }
+        invoiceId
+    }
     /**
      * Import an outstanding customer balance as a NEW opening receivable,
      * without replaying historic sales, stock or previously received cash.
