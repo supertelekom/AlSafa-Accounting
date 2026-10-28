@@ -290,9 +290,28 @@ class MainActivity : Activity() {
         item.addView(text("الصنف $index",18f,gold))
         field(item,"اسم الساعة / الصنف *","مثال: ساعة كاسيو")
         field(item,"الموديل","اختياري")
-        field(item,"الكمية *","1").inputType=InputType.TYPE_CLASS_NUMBER
-        field(item,"سعر البيع *","0").inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
-        item.addView(text("إجمالي الصنف: —",14f))
+        val qty=field(item,"الكمية *","1").apply {
+            inputType=InputType.TYPE_CLASS_NUMBER
+            setText("1")
+        }
+        val price=field(item,"سعر البيع *","0").apply {
+            inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
+        }
+        val total=text("إجمالي الصنف: —",14f)
+        item.addView(total)
+        val update=object:android.text.TextWatcher {
+            override fun beforeTextChanged(s:CharSequence?,start:Int,count:Int,after:Int) {}
+            override fun onTextChanged(s:CharSequence?,start:Int,before:Int,count:Int) {
+                val q=qty.text.toString().toIntOrNull()
+                val p=price.text.toString().toBigDecimalOrNull()
+                total.text=if(q!=null && q>=1 && p!=null && p.signum()>=0)
+                    "إجمالي الصنف: "+p.multiply(java.math.BigDecimal(q)).stripTrailingZeros().toPlainString()
+                    else "إجمالي الصنف: —"
+            }
+            override fun afterTextChanged(s:android.text.Editable?) {}
+        }
+        qty.addTextChangedListener(update)
+        price.addTextChangedListener(update)
         if(removable) item.addView(text("حذف الصنف",14f,gold).apply {
             isClickable=true
             setOnClickListener { parent.removeView(item) }
