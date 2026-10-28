@@ -943,9 +943,31 @@ open class MainActivity:Activity() {
                 val summary=listOf(number,date,name,amount,currency,status).filter { it.isNotBlank() }
                     .joinToString(" · ").ifBlank { record["legacy_id"].orEmpty() }
                 button(summary.take(110),results) {
-                    AlertDialog.Builder(this).setTitle("السجل الأصلي · $category")
-                        .setMessage(obj.toString(2).take(15000))
-                        .setPositiveButton("إغلاق",null).show()
+                    if(category=="sales") {
+                        val details=StringBuilder()
+                        details.append("رقم الفاتورة: ").append(obj.optString("invoiceNo")).append("\n")
+                        details.append("التاريخ: ").append(obj.optString("date")).append("\n")
+                        details.append("العميل: ").append(obj.optString("customer")).append("\n")
+                        details.append("الهاتف: ").append(obj.optString("phone")).append("\n")
+                        details.append("العملة: ").append(obj.optString("currency")).append("\n")
+                        details.append("الإجمالي: ").append(obj.optString("total")).append("\n")
+                        details.append("المدفوع الأصلي: ").append(obj.optString("paid")).append("\n")
+                        val lines=obj.optJSONArray("items")
+                        if(lines!=null) for(index in 0 until lines.length()) {
+                            val item=lines.optJSONObject(index)
+                            if(item!=null) details.append("\n").append(index+1).append(". ")
+                                .append(item.optString("name",item.optString("productName","صنف")))
+                                .append(" · الكمية: ").append(item.optString("qty",item.optString("quantity")))
+                                .append(" · السعر: ").append(item.optString("price",item.optString("unitPrice")))
+                        }
+                        details.append("\n\nهذه فاتورة مستعادة للعرض فقط؛ لا يجوز إلغاؤها أو إرجاعها عبر قيود الفواتير الجديدة.")
+                        AlertDialog.Builder(this).setTitle("فاتورة مبيع قديمة")
+                            .setMessage(details.toString()).setPositiveButton("إغلاق",null).show()
+                    } else {
+                        AlertDialog.Builder(this).setTitle("السجل الأصلي · $category")
+                            .setMessage(obj.toString(2).take(15000))
+                            .setPositiveButton("إغلاق",null).show()
+                    }
                 }
             }
         }
