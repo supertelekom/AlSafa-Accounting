@@ -232,7 +232,10 @@ object LegacyArchivedFinancialPosition {
             totals[key]=Math.addExact(totals[key] ?: 0,value)
             entries.put(JSONObject().put("id",item.optString("id"))
                 .put("date",date.toString()).put("partner",partner)
-                .put("currency",currency).put("amount",amount(value)))
+                .put("currency",currency).put("amount",amount(value))
+                .put("vault",item.optString("vault"))
+                .put("notes",item.optString("notes"))
+                .put("partnerId",partnerId))
         }
         val sums=JSONObject()
         for((key,value) in totals) sums.put(key,amount(value))
