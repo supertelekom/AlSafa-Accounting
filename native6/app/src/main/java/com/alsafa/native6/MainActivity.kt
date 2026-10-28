@@ -2017,9 +2017,29 @@ open class MainActivity:Activity() {
                                 val model=item.optString("model")
                                 val qty=item.optString("qty",item.optString("quantity","1"))
                                 val price=item.optString("price",item.optString("unitPrice",""))
-                                name+(if(model.isBlank()) "" else " · "+model)+
-                                    " × "+qty+(if(price.isBlank())"" else " · "+price)+
-                                    (if(section=="sales" && item.has("cost") && !item.isNull("cost")) " · الكلفة: "+item.optString("cost") else "")
+                                val details=buildList<String> {
+                                    if(model.isNotBlank()) add(model)
+                                    for(key in listOf("color","barcode","sku","ref")) {
+                                        val value=item.optString(key).trim()
+                                        if(value.isNotBlank()) add(value)
+                                    }
+                                    add("× "+qty)
+                                    if(price.isNotBlank()) add(price)
+                                    if(section=="sales") {
+                                        for(key in listOf("cost","discount","total","warrantyMonths")) {
+                                            if(item.has(key) && !item.isNull(key) && item.optString(key).isNotBlank()) {
+                                                val label=when(key) {
+                                                    "cost" -> "الكلفة"
+                                                    "discount" -> "الخصم"
+                                                    "total" -> "الإجمالي"
+                                                    else -> "الضمان بالأشهر"
+                                                }
+                                                add(label+": "+item.optString(key))
+                                            }
+                                        }
+                                    }
+                                }
+                                (listOf(name)+details).filter { it.isNotBlank() }.joinToString(" · ")
                             }
                         }
                         val originalPaymentBreakdown=invoice?.optJSONArray("paymentBreakdown")
