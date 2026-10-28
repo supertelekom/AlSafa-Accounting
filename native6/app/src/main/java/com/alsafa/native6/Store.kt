@@ -405,6 +405,33 @@ class Store(val helper:StoreDb) {
         )
     }
 
+    /** One read-only status for the complete historical financial cutover. */
+    fun archivedFinancialCutoverStatus():Map<String,String> {
+        val references=archivedSaleReferenceAudit()
+        val purchases=archivedInvoiceIdentityAudit("purchases")
+        val review=runCatching { legacyOnlineCutoverAudit() }
+        val reviewRows=review.getOrNull().orEmpty()
+        val unresolved=reviewRows.count {
+            it["state"]=="INVALID_SETTLEMENT" || it["state"]=="NEEDS_COST_AUDIT"
+        }
+        val clear=references["state"]=="REFERENCES_VALID" &&
+            purchases.getValue("missing_ids")==0 &&
+            purchases.getValue("duplicate_ids")==0 &&
+            purchases.getValue("invalid_dates")==0 &&
+            review.isSuccess && unresolved==0
+        return mapOf(
+            "state" to if(clear) "AUDIT_READY_ONLY" else "AUDIT_BLOCKED",
+            "sale_references" to references.getValue("state"),
+            "purchase_identity_errors" to (
+                purchases.getValue("missing_ids")+
+                purchases.getValue("duplicate_ids")+
+                purchases.getValue("invalid_dates")).toString(),
+            "unresolved_online_sales" to unresolved.toString(),
+            "cutover_error" to (review.exceptionOrNull()?.message ?: ""),
+            "financial_activation" to "NOT_POSTED"
+        )
+    }
+
     /** Paginated repair history with bounded BLOB reads for old embedded watch photos. */
     fun repairPage(term:String,limit:Int,offset:Int):List<Map<String,String>> {
         require(limit in 1..100 && offset>=0)
