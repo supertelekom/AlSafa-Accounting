@@ -433,10 +433,40 @@ class MainActivity : Activity() {
         parent.addView(text(if(repair) "قسم الصيانة" else "المبيعات والفواتير",26f,gold))
         parent.addView(text(if(repair) "رقم فاتورة الصيانة ظاهر ويمكن البحث به وتعديل بياناتها." else "رقم الفاتورة ظاهر ويمكن البحث به وتعديل بياناتها بأمان.",14f))
         val newLabel=if(repair) "＋ طلب" else "＋ فاتورة"
-        parent.addView(text(newLabel,16f,gold).apply { isClickable=true;setOnClickListener { previousScreen=screen;screen=if(repair) "preview:طلب صيانة" else "preview:مبيع كامل";render() } })
-        field(parent,"يوم الفواتير","YYYY-MM-DD").inputType=InputType.TYPE_CLASS_DATETIME
-        field(parent,"بحث في جميع الفواتير","رقم الفاتورة أو اسم العميل أو الهاتف...")
-        parent.addView(text("بدون بحث: تظهر فواتير اليوم المختار. عند الكتابة: يتم البحث في جميع التواريخ ويظهر تاريخ الفاتورة الأصلي.",12f))
+        parent.addView(text(newLabel,16f,gold).apply {
+            isClickable=true
+            setOnClickListener { previousScreen=screen;screen=if(repair) "preview:طلب صيانة" else "preview:مبيع كامل";render() }
+        })
+        val date=field(parent,"يوم الفواتير","YYYY-MM-DD").apply {
+            inputType=InputType.TYPE_NULL
+            isFocusable=false
+            isClickable=true
+            setText(java.time.LocalDate.now().toString())
+            setOnClickListener {
+                val current=runCatching { java.time.LocalDate.parse(text.toString()) }.getOrDefault(java.time.LocalDate.now())
+                android.app.DatePickerDialog(this@MainActivity,{ _,year,month,day ->
+                    setText(java.time.LocalDate.of(year,month+1,day).toString())
+                },current.year,current.monthValue-1,current.dayOfMonth).show()
+            }
+        }
+        val search=field(parent,"بحث في جميع الفواتير","رقم الفاتورة أو اسم العميل أو الهاتف...")
+        val hint=text("بدون بحث: تظهر فواتير اليوم المختار. عند الكتابة: يتم البحث في جميع التواريخ ويظهر تاريخ الفاتورة الأصلي.",12f)
+        parent.addView(hint)
+        val filterHint=text("يوم الفواتير: "+date.text.toString(),13f,gold)
+        parent.addView(filterHint)
+        val update= {
+            filterHint.text=if(search.text.isNullOrBlank()) "يوم الفواتير: "+date.text.toString() else "بحث في جميع الفواتير: "+search.text.toString()
+        }
+        search.addTextChangedListener(object:android.text.TextWatcher {
+            override fun beforeTextChanged(s:CharSequence?,start:Int,count:Int,after:Int) {}
+            override fun onTextChanged(s:CharSequence?,start:Int,before:Int,count:Int) { update() }
+            override fun afterTextChanged(s:android.text.Editable?) {}
+        })
+        date.addTextChangedListener(object:android.text.TextWatcher {
+            override fun beforeTextChanged(s:CharSequence?,start:Int,count:Int,after:Int) {}
+            override fun onTextChanged(s:CharSequence?,start:Int,before:Int,count:Int) { update() }
+            override fun afterTextChanged(s:android.text.Editable?) {}
+        })
         parent.addView(text("الأرشيف غير متصل بالبيانات بعد؛ لا يمكن الاستنتاج أن الفواتير غير موجودة.",14f))
     }
     private fun expenseFormPreview(parent:LinearLayout) {
