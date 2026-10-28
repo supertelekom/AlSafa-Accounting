@@ -259,6 +259,13 @@ object LegacySnapshotImport {
             val array=data.getJSONArray(source)
             var newCount=0
             var existingCount=0
+            // Discount rules are imported in the same atomic transaction as the source snapshot.
+            // Do not fabricate missing rules or default percentages.
+            val rules=d.optJSONArray("discountRules")
+            if(rules!=null) {
+                progress(31,"استعادة قواعد الخصم الأصلية")
+                store.importLegacyDiscountRules(rules)
+            }
             val seen=HashSet<String>()
             for(i in 0 until array.length()) {
                 val record=array.optJSONObject(i)
