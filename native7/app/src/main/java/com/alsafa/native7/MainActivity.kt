@@ -862,6 +862,117 @@ class MainActivity : Activity() {
             }
         })
         
+    }        formPair(parent,{ right ->
+        },{ left ->
+        })
+        select(parent,"عملة الصيانة / القبض *",listOf("USD","TRY","SYP"))
+        parent.addView(text("المبلغ يدخل صندوق هذه العملة نفسها.",12f))
+        select(parent,"طريقة الدفع الأولى *",listOf("نقدي","شام كاش"))
+        parent.addView(text("اختر نقدي أو شام كاش قبل الحفظ.",12f))
+        formPair(parent,{ field(it,"اسم العميل *") },{ field(it,"رقم واتساب العميل","09xxxxxxxx").inputType=InputType.TYPE_CLASS_PHONE })
+        select(parent,"حالة الطلب",listOf("قيد الصيانة","بانتظار القطعة","جاهز للاستلام"))
+        formSection(parent,"تفاصيل الساعة والتكلفة")
+        formPair(parent,{ field(it,"الماركة / نوع الساعة *","مثال: كاسيو") },{ field(it,"الموديل أو الرقم") })
+        field(parent,"العطل أو المطلوب *","مثال: تغيير بطارية وإصلاح السوار")
+        field(parent,"نتيجة الفحص أو تحديث العميل","اختياري — اكتب هنا أي مشكلة تظهر لاحقاً ليتم إرسالها للعميل")
+        parent.addView(text("صورة ساعة العميل عند الاستلام",16f,gold))
+        parent.addView(text("📷 الكاميرا",16f,gold).apply {
+            isClickable=true
+            setOnClickListener {
+                snapshotRepairDraft()
+                val values=android.content.ContentValues().apply {
+                    put(android.provider.MediaStore.Images.Media.DISPLAY_NAME,"alsafa_repair_"+System.currentTimeMillis()+".jpg")
+                    put(android.provider.MediaStore.Images.Media.MIME_TYPE,"image/jpeg")
+                    put(android.provider.MediaStore.Images.Media.RELATIVE_PATH,"Pictures/AlSafa")
+                }
+                val uri=contentResolver.insert(android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI,values)
+                if(uri==null) {
+                    android.widget.Toast.makeText(this@MainActivity,"تعذر إنشاء ملف الصورة",android.widget.Toast.LENGTH_SHORT).show()
+                } else {
+                    pendingCameraUri=uri
+                    val camera=android.content.Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE).apply {
+                        putExtra(android.provider.MediaStore.EXTRA_OUTPUT,uri)
+                        addFlags(android.content.Intent.FLAG_GRANT_WRITE_URI_PERMISSION or android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                    }
+                    try { startActivityForResult(camera,702) }
+                    catch(e:Exception) {
+                        pendingCameraUri=null
+                        contentResolver.delete(uri,null,null)
+                        android.widget.Toast.makeText(this@MainActivity,"تعذر تشغيل الكاميرا",android.widget.Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
+        })
+        parent.addView(text("🖼️ اختيار من الاستوديو",16f,gold).apply {
+            isClickable=true
+            setOnClickListener {
+                val intent=android.content.Intent(android.content.Intent.ACTION_OPEN_DOCUMENT).apply {
+                    addCategory(android.content.Intent.CATEGORY_OPENABLE)
+                    type="image/*"
+                }
+                startActivityForResult(intent,701)
+            }
+        })
+        parent.addView(text("حذف الصورة",16f,gold).apply {
+            isClickable=true
+            setOnClickListener { snapshotRepairDraft();repairPhotoUri=null;render();restoreRepairDraft() }
+        })
+        repairPhotoUri?.let { uri ->
+            parent.addView(android.widget.ImageView(this).apply {
+                setImageURI(uri)
+                adjustViewBounds=true
+                maxHeight=dp(200)
+                isClickable=true
+                setOnClickListener {
+                    val photo=android.widget.ImageView(this@MainActivity).apply {
+                        setImageURI(uri)
+                        adjustViewBounds=true
+                        scaleType=android.widget.ImageView.ScaleType.FIT_CENTER
+                    }
+                    android.app.AlertDialog.Builder(this@MainActivity)
+                        .setView(photo)
+                        .setPositiveButton("✕ إغلاق"){ dialog,_ -> dialog.dismiss() }
+                        .show()
+                }
+            })
+        }
+        parent.addView(text("تُحفظ داخل طلب الصيانة وتُرسل مع رسالة الاستلام عند اختيار واتساب.",12f))
+        formSection(parent,"قطع الصيانة المستخدمة")
+        parent.addView(text("اختيار قطع الصيانة اختياري عند الاستلام.",14f))
+        field(parent,"نسبة الضريبة %","0").inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
+        parent.addView(text("اختياري ومجهز للمستقبل. اتركه 0 حالياً.",12f))
+        field(parent,"المبلغ المقبوض الآن","0").inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
+        parent.addView(text("عملة الصيانة والتحصيل",16f))
+        parent.addView(text("هي نفسها عملة الفاتورة المختارة أعلاه، وتدخل إلى صندوق العملة نفسها.",12f))
+        select(parent,"حالة الدفع",listOf("عند الاستلام","مدفوع جزئياً","مدفوع بالكامل"))
+        field(parent,"ملاحظات","لون السوار، موعد التسليم، تفاصيل مهمة")
+        parent.addView(text("عند وجود رقم العميل تُفتح محادثته في واتساب أعمال مع صورة الساعة ورسالة الاستلام بعد الحفظ.",12f))
+        parent.addView(text("اختيار قطع الصيانة اختياري عند الاستلام. يمكنك حفظ الطلب بدون قطع، ثم بعد الفحص تحديث ما تم عمله وأجرة العمل، وإضافة القطع عند معرفتها.",12f))
+        parent.addView(text("إلغاء",16f,gold).apply { isClickable=true;setOnClickListener { returnToPrevious() } })
+        parent.addView(text("حفظ طلب الصيانة",18f,gold).apply {
+            background=panel(Color.rgb(239,228,208),12)
+            isClickable=true
+            setOnClickListener {
+                snapshotRepairDraft()
+                val values=repairDraftTexts ?: emptyList()
+                val customer=values.getOrNull(2)?.trim().orEmpty()
+                val watch=values.getOrNull(4)?.trim().orEmpty()
+                if(customer.isBlank() || watch.isBlank()) {
+                    android.widget.Toast.makeText(this@MainActivity,"تحقق من بيانات العميل والساعة",android.widget.Toast.LENGTH_LONG).show()
+                } else try {
+                    val payload=org.json.JSONObject().apply {
+                        put("form_texts",org.json.JSONArray(values))
+                        put("form_selections",org.json.JSONArray(repairDraftSelections ?: emptyList<Int>()))
+                    }
+                    val photo=repairPhotoUri?.toString()
+                    val id=repairStore.save(payload,photo,"قيد الصيانة")
+                    android.widget.Toast.makeText(this@MainActivity,"تم حفظ طلب الصيانة رقم $id محلياً",android.widget.Toast.LENGTH_LONG).show()
+                } catch(e:Exception) {
+                    android.widget.Toast.makeText(this@MainActivity,"فشل حفظ الطلب: "+e.message,android.widget.Toast.LENGTH_LONG).show()
+                }
+            }
+        })
+        
     }
     private fun invoiceArchivePreview(parent:LinearLayout,repair:Boolean) {
         parent.addView(text(if(repair) "قسم الصيانة" else "المبيعات والفواتير",26f,gold))
