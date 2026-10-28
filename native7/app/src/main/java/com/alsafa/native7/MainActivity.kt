@@ -131,11 +131,16 @@ class MainActivity : Activity() {
             parent.addView(this,LinearLayout.LayoutParams(-1,dp(52)).apply { bottomMargin=dp(12) })
         }
     }
-    private fun select(parent:LinearLayout,label:String,options:List<String>) {
+    private fun select(parent:LinearLayout,label:String,options:List<String>):Spinner {
         parent.addView(text(label,15f).apply { gravity=Gravity.RIGHT })
-        val spinner=Spinner(this)
+        val spinner=Spinner(this).apply {
+            layoutDirection=View.LAYOUT_DIRECTION_RTL
+            background=panel(paper,12)
+            setPadding(dp(8),dp(3),dp(8),dp(3))
+        }
         spinner.adapter=ArrayAdapter(this,android.R.layout.simple_spinner_dropdown_item,options)
         parent.addView(spinner,LinearLayout.LayoutParams(-1,dp(52)).apply { bottomMargin=dp(12) })
+        return spinner
     }
     private fun finalAmountCurrency(parent:LinearLayout, defaultCurrency:String) {
         parent.addView(text("المبلغ النهائي وعملته",15f).apply { gravity=Gravity.RIGHT })
