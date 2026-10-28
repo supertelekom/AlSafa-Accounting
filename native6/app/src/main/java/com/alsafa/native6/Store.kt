@@ -1319,6 +1319,9 @@ class Store(val helper:StoreDb) {
             val source=JSONObject(row.getValue("payload"))
             val due=reconciledLegacySaleDue(source,settlements)
             if(due==0L) return@mapNotNull null
+            require(settlements.returns[source.optString("id")].isNullOrEmpty()) {
+                "فاتورة بها مرتجع: يلزم مطابقة كلفة وكمية المرتجع قبل حساب الربح المتبقي"
+            }
             val items=source.optJSONArray("items")
                 ?: throw IllegalArgumentException("فاتورة قديمة بلا أصناف: "+source.optString("id"))
             require(items.length()>0){"فاتورة قديمة بلا أصناف"}
