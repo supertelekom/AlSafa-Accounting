@@ -2168,7 +2168,7 @@ class Store(val helper:StoreDb) {
      * This is deliberately opt-in: never call automatically during a trial
      * restore, and never replay closed historical sales or old receipts.
      */
-    fun activateLegacyCustomerBalances(cutoverDate:String):Map<String,Long>=transaction {
+    fun activateLegacyCustomerBalances(cutoverDate:String):Map<String,Long> = transaction {
         // An opening invoice currently carries cost=0, and collectInternal only
         // transfers receivable to cash. Activating it now would permanently
         // understate the profit due on future online collections. Fail closed
@@ -2176,7 +2176,7 @@ class Store(val helper:StoreDb) {
         throw IllegalStateException("تفعيل الذمم القديمة متوقف مؤقتاً: يجب أولاً ربط كلفة المبيع والربح بتاريخ التحصيل")
     }
     @Suppress("unused")
-    private fun activateLegacyCustomerBalancesUnsafe(cutoverDate:String):Map<String,Long>=transaction {
+    private fun activateLegacyCustomerBalancesUnsafe(cutoverDate:String):Map<String,Long> = transaction {
         val day=LocalDate.parse(cutoverDate)
         require(!day.isAfter(LocalDate.now())){"تاريخ الانتقال في المستقبل"}
         require(scalar("SELECT count(*) FROM events") == 0L) {
