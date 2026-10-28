@@ -1941,6 +1941,17 @@ open class MainActivity:Activity() {
                         val displayPhone=if(section=="sales") invoice?.optString("phone").orEmpty() else ""
                         val items=invoice?.optJSONArray("items")
                         val linkedPayments=original?.optJSONArray("linkedPayments")?.length() ?: 0
+                        val returns=original?.optJSONArray("linkedReturns")
+                        val returnLines=if(returns==null || returns.length()==0) "" else
+                            (0 until returns.length()).joinToString("\\n") { index ->
+                                val row=returns.optJSONObject(index)?.optJSONObject("record")
+                                if(row==null) "" else {
+                                    row.optString("date")+" · "+row.optString("itemName")+
+                                        " · الكمية: "+row.optString("qty")+
+                                        " · المسترد: "+row.optString("refundAmount")+
+                                        " "+row.optString("currency")
+                                }
+                            }
                         val payments=original?.optJSONArray("linkedPayments")
                         val paymentLines=if(payments==null || payments.length()==0) "" else
                             (0 until payments.length()).joinToString("\n") { index ->
@@ -1973,7 +1984,11 @@ open class MainActivity:Activity() {
                                 invoice.optString("currency")+
                             "\nالمدفوع: "+invoice.optString("paid")+
                             "\nالمتبقي: "+summary.optString("outstanding")+
-                            "\nعمليات الدفع المرتبطة: "+linkedPayments+
+                            "
+عمليات الدفع المرتبطة: "+linkedPayments+
+                            (if(returnLines.isBlank()) "" else "
+المرتجعات المرتبطة:
+"+returnLines)+
                             (if(paymentLines.isBlank()) "" else "\n"+paymentLines)+
                             "\n\nالأصناف:\n"+lines
                         runOnUiThread {
