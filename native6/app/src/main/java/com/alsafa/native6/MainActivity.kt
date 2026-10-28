@@ -1937,7 +1937,7 @@ open class MainActivity:Activity() {
                         }
                         val original=LegacyInvoiceSnapshot.detail(store,section,archiveKey)
                         val invoice=original?.optJSONObject("invoice")
-                        val displayDate=invoice?.optString("date")?.take(10).orEmpty().ifBlank { summary.optString("date") }
+                        val displayDate=invoice?.optString("date").orEmpty()
                         val displayPhone=if(section=="sales") invoice?.optString("phone").orEmpty() else ""
                         val items=invoice?.optJSONArray("items")
                         val linkedPayments=original?.optJSONArray("linkedPayments")?.length() ?: 0
