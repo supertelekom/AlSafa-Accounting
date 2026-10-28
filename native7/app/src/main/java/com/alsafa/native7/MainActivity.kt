@@ -1579,7 +1579,7 @@ class MainActivity : Activity() {
             orientation=LinearLayout.HORIZONTAL
             layoutDirection=View.LAYOUT_DIRECTION_RTL
             gravity=Gravity.CENTER_VERTICAL
-            if(resources.configuration.screenWidthDp>=720) setPadding(dp(25),dp(19),dp(25),dp(19))
+            if(resources.configuration.screenWidthDp>=720) setPadding(dp(20),dp(15),dp(20),dp(15))
             else setPadding(dp(18),dp(18),dp(18),dp(16))
             background=GradientDrawable(Orientation.TL_BR,
                 intArrayOf(Color.rgb(249,243,232),Color.rgb(234,217,185))).apply {
@@ -1643,7 +1643,7 @@ class MainActivity : Activity() {
         if(sidebar) {
             val nav=LegacyNavigation(this)
             nav.show(true,screen) { navigateTo(it) }
-            workArea.addView(nav,LinearLayout.LayoutParams(dp(220),-1))
+            workArea.addView(nav,LinearLayout.LayoutParams(dp(if(resources.configuration.screenWidthDp>=1200 && resources.configuration.orientation==android.content.res.Configuration.ORIENTATION_LANDSCAPE) 230 else 200),-1))
         }
         val scroll=ScrollView(this).apply { isFillViewport=true }
         workArea.addView(scroll,LinearLayout.LayoutParams(0,-1,1f))
