@@ -416,7 +416,7 @@ class MainActivity : Activity() {
             textSize=14f
             setTextColor(ink)
             setHintTextColor(Color.rgb(138,123,108))
-            background=panel(Color.rgb(255,252,247),10)
+            background=panel(Color.rgb(255,252,247),10,Color.rgb(234,223,206))
             setPadding(dp(10),dp(8),dp(10),dp(8))
             parent.addView(this,LinearLayout.LayoutParams(-1,dp(42)).apply { bottomMargin=dp(11) })
         }
@@ -505,7 +505,7 @@ class MainActivity : Activity() {
         val barcodeInput=EditText(this).apply {
             hint="امسح أو اكتب الباركود"
             textSize=14f
-            background=panel(Color.rgb(255,252,247),10)
+            background=panel(Color.rgb(255,252,247),10,Color.rgb(234,223,206))
             setPadding(dp(10),dp(8),dp(10),dp(8))
             inputType=InputType.TYPE_CLASS_NUMBER
         }
