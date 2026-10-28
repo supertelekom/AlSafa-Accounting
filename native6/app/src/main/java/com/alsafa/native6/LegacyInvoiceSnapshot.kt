@@ -64,6 +64,7 @@ object LegacyInvoiceSnapshot {
             .put("paymentsAreEvidenceOnly",true)
             .put("isSimplifiedSale",section=="sales" && source.optString("customer").isBlank() && source.optString("phone").isBlank())
             .put("paidSnapshotIsCumulative",true)
+            .put("linkedPaymentsRequireReconciliation",section=="sales")
     }
     fun page(store:Store,section:String,from:String="",to:String="",term:String="",
              offset:Int=0,limit:Int=50):JSONObject {
