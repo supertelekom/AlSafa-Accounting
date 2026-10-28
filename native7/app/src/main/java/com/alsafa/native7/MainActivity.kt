@@ -412,7 +412,7 @@ class MainActivity : Activity() {
     private fun fullSalePreview(parent:LinearLayout) {
         parent.addView(text("فاتورة مبيعات",26f,gold))
         parent.addView(text("اختر من المنتجات أو امسح الباركود بالكاميرا لإضافة الساعة فوراً.",14f))
-        parent.addView(text("قائمة الفواتير",15f,gold).apply { isClickable=true;setOnClickListener { previousScreen=screen;screen="preview:المبيعات والفواتير";render() } })
+        parent.addView(text("قائمة الفواتير",15f,gold).apply { isClickable=true;setOnClickListener { navigateTo("preview:المبيعات والفواتير") } })
         parent.addView(text("بيانات الفاتورة",21f,gold))
         select(parent,"نوع البيع *",listOf("بيع من المحل","بيع أونلاين"))
         parent.addView(text("الأونلاين يخرج من المخزون فوراً، والمال يدخل الخزنة فقط عند التحصيل.",12f))
