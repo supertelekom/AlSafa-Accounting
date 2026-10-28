@@ -946,6 +946,21 @@ class MainActivity : Activity() {
         field(parent,"كلفة الشراء للقطعة").inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
         parent.addView(text("كابلز (اختياري)",20f,gold))
         parent.addView(text("المجموعات والألوان تُنقل وفق بنية المنتج الأصلية، ولا تُحذف ألوان محفوظة عند التعديل.",12f))
+        select(parent,"نوع القطعة في الكابلز",listOf("ليست كابلز","رجالي","نسائي"))
+        select(parent,"القطعة المرتبطة",listOf("بدون قطعة مرتبطة"))
+        field(parent,"سعر الكابلز كاملًا").inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
+        parent.addView(text("الشراكات الخارجية",20f,gold))
+        select(parent,"مصدر رأس المال",listOf("بضاعة المحل — بدون شريك خارجي"))
+        field(parent,"نسبة الشريك من الربح/الخسارة %").inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
+        field(parent,"وصف الساعة","وصف قصير وجميل يظهر للعميل")
+        field(parent,"مواصفات إضافية","مثال: تاريخ، منبه، إضاءة، كرونوغراف...")
+        parent.addView(text("تعريف الساعة للمستشار",20f,gold))
+        select(parent,"الجنس المناسب",listOf("تلقائي من بيانات المنتج","ذكر","أنثى","مناسب للجميع"))
+        select(parent,"الحجم البصري",listOf("تلقائي","ناعم وصغير","متوسط ومتوازن","كبير وملفت"))
+        listOf("الفئات العمرية المناسبة","الاستخدام المناسب","الأسلوب").forEach { parent.addView(text(it,15f)) }
+        select(parent,"درجة اللفت",listOf("غير محدد","هادئ","متوازن","ملفت"))
+        select(parent,"مناسبة كهدية",listOf("غير محدد","نعم","لا"))
+        field(parent,"ملاحظات داخلية")
         parent.addView(text("إلغاء",16f,gold).apply { isClickable=true;setOnClickListener { returnToPrevious() } })
         disabledAction(parent,"⚡ حفظ + إضافة التالي")
         disabledAction(parent,"حفظ المنتج")
