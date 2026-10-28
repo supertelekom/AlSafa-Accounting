@@ -667,12 +667,15 @@ class MainActivity : Activity() {
                 }
             }
         })
-        select(parent,"عملة البيع / القبض *",listOf("USD","TRY","SYP"))
-        parent.addView(text("المبلغ يدخل صندوق هذه العملة نفسها.",12f))
-        select(parent,"طريقة الدفع *",listOf("نقدي","شام كاش"))
-        parent.addView(text("اختر نقدي أو شام كاش قبل حفظ الفاتورة.",12f))
+        formPair(parent,{ column ->
+            select(column,"عملة البيع / القبض *",listOf("USD","TRY","SYP"))
+            column.addView(text("المبلغ يدخل صندوق هذه العملة نفسها.",11f,Color.rgb(138,123,108)))
+        },{ column ->
+            select(column,"طريقة الدفع *",listOf("نقدي","شام كاش"))
+            column.addView(text("اختر نقدي أو شام كاش قبل حفظ الفاتورة.",11f,Color.rgb(138,123,108)))
+        })
         formPair(parent,{ field(it,"اسم العميل","مهم للضمان والفاتورة") },{ field(it,"رقم واتساب العميل","مثال: 09xxxxxxxx").inputType=InputType.TYPE_CLASS_PHONE })
-        select(parent,"مدة الضمان",listOf("بدون ضمان","3 أشهر","6 أشهر","سنة","سنتان"))
+        select(parent,"مدة الضمان",listOf("بدون ضمان","3 أشهر","6 أشهر","سنة","سنتان")).setSelection(3)
         parent.addView(text("يرتبط الضمان تلقائياً بالعميل والفاتورة.",12f))
         formSection(parent,"إضافة من المخزون")
         field(parent,"بحث سريع عن المنتج","اكتب جزءاً من الاسم أو REF أو الرقم أو الباركود")
