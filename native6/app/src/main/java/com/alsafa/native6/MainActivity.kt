@@ -1966,9 +1966,9 @@ open class MainActivity:Activity() {
                             "\nالتاريخ: "+displayDate+
                             (if(section=="purchases") "\nالمورد: "+summary.optString("supplierName") else "\nالعميل: "+summary.optString("customer"))+
                             (if(section=="sales") "\nالهاتف: "+displayPhone else "")+
-                            "\nالإجمالي: "+summary.optString("total")+" "+
-                                summary.optString("currency")+
-                            "\nالمدفوع: "+summary.optString("paid")+
+                            "\nالإجمالي: "+invoice.optString("total")+" "+
+                                invoice.optString("currency")+
+                            "\nالمدفوع: "+invoice.optString("paid")+
                             "\nالمتبقي: "+summary.optString("outstanding")+
                             "\nعمليات الدفع المرتبطة: "+linkedPayments+
                             (if(paymentLines.isBlank()) "" else "\n"+paymentLines)+
