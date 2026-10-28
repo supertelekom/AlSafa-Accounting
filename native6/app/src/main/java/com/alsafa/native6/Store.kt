@@ -206,6 +206,24 @@ class Store(val helper:StoreDb) {
         )
     }
 
+    /** Detail view for an archived payment, cash movement, closing or return. */
+    fun archivedFinanceDetail(kind:String,archiveKey:String):Map<String,String> {
+        require(kind in setOf("payments","cashTransactions","supplierLedger",
+            "partnerWithdrawals","dailyClosings","returns"))
+        val source=JSONObject(archivedRecordDetail(kind,archiveKey))
+        return mapOf(
+            "archive_key" to archiveKey,
+            "source_id" to source.optString("id"),
+            "date" to source.optString("date"),
+            "currency" to source.optString("currency"),
+            "amount" to source.optString("amount"),
+            "reference_id" to source.optString("referenceId"),
+            "reference_type" to source.optString("referenceType"),
+            "original_json" to source.toString(),
+            "state" to "ARCHIVED_ONLY"
+        )
+    }
+
     /** Paginated repair history with bounded BLOB reads for old embedded watch photos. */
     fun repairPage(term:String,limit:Int,offset:Int):List<Map<String,String>> {
         require(limit in 1..100 && offset>=0)
