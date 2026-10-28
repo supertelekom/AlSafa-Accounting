@@ -1690,6 +1690,33 @@ class Store(val helper:StoreDb) {
         invoiceId
     }
     /**
+     * Issue one invoice and post its same-currency and converted collections
+     * atomically. Conversion amounts are supplied explicitly, never inferred.
+     */
+    fun saleWithMixedCurrencies(items:List<SaleItem>,party:String,phone:String,
+        currency:Currency,receipts:List<Pair<String,Long>>,
+        convertedInvoiceAmount:Long,convertedCurrency:Currency,
+        convertedCashAmount:Long,convertedVault:String,discount:Long=0,
+        date:String=today(),receiptDate:String=date,notes:String="",
+        saleType:String="store",warrantyMonths:Int=0,warrantyStart:String=date):String=transaction {
+        require(convertedInvoiceAmount>0L && convertedCashAmount>0L) {
+            "حدد المبلغ المحسوب من الفاتورة والنقد المقبوض بالعملة الأخرى"
+        }
+        require(convertedCurrency!=currency) { "عملة القبض الإضافي يجب أن تختلف عن عملة الفاتورة" }
+        val sameCurrencyPaid=receipts.fold(0L) { sum,receipt ->
+            require(receipt.second>=0L) { "مبلغ قبض سالب" }
+            Math.addExact(sum,receipt.second)
+        }
+        val invoiceId=saleWithReceipts(items,party,phone,currency,receipts,
+            discount,date,receiptDate,notes,saleType,warrantyMonths,warrantyStart)
+        require(Math.addExact(sameCurrencyPaid,convertedInvoiceAmount)<=
+            invoice(invoiceId).total) { "الدفعات تتجاوز قيمة الفاتورة" }
+        collectConverted(invoiceId,convertedInvoiceAmount,convertedCurrency,
+            convertedCashAmount,convertedVault,receiptDate)
+        invoiceId
+    }
+
+    /**
      * Import an outstanding customer balance as a NEW opening receivable,
      * without replaying historic sales, stock or previously received cash.
      * Original invoice remains in legacy_records for audit. The opening
