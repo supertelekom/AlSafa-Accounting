@@ -612,28 +612,31 @@ class MainActivity : Activity() {
         formSection(parent,"بيانات الفاتورة")
         select(parent,"نوع البيع *",listOf("بيع من المحل","بيع أونلاين"))
         parent.addView(text("الأونلاين يخرج من المخزون فوراً، والمال يدخل الخزنة فقط عند التحصيل.",12f))
-        field(parent,"التاريخ *","YYYY-MM-DD").apply {
-            setText(java.time.LocalDate.now().toString())
-            isFocusable=false
-            isClickable=true
-            setOnClickListener {
-                val now=runCatching { java.time.LocalDate.parse(text.toString()) }.getOrDefault(java.time.LocalDate.now())
-                android.app.DatePickerDialog(this@MainActivity,{ _,y,m,d ->
-                    setText(java.time.LocalDate.of(y,m+1,d).toString())
-                },now.year,now.monthValue-1,now.dayOfMonth).show()
+        formPair(parent,{ column ->
+            field(column,"التاريخ *","YYYY-MM-DD").apply {
+                setText(java.time.LocalDate.now().toString())
+                isFocusable=false
+                isClickable=true
+                setOnClickListener {
+                    val now=runCatching { java.time.LocalDate.parse(text.toString()) }.getOrDefault(java.time.LocalDate.now())
+                    android.app.DatePickerDialog(this@MainActivity,{ _,y,m,d ->
+                        setText(java.time.LocalDate.of(y,m+1,d).toString())
+                    },now.year,now.monthValue-1,now.dayOfMonth).show()
+                }
             }
-        }
-        field(parent,"الوقت *","HH:MM").apply {
-            setText(java.time.LocalTime.now().format(java.time.format.DateTimeFormatter.ofPattern("HH:mm")))
-            isFocusable=false
-            isClickable=true
-            setOnClickListener {
-                val now=runCatching { java.time.LocalTime.parse(text.toString()) }.getOrDefault(java.time.LocalTime.now())
-                android.app.TimePickerDialog(this@MainActivity,{ _,h,m ->
-                    setText(String.format(java.util.Locale.US,"%02d:%02d",h,m))
-                },now.hour,now.minute,true).show()
+        },{ column ->
+            field(column,"الوقت *","HH:MM").apply {
+                setText(java.time.LocalTime.now().format(java.time.format.DateTimeFormatter.ofPattern("HH:mm")))
+                isFocusable=false
+                isClickable=true
+                setOnClickListener {
+                    val now=runCatching { java.time.LocalTime.parse(text.toString()) }.getOrDefault(java.time.LocalTime.now())
+                    android.app.TimePickerDialog(this@MainActivity,{ _,h,m ->
+                        setText(String.format(java.util.Locale.US,"%02d:%02d",h,m))
+                    },now.hour,now.minute,true).show()
+                }
             }
-        }
+        })
         select(parent,"عملة البيع / القبض *",listOf("USD","TRY","SYP"))
         parent.addView(text("المبلغ يدخل صندوق هذه العملة نفسها.",12f))
         select(parent,"طريقة الدفع *",listOf("نقدي","شام كاش"))
@@ -726,28 +729,31 @@ class MainActivity : Activity() {
     private fun repairFormPreview(parent:LinearLayout) {
         formHeader(parent,"طلب صيانة","سجل الاستلام، الأجرة، كلفة الصيانة، وحالة الدفع.","الطلبات","preview:كل الصيانة")
         formSection(parent,"بيانات العميل")
-        field(parent,"التاريخ *","YYYY-MM-DD").apply {
-            setText(java.time.LocalDate.now().toString())
-            isFocusable=false
-            isClickable=true
-            setOnClickListener {
-                val today=runCatching { java.time.LocalDate.parse(text.toString()) }.getOrDefault(java.time.LocalDate.now())
-                android.app.DatePickerDialog(this@MainActivity,{ _,y,m,d ->
-                    setText(java.time.LocalDate.of(y,m+1,d).toString())
-                },today.year,today.monthValue-1,today.dayOfMonth).show()
+        formPair(parent,{ column ->
+            field(column,"التاريخ *","YYYY-MM-DD").apply {
+                setText(java.time.LocalDate.now().toString())
+                isFocusable=false
+                isClickable=true
+                setOnClickListener {
+                    val today=runCatching { java.time.LocalDate.parse(text.toString()) }.getOrDefault(java.time.LocalDate.now())
+                    android.app.DatePickerDialog(this@MainActivity,{ _,y,m,d ->
+                        setText(java.time.LocalDate.of(y,m+1,d).toString())
+                    },today.year,today.monthValue-1,today.dayOfMonth).show()
+                }
             }
-        }
-        field(parent,"وقت الاستلام *","HH:MM").apply {
-            setText(java.time.LocalTime.now().format(java.time.format.DateTimeFormatter.ofPattern("HH:mm")))
-            isFocusable=false
-            isClickable=true
-            setOnClickListener {
-                val now=runCatching { java.time.LocalTime.parse(text.toString()) }.getOrDefault(java.time.LocalTime.now())
-                android.app.TimePickerDialog(this@MainActivity,{ _,h,m ->
-                    setText(String.format(java.util.Locale.US,"%02d:%02d",h,m))
-                },now.hour,now.minute,true).show()
+        },{ column ->
+            field(column,"وقت الاستلام *","HH:MM").apply {
+                setText(java.time.LocalTime.now().format(java.time.format.DateTimeFormatter.ofPattern("HH:mm")))
+                isFocusable=false
+                isClickable=true
+                setOnClickListener {
+                    val now=runCatching { java.time.LocalTime.parse(text.toString()) }.getOrDefault(java.time.LocalTime.now())
+                    android.app.TimePickerDialog(this@MainActivity,{ _,h,m ->
+                        setText(String.format(java.util.Locale.US,"%02d:%02d",h,m))
+                    },now.hour,now.minute,true).show()
+                }
             }
-        }
+        })
         select(parent,"عملة الصيانة / القبض *",listOf("USD","TRY","SYP"))
         parent.addView(text("المبلغ يدخل صندوق هذه العملة نفسها.",12f))
         select(parent,"طريقة الدفع الأولى *",listOf("نقدي","شام كاش"))
