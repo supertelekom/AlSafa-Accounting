@@ -1362,11 +1362,21 @@ class Store(val helper:StoreDb) {
         val returns:Map<String,List<JSONObject>>
     )
     private fun legacySettlementIndex():LegacySettlementIndex {
-        fun grouped(category:String):Map<String,List<JSONObject>> =
-            legacyRows(category).map { JSONObject(it.getValue("payload")) }
-                .filter { it.optString("referenceType")=="sale" &&
-                    it.optString("referenceId").isNotBlank() }
+        fun grouped(category:String):Map<String,List<JSONObject>> {
+            val seen=HashSet<String>()
+            return legacyRows(category).map { JSONObject(it.getValue("payload")) }
+                .filter { it.optString("referenceType")=="sale" }
+                .onEach { record ->
+                    val id=record.optString("id")
+                    require(id.isNotBlank() && seen.add(id)) {
+                        "معرف حركة مالية قديمة مفقود أو مكرر في "+category
+                    }
+                    require(record.optString("referenceId").isNotBlank()) {
+                        "حركة مالية قديمة دون فاتورة مرتبطة في "+category
+                    }
+                }
                 .groupBy { it.optString("referenceId") }
+        }
         return LegacySettlementIndex(grouped("payments"),grouped("returns"))
     }
 
