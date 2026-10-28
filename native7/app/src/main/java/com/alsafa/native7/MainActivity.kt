@@ -578,7 +578,7 @@ class MainActivity : Activity() {
             setOnClickListener { manualSaleItemPreview(lines,nextLine++,true,updateSubtotal);updateSubtotal() }
         })
         parent.addView(liveSubtotal)
-        parent.addView(text("الدفع والإرسال",21f,gold))
+        formSection(parent,"الدفع والإرسال")
         select(parent,"حالة الدفع",listOf("مدفوع بالكامل","مدفوع جزئياً","عند الاستلام"))
         select(parent,"قاعدة الخصم",listOf("بدون قاعدة خصم"))
         disabledAction(parent,"＋ إنشاء قاعدة خصم")
@@ -612,6 +612,7 @@ class MainActivity : Activity() {
         listOf("خصم قاعدة الخصم","خصم إضافي يدوي","خصم الولاء","إجمالي الفاتورة","المتبقي على العميل").forEach {
             parent.addView(text("$it     —",16f))
         }
+        parent.addView(text("إلغاء",16f,gold).apply { isClickable=true;setOnClickListener { returnToPrevious() } })
         disabledAction(parent,"حفظ الفاتورة")
         parent.addView(text("هذه معاينة حقول فقط. الحفظ والحسابات وإرسال واتساب غير متاحة.",12f))
     }
@@ -719,8 +720,8 @@ class MainActivity : Activity() {
                 }
             })
         }
-        parent.addView(text("الصورة للمعاينة فقط حتى تفعيل حفظ طلب الصيانة.",12f))
-        parent.addView(text("قطع الصيانة المستخدمة",21f,gold))
+        parent.addView(text("صورة ساعة العميل عند الاستلام.",12f))
+        formSection(parent,"قطع الصيانة المستخدمة")
         parent.addView(text("لم تُحمّل قطع الصيانة بعد.",14f))
         field(parent,"نسبة الضريبة %","0").inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
         field(parent,"المبلغ المقبوض الآن","0").inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
@@ -729,6 +730,7 @@ class MainActivity : Activity() {
         field(parent,"ملاحظات","لون السوار، موعد التسليم، تفاصيل مهمة")
         parent.addView(text("عند وجود رقم العميل تُفتح محادثته في واتساب أعمال مع صورة الساعة ورسالة الاستلام بعد الحفظ.",12f))
         parent.addView(text("اختيار قطع الصيانة اختياري عند الاستلام. يمكنك حفظ الطلب بدون قطع، ثم بعد الفحص تحديث ما تم عمله وأجرة العمل، وإضافة القطع عند معرفتها.",12f))
+        parent.addView(text("إلغاء",16f,gold).apply { isClickable=true;setOnClickListener { returnToPrevious() } })
         parent.addView(text("حفظ طلب الصيانة",18f,gold).apply {
             background=panel(Color.rgb(239,228,208),12)
             isClickable=true
@@ -944,6 +946,8 @@ class MainActivity : Activity() {
         field(parent,"كلفة الشراء للقطعة").inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
         parent.addView(text("كابلز (اختياري)",20f,gold))
         parent.addView(text("المجموعات والألوان تُنقل وفق بنية المنتج الأصلية، ولا تُحذف ألوان محفوظة عند التعديل.",12f))
+        parent.addView(text("إلغاء",16f,gold).apply { isClickable=true;setOnClickListener { returnToPrevious() } })
+        disabledAction(parent,"⚡ حفظ + إضافة التالي")
         disabledAction(parent,"حفظ المنتج")
         parent.addView(text("معاينة شكلية فقط — لا تتم إضافة المنتج إلى المخزون.",12f))
     }
