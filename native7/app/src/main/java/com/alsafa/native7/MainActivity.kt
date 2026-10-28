@@ -19,6 +19,7 @@ class MainActivity : Activity() {
     private val pearl = Color.rgb(248,243,235)
     private val paper = Color.rgb(255,253,249)
     private var screen = "chooser"
+    private var previousScreen = "chooser"
     private fun dp(value:Int) = (value * resources.displayMetrics.density + 0.5f).toInt()
     private fun text(value:String, size:Float, color:Int = ink):TextView = TextView(this).apply {
         text = value; textSize = size; setTextColor(color); gravity = Gravity.CENTER
@@ -30,14 +31,16 @@ class MainActivity : Activity() {
     override fun onCreate(savedInstanceState:Bundle?) {
         super.onCreate(savedInstanceState)
         screen=savedInstanceState?.getString("screen") ?: "chooser"
+        previousScreen=savedInstanceState?.getString("previousScreen") ?: "chooser"
         render()
     }
     override fun onSaveInstanceState(outState:Bundle) {
         outState.putString("screen",screen)
+        outState.putString("previousScreen",previousScreen)
         super.onSaveInstanceState(outState)
     }
     @Deprecated("Deprecated in Java")
-    override fun onBackPressed() { if(screen!="chooser"){screen="chooser";render()}else super.onBackPressed() }
+    override fun onBackPressed() { if(screen!="chooser"){screen=if(screen.startsWith("preview:")) previousScreen else "chooser";render()}else super.onBackPressed() }
     private fun card(parent:LinearLayout, title:String, description:String, target:String, dark:Boolean=false) {
         val card=LinearLayout(this).apply {
             orientation=LinearLayout.VERTICAL
@@ -80,7 +83,7 @@ class MainActivity : Activity() {
                     orientation=LinearLayout.VERTICAL;gravity=Gravity.CENTER
                     background=panel(paper,if(simple) 24 else 18)
                     setPadding(dp(10),dp(12),dp(10),dp(12))
-                    isClickable=true;setOnClickListener { screen="preview:" + item.first;render() }
+                    isClickable=true;setOnClickListener { previousScreen=screen;screen="preview:" + item.first;render() }
                 }
                 box.addView(text(item.third,if(simple) 42f else 28f,gold))
                 box.addView(text(item.first,if(simple) 20f else 18f))
@@ -89,6 +92,27 @@ class MainActivity : Activity() {
                     if(index==0) marginEnd=dp(13)
                 })
             }
+        }
+    }
+    private fun currencySummary(parent:LinearLayout) {
+        val titles=listOf("↪" to "المدوّر من الإقفال السابق", "🛒" to "مبيعات اليوم", "🔧" to "صيانة اليوم")
+        titles.forEach { (symbol,label) ->
+            val section=LinearLayout(this).apply {
+                orientation=LinearLayout.VERTICAL
+                layoutDirection=View.LAYOUT_DIRECTION_RTL
+                background=panel(paper,17)
+                setPadding(dp(10),dp(9),dp(10),dp(9))
+            }
+            section.addView(text("$symbol  $label",16f,gold).apply { gravity=Gravity.RIGHT })
+            val values=LinearLayout(this).apply { orientation=LinearLayout.HORIZONTAL;layoutDirection=View.LAYOUT_DIRECTION_RTL }
+            listOf("USD","SYP","TRY").forEach { currency ->
+                val cell=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL;gravity=Gravity.CENTER }
+                cell.addView(text(currency,12f,ink))
+                cell.addView(text("—",17f,gold))
+                values.addView(cell,LinearLayout.LayoutParams(0,-2,1f))
+            }
+            section.addView(values)
+            parent.addView(section,LinearLayout.LayoutParams(-1,-2).apply { bottomMargin=dp(10) })
         }
     }
     private fun render() {
@@ -120,6 +144,7 @@ class MainActivity : Activity() {
                 body.addView(text("العمل السريع",25f,gold))
                 body.addView(text("اختر العملية فقط.",15f))
                 body.addView(text("⚙️ الوضع الكامل",14f,gold).apply { isClickable=true;setOnClickListener { screen="full";render() } })
+                currencySummary(body)
                 actionGrid(body,listOf(
                     Triple("مبيع","بيع سريع","🛒"),
                     Triple("صيانة سريعة","استلام أو تسليم مباشر","🔧"),
@@ -131,6 +156,7 @@ class MainActivity : Activity() {
                 body.addView(text("الوضع الكامل",25f,gold))
                 body.addView(text("كل عمليات المتجر والإدارة.",15f))
                 body.addView(text("👨‍🔧 الوضع المبسط",14f,gold).apply { isClickable=true;setOnClickListener { screen="simple";render() } })
+                currencySummary(body)
                 actionGrid(body,listOf(
                     Triple("اليوم","ملخص وتنبيهات العمل الآن","☀️"),
                     Triple("مبيع","شاشة المبيع الكاملة","🛒"),
@@ -170,7 +196,7 @@ class MainActivity : Activity() {
         }
         if(screen!="chooser") body.addView(text("العودة",17f,gold).apply {
             isClickable=true;setOnClickListener {
-                screen=if(screen.startsWith("preview:")) "full" else "chooser"
+                screen=if(screen.startsWith("preview:")) previousScreen else "chooser"
                 render()
             }
         })
