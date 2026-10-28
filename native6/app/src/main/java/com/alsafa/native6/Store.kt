@@ -2377,6 +2377,34 @@ class Store(val helper:StoreDb) {
             "historical_posted_to_native" to false
         )
     }
+    fun legacySupplierDueCheck(supplier:String,c:Currency):Map<String,String> {
+        require(scalar("SELECT count(*) FROM suppliers WHERE id=?",supplier)==1L)
+        var invoices=java.math.BigDecimal.ZERO
+        for(row in legacyRows("purchases")) {
+            val v=JSONObject(row.getValue("payload"))
+            if(v.optString("supplierId")!=supplier || v.optString("currency")!=c.name) continue
+            val total=v.getString("total").toBigDecimal()
+            val paid=v.getString("paid").toBigDecimal()
+            require(total>=paid && paid.signum()>=0)
+            invoices=invoices.add(total.subtract(paid))
+        }
+        var opening=java.math.BigDecimal.ZERO
+        for(row in legacyRows("supplierLedger")) {
+            val v=JSONObject(row.getValue("payload"))
+            if(v.optString("supplierId")!=supplier || v.optString("currency")!=c.name) continue
+            val value=v.getString("amount").toBigDecimal()
+            require(value.signum()>=0)
+            when(v.optString("kind")) {
+                "opening-debt" -> opening=opening.add(value)
+                "payment" -> opening=opening.subtract(value)
+            }
+        }
+        val due=invoices.add(opening)
+        return mapOf("currency" to c.name,"invoiceDue" to invoices.toPlainString(),
+            "openingLessPayments" to opening.toPlainString(),
+            "candidateDue" to due.toPlainString(),"nativeDueMinor" to supplierDue(supplier,c).toString(),
+            "postingAllowed" to "false")
+    }
     fun supplierLedgerBreakdown(supplier:String,c:Currency):List<Map<String,String>> = rows("SELECT e.date,e.kind,e.id event_id,coalesce(sum(j.amount),0) amount FROM journal j JOIN events e ON e.id=j.event_id WHERE j.account=? AND j.currency=? GROUP BY e.id,e.date,e.kind ORDER BY e.date,e.created,e.id","payable:$supplier",c.name)
     fun supplierLedgerWithBalances(supplier:String,c:Currency):List<Map<String,String>> {
         require(scalar("SELECT count(*) FROM suppliers WHERE id=?",supplier)==1L){"المورد غير موجود"}
