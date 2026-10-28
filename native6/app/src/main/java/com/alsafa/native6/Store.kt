@@ -2186,7 +2186,7 @@ class Store(val helper:StoreDb) {
     fun returnSale(invoiceId:String,quantities:Map<Int,Long>,reason:String,date:String=today(),command:String=id()):String=transaction {
         val inv=invoice(invoiceId);require(inv.kind=="sale" && inv.status=="posted"){"المرتجع متاح لفاتورة مبيع نشطة فقط"}
         require(reason.isNotBlank() && quantities.isNotEmpty()){"حدد سبب الإرجاع والأصناف"}
-        val lines=rows("SELECT * FROM invoice_lines WHERE invoice_id=? ORDER BY line",invoiceId)
+        val lines=rows("SELECT invoice_id,line,product_id,name,qty,net,cost FROM invoice_lines WHERE invoice_id=? UNION ALL SELECT invoice_id,line,'' AS product_id,name,qty,net,cost FROM manual_invoice_lines WHERE invoice_id=? ORDER BY line",invoiceId,invoiceId)
         require(lines.isNotEmpty() && quantities.keys.all { k->lines.any { it.getValue("line").toInt()==k } }){"أصناف المرتجع غير موجودة في الفاتورة"}
         require(quantities.values.all { it>0L }){"كل كمية مرتجعة يجب أن تكون موجبة"}
         require(!LocalDate.parse(date).isAfter(LocalDate.now())){"لا يمكن تسجيل مرتجع بتاريخ مستقبلي"}
@@ -2214,7 +2214,7 @@ class Store(val helper:StoreDb) {
             val cost=allocateReturnIncrement(line.getValue("cost").toLong(),original,previous,priorCost,q)
             require(value>=0L && cost>=0L){"قيمة مرتجع غير صالحة؛ راجع سجل المرتجعات السابق"}
             insert("returns","event_id" to command,"invoice_id" to invoiceId,"line" to index,"qty" to q,"credit" to value,"cost" to cost)
-            stock(command,index,product(line.getValue("product_id")),q,cost);totalCredit=add(totalCredit,value);costCredit=add(costCredit,cost)
+            if(line.getValue("product_id").isNotBlank()) stock(command,index,product(line.getValue("product_id")),q,cost);totalCredit=add(totalCredit,value);costCredit=add(costCredit,cost)
         }
         // Reject inconsistent accumulated returns before creating a receivable or refund liability.
         require(credit(invoiceId) in 0L..inv.total){"إجمالي المرتجعات غير متسق مع قيمة الفاتورة"}
@@ -2222,7 +2222,7 @@ class Store(val helper:StoreDb) {
         // Credit applied against debt first; excess is a refund liability, never an automatic cash withdrawal.
         val previousCredit=Math.subtractExact(credit(invoiceId),totalCredit);val previousDue=maxOf(0L,Math.subtractExact(Math.subtractExact(inv.total,previousCredit),paid(invoiceId)));val debtReduction=minOf(previousDue,totalCredit)
         post(command,listOf(Posting("revenue:returns",inv.currency,totalCredit),Posting("receivable:$invoiceId",inv.currency,-debtReduction),Posting("refund:$invoiceId",inv.currency,Math.negateExact(Math.subtractExact(totalCredit,debtReduction))),Posting("inventory",inv.currency,costCredit),Posting("expense:cogs",inv.currency,-costCredit)))
-        if(scalar("SELECT coalesce(sum(qty),0) FROM returns WHERE invoice_id=?",invoiceId)==scalar("SELECT sum(qty) FROM invoice_lines WHERE invoice_id=?",invoiceId))db.execSQL("UPDATE invoices SET status='cancelled' WHERE id=?",arrayOf(invoiceId))
+        if(scalar("SELECT coalesce(sum(qty),0) FROM returns WHERE invoice_id=?",invoiceId)==scalar("SELECT coalesce(sum(qty),0) FROM (SELECT qty FROM invoice_lines WHERE invoice_id=? UNION ALL SELECT qty FROM manual_invoice_lines WHERE invoice_id=?)",invoiceId,invoiceId))db.execSQL("UPDATE invoices SET status='cancelled' WHERE id=?",arrayOf(invoiceId))
         command
     }
     /** Net historical sale profitability after posted returns; amounts use invoice minor units. */
@@ -2251,7 +2251,7 @@ class Store(val helper:StoreDb) {
         require(reason.isNotBlank()){"سبب إلغاء الفاتورة مطلوب"};require(!LocalDate.parse(date).isAfter(LocalDate.now())){"تاريخ الإلغاء في المستقبل"}
         val inv=invoice(invoiceId)
         require(inv.kind=="sale" && inv.status=="posted"){"إلغاء المبيع متاح للفواتير النشطة فقط"}
-        val remaining=rows("SELECT l.line,l.qty original_qty,l.qty-coalesce((SELECT sum(r.qty) FROM returns r WHERE r.invoice_id=l.invoice_id AND r.line=l.line),0) AS remaining FROM invoice_lines l WHERE l.invoice_id=?",invoiceId)
+        val remaining=rows("SELECT l.line,l.qty original_qty,l.qty-coalesce((SELECT sum(r.qty) FROM returns r WHERE r.invoice_id=l.invoice_id AND r.line=l.line),0) AS remaining FROM (SELECT invoice_id,line,qty FROM invoice_lines UNION ALL SELECT invoice_id,line,qty FROM manual_invoice_lines) l WHERE l.invoice_id=?",invoiceId)
         require(remaining.isNotEmpty()){"فاتورة المبيع بلا أصناف"}
         require(remaining.all{it.getValue("original_qty").toLong()>0L && it.getValue("remaining").toLong() in 0L..it.getValue("original_qty").toLong()}){"مرتجعات الفاتورة غير متسقة مع الكميات الأصلية"}
         val quantities=remaining.filter{it.getValue("remaining").toLong()>0L}.associate{it.getValue("line").toInt() to it.getValue("remaining").toLong()}
