@@ -1170,7 +1170,22 @@ class MainActivity : Activity() {
         select(parent,"عملة الأسعار",listOf("USD","TRY","SYP"))
         field(parent,"سعر البيع *").inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
         field(parent,"كلفة الشراء للقطعة").inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
-        parent.addView(text("كابلز (اختياري)",20f,gold))
+        formSection(parent,"كابلز (اختياري)")
+        parent.addView(text("اربط الرجالي والنسائي فقط إذا كانا يباعان منفردين أو كطقم بسعر خاص. لا يؤثر هذا الربط على مجموعات الألوان.",12f))
+        select(parent,"نوع القطعة في الكابلز",listOf("ليست كابلز","رجالي","نسائي"))
+        select(parent,"القطعة المرتبطة",listOf("بدون ربط"))
+        field(parent,"سعر الكابلز كاملًا").inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
+        parent.addView(text("صورة الكابلز معًا (اختيارية)",16f,gold))
+        disabledAction(parent,"📷 الكاميرا")
+        disabledAction(parent,"🖼️ اختيار من الاستوديو")
+        formSection(parent,"الشراكة الخارجية")
+        parent.addView(text("استخدمها فقط للبضاعة التي رأس مالها من أحد الشريكين الخارجيين.",12f))
+        select(parent,"مصدر رأس المال",listOf("بضاعة المحل — بدون شريك خارجي"))
+        field(parent,"نسبة الشريك من الربح/الخسارة %").inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
+        formSection(parent,"تفاصيل الساعة للعميل")
+        parent.addView(text("هذه المعلومات تظهر في صفحة QR العامة للساعة.",12f))
+        field(parent,"وصف الساعة","وصف قصير وجميل يظهر للعميل")
+        field(parent,"مواصفات إضافية","مثال: تاريخ، منبه، إضاءة، كرونوغراف...")
         parent.addView(text("المجموعات والألوان تُنقل وفق بنية المنتج الأصلية، ولا تُحذف ألوان محفوظة عند التعديل.",12f))
         select(parent,"نوع القطعة في الكابلز",listOf("ليست كابلز","رجالي","نسائي"))
         select(parent,"القطعة المرتبطة",listOf("بدون قطعة مرتبطة"))
