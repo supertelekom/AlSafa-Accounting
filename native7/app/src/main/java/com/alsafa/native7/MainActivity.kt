@@ -154,7 +154,7 @@ class MainActivity : Activity() {
             orientation=LinearLayout.VERTICAL; gravity=Gravity.CENTER_VERTICAL
             layoutDirection=View.LAYOUT_DIRECTION_RTL; setPadding(dp(20),dp(12),dp(20),dp(12))
             this.background=background; isClickable=true
-            setOnClickListener { screen=target;render() }
+            setOnClickListener { navigateTo(target) }
         }
         val badge=text(symbol,22f,if(dark) Color.rgb(234,217,192) else gold).apply {
             background=panel(if(dark) Color.rgb(75,68,60) else Color.rgb(245,230,203),18)
