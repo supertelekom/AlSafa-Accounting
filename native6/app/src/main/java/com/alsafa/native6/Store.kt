@@ -328,6 +328,24 @@ class Store(val helper:StoreDb) {
             "duplicate_ids" to duplicates,"invalid_dates" to invalidDates)
     }
 
+    /** Find the exact original archived invoice by immutable source ID. */
+    fun archivedInvoiceBySourceId(kind:String,sourceId:String):Map<String,String>? {
+        require(kind=="sales" || kind=="purchases")
+        require(sourceId.isNotBlank())
+        var offset=0
+        var found:Map<String,String>?=null
+        while(true) {
+            val batch=archivedInvoicePage(kind,"",100,offset)
+            if(batch.isEmpty()) break
+            for(row in batch) if(row["source_id"]==sourceId) {
+                require(found==null) { "معرف فاتورة قديمة مكرر" }
+                found=row
+            }
+            offset=Math.addExact(offset,batch.size)
+        }
+        return found
+    }
+
     /** Paginated repair history with bounded BLOB reads for old embedded watch photos. */
     fun repairPage(term:String,limit:Int,offset:Int):List<Map<String,String>> {
         require(limit in 1..100 && offset>=0)
