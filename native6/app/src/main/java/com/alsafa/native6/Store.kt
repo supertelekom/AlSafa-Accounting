@@ -1299,7 +1299,11 @@ class Store(val helper:StoreDb) {
                     source.optString("customer")
                 },
                 "status" to source.optString("paymentStatus"),
-                "activation_state" to "REVIEW_ONLY"
+                "activation_state" to "REVIEW_ONLY",
+                "needs_status_review" to (source.optString("paymentStatus").trim() in
+                    setOf("مدفوع بالكامل","مسوّاة/مسترجعة","ملغاة","مسترجعة")).toString(),
+                "original_sale_total" to source.optString("total"),
+                "original_paid_field" to source.optString("paid")
             )
         }
     }
