@@ -1801,7 +1801,7 @@ open class MainActivity:Activity() {
         })
     }
     private fun sale(){
-        sectionHeading("فاتورة مبيعات","اختر الأصناف، راجع السلة ثم احفظ الفاتورة")
+        sectionHeading("فاتورة مبيعات","اختر من المنتجات أو امسح الباركود بالكاميرا لإضافة الساعة فوراً.")
         button("سجل المبيعات القديمة المستعادة — بحث وعرض") {
             form("فواتير المبيع المستعادة","إغلاق"){box->
                 val search=field("رقم الفاتورة أو اسم العميل أو الهاتف أو الساعة",box)
@@ -1880,6 +1880,7 @@ open class MainActivity:Activity() {
                 ({})
             }
         }
+        text("إضافة من المخزون",body,18f).apply { setTextColor(gold) }
         button("إضافة أصناف إلى الفاتورة ▾") {
             val actions=arrayOf("اختيار ساعة من المنتجات","اختيار قطعة صيانة للبيع","مسح باركود الصنف")
             AlertDialog.Builder(this).setTitle("طريقة إضافة الصنف")
@@ -1900,6 +1901,7 @@ open class MainActivity:Activity() {
                 .setNegativeButton("رجوع",null)
                 .setPositiveButton("تفريغ"){_,_->basket.clear();render()}.show()
         }
+        text("أصناف الفاتورة",body,18f).apply { setTextColor(gold) }
         if(basket.isNotEmpty()) {
             val estimatedCost=basket.fold(0L){sum,item->
                 val product=store.product(item.productId)
@@ -1914,7 +1916,7 @@ open class MainActivity:Activity() {
         }
         if(basket.isEmpty())text("السلة فارغة. أضف ساعة أو قطعة صيانة للبيع، أو امسح الباركود.",body,14f)
         basket.toList().forEach{line->saleBasketRow(line)}
-        if(basket.isNotEmpty()){val total=basket.fold(0L){a,i->add(a,mul(i.qty,i.unitPrice))};text("إجمالي الفاتورة: ${money(total,basketCurrency)}",size=21f).apply { setTextColor(gold);background=background(sand,14);setPadding(dp(18),dp(15),dp(18),dp(15)) };button("إتمام الفاتورة"){form("حفظ فاتورة مبيعات"){box->val customer=field("اسم العميل",box);val phone=field("رقم واتساب العميل",box);val discount=field("الخصم ${basketCurrency.name}",box,"0",true);val notes=field("ملاحظات الفاتورة",box);val saleType=select("نوع البيع",listOf("بيع من المحل","بيع أونلاين"),box);val paymentStatus=select("حالة الدفع",listOf("مدفوع بالكامل","مدفوع جزئياً","عند الاستلام"),box);val warrantyMonths=select("مدة الضمان",listOf("بدون ضمان","3 أشهر","6 أشهر","سنة","سنتان"),box);warrantyMonths.setSelection(3);val warrantyStart=field("تاريخ بدء الضمان YYYY-MM-DD",box,Store.today());val paid=field("المدفوع ${basketCurrency.name}",box,Money(total,basketCurrency).display().substringBefore(' '),true);val vault=select("يُقبض في",vaultNames,box);val extraPaid=field("مبلغ قبض ثانٍ بنفس عملة الفاتورة (اختياري)",box,"0",true);val extraVault=select("الخزنة الثانية",vaultNames,box);if(vaultNames.size>1)extraVault.setSelection(1);val otherCurrency=select("عملة قبض إضافية مختلفة (اختياري)",listOf("بدون")+Currency.values().filter{it!=basketCurrency}.map{it.name},box);val otherInvoiceAmount=field("المبلغ المحسوب من الفاتورة مقابل العملة الأخرى",box,"0",true);val otherCashAmount=field("المبلغ النقدي المقبوض بالعملة الأخرى",box,"0",true);val otherVault=select("خزنة قبض العملة الأخرى",vaultNames,box);val invoiceDate=field("تاريخ فاتورة البيع YYYY-MM-DD",box,Store.today());val receiptDate=field("تاريخ استلام النقود الفعلي YYYY-MM-DD (إذا دُفع مبلغ)",box,Store.today());
+        if(basket.isNotEmpty()){val total=basket.fold(0L){a,i->add(a,mul(i.qty,i.unitPrice))};text("إجمالي الفاتورة: ${money(total,basketCurrency)}",size=21f).apply { setTextColor(gold);background=background(sand,14);setPadding(dp(18),dp(15),dp(18),dp(15)) };button("إتمام الفاتورة"){form("حفظ فاتورة مبيعات"){box->text("بيانات الفاتورة",box,18f).apply { setTextColor(gold) };val customer=field("اسم العميل",box);val phone=field("رقم واتساب العميل",box);val discount=field("الخصم ${basketCurrency.name}",box,"0",true);val notes=field("ملاحظات الفاتورة",box);val saleType=select("نوع البيع",listOf("بيع من المحل","بيع أونلاين"),box);val paymentStatus=select("حالة الدفع",listOf("مدفوع بالكامل","مدفوع جزئياً","عند الاستلام"),box);val warrantyMonths=select("مدة الضمان",listOf("بدون ضمان","3 أشهر","6 أشهر","سنة","سنتان"),box);warrantyMonths.setSelection(3);val warrantyStart=field("تاريخ بدء الضمان YYYY-MM-DD",box,Store.today());text("الدفع والإرسال",box,18f).apply { setTextColor(gold) };val paid=field("المدفوع ${basketCurrency.name}",box,Money(total,basketCurrency).display().substringBefore(' '),true);val vault=select("يُقبض في",vaultNames,box);val extraPaid=field("مبلغ قبض ثانٍ بنفس عملة الفاتورة (اختياري)",box,"0",true);val extraVault=select("الخزنة الثانية",vaultNames,box);if(vaultNames.size>1)extraVault.setSelection(1);val otherCurrency=select("عملة قبض إضافية مختلفة (اختياري)",listOf("بدون")+Currency.values().filter{it!=basketCurrency}.map{it.name},box);val otherInvoiceAmount=field("المبلغ المحسوب من الفاتورة مقابل العملة الأخرى",box,"0",true);val otherCashAmount=field("المبلغ النقدي المقبوض بالعملة الأخرى",box,"0",true);val otherVault=select("خزنة قبض العملة الأخرى",vaultNames,box);val invoiceDate=field("تاريخ فاتورة البيع YYYY-MM-DD",box,Store.today());val receiptDate=field("تاريخ استلام النقود الفعلي YYYY-MM-DD (إذا دُفع مبلغ)",box,Store.today());
             saleType.onItemSelectedListener=object:android.widget.AdapterView.OnItemSelectedListener {
                 override fun onNothingSelected(parent:android.widget.AdapterView<*>?) {}
                 override fun onItemSelected(parent:android.widget.AdapterView<*>?,view:View?,position:Int,id:Long) {
