@@ -126,6 +126,7 @@ class MainActivity : Activity() {
         outState.putIntegerArrayList("repairDraftSelections",repairDraftSelections?.let { ArrayList(it) })
         outState.putString("screen",screen)
         outState.putString("previousScreen",previousScreen)
+        outState.putStringArrayList("navigationHistory",ArrayList(navigationHistory))
         outState.putString("repairPhotoUri",repairPhotoUri?.toString())
         super.onSaveInstanceState(outState)
     }
