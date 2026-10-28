@@ -902,52 +902,6 @@ open class MainActivity:Activity() {
                 }
             }
         }
-        val legacySaleId=field("معرف فاتورة المبيع القديمة للفحص",body)
-        button("عرض الفاتورة القديمة مع التحصيلات والكلفة",body) {
-            val sourceId=legacySaleId.text.toString().trim()
-            if(sourceId.isBlank()) {
-                Toast.makeText(this,"أدخل معرف الفاتورة القديمة",Toast.LENGTH_LONG).show()
-            } else work(refresh=false) {
-                val review=store.archivedSaleReviewBySourceId(sourceId)
-                val message=listOf(
-                    "رقم الفاتورة: "+review["invoice_no"].orEmpty(),
-                    "التاريخ: "+review["date"].orEmpty(),
-                    "الإجمالي: "+review["total"].orEmpty()+" "+review["currency"].orEmpty(),
-                    "دفعات مرتبطة: "+review["settlement_linked_payment_count"].orEmpty(),
-                    "مرتجعات مرتبطة: "+review["settlement_linked_return_count"].orEmpty(),
-                    "الذمة المتبقية بالوحدة الصغرى: "+review["settlement_remaining_minor"].orEmpty(),
-                    "حالة الكلفة: "+review["cost_state"].orEmpty(),
-                    "كلفة المبلغ المتبقي بالوحدة الصغرى: "+review["cost_estimated_pending_cost_minor"].orEmpty(),
-                    "الربح المتوقع بالوحدة الصغرى: "+review["cost_estimated_pending_profit_minor"].orEmpty(),
-                    review["cost_reason"].orEmpty(),
-                    "عرض تاريخي فقط، دون أي قيد مالي."
-                ).filter { it.isNotBlank() }.joinToString("\n")
-                runOnUiThread {
-                    if(!isFinishing&&!isDestroyed) AlertDialog.Builder(this)
-                        .setTitle("مراجعة فاتورة المبيع القديمة")
-                        .setMessage(message).setPositiveButton("إغلاق",null).show()
-                }
-            }
-        }
-        button("فحص سلامة الفواتير والذمم المستعادة") {
-            work(refresh=false) {
-                val report=store.archivedFinancialCutoverStatus()
-                val message=listOf(
-                    "حالة التدقيق: "+report.getValue("state"),
-                    "مراجع فواتير المبيع: "+report.getValue("sale_references"),
-                    "أخطاء تعريف المشتريات: "+report.getValue("purchase_identity_errors"),
-                    "فواتير مبيع تحتاج مراجعة: "+report.getValue("unresolved_online_sales"),
-                    report.getValue("cutover_error"),
-                    "لم يتم تفعيل أرصدة مالية أو إعادة تسجيل قبض."
-                ).filter { it.isNotBlank() }.joinToString("\n")
-                runOnUiThread {
-                    if(!isFinishing&&!isDestroyed) AlertDialog.Builder(this)
-                        .setTitle("تدقيق النسخة القديمة")
-                        .setMessage(message)
-                        .setPositiveButton("إغلاق",null).show()
-                }
-            }
-        }
         val results=column()
         body.addView(results)
         var offset=0
