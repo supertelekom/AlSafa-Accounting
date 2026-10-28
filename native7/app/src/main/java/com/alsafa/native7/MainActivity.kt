@@ -168,7 +168,12 @@ class MainActivity : Activity() {
         parent.addView(text("1  "+steps[0],20f,gold))
         field(parent,"بحث بالاسم أو REF أو الرقم أو الباركود","مثال: CASIO أو MTP أو 002")
         field(parent,"الباركود","امسح أو اكتب الباركود")
-        parent.addView(text("📷 قراءة الباركود     إضافة",15f,gold))
+        val barcodeActions=LinearLayout(this).apply { orientation=LinearLayout.HORIZONTAL;layoutDirection=View.LAYOUT_DIRECTION_RTL }
+        listOf("📷 قراءة الباركود","إضافة").forEach { label ->
+            val action=text(label,15f,gold).apply { background=panel(paper,12);isClickable=true;setOnClickListener { android.widget.Toast.makeText(this@MainActivity,"قارئ الباركود وربط المخزون لم يُنفذا بعد",android.widget.Toast.LENGTH_SHORT).show() } }
+            barcodeActions.addView(action,LinearLayout.LayoutParams(0,dp(54),1f).apply { marginEnd=dp(6) })
+        }
+        parent.addView(barcodeActions)
         parent.addView(text("لم يتم اختيار ساعة بعد",15f))
         parent.addView(text("2  "+steps[1],20f,gold))
         finalAmountCurrency(parent,"USD")
