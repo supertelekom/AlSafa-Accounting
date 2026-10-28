@@ -62,7 +62,7 @@ object LegacyInvoiceSnapshot {
             .put("readOnly",true)
             .put("financialPosting","NONE")
             .put("paymentsAreEvidenceOnly",true)
-            .put("isSimplifiedSale",section=="sales" && source.optString("customer").isBlank() && source.optString("customerName").isBlank() && source.optString("phone").isBlank())
+            .put("isSimplifiedSale",section=="sales" && source.optString("customer").isBlank() && source.optString("phone").isBlank())
             .put("paidSnapshotIsCumulative",true)
     }
     fun page(store:Store,section:String,from:String="",to:String="",term:String="",
@@ -118,8 +118,8 @@ object LegacyInvoiceSnapshot {
                 .put("id",original.optString("id"))
                 .put("invoiceNo",original.optString("invoiceNo"))
                 .put("supplierInvoice",original.optString("supplierInvoice"))
-                .put("date",date).put("customer",original.optString("customer").ifBlank { original.optString("customerName") })
-                .put("phone",original.optString("phone").ifBlank { original.optString("customerPhone").ifBlank { original.optString("supplierPhone") } })
+                .put("date",date).put("customer",original.optString("customer"))
+                .put("phone",original.optString("phone"))
                 .put("supplierName",original.optString("supplierName"))
                 .put("currency",currency).put("total",total?.toPlainString() ?: original.optString("total"))
                 .put("paid",paid?.toPlainString() ?: original.optString("paid"))
@@ -127,7 +127,7 @@ object LegacyInvoiceSnapshot {
                 .put("financiallyValid",financiallyValid)
                 .put("validationIssue",if(financiallyValid) "" else "تتطلب الفاتورة مراجعة معرفها أو تاريخها أو عملتها أو مبالغها")
                 .put("paymentStatus",original.optString("paymentStatus"))
-                .put("isSimplifiedSale",section=="sales" && original.optString("customer").isBlank() && original.optString("customerName").isBlank() && original.optString("phone").isBlank())
+                .put("isSimplifiedSale",section=="sales" && original.optString("customer").isBlank() && original.optString("phone").isBlank())
                 .put("readOnly",true))
         }
         val totals=JSONObject()
