@@ -174,7 +174,7 @@ class MainActivity : Activity() {
                     orientation=LinearLayout.VERTICAL;gravity=Gravity.CENTER
                     background=panel(paper,if(simple) 24 else 18)
                     setPadding(dp(10),dp(12),dp(10),dp(12))
-                    isClickable=true;setOnClickListener { previousScreen=screen;screen=if(screen=="full" && item.first=="مبيع") "preview:مبيع كامل" else "preview:" + item.first;render() }
+                    isClickable=true;setOnClickListener { navigateTo(if(screen=="full" && item.first=="مبيع") "preview:مبيع كامل" else "preview:" + item.first) }
                 }
                 box.addView(text(item.third,if(simple) 42f else 28f,gold))
                 box.addView(text(item.first,if(simple) 20f else 18f))
