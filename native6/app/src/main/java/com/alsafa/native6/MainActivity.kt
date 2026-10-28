@@ -902,6 +902,25 @@ open class MainActivity:Activity() {
                 }
             }
         }
+        button("فحص سلامة الفواتير والذمم المستعادة") {
+            work(refresh=false) {
+                val report=store.archivedFinancialCutoverStatus()
+                val message=listOf(
+                    "حالة التدقيق: "+report.getValue("state"),
+                    "مراجع فواتير المبيع: "+report.getValue("sale_references"),
+                    "أخطاء تعريف المشتريات: "+report.getValue("purchase_identity_errors"),
+                    "فواتير مبيع تحتاج مراجعة: "+report.getValue("unresolved_online_sales"),
+                    report.getValue("cutover_error"),
+                    "لم يتم تفعيل أرصدة مالية أو إعادة تسجيل قبض."
+                ).filter { it.isNotBlank() }.joinToString("\\n")
+                runOnUiThread {
+                    if(!isFinishing&&!isDestroyed) AlertDialog.Builder(this)
+                        .setTitle("تدقيق النسخة القديمة")
+                        .setMessage(message)
+                        .setPositiveButton("إغلاق",null).show()
+                }
+            }
+        }
         val results=column()
         body.addView(results)
         var offset=0
