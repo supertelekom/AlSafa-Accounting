@@ -1657,14 +1657,14 @@ class MainActivity : Activity() {
         val tablet=resources.configuration.screenWidthDp>=720
         val landscape=resources.configuration.orientation==android.content.res.Configuration.ORIENTATION_LANDSCAPE
         val wideLandscape=resources.configuration.screenWidthDp>=1200 && landscape
-        val maxWidth=dp(if(tablet) 1280 else 680)
-        val sidebarWidth=if(sidebar) dp(if(resources.configuration.screenWidthDp>=1080) 245 else 220) else 0
+        // Legacy v3.9.359 Honor Pad X8b: portrait 720-1199, landscape >=1200.
+        val maxWidth=dp(if(wideLandscape) 1440 else if(tablet) 1180 else 680)
+        val sidebarWidth=if(sidebar) dp(if(wideLandscape) 230 else 200) else 0
         val available=width-sidebarWidth
-        // v3.9.359 style.css: main padding 28px from 720px, 34px 38px from 1080px.
-        val desktop=resources.configuration.screenWidthDp>=1080
-        body.setPadding(dp(if(desktop) 38 else if(tablet) 28 else 15),
-            dp(if(desktop) 34 else if(tablet) 28 else 17),
-            dp(if(desktop) 38 else if(tablet) 28 else 15),dp(10))
+        val horizontalPadding=if(wideLandscape) 28 else if(tablet) 20 else 15
+        val verticalPadding=if(wideLandscape) 24 else if(tablet) 20 else 17
+        body.setPadding(dp(horizontalPadding),dp(verticalPadding),
+            dp(horizontalPadding),dp(10))
         scroll.addView(body,android.widget.FrameLayout.LayoutParams(
             if(available>maxWidth) maxWidth else -1,-2,Gravity.TOP or Gravity.CENTER_HORIZONTAL
         ))
