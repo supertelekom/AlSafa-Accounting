@@ -1478,10 +1478,10 @@ class MainActivity : Activity() {
         activeRoot=root
         originalTopbar(root)
         val scroll=ScrollView(this).apply { isFillViewport=true }
-        root.addView(scroll,LinearLayout.LayoutParams(-1,-1))
+        root.addView(scroll,LinearLayout.LayoutParams(-1,0,1f))
         val body=LinearLayout(this).apply {
             orientation=LinearLayout.VERTICAL; layoutDirection=View.LAYOUT_DIRECTION_RTL
-            setPadding(dp(20),dp(22),dp(20),dp(24))
+            setPadding(dp(15),dp(14),dp(15),dp(24))
         }
         val maxWidth=dp(if(screen=="chooser") 920 else 680)
         val width=resources.displayMetrics.widthPixels
