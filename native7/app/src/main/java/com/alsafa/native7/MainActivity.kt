@@ -477,6 +477,68 @@ class MainActivity : Activity() {
         }
         parent.addView(text("لا توجد حسابات فعلية في معاينة الواجهة.",12f))
     }
+    private fun settingsPreview(parent:LinearLayout) {
+        parent.addView(text("الإعدادات",26f,gold))
+        parent.addView(text("تخصيص المتجر والعملات والنسخة الاحتياطية.",14f))
+        parent.addView(text("بيانات المتجر",20f,gold))
+        field(parent,"اسم المتجر")
+        select(parent,"عملة التطبيق (الوضع الكامل)",listOf("USD","TRY","SYP"))
+        field(parent,"رقم واتساب المتجر (اختياري)","لإظهاره في الإيصال")
+        disabledAction(parent,"حفظ الإعدادات")
+        parent.addView(text("الشريكان الخارجيان",20f,gold))
+        parent.addView(text("هذان الشريكان لا يشاركان في كامل المحل. تُربط بضاعتهما من شاشة المنتج، ورأس مال القطعة يكون للشريك المحدد.",12f))
+        repeat(2) { i ->
+            field(parent,"اسم الشريك الخارجي ${i+1}")
+            field(parent,"النسبة الافتراضية %")
+        }
+        disabledAction(parent,"حفظ الشريكين الخارجيين")
+        parent.addView(text("نسب الشركاء",20f,gold))
+        parent.addView(text("يجب أن يكون مجموع النسب 100%.",12f))
+        repeat(3) { i ->
+            field(parent,"اسم الشريك ${i+1}")
+            field(parent,"النسبة %")
+        }
+        disabledAction(parent,"حفظ نسب الشركاء")
+        parent.addView(text("الإنترنت وأسعار العملات",20f,gold))
+        parent.addView(text("النسخة الجديدة تعمل دون مزامنة أو اتصال بالإنترنت.",12f))
+        listOf("سعر 1 دولار بالليرة السورية","سعر 1 دولار بالليرة التركية","سعر 1 ليرة تركية بالليرة السورية").forEach {
+            field(parent,it)
+        }
+        disabledAction(parent,"حفظ أسعار السوق")
+        parent.addView(text("أزرار الصيانة السريعة — الوضع المبسط",20f,gold))
+        parent.addView(text("لكل زر يمكنك اختيار سعر ثابت أو مبلغ يدوي وقت الاستخدام.",12f))
+        disabledAction(parent,"＋ زر جديد")
+        parent.addView(text("قوالب رسائل العملاء",20f,gold))
+        listOf("رسالة المبيع","استلام الصيانة","نتيجة الفحص","تحديث حالة الصيانة","جاهزة للاستلام","التسليم والدفع").forEach { field(parent,it) }
+        disabledAction(parent,"حفظ القوالب")
+        disabledAction(parent,"استعادة القوالب الجاهزة")
+        parent.addView(text("النسخ الاحتياطي الآمن",20f,gold))
+        disabledAction(parent,"⬇ تصدير نسخة كاملة كملف")
+        disabledAction(parent,"⬆ استعادة نسخة من ملف")
+        parent.addView(text("لا يمكن استعادة أو تصدير بيانات قبل تنفيذ قاعدة البيانات والتحقق من سلامتها.",12f))
+    }
+    private fun dailyClosingPreview(parent:LinearLayout) {
+        parent.addView(text("إقفال اليوم",26f,gold))
+        parent.addView(text("مرتبط مباشرة بدرج المحل والصندوق الخارجي وشام كاش والحساب البنكي، ويعرض فروقات المرتجع والاستبدال.",14f))
+        parent.addView(text("الخزائن والأرصدة",20f,gold))
+        listOf("USD","SYP","TRY").forEach { parent.addView(text("$it    —",16f)) }
+        parent.addView(text("مقبوض نقدي اليوم",20f,gold))
+        listOf("USD","SYP","TRY").forEach { parent.addView(text("$it    —",16f)) }
+        parent.addView(text("عدّ درج المحل وحدد المدوّر بنفسك",20f,gold))
+        parent.addView(text("لا يوجد أي اقتراح تلقائي. اكتب ما عددته فعلياً ثم اكتب المبلغ الذي تريد تركه للغد؛ مبلغ النقل يُحسب فقط من اختيارك.",12f))
+        listOf("USD","SYP","TRY").forEach { c ->
+            parent.addView(text(c,18f,gold))
+            field(parent,"المبلغ المعدود فعلياً")
+            field(parent,"المبلغ الذي سيبقى للغد")
+        }
+        parent.addView(text("مطابقة شام كاش",20f,gold))
+        field(parent,"رصيد شام كاش USD الفعلي")
+        field(parent,"رصيد شام كاش SYP الفعلي")
+        field(parent,"ملاحظة الإقفال")
+        parent.addView(text("اكتب ما عددته فعلياً، ثم حدد ما تنقله للصندوق الخارجي. المتبقي يصبح رصيد بداية الغد.",12f))
+        disabledAction(parent,"إقفال اليوم وترحيل الأرصدة")
+        parent.addView(text("لا تُجرى أي حركة نقدية في معاينة Native 7.",12f))
+    }
     private fun render() {
         val root=LinearLayout(this).apply {
             orientation=LinearLayout.VERTICAL; layoutDirection=View.LAYOUT_DIRECTION_RTL
@@ -582,6 +644,8 @@ class MainActivity : Activity() {
             "preview:قبض دين" -> debtsPreview(body)
             "preview:الشركاء والسحوبات" -> partnersPreview(body)
             "preview:التقارير" -> reportsPreview(body)
+            "preview:الإعدادات" -> settingsPreview(body)
+            "preview:إقفال اليوم" -> dailyClosingPreview(body)
             "preview:تسليم الوردية" -> handoverPreview(body)
             "preview:صيانة سريعة" -> quickRepairPreview(body)
             "preview:تسليم الساعات" -> deliveryPreview(body)
