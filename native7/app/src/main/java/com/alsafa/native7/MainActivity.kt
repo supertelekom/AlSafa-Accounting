@@ -40,6 +40,7 @@ class MainActivity : Activity() {
         super.onCreate(savedInstanceState)
         screen=savedInstanceState?.getString("screen") ?: "chooser"
         previousScreen=savedInstanceState?.getString("previousScreen") ?: "chooser"
+        repairPhotoUri=savedInstanceState?.getString("repairPhotoUri")?.let(android.net.Uri::parse)
         render()
     }
     @Deprecated("Deprecated in Java")
@@ -53,6 +54,7 @@ class MainActivity : Activity() {
     override fun onSaveInstanceState(outState:Bundle) {
         outState.putString("screen",screen)
         outState.putString("previousScreen",previousScreen)
+        outState.putString("repairPhotoUri",repairPhotoUri?.toString())
         super.onSaveInstanceState(outState)
     }
     @Deprecated("Deprecated in Java")
