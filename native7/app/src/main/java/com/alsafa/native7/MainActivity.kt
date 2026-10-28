@@ -526,7 +526,7 @@ class MainActivity : Activity() {
         parent.addView(text("سجل الاستلام، الأجرة، كلفة الصيانة، وحالة الدفع.",14f))
         parent.addView(text("الطلبات",16f,gold).apply {
             isClickable=true
-            setOnClickListener { previousScreen=screen;screen="preview:كل الصيانة";render() }
+            setOnClickListener { navigateTo("preview:كل الصيانة") }
         })
         parent.addView(text("بيانات العميل",21f,gold))
         field(parent,"التاريخ *","YYYY-MM-DD").apply {
