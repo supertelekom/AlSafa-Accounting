@@ -241,6 +241,34 @@ class Store(val helper:StoreDb) {
         )
     }
 
+    /**
+     * Historical sale settlement drill-down. The old paid field may be stale:
+     * linked payment and return records are displayed independently.
+     */
+    fun archivedSaleSettlementDetail(archiveKey:String):Map<String,String> {
+        val source=JSONObject(archivedRecordDetail("sales",archiveKey))
+        val sourceId=source.optString("id").trim()
+        require(sourceId.isNotEmpty()) { "فاتورة قديمة بلا معرف" }
+        val index=legacySettlementIndex()
+        val payments=index.payments[sourceId].orEmpty()
+        val returns=index.returns[sourceId].orEmpty()
+        val due=runCatching { reconciledLegacySaleDue(source,index) }
+        return mapOf(
+            "source_id" to sourceId,
+            "invoice_no" to source.optString("invoiceNo"),
+            "currency" to source.optString("currency"),
+            "original_total" to source.optString("total"),
+            "source_paid_field" to source.optString("paid"),
+            "linked_payment_count" to payments.size.toString(),
+            "linked_return_count" to returns.size.toString(),
+            "linked_payments_json" to org.json.JSONArray(payments).toString(),
+            "linked_returns_json" to org.json.JSONArray(returns).toString(),
+            "remaining_minor" to due.getOrNull()?.toString().orEmpty(),
+            "reconciliation_state" to if(due.isSuccess) "RECONCILED_READ_ONLY" else "NEEDS_REVIEW",
+            "reconciliation_error" to (due.exceptionOrNull()?.message ?: "")
+        )
+    }
+
     /** Paginated repair history with bounded BLOB reads for old embedded watch photos. */
     fun repairPage(term:String,limit:Int,offset:Int):List<Map<String,String>> {
         require(limit in 1..100 && offset>=0)
