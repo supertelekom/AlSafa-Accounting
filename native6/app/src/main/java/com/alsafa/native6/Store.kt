@@ -1607,7 +1607,11 @@ class Store(val helper:StoreDb) {
                 }
             }
         }
-        return add(maxOf(existing,previous,imported),1L)
+        val highWater=maxOf(existing,previous,imported)
+        require(highWater>=0L && highWater<Long.MAX_VALUE) {
+            "تعذر إصدار رقم فاتورة جديد دون تعارض مع التسلسل القديم"
+        }
+        return Math.addExact(highWater,1L)
     }
     fun sale(items:List<SaleItem>,party:String,phone:String,currency:Currency,paid:Long,vault:String,discount:Long=0,date:String=today(),command:String=id(),receiptDate:String=date,notes:String="",saleType:String="store",warrantyMonths:Int=0,warrantyStart:String=date):String=transaction {
         require(saleType in setOf("store","online"))
