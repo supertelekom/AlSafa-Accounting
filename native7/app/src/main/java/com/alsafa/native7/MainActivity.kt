@@ -1519,17 +1519,38 @@ class MainActivity : Activity() {
         setContentView(root)
         activeRoot=root
         originalTopbar(root)
+        val width=resources.displayMetrics.widthPixels
+        val simpleMode=screen=="simple" || screen=="preview:مبيع" ||
+            screen=="preview:صيانة سريعة" || screen=="preview:تسليم الساعات" ||
+            screen=="preview:تسليم الوردية"
+        val showNavigation=!simpleMode && screen!="advisor"
+        val sidebar=showNavigation && width>=dp(720)
+        val workArea=LinearLayout(this).apply {
+            orientation=LinearLayout.HORIZONTAL
+            layoutDirection=View.LAYOUT_DIRECTION_RTL
+        }
+        root.addView(workArea,LinearLayout.LayoutParams(-1,0,1f))
+        if(sidebar) {
+            val nav=LegacyNavigation(this)
+            nav.show(true,screen) { navigateTo(it) }
+            workArea.addView(nav,LinearLayout.LayoutParams(dp(220),-1))
+        }
         val scroll=ScrollView(this).apply { isFillViewport=true }
-        root.addView(scroll,LinearLayout.LayoutParams(-1,0,1f))
+        workArea.addView(scroll,LinearLayout.LayoutParams(0,-1,1f))
         val body=LinearLayout(this).apply {
             orientation=LinearLayout.VERTICAL; layoutDirection=View.LAYOUT_DIRECTION_RTL
-            setPadding(dp(15),dp(14),dp(15),dp(24))
+            setPadding(dp(15),dp(17),dp(15),dp(24))
         }
-        val maxWidth=dp(if(screen=="chooser") 920 else 680)
-        val width=resources.displayMetrics.widthPixels
+        val maxWidth=dp(680)
+        val available=width-if(sidebar) dp(220) else 0
         scroll.addView(body,android.widget.FrameLayout.LayoutParams(
-            if(width>maxWidth) maxWidth else -1,-2,Gravity.TOP or Gravity.CENTER_HORIZONTAL
+            if(available>maxWidth) maxWidth else -1,-2,Gravity.TOP or Gravity.CENTER_HORIZONTAL
         ))
+        if(showNavigation && !sidebar) {
+            val nav=LegacyNavigation(this)
+            nav.show(false,screen) { navigateTo(it) }
+            root.addView(nav,LinearLayout.LayoutParams(-1,dp(68)))
+        }
         when(screen) {
             "chooser" -> {
                 body.addView(text("ALSAFA WATCHES",13f,gold))
