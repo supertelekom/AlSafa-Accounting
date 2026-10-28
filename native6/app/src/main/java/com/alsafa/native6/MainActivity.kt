@@ -3442,7 +3442,7 @@ Store.vaults.forEach{v->text(v+" · إقفالات تحتاج عدّاً: "+stor
                             for(i in 0 until rows.length()) {
                                 val invoice=rows.getJSONObject(i)
                                 val card=column().apply { setPadding(dp(12),dp(8),dp(12),dp(8));background=background(paper,12) }
-                                text("#"+invoice.optString("invoiceNo")+" · "+invoice.optString("date"),card,15f)
+                                text("#"+invoice.optString("supplierInvoice")+" · "+invoice.optString("date"),card,15f)
                                 text(invoice.optString("supplierName"),card,14f)
                                 text("الإجمالي: "+invoice.optString("total")+" "+invoice.optString("currency")+
                                     " · المدفوع: "+invoice.optString("paid")+" · المتبقي: "+invoice.optString("outstanding"),card,13f)
