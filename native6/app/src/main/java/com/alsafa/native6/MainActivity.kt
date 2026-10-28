@@ -4905,7 +4905,7 @@ button("＋ مورد"){form("مورد جديد"){box->val n=field("الاسم",b
                     val entries=report.getJSONArray("withdrawals")
                     val details=(0 until minOf(entries.length(),100)).map { index ->
                         val item=entries.getJSONObject(index)
-                        "${item.optString("date")} | ${item.optString("partner")} | ${item.optString("amount")} ${item.optString("currency")}"
+                        "${item.optString("date")} | ${item.optString("partner")} | ${item.optString("amount")} ${item.optString("currency")} | ${item.optString("vault")}"
                     }.joinToString("\n")
                     val message="الشهر: ${report.getString("month")}\n"+
                         "عدد السحوبات: ${entries.length()}\n"+
