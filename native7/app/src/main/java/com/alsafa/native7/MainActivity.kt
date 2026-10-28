@@ -281,6 +281,24 @@ class MainActivity : Activity() {
         parent.addView(text("لا توجد ساعات بانتظار التسليم.",16f))
         parent.addView(text("هذه قائمة غير متصلة بالبيانات بعد، ولا تعكس حالة الساعات الفعلية.",12f))
     }
+    private fun manualSaleItemPreview(parent:LinearLayout,index:Int,removable:Boolean) {
+        val item=LinearLayout(this).apply {
+            orientation=LinearLayout.VERTICAL
+            background=panel(paper,16)
+            setPadding(dp(12),dp(10),dp(12),dp(10))
+        }
+        item.addView(text("الصنف $index",18f,gold))
+        field(item,"اسم الساعة / الصنف *","مثال: ساعة كاسيو")
+        field(item,"الموديل","اختياري")
+        field(item,"الكمية *","1").inputType=InputType.TYPE_CLASS_NUMBER
+        field(item,"سعر البيع *","0").inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
+        item.addView(text("إجمالي الصنف: —",14f))
+        if(removable) item.addView(text("حذف الصنف",14f,gold).apply {
+            isClickable=true
+            setOnClickListener { parent.removeView(item) }
+        })
+        parent.addView(item,LinearLayout.LayoutParams(-1,-2).apply { bottomMargin=dp(12) })
+    }
     private fun fullSalePreview(parent:LinearLayout) {
         parent.addView(text("فاتورة مبيعات",26f,gold))
         parent.addView(text("اختر من المنتجات أو امسح الباركود بالكاميرا لإضافة الساعة فوراً.",14f))
@@ -304,8 +322,14 @@ class MainActivity : Activity() {
         disabledAction(parent,"إضافة بالباركود")
         parent.addView(text("عند العثور على الباركود يضاف المنتج بسعره وبياناته المحفوظة تلقائياً.",12f))
         parent.addView(text("أصناف الفاتورة",21f,gold))
-        parent.addView(text("لا توجد أصناف مضافة",14f))
-        disabledAction(parent,"＋ إضافة صنف يدوي")
+        val lines=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL }
+        parent.addView(lines)
+        manualSaleItemPreview(lines,1,false)
+        var nextLine=2
+        parent.addView(text("＋ إضافة صنف يدوي",16f,gold).apply {
+            isClickable=true
+            setOnClickListener { manualSaleItemPreview(lines,nextLine++,true) }
+        })
         parent.addView(text("الدفع والإرسال",21f,gold))
         select(parent,"حالة الدفع",listOf("مدفوع بالكامل","مدفوع جزئياً","عند الاستلام"))
         select(parent,"قاعدة الخصم",listOf("بدون قاعدة خصم"))
