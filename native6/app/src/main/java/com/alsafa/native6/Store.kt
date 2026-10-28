@@ -82,6 +82,22 @@ class Store(val helper:StoreDb) {
         }
     }
 
+    fun archivedFinancePage(kind:String,query:String="",limit:Int=30,offset:Int=0):List<Map<String,String>> {
+        require(kind in setOf("payments","cashTransactions","supplierLedger",
+            "partnerWithdrawals","dailyClosings","returns"))
+        return legacyPage(kind,query,limit,offset).map { row ->
+            val item=JSONObject(row.getValue("payload"))
+            mapOf("archive_key" to row.getValue("legacy_id"),
+                "source_id" to item.optString("id"),
+                "date" to item.optString("date"),
+                "reference_id" to item.optString("referenceId"),
+                "reference_type" to item.optString("referenceType"),
+                "currency" to item.optString("currency"),
+                "amount" to item.optString("amount"),
+                "state" to "ARCHIVED_ONLY")
+        }
+    }
+
     /** Paginated repair history with bounded BLOB reads for old embedded watch photos. */
     fun repairPage(term:String,limit:Int,offset:Int):List<Map<String,String>> {
         require(limit in 1..100 && offset>=0)
