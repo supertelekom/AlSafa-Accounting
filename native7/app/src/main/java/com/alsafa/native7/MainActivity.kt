@@ -25,6 +25,8 @@ class MainActivity : Activity() {
     private val paper = Color.rgb(255,253,249)
     private var screen = "chooser"
     private var previousScreen = "chooser"
+    private var selectedQuickRepair: String? = null
+    private var selectedQuickPrice: Int? = null
     private fun dp(value:Int) = (value * resources.displayMetrics.density + 0.5f).toInt()
     private fun text(value:String, size:Float, color:Int = ink):TextView = TextView(this).apply {
         text = value; textSize = size; setTextColor(color); gravity = Gravity.CENTER
@@ -201,11 +203,17 @@ class MainActivity : Activity() {
         parent.addView(text("صيانة سريعة",26f,gold))
         parent.addView(text("اضغط على الخدمة ثم اختر الدفع والعملة.",14f))
         val chosen=text("اختر خدمة من الأعلى",16f)
+        val finalAmount=EditText(this).apply { hint="أدخل المبلغ النهائي"; inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL }
         val custom=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL;visibility=View.GONE }
         val customAmount=field(custom,"سعر الصيانة الأساسي (ثم اختر عملة الصيانة بالأسفل)","اكتب المبلغ").apply {
             inputType=android.text.InputType.TYPE_CLASS_NUMBER or android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL
         }
         field(custom,"العمل الذي تم *","مثال: تبديل ماكينة، تنظيف الساعة، تثبيت العقارب...")
+        customAmount.addTextChangedListener(object:android.text.TextWatcher {
+            override fun beforeTextChanged(s:CharSequence?,start:Int,count:Int,after:Int) {}
+            override fun onTextChanged(s:CharSequence?,start:Int,before:Int,count:Int) { if(selectedQuickPrice==null) finalAmount.setText(s?.toString() ?: "") }
+            override fun afterTextChanged(s:android.text.Editable?) {}
+        })
         val options=listOf(
             Triple("بطارية",50,"🔋"),Triple("بطارية",70,"🔋"),
             Triple("بطارية",100,"🔋"),Triple("بطارية",150,"🔋"),
@@ -224,7 +232,10 @@ class MainActivity : Activity() {
                     setPadding(dp(5),dp(9),dp(5),dp(9))
                     isClickable=true
                     setOnClickListener {
+                        selectedQuickRepair=label
+                        selectedQuickPrice=if(price<0) null else price
                         chosen.text=if(price<0) name else "$label — $price TRY"
+                        finalAmount.setText(if(price<0) "" else price.toString())
                         custom.visibility=if(price<0) View.VISIBLE else View.GONE
                         if(price>=0)customAmount.setText("")
                     }
@@ -253,7 +264,12 @@ class MainActivity : Activity() {
         parent.addView(delivered)
         parent.addView(customerFields)
         parent.addView(text("3  مبلغ الصيانة النهائي",20f,gold))
-        finalAmountCurrency(parent,"TRY")
+        parent.addView(text("المبلغ النهائي وعملته",15f).apply { gravity=Gravity.RIGHT })
+        finalAmount.background=panel(paper,12)
+        finalAmount.setPadding(dp(13),dp(10),dp(13),dp(10))
+        parent.addView(finalAmount,LinearLayout.LayoutParams(-1,dp(52)))
+        select(parent,"عملة التحصيل",listOf("₺ تركية","$ دولار","ل.س سورية"))
+        parent.addView(text("يمكن تعديل السعر بعد تحويله. يُسجّل المبلغ النهائي بالعملة المختارة.",12f))
         parent.addView(text("4  طريقة الدفع",20f,gold))
         select(parent,"طريقة الدفع",listOf("💵 نقدي","📱 شام كاش"))
         parent.addView(text("✓ إتمام العملية",19f,gold))
