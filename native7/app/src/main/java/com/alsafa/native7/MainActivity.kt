@@ -597,6 +597,25 @@ class MainActivity : Activity() {
             isClickable=true
             setOnClickListener { snapshotRepairDraft();repairPhotoUri=null;repairCameraPreview=null;render();restoreRepairDraft() }
         })
+        repairCameraPreview?.let { bitmap ->
+            parent.addView(android.widget.ImageView(this).apply {
+                setImageBitmap(bitmap)
+                adjustViewBounds=true
+                maxHeight=dp(200)
+                isClickable=true
+                setOnClickListener {
+                    val photo=android.widget.ImageView(this@MainActivity).apply {
+                        setImageBitmap(bitmap)
+                        adjustViewBounds=true
+                        scaleType=android.widget.ImageView.ScaleType.FIT_CENTER
+                    }
+                    android.app.AlertDialog.Builder(this@MainActivity)
+                        .setView(photo)
+                        .setPositiveButton("✕ إغلاق"){ dialog,_ -> dialog.dismiss() }
+                        .show()
+                }
+            })
+        }
         repairPhotoUri?.let { uri ->
             parent.addView(android.widget.ImageView(this).apply {
                 setImageURI(uri)
