@@ -54,11 +54,28 @@ object LegacyInvoiceSnapshot {
                 }
             }
         }
+        // Returns are historical records linked to the original invoice. Keep their
+        // source amounts and dates intact; never post them again during display.
+        val linkedReturns=JSONArray()
+        if(section=="sales" || section=="repairs") {
+            for(returnRow in store.legacyRows("returns")) {
+                val original=JSONObject(returnRow.getValue("payload"))
+                val type=original.optString("referenceType")
+                val expected=if(section=="sales") "sale" else "repair"
+                if(original.optString("referenceId")==id &&
+                    (type.equals(expected,ignoreCase=true) || type.equals(section,ignoreCase=true))) {
+                    linkedReturns.put(JSONObject()
+                        .put("archiveKey",returnRow.getValue("legacy_id"))
+                        .put("record",original))
+                }
+            }
+        }
         return JSONObject()
             .put("section",section)
             .put("archiveKey",archiveKey)
             .put("invoice",source)
             .put("linkedPayments",linked)
+            .put("linkedReturns",linkedReturns)
             .put("readOnly",true)
             .put("financialPosting","NONE")
             .put("paymentsAreEvidenceOnly",true)
