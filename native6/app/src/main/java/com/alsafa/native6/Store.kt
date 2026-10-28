@@ -1635,6 +1635,12 @@ class Store(val helper:StoreDb) {
     }
     fun sale(items:List<SaleItem>,party:String,phone:String,currency:Currency,paid:Long,vault:String,discount:Long=0,date:String=today(),command:String=id(),receiptDate:String=date,notes:String="",saleType:String="store",warrantyMonths:Int=0,warrantyStart:String=date):String=transaction {
         require(saleType in setOf("store","online"))
+        // A restored sale retains its original ID in the archive. Never allow a
+        // new native sale to reuse that identity and post a second stock/cash entry.
+        require(scalar("SELECT count(*) FROM legacy_records WHERE category='sales' AND legacy_id LIKE ?",
+            "%:"+command)==0L) {
+            "معرف فاتورة المبيع مستخدم في الأرشيف القديم؛ أوقف التسجيل منعاً للتكرار"
+        }
         require(warrantyMonths in 0..120)
         if(warrantyMonths>0) LocalDate.parse(warrantyStart)
         require(items.isNotEmpty() && items.map {it.productId}.distinct().size==items.size){"الصنف مكرر"};vault(vault)
