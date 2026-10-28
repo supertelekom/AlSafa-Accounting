@@ -334,6 +334,64 @@ class MainActivity : Activity() {
         }
         parent.addView(action,LinearLayout.LayoutParams(-1,dp(49)).apply { bottomMargin=dp(8) })
     }
+    private fun repairFormPreview(parent:LinearLayout) {
+        parent.addView(text("طلب صيانة",26f,gold))
+        parent.addView(text("سجل الاستلام، الأجرة، كلفة الصيانة، وحالة الدفع.",14f))
+        disabledAction(parent,"الطلبات")
+        parent.addView(text("بيانات العميل",21f,gold))
+        field(parent,"التاريخ *","YYYY-MM-DD")
+        field(parent,"وقت الاستلام *","HH:MM")
+        select(parent,"عملة الصيانة / القبض *",listOf("USD","TRY","SYP"))
+        select(parent,"طريقة الدفع الأولى *",listOf("نقدي","شام كاش"))
+        field(parent,"اسم العميل *")
+        field(parent,"رقم واتساب العميل","09xxxxxxxx").inputType=InputType.TYPE_CLASS_PHONE
+        select(parent,"حالة الطلب",listOf("قيد الصيانة","بانتظار القطعة","جاهز للاستلام"))
+        parent.addView(text("تفاصيل الساعة والتكلفة",21f,gold))
+        field(parent,"الماركة / نوع الساعة *","مثال: كاسيو")
+        field(parent,"الموديل أو الرقم")
+        field(parent,"العطل أو المطلوب *","مثال: تغيير بطارية وإصلاح السوار")
+        field(parent,"نتيجة الفحص أو تحديث العميل","اختياري — اكتب هنا أي مشكلة تظهر لاحقاً ليتم إرسالها للعميل")
+        parent.addView(text("صورة ساعة العميل عند الاستلام",16f,gold))
+        disabledAction(parent,"📷 الكاميرا")
+        disabledAction(parent,"🖼️ اختيار من الاستوديو")
+        disabledAction(parent,"حذف الصورة")
+        parent.addView(text("تُحفظ داخل طلب الصيانة وتُرسل مع رسالة الاستلام عند اختيار واتساب.",12f))
+        parent.addView(text("قطع الصيانة المستخدمة",21f,gold))
+        parent.addView(text("لم تُحمّل قطع الصيانة بعد.",14f))
+        field(parent,"نسبة الضريبة %","0").inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
+        field(parent,"المبلغ المقبوض الآن","0").inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
+        parent.addView(text("عملة الصيانة والتحصيل",16f))
+        select(parent,"حالة الدفع",listOf("عند الاستلام","مدفوع جزئياً","مدفوع بالكامل"))
+        field(parent,"ملاحظات","لون السوار، موعد التسليم، تفاصيل مهمة")
+        parent.addView(text("عند وجود رقم العميل تُفتح محادثته في واتساب أعمال مع صورة الساعة ورسالة الاستلام بعد الحفظ.",12f))
+        parent.addView(text("اختيار قطع الصيانة اختياري عند الاستلام. يمكنك حفظ الطلب بدون قطع، ثم بعد الفحص تحديث ما تم عمله وأجرة العمل، وإضافة القطع عند معرفتها.",12f))
+        disabledAction(parent,"حفظ طلب الصيانة")
+        parent.addView(text("معاينة واجهة فقط — لا يتم حفظ طلبات أو صور.",12f))
+    }
+    private fun invoiceArchivePreview(parent:LinearLayout,repair:Boolean) {
+        parent.addView(text(if(repair) "قسم الصيانة" else "المبيعات والفواتير",26f,gold))
+        parent.addView(text(if(repair) "رقم فاتورة الصيانة ظاهر ويمكن البحث به وتعديل بياناتها." else "رقم الفاتورة ظاهر ويمكن البحث به وتعديل بياناتها بأمان.",14f))
+        val newLabel=if(repair) "＋ طلب" else "＋ فاتورة"
+        parent.addView(text(newLabel,16f,gold).apply { isClickable=true;setOnClickListener { previousScreen=screen;screen=if(repair) "preview:طلب صيانة" else "preview:مبيع كامل";render() } })
+        field(parent,"يوم الفواتير","YYYY-MM-DD").inputType=InputType.TYPE_CLASS_DATETIME
+        field(parent,"بحث في جميع الفواتير","رقم الفاتورة أو اسم العميل أو الهاتف...")
+        parent.addView(text("بدون بحث: تظهر فواتير اليوم المختار. عند الكتابة: يتم البحث في جميع التواريخ ويظهر تاريخ الفاتورة الأصلي.",12f))
+        parent.addView(text("الأرشيف غير متصل بالبيانات بعد؛ لا يمكن الاستنتاج أن الفواتير غير موجودة.",14f))
+    }
+    private fun expenseFormPreview(parent:LinearLayout) {
+        parent.addView(text("تسجيل مصروف",26f,gold))
+        parent.addView(text("يسجل المصروف في التقرير ويُخصم فوراً من الحافظة التي تختارها.",14f))
+        disabledAction(parent,"القائمة")
+        field(parent,"التاريخ *","YYYY-MM-DD")
+        field(parent,"الوقت *","HH:MM")
+        select(parent,"العملة",listOf("USD","TRY","SYP"))
+        field(parent,"المبلغ *").inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
+        select(parent,"دُفع من",listOf("نقدي","شام كاش"))
+        select(parent,"نوع المصروف",listOf("إيجار","نقل وشحن","كهرباء وإنترنت","أجور وصيانة","مصروف آخر"))
+        field(parent,"التفاصيل","مثال: أجرة نقل أو كهرباء")
+        disabledAction(parent,"حفظ وخصم المصروف")
+        parent.addView(text("معاينة فقط — لا تُخصم أي مبالغ.",12f))
+    }
     private fun render() {
         val root=LinearLayout(this).apply {
             orientation=LinearLayout.VERTICAL; layoutDirection=View.LAYOUT_DIRECTION_RTL
@@ -410,6 +468,14 @@ class MainActivity : Activity() {
             }
             "preview:مبيع" -> salePreview(body)
             "preview:مبيع كامل" -> fullSalePreview(body)
+            "preview:استلام صيانة" -> repairFormPreview(body)
+            "preview:طلب صيانة" -> repairFormPreview(body)
+            "preview:تسليم صيانة" -> invoiceArchivePreview(body,true)
+            "preview:كل الصيانة" -> invoiceArchivePreview(body,true)
+            "preview:الفواتير السابقة" -> invoiceArchivePreview(body,false)
+            "preview:المبيعات والفواتير" -> invoiceArchivePreview(body,false)
+            "preview:مصروف" -> expenseFormPreview(body)
+            "preview:المصاريف" -> expenseFormPreview(body)
             "preview:تسليم الوردية" -> handoverPreview(body)
             "preview:صيانة سريعة" -> quickRepairPreview(body)
             "preview:تسليم الساعات" -> deliveryPreview(body)
