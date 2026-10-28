@@ -1388,6 +1388,10 @@ class Store(val helper:StoreDb) {
      */
     fun legacyOnlineCutoverAudit():List<Map<String,String>> {
         val settlements=legacySettlementIndex()
+        val brokenReferences=legacyOnlineSettlementReferenceIssues()
+        require(brokenReferences.isEmpty()) {
+            "حركات قبض أو مرتجعات تشير إلى فواتير غير موجودة: "+brokenReferences.size
+        }
         val costRows=runCatching { legacyOnlineCostPreview() }
         val costById=costRows.getOrNull()?.associateBy { it.getValue("source_id") }
         return legacyRows("sales").map { row ->
