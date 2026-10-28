@@ -1000,7 +1000,7 @@ class MainActivity : Activity() {
             "simple" -> {
                 body.addView(text("العمل السريع",25f,gold))
                 body.addView(text("اختر العملية فقط.",15f))
-                body.addView(text("⚙️ الوضع الكامل",14f,gold).apply { isClickable=true;setOnClickListener { screen="full";render() } })
+                body.addView(text("⚙️ الوضع الكامل",14f,gold).apply { isClickable=true;setOnClickListener { navigateTo("full") } })
                 currencySummary(body)
                 actionGrid(body,listOf(
                     Triple("مبيع","بيع سريع","🛒"),
