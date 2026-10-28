@@ -1601,7 +1601,7 @@ class MainActivity : Activity() {
         }
         brand.addView(mark,LinearLayout.LayoutParams(dp(43),dp(43)))
         val labels=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL }
-        labels.addView(text("الصفا للساعات",19f,Color.rgb(122,81,24)).apply {
+        labels.addView(text("الصفا للساعات",if(resources.configuration.screenWidthDp>=720) 21f else 19f,Color.rgb(122,81,24)).apply {
             gravity=Gravity.RIGHT
             typeface=Typeface.create(typeface,Typeface.BOLD)
             setPadding(0,0,0,0)
