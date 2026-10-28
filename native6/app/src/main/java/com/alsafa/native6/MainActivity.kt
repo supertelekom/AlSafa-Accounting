@@ -1845,7 +1845,7 @@ open class MainActivity:Activity() {
                                 text("#"+invoice.optString("invoiceNo")+" · "+invoice.optString("date"),card,15f)
                                 text(invoice.optString("customer")+" · "+invoice.optString("phone"),card,14f)
                                 text("الإجمالي: "+invoice.optString("total")+" "+invoice.optString("currency")+
-                                    " · المسدد/المسوّى: "+invoice.optString("settledIncludingReturns")+" · المتبقي: "+invoice.optString("outstanding"),card,13f)
+                                    " · المدفوع: "+invoice.optString("paid")+" · المتبقي: "+invoice.optString("outstanding"),card,13f)
                                 button("عرض الفاتورة وبنودها",card) { showRestoredInvoiceOptions("sales",invoice) }
                                 results.addView(card)
                             }
