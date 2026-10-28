@@ -11,6 +11,10 @@ import android.view.View
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
+import android.widget.EditText
+import android.widget.Spinner
+import android.widget.ArrayAdapter
+import android.widget.Button
 
 /** UI-only prototype. No accounting transactions, persistence or network calls. */
 class MainActivity : Activity() {
@@ -115,6 +119,53 @@ class MainActivity : Activity() {
             parent.addView(section,LinearLayout.LayoutParams(-1,-2).apply { bottomMargin=dp(10) })
         }
     }
+    private fun field(parent:LinearLayout,label:String,hint:String=""):EditText {
+        parent.addView(text(label,15f).apply { gravity=Gravity.RIGHT })
+        return EditText(this).apply {
+            this.hint=hint; textSize=17f
+            background=panel(paper,12)
+            setPadding(dp(13),dp(10),dp(13),dp(10))
+            parent.addView(this,LinearLayout.LayoutParams(-1,dp(52)).apply { bottomMargin=dp(12) })
+        }
+    }
+    private fun select(parent:LinearLayout,label:String,options:List<String>) {
+        parent.addView(text(label,15f).apply { gravity=Gravity.RIGHT })
+        val spinner=Spinner(this)
+        spinner.adapter=ArrayAdapter(this,android.R.layout.simple_spinner_dropdown_item,options)
+        parent.addView(spinner,LinearLayout.LayoutParams(-1,dp(52)).apply { bottomMargin=dp(12) })
+    }
+    private fun salePreview(parent:LinearLayout) {
+        parent.addView(text("مبيع سريع",26f,gold))
+        parent.addView(text("ابحث عن الساعة أو امسح الباركود، ثم اختر طريقة الدفع وعملة البيع.",14f))
+        val steps=listOf("اختر الساعة","سعر البيع النهائي","طريقة الدفع")
+        parent.addView(text("1  "+steps[0],20f,gold))
+        field(parent,"بحث بالاسم أو REF أو الرقم أو الباركود","مثال: CASIO أو MTP أو 002")
+        field(parent,"الباركود","امسح أو اكتب الباركود")
+        parent.addView(text("📷 قراءة الباركود     إضافة",15f,gold))
+        parent.addView(text("لم يتم اختيار ساعة بعد",15f))
+        parent.addView(text("2  "+steps[1],20f,gold))
+        field(parent,"المبلغ النهائي وعملته","أدخل المبلغ النهائي").inputType=android.text.InputType.TYPE_CLASS_NUMBER or android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL
+        select(parent,"عملة التحصيل",listOf("USD","TRY","SYP"))
+        parent.addView(text("3  "+steps[2],20f,gold))
+        select(parent,"طريقة الدفع",listOf("💵 نقدي","📱 شام كاش"))
+        parent.addView(text("✓ إتمام الفاتورة",19f).apply {
+            background=panel(Color.rgb(234,223,206),16)
+        })
+        parent.addView(text("معاينة شكلية فقط — لا يتم حفظ أي فاتورة.",12f))
+    }
+    private fun handoverPreview(parent:LinearLayout) {
+        parent.addView(text("تسليم الوردية",26f,gold))
+        parent.addView(text("تسليم النقود وكل ما يجب أن يتابعه الموظف التالي.",14f))
+        field(parent,"المسلّم *")
+        field(parent,"المستلم *")
+        parent.addView(text("النقود المسلّمة",20f,gold))
+        listOf("USD","TRY","SYP").forEach { field(parent,it,"0").inputType=android.text.InputType.TYPE_CLASS_NUMBER or android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL }
+        parent.addView(text("الساعات والعمليات المنتظرة",20f,gold))
+        listOf("📌 المحجوزات","⌚ الساعات التي لم تُسلّم","📦 بانتظار التسليم").forEach { parent.addView(text(it,16f)) }
+        field(parent,"ملاحظات الوردية")
+        parent.addView(text("تأكيد التسليم والاستلام",18f,gold))
+        parent.addView(text("معاينة شكلية فقط — لا يتم تسجيل تسليم.",12f))
+    }
     private fun render() {
         val root=LinearLayout(this).apply {
             orientation=LinearLayout.VERTICAL; layoutDirection=View.LAYOUT_DIRECTION_RTL
@@ -189,6 +240,8 @@ class MainActivity : Activity() {
                     Triple("الشركاء والسحوبات","الحصص والسحوبات","🤝")
                 ),false)
             }
+            "preview:مبيع" -> salePreview(body)
+            "preview:تسليم الوردية" -> handoverPreview(body)
             else -> {
                 body.addView(text(screen.removePrefix("preview:"),23f,gold))
                 body.addView(text("واجهة قيد المطابقة مع التطبيق القديم — لا توجد عمليات حفظ في هذه النسخة.",15f))
