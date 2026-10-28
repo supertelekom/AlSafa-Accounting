@@ -400,10 +400,24 @@ class MainActivity : Activity() {
         field(parent,"نقاط الولاء المستخدمة","0").apply { isEnabled=false }
         parent.addView(text("برنامج الولاء لم يُربط بعد.",12f))
         field(parent,"نسبة الضريبة %","0").inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
-        select(parent,"نوع القبض",listOf("عملة واحدة","دفع مختلط (أكثر من عملة)"))
-        field(parent,"المبلغ المقبوض الآن","0").inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
-        parent.addView(text("المبالغ المقبوضة فعلياً — عند الدفع المختلط",16f,gold))
-        listOf("USD","TRY","SYP").forEach { field(parent,it,"0").inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL }
+        val collectionMode=select(parent,"نوع القبض",listOf("عملة واحدة","دفع مختلط (أكثر من عملة)"))
+        val singlePayment=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL }
+        parent.addView(singlePayment)
+        field(singlePayment,"المبلغ المقبوض الآن","0").inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
+        val mixedPayment=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL }
+        parent.addView(mixedPayment)
+        mixedPayment.addView(text("المبالغ المقبوضة فعلياً — عند الدفع المختلط",16f,gold))
+        listOf("USD","TRY","SYP").forEach {
+            field(mixedPayment,it,"0").inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
+        }
+        mixedPayment.visibility=View.GONE
+        collectionMode.onItemSelectedListener=object:android.widget.AdapterView.OnItemSelectedListener {
+            override fun onNothingSelected(parent:android.widget.AdapterView<*>?) {}
+            override fun onItemSelected(parent:android.widget.AdapterView<*>?,view:View?,position:Int,id:Long) {
+                singlePayment.visibility=if(position==0) View.VISIBLE else View.GONE
+                mixedPayment.visibility=if(position==1) View.VISIBLE else View.GONE
+            }
+        }
         field(parent,"ملاحظات","تفاصيل الضمان أو اللون أو أي ملاحظة")
         parent.addView(text("عند وجود رقم العميل تُرسل الفاتورة تلقائياً عبر واتساب أعمال بعد الحفظ.",12f))
         listOf("خصم قاعدة الخصم","خصم إضافي يدوي","خصم الولاء","إجمالي الفاتورة","المتبقي على العميل").forEach {
