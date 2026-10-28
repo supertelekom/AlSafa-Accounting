@@ -2022,6 +2022,19 @@ open class MainActivity:Activity() {
                                     (if(section=="sales" && item.has("cost") && !item.isNull("cost")) " · الكلفة: "+item.optString("cost") else "")
                             }
                         }
+                        val originalPaymentBreakdown=invoice?.optJSONArray("paymentBreakdown")
+                        val originalPaymentLines=if(originalPaymentBreakdown==null) "" else
+                            (0 until originalPaymentBreakdown.length()).joinToString("\n") { index ->
+                                val entry=originalPaymentBreakdown.optJSONObject(index)
+                                if(entry==null) "" else entry.optString("amount")+" "+
+                                    entry.optString("currency")+" · "+entry.optString("method")
+                            }
+                        val originalRates=invoice?.optJSONObject("rateSnapshot")
+                        val rateDetails=if(originalRates==null) "" else
+                            "USD: "+originalRates.optString("USD")+
+                            " · TRY: "+originalRates.optString("TRY")+
+                            " · SYP: "+originalRates.optString("SYP")+
+                            " · TRY/SYP: "+originalRates.optString("TRY_SYP")
                         val message=if(invoice==null)"تعذر العثور على الفاتورة" else
                             "رقم الفاتورة: "+number+
                             "\nالتاريخ: "+displayDate+
@@ -2033,6 +2046,15 @@ open class MainActivity:Activity() {
                                 "\nطريقة الدفع: "+invoice.optString("paymentMethod")+
                                 "\nالضمان بالأشهر: "+invoice.optString("warrantyMonths")+
                                 "\nبداية الضمان: "+invoice.optString("warrantyStart")+
+                                "\nالخصم اليدوي: "+invoice.optString("manualDiscount")+
+                                "\nخصم المساومة: "+invoice.optString("bargainingDiscount")+
+                                "\nخصم الولاء: "+invoice.optString("loyaltyDiscount")+
+                                "\nاسم قاعدة الخصم: "+invoice.optString("discountRuleName")+
+                                "\nنقاط الولاء المستخدمة: "+invoice.optString("loyaltyPointsRedeemed")+
+                                "\nنسبة الضريبة: "+invoice.optString("taxRate")+
+                                "\nعملة القبض الأصلية: "+invoice.optString("paymentCurrency")+
+                                (if(originalPaymentLines.isBlank()) "" else "\nتفصيل القبض المختلط:\n"+originalPaymentLines)+
+                                (if(rateDetails.isBlank()) "" else "\nأسعار الصرف وقت البيع: "+rateDetails)+
                                 "\nالخصم: "+invoice.optString("discount")+
                                 "\nالضريبة: "+invoice.optString("tax")+
                                 "\nملاحظات: "+invoice.optString("notes") else "")+
