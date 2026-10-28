@@ -1025,7 +1025,7 @@ class MainActivity : Activity() {
                 ),false)
                 body.addView(text("آخر العمليات",20f,gold))
                 body.addView(text("آخر العمليات غير متصلة بالبيانات بعد.",14f))
-                body.addView(text("الإدارة",17f,gold).apply { isClickable=true;setOnClickListener { screen="management";render() } })
+                body.addView(text("الإدارة",17f,gold).apply { isClickable=true;setOnClickListener { navigateTo("management") } })
             }
             "management" -> {
                 body.addView(text("الإدارة",25f,gold))
