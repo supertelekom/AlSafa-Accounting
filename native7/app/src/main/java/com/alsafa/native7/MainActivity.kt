@@ -125,6 +125,7 @@ class MainActivity : Activity() {
                 }
                 snapshotRepairDraft()
                 repairPhotoUri=uri
+                repairCameraPreview=null
                 render()
                 restoreRepairDraft()
             }
