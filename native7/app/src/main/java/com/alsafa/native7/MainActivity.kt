@@ -169,29 +169,64 @@ class MainActivity : Activity() {
     private fun quickRepairPreview(parent:LinearLayout) {
         parent.addView(text("صيانة سريعة",26f,gold))
         parent.addView(text("اضغط على الخدمة ثم اختر الدفع والعملة.",14f))
-        actionGrid(parent,listOf(
-            Triple("بطارية","50 ليرة","🔋"),
-            Triple("بطارية","70 ليرة","🔋"),
-            Triple("بطارية","100 ليرة","🔋"),
-            Triple("بطارية","150 ليرة","🔋"),
-            Triple("حزام بلاستك","100 ليرة","⌚"),
-            Triple("حزام جلد","250 ليرة","⌚"),
-            Triple("قفل ساعة جلد","30 ليرة","🔗"),
-            Triple("قفل ساعة قلاب","70 ليرة","🔗"),
-            Triple("صيانة مشكلة","مبلغ يدوي","🛠️")
-        ),false)
-        parent.addView(text("اختر خدمة من الأعلى",16f))
+        val chosen=text("اختر خدمة من الأعلى",16f)
+        val custom=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL;visibility=View.GONE }
+        val customAmount=field(custom,"سعر الصيانة الأساسي (ثم اختر عملة الصيانة بالأسفل)","اكتب المبلغ").apply {
+            inputType=android.text.InputType.TYPE_CLASS_NUMBER or android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL
+        }
+        field(custom,"العمل الذي تم *","مثال: تبديل ماكينة، تنظيف الساعة، تثبيت العقارب...")
+        val options=listOf(
+            Triple("بطارية",50,"🔋"),Triple("بطارية",70,"🔋"),
+            Triple("بطارية",100,"🔋"),Triple("بطارية",150,"🔋"),
+            Triple("حزام بلاستك",100,"⌚"),Triple("حزام جلد",250,"⌚"),
+            Triple("قفل ساعة جلد",30,"🔗"),Triple("قفل ساعة قلاب",70,"🔗"),
+            Triple("صيانة مشكلة",-1,"🛠️")
+        )
+        options.chunked(3).forEach { group ->
+            val row=LinearLayout(this).apply { orientation=LinearLayout.HORIZONTAL;layoutDirection=View.LAYOUT_DIRECTION_RTL }
+            parent.addView(row,LinearLayout.LayoutParams(-1,-2).apply { bottomMargin=dp(9) })
+            group.forEach { (name,price,emoji) ->
+                val label=if(price<0) name else "$name $price ليرة"
+                val tile=LinearLayout(this).apply {
+                    orientation=LinearLayout.VERTICAL;gravity=Gravity.CENTER
+                    background=panel(paper,14)
+                    setPadding(dp(5),dp(9),dp(5),dp(9))
+                    isClickable=true
+                    setOnClickListener {
+                        chosen.text=if(price<0) name else "$label — $price TRY"
+                        custom.visibility=if(price<0) View.VISIBLE else View.GONE
+                        if(price>=0)customAmount.setText("")
+                    }
+                }
+                tile.addView(text(emoji,25f,gold))
+                tile.addView(text(label,12f))
+                tile.addView(text(if(price<0) "مبلغ يدوي" else "$price TRY",12f,gold))
+                row.addView(tile,LinearLayout.LayoutParams(0,dp(124),1f).apply { marginEnd=dp(5) })
+            }
+            repeat(3-group.size){row.addView(View(this),LinearLayout.LayoutParams(0,dp(1),1f))}
+        }
+        parent.addView(custom)
+        parent.addView(chosen)
         parent.addView(text("2  حالة تسليم الساعة",20f,gold))
-        select(parent,"حالة التسليم",listOf("تم تسليم الساعة","ترك الساعة لدينا"))
-        field(parent,"اسم العميل *","إذا بقيت الساعة لدينا")
-        field(parent,"رقم الهاتف","اختياري")
+        val customerFields=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL;visibility=View.GONE }
+        field(customerFields,"اسم العميل *")
+        field(customerFields,"رقم الهاتف")
+        val delivered=LinearLayout(this).apply { orientation=LinearLayout.HORIZONTAL;layoutDirection=View.LAYOUT_DIRECTION_RTL }
+        listOf("تم تسليم الساعة","ترك الساعة لدينا").forEachIndexed { i,label ->
+            val option=text(label,15f).apply {
+                background=panel(paper,12);isClickable=true
+                setOnClickListener { customerFields.visibility=if(i==1) View.VISIBLE else View.GONE }
+            }
+            delivered.addView(option,LinearLayout.LayoutParams(0,dp(58),1f).apply { marginEnd=dp(5) })
+        }
+        parent.addView(delivered)
+        parent.addView(customerFields)
         parent.addView(text("3  مبلغ الصيانة النهائي",20f,gold))
-        field(parent,"المبلغ النهائي","")
         select(parent,"عملة الصيانة",listOf("TRY","USD","SYP"))
         parent.addView(text("4  طريقة الدفع",20f,gold))
         select(parent,"طريقة الدفع",listOf("💵 نقدي","📱 شام كاش"))
         parent.addView(text("✓ إتمام العملية",19f,gold))
-        parent.addView(text("معاينة شكلية فقط — لا يتم حفظ صيانة أو خصم قطع.",12f))
+        parent.addView(text("معاينة فقط — لا يتم حفظ صيانة أو خصم قطع.",12f))
     }
     private fun deliveryPreview(parent:LinearLayout) {
         parent.addView(text("تسليم الساعات",26f,gold))
