@@ -4,7 +4,11 @@ import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 
-class StoreDb(context: Context, name: String = "alsafa_native6.db") : SQLiteOpenHelper(context,name,null,8) {
+class StoreDb(context: Context, name: String = "alsafa_native6.db") : SQLiteOpenHelper(context,name,null,9) {
+    private val legacyPartnerDrawingsTable = """CREATE TABLE IF NOT EXISTS legacy_partner_drawings(
+        source_id TEXT PRIMARY KEY NOT NULL, partner_id TEXT NOT NULL REFERENCES partner_members(id),
+        actual_date TEXT NOT NULL, currency TEXT NOT NULL CHECK(currency IN ('USD','TRY','SYP')),
+        amount_minor INTEGER NOT NULL CHECK(amount_minor>0), source_payload TEXT NOT NULL)"""
     override fun onConfigure(db: SQLiteDatabase) { db.setForeignKeyConstraintsEnabled(true); db.execSQL("PRAGMA synchronous=FULL") }
     override fun onCreate(db: SQLiteDatabase) {
         schema.forEach(db::execSQL)
@@ -14,17 +18,20 @@ class StoreDb(context: Context, name: String = "alsafa_native6.db") : SQLiteOpen
         db.execSQL(legacyRecordsNoUpdate)
         db.execSQL(legacyRecordsNoDelete)
         com.alsafa.native6.accounting.PartnerSchema.statements.forEach(db::execSQL)
+        db.execSQL(legacyPartnerDrawingsTable)
         immutableTriggers.forEach(db::execSQL)
         db.execSQL(autoClosingReviewsTable)
         reviewTriggers.forEach(db::execSQL)
         db.execSQL("CREATE TRIGGER IF NOT EXISTS closings_count_guard BEFORE INSERT ON closings BEGIN SELECT CASE WHEN (SELECT kind FROM events WHERE id=NEW.event_id)='AUTO_CLOSING' AND NEW.counted IS NOT NULL THEN RAISE(ABORT,'Automatic closing has no physical count') WHEN (SELECT kind FROM events WHERE id=NEW.event_id)='CLOSING' AND NEW.counted IS NULL THEN RAISE(ABORT,'Manual closing requires a count') END; END")
     }
     override fun onUpgrade(db: SQLiteDatabase,old: Int,new: Int) {
-        require(old in 1..7 && new == 8) {
+        if(old==8 && new==9) { db.execSQL(legacyPartnerDrawingsTable); return }
+        require(old in 1..7 && new == 9) {
             "Unsupported migration $old → $new; database preserved"
         }
         db.execSQL(manualInvoiceLinesTable)
         db.execSQL(discountRulesTable)
+        db.execSQL(legacyPartnerDrawingsTable)
         if (old == 7) return
         if (old == 6) {
             db.execSQL("ALTER TABLE invoices ADD COLUMN sale_type TEXT NOT NULL DEFAULT 'store'")
