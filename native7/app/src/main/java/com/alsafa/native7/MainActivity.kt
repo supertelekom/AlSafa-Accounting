@@ -366,15 +366,21 @@ class MainActivity : Activity() {
     }
     /** Two-column field row follows the original .form-grid layout (11px gap). */
     private fun formPair(parent:LinearLayout,first:(LinearLayout)->Unit,second:(LinearLayout)->Unit) {
+        val narrow=resources.configuration.screenWidthDp<600
         val row=LinearLayout(this).apply {
-            orientation=LinearLayout.HORIZONTAL
+            orientation=if(narrow) LinearLayout.VERTICAL else LinearLayout.HORIZONTAL
             layoutDirection=View.LAYOUT_DIRECTION_RTL
             gravity=Gravity.TOP
         }
         val right=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL }
         val left=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL }
-        row.addView(right,LinearLayout.LayoutParams(0,-2,1f).apply { marginEnd=dp(11) })
-        row.addView(left,LinearLayout.LayoutParams(0,-2,1f))
+        if(narrow) {
+            row.addView(right,LinearLayout.LayoutParams(-1,-2))
+            row.addView(left,LinearLayout.LayoutParams(-1,-2))
+        } else {
+            row.addView(right,LinearLayout.LayoutParams(0,-2,1f).apply { marginEnd=dp(11) })
+            row.addView(left,LinearLayout.LayoutParams(0,-2,1f))
+        }
         parent.addView(row)
         first(right)
         second(left)
