@@ -761,11 +761,10 @@ class MainActivity : Activity() {
         }
         multilineField(parent,"ملاحظات","تفاصيل الضمان أو اللون أو أي ملاحظة")
         parent.addView(text("عند وجود رقم العميل تُرسل الفاتورة تلقائياً عبر واتساب أعمال بعد الحفظ.",12f))
-        listOf("خصم قاعدة الخصم","خصم إضافي يدوي","خصم الولاء","إجمالي الفاتورة","المتبقي على العميل").forEach {
-            parent.addView(text("$it     —",16f))
+        saleCalculationBox(parent)
+        formActions(parent,{ returnToPrevious() },"حفظ الفاتورة") {
+            android.widget.Toast.makeText(this,"حفظ الفاتورة غير مفعّل حتى اكتمال دورة المبيع",android.widget.Toast.LENGTH_LONG).show()
         }
-        parent.addView(text("إلغاء",16f,gold).apply { isClickable=true;setOnClickListener { returnToPrevious() } })
-        disabledAction(parent,"حفظ الفاتورة")
         
     }
     private fun disabledAction(parent:LinearLayout,label:String) {
@@ -776,6 +775,51 @@ class MainActivity : Activity() {
             isClickable=true
         }
         parent.addView(action,LinearLayout.LayoutParams(-1,dp(44)).apply { bottomMargin=dp(9) })
+    }
+    /** Original .form-actions: two equal-width buttons with a 9px gap. */
+    private fun formActions(parent:LinearLayout,cancel:()->Unit,saveLabel:String,onSave:()->Unit) {
+        val actions=LinearLayout(this).apply {
+            orientation=LinearLayout.HORIZONTAL
+            layoutDirection=View.LAYOUT_DIRECTION_RTL
+        }
+        val cancelButton=text("إلغاء",14f,Color.rgb(122,81,24)).apply {
+            background=panel(Color.rgb(247,237,221),11,Color.rgb(223,201,164))
+            isClickable=true
+            setOnClickListener { cancel() }
+        }
+        val saveButton=text(saveLabel,14f,Color.WHITE).apply {
+            background=GradientDrawable(Orientation.TL_BR,intArrayOf(Color.rgb(179,131,50),Color.rgb(139,96,31))).apply {
+                cornerRadius=dp(11).toFloat()
+            }
+            isClickable=true
+            setOnClickListener { onSave() }
+        }
+        actions.addView(cancelButton,LinearLayout.LayoutParams(0,dp(45),1f).apply { marginEnd=dp(9) })
+        actions.addView(saveButton,LinearLayout.LayoutParams(0,dp(45),1f))
+        parent.addView(actions,LinearLayout.LayoutParams(-1,-2).apply { topMargin=dp(18) })
+    }
+    /** Original .calculation-box: dashed sand border and five rows. */
+    private fun saleCalculationBox(parent:LinearLayout) {
+        val box=LinearLayout(this).apply {
+            orientation=LinearLayout.VERTICAL
+            background=GradientDrawable().apply {
+                setColor(Color.rgb(251,245,235))
+                cornerRadius=dp(12).toFloat()
+                setStroke(dp(1),Color.rgb(223,201,164),dp(5).toFloat(),dp(4).toFloat())
+            }
+            setPadding(dp(13),dp(13),dp(13),dp(13))
+        }
+        listOf("خصم قاعدة الخصم","خصم إضافي يدوي","خصم الولاء","إجمالي الفاتورة","المتبقي على العميل").forEach { label ->
+            val row=LinearLayout(this).apply {
+                orientation=LinearLayout.HORIZONTAL
+                layoutDirection=View.LAYOUT_DIRECTION_RTL
+                gravity=Gravity.CENTER_VERTICAL
+            }
+            row.addView(text(label,12f).apply { gravity=Gravity.RIGHT },LinearLayout.LayoutParams(0,-2,1f))
+            row.addView(text("—",12f,Color.rgb(122,81,24)))
+            box.addView(row)
+        }
+        parent.addView(box,LinearLayout.LayoutParams(-1,-2).apply { topMargin=dp(15);bottomMargin=dp(15) })
     }
     private fun repairFormPreview(parent:LinearLayout) {
         formHeader(parent,"طلب صيانة","سجل الاستلام، الأجرة، كلفة الصيانة، وحالة الدفع.","الطلبات","preview:كل الصيانة")
