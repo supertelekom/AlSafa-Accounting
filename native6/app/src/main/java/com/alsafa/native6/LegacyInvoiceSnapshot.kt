@@ -39,6 +39,14 @@ object LegacyInvoiceSnapshot {
                 "عملة الفاتورة التاريخية غير مدعومة"
             }
         }
+        // A restored invoice must never silently share an identity with a posted
+        // native invoice. This check is read-only and creates no accounting entries.
+        if(section=="sales") {
+            val nativeCollision=store.rows("SELECT id FROM invoices WHERE id=? LIMIT 1",id)
+            require(nativeCollision.isEmpty()) {
+                "معرف فاتورة المبيع المستعادة مستخدم في قاعدة الفواتير النشطة"
+            }
+        }
         val linked=JSONArray()
         if(id.isNotBlank()) {
             val payments=store.legacyRows("payments")
