@@ -44,7 +44,6 @@ class MainActivity : Activity() {
     private var repairDraftTexts:List<String>? = null
     private var repairDraftSelections:List<Int>? = null
     private var repairDraftScreen:String? = null
-    private fun isRepairScreen(value:String)=value=="preview:طلب صيانة" || value=="preview:استلام صيانة"
 
     private fun walkForm(view:View,edit:(EditText)->Unit,spin:(Spinner)->Unit) {
         when(view) {
