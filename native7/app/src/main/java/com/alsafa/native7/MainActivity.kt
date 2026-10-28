@@ -551,10 +551,13 @@ class MainActivity : Activity() {
             }
         }
         select(parent,"عملة البيع / القبض *",listOf("USD","TRY","SYP"))
+        parent.addView(text("المبلغ يدخل صندوق هذه العملة نفسها.",12f))
         select(parent,"طريقة الدفع *",listOf("نقدي","شام كاش"))
+        parent.addView(text("اختر نقدي أو شام كاش قبل حفظ الفاتورة.",12f))
         field(parent,"اسم العميل","مهم للضمان والفاتورة")
         field(parent,"رقم واتساب العميل","مثال: 09xxxxxxxx").inputType=InputType.TYPE_CLASS_PHONE
         select(parent,"مدة الضمان",listOf("بدون ضمان","3 أشهر","6 أشهر","سنة","سنتان"))
+        parent.addView(text("يرتبط الضمان تلقائياً بالعميل والفاتورة.",12f))
         formSection(parent,"إضافة من المخزون")
         field(parent,"بحث سريع عن المنتج","اكتب جزءاً من الاسم أو REF أو الرقم أو الباركود")
         select(parent,"اختر المنتج",listOf("لا توجد منتجات محمّلة بعد"))
@@ -591,21 +594,24 @@ class MainActivity : Activity() {
         formSection(parent,"الدفع والإرسال")
         select(parent,"حالة الدفع",listOf("مدفوع بالكامل","مدفوع جزئياً","عند الاستلام"))
         select(parent,"قاعدة الخصم",listOf("بدون قاعدة خصم"))
+        parent.addView(text("قاعدة الخصم = خصم محفوظ مسبقاً لتستخدمه بسرعة، مثل «عميل مميز 10%».",12f))
         disabledAction(parent,"＋ إنشاء قاعدة خصم")
         field(parent,"خصم الفاتورة اليدوي","0").inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
         field(parent,"نقاط الولاء المستخدمة","0").apply {
             isEnabled=false
             inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
         }
-        parent.addView(text("برنامج الولاء لم يُربط بعد.",12f))
+        parent.addView(text("برنامج الولاء متوقف حالياً.",12f))
         field(parent,"نسبة الضريبة %","0").inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
+        parent.addView(text("اختياري ومجهز للمستقبل. اتركه 0 حالياً.",12f))
         val collectionMode=select(parent,"نوع القبض",listOf("عملة واحدة","دفع مختلط (أكثر من عملة)"))
+        parent.addView(text("للدفع مثل 55$ + 100₺ اختر دفع مختلط.",12f))
         val singlePayment=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL }
         parent.addView(singlePayment)
         field(singlePayment,"المبلغ المقبوض الآن","0").inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
         val mixedPayment=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL }
         parent.addView(mixedPayment)
-        mixedPayment.addView(text("المبالغ المقبوضة فعلياً — عند الدفع المختلط",16f,gold))
+        mixedPayment.addView(text("المبالغ المقبوضة فعلياً",16f,gold))
         listOf("USD","TRY","SYP").forEach {
             field(mixedPayment,it,"0").inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
         }
@@ -624,7 +630,7 @@ class MainActivity : Activity() {
         }
         parent.addView(text("إلغاء",16f,gold).apply { isClickable=true;setOnClickListener { returnToPrevious() } })
         disabledAction(parent,"حفظ الفاتورة")
-        parent.addView(text("هذه معاينة حقول فقط. الحفظ والحسابات وإرسال واتساب غير متاحة.",12f))
+        
     }
     private fun disabledAction(parent:LinearLayout,label:String) {
         val action=text(label,16f,gold).apply {
@@ -660,7 +666,9 @@ class MainActivity : Activity() {
             }
         }
         select(parent,"عملة الصيانة / القبض *",listOf("USD","TRY","SYP"))
+        parent.addView(text("المبلغ يدخل صندوق هذه العملة نفسها.",12f))
         select(parent,"طريقة الدفع الأولى *",listOf("نقدي","شام كاش"))
+        parent.addView(text("اختر نقدي أو شام كاش قبل الحفظ.",12f))
         field(parent,"اسم العميل *")
         field(parent,"رقم واتساب العميل","09xxxxxxxx").inputType=InputType.TYPE_CLASS_PHONE
         select(parent,"حالة الطلب",listOf("قيد الصيانة","بانتظار القطعة","جاهز للاستلام"))
@@ -730,12 +738,14 @@ class MainActivity : Activity() {
                 }
             })
         }
-        parent.addView(text("صورة ساعة العميل عند الاستلام.",12f))
+        parent.addView(text("تُحفظ داخل طلب الصيانة وتُرسل مع رسالة الاستلام عند اختيار واتساب.",12f))
         formSection(parent,"قطع الصيانة المستخدمة")
-        parent.addView(text("لم تُحمّل قطع الصيانة بعد.",14f))
+        parent.addView(text("اختيار قطع الصيانة اختياري عند الاستلام.",14f))
         field(parent,"نسبة الضريبة %","0").inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
+        parent.addView(text("اختياري ومجهز للمستقبل. اتركه 0 حالياً.",12f))
         field(parent,"المبلغ المقبوض الآن","0").inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
         parent.addView(text("عملة الصيانة والتحصيل",16f))
+        parent.addView(text("هي نفسها عملة الفاتورة المختارة أعلاه، وتدخل إلى صندوق العملة نفسها.",12f))
         select(parent,"حالة الدفع",listOf("عند الاستلام","مدفوع جزئياً","مدفوع بالكامل"))
         field(parent,"ملاحظات","لون السوار، موعد التسليم، تفاصيل مهمة")
         parent.addView(text("عند وجود رقم العميل تُفتح محادثته في واتساب أعمال مع صورة الساعة ورسالة الاستلام بعد الحفظ.",12f))
@@ -764,7 +774,7 @@ class MainActivity : Activity() {
                 }
             }
         })
-        parent.addView(text("يتم حفظ الطلب محلياً. لا يتم تسجيل قبض أو أرباح عند الاستلام.",12f))
+        
     }
     private fun invoiceArchivePreview(parent:LinearLayout,repair:Boolean) {
         parent.addView(text(if(repair) "قسم الصيانة" else "المبيعات والفواتير",26f,gold))
