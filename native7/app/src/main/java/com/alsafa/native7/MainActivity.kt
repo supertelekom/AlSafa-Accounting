@@ -701,6 +701,21 @@ class MainActivity : Activity() {
         parent.addView(text("المبيعات والصيانة والضمانات والطلبات",14f))
         parent.addView(text("ملفات العملاء غير متصلة بالبيانات بعد.",13f))
     }
+    private fun openingBalancesPreview(parent:LinearLayout) {
+        parent.addView(text("الأرصدة الافتتاحية",26f,gold))
+        parent.addView(text("البضاعة والقطع والنقود قبل بدء العمل",14f))
+        listOf("درج المحل","الصندوق الخارجي","شام كاش","الحساب البنكي").forEach { name ->
+            parent.addView(text(name,18f,gold))
+            val currencies=if(name=="شام كاش") listOf("USD","SYP") else listOf("USD","TRY","SYP")
+            currencies.forEach { currency ->
+                field(parent,"رصيد $currency","0").inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
+            }
+        }
+        parent.addView(text("المخزون الافتتاحي",20f,gold))
+        parent.addView(text("تُدخل كميات المنتجات وقطع الصيانة من شاشاتها، ولا يُضاف مخزون مكرر عند استعادة النسخة القديمة.",13f))
+        disabledAction(parent,"حفظ الأرصدة الافتتاحية")
+        parent.addView(text("هذه معاينة فقط؛ لا تُحفظ أرصدة ولا تُنشأ حركات مالية.",12f))
+    }
     private fun render() {
         val root=LinearLayout(this).apply {
             orientation=LinearLayout.VERTICAL; layoutDirection=View.LAYOUT_DIRECTION_RTL
@@ -817,6 +832,7 @@ class MainActivity : Activity() {
             "preview:حركة المخزون" -> stockMovementPreview(body)
             "preview:سجل التدقيق" -> auditPreview(body)
             "preview:ملفات العملاء" -> customersPreview(body)
+            "preview:الأرصدة الافتتاحية" -> openingBalancesPreview(body)
             "preview:تسليم الوردية" -> handoverPreview(body)
             "preview:صيانة سريعة" -> quickRepairPreview(body)
             "preview:تسليم الساعات" -> deliveryPreview(body)
