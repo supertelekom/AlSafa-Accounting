@@ -440,7 +440,10 @@ class MainActivity : Activity() {
     private fun repairFormPreview(parent:LinearLayout) {
         parent.addView(text("طلب صيانة",26f,gold))
         parent.addView(text("سجل الاستلام، الأجرة، كلفة الصيانة، وحالة الدفع.",14f))
-        disabledAction(parent,"الطلبات")
+        parent.addView(text("الطلبات",16f,gold).apply {
+            isClickable=true
+            setOnClickListener { previousScreen=screen;screen="preview:كل الصيانة";render() }
+        })
         parent.addView(text("بيانات العميل",21f,gold))
         field(parent,"التاريخ *","YYYY-MM-DD").apply {
             setText(java.time.LocalDate.now().toString())
