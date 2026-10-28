@@ -417,7 +417,7 @@ class MainActivity : Activity() {
             setTextColor(ink)
             setHintTextColor(Color.rgb(138,123,108))
             background=panel(Color.rgb(255,252,247),10,Color.rgb(234,223,206))
-            setPadding(dp(10),dp(8),dp(10),dp(8))
+            setPadding(dp(10),dp(9),dp(10),dp(9))
             parent.addView(this,LinearLayout.LayoutParams(-1,dp(42)).apply { bottomMargin=dp(11) })
         }
     }
@@ -438,7 +438,7 @@ class MainActivity : Activity() {
         val spinner=Spinner(this).apply {
             layoutDirection=View.LAYOUT_DIRECTION_RTL
             background=panel(Color.rgb(255,252,247),10,Color.rgb(234,223,206))
-            setPadding(dp(8),dp(3),dp(8),dp(3))
+            setPadding(dp(10),dp(9),dp(10),dp(9))
         }
         spinner.adapter=ArrayAdapter(this,android.R.layout.simple_spinner_dropdown_item,options)
         parent.addView(spinner,LinearLayout.LayoutParams(-1,dp(42)).apply { bottomMargin=dp(11) })
