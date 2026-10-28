@@ -16,6 +16,18 @@ class OnlineCollectionAllocationTest {
         assertEquals(6200,first.profit+final.profit)
     }
 
+    @Test fun invoice231UsesRealArchivedCost54Dollars() {
+        // 9 watches * $6, sale $162, historical receipt $151, due $11.
+        val historical=OnlineCollectionAllocation.allocate(16200,5400,0,0,15100)
+        assertEquals(5033,historical.capital)
+        assertEquals(10067,historical.profit)
+        val remaining=OnlineCollectionAllocation.allocate(
+            16200,5400,15100,historical.capital,1100)
+        assertEquals(367,remaining.capital)
+        assertEquals(733,remaining.profit)
+        assertEquals(5400,historical.capital+remaining.capital)
+    }
+
     @Test fun pennyRemainderIsAllocatedToFinalReceipt() {
         val first=OnlineCollectionAllocation.allocate(300,100,0,0,100)
         val second=OnlineCollectionAllocation.allocate(300,100,100,first.capital,100)
