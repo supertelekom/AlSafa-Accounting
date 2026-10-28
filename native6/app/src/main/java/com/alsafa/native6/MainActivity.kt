@@ -4854,7 +4854,21 @@ button("＋ مورد"){form("مورد جديد"){box->val n=field("الاسم",b
             }
         }
         val partners=store.rows("SELECT id,name FROM partner_members ORDER BY name")
-        partners.forEach { text(it.getValue("name")+" · "+it.getValue("id"),size=15f) }
+        val currentShares=store.rows("""SELECT l.partner_id,l.percent,p.effective_date
+            FROM partner_share_lines l JOIN partner_share_periods p ON p.id=l.period_id
+            WHERE p.effective_date=(SELECT max(effective_date) FROM partner_share_periods WHERE effective_date<=?)
+            ORDER BY l.partner_id""",Store.today()).associateBy { it.getValue("partner_id") }
+        partners.forEach { partner ->
+            val share=currentShares[partner.getValue("id")]
+            text(partner.getValue("name")+" · "+(share?.get("percent") ?: "غير محددة")+"%",size=16f)
+        }
+        if(currentShares.isNotEmpty()) {
+            val sum=currentShares.values.fold(java.math.BigDecimal.ZERO){acc,row->
+                acc.add(row.getValue("percent").toBigDecimal())
+            }
+            require(sum.compareTo(java.math.BigDecimal("100"))==0){"مجموع نسب الشركاء لا يساوي 100%"}
+            text("النسب السارية منذ "+currentShares.values.first().getValue("effective_date"),size=13f)
+        }
         if(partners.isNotEmpty()) button("تسجيل نسب الشركاء بتاريخ سريان"){
             form("نسب الشركاء"){box->
                 val date=field("تاريخ السريان YYYY-MM-DD",box,Store.today())
