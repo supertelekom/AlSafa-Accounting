@@ -2054,7 +2054,7 @@ class Store(val helper:StoreDb) {
         }
     }
 
-    private data class LegacySettlementIndex(
+    internal data class LegacySettlementIndex(
         val payments:Map<String,List<JSONObject>>,
         val returns:Map<String,List<JSONObject>>
     )
@@ -2080,7 +2080,7 @@ class Store(val helper:StoreDb) {
         return issues
     }
 
-    private fun legacySettlementIndex():LegacySettlementIndex {
+    internal fun legacySettlementIndex():LegacySettlementIndex {
         fun grouped(category:String):Map<String,List<JSONObject>> {
             val seen=HashSet<String>()
             return legacyRows(category).map { JSONObject(it.getValue("payload")) }
@@ -2099,7 +2099,7 @@ class Store(val helper:StoreDb) {
         return LegacySettlementIndex(grouped("payments"),grouped("returns"))
     }
 
-    private fun reconciledLegacySaleDue(source:JSONObject,index:LegacySettlementIndex=legacySettlementIndex()):Long {
+    internal fun reconciledLegacySaleDue(source:JSONObject,index:LegacySettlementIndex=legacySettlementIndex()):Long {
         val ref=source.optString("id")
         val currency=source.optString("currency")
         val total=source.optString("total").toBigDecimalOrNull()
