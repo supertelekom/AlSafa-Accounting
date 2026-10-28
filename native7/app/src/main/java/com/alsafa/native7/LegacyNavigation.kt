@@ -34,7 +34,7 @@ internal class LegacyNavigation(context: Context) : LinearLayout(context) {
                 orientation = if (sidebar) HORIZONTAL else VERTICAL
                 layoutDirection = View.LAYOUT_DIRECTION_RTL
                 gravity = Gravity.CENTER
-                setPadding(dp(10), dp(8), dp(10), dp(8))
+                setPadding(dp(if (sidebar) 12 else 3), dp(if (sidebar) 10 else 5), dp(if (sidebar) 12 else 3), dp(if (sidebar) 10 else 5))
                 background = GradientDrawable().apply {
                     setColor(if (active) Color.rgb(244, 232, 211) else Color.rgb(255, 250, 242))
                     cornerRadius = dp(10).toFloat()
@@ -58,7 +58,7 @@ internal class LegacyNavigation(context: Context) : LinearLayout(context) {
             }
             button.addView(symbol)
             button.addView(label)
-            addView(button, if (sidebar) LayoutParams(-1, dp(62)) else LayoutParams(0, dp(65), 1f))
+            addView(button, if (sidebar) LayoutParams(-1, dp(49)) else LayoutParams(0, dp(65), 1f))
         }
     }
 }
