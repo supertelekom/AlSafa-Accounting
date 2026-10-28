@@ -1693,6 +1693,31 @@ class Store(val helper:StoreDb) {
      * Issue one invoice and post its same-currency and converted collections
      * atomically. Conversion amounts are supplied explicitly, never inferred.
      */
+    /** Persist original-style discount rules without hardcoding customer percentages. */
+    fun saveDiscountRule(ruleId:String,name:String,kind:String,amount:Long,
+        minimum:Long,currency:Currency,enabled:Boolean=true)=transaction {
+        require(ruleId.isNotBlank() && name.isNotBlank() && name.length<=200)
+        require(kind=="percent" || kind=="fixed")
+        require(amount>=0L && minimum>=0L)
+        if(kind=="percent") require(amount<=10000L) { "النسبة تتجاوز 100%" }
+        db.execSQL("INSERT OR REPLACE INTO discount_rules(id,name,kind,amount,minimum,currency,enabled) VALUES(?,?,?,?,?,?,?)",
+            arrayOf(ruleId,name,kind,amount,minimum,currency.name,if(enabled)1 else 0))
+    }
+    fun discountRules():List<Map<String,String>> =
+        rows("SELECT id,name,kind,amount,minimum,currency,enabled FROM discount_rules ORDER BY name")
+    fun discountFor(ruleId:String,gross:Long,currency:Currency):Long {
+        require(gross>=0L)
+        val rule=rows("SELECT * FROM discount_rules WHERE id=? AND enabled=1",ruleId).singleOrNull()
+            ?: return 0L
+        require(rule.getValue("currency")==currency.name) { "عملة قاعدة الخصم لا تطابق الفاتورة" }
+        if(gross<rule.getValue("minimum").toLong()) return 0L
+        return if(rule.getValue("kind")=="percent")
+            java.math.BigInteger.valueOf(gross).multiply(
+                java.math.BigInteger.valueOf(rule.getValue("amount").toLong()))
+                .divide(java.math.BigInteger.valueOf(10000L)).longValueExact()
+        else minOf(gross,rule.getValue("amount").toLong())
+    }
+
     fun saleWithMixedCurrencies(items:List<SaleItem>,party:String,phone:String,
         currency:Currency,receipts:List<Pair<String,Long>>,
         convertedInvoiceAmount:Long,convertedCurrency:Currency,
