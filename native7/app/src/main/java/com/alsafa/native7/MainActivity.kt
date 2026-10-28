@@ -421,10 +421,7 @@ class MainActivity : Activity() {
         disabledAction(parent,"＋ إضافة منتج آخر لنفس الفاتورة")
         parent.addView(text("الدفع والإجمالي",21f,gold))
         listOf("إجمالي الفاتورة تلقائياً","المدفوع الآن","المتبقي للمورد").forEach { field(parent,it,"0").inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL }
-        select(parent,"مصدر دفع الفاتورة",listOf("المحل"))
-        parent.addView(text("اختر المحل أو أحد الشريكين الخارجيين الممولين للبضاعة.",12f))
         select(parent,"الدفع من خزنة المحل",listOf("درج المحل","الصندوق الخارجي","شام كاش","الحساب البنكي"))
-        parent.addView(text("يظهر فقط عندما يكون مصدر الدفع هو المحل.",12f))
         field(parent,"ملاحظات")
         parent.addView(text("يمكنك اختيار صنف موجود أو إنشاء منتج/قطعة جديدة من الفاتورة.",12f))
         disabledAction(parent,"حفظ فاتورة الشراء كاملة")
@@ -485,13 +482,6 @@ class MainActivity : Activity() {
         select(parent,"عملة التطبيق (الوضع الكامل)",listOf("USD","TRY","SYP"))
         field(parent,"رقم واتساب المتجر (اختياري)","لإظهاره في الإيصال")
         disabledAction(parent,"حفظ الإعدادات")
-        parent.addView(text("الشريكان الخارجيان",20f,gold))
-        parent.addView(text("هذان الشريكان لا يشاركان في كامل المحل. تُربط بضاعتهما من شاشة المنتج، ورأس مال القطعة يكون للشريك المحدد.",12f))
-        repeat(2) { i ->
-            field(parent,"اسم الشريك الخارجي ${i+1}")
-            field(parent,"النسبة الافتراضية %")
-        }
-        disabledAction(parent,"حفظ الشريكين الخارجيين")
         parent.addView(text("نسب الشركاء",20f,gold))
         parent.addView(text("يجب أن يكون مجموع النسب 100%.",12f))
         repeat(3) { i ->
