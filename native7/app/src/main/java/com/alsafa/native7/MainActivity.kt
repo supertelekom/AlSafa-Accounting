@@ -88,7 +88,7 @@ class MainActivity : Activity() {
                     orientation=LinearLayout.VERTICAL;gravity=Gravity.CENTER
                     background=panel(paper,if(simple) 24 else 18)
                     setPadding(dp(10),dp(12),dp(10),dp(12))
-                    isClickable=true;setOnClickListener { previousScreen=screen;screen="preview:" + item.first;render() }
+                    isClickable=true;setOnClickListener { previousScreen=screen;screen=if(screen=="full" && item.first=="مبيع") "preview:مبيع كامل" else "preview:" + item.first;render() }
                 }
                 box.addView(text(item.third,if(simple) 42f else 28f,gold))
                 box.addView(text(item.first,if(simple) 20f else 18f))
@@ -260,6 +260,21 @@ class MainActivity : Activity() {
         parent.addView(text("لا توجد ساعات في قائمة الانتظار حالياً.",16f))
         parent.addView(text("معاينة شكلية فقط — لم تُربط قاعدة البيانات بعد.",12f))
     }
+    private fun fullSalePreview(parent:LinearLayout) {
+        parent.addView(text("مبيع",26f,gold))
+        parent.addView(text("واجهة المبيع الكامل — نقل تدريجي من التطبيق الأصلي",14f))
+        field(parent,"اسم العميل","")
+        field(parent,"رقم الهاتف","")
+        parent.addView(text("الأصناف",20f,gold))
+        field(parent,"بحث عن صنف","الاسم أو الموديل أو الباركود")
+        parent.addView(text("لا توجد أصناف مضافة للفاتورة",14f))
+        parent.addView(text("المبلغ الإجمالي",18f,gold))
+        parent.addView(text("—",20f))
+        parent.addView(text("القبض",20f,gold))
+        finalAmountCurrency(parent,"USD")
+        paymentChoices(parent)
+        parent.addView(text("معاينة فقط — الحفظ غير متاح.",13f))
+    }
     private fun render() {
         val root=LinearLayout(this).apply {
             orientation=LinearLayout.VERTICAL; layoutDirection=View.LAYOUT_DIRECTION_RTL
@@ -335,6 +350,7 @@ class MainActivity : Activity() {
                 ),false)
             }
             "preview:مبيع" -> salePreview(body)
+            "preview:مبيع كامل" -> fullSalePreview(body)
             "preview:تسليم الوردية" -> handoverPreview(body)
             "preview:صيانة سريعة" -> quickRepairPreview(body)
             "preview:تسليم الساعات" -> deliveryPreview(body)
