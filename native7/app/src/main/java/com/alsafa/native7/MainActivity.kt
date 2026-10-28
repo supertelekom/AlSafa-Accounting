@@ -329,11 +329,11 @@ class MainActivity : Activity() {
                 layoutDirection=View.LAYOUT_DIRECTION_RTL
                 gravity=Gravity.CENTER_VERTICAL
             }
-            cancel.background=panel(paper,11)
+            cancel.background=panel(paper,10,Color.rgb(234,223,206))
             cancel.gravity=Gravity.CENTER
             save.gravity=Gravity.CENTER
-            actions.addView(cancel,LinearLayout.LayoutParams(0,dp(48),1f).apply { marginEnd=dp(10) })
-            actions.addView(save,LinearLayout.LayoutParams(0,dp(48),1f))
+            actions.addView(cancel,LinearLayout.LayoutParams(0,dp(44),1f).apply { marginEnd=dp(9) })
+            actions.addView(save,LinearLayout.LayoutParams(0,dp(44),1f))
             body.addView(actions,i,LinearLayout.LayoutParams(-1,-2).apply {
                 topMargin=dp(14)
                 bottomMargin=dp(12)
@@ -347,7 +347,7 @@ class MainActivity : Activity() {
             orientation=LinearLayout.VERTICAL
             layoutDirection=View.LAYOUT_DIRECTION_RTL
             background=panel(paper,17,Color.rgb(234,223,206))
-            val formPadding=if(resources.configuration.screenWidthDp>=720) 22 else 15
+            val formPadding=15
             setPadding(dp(formPadding),dp(formPadding),dp(formPadding),dp(formPadding))
         }
         parent.addView(card,LinearLayout.LayoutParams(-1,-2))
