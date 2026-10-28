@@ -224,6 +224,23 @@ class Store(val helper:StoreDb) {
         )
     }
 
+    /** Compare archived section totals with the last imported backup manifest. */
+    fun archivedRestoreVerification(expected:Map<String,Long>):Map<String,String> {
+        val actual=archivedSectionCounts()
+        val missing=expected.keys.filter { it !in actual }
+        require(missing.isEmpty()) { "أقسام غير معروفة في المطابقة: "+missing.joinToString(",") }
+        val mismatches=expected.filter { (key,count) -> actual[key]!=count }
+        return mapOf(
+            "state" to if(mismatches.isEmpty()) "ARCHIVE_COUNTS_MATCH" else "ARCHIVE_COUNTS_MISMATCH",
+            "checked_sections" to expected.size.toString(),
+            "mismatched_sections" to mismatches.size.toString(),
+            "details" to mismatches.entries.joinToString("; ") {
+                it.key+": expected="+it.value+", actual="+actual[it.key]
+            },
+            "financial_activation" to "NOT_ACTIVATED"
+        )
+    }
+
     /** Paginated repair history with bounded BLOB reads for old embedded watch photos. */
     fun repairPage(term:String,limit:Int,offset:Int):List<Map<String,String>> {
         require(limit in 1..100 && offset>=0)
