@@ -327,7 +327,7 @@ class MainActivity : Activity() {
         parent.addView(text("بيانات الفاتورة",21f,gold))
         select(parent,"نوع البيع *",listOf("بيع من المحل","بيع أونلاين"))
         parent.addView(text("الأونلاين يخرج من المخزون فوراً، والمال يدخل الخزنة فقط عند التحصيل.",12f))
-        val saleDate=field(parent,"التاريخ *","YYYY-MM-DD").apply {
+        field(parent,"التاريخ *","YYYY-MM-DD").apply {
             setText(java.time.LocalDate.now().toString())
             isFocusable=false
             isClickable=true
@@ -338,7 +338,7 @@ class MainActivity : Activity() {
                 },now.year,now.monthValue-1,now.dayOfMonth).show()
             }
         }
-        val saleTime=field(parent,"الوقت *","HH:MM").apply {
+        field(parent,"الوقت *","HH:MM").apply {
             setText(java.time.LocalTime.now().format(java.time.format.DateTimeFormatter.ofPattern("HH:mm")))
             isFocusable=false
             isClickable=true
