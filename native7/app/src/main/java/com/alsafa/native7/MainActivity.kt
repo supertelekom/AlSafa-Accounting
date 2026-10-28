@@ -1154,6 +1154,7 @@ class MainActivity : Activity() {
         select(parent,"فئة ساعة كاسيو",listOf("تلقائي من REF","كاسيو","Edifice","G-Shock","Baby-G","Pro Trek","Sheen","Oceanus","Vintage"))
         field(parent,"رابط صفحة المنتج (اختياري)","الصق رابط صفحة الساعة من أي ماركة").inputType=InputType.TYPE_TEXT_VARIATION_URI
         disabledAction(parent,"لصق الرابط")
+        parent.addView(text("عند وضع الرابط يجلب من الصفحة نفسها فقط، دون تغيير محرك بحث الماركة الأساسي.",12f))
         disabledAction(parent,"✦ جلب معلومات الساعة تلقائيًا")
         parent.addView(text("أدخل الماركة وREF ثم اضغط مرة واحدة. يجلب المعلومات والمستشار والصور المتاحة في عملية واحدة، مع الحفاظ على أي بيانات أدخلتها يدويًا.",12f))
         field(parent,"كود المنتج")
@@ -1164,6 +1165,7 @@ class MainActivity : Activity() {
             parent.addView(text(label,16f,gold))
             disabledAction(parent,"📷 الكاميرا")
             disabledAction(parent,"🖼️ اختيار من الاستوديو")
+            disabledAction(parent,"حذف الصورة")
         }
         field(parent,"الكمية بالمخزون *","1").inputType=InputType.TYPE_CLASS_NUMBER
         field(parent,"حد التنبيه الأدنى","1").inputType=InputType.TYPE_CLASS_NUMBER
