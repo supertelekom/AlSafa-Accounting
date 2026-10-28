@@ -82,20 +82,56 @@ class TabletDashboardActivity : Activity() {
     }
 
     private fun tile(label: String, detail: String, symbol: String, action: () -> Unit): View {
+        val simplified = mode == "simple"
+        val chooser = mode == "home"
+        val dark = chooser && label == "الوضع الكامل"
+        val advisor = chooser && label == "ساعدني أختار ساعتي"
+        val fill = when {
+            dark -> Color.rgb(46, 40, 34)
+            advisor -> Color.rgb(37, 32, 28)
+            simplified -> Color.rgb(255, 250, 242)
+            else -> Color.rgb(255, 253, 249)
+        }
+        val border = if (simplified || (chooser && label == "الوضع المبسط")) Color.rgb(216, 189, 136)
+            else Color.rgb(234, 223, 206)
         val box = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            gravity = Gravity.CENTER_VERTICAL
+            orientation = if (simplified) LinearLayout.VERTICAL else LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER
             layoutDirection = View.LAYOUT_DIRECTION_RTL
-            setPadding(dp(12), dp(8), dp(12), dp(8))
-            background = shape(Color.rgb(255, 253, 249))
+            setPadding(dp(if (simplified) 18 else 14), dp(12), dp(if (simplified) 18 else 14), dp(12))
+            background = GradientDrawable().apply {
+                setColor(fill)
+                cornerRadius = dp(if (simplified) 24 else if (advisor) 30 else if (chooser) 26 else 18).toFloat()
+                setStroke(dp(if (simplified || (chooser && label == "الوضع المبسط")) 2 else 1), border)
+            }
             isClickable = true
             isFocusable = true
             setOnClickListener { action() }
-            elevation = dp(2).toFloat()
+            elevation = dp(if (chooser) 5 else 2).toFloat()
         }
-        box.addView(title(symbol, 20f, gold))
-        box.addView(title(label, 16f))
-        box.addView(title(detail, 11f, Color.rgb(113, 101, 87)))
+        val foreground = if (dark || advisor) Color.WHITE else ink
+        val symbolView = title(symbol, if (simplified) 47f else if (chooser) 30f else 25f,
+            if (dark || advisor) Color.rgb(234, 217, 192) else gold).apply {
+            gravity = Gravity.CENTER
+            setPadding(0, 0, 0, 0)
+        }
+        box.addView(symbolView, if (simplified) LinearLayout.LayoutParams(-2, dp(65))
+            else LinearLayout.LayoutParams(dp(if (chooser) 58 else 46), dp(if (chooser) 58 else 46)))
+        val labels = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            gravity = if (simplified) Gravity.CENTER else Gravity.CENTER_VERTICAL
+        }
+        box.addView(labels, if (simplified) LinearLayout.LayoutParams(-1, -2)
+            else LinearLayout.LayoutParams(0, -2, 1f))
+        labels.addView(title(label, if (simplified) 24f else if (chooser) 20f else 17f, foreground).apply {
+            gravity = if (simplified) Gravity.CENTER else Gravity.CENTER_VERTICAL
+            setPadding(dp(4), dp(2), dp(4), dp(2))
+        })
+        labels.addView(title(detail, 11f,
+            if (dark || advisor) Color.rgb(213, 201, 187) else Color.rgb(113, 101, 87)).apply {
+            gravity = if (simplified) Gravity.CENTER else Gravity.CENTER_VERTICAL
+            setPadding(dp(4), dp(2), dp(4), dp(2))
+        })
         return box
     }
 
