@@ -39,8 +39,7 @@ class MainActivity : Activity() {
     }
     private var selectedQuickRepair: String? = null
     private var repairPhotoUri:android.net.Uri? = null
-    private var pendingCameraPath:String? = null
-    private var cameraPreviewPath:String? = null
+    private var pendingCameraUri:android.net.Uri? = null
     private var selectedQuickPrice: Int? = null
     private var activeRoot:View? = null
     private var repairDraftTexts:List<String>? = null
@@ -97,8 +96,7 @@ class MainActivity : Activity() {
         repairDraftScreen=savedInstanceState?.getString("repairDraftScreen")
         repairDraftTexts=savedInstanceState?.getStringArrayList("repairDraftTexts")
         repairDraftSelections=savedInstanceState?.getIntegerArrayList("repairDraftSelections")
-        pendingCameraPath=savedInstanceState?.getString("pendingCameraPath")
-        cameraPreviewPath=savedInstanceState?.getString("cameraPreviewPath")
+        pendingCameraUri=savedInstanceState?.getString("pendingCameraUri")?.let { android.net.Uri.parse(it) }
         render()
         restoreRepairDraft()
     }
@@ -106,15 +104,14 @@ class MainActivity : Activity() {
     override fun onActivityResult(requestCode:Int,resultCode:Int,data:android.content.Intent?) {
         super.onActivityResult(requestCode,resultCode,data)
         if(requestCode==702) {
-            val pending=pendingCameraPath
-            pendingCameraPath=null
-            if(resultCode==Activity.RESULT_OK && pending!=null && java.io.File(pending).length()>0L) {
+            val pending=pendingCameraUri
+            pendingCameraUri=null
+            if(resultCode==Activity.RESULT_OK && pending!=null) {
                 snapshotRepairDraft()
-                repairPhotoUri=android.net.Uri.fromFile(java.io.File(pending))
-                cameraPreviewPath=pending
+                repairPhotoUri=pending
                 render()
                 restoreRepairDraft()
-            } else if(pending!=null) java.io.File(pending).delete()
+            } else if(pending!=null) contentResolver.delete(pending,null,null)
         }
         if(requestCode==701 && resultCode==Activity.RESULT_OK) {
             val uri=data?.data
@@ -128,7 +125,7 @@ class MainActivity : Activity() {
                 }
                 snapshotRepairDraft()
                 repairPhotoUri=uri
-                cameraPreviewPath=null
+                
                 render()
                 restoreRepairDraft()
             }
@@ -143,8 +140,7 @@ class MainActivity : Activity() {
         outState.putString("previousScreen",previousScreen)
         outState.putStringArrayList("navigationHistory",ArrayList(navigationHistory))
         outState.putString("repairPhotoUri",repairPhotoUri?.toString())
-        outState.putString("pendingCameraPath",pendingCameraPath)
-        outState.putString("cameraPreviewPath",cameraPreviewPath)
+        outState.putString("pendingCameraUri",pendingCameraUri?.toString())
         super.onSaveInstanceState(outState)
     }
     @Deprecated("Deprecated in Java")
@@ -583,16 +579,26 @@ class MainActivity : Activity() {
             isClickable=true
             setOnClickListener {
                 snapshotRepairDraft()
-                val photo=java.io.File.createTempFile("repair_", ".jpg",filesDir)
-                pendingCameraPath=photo.absolutePath
-                val camera=android.content.Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE).apply {
-                    putExtra(android.provider.MediaStore.EXTRA_OUTPUT,android.net.Uri.fromFile(photo))
+                val values=android.content.ContentValues().apply {
+                    put(android.provider.MediaStore.Images.Media.DISPLAY_NAME,"alsafa_repair_"+System.currentTimeMillis()+".jpg")
+                    put(android.provider.MediaStore.Images.Media.MIME_TYPE,"image/jpeg")
+                    put(android.provider.MediaStore.Images.Media.RELATIVE_PATH,"Pictures/AlSafa")
                 }
-                try { startActivityForResult(camera,702) }
-                catch(e:Exception) {
-                    pendingCameraPath=null
-                    photo.delete()
-                    android.widget.Toast.makeText(this@MainActivity,"تعذر تشغيل الكاميرا",android.widget.Toast.LENGTH_SHORT).show()
+                val uri=contentResolver.insert(android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI,values)
+                if(uri==null) {
+                    android.widget.Toast.makeText(this@MainActivity,"تعذر إنشاء ملف الصورة",android.widget.Toast.LENGTH_SHORT).show()
+                } else {
+                    pendingCameraUri=uri
+                    val camera=android.content.Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE).apply {
+                        putExtra(android.provider.MediaStore.EXTRA_OUTPUT,uri)
+                        addFlags(android.content.Intent.FLAG_GRANT_WRITE_URI_PERMISSION or android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                    }
+                    try { startActivityForResult(camera,702) }
+                    catch(e:Exception) {
+                        pendingCameraUri=null
+                        contentResolver.delete(uri,null,null)
+                        android.widget.Toast.makeText(this@MainActivity,"تعذر تشغيل الكاميرا",android.widget.Toast.LENGTH_SHORT).show()
+                    }
                 }
             }
         })
