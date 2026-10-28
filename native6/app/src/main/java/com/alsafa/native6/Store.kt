@@ -59,6 +59,28 @@ class Store(val helper:StoreDb) {
         return decodeLegacyRecords(category,matching).firstOrNull()
     }
     /** Read a restored invoice as source data, never as a newly posted native sale. */
+    /** Reconcile legacy return eligibility without altering historical or native ledgers. */
+    fun legacyReturnEligibility(sourceId:String):Map<String,String> {
+        val source=restoredSaleById(sourceId)
+            ?: throw IllegalArgumentException("الفاتورة القديمة غير موجودة")
+        val status=source.optString("status").ifBlank { source.optString("paymentStatus") }
+        val due=runCatching { reconciledLegacySaleDue(source) }
+        val existingReturns=legacyRows("returns").count { row ->
+            val r=JSONObject(row.getValue("payload"))
+            r.optString("referenceType")=="sale" && r.optString("referenceId")==sourceId
+        }
+        return mapOf(
+            "source_id" to sourceId,
+            "invoice_no" to source.optString("invoiceNo"),
+            "currency" to source.optString("currency"),
+            "status" to status,
+            "existing_returns" to existingReturns.toString(),
+            "remaining_due_minor" to (due.getOrNull()?.toString() ?: ""),
+            "eligible_for_automatic_posting" to "false",
+            "reason" to if(due.isFailure) "يلزم تدقيق المقبوضات والمرتجعات الأصلية"
+                else "يلزم إثبات تكلفة وكمية الأصناف وحركات المخزون السابقة قبل التسوية"
+        )
+    }
     fun restoredSaleById(sourceId:String):org.json.JSONObject? {
         require(sourceId.isNotBlank())
         val record=rows("SELECT payload FROM legacy_records WHERE category='sales' AND substr(legacy_id,instr(legacy_id,':')+1)=? LIMIT 1",sourceId).singleOrNull()
