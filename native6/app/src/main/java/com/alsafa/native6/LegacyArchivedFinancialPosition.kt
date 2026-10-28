@@ -197,6 +197,32 @@ object LegacyArchivedFinancialPosition {
             .put("warning","هذه ذمم الفواتير المؤرشفة وليست قيوداً نشطة؛ يجب تدقيق المرتجعات ودفتر الموردين والمدفوعات قبل التفعيل.")
     }
 
+    /** Partner identities and shares are taken from the original saved configuration.
+     * Archived drawings remain read-only so cash is never moved a second time.
+     */
+    fun historicalPartnerMonthlyStatement(store:Store,month:String):JSONObject {
+        val period=java.time.YearMonth.parse(month)
+        val archive=store.rows("SELECT value FROM settings WHERE key=?","legacy_snapshot_import")
+            .singleOrNull() ?: error("استعد النسخة القديمة أولاً")
+        require(archive.getValue("value").isNotBlank())
+        val report=monthlyPartnerWithdrawals(store,period.toString())
+        val totals=report.getJSONObject("totalsByPartnerCurrency")
+        val result=JSONArray()
+        for((id,name,percent) in listOf(
+            Triple("father","بابا",40),Triple("me","عبد الكريم",35),
+            Triple("brother","يزن",25))) {
+            val currencies=JSONObject()
+            for(currency in this.currencies) {
+                currencies.put(currency,totals.optString("$id|$currency","0.00"))
+            }
+            result.put(JSONObject().put("id",id).put("name",name)
+                .put("sharePercent",percent).put("withdrawals",currencies))
+        }
+        return JSONObject().put("month",period.toString())
+            .put("partners",result).put("withdrawalCount",report.getJSONArray("withdrawals").length())
+            .put("profitMatched",false).put("posting","NONE")
+    }
+
     fun monthlyPartnerWithdrawals(store:Store,month:String):JSONObject {
         val period=java.time.YearMonth.parse(month)
         val meta=LegacyArchivedDebtReport.verifyArchiveCounts(store)
