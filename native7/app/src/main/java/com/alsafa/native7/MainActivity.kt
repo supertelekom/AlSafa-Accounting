@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.graphics.Color
 import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
+import android.graphics.drawable.GradientDrawable.Orientation
 import android.view.Gravity
 import android.view.View
 import android.widget.LinearLayout
@@ -51,45 +52,128 @@ class MainActivity : Activity() {
         card.addView(text(description,13f,if(dark) Color.rgb(231,216,197) else ink))
         parent.addView(card,LinearLayout.LayoutParams(-1,dp(138)).apply { bottomMargin=dp(13) })
     }
+    private fun chooserCard(parent:LinearLayout,title:String,description:String,symbol:String,target:String,dark:Boolean) {
+        val background=if(dark) GradientDrawable(Orientation.TL_BR,intArrayOf(Color.rgb(37,33,30),Color.rgb(64,55,48)))
+            else GradientDrawable().apply { setColor(paper) }
+        background.cornerRadius=dp(26).toFloat()
+        val card=LinearLayout(this).apply {
+            orientation=LinearLayout.VERTICAL; gravity=Gravity.CENTER_VERTICAL
+            layoutDirection=View.LAYOUT_DIRECTION_RTL; setPadding(dp(20),dp(12),dp(20),dp(12))
+            this.background=background; isClickable=true
+            setOnClickListener { screen=target;render() }
+        }
+        val badge=text(symbol,22f,if(dark) Color.rgb(234,217,192) else gold).apply {
+            background=panel(if(dark) Color.rgb(75,68,60) else Color.rgb(245,230,203),18)
+        }
+        card.addView(badge,LinearLayout.LayoutParams(dp(54),dp(54)))
+        card.addView(text(title,20f,if(dark) Color.WHITE else ink).apply { gravity=Gravity.RIGHT })
+        card.addView(text(description,11f,if(dark) Color.rgb(213,201,187) else ink).apply { gravity=Gravity.RIGHT })
+        card.addView(text("دخول",10f,if(dark) Color.rgb(213,185,143) else gold).apply { gravity=Gravity.LEFT })
+        parent.addView(card,LinearLayout.LayoutParams(0,dp(165),1f))
+    }
+    private fun actionGrid(parent:LinearLayout,items:List<Triple<String,String,String>>,simple:Boolean) {
+        items.chunked(2).forEach { pair ->
+            val row=LinearLayout(this).apply { orientation=LinearLayout.HORIZONTAL;layoutDirection=View.LAYOUT_DIRECTION_RTL }
+            parent.addView(row,LinearLayout.LayoutParams(-1,-2).apply { bottomMargin=dp(13) })
+            pair.forEachIndexed { index,item ->
+                val box=LinearLayout(this).apply {
+                    orientation=LinearLayout.VERTICAL;gravity=Gravity.CENTER
+                    background=panel(paper,if(simple) 24 else 18)
+                    setPadding(dp(10),dp(12),dp(10),dp(12))
+                    isClickable=true;setOnClickListener { screen="preview:" + item.first;render() }
+                }
+                box.addView(text(item.third,if(simple) 42f else 28f,gold))
+                box.addView(text(item.first,if(simple) 20f else 18f))
+                box.addView(text(item.second,11f))
+                row.addView(box,LinearLayout.LayoutParams(0,dp(if(simple) 210 else 130),1f).apply {
+                    if(index==0) marginEnd=dp(13)
+                })
+            }
+        }
+    }
     private fun render() {
         val root=LinearLayout(this).apply {
             orientation=LinearLayout.VERTICAL; layoutDirection=View.LAYOUT_DIRECTION_RTL
             setBackgroundColor(pearl)
         }
         setContentView(root)
-        root.addView(text("الصفا للساعات",27f,gold))
-        val scroll=ScrollView(this)
-        root.addView(scroll,LinearLayout.LayoutParams(-1,0,1f))
+        val scroll=ScrollView(this).apply { isFillViewport=true }
+        root.addView(scroll,LinearLayout.LayoutParams(-1,-1))
         val body=LinearLayout(this).apply {
-            orientation=LinearLayout.VERTICAL
-            layoutDirection=View.LAYOUT_DIRECTION_RTL
-            setPadding(dp(22),dp(12),dp(22),dp(20))
+            orientation=LinearLayout.VERTICAL; layoutDirection=View.LAYOUT_DIRECTION_RTL
+            setPadding(dp(20),dp(22),dp(20),dp(24))
         }
         scroll.addView(body)
         when(screen) {
             "chooser" -> {
-                body.addView(text("كيف تريد أن تبدأ؟",25f))
+                body.addView(text("ALSAFA WATCHES",13f,gold))
+                body.addView(text("كيف تريد أن تبدأ؟",28f))
                 body.addView(text("اختر بيئة العمل المناسبة، أو افتح مستشار اختيار الساعة أمام العميل.",15f))
-                card(body,"الوضع المبسط","بيع وصيانة وتسليم سريع","simple")
-                card(body,"الوضع الكامل","الإدارة والمخزون والحسابات","full",true)
-                card(body,"ساعدني أختار ساعتي","اختيارات من الساعات المتوفرة فعلياً الآن","advisor",true)
+                val modes=LinearLayout(this).apply { orientation=LinearLayout.HORIZONTAL;layoutDirection=View.LAYOUT_DIRECTION_RTL }
+                body.addView(modes,LinearLayout.LayoutParams(-1,-2).apply { topMargin=dp(20);bottomMargin=dp(14) })
+                chooserCard(modes,"الوضع المبسط","بيع وصيانة وتسليم سريع","⚡","simple",false)
+                modes.addView(View(this),LinearLayout.LayoutParams(dp(14),dp(1)))
+                chooserCard(modes,"الوضع الكامل","الإدارة والمخزون والحسابات","◆","full",true)
+                card(body,"ساعدني أختار ساعتي","ALSAFA ADVISOR — اختيارات ذكية من الساعات المتوفرة فعلياً الآن","advisor",true)
             }
             "simple" -> {
                 body.addView(text("العمل السريع",25f,gold))
-                for(name in listOf("مبيع","صيانة سريعة","تسليم الساعات","تسليم الوردية"))
-                    card(body,name,"واجهة قيد المطابقة مع الأصل","preview")
+                body.addView(text("اختر العملية فقط.",15f))
+                body.addView(text("⚙️ الوضع الكامل",14f,gold).apply { isClickable=true;setOnClickListener { screen="full";render() } })
+                actionGrid(body,listOf(
+                    Triple("مبيع","بيع سريع","🛒"),
+                    Triple("صيانة سريعة","استلام أو تسليم مباشر","🔧"),
+                    Triple("تسليم الساعات","الساعات التي بقيت لدينا","⌚"),
+                    Triple("تسليم الوردية","النقود والمحجوزات والمنتظر","🤝")
+                ),true)
             }
             "full" -> {
                 body.addView(text("الوضع الكامل",25f,gold))
-                for(name in listOf("اليوم","مبيع","استلام صيانة","تسليم صيانة","قبض دين","مصروف","بحث","الإدارة"))
-                    card(body,name,"واجهة قيد المطابقة مع الأصل","preview")
+                body.addView(text("كل عمليات المتجر والإدارة.",15f))
+                body.addView(text("👨‍🔧 الوضع المبسط",14f,gold).apply { isClickable=true;setOnClickListener { screen="simple";render() } })
+                actionGrid(body,listOf(
+                    Triple("اليوم","ملخص وتنبيهات العمل الآن","☀️"),
+                    Triple("مبيع","شاشة المبيع الكاملة","🛒"),
+                    Triple("استلام صيانة","طلب صيانة كامل","🔧"),
+                    Triple("تسليم صيانة","طلبات قيد المتابعة","✅"),
+                    Triple("قبض دين","المبالغ المستحقة","💵"),
+                    Triple("مصروف","تسجيل مصروف","📤"),
+                    Triple("بحث","عميل، هاتف، طلب أو منتج","🔎")
+                ),false)
+                body.addView(text("آخر العمليات",20f,gold))
+                body.addView(text("لا توجد عمليات مسجلة بعد.",14f))
+                body.addView(text("الإدارة",17f,gold).apply { isClickable=true;setOnClickListener { screen="management";render() } })
+            }
+            "management" -> {
+                body.addView(text("الإدارة",25f,gold))
+                actionGrid(body,listOf(
+                    Triple("الأرصدة الافتتاحية","البضاعة والقطع والنقود","📋"),
+                    Triple("المنتجات والمخزون","الساعات والكميات","⌚"),
+                    Triple("قطع الصيانة","القطع والمخزون","🔧"),
+                    Triple("المشتريات والموردون","المشتريات والذمم","📦"),
+                    Triple("الفواتير السابقة","الفواتير والأرشيف","🧾"),
+                    Triple("فواتير المرتجع","المرتجع والاستبدال","↩️"),
+                    Triple("كل الصيانة","الحالات والمتابعة","🔧"),
+                    Triple("الخزائن والأرصدة","الدرج والخزائن","💵"),
+                    Triple("إقفال اليوم","الدرج والمدور","📅"),
+                    Triple("الديون","التحصيل","💳"),
+                    Triple("المصاريف","المصاريف المسجلة","📤"),
+                    Triple("ملفات العملاء","العملاء والضمانات","👤"),
+                    Triple("التقارير","الأرباح والفترات","📊"),
+                    Triple("الشركاء والسحوبات","الحصص والسحوبات","🤝")
+                ),false)
             }
             else -> {
-                body.addView(text("هذه الشاشة قيد النقل من التطبيق الأصلي",20f))
-                body.addView(text("لا توجد عمليات مالية أو بيانات تجريبية قابلة للحفظ في هذه النسخة.",15f))
+                body.addView(text(screen.removePrefix("preview:"),23f,gold))
+                body.addView(text("واجهة قيد المطابقة مع التطبيق القديم — لا توجد عمليات حفظ في هذه النسخة.",15f))
             }
         }
-        val back=text("العودة",17f,gold).apply { isClickable=true;setOnClickListener { screen="chooser";render() } }
-        if(screen!="chooser")root.addView(back)
+        if(screen!="chooser") body.addView(text("العودة",17f,gold).apply {
+            isClickable=true;setOnClickListener {
+                screen=if(screen.startsWith("preview:")) "full" else "chooser"
+                render()
+            }
+        })
     }
+
 }
