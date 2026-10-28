@@ -932,9 +932,19 @@ class MainActivity : Activity() {
         multilineField(parent,"ملاحظات","لون السوار، موعد التسليم، تفاصيل مهمة")
         parent.addView(text("عند وجود رقم العميل تُفتح محادثته في واتساب أعمال مع صورة الساعة ورسالة الاستلام بعد الحفظ.",12f))
         parent.addView(text("اختيار قطع الصيانة اختياري عند الاستلام. يمكنك حفظ الطلب بدون قطع، ثم بعد الفحص تحديث ما تم عمله وأجرة العمل، وإضافة القطع عند معرفتها.",12f))
-        parent.addView(text("إلغاء",16f,gold).apply { isClickable=true;setOnClickListener { returnToPrevious() } })
-        parent.addView(text("حفظ طلب الصيانة",18f,gold).apply {
-            background=panel(Color.rgb(239,228,208),12)
+        val repairActions=LinearLayout(this).apply {
+            orientation=LinearLayout.HORIZONTAL
+            layoutDirection=View.LAYOUT_DIRECTION_RTL
+        }
+        repairActions.addView(text("إلغاء",14f,Color.rgb(122,81,24)).apply {
+            background=panel(Color.rgb(247,237,221),11,Color.rgb(223,201,164))
+            isClickable=true
+            setOnClickListener { returnToPrevious() }
+        },LinearLayout.LayoutParams(0,dp(45),1f).apply { marginEnd=dp(9) })
+        repairActions.addView(text("حفظ طلب الصيانة",14f,Color.WHITE).apply {
+            background=GradientDrawable(Orientation.TL_BR,intArrayOf(Color.rgb(179,131,50),Color.rgb(139,96,31))).apply {
+                cornerRadius=dp(11).toFloat()
+            }
             isClickable=true
             setOnClickListener {
                 snapshotRepairDraft()
@@ -1066,8 +1076,9 @@ class MainActivity : Activity() {
                     android.widget.Toast.makeText(this@MainActivity,"فشل حفظ الطلب: "+e.message,android.widget.Toast.LENGTH_LONG).show()
                 }
             }
-        })
-        
+        },LinearLayout.LayoutParams(0,dp(45),1f))
+        parent.addView(repairActions,LinearLayout.LayoutParams(-1,-2).apply { topMargin=dp(18) })
+
     }
     private fun invoiceArchivePreview(parent:LinearLayout,repair:Boolean) {
         parent.addView(text(if(repair) "قسم الصيانة" else "المبيعات والفواتير",26f,gold))
