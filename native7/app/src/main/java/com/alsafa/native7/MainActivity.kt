@@ -288,18 +288,28 @@ class MainActivity : Activity() {
         val heading=LinearLayout(this).apply {
             orientation=LinearLayout.HORIZONTAL
             layoutDirection=View.LAYOUT_DIRECTION_RTL
-            gravity=Gravity.CENTER_VERTICAL
+            gravity=Gravity.TOP
         }
         val labels=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL }
-        labels.addView(text(title,20f,ink).apply { gravity=Gravity.RIGHT })
-        labels.addView(text(description,13f).apply { gravity=Gravity.RIGHT })
+        labels.addView(text(title,20f,ink).apply {
+            gravity=Gravity.RIGHT
+            typeface=Typeface.create(typeface,Typeface.BOLD)
+            setPadding(0,0,0,0)
+        })
+        labels.addView(text(description,12f,Color.rgb(138,123,108)).apply {
+            gravity=Gravity.RIGHT
+            setPadding(0,dp(5),0,0)
+        })
         heading.addView(labels,LinearLayout.LayoutParams(0,-2,1f))
         heading.addView(text(backLabel,13f,gold).apply {
-            background=panel(Color.rgb(247,237,221),11,Color.rgb(216,189,136))
+            background=panel(paper,11)
             isClickable=true
             setOnClickListener { navigateTo(target) }
         })
-        parent.addView(heading,LinearLayout.LayoutParams(-1,-2).apply { topMargin=dp(2);bottomMargin=dp(14) })
+        parent.addView(heading,LinearLayout.LayoutParams(-1,-2).apply {
+            topMargin=dp(2)
+            bottomMargin=dp(14)
+        })
     }
     private fun field(parent:LinearLayout,label:String,hint:String=""):EditText {
         parent.addView(text(label,11f,Color.rgb(138,123,108)).apply {
