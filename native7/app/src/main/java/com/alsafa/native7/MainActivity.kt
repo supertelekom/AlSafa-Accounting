@@ -615,7 +615,7 @@ class MainActivity : Activity() {
         val newLabel=if(repair) "＋ طلب" else "＋ فاتورة"
         parent.addView(text(newLabel,16f,gold).apply {
             isClickable=true
-            setOnClickListener { previousScreen=screen;screen=if(repair) "preview:طلب صيانة" else "preview:مبيع كامل";render() }
+            setOnClickListener { navigateTo(if(repair) "preview:طلب صيانة" else "preview:مبيع كامل") }
         })
         val date=field(parent,"يوم الفواتير","YYYY-MM-DD").apply {
             inputType=InputType.TYPE_NULL
