@@ -84,6 +84,37 @@ class Store(val helper:StoreDb) {
         }
         return result
     }
+    /**
+     * Post a single, verified reduction of an activated legacy receivable.
+     * Never replay old sales, collections, COGS or inventory movements.
+     * The unique command ID is the idempotency key enforced by events.id.
+     */
+    fun settleLegacyReceivableReturn(sourceId:String,amount:Long,reason:String,
+        command:String,date:String=today()):String=transaction {
+        require(sourceId.isNotBlank() && command.isNotBlank() && reason.isNotBlank())
+        require(amount>0L && !LocalDate.parse(date).isAfter(LocalDate.now()))
+        val source=restoredSaleById(sourceId)
+            ?: throw IllegalArgumentException("الفاتورة القديمة غير موجودة")
+        val currency=Currency.valueOf(source.getString("currency"))
+        val key="legacy-sale:"+sourceId
+        require(scalar("SELECT count(*) FROM settings WHERE key=?",key)==1L) {
+            "لا يمكن تسوية ذمة قديمة قبل تفعيلها ومطابقتها"
+        }
+        val opening=rows("SELECT value FROM settings WHERE key=?",key).single().getValue("value")
+        require(opening.isNotBlank()) { "مرجع الذمة القديمة غير صالح" }
+        require(scalar("SELECT count(*) FROM events WHERE id=?",command)==0L) {
+            "عملية التسوية مسجلة سابقاً"
+        }
+        val account="receivable:"+opening
+        val outstanding=scalar("SELECT coalesce(sum(amount),0) FROM journal WHERE account=? AND currency=?",account,currency.name)
+        require(outstanding>=amount) { "المرتجع يتجاوز الذمة المتبقية" }
+        event(command,"LEGACY_SALE_RETURN",date,reason.trim())
+        post(command,listOf(
+            Posting(account,currency,-amount),
+            Posting("revenue:returns",currency,amount)
+        ))
+        command
+    }
     fun legacyReturnEligibility(sourceId:String):Map<String,String> {
         val source=restoredSaleById(sourceId)
             ?: throw IllegalArgumentException("الفاتورة القديمة غير موجودة")
