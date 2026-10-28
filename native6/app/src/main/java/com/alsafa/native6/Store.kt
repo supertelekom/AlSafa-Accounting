@@ -67,6 +67,21 @@ class Store(val helper:StoreDb) {
             else rows("SELECT legacy_id,length(CAST(payload AS BLOB)) AS bytes FROM legacy_records WHERE category=? AND instr(payload,?)>0 ORDER BY rowid DESC LIMIT ? OFFSET ?",category,term,limit.toString(),offset.toString())
         return decodeLegacyRecords(category,ids)
     }
+    fun archivedInvoicePage(kind:String,query:String="",limit:Int=30,offset:Int=0):List<Map<String,String>> {
+        require(kind=="sales" || kind=="purchases")
+        return legacyPage(kind,query,limit,offset).map { row ->
+            val item=JSONObject(row.getValue("payload"))
+            mapOf("archive_key" to row.getValue("legacy_id"),
+                "source_id" to item.optString("id"),
+                "invoice_no" to item.optString("invoiceNo"),
+                "date" to item.optString("date"),
+                "currency" to item.optString("currency"),
+                "total" to item.optString("total"),
+                "paid" to item.optString("paid"),
+                "state" to "ARCHIVED_ONLY")
+        }
+    }
+
     /** Paginated repair history with bounded BLOB reads for old embedded watch photos. */
     fun repairPage(term:String,limit:Int,offset:Int):List<Map<String,String>> {
         require(limit in 1..100 && offset>=0)
