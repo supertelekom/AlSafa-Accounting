@@ -102,7 +102,7 @@ object LegacyInvoiceSnapshot {
             if(from.isNotBlank() && (date.isBlank() || date<from)) continue
             if(to.isNotBlank() && (date.isBlank() || date>to)) continue
             if(query.isNotBlank()) {
-                val fields=listOf("invoiceNo","number","customer","phone","supplierName","supplierInvoice","notes","id","reference","customerName","supplierId","customerId","customerPhone","supplierPhone","invoiceNumber","productName")
+                val fields=if(section=="sales") listOf("invoiceNo","customer","phone","notes","id") else listOf("supplierInvoice","supplierName","supplierId","notes","id")
                 val found=fields.any { SaleInvoiceFilter.normalize(original.optString(it)).contains(query) }
                 val items=original.optJSONArray("items")
                 val itemFound=items!=null && (0 until items.length()).any { index ->
