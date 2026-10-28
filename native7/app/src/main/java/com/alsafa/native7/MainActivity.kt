@@ -1012,7 +1012,7 @@ class MainActivity : Activity() {
             "full" -> {
                 body.addView(text("الوضع الكامل",25f,gold))
                 body.addView(text("كل عمليات المتجر والإدارة.",15f))
-                body.addView(text("👨‍🔧 الوضع المبسط",14f,gold).apply { isClickable=true;setOnClickListener { screen="simple";render() } })
+                body.addView(text("👨‍🔧 الوضع المبسط",14f,gold).apply { isClickable=true;setOnClickListener { navigateTo("simple") } })
                 currencySummary(body)
                 actionGrid(body,listOf(
                     Triple("اليوم","ملخص وتنبيهات العمل الآن","☀️"),
