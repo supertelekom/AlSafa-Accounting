@@ -420,6 +420,7 @@ class MainActivity : Activity() {
         return EditText(this).apply {
             this.hint=hint
             textSize=14f
+            gravity=Gravity.RIGHT or Gravity.CENTER_VERTICAL
             setTextColor(ink)
             setHintTextColor(Color.rgb(138,123,108))
             background=panel(Color.rgb(255,252,247),10,Color.rgb(234,223,206))
@@ -443,6 +444,7 @@ class MainActivity : Activity() {
         })
         val spinner=Spinner(this).apply {
             layoutDirection=View.LAYOUT_DIRECTION_RTL
+            textAlignment=View.TEXT_ALIGNMENT_VIEW_START
             background=panel(Color.rgb(255,252,247),10,Color.rgb(234,223,206))
             setPadding(dp(10),dp(9),dp(10),dp(9))
         }
