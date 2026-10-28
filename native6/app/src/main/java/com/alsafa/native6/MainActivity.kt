@@ -1937,6 +1937,39 @@ open class MainActivity:Activity() {
                 }
             }
             text("للمبيعات الأونلاين غير المحصلة: اجعل المدفوع صفراً، ثم سجّل القبض من الفاتورة عند وصول النقود.",box);
+            button("معاينة الحسابات",box) {
+                try {
+                    val gross=basket.fold(0L){sum,line->Math.addExact(sum,Math.multiplyExact(line.qty,line.unitPrice))}
+                    val d=amount(discount,basketCurrency)
+                    require(d>=0L && d<gross){"الخصم يجب أن يكون أقل من إجمالي الفاتورة"}
+                    val original=amount(paid,basketCurrency)
+                    val second=amount(extraPaid,basketCurrency)
+                    val converted=amount(otherInvoiceAmount,basketCurrency)
+                    val received=Math.addExact(Math.addExact(original,second),converted)
+                    val net=Math.subtractExact(gross,d)
+                    require(received in 0L..net){"المدفوع يتجاوز الإجمالي بعد الخصم"}
+                    val cost=basket.fold(0L){sum,line->
+                        val p=store.product(line.productId)
+                        require(p.stock>0L && line.qty<=p.stock){"المخزون لا يكفي"}
+                        Math.addExact(sum,java.math.BigInteger.valueOf(p.value)
+                            .multiply(java.math.BigInteger.valueOf(line.qty))
+                            .divide(java.math.BigInteger.valueOf(p.stock)).longValueExact())
+                    }
+                    val message="الإجمالي: "+money(gross,basketCurrency)+
+                        "\\nالخصم: "+money(d,basketCurrency)+
+                        "\\nالصافي: "+money(net,basketCurrency)+
+                        "\\nالمقبوض بقيمة عملة الفاتورة: "+money(received,basketCurrency)+
+                        "\\nالمتبقي: "+money(net-received,basketCurrency)+
+                        "\\nالكلفة التقديرية: "+money(cost,basketCurrency)+
+                        "\\nالربح المتوقع قبل المصاريف: "+money(net-cost,basketCurrency)
+                    AlertDialog.Builder(this).setTitle("معاينة حسابات المبيع")
+                        .setMessage(message).setPositiveButton("إغلاق",null).show()
+                } catch(e:Exception) {
+                    AlertDialog.Builder(this).setTitle("تعذر عرض المعاينة")
+                        .setMessage(e.message?:"تحقق من المبالغ").setPositiveButton("إغلاق",null).show()
+                }
+            }
+
             {val customerText=customer.text.toString();val phoneText=phone.text.toString();val d=amount(discount,basketCurrency);val pay=amount(paid,basketCurrency);val extra=amount(extraPaid,basketCurrency);val combined=Math.addExact(pay,extra);val mixedCurrency=if(otherCurrency.selectedItemPosition==0)null else Currency.valueOf(otherCurrency.selectedItem.toString());val mixedInvoice=amount(otherInvoiceAmount,basketCurrency);val mixedCash=if(mixedCurrency==null)0L else amount(otherCashAmount,mixedCurrency);require(mixedInvoice>=0L && mixedCash>=0L){"مبلغ قبض العملة الأخرى غير صالح"};require((mixedCurrency==null && mixedInvoice==0L && mixedCash==0L) || (mixedCurrency!=null && mixedInvoice>0L && mixedCash>0L)){"أكمل عملة القبض والمبلغ المحسوب والمبلغ النقدي"};val totalCollected=Math.addExact(combined,mixedInvoice);val selectedStatus=paymentStatus.selectedItemPosition;val v=Store.vaults[vault.selectedItemPosition];val v2=Store.vaults[extraVault.selectedItemPosition];require(pay==0L || extra==0L || v!=v2){"لا يمكن تكرار الخزنة نفسها في دفعتين فعليتين؛ اجمع المبلغ في خانة المدفوع"};val items=basket.toList();val c=basketCurrency;val gross=items.fold(0L){sum,item->Math.addExact(sum,Math.multiplyExact(item.qty,item.unitPrice))};require(gross>0 && d>=0 && d<gross){"الإجمالي أو الخصم غير صالح"};require(pay>=0 && extra>=0 && totalCollected<=gross-d){"المدفوع يتجاوز المبلغ المستحق بعد الخصم"};require(when(selectedStatus){0->totalCollected==gross-d;1->totalCollected>0L && totalCollected<gross-d;2->totalCollected==0L;else->false}){"حالة الدفع لا تطابق المبلغ المقبوض"};require(totalCollected==gross-d || customerText.isNotBlank()){"اسم العميل مطلوب عند وجود مبلغ آجل"};items.forEach{item->require(item.qty<=store.product(item.productId).stock){"تغير مخزون أحد الأصناف؛ راجع السلة"}};val issued=java.time.LocalDate.parse(invoiceDate.text.toString().trim()).toString();val collected=java.time.LocalDate.parse(receiptDate.text.toString().trim()).toString();work{val savedId=if(mixedCurrency==null)store.saleWithReceipts(items,customerText,phoneText,c,listOf(v to pay,v2 to extra),d,date=issued,receiptDate=collected,notes=notes.text.toString(),saleType=if(saleType.selectedItemPosition==1)"online" else "store",warrantyMonths=listOf(0,3,6,12,24)[warrantyMonths.selectedItemPosition],warrantyStart=warrantyStart.text.toString().trim()) else store.saleWithMixedCurrencies(items,customerText,phoneText,c,listOf(v to pay,v2 to extra),mixedInvoice,mixedCurrency,mixedCash,Store.vaults[otherVault.selectedItemPosition],d,date=issued,receiptDate=collected,notes=notes.text.toString(),saleType=if(saleType.selectedItemPosition==1)"online" else "store",warrantyMonths=listOf(0,3,6,12,24)[warrantyMonths.selectedItemPosition],warrantyStart=warrantyStart.text.toString().trim());val savedInvoice=store.invoice(savedId);runOnUiThread{if(isFinishing||isDestroyed)return@runOnUiThread;basket.clear();page="invoices";safeRender();AlertDialog.Builder(this).setTitle("تم حفظ فاتورة المبيع #"+savedInvoice.number).setItems(arrayOf("تفاصيل الفاتورة","عرض PDF","مشاركة PDF","طباعة الفاتورة")){_,action->when(action){0->invoiceDetail(savedInvoice);1->viewInvoicePdf(savedInvoice);2->shareInvoicePdf(savedInvoice);3->printInvoice(savedInvoice)}}.setNegativeButton("إغلاق",null).show()}}}
         }}}}
     private fun chooseProduct(inStockOnly:Boolean=false,kind:String?=null,action:(Product)->Unit){val box=column();val search=field("الاسم أو الباركود أو REF أو اللون",box);val results=column();box.addView(results);val sc=ScrollView(this);sc.addView(box);val dialog=AlertDialog.Builder(this).setTitle("اختيار منتج").setView(sc).setNegativeButton("رجوع",null).create()
