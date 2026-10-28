@@ -1595,7 +1595,7 @@ class Store(val helper:StoreDb) {
         // sequence. Never reuse a legacy number, even after restarting the app.
         var imported=0L
         for(section in listOf("sales","purchases","repairs")) {
-            for(record in rows("SELECT payload FROM legacy_records WHERE category=?",section)) {
+            for(record in legacyRows(section)) {
                 val invoice=try { JSONObject(record.getValue("payload")) }
                     catch (_:org.json.JSONException) {
                         throw IllegalStateException("تعذر قراءة رقم فاتورة مستعادة؛ أوقف الترقيم لحماية التسلسل")
