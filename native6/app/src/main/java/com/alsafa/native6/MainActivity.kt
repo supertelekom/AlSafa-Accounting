@@ -1902,6 +1902,26 @@ open class MainActivity:Activity() {
                 .setPositiveButton("تفريغ"){_,_->basket.clear();render()}.show()
         }
         text("أصناف الفاتورة",body,18f).apply { setTextColor(gold) }
+        button("＋ إضافة صنف يدوي",body) {
+            form("إضافة صنف يدوي"){box->
+                val name=field("اسم الساعة / الصنف *",box)
+                val model=field("الموديل",box)
+                val qty=field("الكمية *",box,"1",true)
+                val price=field("سعر البيع *",box,"0",true)
+                text("الصنف اليدوي في التطبيق القديم لا يرتبط بالمخزون. لا يجوز إنشاء حركة مخزون وهمية له.",box,12f)
+                ({
+                    val label=name.text.toString().trim()
+                    val quantity=qty.text.toString().trim().toLong()
+                    val unit=amount(price,basketCurrency)
+                    require(label.isNotBlank() && quantity>0L && unit>=0L){"أدخل اسم الصنف والكمية وسعر البيع"}
+                    AlertDialog.Builder(this).setTitle("الصنف اليدوي")
+                        .setMessage("تم التحقق من بيانات «"+label+"»"+(if(model.text.isNotBlank())" — "+model.text else "")+
+                            ".\\nيلزم نقل دعم الأصناف غير المرتبطة بالمخزون إلى قاعدة بيانات Native 6 قبل السماح بحفظها؛ لن ننشئ منتجاً أو مخزوناً وهمياً.")
+                        .setPositiveButton("إغلاق",null).show()
+                })
+            }
+        }
+
         if(basket.isNotEmpty()) {
             val estimatedCost=basket.fold(0L){sum,item->
                 val product=store.product(item.productId)
