@@ -47,8 +47,18 @@ class MainActivity : Activity() {
     override fun onActivityResult(requestCode:Int,resultCode:Int,data:android.content.Intent?) {
         super.onActivityResult(requestCode,resultCode,data)
         if(requestCode==701 && resultCode==Activity.RESULT_OK) {
-            repairPhotoUri=data?.data
-            render()
+            val uri=data?.data
+            if(uri!=null) {
+                try {
+                    contentResolver.takePersistableUriPermission(
+                        uri,android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION
+                    )
+                } catch (_:SecurityException) {
+                    // Some document providers grant only temporary access.
+                }
+                repairPhotoUri=uri
+                render()
+            }
         }
     }
     override fun onSaveInstanceState(outState:Bundle) {
