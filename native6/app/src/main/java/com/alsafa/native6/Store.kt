@@ -1252,7 +1252,7 @@ class Store(val helper:StoreDb) {
         require(items.isNotEmpty() && items.map {it.productId}.distinct().size==items.size){"الصنف مكرر"};vault(vault)
         val products=items.map { product(it.productId) };require(products.all {it.kind in setOf("watch","part")}){"صنف المبيع غير مدعوم"};require(products.all {it.currency==currency}){"اختلاف عملة المنتج: يلزم تحويل مسجل قبل هذه العملية"}
         require(items.all {it.qty>0&&it.unitPrice>=0}){"الكمية والسعر غير صالحين"};val gross=items.fold(0L){a,i->add(a,mul(i.qty,i.unitPrice))};require(gross>0){"لا يمكن إنشاء فاتورة بإجمالي صفر"};require(discount>=0 && discount<gross){"الخصم غير صالح"}
-        val total=Math.subtractExact(gross,discount);require(paid in 0..total){"المدفوع يتجاوز قيمة الفاتورة"};require(paid==total||party.isNotBlank()){"اسم العميل مطلوب للبيع الآجل"}
+        val total=Math.subtractExact(gross,discount);require(paid in 0..total){"المدفوع يتجاوز قيمة الفاتورة"};// Anonymous sales are valid, including online sales collected later.
         require(!LocalDate.parse(date).isAfter(LocalDate.now())){"لا يمكن تسجيل مبيع بتاريخ مستقبلي"}
         if(paid>0L) require(!LocalDate.parse(receiptDate).isAfter(LocalDate.now()) && !LocalDate.parse(receiptDate).isBefore(LocalDate.parse(date))){"تاريخ قبض البيع يجب أن يكون من تاريخ الفاتورة وحتى اليوم"}
         val nets=allocateInvoiceNet(items.map { mul(it.qty,it.unitPrice) },discount)
