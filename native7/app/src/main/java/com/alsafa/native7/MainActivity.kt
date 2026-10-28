@@ -595,7 +595,7 @@ class MainActivity : Activity() {
                 }
             })
         }
-        parent.addView(text("تُحفظ داخل طلب الصيانة وتُرسل مع رسالة الاستلام عند اختيار واتساب.",12f))
+        parent.addView(text("الصورة للمعاينة فقط حتى تفعيل حفظ طلب الصيانة.",12f))
         parent.addView(text("قطع الصيانة المستخدمة",21f,gold))
         parent.addView(text("لم تُحمّل قطع الصيانة بعد.",14f))
         field(parent,"نسبة الضريبة %","0").inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
