@@ -635,10 +635,10 @@ class MainActivity : Activity() {
     private fun manualSaleItemPreview(parent:LinearLayout,index:Int,removable:Boolean,onChange:()->Unit = {}) {
         val item=LinearLayout(this).apply {
             orientation=LinearLayout.VERTICAL
-            background=panel(paper,16)
-            setPadding(dp(12),dp(10),dp(12),dp(10))
+            background=panel(Color.rgb(252,247,239),12,Color.rgb(234,223,206))
+            setPadding(dp(11),dp(11),dp(11),dp(11))
         }
-        item.addView(text("الصنف $index",18f,gold))
+        item.addView(text("الصنف $index",12f,Color.rgb(122,81,24)).apply { typeface=Typeface.create(typeface,Typeface.BOLD) })
         field(item,"اسم الساعة / الصنف *","مثال: ساعة كاسيو")
         field(item,"الموديل","اختياري")
         val qty=field(item,"الكمية *","1").apply {
@@ -648,7 +648,7 @@ class MainActivity : Activity() {
         val price=field(item,"سعر البيع *","0").apply {
             inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
         }
-        val total=text("إجمالي الصنف: —",14f)
+        val total=text("إجمالي الصنف: —",11f,Color.rgb(122,81,24)).apply { typeface=Typeface.create(typeface,Typeface.BOLD);setPadding(dp(2),dp(9),dp(2),0) }
         item.tag=Pair(qty,price)
         item.addView(total)
         val update=object:android.text.TextWatcher {
@@ -665,11 +665,11 @@ class MainActivity : Activity() {
         }
         qty.addTextChangedListener(update)
         price.addTextChangedListener(update)
-        if(removable) item.addView(text("حذف الصنف",14f,gold).apply {
+        if(removable) item.addView(text("حذف الصنف",11f,Color.rgb(165,53,43)).apply {
             isClickable=true
             setOnClickListener { parent.removeView(item);onChange() }
         })
-        parent.addView(item,LinearLayout.LayoutParams(-1,-2).apply { bottomMargin=dp(12) })
+        parent.addView(item,LinearLayout.LayoutParams(-1,-2).apply { bottomMargin=dp(10) })
     }
     private fun fullSalePreview(parent:LinearLayout) {
         formHeader(parent,"فاتورة مبيعات","اختر من المنتجات أو امسح الباركود بالكاميرا لإضافة الساعة فوراً.","قائمة الفواتير","preview:المبيعات والفواتير")
