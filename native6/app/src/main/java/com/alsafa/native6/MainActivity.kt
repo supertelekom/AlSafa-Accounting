@@ -1948,7 +1948,8 @@ open class MainActivity:Activity() {
                                 if(row==null) "" else {
                                     row.optString("date")+" · "+row.optString("itemName")+
                                         " · الكمية: "+row.optString("qty")+
-                                        " · المسترد: "+row.optString("refundAmount")+
+                                        " · تخفيض الدين: "+row.optString("debtReduction")+
+                                        " · المبلغ المعاد: "+row.optString("refundAmount")+
                                         " "+row.optString("currency")
                                 }
                             }
