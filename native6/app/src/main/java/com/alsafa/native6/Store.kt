@@ -360,6 +360,16 @@ class Store(val helper:StoreDb) {
         return archivedSaleReview(invoice.getValue("archive_key"))
     }
 
+    /** Check every imported section, including products and repair records. */
+    fun archivedFullRestoreCounts():Map<String,Long> {
+        val result=archivedSectionCounts().toMutableMap()
+        result["products"]=scalar("SELECT count(*) FROM products WHERE kind=?","watch")
+        result["maintenanceParts"]=scalar("SELECT count(*) FROM products WHERE kind=?","part")
+        result["suppliers"]=scalar("SELECT count(*) FROM suppliers")
+        result["repairs"]=scalar("SELECT count(*) FROM repairs")
+        return result
+    }
+
     /** Paginated repair history with bounded BLOB reads for old embedded watch photos. */
     fun repairPage(term:String,limit:Int,offset:Int):List<Map<String,String>> {
         require(limit in 1..100 && offset>=0)
