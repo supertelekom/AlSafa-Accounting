@@ -23,7 +23,24 @@ internal class OriginalPageStructure(
     private val navigate: (String) -> Unit,
     private val back: () -> Unit
 ) {
-    private val pages by lazy { JSONObject(java.util.zip.GZIPInputStream(activity.assets.open("original-structure.json.gz")).bufferedReader().use { it.readText() }).getJSONObject("pages") }
+    private val pages by lazy { loadPages() }
+    private fun loadPages():JSONObject {
+        // Android packaging can strip .gz and expose the decompressed asset.
+        // Support both packaged names and inspect bytes rather than the extension.
+        val asset=try {
+            activity.assets.open("original-structure.json.gz")
+        } catch (_:java.io.FileNotFoundException) {
+            activity.assets.open("original-structure.json")
+        }
+        return asset.buffered().use { input ->
+            input.mark(2)
+            val first=input.read()
+            val second=input.read()
+            input.reset()
+            val decoded=if(first==0x1f && second==0x8b) java.util.zip.GZIPInputStream(input) else input
+            decoded.bufferedReader(Charsets.UTF_8).use { JSONObject(it.readText()).getJSONObject("pages") }
+        }
+    }
     private val font by lazy { Typeface.createFromAsset(activity.assets, "Tajawal-Medium.ttf") }
     private val ink = Color.rgb(62,52,41)
     private val muted = Color.rgb(138,123,108)
