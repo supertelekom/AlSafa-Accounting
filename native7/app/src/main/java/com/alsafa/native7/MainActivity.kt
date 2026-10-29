@@ -1782,7 +1782,10 @@ class MainActivity : Activity() {
             setOnClickListener { newProductPhotos.clear();navigateTo("preview:إضافة منتج جديد") }
         }
         parent.addView(addProduct,LinearLayout.LayoutParams(-1,dp(44)).apply { bottomMargin=dp(6) })
-        val search=field(parent,"ابحث باسم المنتج أو الباركود أو REF / Model...")
+        val search=field(parent,"بحث المنتجات","ابحث باسم المنتج أو الباركود أو REF / Model...").apply {
+            isSingleLine=true
+            imeOptions=android.view.inputmethod.EditorInfo.IME_ACTION_SEARCH
+        }
         val countLabel=text("",13f)
         parent.addView(countLabel)
         val list=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL;layoutDirection=View.LAYOUT_DIRECTION_RTL }
@@ -1933,9 +1936,20 @@ class MainActivity : Activity() {
                 list.addView(text(e.message ?: "تعذر تحميل المنتجات",13f))
             }
         }
+        // Debounce searches: querying SQLite and rebuilding product cards on each
+        // keystroke blocks the UI thread, especially with a large legacy backup.
+        val searchHandler=android.os.Handler(android.os.Looper.getMainLooper())
+        var pendingSearch:Runnable?=null
         search.addTextChangedListener(object:android.text.TextWatcher {
             override fun beforeTextChanged(s:CharSequence?,start:Int,count:Int,after:Int){}
-            override fun onTextChanged(s:CharSequence?,start:Int,before:Int,count:Int){load(true)}
+            override fun onTextChanged(s:CharSequence?,start:Int,before:Int,count:Int) {
+                pendingSearch?.let { searchHandler.removeCallbacks(it) }
+                val task=Runnable {
+                    if(search.isAttachedToWindow)load(true)
+                }
+                pendingSearch=task
+                searchHandler.postDelayed(task,180L)
+            }
             override fun afterTextChanged(s:android.text.Editable?){}
         })
         parent.addView(Button(this).apply { text="عرض المزيد";setOnClickListener { load(false) } })
