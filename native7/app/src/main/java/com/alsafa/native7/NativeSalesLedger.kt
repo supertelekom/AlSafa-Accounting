@@ -18,6 +18,7 @@ internal object NativeSalesLedger {
         db.execSQL("CREATE TABLE IF NOT EXISTS native_sale_lines (id TEXT PRIMARY KEY, sale_id TEXT NOT NULL, product_id TEXT NOT NULL, quantity INTEGER NOT NULL, unit_price REAL NOT NULL, unit_cost REAL NOT NULL)")
         db.execSQL("CREATE TABLE IF NOT EXISTS native_sale_stock (id TEXT PRIMARY KEY, sale_id TEXT NOT NULL, product_id TEXT NOT NULL, delta INTEGER NOT NULL, reason TEXT NOT NULL, created_at INTEGER NOT NULL)")
         db.execSQL("CREATE INDEX IF NOT EXISTS idx_native_sale_stock_product ON native_sale_stock(product_id)")
+        db.execSQL("CREATE TABLE IF NOT EXISTS native_sale_returns (id TEXT PRIMARY KEY, sale_id TEXT NOT NULL, product_id TEXT NOT NULL, quantity INTEGER NOT NULL, refund REAL NOT NULL, reason TEXT NOT NULL, created_at INTEGER NOT NULL)")
         db.execSQL("CREATE TABLE IF NOT EXISTS native_sale_collections (id TEXT PRIMARY KEY, sale_id TEXT NOT NULL, amount REAL NOT NULL, currency TEXT NOT NULL, account TEXT NOT NULL, created_at INTEGER NOT NULL, reason TEXT NOT NULL)")
     }
     fun stockDelta(db:SQLiteDatabase,productId:String):Int {
@@ -43,6 +44,7 @@ internal object NativeSalesLedger {
             for((productId,entries) in grouped) {
                 val product=LegacyProductRepository.findById(db,productId) ?: error("المنتج غير موجود")
                 val requested=entries.sumOf { it.quantity }
+                require(product.id==productId) { "تعذر تحديد المنتج" }
                 require(product.stock>=requested) { "المخزون غير كافٍ: "+product.name }
                 require(product.currency==currency) { "تحتاج أسعار العملات المختلفة إلى سعر تحويل صريح" }
                 require(product.cost.isFinite() && product.cost>=0) { "كلفة المنتج غير صالحة" }
@@ -76,7 +78,8 @@ internal object NativeSalesLedger {
         try {
             val sale=find(db,id) ?: error("الفاتورة غير موجودة")
             require(sale.status=="active") { "الفاتورة ملغاة" }
-            require(sale.collected+amount<=sale.total+0.000001) { "القبض أكبر من المتبقي" }
+            val refunded=db.rawQuery("SELECT COALESCE(SUM(refund),0) FROM native_sale_returns WHERE sale_id=?",arrayOf(id)).use { c -> if(c.moveToFirst()) c.getDouble(0) else 0.0 }
+            require(sale.collected+amount<=sale.total-refunded+0.000001) { "القبض أكبر من المتبقي" }
             insertCollection(db,id,amount,sale.currency,account,at,"collection")
             db.setTransactionSuccessful()
         } finally { db.endTransaction() }
@@ -88,14 +91,46 @@ internal object NativeSalesLedger {
         try {
             val sale=find(db,id) ?: error("الفاتورة غير موجودة")
             require(sale.status=="active") { "الفاتورة ملغاة مسبقاً" }
-            db.rawQuery("SELECT product_id,SUM(quantity) FROM native_sale_lines WHERE sale_id=? GROUP BY product_id",arrayOf(id)).use { c ->
+            db.rawQuery("SELECT product_id,-SUM(delta) FROM native_sale_stock WHERE sale_id=? GROUP BY product_id HAVING SUM(delta)<0",arrayOf(id)).use { c ->
                 while(c.moveToNext()) db.execSQL("INSERT INTO native_sale_stock VALUES (?,?,?,?,?,?)",
                     arrayOf<Any>(UUID.randomUUID().toString(),id,c.getString(0),c.getInt(1),"cancel: "+reason,at))
             }
-            db.rawQuery("SELECT amount,currency,account FROM native_sale_collections WHERE sale_id=? AND amount>0",arrayOf(id)).use { c ->
-                while(c.moveToNext()) insertCollection(db,id,-c.getDouble(0),c.getString(1),c.getString(2),at,"cancel: "+reason)
+            db.rawQuery("SELECT account,SUM(amount) FROM native_sale_collections WHERE sale_id=? GROUP BY account HAVING SUM(amount)>0",arrayOf(id)).use { c ->
+                while(c.moveToNext()) insertCollection(db,id,-c.getDouble(1),sale.currency,c.getString(0),at,"cancel: "+reason)
             }
             db.execSQL("UPDATE native_sales SET status='cancelled' WHERE id=?",arrayOf(id))
+            db.setTransactionSuccessful()
+        } finally { db.endTransaction() }
+    }
+    /**
+     * A partial return restores only the returned quantity and creates an auditable
+     * refund entry. A return cannot exceed quantities still sold on this invoice.
+     * Refunds are recorded against the same account and currency as the sale.
+     */
+    fun returnLine(db:SQLiteDatabase,saleId:String,productId:String,quantity:Int,reason:String,
+                   account:String="درج المحل",at:Long=System.currentTimeMillis()) {
+        require(quantity>0 && reason.isNotBlank()) { "الكمية وسبب المرتجع مطلوبان" }
+        create(db)
+        db.beginTransaction()
+        try {
+            val sale=find(db,saleId) ?: error("الفاتورة غير موجودة")
+            require(sale.status=="active") { "الفاتورة ملغاة" }
+            val sold=db.rawQuery("SELECT COALESCE(SUM(quantity),0),COALESCE(SUM(quantity*unit_price),0) FROM native_sale_lines WHERE sale_id=? AND product_id=?",
+                arrayOf(saleId,productId)).use { c -> c.moveToFirst();Pair(c.getInt(0),c.getDouble(1)) }
+            val returned=db.rawQuery("SELECT COALESCE(SUM(quantity),0) FROM native_sale_returns WHERE sale_id=? AND product_id=?",
+                arrayOf(saleId,productId)).use { c -> c.moveToFirst();c.getInt(0) }
+            require(sold.first>0 && returned+quantity<=sold.first) { "كمية المرتجع تتجاوز الكمية المباعة" }
+            val refund=sold.second*quantity/sold.first
+            val existingRefund=db.rawQuery("SELECT COALESCE(SUM(refund),0) FROM native_sale_returns WHERE sale_id=?",
+                arrayOf(saleId)).use { c -> c.moveToFirst();c.getDouble(0) }
+            require(existingRefund+refund<=sale.total+0.000001) { "قيمة المرتجعات تتجاوز الفاتورة" }
+            db.execSQL("INSERT INTO native_sale_returns VALUES (?,?,?,?,?,?,?)",
+                arrayOf<Any>(UUID.randomUUID().toString(),saleId,productId,quantity,refund,reason,at))
+            db.execSQL("INSERT INTO native_sale_stock VALUES (?,?,?,?,?,?)",
+                arrayOf<Any>(UUID.randomUUID().toString(),saleId,productId,quantity,"return: "+reason,at))
+            val refundable=(sale.collected-existingRefund).coerceAtLeast(0.0)
+            val cashRefund=refund.coerceAtMost(refundable)
+            if(cashRefund>0) insertCollection(db,saleId,-cashRefund,sale.currency,account,at,"return: "+reason)
             db.setTransactionSuccessful()
         } finally { db.endTransaction() }
     }
