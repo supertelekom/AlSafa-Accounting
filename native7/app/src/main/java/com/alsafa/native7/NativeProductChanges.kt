@@ -45,7 +45,7 @@ internal object NativeProductChanges {
     private fun validateUniqueness(db:SQLiteDatabase,product:JSONObject,id:String) {
         val barcode=product.optString("barcode").replace(Regex("\\s+"),"")
         if(barcode.isNotBlank()) {
-            db.rawQuery("SELECT id FROM domain_products WHERE id!=? AND REPLACE(barcode,' ','')=? LIMIT 1",
+            db.rawQuery("SELECT p.id FROM domain_products p LEFT JOIN native_product_edits e ON e.product_id=p.id WHERE p.id!=? AND REPLACE(COALESCE(json_extract(e.payload,'$.barcode'),p.barcode),' ','')=? LIMIT 1",
                 arrayOf(id,barcode)).use { require(!it.moveToFirst()) { "الباركود مستخدم" } }
             db.rawQuery("SELECT product_id FROM native_new_products WHERE product_id!=? AND REPLACE(json_extract(payload,'$.barcode'),' ','')=? LIMIT 1",
                 arrayOf(id,barcode)).use { require(!it.moveToFirst()) { "الباركود مستخدم" } }
