@@ -172,37 +172,81 @@ class MainActivity : Activity() {
         restoreRepairDraft()
     }
     private var pendingBarcodeField:EditText?=null
+    private var pendingBarcodeImageUri:android.net.Uri?=null
     private fun barcodeScanButton(parent:LinearLayout,target:EditText) {
         parent.addView(Button(this).apply {
             text="قراءة الباركود بالكاميرا"
             setOnClickListener {
                 pendingBarcodeField=target
                 try {
-                    // Keep compilation independent of the scanner library while Gradle syncs.
-                    val integratorClass=Class.forName("com.google.zxing.integration.android.IntentIntegrator")
-                    val integrator=integratorClass.getConstructor(Activity::class.java).newInstance(this@MainActivity)
-                    val formats=integratorClass.getField("ONE_D_CODE_TYPES").get(null) as java.util.Collection<*>
-                    integratorClass.getMethod("setDesiredBarcodeFormats",java.util.Collection::class.java).invoke(integrator,formats)
-                    integratorClass.getMethod("setPrompt",String::class.java).invoke(integrator,"وجّه الكاميرا إلى باركود الساعة")
-                    integratorClass.getMethod("setBeepEnabled",Boolean::class.javaPrimitiveType).invoke(integrator,false)
-                    integratorClass.getMethod("setOrientationLocked",Boolean::class.javaPrimitiveType).invoke(integrator,false)
-                    integratorClass.getMethod("initiateScan").invoke(integrator)
+                    val values=android.content.ContentValues().apply {
+                        put(android.provider.MediaStore.Images.Media.DISPLAY_NAME,"alsafa_barcode_"+System.currentTimeMillis()+".jpg")
+                        put(android.provider.MediaStore.Images.Media.MIME_TYPE,"image/jpeg")
+                    }
+                    val uri=contentResolver.insert(android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI,values)
+                        ?: throw IllegalStateException("تعذر تجهيز صورة الباركود")
+                    pendingBarcodeImageUri=uri
+                    val camera=android.content.Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE).apply {
+                        putExtra(android.provider.MediaStore.EXTRA_OUTPUT,uri)
+                        addFlags(android.content.Intent.FLAG_GRANT_WRITE_URI_PERMISSION or android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                    }
+                    startActivityForResult(camera,7313)
                 } catch(e:Exception) {
+                    pendingBarcodeImageUri?.let { contentResolver.delete(it,null,null) }
+                    pendingBarcodeImageUri=null
                     pendingBarcodeField=null
-                    android.widget.Toast.makeText(this@MainActivity,"قارئ الباركود غير متاح. تأكد من تنزيل مكتبة ZXing في Gradle Sync.",android.widget.Toast.LENGTH_LONG).show()
+                    android.widget.Toast.makeText(this@MainActivity,"تعذر فتح الكاميرا: "+e.message,android.widget.Toast.LENGTH_LONG).show()
                 }
             }
         })
     }
+    private fun readBarcodeWithMlKit(uri:android.net.Uri) {
+        try {
+            val image=com.google.mlkit.vision.common.InputImage.fromFilePath(this,uri)
+            val options=com.google.mlkit.vision.barcode.BarcodeScannerOptions.Builder()
+                .setBarcodeFormats(
+                    com.google.mlkit.vision.barcode.common.Barcode.FORMAT_EAN_13,
+                    com.google.mlkit.vision.barcode.common.Barcode.FORMAT_EAN_8,
+                    com.google.mlkit.vision.barcode.common.Barcode.FORMAT_UPC_A,
+                    com.google.mlkit.vision.barcode.common.Barcode.FORMAT_UPC_E,
+                    com.google.mlkit.vision.barcode.common.Barcode.FORMAT_CODE_128,
+                    com.google.mlkit.vision.barcode.common.Barcode.FORMAT_CODE_39,
+                    com.google.mlkit.vision.barcode.common.Barcode.FORMAT_ITF
+                ).build()
+            val scanner=com.google.mlkit.vision.barcode.BarcodeScanning.getClient(options)
+            scanner.process(image)
+                .addOnSuccessListener { codes ->
+                    val value=codes.firstOrNull()?.rawValue
+                    if(!value.isNullOrBlank())pendingBarcodeField?.setText(value)
+                    else android.widget.Toast.makeText(this,"لم يُعثر على باركود واضح. أعد التصوير.",android.widget.Toast.LENGTH_LONG).show()
+                }
+                .addOnFailureListener { e ->
+                    android.widget.Toast.makeText(this,"فشلت قراءة الباركود: "+e.message,android.widget.Toast.LENGTH_LONG).show()
+                }
+                .addOnCompleteListener {
+                    scanner.close()
+                    contentResolver.delete(uri,null,null)
+                    pendingBarcodeImageUri=null
+                    pendingBarcodeField=null
+                }
+        } catch(e:Exception) {
+            contentResolver.delete(uri,null,null)
+            pendingBarcodeImageUri=null
+            pendingBarcodeField=null
+            android.widget.Toast.makeText(this,"تعذر تحليل الباركود: "+e.message,android.widget.Toast.LENGTH_LONG).show()
+        }
+    }
     @Deprecated("Deprecated in Java")
     override fun onActivityResult(requestCode:Int,resultCode:Int,data:android.content.Intent?) {
         super.onActivityResult(requestCode,resultCode,data)
-        // ZXing embedded returns the scanned text in this intent extra.
-        if(requestCode==49374) {
-            if(resultCode==RESULT_OK) {
-                data?.getStringExtra("SCAN_RESULT")?.let { pendingBarcodeField?.setText(it) }
+        if(requestCode==7313) {
+            val uri=pendingBarcodeImageUri
+            if(resultCode==RESULT_OK && uri!=null) readBarcodeWithMlKit(uri)
+            else {
+                uri?.let { contentResolver.delete(it,null,null) }
+                pendingBarcodeImageUri=null
+                pendingBarcodeField=null
             }
-            pendingBarcodeField=null
             return
         }
         if(requestCode in 7311..7312 && resultCode!=RESULT_OK) {
