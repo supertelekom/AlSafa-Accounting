@@ -39,7 +39,7 @@ internal object NativeProductChanges {
                 "لا يمكن تغيير المخزون دون مطابقة الكمية مع دفعات التمويل"
             }
         }
-        val barcode=edited.optString("barcode").replace(Regex("\\\\s+"),"")
+        val barcode=edited.optString("barcode").replace(Regex("\\s+"),"")
         if(barcode.isNotBlank()) {
             create(db)
             db.rawQuery("SELECT p.id FROM domain_products p LEFT JOIN native_product_edits e ON e.product_id=p.id WHERE p.id!=? AND REPLACE(COALESCE(json_extract(e.payload,'$.barcode'),p.barcode),' ','')=? LIMIT 1",
