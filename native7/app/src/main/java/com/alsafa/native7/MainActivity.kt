@@ -1352,6 +1352,93 @@ class MainActivity : Activity() {
         load(true)
     }
     private var selectedInventoryProduct:String?=null
+    private fun productCreatePage(parent:LinearLayout) {
+        parent.addView(text("إضافة منتج جديد",23f,gold))
+        val name=field(parent,"اسم الساعة / المنتج *")
+        val brand=field(parent,"الماركة")
+        val model=field(parent,"REF / الموديل")
+        val sku=field(parent,"كود المنتج")
+        val barcode=field(parent,"باركود المنتج")
+        val stock=field(parent,"الكمية بالمخزون *").apply {
+            setText("1");inputType=InputType.TYPE_CLASS_NUMBER
+        }
+        val currency=select(parent,"عملة الأسعار",listOf("USD","TRY","SYP"))
+        val sale=field(parent,"سعر البيع *").apply {
+            inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
+        }
+        val cost=field(parent,"كلفة الشراء للقطعة").apply {
+            inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
+        }
+        val color=field(parent,"اللون")
+        val dial=field(parent,"لون المينا")
+        val strap=field(parent,"لون الحزام")
+        val imageKeys=listOf("photo" to "الصورة الرئيسية للساعة",
+            "photo2" to "صورة إضافية 1","photo3" to "صورة إضافية 2",
+            "barcodePhoto" to "صورة الباركود")
+        for((key,label) in imageKeys) {
+            parent.addView(text(label,14f))
+            val preview=ProductImageView.create(this,newProductPhotos[key].orEmpty(),dp(90),dp(90))
+            parent.addView(preview,LinearLayout.LayoutParams(dp(90),dp(90)))
+            val controls=LinearLayout(this).apply { orientation=LinearLayout.HORIZONTAL }
+            controls.addView(Button(this).apply {
+                text="الكاميرا";setOnClickListener { photoPreview=preview;selectProductPhoto(key,true) }
+            })
+            controls.addView(Button(this).apply {
+                text="الاستوديو";setOnClickListener { photoPreview=preview;selectProductPhoto(key,false) }
+            })
+            controls.addView(Button(this).apply {
+                text="حذف الصورة";setOnClickListener { newProductPhotos.remove(key);preview.setImageDrawable(null) }
+            })
+            parent.addView(controls)
+        }
+        parent.addView(Button(this).apply {
+            text="حفظ المنتج"
+            setOnClickListener {
+                try {
+                    val qty=stock.text.toString().toIntOrNull()
+                    require(qty!=null && qty>=0){"الكمية غير صالحة"}
+                    val price=sale.text.toString().toDoubleOrNull()
+                    val unitCost=cost.text.toString().toDoubleOrNull() ?: 0.0
+                    require(price!=null && price.isFinite() && price>=0){"سعر البيع غير صالح"}
+                    require(unitCost.isFinite() && unitCost>=0){"الكلفة غير صالحة"}
+                    val id=java.util.UUID.randomUUID().toString()
+                    val now=System.currentTimeMillis()
+                    val funding=org.json.JSONArray()
+                    if(qty>0)funding.put(org.json.JSONObject().apply {
+                        put("id",java.util.UUID.randomUUID().toString())
+                        put("purchaseId","")
+                        put("source","shop")
+                        put("qtyOriginal",qty)
+                        put("qtyRemaining",qty)
+                        put("unitCost",unitCost)
+                        put("currency",currency.selectedItem.toString())
+                        put("createdAt",now)
+                    })
+                    val product=org.json.JSONObject().apply {
+                        put("id",id);put("name",name.text.toString().trim())
+                        put("brand",brand.text.toString().trim())
+                        put("model",model.text.toString().trim())
+                        put("sku",sku.text.toString().trim())
+                        put("barcode",barcode.text.toString().trim())
+                        put("stock",qty);put("currency",currency.selectedItem.toString())
+                        put("salePrice",price);put("cost",unitCost)
+                        put("color",color.text.toString().trim())
+                        put("dialColor",dial.text.toString().trim())
+                        put("strapColor",strap.text.toString().trim())
+                        put("fundingLots",funding);put("createdAt",now)
+                        for((key,value) in newProductPhotos)put(key,value)
+                    }
+                    NativeProductChanges.createProduct(legacyBackupStore.writableDatabase,product)
+                    newProductPhotos.clear()
+                    android.widget.Toast.makeText(this@MainActivity,"تم حفظ المنتج",android.widget.Toast.LENGTH_SHORT).show()
+                    returnToPrevious()
+                } catch(e:Exception) {
+                    android.app.AlertDialog.Builder(this@MainActivity).setTitle("لم يُحفظ المنتج")
+                        .setMessage(e.message ?: "تعذر الحفظ").setPositiveButton("حسناً",null).show()
+                }
+            }
+        })
+    }
     private fun inventoryEditPage(parent:LinearLayout) {
         val id=selectedInventoryProduct ?: return
         val db=legacyBackupStore.writableDatabase
@@ -2174,7 +2261,7 @@ class MainActivity : Activity() {
             "preview:المنتجات والمخزون" -> productsPreview(body)
             "native:product-edit" -> inventoryEditPage(body)
             "native:stock-adjustment" -> inventoryAdjustmentPage(body)
-            "preview:إضافة منتج جديد" -> legacyFormCard(body) { productFormPreview(it) }
+            "preview:إضافة منتج جديد" -> legacyFormCard(body) { productCreatePage(it) }
             "preview:قطع الصيانة" -> maintenancePartsPreview(body)
             "preview:فواتير المرتجع" -> returnsPreview(body)
             "preview:الخزائن والأرصدة" -> vaultsPreview(body)
