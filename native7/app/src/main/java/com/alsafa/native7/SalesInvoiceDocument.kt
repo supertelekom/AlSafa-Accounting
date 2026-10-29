@@ -89,7 +89,10 @@ internal object SalesInvoiceDocument {
         }
         // The supplied legacy PDF has a tax row with zero tax. Do not invent
         // a nonzero tax amount without an actual stored tax field.
-        add("الضريبة : 0")
+        val tax=db.rawQuery("SELECT tax_amount FROM native_sale_discounts WHERE sale_id=?",arrayOf(id)).use { c ->
+            if(c.moveToFirst()) c.getDouble(0) else 0.0
+        }
+        add("الضريبة : "+money(tax)+" "+d.sale.currency)
         add("الإجمالي : "+money(d.sale.total)+" "+d.sale.currency,11f)
         add("المقبوض : "+money(d.sale.collected)+" "+d.sale.currency)
         add("المتبقي : "+money(NativeSalesLedger.remaining(db,id))+" "+d.sale.currency,11f)
