@@ -771,6 +771,27 @@ class MainActivity : Activity() {
             setText("0")
             inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
         }
+        val changeAccount=select(parent,"إرجاع الباقي عبر",listOf("درج المحل","الصندوق الخارجي","شام كاش","البنك"))
+        val changeCurrency=select(parent,"عملة الباقي",listOf("USD","TRY","SYP"))
+        val changeRate=field(parent,"سعر صرف الباقي (وحدات عملة الباقي لكل وحدة من عملة الفاتورة)","1").apply {
+            setText("1")
+            inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
+        }
+        val changePreview=text("الباقي للعميل: 0",14f,gold)
+        parent.addView(changePreview)
+        val recalcChange= {
+            val total=(price.text.toString().toDoubleOrNull() ?: 0.0)*(quantity.text.toString().toIntOrNull() ?: 0)
+            val tender=payment.text.toString().toDoubleOrNull() ?: 0.0
+            val rate=changeRate.text.toString().toDoubleOrNull() ?: 0.0
+            changePreview.text="الباقي للعميل: "+((tender-total).coerceAtLeast(0.0)*rate)+" "+changeCurrency.selectedItem.toString()
+        }
+        listOf(price,quantity,payment,changeRate).forEach { field ->
+            field.addTextChangedListener(object:android.text.TextWatcher {
+                override fun beforeTextChanged(s:CharSequence?,start:Int,count:Int,after:Int) {}
+                override fun afterTextChanged(s:android.text.Editable?) {}
+                override fun onTextChanged(s:CharSequence?,start:Int,before:Int,count:Int) { recalcChange() }
+            })
+        }
         val customer=field(parent,"اسم العميل","اختياري")
         val phone=field(parent,"رقم العميل","اختياري").apply { inputType=InputType.TYPE_CLASS_PHONE }
         val online=select(parent,"نوع البيع",listOf("بيع من المحل","بيع أونلاين"))
@@ -799,10 +820,11 @@ class MainActivity : Activity() {
                     require(qty>0 && current.stock>=qty) { "المخزون غير كافٍ" }
                     val amount=price.text.toString().toDoubleOrNull() ?: -1.0
                     val paid=payment.text.toString().toDoubleOrNull() ?: -1.0
-                    val id=NativeSalesLedger.save(legacyBackupStore.writableDatabase,
+                    val id=NativeSalesLedger.saveWithChange(legacyBackupStore.writableDatabase,
                         listOf(NativeSalesLedger.Line(product.id,qty,amount)),currency.selectedItem.toString(),
                         online.selectedItem.toString(),customer.text.toString(),phone.text.toString(),paid,
-                        account.selectedItem.toString())
+                        account.selectedItem.toString(),changeCurrency.selectedItem.toString(),
+                        changeAccount.selectedItem.toString(),changeRate.text.toString().toDoubleOrNull() ?: 0.0)
                     android.widget.Toast.makeText(this@MainActivity,"تم حفظ الفاتورة: "+id,android.widget.Toast.LENGTH_LONG).show()
                     navigateTo("preview:المبيعات والفواتير")
                 } catch(e:Exception) {
