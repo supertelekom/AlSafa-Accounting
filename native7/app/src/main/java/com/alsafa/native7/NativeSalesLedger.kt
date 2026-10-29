@@ -16,6 +16,7 @@ internal object NativeSalesLedger {
         db.execSQL("CREATE TABLE IF NOT EXISTS native_sales (id TEXT PRIMARY KEY, created_at INTEGER NOT NULL, currency TEXT NOT NULL, channel TEXT NOT NULL, customer TEXT NOT NULL, phone TEXT NOT NULL, total REAL NOT NULL, cost REAL NOT NULL, status TEXT NOT NULL DEFAULT 'active')")
         db.execSQL("CREATE TABLE IF NOT EXISTS native_sale_lines (id TEXT PRIMARY KEY, sale_id TEXT NOT NULL, product_id TEXT NOT NULL, quantity INTEGER NOT NULL, unit_price REAL NOT NULL, unit_cost REAL NOT NULL)")
         db.execSQL("CREATE TABLE IF NOT EXISTS native_sale_manual_items (line_id TEXT PRIMARY KEY, name TEXT NOT NULL, model TEXT NOT NULL)")
+        db.execSQL("CREATE TABLE IF NOT EXISTS native_sale_discounts (sale_id TEXT PRIMARY KEY, subtotal REAL NOT NULL, manual_discount REAL NOT NULL, rule_discount REAL NOT NULL, tax_rate REAL NOT NULL, tax_amount REAL NOT NULL)")
         db.execSQL("CREATE TABLE IF NOT EXISTS native_sale_stock (id TEXT PRIMARY KEY, sale_id TEXT NOT NULL, product_id TEXT NOT NULL, delta INTEGER NOT NULL, reason TEXT NOT NULL, created_at INTEGER NOT NULL)")
         db.execSQL("CREATE INDEX IF NOT EXISTS idx_native_sale_stock_product ON native_sale_stock(product_id)")
         db.execSQL("CREATE TABLE IF NOT EXISTS native_sale_returns (id TEXT PRIMARY KEY, sale_id TEXT NOT NULL, product_id TEXT NOT NULL, quantity INTEGER NOT NULL, refund REAL NOT NULL, reason TEXT NOT NULL, created_at INTEGER NOT NULL)")
@@ -85,18 +86,19 @@ internal object NativeSalesLedger {
         }
     }
     fun save(db:SQLiteDatabase,lines:List<Line>,currency:String,channel:String,customer:String,phone:String,
-             initialCollection:Double=0.0,account:String="درج المحل",changeAccount:String=account,changeCurrency:String=currency):String {
+             initialCollection:Double=0.0,account:String="درج المحل",changeAccount:String=account,changeCurrency:String=currency,manualDiscount:Double=0.0,ruleDiscount:Double=0.0,taxRate:Double=0.0):String {
         require(changeCurrency==currency) { "إرجاع الباقي بعملة أخرى يحتاج سعر تحويل صريح" }
         create(db)
         db.beginTransaction()
         try {
-            val id=saveInternal(db,lines,currency,channel,customer,phone,initialCollection,account,changeAccount)
+            val id=saveInternal(db,lines,currency,channel,customer,phone,initialCollection,account,changeAccount,manualDiscount,ruleDiscount,taxRate)
             db.setTransactionSuccessful()
             return id
         } finally { db.endTransaction() }
     }
     private fun saveInternal(db:SQLiteDatabase,lines:List<Line>,currency:String,channel:String,
-        customer:String,phone:String,initialCollection:Double,account:String,changeAccount:String=account):String {
+        customer:String,phone:String,initialCollection:Double,account:String,changeAccount:String=account,
+        manualDiscount:Double=0.0,ruleDiscount:Double=0.0,taxRate:Double=0.0):String {
         require(lines.isNotEmpty()) { "أضف صنفاً إلى الفاتورة" }
         require(currency in setOf("USD","TRY","SYP")) { "عملة غير مدعومة" }
         require(initialCollection.isFinite() && initialCollection>=0) { "قيمة القبض غير صالحة" }
@@ -132,6 +134,16 @@ internal object NativeSalesLedger {
                 arrayOf<Any>(lineId,line.name.trim(),line.model.trim()))
         }
         require(total.isFinite() && cost.isFinite() && total>=0) { "قيمة الفاتورة غير صالحة" }
+        require(manualDiscount.isFinite() && manualDiscount>=0 && ruleDiscount.isFinite() && ruleDiscount>=0 &&
+            manualDiscount+ruleDiscount<=total) { "الخصم غير صالح" }
+        require(taxRate.isFinite() && taxRate>=0) { "نسبة الضريبة غير صالحة" }
+        val subtotal=total
+        val taxable=total-manualDiscount-ruleDiscount
+        val tax=taxable*taxRate/100.0
+        require(tax.isFinite()) { "الضريبة غير صالحة" }
+        total=taxable+tax
+        db.execSQL("INSERT INTO native_sale_discounts VALUES (?,?,?,?,?,?)",
+            arrayOf<Any>(id,subtotal,manualDiscount,ruleDiscount,taxRate,tax))
         require(total>0 || initialCollection==0.0) { "لا يمكن قبض مبلغ لفاتورة قيمتها صفر" }
         db.execSQL("INSERT INTO native_sales VALUES (?,?,?,?,?,?,?,?,?)",arrayOf<Any>(id,now,currency,channel,customer,phone,total,cost,"active"))
         if(initialCollection>0) insertCollection(db,id,initialCollection,currency,account,now,"collection")
@@ -149,7 +161,7 @@ internal object NativeSalesLedger {
      */
     fun saveWithChange(db:SQLiteDatabase,lines:List<Line>,currency:String,channel:String,
         customer:String,phone:String,tendered:Double,tenderAccount:String,
-        changeCurrency:String,changeAccount:String,changeRate:Double):String {
+        changeCurrency:String,changeAccount:String,changeRate:Double,manualDiscount:Double=0.0,ruleDiscount:Double=0.0,taxRate:Double=0.0):String {
         require(tendered.isFinite() && tendered>=0) { "المبلغ المدفوع غير صالح" }
         require(changeCurrency in setOf("USD","TRY","SYP")) { "عملة الباقي غير صالحة" }
         require(changeRate.isFinite() && changeRate>0) { "سعر الصرف غير صالح" }
@@ -158,7 +170,7 @@ internal object NativeSalesLedger {
         create(db)
         db.beginTransaction()
         try {
-            val id=saveInternal(db,lines,currency,channel,customer,phone,0.0,tenderAccount)
+            val id=saveInternal(db,lines,currency,channel,customer,phone,0.0,tenderAccount,manualDiscount=manualDiscount,ruleDiscount=ruleDiscount,taxRate=taxRate)
             val sale=find(db,id) ?: error("تعذر قراءة الفاتورة")
             val collected=tendered.coerceAtMost(sale.total)
             val change=(tendered-sale.total).coerceAtLeast(0.0)
@@ -176,7 +188,7 @@ internal object NativeSalesLedger {
     }
     data class Tender(val amount:Double,val currency:String,val account:String,val rate:Double)
     fun saveMixed(db:SQLiteDatabase,lines:List<Line>,currency:String,channel:String,
-        customer:String,phone:String,tenders:List<Tender>):String {
+        customer:String,phone:String,tenders:List<Tender>,manualDiscount:Double=0.0,ruleDiscount:Double=0.0,taxRate:Double=0.0):String {
         require(tenders.isNotEmpty()) { "حدد مبالغ القبض" }
         require(tenders.all { it.amount.isFinite() && it.amount>0 && it.rate.isFinite() && it.rate>0 &&
             it.currency in setOf("USD","TRY","SYP") && it.account.isNotBlank() &&
@@ -184,7 +196,7 @@ internal object NativeSalesLedger {
         create(db)
         db.beginTransaction()
         try {
-            val id=saveInternal(db,lines,currency,channel,customer,phone,0.0,tenders.first().account)
+            val id=saveInternal(db,lines,currency,channel,customer,phone,0.0,tenders.first().account,manualDiscount=manualDiscount,ruleDiscount=ruleDiscount,taxRate=taxRate)
             val sale=find(db,id) ?: error("الفاتورة غير موجودة")
             val total=tenders.sumOf { it.amount*it.rate }
             require(total.isFinite() && total<=sale.total+0.000001) { "الدفع المختلط أكبر من قيمة الفاتورة؛ استخدم إرجاع الباقي" }
@@ -294,7 +306,13 @@ internal object NativeSalesLedger {
             val returned=db.rawQuery("SELECT COALESCE(SUM(quantity),0) FROM native_sale_returns WHERE sale_id=? AND product_id=?",
                 arrayOf(saleId,productId)).use { c -> c.moveToFirst();c.getInt(0) }
             require(sold.first>0 && returned+quantity<=sold.first) { "كمية المرتجع تتجاوز الكمية المباعة" }
-            val refund=sold.second*quantity/sold.first
+            val grossRefund=sold.second*quantity/sold.first
+            val refund=db.rawQuery("SELECT subtotal,manual_discount,rule_discount,tax_rate FROM native_sale_discounts WHERE sale_id=?",arrayOf(saleId)).use { c ->
+                if(c.moveToFirst() && c.getDouble(0)>0) {
+                    val factor=(c.getDouble(0)-c.getDouble(1)-c.getDouble(2))/c.getDouble(0)
+                    grossRefund*factor*(1.0+c.getDouble(3)/100.0)
+                } else grossRefund
+            }
             val existingRefund=db.rawQuery("SELECT COALESCE(SUM(refund),0) FROM native_sale_returns WHERE sale_id=?",
                 arrayOf(saleId)).use { c -> c.moveToFirst();c.getDouble(0) }
             require(existingRefund+refund<=sale.total+0.000001) { "قيمة المرتجعات تتجاوز الفاتورة" }
