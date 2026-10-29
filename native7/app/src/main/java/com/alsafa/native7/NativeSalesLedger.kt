@@ -63,7 +63,8 @@ internal object NativeSalesLedger {
             }
             db.execSQL("INSERT INTO native_sale_stock VALUES (?,?,?,?,?,?)",arrayOf<Any>(UUID.randomUUID().toString(),id,productId,-requested,"sale",now))
         }
-        require(total.isFinite() && cost.isFinite()) { "قيمة الفاتورة غير صالحة" }
+        require(total.isFinite() && cost.isFinite() && total>=0) { "قيمة الفاتورة غير صالحة" }
+        require(initialCollection<=total+0.000001 || total>0) { "المبلغ المقبوض غير صالح" }
         db.execSQL("INSERT INTO native_sales VALUES (?,?,?,?,?,?,?,?,?)",arrayOf<Any>(id,now,currency,channel,customer,phone,total,cost,"active"))
         if(initialCollection>0) insertCollection(db,id,initialCollection,currency,account,now,"collection")
         val change=(initialCollection-total).coerceAtLeast(0.0)
@@ -84,6 +85,7 @@ internal object NativeSalesLedger {
         require(tendered.isFinite() && tendered>=0) { "المبلغ المدفوع غير صالح" }
         require(changeCurrency in setOf("USD","TRY","SYP")) { "عملة الباقي غير صالحة" }
         require(changeRate.isFinite() && changeRate>0) { "سعر الصرف غير صالح" }
+        require(tenderAccount.isNotBlank() && changeAccount.isNotBlank()) { "حدد خزنة القبض والباقي" }
         if(currency==changeCurrency) require(kotlin.math.abs(changeRate-1.0)<0.000001) { "سعر الصرف لنفس العملة يجب أن يكون 1" }
         create(db)
         db.beginTransaction()
