@@ -21,11 +21,8 @@ internal object LegacyReceivables {
     data class Result(val paid:Double,val refunded:Double,val netPaid:Double,
         val effectiveTotal:Double,val balance:Double,val status:String)
 
-    /**
-     * originalTotal must be supplied by the separately ported saleTotal or
-     * repairInvoiceTotal rule. Never silently assume record.total for repairs.
-     */
-    fun calculate(type:String,record:JSONObject,originalTotal:Double,
+    /** Calculates original receivables from the source-derived invoice total. */
+    fun calculate(type:String,record:JSONObject,
         payments:JSONArray?,returns:JSONArray?):Result {
         require(type=="sale" || type=="repair")
         val id=record.getString("id")
@@ -35,6 +32,7 @@ internal object LegacyReceivables {
         val paid=base+matchedPayments.sumOf { number(it.opt("amount")) }
         val refunded=matchedReturns.sumOf { max(0.0,number(it.opt("refundAmount"))) }
         val netPaid=max(0.0,paid-refunded)
+        val originalTotal=if(type=="sale") LegacyAccountingRules.saleTotal(record) else LegacyAccountingRules.repairInvoiceTotal(record)
         val effective=max(0.0,originalTotal-matchedReturns.sumOf { number(it.opt("creditAmount")) })
         val collectionDiscount=if(type=="sale" && record.optString("saleType","store")=="online")
             matchedPayments.sumOf { max(0.0,number(it.opt("onlineCollectionDiscount"))) } else 0.0
