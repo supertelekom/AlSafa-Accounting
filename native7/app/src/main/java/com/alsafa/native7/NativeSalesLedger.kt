@@ -348,6 +348,19 @@ internal object NativeSalesLedger {
         }
         return result
     }
+    data class LegacyMonthlyTotals(val currency:String,val sales:Double,val withdrawals:Double)
+    fun legacyMonthlyTotals(db:SQLiteDatabase,month:String):List<LegacyMonthlyTotals> {
+        require(Regex("\\d{4}-\\d{2}").matches(month))
+        LegacyDomainTables.create(db)
+        return listOf("USD","TRY","SYP").map { currency ->
+            fun total(sql:String):Double=db.rawQuery(sql,arrayOf(currency,month+"%")).use { c ->
+                c.moveToFirst();c.getDouble(0)
+            }
+            LegacyMonthlyTotals(currency,
+                total("SELECT COALESCE(SUM(total),0) FROM domain_sales WHERE currency=? AND date LIKE ?"),
+                total("SELECT COALESCE(SUM(amount),0) FROM domain_partnerWithdrawals WHERE currency=? AND date LIKE ?"))
+        }
+    }
     data class Audit(val currency:String,val sales:Double,val collected:Double,
         val returned:Double,val recognizedProfit:Double)
     fun monthlyAudit(db:SQLiteDatabase,from:Long,to:Long):List<Audit> {
