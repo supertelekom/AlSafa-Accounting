@@ -236,15 +236,15 @@ internal class OriginalPageStructure(
             gravity=if(cs.contains("father-main-card")) Gravity.CENTER else Gravity.CENTER_VERTICAL
             items(rich).forEachIndexed { index,child ->
                 val content=build(child).apply { if(this is TextView && index==0) {
-                    textSize=if(cs.contains("father-main-card")) 51f else if(cs.contains("mode-card")) 31f else if(cs.contains("modern-feature-card")) 28f else 25f
+                    textSize=if(cs.contains("father-main-card")) { if(activity.resources.configuration.screenWidthDp<=420) 42f else 51f } else if(cs.contains("mode-card")) 31f else if(cs.contains("modern-feature-card")) 28f else 25f
                     if(!horizontal) gravity=Gravity.CENTER
                 } else if(this is TextView && index>0) {
-                    textSize=when { cs.contains("father-main-card") && index==1 -> 24f;cs.contains("mode-card") && index==1 -> 20f;cs.contains("simple-action") && index==1 -> if(activity.resources.configuration.screenWidthDp<=420) 15f else 17f;cs.contains("modern-feature-card") && index==1 -> 15f;index==1 -> 14f;cs.contains("father-main-card") -> 11f;cs.contains("mode-card") -> 11f;cs.contains("simple-action") -> 11f;else -> 10f }
+                    textSize=when { cs.contains("father-main-card") && index==1 -> if(activity.resources.configuration.screenWidthDp<=420) 20f else 24f;cs.contains("mode-card") && index==1 -> 20f;cs.contains("simple-action") && index==1 -> if(activity.resources.configuration.screenWidthDp<=420) 15f else 17f;cs.contains("modern-feature-card") && index==1 -> 15f;index==1 -> 14f;cs.contains("father-main-card") -> 11f;cs.contains("mode-card") -> 11f;cs.contains("simple-action") -> 11f;else -> 10f }
                 } }
-                addView(content,if(horizontal) LinearLayout.LayoutParams(if(index==1) 0 else if(index==0) dp(46) else -2,-2,if(index==1) 1f else 0f).apply { if(index==0) marginEnd=dp(12) }
+                addView(content,if(horizontal) LinearLayout.LayoutParams(if(index==1) 0 else if(index==0) dp(if(cs.contains("mode-card")) 58 else if(cs.contains("modern-feature-card")) 42 else 46) else -2,-2,if(index==1) 1f else 0f).apply { if(index==0) marginEnd=dp(if(cs.contains("mode-card")) 15 else if(cs.contains("modern-feature-card")) 13 else if(cs.contains("simple-action")) 12 else 12) }
                     else LinearLayout.LayoutParams(-1,-2))
             }
-            minimumHeight=dp(when { cs.contains("father-main-card") -> 185;cs.contains("mode-card") -> 122;cs.contains("manage-card") -> 115;cs.contains("modern-feature-card") -> 86;cs.contains("simple-action") && activity.resources.configuration.screenWidthDp<=420 -> 96;else -> 104 })
+            minimumHeight=dp(when { cs.contains("father-main-card") -> if(activity.resources.configuration.screenWidthDp<=420) 155 else 185;cs.contains("mode-card") -> 122;cs.contains("manage-card") -> 115;cs.contains("modern-feature-card") -> 86;cs.contains("simple-action") && activity.resources.configuration.screenWidthDp<=420 -> 96;else -> 104 })
             setPadding(dp(if(cs.contains("mode-card")) 18 else if(cs.contains("modern-feature-card")) 16 else if(cs.contains("simple-action")) 14 else 15),dp(if(cs.contains("mode-card")) 18 else if(cs.contains("modern-feature-card")) 16 else if(cs.contains("simple-action")) 16 else 15),dp(if(cs.contains("mode-card")) 18 else if(cs.contains("modern-feature-card")) 16 else if(cs.contains("simple-action")) 14 else 15),dp(if(cs.contains("mode-card")) 18 else if(cs.contains("modern-feature-card")) 16 else if(cs.contains("simple-action")) 16 else 15))
             background=when {
                 cs.contains("father-main-card") -> GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(Color.rgb(255,253,249),Color.rgb(247,234,211))).apply { cornerRadius=dp(24).toFloat();setStroke(dp(2),Color.rgb(216,189,136)) }
