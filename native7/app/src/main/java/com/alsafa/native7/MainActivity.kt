@@ -1217,18 +1217,15 @@ class MainActivity : Activity() {
                 }
                 val discount=manualDiscount.text.toString().toDoubleOrNull() ?: 0.0
                 require(discount.isFinite() && discount>=0) { "الخصم غير صالح" }
-                require((taxRate.text.toString().toDoubleOrNull() ?: 0.0)==0.0) { "لا يمكن حفظ الضريبة قبل تفعيل حسابها" }
+                val enteredTaxRate=taxRate.text.toString().toDoubleOrNull() ?: 0.0
+                require(enteredTaxRate.isFinite() && enteredTaxRate>=0) { "نسبة الضريبة غير صالحة" }
                 val subtotal=saleLines.sumOf { it.quantity*it.unitPrice }
                 val savedRule=savedDiscountRules.getOrNull(discountRule.selectedItemPosition-1)
                 val ruleDiscount=LegacyDiscountRules.amount(savedRule,subtotal,saleCurrency.selectedItem.toString())
                 val combinedDiscount=discount+ruleDiscount
                 require(subtotal>0 && combinedDiscount<=subtotal) { "الخصم أكبر من قيمة الفاتورة" }
-                if(combinedDiscount>0) {
-                    val factor=(subtotal-combinedDiscount)/subtotal
-                    for(i in saleLines.indices) saleLines[i]=saleLines[i].copy(unitPrice=saleLines[i].unitPrice*factor)
-                }
                 val amount=initialPayment.text.toString().toDoubleOrNull() ?: 0.0
-                val finalTotal=subtotal-combinedDiscount
+                val finalTotal=(subtotal-combinedDiscount)*(1.0+enteredTaxRate/100.0)
                 val deferred=paymentStatus.selectedItemPosition>=2
                 val id=if(collectionMode.selectedItemPosition==1) {
                     val tenders=mixedRows.mapNotNull { (money,values,account) ->
@@ -1243,10 +1240,10 @@ class MainActivity : Activity() {
                     }
                     if(tenders.isEmpty()) NativeSalesLedger.save(legacyBackupStore.writableDatabase,saleLines,
                         saleCurrency.selectedItem.toString(),saleType.selectedItem.toString(),
-                        saleCustomer.text.toString(),salePhone.text.toString())
+                        saleCustomer.text.toString(),salePhone.text.toString(),manualDiscount=discount,ruleDiscount=ruleDiscount,taxRate=enteredTaxRate)
                     else NativeSalesLedger.saveMixed(legacyBackupStore.writableDatabase,saleLines,
                         saleCurrency.selectedItem.toString(),saleType.selectedItem.toString(),
-                        saleCustomer.text.toString(),salePhone.text.toString(),tenders)
+                        saleCustomer.text.toString(),salePhone.text.toString(),tenders,discount,ruleDiscount,enteredTaxRate)
                 } else {
                     require(!deferred || amount==0.0) { "البيع الآجل أو عند الاستلام لا يقبل قبضاً الآن" }
                     require(paymentStatus.selectedItemPosition!=0 || amount+0.000001>=finalTotal) { "حالة مدفوع بالكامل تتطلب قبض إجمالي الفاتورة" }
@@ -1255,7 +1252,7 @@ class MainActivity : Activity() {
                     saleType.selectedItem.toString(),saleCustomer.text.toString(),salePhone.text.toString(),amount,
                     when(paymentMethod.selectedItemPosition) { 1 -> "شام كاش"; 2 -> "البنك"; else -> "درج المحل" },
                     changeCurrency.selectedItem.toString(),changeAccount.selectedItem.toString(),
-                    changeRate.text.toString().toDoubleOrNull() ?: 0.0
+                    changeRate.text.toString().toDoubleOrNull() ?: 0.0,discount,ruleDiscount,enteredTaxRate
                 )
                 }
                 android.widget.Toast.makeText(this,"تم حفظ الفاتورة: "+id,android.widget.Toast.LENGTH_LONG).show()
