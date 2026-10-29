@@ -2111,7 +2111,9 @@ class MainActivity : Activity() {
                             val value=spinner.selectedItem.toString()
                             if(value!="غير محدد")put(key,if(key=="warrantyMonths")value.toIntOrNull() ?: 0 else value)
                         }
-                        for((key,value) in newProductPhotos)put(key,value)
+                        for(key in listOf("photo","photo2","photo3","barcodePhoto")) {
+                            newProductPhotos[key]?.let { put(key,it) }
+                        }
                     }
                     val all=mutableListOf(product)
                     if(variantDrafts.isNotEmpty()) {
