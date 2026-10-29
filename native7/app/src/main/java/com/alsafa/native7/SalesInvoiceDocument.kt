@@ -114,7 +114,17 @@ internal object SalesInvoiceDocument {
                 paint.textSize=size
                 paint.color=Color.BLACK
                 y+=lineHeight
-                canvas.drawText(value,width-margin-paint.measureText(value),y,paint)
+                val separator=value.indexOf(" : ")
+                if(separator>0 && width>=190) {
+                    val label=value.substring(0,separator)
+                    val content=value.substring(separator+3)
+                    val labelWidth=paint.measureText(label)
+                    val valueWidth=paint.measureText(content)
+                    if(labelWidth+valueWidth+18f<width-2*margin) {
+                        canvas.drawText(label,width-margin-labelWidth,y,paint)
+                        canvas.drawText(content,margin,y,paint)
+                    } else canvas.drawText(value,width-margin-paint.measureText(value),y,paint)
+                } else canvas.drawText(value,width-margin-paint.measureText(value),y,paint)
             }
             doc.finishPage(page)
             val dir=File(activity.cacheDir,"invoices").apply { mkdirs() }
