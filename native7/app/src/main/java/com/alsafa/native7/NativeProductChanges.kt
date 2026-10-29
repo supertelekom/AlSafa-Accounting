@@ -169,6 +169,19 @@ internal object NativeProductChanges {
                     }
                 }
             }
+            if(groupId.isNotBlank() &&
+                LegacyProductRules.productVariantIdentity(edited)!=LegacyProductRules.productVariantIdentity(previous)) {
+                db.rawQuery("SELECT COALESCE(e.payload,n.payload) FROM native_new_products n LEFT JOIN native_product_edits e ON e.product_id=n.product_id WHERE n.product_id!=? AND json_extract(COALESCE(e.payload,n.payload),'$.variantGroupId')=?",
+                    arrayOf(id,groupId)).use { cursor ->
+                    while(cursor.moveToNext()) {
+                        val other=JSONObject(cursor.getString(0))
+                        require(LegacyProductRules.productVariantIdentity(other)!=
+                            LegacyProductRules.productVariantIdentity(edited)) {
+                            "هذا اللون موجود مسبقاً في مجموعة المنتج"
+                        }
+                    }
+                }
+            }
             // Financial movements require their own atomic stock/cash posting.
             require(LegacyAccountingRules.number(previous.opt("stock"))==stock) {
                 "تعديل كمية المخزون يتطلب تسوية مخزون مستقلة مع حركة موثقة"
