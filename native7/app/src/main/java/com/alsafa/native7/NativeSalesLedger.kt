@@ -315,7 +315,9 @@ internal object NativeSalesLedger {
     fun compareCashMovements(db:SQLiteDatabase,from:Long,to:Long):List<CashComparison> {
         require(to>from)
         LegacyDomainTables.create(db)
-        val dateFormat=java.text.SimpleDateFormat("yyyy-MM-dd",java.util.Locale.US)
+        val dateFormat=java.text.SimpleDateFormat("yyyy-MM-dd",java.util.Locale.US).apply {
+            timeZone=java.util.TimeZone.getTimeZone("Asia/Damascus")
+        }
         val start=dateFormat.format(java.util.Date(from))
         val end=dateFormat.format(java.util.Date(to))
         val result=mutableListOf<CashComparison>()
