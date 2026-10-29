@@ -16,4 +16,4 @@ android {
 
 
 // Bundled ML Kit barcode model: works offline without Play Services download.
-dependencies { implementation("com.google.mlkit:barcode-scanning:17.3.0") }
+dependencies { implementation("com.google.mlkit:barcode-scanning:17.3.0"); implementation("com.google.zxing:core:3.5.3") }
