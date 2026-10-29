@@ -2,7 +2,6 @@ package com.alsafa.native7
 
 import android.database.sqlite.SQLiteDatabase
 import java.util.UUID
-import kotlin.math.abs
 
 /**
  * Local append-only sales ledger. Source imports are immutable. All writes affecting a
@@ -128,11 +127,23 @@ internal object NativeSalesLedger {
                 arrayOf<Any>(UUID.randomUUID().toString(),saleId,productId,quantity,refund,reason,at))
             db.execSQL("INSERT INTO native_sale_stock VALUES (?,?,?,?,?,?)",
                 arrayOf<Any>(UUID.randomUUID().toString(),saleId,productId,quantity,"return: "+reason,at))
-            val refundable=sale.collected.coerceAtLeast(0.0)
+            val refundable=db.rawQuery("SELECT COALESCE(SUM(amount),0) FROM native_sale_collections WHERE sale_id=? AND account=?",arrayOf(saleId,account)).use { c -> c.moveToFirst();c.getDouble(0).coerceAtLeast(0.0) }
             val cashRefund=refund.coerceAtMost(refundable)
             if(cashRefund>0) insertCollection(db,saleId,-cashRefund,sale.currency,account,at,"return: "+reason)
             db.setTransactionSuccessful()
         } finally { db.endTransaction() }
+    }
+    fun remaining(db:SQLiteDatabase,id:String):Double {
+        val sale=find(db,id) ?: error("الفاتورة غير موجودة")
+        val returns=db.rawQuery("SELECT COALESCE(SUM(refund),0) FROM native_sale_returns WHERE sale_id=?",arrayOf(id)).use { c -> c.moveToFirst();c.getDouble(0) }
+        return (sale.total-returns-sale.collected).coerceAtLeast(0.0)
+    }
+    fun accountMovement(db:SQLiteDatabase,account:String,currency:String,from:Long,to:Long):Double {
+        create(db)
+        db.rawQuery("SELECT COALESCE(SUM(amount),0) FROM native_sale_collections WHERE account=? AND currency=? AND created_at>=? AND created_at<?",arrayOf(account,currency,from.toString(),to.toString())).use { c ->
+            c.moveToFirst()
+            return c.getDouble(0)
+        }
     }
     /** Profit is earned only on the actual collection day, proportionally to cash received. */
     fun recognizedProfit(db:SQLiteDatabase,from:Long,to:Long):Double {
