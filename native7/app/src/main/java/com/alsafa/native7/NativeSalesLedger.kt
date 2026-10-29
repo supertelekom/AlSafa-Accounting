@@ -64,7 +64,7 @@ internal object NativeSalesLedger {
             db.execSQL("INSERT INTO native_sale_stock VALUES (?,?,?,?,?,?)",arrayOf<Any>(UUID.randomUUID().toString(),id,productId,-requested,"sale",now))
         }
         require(total.isFinite() && cost.isFinite() && total>=0) { "قيمة الفاتورة غير صالحة" }
-        require(initialCollection<=total+0.000001 || total>0) { "المبلغ المقبوض غير صالح" }
+        require(total>0 || initialCollection==0.0) { "لا يمكن قبض مبلغ لفاتورة قيمتها صفر" }
         db.execSQL("INSERT INTO native_sales VALUES (?,?,?,?,?,?,?,?,?)",arrayOf<Any>(id,now,currency,channel,customer,phone,total,cost,"active"))
         if(initialCollection>0) insertCollection(db,id,initialCollection,currency,account,now,"collection")
         val change=(initialCollection-total).coerceAtLeast(0.0)
