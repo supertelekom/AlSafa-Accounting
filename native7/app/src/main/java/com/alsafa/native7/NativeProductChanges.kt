@@ -274,6 +274,12 @@ internal object NativeProductChanges {
             for(edit in edits) {
                 val id=edit.getString("id")
                 val old=originals.getValue(id)
+                require(!isDeleted(db,id)) { "لا يمكن تعديل لون منتج محذوف" }
+                val price=LegacyAccountingRules.number(edit.opt("salePrice"))
+                val cost=LegacyAccountingRules.number(edit.opt("cost"))
+                require(price.isFinite() && cost.isFinite() && price>=0 && cost>=0) {
+                    "سعر أو تكلفة اللون غير صالحة"
+                }
                 require(old.optString("variantGroupId")==group) { "مجموعة المنتج مختلفة" }
                 require(LegacyAccountingRules.number(old.opt("stock"))==
                     LegacyAccountingRules.number(edit.opt("stock"))) { "تعديل المخزون يتطلب التسوية" }
