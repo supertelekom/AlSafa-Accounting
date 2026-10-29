@@ -20,6 +20,7 @@ internal object NativeSalesLedger {
         db.execSQL("CREATE TABLE IF NOT EXISTS native_sale_returns (id TEXT PRIMARY KEY, sale_id TEXT NOT NULL, product_id TEXT NOT NULL, quantity INTEGER NOT NULL, refund REAL NOT NULL, reason TEXT NOT NULL, created_at INTEGER NOT NULL)")
         db.execSQL("CREATE TABLE IF NOT EXISTS native_sale_change (id TEXT PRIMARY KEY, sale_id TEXT NOT NULL, amount_in_invoice_currency REAL NOT NULL, invoice_currency TEXT NOT NULL, payout REAL NOT NULL, payout_currency TEXT NOT NULL, payout_account TEXT NOT NULL, tender_account TEXT NOT NULL, exchange_rate REAL NOT NULL, created_at INTEGER NOT NULL)")
         db.execSQL("CREATE TABLE IF NOT EXISTS native_sale_mixed (id TEXT PRIMARY KEY, sale_id TEXT NOT NULL, amount REAL NOT NULL, currency TEXT NOT NULL, account TEXT NOT NULL, invoice_equivalent REAL NOT NULL, exchange_rate REAL NOT NULL, created_at INTEGER NOT NULL)")
+        db.execSQL("CREATE TABLE IF NOT EXISTS native_partner_withdrawals (id TEXT PRIMARY KEY, partner TEXT NOT NULL, currency TEXT NOT NULL, amount REAL NOT NULL, created_at INTEGER NOT NULL, note TEXT NOT NULL)")
         db.execSQL("CREATE TABLE IF NOT EXISTS native_sale_profit_adjustments (id TEXT PRIMARY KEY, sale_id TEXT NOT NULL, amount REAL NOT NULL, currency TEXT NOT NULL, created_at INTEGER NOT NULL, reason TEXT NOT NULL)")
         db.execSQL("CREATE TABLE IF NOT EXISTS native_sale_collections (id TEXT PRIMARY KEY, sale_id TEXT NOT NULL, amount REAL NOT NULL, currency TEXT NOT NULL, account TEXT NOT NULL, created_at INTEGER NOT NULL, reason TEXT NOT NULL)")
     }
@@ -264,6 +265,33 @@ internal object NativeSalesLedger {
                 PartnerShare("عبد الكريم",35,value*0.35),
                 PartnerShare("يزن",25,value*0.25))
         }
+    data class PartnerBalance(val name:String,val currency:String,val profit:Double,
+        val withdrawals:Double,val remaining:Double,val previousUnpaid:Double)
+    fun recordPartnerWithdrawal(db:SQLiteDatabase,name:String,currency:String,amount:Double,
+        at:Long=System.currentTimeMillis(),note:String="") {
+        require(name in setOf("الأب","عبد الكريم","يزن") && currency in setOf("USD","TRY","SYP"))
+        require(amount.isFinite() && amount>0)
+        create(db)
+        db.execSQL("INSERT INTO native_partner_withdrawals VALUES (?,?,?,?,?,?)",
+            arrayOf<Any>(UUID.randomUUID().toString(),name,currency,amount,at,note))
+    }
+    fun partnerBalances(db:SQLiteDatabase,from:Long,to:Long):List<PartnerBalance> {
+        require(to>from)
+        val monthly=partnerShares(db,from,to)
+        val previous=partnerShares(db,0,from)
+        return listOf("USD","TRY","SYP").flatMap { currency ->
+            listOf("الأب","عبد الكريم","يزن").map { name ->
+                val earned=monthly[currency]?.firstOrNull { it.name==name }?.profit ?: 0.0
+                val old=previous[currency]?.firstOrNull { it.name==name }?.profit ?: 0.0
+                fun withdrawn(start:Long,end:Long):Double =
+                    db.rawQuery("SELECT COALESCE(SUM(amount),0) FROM native_partner_withdrawals WHERE partner=? AND currency=? AND created_at>=? AND created_at<?",
+                        arrayOf(name,currency,start.toString(),end.toString())).use { c -> c.moveToFirst();c.getDouble(0) }
+                val currentWithdrawals=withdrawn(from,to)
+                PartnerBalance(name,currency,earned,currentWithdrawals,earned-currentWithdrawals,
+                    old-withdrawn(0,from))
+            }
+        }
+    }
     /** Returned cost uses weighted average historical cost of the sold product. */
     fun returnedCost(db:SQLiteDatabase,saleId:String):Double {
         create(db)
