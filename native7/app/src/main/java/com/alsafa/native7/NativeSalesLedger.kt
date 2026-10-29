@@ -10,7 +10,7 @@ import java.util.UUID
  * conversion rate and must not be silently summed.
  */
 internal object NativeSalesLedger {
-    data class Line(val productId:String,val quantity:Int,val unitPrice:Double,val name:String="",val model:String="")
+    data class Line(val productId:String,val quantity:Int,val unitPrice:Double,val name:String="",val model:String="",val unitCost:Double=0.0)
     data class Sale(val id:String,val currency:String,val total:Double,val cost:Double,val collected:Double,val status:String)
     fun create(db:SQLiteDatabase) {
         db.execSQL("CREATE TABLE IF NOT EXISTS native_sales (id TEXT PRIMARY KEY, created_at INTEGER NOT NULL, currency TEXT NOT NULL, channel TEXT NOT NULL, customer TEXT NOT NULL, phone TEXT NOT NULL, total REAL NOT NULL, cost REAL NOT NULL, status TEXT NOT NULL DEFAULT 'active')")
@@ -100,7 +100,7 @@ internal object NativeSalesLedger {
         require(lines.isNotEmpty()) { "أضف صنفاً إلى الفاتورة" }
         require(currency in setOf("USD","TRY","SYP")) { "عملة غير مدعومة" }
         require(initialCollection.isFinite() && initialCollection>=0) { "قيمة القبض غير صالحة" }
-        require(lines.all { it.quantity>0 && it.unitPrice.isFinite() && it.unitPrice>=0 && (it.productId.isNotBlank() || it.name.isNotBlank()) }) { "بيانات الأصناف غير صالحة" }
+        require(lines.all { it.quantity>0 && it.unitPrice.isFinite() && it.unitPrice>=0 && it.unitCost.isFinite() && it.unitCost>=0 && (it.productId.isNotBlank() || it.name.isNotBlank()) }) { "بيانات الأصناف غير صالحة" }
         require(channel in setOf("بيع من المحل","بيع أونلاين")) { "نوع البيع غير صالح" }
         require(account.isNotBlank() && changeAccount.isNotBlank()) { "حدد خزنة القبض والباقي" }
         val id=UUID.randomUUID().toString()
@@ -125,8 +125,9 @@ internal object NativeSalesLedger {
         for(line in lines.filter { it.productId.isBlank() }) {
             val lineId=UUID.randomUUID().toString()
             total+=line.unitPrice*line.quantity
+            cost+=line.unitCost*line.quantity
             db.execSQL("INSERT INTO native_sale_lines VALUES (?,?,?,?,?,?)",
-                arrayOf<Any>(lineId,id,"",line.quantity,line.unitPrice,0.0))
+                arrayOf<Any>(lineId,id,"",line.quantity,line.unitPrice,line.unitCost))
             db.execSQL("INSERT INTO native_sale_manual_items VALUES (?,?,?)",
                 arrayOf<Any>(lineId,line.name.trim(),line.model.trim()))
         }
