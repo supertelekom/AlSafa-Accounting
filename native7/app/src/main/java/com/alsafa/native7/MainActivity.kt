@@ -1509,7 +1509,7 @@ class MainActivity : Activity() {
                                     OR EXISTS(SELECT 1 FROM native_new_products n
                                         WHERE n.product_id=l.product_id AND
                                         COALESCE((SELECT json_extract(e.payload,'$.name') FROM native_product_edits e WHERE e.product_id=n.product_id),
-                                        json_extract(n.payload,'$.name')) LIKE ?)))))
+                                        json_extract(n.payload,'$.name')) LIKE ?))))
                                 AND (? IS NULL OR s.created_at>=?)
                                 AND (? IS NULL OR s.created_at<?)
                             ORDER BY s.created_at DESC LIMIT 30""".trimIndent(),
