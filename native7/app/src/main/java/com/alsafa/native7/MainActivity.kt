@@ -1286,15 +1286,18 @@ class MainActivity : Activity() {
     }
     private fun productsPreview(parent:LinearLayout) {
         parent.addView(text("المنتجات والمخزون",26f,gold))
-        disabledAction(parent,"⬆ استيراد آمن")
-        parent.addView(text("＋ منتج",18f,gold).apply {
+        val addProduct=text("＋ منتج",16f,gold).apply {
+            gravity=Gravity.CENTER_VERTICAL or Gravity.RIGHT
+            background=panel(paper,12)
+            setPadding(dp(14),dp(8),dp(14),dp(8))
             isClickable=true
             setOnClickListener { newProductPhotos.clear();navigateTo("preview:إضافة منتج جديد") }
-        })
+        }
+        parent.addView(addProduct,LinearLayout.LayoutParams(-1,dp(44)).apply { bottomMargin=dp(6) })
         val search=field(parent,"ابحث باسم المنتج أو الباركود أو REF / Model...")
         val countLabel=text("",13f)
         parent.addView(countLabel)
-        val list=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL }
+        val list=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL;layoutDirection=View.LAYOUT_DIRECTION_RTL }
         parent.addView(list)
         var offset=0
         fun load(reset:Boolean) {
@@ -1320,7 +1323,8 @@ class MainActivity : Activity() {
                     val row=LinearLayout(this).apply {
                         orientation=LinearLayout.VERTICAL
                         background=panel(paper,14)
-                        setPadding(dp(10),dp(10),dp(10),dp(10))
+                        layoutDirection=View.LAYOUT_DIRECTION_RTL
+                        setPadding(dp(14),dp(12),dp(14),dp(12))
                     }
                     val header=LinearLayout(this).apply {
                         orientation=LinearLayout.HORIZONTAL
@@ -1335,13 +1339,13 @@ class MainActivity : Activity() {
                     val labels=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL }
                     labels.addView(text(p.name,16f).apply { gravity=Gravity.RIGHT })
                     labels.addView(text(p.raw.optString("brand")+" · "+p.raw.optString("model"),12f).apply { gravity=Gravity.RIGHT })
-                    header.addView(labels,LinearLayout.LayoutParams(0,-2,1f))
+                    header.addView(labels,LinearLayout.LayoutParams(0,-2,1f).apply { marginStart=dp(12) })
                     row.addView(header)
                     val stock=p.stock
                     // Reserved/available quantities are not shown until the legacy reservation logic is ported.
-                    row.addView(text("المخزون الفعلي: $stock    سعر البيع: ${p.salePrice} ${p.currency}",13f))
-                    row.addView(text("كلفة الشراء للقطعة: ${p.cost} ${p.currency}",13f))
-                    row.addView(text("الباركود: "+p.barcode.ifBlank { "—" },12f))
+                    row.addView(text("المخزون الفعلي: $stock    سعر البيع: ${p.salePrice} ${p.currency}",13f).apply { gravity=Gravity.RIGHT })
+                    row.addView(text("كلفة الشراء للقطعة: ${p.cost} ${p.currency}",13f).apply { gravity=Gravity.RIGHT })
+                    row.addView(text("الباركود: "+p.barcode.ifBlank { "—" },12f).apply { gravity=Gravity.RIGHT })
                     val extraPhotos=listOf("photo2","photo3").mapNotNull { key ->
                         p.raw.optString(key).takeIf { it.isNotBlank() }?.let { key to it }
                     }
@@ -1356,7 +1360,7 @@ class MainActivity : Activity() {
                     }
                     if(stock<=LegacyAccountingRules.number(p.raw.opt("minStock")))
                         row.addView(text("تنبيه: المخزون وصل للحد الأدنى",12f,Color.RED))
-                    val actions=LinearLayout(this).apply { orientation=LinearLayout.HORIZONTAL }
+                    val actions=LinearLayout(this).apply { orientation=LinearLayout.HORIZONTAL;layoutDirection=View.LAYOUT_DIRECTION_RTL;gravity=Gravity.RIGHT }
                     val edit=Button(this).apply {
                         text="تعديل"
                         setOnClickListener { newProductPhotos.clear();selectedInventoryProduct=p.id;navigateTo("native:product-edit") }
@@ -1375,7 +1379,7 @@ class MainActivity : Activity() {
                         text="صورة الباركود"
                         setOnClickListener { ProductImageView.show(this@MainActivity,barcodePhoto,"صورة الباركود") }
                     })
-                    row.addView(actions)
+                    row.addView(actions,LinearLayout.LayoutParams(-1,-2).apply { topMargin=dp(6) })
                     list.addView(row,LinearLayout.LayoutParams(-1,-2).apply { bottomMargin=dp(10) })
                 }
                 offset+=products.size
