@@ -24,12 +24,12 @@ import java.net.URLEncoder
 internal object SalesInvoiceDocument {
     private data class Row(val name:String,val qty:Int,val price:Double)
     private data class Detail(val sale:NativeSalesLedger.Sale,val customer:String,
-        val phone:String,val createdAt:Long,val rows:List<Row>,val refunded:Double)
+        val phone:String,val createdAt:Long,val channel:String,val rows:List<Row>,val refunded:Double)
     private fun detail(db:SQLiteDatabase,id:String):Detail {
         NativeSalesLedger.create(db)
         val sale=NativeSalesLedger.find(db,id) ?: error("الفاتورة غير موجودة")
-        val header=db.rawQuery("SELECT customer,phone,created_at FROM native_sales WHERE id=?",arrayOf(id)).use { c ->
-            require(c.moveToFirst());Triple(c.getString(0),c.getString(1),c.getLong(2))
+        val header=db.rawQuery("SELECT customer,phone,created_at,channel FROM native_sales WHERE id=?",arrayOf(id)).use { c ->
+            require(c.moveToFirst());listOf(c.getString(0),c.getString(1),c.getLong(2).toString(),c.getString(3))
         }
         val rows=mutableListOf<Row>()
         db.rawQuery("SELECT l.product_id,l.quantity,l.unit_price FROM native_sale_lines l WHERE l.sale_id=?",arrayOf(id)).use { c ->
@@ -41,7 +41,7 @@ internal object SalesInvoiceDocument {
         val refunded=db.rawQuery("SELECT COALESCE(SUM(refund),0) FROM native_sale_returns WHERE sale_id=?",arrayOf(id)).use { c ->
             c.moveToFirst();c.getDouble(0)
         }
-        return Detail(sale,header.first,header.second,header.third,rows,refunded)
+        return Detail(sale,header[0],header[1],header[2].toLong(),header[3],rows,refunded)
     }
     private fun money(value:Double)=String.format(java.util.Locale.US,"%.2f",value)
     /** Thermal roll PDF. Width is physical millimetres; height follows invoice content. */
@@ -92,7 +92,7 @@ internal object SalesInvoiceDocument {
         add("الإجمالي : "+money(d.sale.total)+" "+d.sale.currency,11f)
         add("المقبوض : "+money(d.sale.collected)+" "+d.sale.currency)
         add("المتبقي : "+money(NativeSalesLedger.remaining(db,id))+" "+d.sale.currency,11f)
-        add("طريقة الدفع : "+d.sale.channel)
+        add("طريقة الدفع : "+d.channel)
         if(d.refunded>0.000001) add("المرتجعات : "+money(d.refunded)+" "+d.sale.currency)
         if(d.sale.status!="active") add("ملغاة")
         add("شكراً لثقتكم بنا",11f)
