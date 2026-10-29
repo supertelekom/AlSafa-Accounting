@@ -960,6 +960,7 @@ class MainActivity : Activity() {
         val price=field(item,"سعر البيع *","0").apply {
             inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
         }
+        val cost=field(item,"تكلفة الصنف","0").apply { inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL; setText("0") }
         val total=text("إجمالي الصنف: —",11f,Color.rgb(122,81,24)).apply { typeface=Typeface.create(typeface,Typeface.BOLD);setPadding(dp(2),dp(9),dp(2),0) }
         item.tag=Pair(qty,price)
         item.addView(total)
@@ -1211,7 +1212,8 @@ class MainActivity : Activity() {
                     val name=edits.getOrNull(0)?.text?.toString()?.trim().orEmpty()
                     val model=edits.getOrNull(1)?.text?.toString()?.trim().orEmpty()
                     require(!productId.isNullOrBlank() || name.isNotBlank()) { "اسم الصنف مطلوب" }
-                    saleLines.add(NativeSalesLedger.Line(productId.orEmpty(),qty,price,name,model))
+                    val unitCost=if(productId.isNullOrBlank()) edits.getOrNull(4)?.text?.toString()?.toDoubleOrNull() ?: 0.0 else 0.0
+                    saleLines.add(NativeSalesLedger.Line(productId.orEmpty(),qty,price,name,model,unitCost))
                 }
                 val discount=manualDiscount.text.toString().toDoubleOrNull() ?: 0.0
                 require(discount.isFinite() && discount>=0) { "الخصم غير صالح" }
