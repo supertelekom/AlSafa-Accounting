@@ -237,11 +237,29 @@ internal object NativeProductChanges {
                     }
                 }
             }
+            // Reject a colour identity already used by another product in this group.
+            val editedIds=ids.toSet()
+            db.rawQuery("SELECT COALESCE(e.payload,p.raw_json) FROM domain_products p LEFT JOIN native_product_edits e ON e.product_id=p.id WHERE p.variantGroupId=?",
+                arrayOf(group)).use { c ->
+                while(c.moveToNext()) {
+                    val other=JSONObject(c.getString(0))
+                    if(other.optString("id") !in editedIds) {
+                        require(edits.none { LegacyProductRules.productVariantIdentity(it)==LegacyProductRules.productVariantIdentity(other) }) {
+                            "هذا اللون موجود مسبقاً في مجموعة المنتج"
+                        }
+                    }
+                }
+            }
             val codes=mutableSetOf<String>()
             for(edit in edits) {
                 val code=edit.optString("barcode").replace(Regex("\\s+"),"")
                 require(code.isBlank() || codes.add(code)) { "الباركود مكرر بين الألوان" }
                 if(code.isNotBlank()) {
+                    db.rawQuery("SELECT id FROM domain_maintenanceParts WHERE REPLACE(barcode,' ','')=? LIMIT 1",
+                        arrayOf(code)).use { c ->
+                        require(!c.moveToFirst()) { "الباركود مستخدم لقطعة صيانة" }
+                    }
+
                     db.rawQuery("SELECT p.id FROM domain_products p LEFT JOIN native_product_edits e ON e.product_id=p.id WHERE REPLACE(COALESCE(json_extract(e.payload,'$.barcode'),p.barcode),' ','')=?",
                         arrayOf(code)).use { c ->
                         while(c.moveToNext())require(c.getString(0) in ids) { "الباركود مستخدم في منتج آخر" }
