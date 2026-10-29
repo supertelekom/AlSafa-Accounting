@@ -2207,7 +2207,11 @@ class MainActivity : Activity() {
         val members=mutableListOf<org.json.JSONObject>()
         db.rawQuery("SELECT p.id FROM domain_products p WHERE p.variantGroupId=? UNION SELECT n.product_id FROM native_new_products n WHERE json_extract(n.payload,'$.variantGroupId')=?",
             arrayOf(groupId,groupId)).use { c ->
-            while(c.moveToNext())NativeProductChanges.get(db,c.getString(0))?.let { members.add(it) }
+            while(c.moveToNext()) {
+                val memberId=c.getString(0)
+                if(!NativeProductChanges.isDeleted(db,memberId))
+                    NativeProductChanges.get(db,memberId)?.let { members.add(it) }
+            }
         }
         parent.addView(text("تعديل ألوان المنتج",22f,gold))
         parent.addView(text("لكل لون صورة وسعر وتكلفة وباركود مستقل. تسوية الكميات تتم من صفحة المخزون.",13f))
@@ -2226,6 +2230,7 @@ class MainActivity : Activity() {
                 setText(member.optString("variantColor").ifBlank { member.optString("color") })
             }
             val barcode=field(card,"باركود اللون").apply { setText(member.optString("barcode")) }
+            barcodeScanButton(card,barcode)
             val sale=field(card,"سعر البيع").apply {
                 setText(member.optString("salePrice"))
                 inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
@@ -2297,6 +2302,7 @@ class MainActivity : Activity() {
         val strapColor=field(parent,"لون الحزام").apply { setText(product.optString("strapColor")) }
         val variantColor=field(parent,"لون النسخة").apply { setText(product.optString("variantColor")) }
         val barcode=field(parent,"باركود المنتج").apply { setText(product.optString("barcode")) }
+        barcodeScanButton(parent,barcode)
         val cost=field(parent,"كلفة الشراء للقطعة").apply {
             setText(product.optString("cost"))
             inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
