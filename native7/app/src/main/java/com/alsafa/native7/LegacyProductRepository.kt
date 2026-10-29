@@ -34,7 +34,7 @@ internal object LegacyProductRepository {
               json_extract(COALESCE(e.payload,n.payload),'$.sku') sku,
               1000000+n.created_at sort_order
             FROM native_new_products n LEFT JOIN native_product_edits e ON e.product_id=n.product_id
-        ) $where ORDER BY sort_order LIMIT ? OFFSET ?"""
+         ) $where ORDER BY name COLLATE NOCASE, sort_order LIMIT ? OFFSET ?"""
         val output=ArrayList<Product>()
         db.rawQuery(sql,args).use { c ->
             while(c.moveToNext()) {
