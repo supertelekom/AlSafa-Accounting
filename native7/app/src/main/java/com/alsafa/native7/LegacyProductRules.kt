@@ -53,15 +53,31 @@ internal object LegacyProductRules {
     }
     fun barcodeConflict(barcode:String,products:JSONArray,parts:JSONArray,
         exceptType:String="",exceptId:String=""):JSONObject? {
-        val code=barcode.trim()
+        val code=barcode.replace(Regex("\\s+"),"")
         if(code.isBlank())return null
         return rows(products).firstOrNull {
-            it.optString("barcode").trim()==code &&
+            it.optString("barcode").replace(Regex("\\s+"),"")==code &&
                 !(exceptType=="product" && it.optString("id")==exceptId)
         } ?: rows(parts).firstOrNull {
             it.optString("barcode").trim()==code &&
                 !(exceptType=="part" && it.optString("id")==exceptId)
         }
+    }
+    data class VariantInput(val id:String,val color:String,val barcode:String)
+    fun validateVariants(variants:List<VariantInput>,products:JSONArray,parts:JSONArray,
+        ignoreProductIds:Set<String> = emptySet()):List<String> {
+        val errors=ArrayList<String>()
+        val seen=HashSet<String>()
+        for(v in variants) {
+            if(colorKey(v.color).isBlank())errors.add("اكتب اسم اللون في كل صف.")
+            val code=v.barcode.replace(Regex("\\s+"),"")
+            if(code.isBlank())continue
+            if(!seen.add(code))errors.add("الباركود $code مكرر بين الألوان.")
+            val existing=barcodeConflict(code,products,parts)
+            if(existing!=null && existing.optString("id") !in ignoreProductIds)
+                errors.add("الباركود $code مستخدم مسبقاً في منتج أو قطعة صيانة.")
+        }
+        return errors
     }
     fun trackedQuantity(product:JSONObject):Double=rows(product.optJSONArray("fundingLots"))
         .sumOf { max(0.0,n(it.opt("qtyRemaining"))) }
