@@ -294,7 +294,7 @@ internal object NativeSalesLedger {
             require(existingRefund+refund<=sale.total+0.000001) { "قيمة المرتجعات تتجاوز الفاتورة" }
             db.execSQL("INSERT INTO native_sale_returns VALUES (?,?,?,?,?,?,?)",
                 arrayOf<Any>(UUID.randomUUID().toString(),saleId,productId,quantity,refund,reason,at))
-            db.execSQL("INSERT INTO native_sale_stock VALUES (?,?,?,?,?,?)",
+            if(productId.isNotBlank()) db.execSQL("INSERT INTO native_sale_stock VALUES (?,?,?,?,?,?)",
                 arrayOf<Any>(UUID.randomUUID().toString(),saleId,productId,quantity,"return: "+reason,at))
             // Mixed tender is held in native_sale_mixed, while the invoice-equivalent
             // collection uses the synthetic account "mixed". Never pay a refund
