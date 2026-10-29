@@ -742,7 +742,29 @@ class MainActivity : Activity() {
                 background=panel(Color.rgb(247,237,221),12,Color.rgb(223,201,164))
                 isClickable=true
                 setOnClickListener {
-                    android.widget.Toast.makeText(this@MainActivity,"قارئ الباركود وربط المخزون لم يُنفذا بعد",android.widget.Toast.LENGTH_SHORT).show()
+                    if(label.contains("قراءة الباركود")) {
+                        pendingBarcodeField=barcodeInput
+                        try {
+                            val values=android.content.ContentValues().apply {
+                                put(android.provider.MediaStore.Images.Media.DISPLAY_NAME,"alsafa_barcode_"+System.currentTimeMillis()+".jpg")
+                                put(android.provider.MediaStore.Images.Media.MIME_TYPE,"image/jpeg")
+                            }
+                            val uri=contentResolver.insert(android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI,values)
+                                ?: throw IllegalStateException("تعذر تجهيز صورة الباركود")
+                            pendingBarcodeImageUri=uri
+                            startActivityForResult(android.content.Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE).apply {
+                                putExtra(android.provider.MediaStore.EXTRA_OUTPUT,uri)
+                                addFlags(android.content.Intent.FLAG_GRANT_WRITE_URI_PERMISSION or android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                            },7313)
+                        } catch(e:Exception) {
+                            pendingBarcodeImageUri?.let { contentResolver.delete(it,null,null) }
+                            pendingBarcodeImageUri=null
+                            pendingBarcodeField=null
+                            android.widget.Toast.makeText(this@MainActivity,e.message ?: "تعذر فتح الكاميرا",android.widget.Toast.LENGTH_LONG).show()
+                        }
+                    } else {
+                        navigateTo("preview:مبيع كامل")
+                    }
                 }
             }
             barcodeActions.addView(action,LinearLayout.LayoutParams(-2,dp(58)).apply { marginStart=dp(8) })
