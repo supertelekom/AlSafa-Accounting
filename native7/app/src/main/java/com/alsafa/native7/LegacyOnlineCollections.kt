@@ -43,8 +43,9 @@ internal object LegacyOnlineCollections {
                     row.optString("currency"),saleCurrency,rate)
                 if(converted!=null) openingCash+=max(0.0,converted)
             }
-            val corrected=sale.has("paymentMetadataCorrectedAt") ||
-                sale.has("paymentCurrencyCorrectedAt") || sale.has("financialFootprintRepairedAt")
+            val corrected=!sale.isNull("paymentMetadataCorrectedAt") && sale.optString("paymentMetadataCorrectedAt").isNotBlank() ||
+                !sale.isNull("paymentCurrencyCorrectedAt") && sale.optString("paymentCurrencyCorrectedAt").isNotBlank() ||
+                !sale.isNull("financialFootprintRepairedAt") && sale.optString("financialFootprintRepairedAt").isNotBlank()
             val explicitToRemove=if(corrected)relevant.sumOf {
                 max(0.0,LegacyAccountingRules.number(it.opt("amount"))) } else sameDay
             val opening=if(hasCashRows) max(0.0,openingCash-sameDay)
