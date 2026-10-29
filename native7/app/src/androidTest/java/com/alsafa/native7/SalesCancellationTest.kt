@@ -80,4 +80,28 @@ class SalesCancellationTest {
             assertEquals(0.0,sum(db,"native_sale_mixed","amount",id),0.000001)
         } finally { db.close() }
     }
+    @Test fun mixedReturnRejectsUnrelatedCashboxWithoutChangingStock() {
+        val (db,id)=fixture(80.0,true)
+        try {
+            try {
+                NativeSalesLedger.returnLine(db,id,"watch",1,"مرتجع","درج المحل",2000L)
+                fail("Mixed return from unrelated cashbox accepted")
+            } catch(_:IllegalArgumentException) {}
+            assertEquals(-2.0,sum(db,"native_sale_stock","delta",id),0.000001)
+            assertEquals(0.0,sum(db,"native_sale_returns","refund",id),0.000001)
+            assertTrue(NativeSalesLedger.auditMixedCollections(db).isEmpty())
+        } finally { db.close() }
+    }
+    @Test fun repeatedPartialReturnsThenCancelDoNotDoubleRefund() {
+        val (db,id)=fixture(100.0,true)
+        try {
+            NativeSalesLedger.returnLine(db,id,"watch",1,"مرتجع أول","mixed",2000L)
+            NativeSalesLedger.returnLine(db,id,"watch",1,"مرتجع ثان","mixed",2500L)
+            assertEquals(0.0,sum(db,"native_sale_mixed","invoice_equivalent",id),0.000001)
+            NativeSalesLedger.cancel(db,id,"إلغاء",3000L)
+            verify(db,id)
+            assertEquals(0.0,sum(db,"native_sale_mixed","amount",id),0.000001)
+        } finally { db.close() }
+    }
+
 }
