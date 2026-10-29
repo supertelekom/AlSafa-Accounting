@@ -2388,10 +2388,57 @@ class MainActivity : Activity() {
         parent.addView(text("لم يتم تحميل قطع الصيانة بعد.",15f))
     }
     private fun returnsPreview(parent:LinearLayout) {
-        parent.addView(text("فواتير المرتجع والاستبدال",26f,gold))
-        parent.addView(text("كل مرتجع محفوظ كمستند مستقل ومرتبط بفاتورته الأصلية.",14f))
-        parent.addView(text("الأرشيف غير متصل بالبيانات بعد.",15f))
-        parent.addView(text("لا تُنفذ أي إعادة للمخزون أو الخزنة من هذه المعاينة.",12f))
+        formHeader(parent,"فواتير المرتجع والاستبدال","كل مرتجع يبقى مرتبطاً بالفاتورة الأصلية، دون حذف سجلاتها.","رجوع","preview:المبيعات والفواتير")
+        val saleId=field(parent,"رقم الفاتورة الأصلية","أدخل رقم الفاتورة")
+        val productId=field(parent,"معرّف المنتج","اختر الصنف المباع")
+        val qty=field(parent,"الكمية المرتجعة","1").apply {
+            setText("1")
+            inputType=InputType.TYPE_CLASS_NUMBER
+        }
+        val reason=field(parent,"سبب المرتجع","سبب المرتجع مطلوب")
+        val account=select(parent,"الخزنة",listOf("درج المحل","الصندوق الخارجي","شام كاش","البنك"))
+        val matches=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL }
+        parent.addView(matches)
+        fun showLines() {
+            matches.removeAllViews()
+            val id=saleId.text.toString().trim()
+            if(id.isBlank()) return
+            try {
+                val db=legacyBackupStore.readableDatabase
+                NativeSalesLedger.create(db)
+                db.rawQuery("SELECT l.product_id,COALESCE(p.name,l.product_id),SUM(l.quantity) FROM native_sale_lines l LEFT JOIN domain_products p ON p.id=l.product_id WHERE l.sale_id=? GROUP BY l.product_id",arrayOf(id)).use { cursor ->
+                    while(cursor.moveToNext()) {
+                        val pid=cursor.getString(0)
+                        matches.addView(text(cursor.getString(1)+" · "+cursor.getInt(2),13f,gold).apply {
+                            isClickable=true
+                            setOnClickListener { productId.setText(pid) }
+                        })
+                    }
+                }
+            } catch(e:Exception) {
+                matches.addView(text("تعذر تحميل أصناف الفاتورة: "+(e.message ?: ""),12f))
+            }
+        }
+        saleId.addTextChangedListener(object:android.text.TextWatcher {
+            override fun beforeTextChanged(s:CharSequence?,start:Int,count:Int,after:Int) {}
+            override fun afterTextChanged(s:android.text.Editable?) {}
+            override fun onTextChanged(s:CharSequence?,start:Int,before:Int,count:Int) { showLines() }
+        })
+        parent.addView(Button(this).apply {
+            text="حفظ المرتجع"
+            setOnClickListener {
+                try {
+                    NativeSalesLedger.returnLine(legacyBackupStore.writableDatabase,
+                        saleId.text.toString().trim(),productId.text.toString().trim(),
+                        qty.text.toString().toIntOrNull() ?: 0,reason.text.toString().trim(),
+                        account.selectedItem.toString())
+                    android.widget.Toast.makeText(this@MainActivity,"تم حفظ المرتجع وعكس حركة المخزون",android.widget.Toast.LENGTH_LONG).show()
+                    navigateTo("preview:المبيعات والفواتير")
+                } catch(e:Exception) {
+                    android.widget.Toast.makeText(this@MainActivity,e.message ?: "تعذر المرتجع",android.widget.Toast.LENGTH_LONG).show()
+                }
+            }
+        })
     }
     private fun vaultsPreview(parent:LinearLayout) {
         parent.addView(text("الخزائن والأرصدة",26f,gold))
