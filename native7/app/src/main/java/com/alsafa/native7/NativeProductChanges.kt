@@ -83,8 +83,10 @@ internal object NativeProductChanges {
                     }
                 }
             }
+            val previous=JSONObject(old!!)
             val groupId=edited.optString("variantGroupId")
-            if(groupId.isNotBlank()) {
+            if(groupId.isNotBlank() && (groupId!=previous.optString("variantGroupId") ||
+                LegacyProductRules.productVariantIdentity(edited)!=LegacyProductRules.productVariantIdentity(previous))) {
                 val identity=LegacyProductRules.productVariantIdentity(edited)
                 db.rawQuery("SELECT COALESCE(e.payload,p.raw_json) FROM domain_products p LEFT JOIN native_product_edits e ON e.product_id=p.id WHERE p.variantGroupId=? AND p.id!=?",
                     arrayOf(groupId,id)).use { cursor ->
@@ -96,7 +98,6 @@ internal object NativeProductChanges {
                     }
                 }
             }
-            val previous=JSONObject(old!!)
             // Financial movements require their own atomic stock/cash posting.
             require(LegacyAccountingRules.number(previous.opt("stock"))==stock) {
                 "تعديل كمية المخزون يتطلب تسوية مخزون مستقلة مع حركة موثقة"
