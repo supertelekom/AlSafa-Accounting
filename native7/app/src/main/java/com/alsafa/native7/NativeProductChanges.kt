@@ -74,7 +74,7 @@ internal object NativeProductChanges {
                     arrayOf(id,proposedBarcode)).use { cursor ->
                     require(!cursor.moveToFirst()) { "الباركود مستخدم في منتج آخر" }
                 }
-                db.rawQuery("SELECT raw_json FROM domain_maintenance_parts",null).use { cursor ->
+                db.rawQuery("SELECT raw_json FROM domain_maintenanceParts",null).use { cursor ->
                     while(cursor.moveToNext()) {
                         val part=JSONObject(cursor.getString(0))
                         require(part.optString("barcode").replace(Regex("\\s+"),"")!=proposedBarcode) {
