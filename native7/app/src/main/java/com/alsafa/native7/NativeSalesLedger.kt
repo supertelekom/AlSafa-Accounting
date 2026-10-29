@@ -128,7 +128,7 @@ internal object NativeSalesLedger {
                 arrayOf<Any>(UUID.randomUUID().toString(),saleId,productId,quantity,refund,reason,at))
             db.execSQL("INSERT INTO native_sale_stock VALUES (?,?,?,?,?,?)",
                 arrayOf<Any>(UUID.randomUUID().toString(),saleId,productId,quantity,"return: "+reason,at))
-            val refundable=(sale.collected-existingRefund).coerceAtLeast(0.0)
+            val refundable=sale.collected.coerceAtLeast(0.0)
             val cashRefund=refund.coerceAtMost(refundable)
             if(cashRefund>0) insertCollection(db,saleId,-cashRefund,sale.currency,account,at,"return: "+reason)
             db.setTransactionSuccessful()
