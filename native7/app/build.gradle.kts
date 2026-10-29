@@ -3,7 +3,7 @@ android {
     namespace = "com.alsafa.native7"
     compileSdk = 37
     // Use the Build Tools version selected by this AGP release.
-    defaultConfig { applicationId = "com.alsafa.native7"; minSdk = 26; targetSdk = 37; versionCode = 2; versionName = "7.0.1-ui-preview" }
+    defaultConfig { applicationId = "com.alsafa.native7"; minSdk = 26; targetSdk = 37; versionCode = 2; versionName = "7.0.1-ui-preview"; testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner" }
     compileOptions { sourceCompatibility = JavaVersion.VERSION_17; targetCompatibility = JavaVersion.VERSION_17 }
     // Built-in Kotlin inherits JVM 17 from compileOptions.
     buildTypes {
@@ -16,4 +16,4 @@ android {
 
 
 // Bundled ML Kit barcode model: works offline without Play Services download.
-dependencies { implementation("com.google.mlkit:barcode-scanning:17.3.0"); implementation("com.google.zxing:core:3.5.3") }
+dependencies { implementation("com.google.mlkit:barcode-scanning:17.3.0"); implementation("com.google.zxing:core:3.5.3"); androidTestImplementation("androidx.test.ext:junit:1.2.1"); androidTestImplementation("androidx.test:runner:1.6.2") }
