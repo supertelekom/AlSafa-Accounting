@@ -747,6 +747,7 @@ class MainActivity : Activity() {
                                 chosen=product
                                 selected.text=product.name+" · "+product.raw.optString("color")+" · المتاح "+product.stock
                                 price.setText(product.salePrice.toString())
+                                productCost.text="كلفة القطعة: "+product.cost+" "+product.currency
                                 currency.setSelection(listOf("USD","TRY","SYP").indexOf(product.currency).coerceAtLeast(0))
                                 results.removeAllViews()
                             }
@@ -758,6 +759,8 @@ class MainActivity : Activity() {
                 results.addView(text("تعذر البحث: "+(e.message ?: ""),12f))
             }
         }
+        val productCost=text("كلفة القطعة: —",13f,gold)
+        parent.addView(productCost)
         quickStep(parent,2,"سعر البيع النهائي")
         price=field(parent,"سعر البيع","0").apply { inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL }
         val quantity=field(parent,"الكمية","1").apply {
@@ -767,6 +770,7 @@ class MainActivity : Activity() {
         currency=select(parent,"العملة",listOf("USD","TRY","SYP"))
         quickStep(parent,3,"طريقة الدفع")
         val account=select(parent,"طريقة الدفع",listOf("درج المحل","الصندوق الخارجي","شام كاش","البنك"))
+        val paymentStatus=select(parent,"حالة الدفع",listOf("مدفوع بالكامل","دفعة جزئية","عند الاستلام","آجل"))
         val payment=field(parent,"المبلغ المقبوض الآن","0").apply {
             setText("0")
             inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
@@ -820,6 +824,10 @@ class MainActivity : Activity() {
                     require(qty>0 && current.stock>=qty) { "المخزون غير كافٍ" }
                     val amount=price.text.toString().toDoubleOrNull() ?: -1.0
                     val paid=payment.text.toString().toDoubleOrNull() ?: -1.0
+                    val total=amount*qty
+                    require(paid.isFinite() && paid>=0) { "المبلغ المقبوض غير صالح" }
+                    require(paymentStatus.selectedItemPosition<2 || paid==0.0) { "لا يمكن قبض مبلغ لفاتورة آجل أو عند الاستلام" }
+                    require(paymentStatus.selectedItemPosition!=0 || paid+0.000001>=total) { "حالة مدفوع بالكامل تتطلب قبض قيمة الفاتورة" }
                     val id=NativeSalesLedger.saveWithChange(legacyBackupStore.writableDatabase,
                         listOf(NativeSalesLedger.Line(product.id,qty,amount)),currency.selectedItem.toString(),
                         online.selectedItem.toString(),customer.text.toString(),phone.text.toString(),paid,
