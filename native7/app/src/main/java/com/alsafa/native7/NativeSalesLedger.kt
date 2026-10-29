@@ -244,11 +244,14 @@ internal object NativeSalesLedger {
     }
     fun profitByCurrency(db:SQLiteDatabase,from:Long,to:Long):Map<String,Double> {
         create(db)
-        val result=linkedMapOf<String,Double>()
-        db.rawQuery("SELECT s.currency,COALESCE(SUM(CASE WHEN s.total>0 THEN c.amount*(s.total-s.cost)/s.total ELSE 0 END),0) FROM native_sale_collections c JOIN native_sales s ON s.id=c.sale_id WHERE c.created_at>=? AND c.created_at<? GROUP BY s.currency",arrayOf(from.toString(),to.toString())).use { cursor ->
-            while(cursor.moveToNext()) result[cursor.getString(0)]=cursor.getDouble(1)
+        val totals=linkedMapOf<String,Double>()
+        db.rawQuery("SELECT s.currency,COALESCE(SUM(CASE WHEN c.amount>0 AND s.total>0 THEN c.amount*(s.total-s.cost)/s.total ELSE 0 END),0) FROM native_sale_collections c JOIN native_sales s ON s.id=c.sale_id WHERE c.created_at>=? AND c.created_at<? GROUP BY s.currency",arrayOf(from.toString(),to.toString())).use { c ->
+            while(c.moveToNext()) totals[c.getString(0)]=c.getDouble(1)
         }
-        return result
+        db.rawQuery("SELECT currency,COALESCE(SUM(amount),0) FROM native_sale_profit_adjustments WHERE created_at>=? AND created_at<? GROUP BY currency",arrayOf(from.toString(),to.toString())).use { c ->
+            while(c.moveToNext()) totals[c.getString(0)]=(totals[c.getString(0)] ?: 0.0)+c.getDouble(1)
+        }
+        return totals
     }
     /** Returned cost uses weighted average historical cost of the sold product. */
     fun returnedCost(db:SQLiteDatabase,saleId:String):Double {
