@@ -32,10 +32,11 @@ internal object SalesInvoiceDocument {
             require(c.moveToFirst());listOf(c.getString(0),c.getString(1),c.getLong(2).toString(),c.getString(3))
         }
         val rows=mutableListOf<Row>()
-        db.rawQuery("SELECT l.product_id,l.quantity,l.unit_price FROM native_sale_lines l WHERE l.sale_id=?",arrayOf(id)).use { c ->
+        db.rawQuery("SELECT l.product_id,l.quantity,l.unit_price,COALESCE(m.name,'') FROM native_sale_lines l LEFT JOIN native_sale_manual_items m ON m.line_id=l.id WHERE l.sale_id=?",arrayOf(id)).use { c ->
             while(c.moveToNext()) {
-                val product=LegacyProductRepository.findById(db,c.getString(0))
-                rows.add(Row(product?.name ?: c.getString(0),c.getInt(1),c.getDouble(2)))
+                val productId=c.getString(0)
+                val product=if(productId.isNotBlank()) LegacyProductRepository.findById(db,productId) else null
+                rows.add(Row(product?.name ?: c.getString(3).ifBlank { productId },c.getInt(1),c.getDouble(2)))
             }
         }
         val refunded=db.rawQuery("SELECT COALESCE(SUM(refund),0) FROM native_sale_returns WHERE sale_id=?",arrayOf(id)).use { c ->
