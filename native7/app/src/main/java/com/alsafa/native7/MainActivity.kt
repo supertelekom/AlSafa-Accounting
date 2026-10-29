@@ -1931,6 +1931,9 @@ class MainActivity : Activity() {
                             cardRow?.addView(View(this),LinearLayout.LayoutParams(0,dp(1),1f))
                     } else list.addView(row,LinearLayout.LayoutParams(-1,-2).apply { bottomMargin=dp(8) })
                 }
+                if(reset && products.isEmpty()) {
+                    list.addView(text("لا توجد منتجات مطابقة للبحث",13f).apply { gravity=Gravity.CENTER })
+                }
                 offset+=products.size
             } catch(e:Exception) {
                 list.addView(text(e.message ?: "تعذر تحميل المنتجات",13f))
