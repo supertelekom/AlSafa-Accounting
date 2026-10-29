@@ -64,3 +64,37 @@ dates, invoice numbers and references**, not yet normalized financial posting
 tables. No balances are recomputed and no accounting writes are enabled.
 Enforcing foreign keys or generating accounting balances before checking real
 reference coverage would be premature. Preserve raw JSON for every row.
+
+## Reference verification against the actual backup (2026-10-26)
+
+Checked original IDs (not inferred names) in the supplied 65.9 MB JSON:
+- Purchases -> suppliers: 8 references, 0 unresolved.
+- Supplier ledger -> suppliers: 2 references, 0 unresolved.
+- Sale line productId -> products: 126 references, 0 unresolved.
+- Repair usedParts.partId -> maintenanceParts: 190 references, 0 unresolved.
+
+The typed `domain_*` projection tables and `domain_children` were introduced
+in SQLite schema v4. Import occurs in the existing archive transaction.
+`legacy_reference_audit` currently checks purchase/supplier-ledger supplier IDs;
+nested line-level verification above was performed against the actual backup,
+but is not yet enforced at runtime. Polymorphic inventory movements require
+`itemType` discrimination and must not be assumed to target products only.
+
+The read-only `LegacyReceivables` Kotlin module ports `paidFor`,
+`refundedFor`, `effectiveTotalFor`, `netPaidFor`, `balanceFor`,
+`paymentStatusFor` from `assets/main.js`. Its caller must provide the
+source-derived sale/repair total; **do not substitute record.total** without
+checking `saleTotal` and `repairInvoiceTotal`.
+
+### Outstanding release blockers
+
+- Validate Kotlin/Gradle compilation and import of a full 65.9 MB backup
+  without blocking the Android main thread or exceeding memory.
+- Complete typed field and child-table mappings; current `domain_children`
+  retains raw child JSON and selected fields, not all child attributes.
+- Enforce/test polymorphic references, duplicates, and missing IDs without
+  destroying historical data.
+- Port totals, cost/funding allocation, purchase atomic stock posting,
+  returns, currency conversion, daily closings and partner accounting rules.
+- Compare all financial outputs with the original application before enabling
+  live writes.
