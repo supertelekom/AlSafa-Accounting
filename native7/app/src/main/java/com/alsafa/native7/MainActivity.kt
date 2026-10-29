@@ -1152,8 +1152,17 @@ class MainActivity : Activity() {
         val mixedPayment=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL }
         parent.addView(mixedPayment)
         mixedPayment.addView(text("المبالغ المقبوضة فعلياً",16f,gold))
-        listOf("USD","TRY","SYP").forEach {
-            field(mixedPayment,it,"0").inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
+        val mixedRows=listOf("USD","TRY","SYP").map { money ->
+            val value=field(mixedPayment,"المقبوض "+money,"0").apply {
+                setText("0")
+                inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
+            }
+            val rate=field(mixedPayment,"كم "+saleCurrency.selectedItem.toString()+" لكل "+money,"1").apply {
+                setText("1")
+                inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
+            }
+            val account=select(mixedPayment,"خزنة "+money,listOf("درج المحل","الصندوق الخارجي","شام كاش","البنك"))
+            Triple(money,Pair(value,rate),account)
         }
         mixedPayment.visibility=View.GONE
         collectionMode.onItemSelectedListener=object:android.widget.AdapterView.OnItemSelectedListener {
@@ -1168,7 +1177,6 @@ class MainActivity : Activity() {
         saleCalculationBox(parent)
         formActions(parent,{ returnToPrevious() },"حفظ الفاتورة") {
             try {
-                require(collectionMode.selectedItemPosition==0) { "القبض المختلط يحتاج تحديد سعر تحويل لكل عملة" }
                 val saleLines=mutableListOf<NativeSalesLedger.Line>()
                 for(i in 0 until lines.childCount) {
                     val card=lines.getChildAt(i)
@@ -1189,7 +1197,16 @@ class MainActivity : Activity() {
                     for(i in saleLines.indices) saleLines[i]=saleLines[i].copy(unitPrice=saleLines[i].unitPrice*factor)
                 }
                 val amount=initialPayment.text.toString().toDoubleOrNull() ?: 0.0
-                val id=NativeSalesLedger.saveWithChange(
+                val id=if(collectionMode.selectedItemPosition==1) {
+                    val tenders=mixedRows.mapNotNull { (money,values,account) ->
+                        val paid=values.first.text.toString().toDoubleOrNull() ?: 0.0
+                        if(paid<=0) null else NativeSalesLedger.Tender(paid,money,account.selectedItem.toString(),
+                            values.second.text.toString().toDoubleOrNull() ?: 0.0)
+                    }
+                    NativeSalesLedger.saveMixed(legacyBackupStore.writableDatabase,saleLines,
+                        saleCurrency.selectedItem.toString(),saleType.selectedItem.toString(),
+                        saleCustomer.text.toString(),salePhone.text.toString(),tenders)
+                } else NativeSalesLedger.saveWithChange(
                     legacyBackupStore.writableDatabase,saleLines,saleCurrency.selectedItem.toString(),
                     saleType.selectedItem.toString(),saleCustomer.text.toString(),salePhone.text.toString(),amount,
                     when(paymentMethod.selectedItemPosition) { 1 -> "شام كاش"; 2 -> "البنك"; else -> "درج المحل" },
