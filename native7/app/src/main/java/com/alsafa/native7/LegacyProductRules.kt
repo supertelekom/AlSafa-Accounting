@@ -59,7 +59,7 @@ internal object LegacyProductRules {
             it.optString("barcode").replace(Regex("\\s+"),"")==code &&
                 !(exceptType=="product" && it.optString("id")==exceptId)
         } ?: rows(parts).firstOrNull {
-            it.optString("barcode").trim()==code &&
+            it.optString("barcode").replace(Regex("\\s+"),"")==code &&
                 !(exceptType=="part" && it.optString("id")==exceptId)
         }
     }
