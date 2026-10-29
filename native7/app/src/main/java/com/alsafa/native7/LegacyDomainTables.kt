@@ -75,7 +75,7 @@ internal object LegacyDomainTables {
                     val child=children.get(j)
                     val obj=child as? JSONObject
                     db.execSQL("INSERT INTO domain_children(section,parent_ordinal,relation,ordinal,original_id,reference_id,quantity,amount,raw_json) VALUES (?,?,?,?,?,?,?,?,?)",
-                        arrayOf(section,i,relation,j,obj?.optString("id"),obj?.optString("productId")
+                        arrayOf<Any?>(section,i,relation,j,obj?.optString("id"),obj?.optString("productId")
                             ?:obj?.optString("partId")?:obj?.optString("itemId"),
                             obj?.optDouble("qty")?.takeUnless { it.isNaN() },
                             obj?.optDouble("amount")?.takeUnless { it.isNaN() },child.toString()))
