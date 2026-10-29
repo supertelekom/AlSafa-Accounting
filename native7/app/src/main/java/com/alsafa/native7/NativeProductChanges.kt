@@ -75,4 +75,40 @@ internal object NativeProductChanges {
             db.endTransaction()
         }
     }
+    /**
+     * Colour and price edits are one transaction, including an audit entry for
+     * each affected product. Stock and funding remain untouched.
+     */
+    fun saveColorGroup(db:SQLiteDatabase,edits:List<JSONObject>,reason:String) {
+        require(edits.isNotEmpty() && reason.isNotBlank())
+        val ids=edits.map { it.optString("id") }
+        require(ids.none(String::isBlank) && ids.distinct().size==ids.size)
+        val keys=edits.map { LegacyProductRules.productVariantIdentity(it) }
+        require(keys.distinct().size==keys.size) { "تكرار اللون في المجموعة" }
+        create(db)
+        db.beginTransaction()
+        try {
+            for(edited in edits) {
+                val id=edited.getString("id")
+                val old=get(db,id) ?: throw IllegalArgumentException("منتج غير موجود")
+                require(old.optString("variantGroupId")==edited.optString("variantGroupId")) {
+                    "تغيير مجموعة الألوان يتطلب معالجة مستقلة"
+                }
+                require(LegacyAccountingRules.number(old.opt("stock"))==
+                    LegacyAccountingRules.number(edited.opt("stock"))) {
+                    "لا يمكن تغيير المخزون من تعديل الألوان"
+                }
+                require(old.optJSONArray("fundingLots")?.toString()==
+                    edited.optJSONArray("fundingLots")?.toString()) {
+                    "لا يمكن تغيير التمويل من تعديل الألوان"
+                }
+                db.execSQL("INSERT OR REPLACE INTO native_product_edits(product_id,payload,revision) VALUES (?,?,COALESCE((SELECT revision+1 FROM native_product_edits WHERE product_id=?),1))",
+                    arrayOf(id,edited.toString(),id))
+                db.execSQL("INSERT INTO native_product_audit(event_id,product_id,previous_payload,new_payload,reason,recorded_at) VALUES (?,?,?,?,?,?)",
+                    arrayOf(UUID.randomUUID().toString(),id,old.toString(),edited.toString(),reason,System.currentTimeMillis()))
+            }
+            db.setTransactionSuccessful()
+        } finally { db.endTransaction() }
+    }
+
 }
