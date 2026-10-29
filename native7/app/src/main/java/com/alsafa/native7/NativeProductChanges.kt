@@ -123,7 +123,12 @@ internal object NativeProductChanges {
                     if(it.moveToFirst())old=it.getString(0)
                 }
             }
-            require(old!=null) { "المنتج غير موجود؛ إضافة المنتجات الجديدة تحتاج مساراً مستقلاً" }
+            if(old==null) {
+                db.rawQuery("SELECT payload FROM native_new_products WHERE product_id=?",arrayOf(id)).use {
+                    if(it.moveToFirst())old=it.getString(0)
+                }
+            }
+            require(old!=null) { "المنتج غير موجود" }
             val proposedBarcode=edited.optString("barcode").replace(Regex("\\s+"),"")
             if(proposedBarcode.isNotBlank()) {
                 db.rawQuery("SELECT p.id FROM domain_products p LEFT JOIN native_product_edits e ON e.product_id=p.id WHERE p.id!=? AND REPLACE(COALESCE(json_extract(e.payload,'$.barcode'),p.barcode),' ','')=? LIMIT 1",
@@ -140,6 +145,16 @@ internal object NativeProductChanges {
                 }
             }
             val previous=JSONObject(old!!)
+            db.rawQuery("SELECT COALESCE(e.payload,n.payload) FROM native_new_products n LEFT JOIN native_product_edits e ON e.product_id=n.product_id WHERE n.product_id!=?",
+                arrayOf(id)).use { cursor ->
+                while(cursor.moveToNext()) {
+                    val other=JSONObject(cursor.getString(0))
+                    require(proposedBarcode.isBlank() ||
+                        other.optString("barcode").replace(Regex("\\s+"),"")!=proposedBarcode) {
+                        "الباركود مستخدم في منتج آخر"
+                    }
+                }
+            }
             val groupId=edited.optString("variantGroupId")
             if(groupId.isNotBlank() && (groupId!=previous.optString("variantGroupId") ||
                 LegacyProductRules.productVariantIdentity(edited)!=LegacyProductRules.productVariantIdentity(previous))) {
