@@ -15,10 +15,61 @@ internal object NativeProductChanges {
     fun create(db:SQLiteDatabase) {
         db.execSQL("CREATE TABLE IF NOT EXISTS native_product_edits (product_id TEXT PRIMARY KEY NOT NULL, payload TEXT NOT NULL, revision INTEGER NOT NULL)")
         db.execSQL("CREATE TABLE IF NOT EXISTS native_product_audit (event_id TEXT PRIMARY KEY NOT NULL, product_id TEXT NOT NULL, previous_payload TEXT, new_payload TEXT NOT NULL, reason TEXT NOT NULL, recorded_at INTEGER NOT NULL)")
+        db.execSQL("CREATE TABLE IF NOT EXISTS native_new_products (product_id TEXT PRIMARY KEY NOT NULL, payload TEXT NOT NULL, created_at INTEGER NOT NULL)")
+    }
+    fun createProduct(db:SQLiteDatabase,product:JSONObject) {
+        val id=product.optString("id")
+        require(id.isNotBlank() && product.optString("name").isNotBlank()) { "اسم المنتج مطلوب" }
+        require(LegacyAccountingRules.number(product.opt("salePrice"))>=0 &&
+            LegacyAccountingRules.number(product.opt("cost"))>=0) { "سعر أو كلفة غير صالحة" }
+        val stock=LegacyProductRules.stock(product)
+        require(!LegacyProductRules.fundingMismatch(product)) { "دفعات التمويل لا تطابق المخزون" }
+        create(db)
+        db.beginTransaction()
+        try {
+            require(get(db,id)==null) { "معرف المنتج موجود مسبقاً" }
+            validateUniqueness(db,product,id)
+            val now=System.currentTimeMillis()
+            db.execSQL("INSERT INTO native_new_products(product_id,payload,created_at) VALUES (?,?,?)",
+                arrayOf(id,product.toString(),now))
+            db.execSQL("INSERT INTO native_product_audit(event_id,product_id,previous_payload,new_payload,reason,recorded_at) VALUES (?,?,?,?,?,?)",
+                arrayOf(UUID.randomUUID().toString(),id,null,product.toString(),"إضافة منتج جديد",now))
+            db.setTransactionSuccessful()
+        } finally { db.endTransaction() }
+    }
+    private fun validateUniqueness(db:SQLiteDatabase,product:JSONObject,id:String) {
+        val barcode=product.optString("barcode").replace(Regex("\\s+"),"")
+        if(barcode.isNotBlank()) {
+            db.rawQuery("SELECT id FROM domain_products WHERE id!=? AND REPLACE(barcode,' ','')=? LIMIT 1",
+                arrayOf(id,barcode)).use { require(!it.moveToFirst()) { "الباركود مستخدم" } }
+            db.rawQuery("SELECT product_id FROM native_new_products WHERE product_id!=? AND REPLACE(json_extract(payload,'$.barcode'),' ','')=? LIMIT 1",
+                arrayOf(id,barcode)).use { require(!it.moveToFirst()) { "الباركود مستخدم" } }
+            db.rawQuery("SELECT id FROM domain_maintenanceParts WHERE REPLACE(barcode,' ','')=? LIMIT 1",
+                arrayOf(barcode)).use { require(!it.moveToFirst()) { "الباركود مستخدم لقطعة صيانة" } }
+        }
+        val group=product.optString("variantGroupId")
+        if(group.isNotBlank()) {
+            val key=LegacyProductRules.productVariantIdentity(product)
+            db.rawQuery("SELECT COALESCE(e.payload,p.raw_json) FROM domain_products p LEFT JOIN native_product_edits e ON e.product_id=p.id WHERE p.variantGroupId=? AND p.id!=?",
+                arrayOf(group,id)).use { c ->
+                while(c.moveToNext())require(LegacyProductRules.productVariantIdentity(JSONObject(c.getString(0)))!=key) {
+                    "اللون موجود مسبقاً في المجموعة"
+                }
+            }
+            db.rawQuery("SELECT payload FROM native_new_products WHERE product_id!=? AND json_extract(payload,'$.variantGroupId')=?",
+                arrayOf(id,group)).use { c ->
+                while(c.moveToNext())require(LegacyProductRules.productVariantIdentity(JSONObject(c.getString(0)))!=key) {
+                    "اللون موجود مسبقاً في المجموعة"
+                }
+            }
+        }
     }
     fun get(db:SQLiteDatabase,id:String):JSONObject? {
         create(db)
         db.rawQuery("SELECT payload FROM native_product_edits WHERE product_id=?",arrayOf(id)).use {
+            if(it.moveToFirst())return JSONObject(it.getString(0))
+        }
+        db.rawQuery("SELECT payload FROM native_new_products WHERE product_id=? LIMIT 1",arrayOf(id)).use {
             if(it.moveToFirst())return JSONObject(it.getString(0))
         }
         db.rawQuery("SELECT raw_json FROM domain_products WHERE id=? LIMIT 1",arrayOf(id)).use {
