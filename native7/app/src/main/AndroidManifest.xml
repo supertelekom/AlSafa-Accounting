@@ -13,7 +13,7 @@
         android:enableOnBackInvokedCallback="true">
         <provider android:name=".InvoiceContentProvider"
             android:authorities="${applicationId}.invoices"
-            android:exported="true"
+            android:exported="false"
             android:grantUriPermissions="true" />
         <activity android:name=".MainActivity" android:exported="true"
             android:resizeableActivity="true" android:windowSoftInputMode="adjustResize">
