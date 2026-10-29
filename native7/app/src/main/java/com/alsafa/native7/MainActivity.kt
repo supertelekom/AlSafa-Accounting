@@ -1377,23 +1377,29 @@ class MainActivity : Activity() {
     private var selectedInventoryProduct:String?=null
     private fun productCreatePage(parent:LinearLayout) {
         parent.addView(text("إضافة منتج جديد",23f,gold))
-        val name=field(parent,"اسم الساعة / المنتج *")
-        val brand=field(parent,"الماركة")
-        val model=field(parent,"REF / الموديل")
-        val sku=field(parent,"كود المنتج")
+        lateinit var name:EditText
+        lateinit var brand:EditText
+        formPair(parent,{ name=field(it,"اسم الساعة / المنتج *") },
+            { brand=field(it,"الماركة") })
+        lateinit var model:EditText
+        lateinit var sku:EditText
+        formPair(parent,{ model=field(it,"REF / الموديل") },
+            { sku=field(it,"كود المنتج") })
         val barcode=field(parent,"باركود المنتج")
         val stock=field(parent,"الكمية بالمخزون *").apply {
             setText("1");inputType=InputType.TYPE_CLASS_NUMBER
         }
         val currency=select(parent,"عملة الأسعار",listOf("USD","TRY","SYP"))
-        val sale=field(parent,"سعر البيع *").apply {
+        lateinit var sale:EditText
+        lateinit var cost:EditText
+        formPair(parent,{ sale=field(it,"سعر البيع *").apply {
             inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
-        }
-        val cost=field(parent,"كلفة الشراء للقطعة").apply {
+        } },{ cost=field(it,"كلفة الشراء للقطعة").apply {
             inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
-        }
-        val color=field(parent,"اللون")
-        val dial=field(parent,"لون المينا")
+        } })
+        lateinit var color:EditText
+        lateinit var dial:EditText
+        formPair(parent,{ color=field(it,"اللون") },{ dial=field(it,"لون المينا") })
         val strap=field(parent,"لون الحزام")
         val details=linkedMapOf<String,Spinner>()
         listOf(
