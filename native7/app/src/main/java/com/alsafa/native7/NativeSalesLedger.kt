@@ -227,14 +227,16 @@ internal object NativeSalesLedger {
             val sale=find(db,id) ?: error("الفاتورة غير موجودة")
             require(sale.status=="active") { "الفاتورة ملغاة" }
             val refunded=db.rawQuery("SELECT COALESCE(SUM(refund),0) FROM native_sale_returns WHERE sale_id=?",arrayOf(id)).use { c -> if(c.moveToFirst()) c.getDouble(0) else 0.0 }
-            require(sale.collected+amount<=sale.total-refunded+0.000001) { "القبض أكبر من المتبقي" }
-            insertCollection(db,id,amount,sale.currency,account,at,"collection")
+            // Original appendPayment: applied = min(max(0, amount), balanceFor(...)).
+            val applied=amount.coerceAtMost((sale.total-refunded-sale.collected).coerceAtLeast(0.0))
+            if(applied<=0.0) { db.setTransactionSuccessful(); return }
+            insertCollection(db,id,applied,sale.currency,account,at,"collection")
             val returnedValue=db.rawQuery("SELECT COALESCE(SUM(refund),0) FROM native_sale_returns WHERE sale_id=?",arrayOf(id)).use { c -> c.moveToFirst();c.getDouble(0) }
             if(returnedValue>0.000001) {
                 val netValue=sale.total-returnedValue
                 val margin=if(netValue>0.000001) (netValue-sale.cost+returnedCost(db,id))/netValue else 0.0
                 val initialMargin=if(sale.total>0) (sale.total-sale.cost)/sale.total else 0.0
-                val adjustment=amount*(margin-initialMargin)
+                val adjustment=applied*(margin-initialMargin)
                 if(kotlin.math.abs(adjustment)>0.000001) db.execSQL("INSERT INTO native_sale_profit_adjustments VALUES (?,?,?,?,?,?)",
                     arrayOf<Any>(UUID.randomUUID().toString(),id,adjustment,sale.currency,at,"collection_after_return"))
             }
