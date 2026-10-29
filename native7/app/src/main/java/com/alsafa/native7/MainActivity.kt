@@ -1282,8 +1282,12 @@ class MainActivity : Activity() {
         var offset=0
         fun load(reset:Boolean) {
             if(reset) { offset=0;list.removeAllViews() }
-            if(!legacyBackupStore.hasData()) {
-                countLabel.text="استعد النسخة الاحتياطية لعرض المنتجات."
+            NativeProductChanges.create(legacyBackupStore.writableDatabase)
+            val nativeCount=legacyBackupStore.readableDatabase.rawQuery("SELECT COUNT(*) FROM native_new_products",null).use {
+                if(it.moveToFirst())it.getInt(0) else 0
+            }
+            if(!legacyBackupStore.hasData() && nativeCount==0) {
+                countLabel.text="لا توجد منتجات محفوظة بعد."
                 return
             }
             try {
@@ -1292,7 +1296,7 @@ class MainActivity : Activity() {
                     val count=db.rawQuery("SELECT COUNT(*) FROM domain_products",null).use {
                         if(it.moveToFirst())it.getInt(0) else 0
                     }
-                    countLabel.text="$count منتج محفوظ. أضف ساعاتك وأسعارها وكمياتها وباركودها، ثم اخترها مباشرة في الفاتورة."
+                    countLabel.text="${count+nativeCount} منتج محفوظ."
                 }
                 val products=LegacyProductRepository.list(db,search.text.toString(),offset,24)
                 for(p in products) {
