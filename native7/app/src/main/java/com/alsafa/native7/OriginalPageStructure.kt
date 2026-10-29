@@ -88,7 +88,7 @@ internal class OriginalPageStructure(
             "select" -> selection(n)
             "toggle" -> toggle(n)
             "button" -> button(n)
-            "title","text" -> label(n.optString("text"),n.optDouble("size",13.0).toFloat(),if(n.optBoolean("muted")) muted else ink,n.optString("weight")=="bold").apply {
+            "title","text" -> label(n.optString("text"),if(cs.contains("field-label")) 11f else n.optDouble("size",13.0).toFloat(),if(n.optBoolean("muted")) muted else ink,n.optString("weight")=="bold").apply {
                 setPadding(0,dp(if(kind=="title") 3 else 2),0,dp(if(kind=="title") 7 else 5))
                 if(cs.any { it in listOf("barcode-help","help") }) { textSize=11f;setTextColor(muted) }
                 if(cs.contains("simple-icon")) { textSize=25f;gravity=Gravity.CENTER;background=bg(Color.rgb(248,237,219),14) }
@@ -101,7 +101,7 @@ internal class OriginalPageStructure(
                 val tablet=activity.resources.configuration.screenWidthDp>=720
                 val wide=activity.resources.configuration.screenWidthDp>=1200 && activity.resources.configuration.orientation==android.content.res.Configuration.ORIENTATION_LANDSCAPE
                 val count=when(kind) {
-                    "formGrid" -> if(wide) 3 else if(activity.resources.configuration.screenWidthDp>380) 2 else 1
+                    "formGrid" -> if(activity.resources.configuration.screenWidthDp>=1080) 4 else if(activity.resources.configuration.screenWidthDp>380) 2 else 1
                     "manageGrid" -> if(tablet) 4 else 2
                     "modernGrid" -> if(tablet) 3 else 2
                     "summaryGrid","reportGrid" -> if(cs.contains("currency-home-values")) 3 else if(cs.contains("home-currency-ledger")) { if(activity.resources.configuration.screenWidthDp>760) 3 else 1 } else if(tablet) 3 else 1
@@ -110,7 +110,7 @@ internal class OriginalPageStructure(
                     "repairGrid" -> if(activity.resources.configuration.screenWidthDp>=1024) 4 else if(tablet) 3 else 2
                     else -> 2
                 }
-                SourceGrid(activity,count,dp(if(kind=="manageGrid") 10 else 11)).apply {
+                SourceGrid(activity,count,dp(if(kind in listOf("manageGrid","summaryGrid","reportGrid")) 10 else 11)).apply {
                     children.forEach { addCell(build(it),it.optBoolean("full")) }
                 }
             }
@@ -139,7 +139,7 @@ internal class OriginalPageStructure(
                 addView(body)
             }
             else -> column().apply {
-                children.forEach { child -> addView(build(child),LinearLayout.LayoutParams(-1,-2).apply { bottomMargin=dp(if(child.optString("kind") in listOf("section","form","summaryGrid","reportGrid")) 14 else if(kind=="field") 4 else 2) }) }
+                children.forEach { child -> addView(build(child),LinearLayout.LayoutParams(-1,-2).apply { bottomMargin=dp(if(child.optString("kind") in listOf("section","form","summaryGrid","reportGrid")) 14 else if(kind=="field") 6 else 2) }) }
                 when(kind) {
                     "section","form" -> { background=bg();setPadding(dp(15),dp(15),dp(15),dp(15)) }
                     "stat" -> { background=bg(Color.rgb(255,250,242),12);setPadding(dp(12),dp(12),dp(12),dp(12)) }
