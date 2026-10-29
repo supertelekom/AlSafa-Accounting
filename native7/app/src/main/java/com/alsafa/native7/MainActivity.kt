@@ -1460,7 +1460,17 @@ class MainActivity : Activity() {
                         text="صورة الباركود"
                         setOnClickListener { ProductImageView.show(this@MainActivity,barcodePhoto,"صورة الباركود") }
                     })
-                    row.addView(actions,LinearLayout.LayoutParams(-1,-2).apply { topMargin=dp(6) })
+                    val actionScroller=android.widget.HorizontalScrollView(this).apply { isHorizontalScrollBarEnabled=false;layoutDirection=View.LAYOUT_DIRECTION_RTL }
+                    for(i in 0 until actions.childCount) (actions.getChildAt(i) as? Button)?.apply {
+                        typeface=legacyTypeface
+                        textSize=11f
+                        isAllCaps=false
+                        minWidth=0
+                        minimumWidth=0
+                        setPadding(dp(7),dp(5),dp(7),dp(5))
+                    }
+                    actionScroller.addView(actions)
+                    row.addView(actionScroller,LinearLayout.LayoutParams(-1,-2).apply { topMargin=dp(6) })
                     if(twoColumns) {
                         cardRow?.addView(row,LinearLayout.LayoutParams(0,-2,1f).apply { marginEnd=dp(6);bottomMargin=dp(8) })
                         if(cardIndex==products.lastIndex && cardIndex%2==0)
