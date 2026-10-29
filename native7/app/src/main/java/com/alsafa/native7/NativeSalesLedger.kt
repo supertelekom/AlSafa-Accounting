@@ -24,6 +24,33 @@ internal object NativeSalesLedger {
         db.execSQL("CREATE TABLE IF NOT EXISTS native_sale_profit_adjustments (id TEXT PRIMARY KEY, sale_id TEXT NOT NULL, amount REAL NOT NULL, currency TEXT NOT NULL, created_at INTEGER NOT NULL, reason TEXT NOT NULL)")
         db.execSQL("CREATE TABLE IF NOT EXISTS native_sale_collections (id TEXT PRIMARY KEY, sale_id TEXT NOT NULL, amount REAL NOT NULL, currency TEXT NOT NULL, account TEXT NOT NULL, created_at INTEGER NOT NULL, reason TEXT NOT NULL)")
     }
+    /** Verifies every native invoice's net stock movements against sold and returned units.
+     * A cancelled invoice must have zero net stock effect.
+     */
+    data class StockAuditIssue(val saleId:String,val productId:String,
+        val expected:Int,val actual:Int)
+    fun auditStock(db:SQLiteDatabase):List<StockAuditIssue> {
+        create(db)
+        val issues=mutableListOf<StockAuditIssue>()
+        db.rawQuery("""
+            SELECT s.id, l.product_id,
+              CASE WHEN s.status='active' THEN -SUM(l.quantity)+
+                COALESCE((SELECT SUM(r.quantity) FROM native_sale_returns r
+                  WHERE r.sale_id=s.id AND r.product_id=l.product_id),0)
+                ELSE 0 END AS expected,
+              COALESCE((SELECT SUM(st.delta) FROM native_sale_stock st
+                WHERE st.sale_id=s.id AND st.product_id=l.product_id),0) AS actual
+            FROM native_sales s JOIN native_sale_lines l ON l.sale_id=s.id
+            GROUP BY s.id,l.product_id
+        """.trimIndent(),null).use { c ->
+            while(c.moveToNext()) {
+                val expected=c.getInt(2)
+                val actual=c.getInt(3)
+                if(expected!=actual)issues.add(StockAuditIssue(c.getString(0),c.getString(1),expected,actual))
+            }
+        }
+        return issues
+    }
     fun stockDelta(db:SQLiteDatabase,productId:String):Int {
         create(db)
         db.rawQuery("SELECT COALESCE(SUM(delta),0) FROM native_sale_stock WHERE product_id=?",arrayOf(productId)).use { c ->
