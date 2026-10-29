@@ -2808,7 +2808,7 @@ class MainActivity : Activity() {
         val prefs=getSharedPreferences("alsafa_printer",MODE_PRIVATE)
         val selected=Spinner(this)
         selected.adapter=ArrayAdapter(this,android.R.layout.simple_spinner_dropdown_item,
-            sizes.map { "$"+"it ملم" })
+            sizes.map { it.toString()+" ملم" })
         selected.setSelection(sizes.indexOf(prefs.getInt("roll_width_mm",80)).coerceAtLeast(0))
         parent.addView(selected)
         parent.addView(Button(this).apply {
