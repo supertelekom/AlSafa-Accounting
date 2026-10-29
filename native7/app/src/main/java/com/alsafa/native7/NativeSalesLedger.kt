@@ -27,10 +27,11 @@ internal object NativeSalesLedger {
         }
     }
     fun save(db:SQLiteDatabase,lines:List<Line>,currency:String,channel:String,customer:String,phone:String,
-             initialCollection:Double=0.0,account:String="درج المحل"):String {
+             initialCollection:Double=0.0,account:String="درج المحل",changeAccount:String=account,changeCurrency:String=currency):String {
         require(lines.isNotEmpty()) { "أضف صنفاً إلى الفاتورة" }
         require(currency in setOf("USD","TRY","SYP")) { "عملة غير مدعومة" }
         require(initialCollection.isFinite() && initialCollection>=0) { "قيمة القبض غير صالحة" }
+        require(changeCurrency==currency) { "إرجاع الباقي بعملة أخرى يحتاج سعر تحويل صريح" }
         require(lines.all { it.quantity>0 && it.unitPrice.isFinite() && it.unitPrice>=0 && it.productId.isNotBlank() }) { "بيانات الأصناف غير صالحة" }
         create(db)
         val id=UUID.randomUUID().toString()
@@ -54,9 +55,11 @@ internal object NativeSalesLedger {
                 }
                 db.execSQL("INSERT INTO native_sale_stock VALUES (?,?,?,?,?,?)",arrayOf<Any>(UUID.randomUUID().toString(),id,productId,-requested,"sale",now))
             }
-            require(total.isFinite() && cost.isFinite() && initialCollection<=total+0.000001) { "القبض أكبر من قيمة الفاتورة" }
+            require(total.isFinite() && cost.isFinite()) { "قيمة الفاتورة غير صالحة" }
             db.execSQL("INSERT INTO native_sales VALUES (?,?,?,?,?,?,?,?,?)",arrayOf<Any>(id,now,currency,channel,customer,phone,total,cost,"active"))
             if(initialCollection>0) insertCollection(db,id,initialCollection,currency,account,now,"collection")
+            val change=(initialCollection-total).coerceAtLeast(0.0)
+            if(change>0.000001) insertCollection(db,id,-change,currency,changeAccount,now,"change")
             db.setTransactionSuccessful()
         } finally { db.endTransaction() }
         return id
