@@ -16,12 +16,27 @@ internal object LegacyProductRepository {
         NativeProductChanges.create(db)
         val term=search.trim()
         val where=if(term.isBlank())"" else
-            "WHERE COALESCE(json_extract(e.payload,'$.name'),p.name) LIKE ? ESCAPE '!' OR COALESCE(json_extract(e.payload,'$.barcode'),p.barcode) LIKE ? ESCAPE '!' OR p.model LIKE ? ESCAPE '!' OR p.sku LIKE ? ESCAPE '!'"
+            "WHERE name LIKE ? ESCAPE '!' OR barcode LIKE ? ESCAPE '!' OR model LIKE ? ESCAPE '!' OR sku LIKE ? ESCAPE '!'"
         val escaped=term.replace("!","!!").replace("%","!%").replace("_","!_")
         val args=if(term.isBlank())arrayOf(limit.toString(),offset.toString())
             else arrayOf(*Array(4){"%$escaped%"},limit.toString(),offset.toString())
+        val sql="""SELECT payload FROM (
+            SELECT COALESCE(e.payload,p.raw_json) payload,
+              COALESCE(json_extract(e.payload,'$.name'),p.name) name,
+              COALESCE(json_extract(e.payload,'$.barcode'),p.barcode) barcode,
+              p.model model,p.sku sku,p.ordinal sort_order
+            FROM domain_products p LEFT JOIN native_product_edits e ON e.product_id=p.id
+            UNION ALL
+            SELECT COALESCE(e.payload,n.payload) payload,
+              json_extract(COALESCE(e.payload,n.payload),'$.name') name,
+              json_extract(COALESCE(e.payload,n.payload),'$.barcode') barcode,
+              json_extract(COALESCE(e.payload,n.payload),'$.model') model,
+              json_extract(COALESCE(e.payload,n.payload),'$.sku') sku,
+              1000000+n.created_at sort_order
+            FROM native_new_products n LEFT JOIN native_product_edits e ON e.product_id=n.product_id
+        ) $where ORDER BY sort_order LIMIT ? OFFSET ?"""
         val output=ArrayList<Product>()
-        db.rawQuery("SELECT COALESCE(e.payload,p.raw_json) FROM domain_products p LEFT JOIN native_product_edits e ON e.product_id=p.id $where ORDER BY p.ordinal LIMIT ? OFFSET ?",args).use { c ->
+        db.rawQuery(sql,args).use { c ->
             while(c.moveToNext()) {
                 val row=JSONObject(c.getString(0))
                 output.add(Product(row.optString("id"),row.optString("name"),
@@ -36,14 +51,13 @@ internal object LegacyProductRepository {
     }
     fun findById(db:SQLiteDatabase,id:String):Product? {
         NativeProductChanges.create(db)
-        db.rawQuery("SELECT COALESCE(e.payload,p.raw_json) FROM domain_products p LEFT JOIN native_product_edits e ON e.product_id=p.id WHERE p.id=? LIMIT 1",arrayOf(id)).use { c ->
-            if(!c.moveToFirst())return null
-            val row=JSONObject(c.getString(0))
+        NativeProductChanges.get(db,id)?.let { row ->
             return Product(row.optString("id"),row.optString("name"),
                 row.optString("barcode"),LegacyProductRules.stock(row),
                 row.optString("currency","USD"),LegacyAccountingRules.number(row.opt("salePrice")),
                 LegacyAccountingRules.number(row.opt("cost")),
                 row.optString("variantGroupId"),row.optString("variantRole"),row)
         }
+        return null
     }
 }
