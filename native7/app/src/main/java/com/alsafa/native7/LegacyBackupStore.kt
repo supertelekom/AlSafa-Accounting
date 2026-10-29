@@ -81,7 +81,7 @@ internal class LegacyBackupStore(context: Context) :
                 val raw = value.toString()
                 val count = if (value is JSONArray) value.length() else 0
                 db.execSQL("INSERT INTO legacy_sections(name,payload,item_count) VALUES(?,?,?)",
-                    arrayOf(key, raw, count))
+                    arrayOf<Any?>(key, raw, count))
                 if (value is JSONArray) {
                     LegacyOperationalSchema.importSection(db,key,value)
                     LegacyDomainTables.importSection(db,key,value)
@@ -89,7 +89,7 @@ internal class LegacyBackupStore(context: Context) :
                         val record = value.get(index)
                         val originalId = (record as? JSONObject)?.optString("id")?.takeIf { it.isNotBlank() }
                         db.execSQL("INSERT INTO legacy_records(section,ordinal,original_id,payload) VALUES(?,?,?,?)",
-                            arrayOf(key, index, originalId, record.toString()))
+                            arrayOf<Any?>(key, index, originalId, record.toString()))
                     }
                 }
             }
