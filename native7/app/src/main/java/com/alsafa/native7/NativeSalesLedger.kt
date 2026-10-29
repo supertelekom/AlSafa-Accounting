@@ -307,6 +307,27 @@ internal object NativeSalesLedger {
             c.moveToFirst();return c.getDouble(0)
         }
     }
+    data class CashComparison(val account:String,val currency:String,
+        val legacyMovement:Double,val nativeMovement:Double,val combinedMovement:Double)
+    fun compareCashMovements(db:SQLiteDatabase,from:Long,to:Long):List<CashComparison> {
+        require(to>from)
+        LegacyDomainTables.create(db)
+        val dateFormat=java.text.SimpleDateFormat("yyyy-MM-dd",java.util.Locale.US)
+        val start=dateFormat.format(java.util.Date(from))
+        val end=dateFormat.format(java.util.Date(to))
+        val result=mutableListOf<CashComparison>()
+        db.rawQuery("SELECT DISTINCT vault,currency FROM domain_cashTransactions WHERE vault IS NOT NULL AND currency IS NOT NULL",null).use { c ->
+            while(c.moveToNext()) {
+                val account=c.getString(0)
+                val currency=c.getString(1)
+                val legacy=db.rawQuery("SELECT COALESCE(SUM(amount),0) FROM domain_cashTransactions WHERE vault=? AND currency=? AND substr(date,1,10)>=? AND substr(date,1,10)<?",
+                    arrayOf(account,currency,start,end)).use { x -> x.moveToFirst();x.getDouble(0) }
+                val native=accountMovement(db,account,currency,from,to)
+                result.add(CashComparison(account,currency,legacy,native,legacy+native))
+            }
+        }
+        return result
+    }
     data class Audit(val currency:String,val sales:Double,val collected:Double,
         val returned:Double,val recognizedProfit:Double)
     fun monthlyAudit(db:SQLiteDatabase,from:Long,to:Long):List<Audit> {
