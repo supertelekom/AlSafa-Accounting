@@ -47,8 +47,11 @@ internal object NativeProductChanges {
             for(product in products) {
                 val id=product.optString("id")
                 require(id.isNotBlank() && product.optString("name").isNotBlank()) { "اسم المنتج مطلوب" }
-                require(LegacyAccountingRules.number(product.opt("salePrice"))>=0 &&
-                    LegacyAccountingRules.number(product.opt("cost"))>=0) { "السعر أو الكلفة غير صالحة" }
+                val salePrice=LegacyAccountingRules.number(product.opt("salePrice"))
+                val unitCost=LegacyAccountingRules.number(product.opt("cost"))
+                require(salePrice.isFinite() && unitCost.isFinite() && salePrice>=0 && unitCost>=0) {
+                    "السعر أو الكلفة غير صالحة"
+                }
                 require(!LegacyProductRules.fundingMismatch(product)) { "دفعات التمويل لا تطابق المخزون" }
                 require(get(db,id)==null) { "معرف المنتج مكرر" }
                 validateUniqueness(db,product,id)
@@ -131,6 +134,11 @@ internal object NativeProductChanges {
         require(reason.isNotBlank()) { "سبب التعديل مطلوب" }
         require(!isDeleted(db,id)) { "لا يمكن تعديل منتج محذوف" }
         require(edited.optString("name").isNotBlank()) { "اسم المنتج مطلوب" }
+        val editedPrice=LegacyAccountingRules.number(edited.opt("salePrice"))
+        val editedCost=LegacyAccountingRules.number(edited.opt("cost"))
+        require(editedPrice.isFinite() && editedCost.isFinite() && editedPrice>=0 && editedCost>=0) {
+            "السعر أو الكلفة غير صالحة"
+        }
         val stock=LegacyAccountingRules.number(edited.opt("stock"))
         require(stock.isFinite() && stock>=0 && abs(stock-stock.toInt())<0.0001) { "كمية المخزون غير صالحة" }
         val lots=edited.optJSONArray("fundingLots")
