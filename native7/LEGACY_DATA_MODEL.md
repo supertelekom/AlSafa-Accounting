@@ -28,3 +28,39 @@ Source of truth: `AlSafaAccounting-v3.9.359-TABLET-PARTNER-DATE-REPORT-FIX-SOURC
 ## Status
 
 The archive and staging layers do not make sales, inventory, or accounting operational. Typed schema and domain logic remain to be implemented and tested.
+
+## Actual backup inspection — 2026-10-26
+
+The 65,903,245-byte original JSON backup was inspected. Observed section counts:
+products 558; maintenanceParts 74; sales 111; repairs 308; expenses 22;
+payments 36; partnerWithdrawals 72; cashTransactions 722; dailyClosings 34;
+purchases 8; suppliers 13; returns 4; auditLog 1732; discountRules 2;
+loyaltyLedger 2; productCostHistory 411; productDetailOptions 53;
+inventoryMovements 513; supplierLedger 2. Other declared sections have zero records.
+
+Important correction: **supplierLedger exists in the actual backup** although omitted
+from the initial emptyData declaration. Its records have supplierId, kind,
+amount, currency, date, time, notes, rateSnapshot, and optional corrections/vault.
+
+Verified nested record groups:
+- products.fundingLots: purchaseId, partnerId, qtyOriginal, qtyRemaining, unitCost, currency.
+- sales.items: productId, qty, price, cost, fundingAllocations; sales.paymentBreakdown.
+- repairs.usedParts: partId, qty, price, cost.
+- purchases.items: itemKind, itemId, qty, unitCost, lineTotal; purchases.payments.
+- suppliers.openingDebts and suppliers.directPayments.
+- returns.returnFundingAllocations.
+- inventoryMovements.fundingAdjustments.
+- supplierLedger.corrections.
+
+Observed relationships are **logical references**, not yet enforced SQLite foreign
+keys: sale items -> products, repair parts -> maintenanceParts, purchase items
+-> products or maintenanceParts according to itemKind, purchase -> supplier,
+payments/returns/cashTransactions -> polymorphic referenceType/referenceId,
+inventory movements -> itemType/itemId, supplier ledger -> supplierId.
+
+SQLite v3 now creates section-specific `op_*` tables plus `op_children`.
+These are **lossless operational staging tables with indexed original identifiers,
+dates, invoice numbers and references**, not yet normalized financial posting
+tables. No balances are recomputed and no accounting writes are enabled.
+Enforcing foreign keys or generating accounting balances before checking real
+reference coverage would be premature. Preserve raw JSON for every row.
