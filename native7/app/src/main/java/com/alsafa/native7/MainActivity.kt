@@ -1316,6 +1316,49 @@ class MainActivity : Activity() {
             isClickable=true
             setOnClickListener { navigateTo(if(repair) "preview:طلب صيانة" else "preview:مبيع كامل") }
         })
+        if(!repair) {
+            formSection(parent,"قبض / إلغاء فاتورة")
+            val invoiceId=field(parent,"رقم الفاتورة","أدخل رقم الفاتورة")
+            val collectedAmount=field(parent,"المبلغ المقبوض","0").apply {
+                inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
+            }
+            val cancellationReason=field(parent,"سبب الإلغاء","مطلوب عند الإلغاء")
+            parent.addView(Button(this).apply {
+                text="قبض"
+                setOnClickListener {
+                    try {
+                        NativeSalesLedger.collect(legacyBackupStore.writableDatabase,
+                            invoiceId.text.toString().trim(),
+                            collectedAmount.text.toString().toDoubleOrNull() ?: -1.0,"درج المحل")
+                        android.widget.Toast.makeText(this@MainActivity,"تم تسجيل القبض",android.widget.Toast.LENGTH_LONG).show()
+                    } catch(e:Exception) {
+                        android.widget.Toast.makeText(this@MainActivity,e.message ?: "تعذر القبض",android.widget.Toast.LENGTH_LONG).show()
+                    }
+                }
+            })
+            parent.addView(Button(this).apply {
+                text="إلغاء فاتورة"
+                setOnClickListener {
+                    val id=invoiceId.text.toString().trim()
+                    val reason=cancellationReason.text.toString().trim()
+                    if(id.isBlank() || reason.isBlank()) {
+                        android.widget.Toast.makeText(this@MainActivity,"رقم الفاتورة وسبب الإلغاء مطلوبان",android.widget.Toast.LENGTH_LONG).show()
+                        return@setOnClickListener
+                    }
+                    android.app.AlertDialog.Builder(this@MainActivity)
+                        .setMessage("تأكيد إلغاء الفاتورة وعكس المخزون والقبض؟")
+                        .setNegativeButton("رجوع",null)
+                        .setPositiveButton("إلغاء الفاتورة") { _,_ ->
+                            try {
+                                NativeSalesLedger.cancel(legacyBackupStore.writableDatabase,id,reason)
+                                android.widget.Toast.makeText(this@MainActivity,"تم إلغاء الفاتورة",android.widget.Toast.LENGTH_LONG).show()
+                            } catch(e:Exception) {
+                                android.widget.Toast.makeText(this@MainActivity,e.message ?: "تعذر الإلغاء",android.widget.Toast.LENGTH_LONG).show()
+                            }
+                        }.show()
+                }
+            })
+        }
         val date=field(parent,"يوم الفواتير","YYYY-MM-DD").apply {
             inputType=InputType.TYPE_NULL
             isFocusable=false
