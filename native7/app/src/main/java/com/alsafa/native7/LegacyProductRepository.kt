@@ -16,7 +16,7 @@ internal object LegacyProductRepository {
         NativeProductChanges.create(db)
         val term=search.trim()
         val where=if(term.isBlank())"" else
-            "WHERE p.name LIKE ? ESCAPE '!' OR p.barcode LIKE ? ESCAPE '!' OR p.model LIKE ? ESCAPE '!' OR p.sku LIKE ? ESCAPE '!'"
+            "WHERE COALESCE(json_extract(e.payload,'$.name'),p.name) LIKE ? ESCAPE '!' OR COALESCE(json_extract(e.payload,'$.barcode'),p.barcode) LIKE ? ESCAPE '!' OR p.model LIKE ? ESCAPE '!' OR p.sku LIKE ? ESCAPE '!'"
         val escaped=term.replace("!","!!").replace("%","!%").replace("_","!_")
         val args=if(term.isBlank())arrayOf(limit.toString(),offset.toString())
             else arrayOf(*Array(4){"%$escaped%"},limit.toString(),offset.toString())
