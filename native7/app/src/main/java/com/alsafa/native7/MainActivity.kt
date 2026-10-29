@@ -93,6 +93,22 @@ class MainActivity : Activity() {
         GradientDrawable().apply { setColor(color); cornerRadius=dp(radius).toFloat(); setStroke(dp(1),border) }
     override fun onCreate(savedInstanceState:Bundle?) {
         super.onCreate(savedInstanceState)
+        if(android.os.Build.VERSION.SDK_INT>=30) {
+            window.setDecorFitsSystemWindows(false)
+            val appearance=android.view.WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS or
+                android.view.WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS
+            window.insetsController?.setSystemBarsAppearance(appearance,appearance)
+        } else {
+            @Suppress("DEPRECATION")
+            window.decorView.systemUiVisibility=View.SYSTEM_UI_FLAG_LAYOUT_STABLE or
+                View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION or
+                View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR or View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR
+        }
+        if(android.os.Build.VERSION.SDK_INT>=33) {
+            onBackInvokedDispatcher.registerOnBackInvokedCallback(android.window.OnBackInvokedDispatcher.PRIORITY_DEFAULT) {
+                if(screen!="chooser") returnToPrevious() else finish()
+            }
+        }
         screen=savedInstanceState?.getString("screen") ?: "chooser"
         previousScreen=savedInstanceState?.getString("previousScreen") ?: "chooser"
         navigationHistory.addAll(savedInstanceState?.getStringArrayList("navigationHistory") ?: emptyList())
@@ -902,7 +918,7 @@ class MainActivity : Activity() {
                 val values=android.content.ContentValues().apply {
                     put(android.provider.MediaStore.Images.Media.DISPLAY_NAME,"alsafa_repair_"+System.currentTimeMillis()+".jpg")
                     put(android.provider.MediaStore.Images.Media.MIME_TYPE,"image/jpeg")
-                    put(android.provider.MediaStore.Images.Media.RELATIVE_PATH,"Pictures/AlSafa")
+                    if(android.os.Build.VERSION.SDK_INT>=29) put(android.provider.MediaStore.Images.Media.RELATIVE_PATH,"Pictures/AlSafa")
                 }
                 val uri=contentResolver.insert(android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI,values)
                 if(uri==null) {
@@ -1706,7 +1722,21 @@ class MainActivity : Activity() {
             orientation=LinearLayout.VERTICAL; layoutDirection=View.LAYOUT_DIRECTION_RTL
             setBackgroundColor(pearl)
         }
+        // Apply system/keyboard insets once so modern edge-to-edge does not cover the UI.
+        root.setOnApplyWindowInsetsListener { view,insets ->
+            if(android.os.Build.VERSION.SDK_INT>=30) {
+                val bars=insets.getInsets(android.view.WindowInsets.Type.systemBars() or android.view.WindowInsets.Type.displayCutout())
+                val keyboard=insets.getInsets(android.view.WindowInsets.Type.ime())
+                view.setPadding(bars.left,bars.top,bars.right,maxOf(bars.bottom,keyboard.bottom))
+            } else {
+                @Suppress("DEPRECATION")
+                view.setPadding(insets.systemWindowInsetLeft,insets.systemWindowInsetTop,
+                    insets.systemWindowInsetRight,insets.systemWindowInsetBottom)
+            }
+            insets
+        }
         setContentView(root)
+        root.requestApplyInsets()
         activeRoot=root
         originalTopbar(root)
         val width=resources.displayMetrics.widthPixels

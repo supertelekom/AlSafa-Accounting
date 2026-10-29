@@ -93,3 +93,14 @@ The previous user instructions excluding unused external partners and cloud/sync
 Verified Kotlin syntax for all source files; original button wording/order for all captured structures; resolution of source route targets; absence of runtime web assets/network permission; exact font/logo bytes; and deterministic extraction.
 
 **Not verified:** Kotlin/Android compilation, rendered Android layout, behavior on the Honor Pad X8b, exact pixel/font metrics, record-populated lists/details, all adaptive advisor paths, draft restoration, or operational/accounting behavior. SDK/Gradle are unavailable in this environment. Finish visual/device verification of the external structure before connecting functionality. No claim of full parity or operational readiness.
+
+
+## Build setup update — 2026-10-29
+
+Added the official Gradle 9.8.2 wrapper scripts and JAR, pinned the distribution SHA-256, and verified the JAR SHA-256 against Gradle's published value. The Unix launcher is executable; Windows launcher/checkout line-ending rules are included.
+
+Pinned stable AGP 9.4.1 and Kotlin 2.4.21; removed the legacy kotlin-android application and kotlinOptions DSL in favor of AGP built-in Kotlin. compileSdk/targetSdk are 37, minSdk remains 26, and the JVM bytecode target remains 17. Build Tools are selected by AGP's documented default rather than guessing a newer package version. Added theme/resources, ProGuard placeholder, and local build instructions.
+
+Target SDK migration includes root system/IME/cutout insets, API-guarded modern back callbacks, and an API guard on the retained legacy MediaStore relative-path constant. No page labels, accounting behavior, data schema, app permissions, or Native 6 files changed in this update.
+
+Validation: official wrapper hash/JAR integrity, shell syntax, XML/resource references, version/configuration checks, native asset inventory, and Kotlin/Kotlin-DSL syntax checks pass. Running `./gradlew --version --no-daemon` starts the wrapper but fails to download the distribution with `Network is unreachable`. No dependency resolution, Android compilation, APK or device test succeeded here. JetBrains' fully tested KGP matrix currently stops below the latest Gradle/AGP versions pinned by the user's request; actual Sync/Build compatibility remains to be established, with no warning suppression.
