@@ -2216,15 +2216,23 @@ class MainActivity : Activity() {
         val db=legacyBackupStore.writableDatabase
         val product=NativeProductChanges.get(db,id) ?: return
         parent.addView(text("تسوية المخزون — "+product.optString("name"),22f,gold))
-        parent.addView(text("الكمية المسجلة: "+LegacyProductRules.stock(product),14f))
+        val effectiveStock=LegacyProductRules.stock(product)+NativeSalesLedger.stockDelta(db,id)
+        parent.addView(text("الكمية المسجلة: "+effectiveStock,14f))
         val actual=field(parent,"الكمية الفعلية في المحل *").apply {
-            setText(LegacyProductRules.stock(product).toString())
+            setText(effectiveStock.toString())
             inputType=InputType.TYPE_CLASS_NUMBER
         }
         val reason=select(parent,"سبب التسوية *",listOf(
             "جرد فعلي","خطأ إدخال سابق","تلف أو فقد","تصحيح بعد مراجعة المخزون"))
         val notes=field(parent,"ملاحظة")
         parent.addView(text("هذه العملية لا تعدّل أو تحذف فواتير البيع والشراء.",12f))
+        val previousAdjustments=NativeProductChanges.stockAdjustmentHistory(db,id)
+        if(previousAdjustments.isNotEmpty()) {
+            parent.addView(text("سجل التسويات",16f,gold))
+            previousAdjustments.take(20).forEach { movement ->
+                parent.addView(text("${movement.before.toInt()} ← ${movement.after.toInt()} · ${movement.reason}",12f))
+            }
+        }
         parent.addView(Button(this).apply {
             text="تأكيد التسوية"
             setOnClickListener {
