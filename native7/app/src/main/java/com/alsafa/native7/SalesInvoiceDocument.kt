@@ -70,6 +70,9 @@ internal object SalesInvoiceDocument {
             if(part.isNotEmpty()) result.add(part)
             return result.ifEmpty { listOf("") }
         }
+        // Match the supplied legacy receipt's two-column label/value layout.
+        // Draw each row separately so the label stays on the right and the value
+        // stays on the left, as on the original 80 mm print.
         val lines=mutableListOf<Pair<String,Float>>()
         fun add(value:String,size:Float=9f) { fit(value,size).forEach { lines.add(it to size) } }
         add("الصفا للساعات",13f)
@@ -160,7 +163,7 @@ internal object SalesInvoiceDocument {
         if(number.isNotEmpty()) {
             android.app.AlertDialog.Builder(activity)
                 .setTitle("واتساب العميل")
-                .setMessage("العميل: +"+number+"\\nلا يمكن ضمان إرفاق PDF تلقائياً بالمحادثة المحددة. للمرفق اختر المشاركة وحدد العميل داخل واتساب.")
+                .setMessage("العميل: +"+number+"\nلا يمكن ضمان إرفاق PDF تلقائياً بالمحادثة المحددة. للمرفق اختر المشاركة وحدد العميل داخل واتساب.")
                 .setNeutralButton("فتح محادثة العميل") { _,_ ->
                     runCatching { activity.startActivity(Intent(Intent.ACTION_VIEW,
                         Uri.parse("https://wa.me/"+number))) }
