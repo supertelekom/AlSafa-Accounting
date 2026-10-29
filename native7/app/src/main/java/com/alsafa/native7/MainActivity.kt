@@ -1236,9 +1236,10 @@ class MainActivity : Activity() {
                     val count=db.rawQuery("SELECT COUNT(*) FROM domain_products",null).use {
                         if(it.moveToFirst())it.getInt(0) else 0
                     }
-                    countLabel.text="$"+"{count} منتج محفوظ. أضف ساعاتك وأسعارها وكمياتها وباركودها، ثم اخترها مباشرة في الفاتورة."
+                    countLabel.text="$count منتج محفوظ. أضف ساعاتك وأسعارها وكمياتها وباركودها، ثم اخترها مباشرة في الفاتورة."
                 }
                 val products=LegacyProductRepository.list(db,search.text.toString(),offset,24)
+                    .sortedWith(compareBy(java.text.Collator.getInstance(java.util.Locale("ar"))) { it.name })
                 for(p in products) {
                     val row=LinearLayout(this).apply {
                         orientation=LinearLayout.VERTICAL
@@ -1261,8 +1262,9 @@ class MainActivity : Activity() {
                     header.addView(labels,LinearLayout.LayoutParams(0,-2,1f))
                     row.addView(header)
                     val stock=p.stock
-                    val reserved=0 // Reservation projection is not ported yet; do not invent a value.
-                    row.addView(text("المخزون الفعلي: $stock    سعر البيع: "+"$"+"{p.salePrice} "+"$"+"{p.currency}",13f))
+                    // Reserved/available quantities are not shown until the legacy reservation logic is ported.
+                    row.addView(text("المخزون الفعلي: $stock    سعر البيع: ${p.salePrice} ${p.currency}",13f))
+                    row.addView(text("كلفة الشراء للقطعة: ${p.cost} ${p.currency}",13f))
                     row.addView(text("الباركود: "+p.barcode.ifBlank { "—" },12f))
                     if(stock<=LegacyAccountingRules.number(p.raw.opt("minStock")))
                         row.addView(text("تنبيه: المخزون وصل للحد الأدنى",12f,Color.RED))
@@ -1302,6 +1304,10 @@ class MainActivity : Activity() {
         val name=field(parent,"اسم الساعة / المنتج *").apply { setText(product.optString("name")) }
         val color=field(parent,"اللون").apply { setText(product.optString("color")) }
         val barcode=field(parent,"باركود المنتج").apply { setText(product.optString("barcode")) }
+        val cost=field(parent,"كلفة الشراء للقطعة").apply {
+            setText(product.optString("cost"))
+            inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
+        }
         val price=field(parent,"سعر البيع *").apply {
             setText(product.optString("salePrice"))
             inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
@@ -1313,11 +1319,14 @@ class MainActivity : Activity() {
                 try {
                     val amount=price.text.toString().toDoubleOrNull()
                     require(amount!=null && amount.isFinite() && amount>=0){"سعر البيع غير صالح"}
+                    val costAmount=cost.text.toString().toDoubleOrNull()
+                    require(costAmount!=null && costAmount.isFinite() && costAmount>=0){"كلفة الشراء غير صالحة"}
                     val candidate=org.json.JSONObject(product.toString()).apply {
                         put("name",name.text.toString().trim())
                         put("color",color.text.toString().trim())
                         put("barcode",barcode.text.toString().trim())
                         put("salePrice",amount)
+                        put("cost",costAmount)
                     }
                     NativeProductChanges.save(db,candidate,"تعديل بيانات المنتج")
                     android.widget.Toast.makeText(this@MainActivity,"تم الحفظ",android.widget.Toast.LENGTH_SHORT).show()
