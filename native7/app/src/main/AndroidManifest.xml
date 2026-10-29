@@ -2,6 +2,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <supports-screens android:smallScreens="false" android:normalScreens="false"
         android:largeScreens="true" android:xlargeScreens="true" android:requiresSmallestWidthDp="600" />
+    <uses-permission android:name="android.permission.BLUETOOTH" android:maxSdkVersion="30" />
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" android:maxSdkVersion="30" />
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
     <application android:label="الصفا Native 7" android:theme="@style/Theme.AlSafa.Native7"
         android:usesCleartextTraffic="false" android:allowBackup="false" android:supportsRtl="true"
         android:enableOnBackInvokedCallback="true">
