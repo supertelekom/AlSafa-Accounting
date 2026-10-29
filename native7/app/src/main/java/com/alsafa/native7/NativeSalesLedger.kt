@@ -20,6 +20,7 @@ internal object NativeSalesLedger {
         db.execSQL("CREATE TABLE IF NOT EXISTS native_sale_returns (id TEXT PRIMARY KEY, sale_id TEXT NOT NULL, product_id TEXT NOT NULL, quantity INTEGER NOT NULL, refund REAL NOT NULL, reason TEXT NOT NULL, created_at INTEGER NOT NULL)")
         db.execSQL("CREATE TABLE IF NOT EXISTS native_sale_change (id TEXT PRIMARY KEY, sale_id TEXT NOT NULL, amount_in_invoice_currency REAL NOT NULL, invoice_currency TEXT NOT NULL, payout REAL NOT NULL, payout_currency TEXT NOT NULL, payout_account TEXT NOT NULL, tender_account TEXT NOT NULL, exchange_rate REAL NOT NULL, created_at INTEGER NOT NULL)")
         db.execSQL("CREATE TABLE IF NOT EXISTS native_sale_mixed (id TEXT PRIMARY KEY, sale_id TEXT NOT NULL, amount REAL NOT NULL, currency TEXT NOT NULL, account TEXT NOT NULL, invoice_equivalent REAL NOT NULL, exchange_rate REAL NOT NULL, created_at INTEGER NOT NULL)")
+        db.execSQL("CREATE TABLE IF NOT EXISTS native_sale_profit_adjustments (id TEXT PRIMARY KEY, sale_id TEXT NOT NULL, amount REAL NOT NULL, currency TEXT NOT NULL, created_at INTEGER NOT NULL, reason TEXT NOT NULL)")
         db.execSQL("CREATE TABLE IF NOT EXISTS native_sale_collections (id TEXT PRIMARY KEY, sale_id TEXT NOT NULL, amount REAL NOT NULL, currency TEXT NOT NULL, account TEXT NOT NULL, created_at INTEGER NOT NULL, reason TEXT NOT NULL)")
     }
     fun stockDelta(db:SQLiteDatabase,productId:String):Int {
@@ -211,6 +212,14 @@ internal object NativeSalesLedger {
             val refundable=db.rawQuery("SELECT COALESCE(SUM(amount),0) FROM native_sale_collections WHERE sale_id=? AND account=?",arrayOf(saleId,account)).use { c -> c.moveToFirst();c.getDouble(0).coerceAtLeast(0.0) }
             val cashRefund=refund.coerceAtMost(refundable)
             if(cashRefund>0) insertCollection(db,saleId,-cashRefund,sale.currency,account,at,"return: "+reason)
+            val costOfReturned=db.rawQuery("SELECT COALESCE(SUM(quantity*unit_cost),0) FROM native_sale_lines WHERE sale_id=? AND product_id=?",arrayOf(saleId,productId)).use { c -> c.moveToFirst();c.getDouble(0) }
+            val costPerUnit=costOfReturned/sold.first
+            val returnedMargin=refund-costPerUnit*quantity
+            val historicalCollected=db.rawQuery("SELECT COALESCE(SUM(CASE WHEN amount>0 THEN amount ELSE 0 END),0) FROM native_sale_collections WHERE sale_id=? AND reason IN ('collection','mixed_collection')",arrayOf(saleId)).use { c -> c.moveToFirst();c.getDouble(0) }
+            val collectedShare=if(sale.total>0) (historicalCollected/sale.total).coerceIn(0.0,1.0) else 0.0
+            val profitReversal=-returnedMargin*collectedShare
+            if(profitReversal!=0.0) db.execSQL("INSERT INTO native_sale_profit_adjustments VALUES (?,?,?,?,?,?)",
+                arrayOf<Any>(UUID.randomUUID().toString(),saleId,profitReversal,sale.currency,at,"return: "+reason))
             db.setTransactionSuccessful()
         } finally { db.endTransaction() }
     }
