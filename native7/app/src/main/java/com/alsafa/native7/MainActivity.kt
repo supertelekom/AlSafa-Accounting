@@ -1791,7 +1791,7 @@ class MainActivity : Activity() {
         fun load(reset:Boolean) {
             if(reset) { offset=0;list.removeAllViews() }
             NativeProductChanges.create(legacyBackupStore.writableDatabase)
-            val nativeCount=legacyBackupStore.readableDatabase.rawQuery("SELECT COUNT(*) FROM native_new_products",null).use {
+            val nativeCount=legacyBackupStore.readableDatabase.rawQuery("SELECT COUNT(*) FROM native_new_products n WHERE NOT EXISTS (SELECT 1 FROM native_deleted_products d WHERE d.product_id=n.product_id)",null).use {
                 if(it.moveToFirst())it.getInt(0) else 0
             }
             if(!legacyBackupStore.hasData() && nativeCount==0) {
@@ -1801,7 +1801,7 @@ class MainActivity : Activity() {
             try {
                 val db=legacyBackupStore.readableDatabase
                 if(reset) {
-                    val count=db.rawQuery("SELECT COUNT(*) FROM domain_products",null).use {
+                    val count=db.rawQuery("SELECT COUNT(*) FROM domain_products p WHERE NOT EXISTS (SELECT 1 FROM native_deleted_products d WHERE d.product_id=p.id)",null).use {
                         if(it.moveToFirst())it.getInt(0) else 0
                     }
                     countLabel.text="${count+nativeCount} منتج محفوظ."
@@ -1869,6 +1869,31 @@ class MainActivity : Activity() {
                     actions.addView(Button(this).apply {
                         text="تسوية المخزون"
                         setOnClickListener { selectedInventoryProduct=p.id;navigateTo("native:stock-adjustment") }
+                    })
+                    actions.addView(Button(this).apply {
+                        text="حذف المنتج"
+                        setOnClickListener {
+                            val reason=EditText(this@MainActivity).apply {
+                                hint="سبب الحذف"
+                                typeface=legacyTypeface
+                            }
+                            android.app.AlertDialog.Builder(this@MainActivity)
+                                .setTitle("حذف المنتج — "+p.name)
+                                .setMessage("يُخفى المنتج من المخزون دون حذف سجل الفواتير. يجب أن تكون كميته صفراً.")
+                                .setView(reason)
+                                .setNegativeButton("إلغاء",null)
+                                .setPositiveButton("تأكيد الحذف") { _,_ ->
+                                    try {
+                                        NativeProductChanges.deleteProduct(
+                                            legacyBackupStore.writableDatabase,p.id,reason.text.toString().trim())
+                                        load(true)
+                                    } catch(e:Exception) {
+                                        android.app.AlertDialog.Builder(this@MainActivity)
+                                            .setMessage(e.message ?: "تعذر حذف المنتج")
+                                            .setPositiveButton("حسناً",null).show()
+                                    }
+                                }.show()
+                        }
                     })
                     actions.addView(Button(this).apply {
                         text="طباعة باركود"
