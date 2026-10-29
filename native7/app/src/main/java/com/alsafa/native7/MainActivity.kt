@@ -1512,6 +1512,23 @@ class MainActivity : Activity() {
                 }
             })
             parent.addView(Button(this).apply {
+                text="طباعة بلوتوث مباشرة"
+                setOnClickListener {
+                    try {
+                        val prefs=getSharedPreferences("alsafa_printer",MODE_PRIVATE)
+                        val mac=prefs.getString("printer_mac",null) ?: error("اختر الطابعة من صفحة الطابعة الحرارية أولاً")
+                        val width=prefs.getInt("roll_width_mm",80)
+                        val file=SalesInvoiceDocument.createPdf(this@MainActivity,legacyBackupStore.readableDatabase,
+                            invoiceId.text.toString().trim(),width)
+                        ThermalBluetoothPrinter.print(this@MainActivity,file,mac,width) { error ->
+                            android.widget.Toast.makeText(this@MainActivity,error ?: "أُرسلت بيانات الفاتورة إلى الطابعة",android.widget.Toast.LENGTH_LONG).show()
+                        }
+                    } catch(e:Exception) {
+                        android.widget.Toast.makeText(this@MainActivity,e.message ?: "تعذرت الطباعة",android.widget.Toast.LENGTH_LONG).show()
+                    }
+                }
+            })
+            parent.addView(Button(this).apply {
                 text="إرسال الفاتورة عبر واتساب"
                 setOnClickListener {
                     try {
@@ -2799,6 +2816,29 @@ class MainActivity : Activity() {
             setOnClickListener {
                 prefs.edit().putInt("roll_width_mm",sizes[selected.selectedItemPosition]).apply()
                 android.widget.Toast.makeText(this@MainActivity,"تم حفظ عرض الرول",android.widget.Toast.LENGTH_SHORT).show()
+            }
+        })
+        parent.addView(Button(this).apply {
+            text="اختيار طابعة بلوتوث مقترنة"
+            setOnClickListener {
+                try {
+                    if(android.os.Build.VERSION.SDK_INT>=31 &&
+                        checkSelfPermission(android.Manifest.permission.BLUETOOTH_CONNECT)!=android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                        requestPermissions(arrayOf(android.Manifest.permission.BLUETOOTH_CONNECT),7180)
+                    } else {
+                        val devices=ThermalBluetoothPrinter.paired(this@MainActivity)
+                        if(devices.isEmpty()) error("لا توجد طابعة مقترنة؛ اقترن بالطابعة من إعدادات البلوتوث")
+                        android.app.AlertDialog.Builder(this@MainActivity)
+                            .setTitle("اختيار الطابعة")
+                            .setSingleChoiceItems(devices.map { it.first+" · "+it.second }.toTypedArray(),-1) { dialog,index ->
+                                prefs.edit().putString("printer_mac",devices[index].second).apply()
+                                dialog.dismiss()
+                                android.widget.Toast.makeText(this@MainActivity,"تم اختيار الطابعة",android.widget.Toast.LENGTH_SHORT).show()
+                            }.setNegativeButton("إلغاء",null).show()
+                    }
+                } catch(e:Exception) {
+                    android.widget.Toast.makeText(this@MainActivity,e.message,android.widget.Toast.LENGTH_LONG).show()
+                }
             }
         })
         parent.addView(Button(this).apply {
