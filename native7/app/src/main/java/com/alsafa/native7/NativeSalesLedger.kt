@@ -18,7 +18,7 @@ internal object NativeSalesLedger {
         db.execSQL("CREATE TABLE IF NOT EXISTS native_sale_stock (id TEXT PRIMARY KEY, sale_id TEXT NOT NULL, product_id TEXT NOT NULL, delta INTEGER NOT NULL, reason TEXT NOT NULL, created_at INTEGER NOT NULL)")
         db.execSQL("CREATE INDEX IF NOT EXISTS idx_native_sale_stock_product ON native_sale_stock(product_id)")
         db.execSQL("CREATE TABLE IF NOT EXISTS native_sale_returns (id TEXT PRIMARY KEY, sale_id TEXT NOT NULL, product_id TEXT NOT NULL, quantity INTEGER NOT NULL, refund REAL NOT NULL, reason TEXT NOT NULL, created_at INTEGER NOT NULL)")
-        db.execSQL("CREATE TABLE IF NOT EXISTS native_sale_change (id TEXT PRIMARY KEY, sale_id TEXT NOT NULL, amount_in_invoice_currency REAL NOT NULL, invoice_currency TEXT NOT NULL, payout REAL NOT NULL, payout_currency TEXT NOT NULL, payout_account TEXT NOT NULL, exchange_rate REAL NOT NULL, created_at INTEGER NOT NULL)")
+        db.execSQL("CREATE TABLE IF NOT EXISTS native_sale_change (id TEXT PRIMARY KEY, sale_id TEXT NOT NULL, amount_in_invoice_currency REAL NOT NULL, invoice_currency TEXT NOT NULL, payout REAL NOT NULL, payout_currency TEXT NOT NULL, payout_account TEXT NOT NULL, tender_account TEXT NOT NULL, exchange_rate REAL NOT NULL, created_at INTEGER NOT NULL)")
         db.execSQL("CREATE TABLE IF NOT EXISTS native_sale_collections (id TEXT PRIMARY KEY, sale_id TEXT NOT NULL, amount REAL NOT NULL, currency TEXT NOT NULL, account TEXT NOT NULL, created_at INTEGER NOT NULL, reason TEXT NOT NULL)")
     }
     fun stockDelta(db:SQLiteDatabase,productId:String):Int {
@@ -88,8 +88,8 @@ internal object NativeSalesLedger {
             if(change>0) {
                 val payout=change*changeRate
                 require(payout.isFinite()) { "قيمة الباقي غير صالحة" }
-                db.execSQL("INSERT INTO native_sale_change VALUES (?,?,?,?,?,?,?,?,?)",
-                    arrayOf<Any>(UUID.randomUUID().toString(),id,change,currency,payout,changeCurrency,changeAccount,changeRate,now))
+                db.execSQL("INSERT INTO native_sale_change VALUES (?,?,?,?,?,?,?,?,?,?)",
+                    arrayOf<Any>(UUID.randomUUID().toString(),id,change,currency,payout,changeCurrency,changeAccount,tenderAccount,changeRate,now))
             }
             db.setTransactionSuccessful()
             return id
@@ -176,7 +176,12 @@ internal object NativeSalesLedger {
         create(db)
         db.rawQuery("SELECT COALESCE(SUM(amount),0) FROM native_sale_collections WHERE account=? AND currency=? AND created_at>=? AND created_at<?",arrayOf(account,currency,from.toString(),to.toString())).use { c ->
             c.moveToFirst()
-            return c.getDouble(0)
+            val collected=c.getDouble(0)
+            val tenderExcess=db.rawQuery("SELECT COALESCE(SUM(amount_in_invoice_currency),0) FROM native_sale_change WHERE tender_account=? AND invoice_currency=? AND created_at>=? AND created_at<?",
+                arrayOf(account,currency,from.toString(),to.toString())).use { x -> x.moveToFirst();x.getDouble(0) }
+            val paidChange=db.rawQuery("SELECT COALESCE(SUM(payout),0) FROM native_sale_change WHERE payout_account=? AND payout_currency=? AND created_at>=? AND created_at<?",
+                arrayOf(account,currency,from.toString(),to.toString())).use { x -> x.moveToFirst();x.getDouble(0) }
+            return collected+tenderExcess-paidChange
         }
     }
     /** Profit is earned only on the actual collection day, proportionally to cash received. */
