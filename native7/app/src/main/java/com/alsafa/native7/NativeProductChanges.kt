@@ -47,7 +47,7 @@ internal object NativeProductChanges {
         if(barcode.isNotBlank()) {
             db.rawQuery("SELECT p.id FROM domain_products p LEFT JOIN native_product_edits e ON e.product_id=p.id WHERE p.id!=? AND REPLACE(COALESCE(json_extract(e.payload,'$.barcode'),p.barcode),' ','')=? LIMIT 1",
                 arrayOf(id,barcode)).use { require(!it.moveToFirst()) { "الباركود مستخدم" } }
-            db.rawQuery("SELECT product_id FROM native_new_products WHERE product_id!=? AND REPLACE(json_extract(payload,'$.barcode'),' ','')=? LIMIT 1",
+            db.rawQuery("SELECT n.product_id FROM native_new_products n LEFT JOIN native_product_edits e ON e.product_id=n.product_id WHERE n.product_id!=? AND REPLACE(json_extract(COALESCE(e.payload,n.payload),'$.barcode'),' ','')=? LIMIT 1",
                 arrayOf(id,barcode)).use { require(!it.moveToFirst()) { "الباركود مستخدم" } }
             db.rawQuery("SELECT id FROM domain_maintenanceParts WHERE REPLACE(barcode,' ','')=? LIMIT 1",
                 arrayOf(barcode)).use { require(!it.moveToFirst()) { "الباركود مستخدم لقطعة صيانة" } }
