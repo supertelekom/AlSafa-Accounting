@@ -65,7 +65,16 @@ class MainActivity : Activity() {
         } else android.content.Intent(android.content.Intent.ACTION_GET_CONTENT).apply {
                 type="image/*";addCategory(android.content.Intent.CATEGORY_OPENABLE)
             }
-        startActivityForResult(intent,if(camera)7312 else 7311)
+        try {
+            startActivityForResult(intent,if(camera)7312 else 7311)
+        } catch(e:Exception) {
+            if(camera)pendingProductCameraUri?.let { contentResolver.delete(it,null,null) }
+            pendingProductCameraUri=null
+            pendingProductPhotoKey=null
+            android.app.AlertDialog.Builder(this).setTitle("تعذر فتح الصورة")
+                .setMessage(e.message ?: "تأكد من وجود تطبيق كاميرا أو استوديو")
+                .setPositiveButton("حسناً",null).show()
+        }
     }
     private fun productPhotoData(bitmap:android.graphics.Bitmap):String {
         val width=bitmap.width
@@ -165,6 +174,12 @@ class MainActivity : Activity() {
     @Deprecated("Deprecated in Java")
     override fun onActivityResult(requestCode:Int,resultCode:Int,data:android.content.Intent?) {
         super.onActivityResult(requestCode,resultCode,data)
+        if(requestCode in 7311..7312 && resultCode!=RESULT_OK) {
+            if(requestCode==7312)pendingProductCameraUri?.let { contentResolver.delete(it,null,null) }
+            pendingProductCameraUri=null
+            pendingProductPhotoKey=null
+            photoPreview=null
+        }
         if(requestCode in 7311..7312 && resultCode==RESULT_OK) {
             val key=pendingProductPhotoKey
             if(key!=null)try {
@@ -188,6 +203,7 @@ class MainActivity : Activity() {
             }
             if(requestCode==7312)pendingProductCameraUri=null
             pendingProductPhotoKey=null
+            photoPreview=null
         }
         if (requestCode == 7107 && resultCode == RESULT_OK && data?.data != null) {
             val uri = requireNotNull(data.data)
