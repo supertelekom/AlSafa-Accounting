@@ -958,9 +958,23 @@ class MainActivity : Activity() {
         val liveQuery=field(parent,"بحث سريع عن المنتج","اكتب جزءاً من الاسم أو REF أو الرقم أو الباركود")
         val liveMatches=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL }
         parent.addView(liveMatches)
-        field(parent,"","امسح أو اكتب باركود الساعة")
-        disabledAction(parent,"⌁ قراءة بالكاميرا")
-        disabledAction(parent,"إضافة بالباركود")
+        val saleBarcode=field(parent,"","امسح أو اكتب باركود الساعة")
+        barcodeScanButton(parent,saleBarcode)
+        saleBarcode.addTextChangedListener(object:android.text.TextWatcher {
+            override fun beforeTextChanged(s:CharSequence?,start:Int,count:Int,after:Int) {}
+            override fun afterTextChanged(s:android.text.Editable?) {}
+            override fun onTextChanged(s:CharSequence?,start:Int,before:Int,count:Int) {
+                val code=s?.toString()?.trim().orEmpty()
+                if(code.isBlank()) return
+                try {
+                    val matched=LegacyProductRepository.list(legacyBackupStore.readableDatabase,code,0,30).firstOrNull { it.barcode==code }
+                    if(matched!=null) saleBarcode.post {
+                        liveQuery.setText(code)
+                        saleBarcode.setText("")
+                    }
+                } catch(_:Exception) {}
+            }
+        })
         parent.addView(text("عند العثور على الباركود يضاف المنتج بسعره وبياناته المحفوظة تلقائياً.",12f))
         formSection(parent,"أصناف الفاتورة")
         val lines=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL }
