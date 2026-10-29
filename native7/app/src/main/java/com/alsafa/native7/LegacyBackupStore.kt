@@ -99,6 +99,9 @@ internal class LegacyBackupStore(context: Context) :
                 arrayOf("backup_sha256",inspection.sha256))
             db.execSQL("INSERT INTO legacy_metadata(name,payload) VALUES(?,?)",
                 arrayOf("backup_exported_at",inspection.exportedAt))
+            val references = LegacySnapshotVerifier.verify(wrapper)
+            db.execSQL("INSERT INTO legacy_metadata(name,payload) VALUES(?,?)",
+                arrayOf("unresolved_reference_count", references.unresolved.size.toString()))
             LegacyDomainTables.audit(db)
             val persisted = db.rawQuery("SELECT COUNT(*) FROM legacy_sections", null).use {
                 check(it.moveToFirst())
