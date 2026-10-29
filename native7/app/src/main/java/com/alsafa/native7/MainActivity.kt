@@ -1006,7 +1006,7 @@ class MainActivity : Activity() {
                         liveQuery.setText(code)
                         for(i in 0 until liveMatches.childCount) {
                             val candidate=liveMatches.getChildAt(i) as? TextView ?: continue
-                            if(candidate.text.toString().contains(matched.barcode)) {
+                            if(candidate.getTag(android.R.id.content)==matched.id) {
                                 candidate.performClick()
                                 break
                             }
@@ -1046,6 +1046,7 @@ class MainActivity : Activity() {
                 try {
                     LegacyProductRepository.list(legacyBackupStore.readableDatabase,query,0,20).forEach { product ->
                         liveMatches.addView(text(product.name+" · "+product.barcode+" · "+product.stock,13f,gold).apply {
+                            setTag(android.R.id.content,product.id)
                             gravity=Gravity.RIGHT
                             isClickable=true
                             setOnClickListener {
