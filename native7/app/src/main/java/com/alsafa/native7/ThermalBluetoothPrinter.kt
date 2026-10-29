@@ -39,7 +39,6 @@ internal object ThermalBluetoothPrinter {
             try {
                 val device=adapter.getRemoteDevice(address)
                 socket=device.createRfcommSocketToServiceRecord(spp)
-                adapter.cancelDiscovery()
                 socket.connect()
                 val out=socket.outputStream
                 out.write(byteArrayOf(27,64))
