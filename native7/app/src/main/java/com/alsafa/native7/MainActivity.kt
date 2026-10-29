@@ -1107,7 +1107,8 @@ class MainActivity : Activity() {
         parent.addView(liveSubtotal)
         formSection(parent,"الدفع والإرسال")
         val paymentStatus=select(parent,"حالة الدفع",listOf("مدفوع بالكامل","دفعة جزئية","عند الاستلام","آجل"))
-        select(parent,"قاعدة الخصم",listOf("بدون قاعدة خصم"))
+        val savedDiscountRules=LegacyDiscountRules.list(legacyBackupStore.readableDatabase)
+        val discountRule=select(parent,"قاعدة الخصم",listOf("بدون قاعدة خصم")+savedDiscountRules.map { it.name })
         parent.addView(text("قاعدة الخصم = خصم محفوظ مسبقاً لتستخدمه بسرعة، مثل «عميل مميز 10%».",12f))
         disabledAction(parent,"＋ إنشاء قاعدة خصم")
         val manualDiscount=field(parent,"خصم الفاتورة اليدوي","0").apply { inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL }
@@ -1191,13 +1192,16 @@ class MainActivity : Activity() {
                 require(discount.isFinite() && discount>=0) { "الخصم غير صالح" }
                 require((taxRate.text.toString().toDoubleOrNull() ?: 0.0)==0.0) { "لا يمكن حفظ الضريبة قبل تفعيل حسابها" }
                 val subtotal=saleLines.sumOf { it.quantity*it.unitPrice }
-                require(subtotal>0 && discount<=subtotal) { "الخصم أكبر من قيمة الفاتورة" }
-                if(discount>0) {
-                    val factor=(subtotal-discount)/subtotal
+                val savedRule=savedDiscountRules.getOrNull(discountRule.selectedItemPosition-1)
+                val ruleDiscount=LegacyDiscountRules.amount(savedRule,subtotal,saleCurrency.selectedItem.toString())
+                val combinedDiscount=discount+ruleDiscount
+                require(subtotal>0 && combinedDiscount<=subtotal) { "الخصم أكبر من قيمة الفاتورة" }
+                if(combinedDiscount>0) {
+                    val factor=(subtotal-combinedDiscount)/subtotal
                     for(i in saleLines.indices) saleLines[i]=saleLines[i].copy(unitPrice=saleLines[i].unitPrice*factor)
                 }
                 val amount=initialPayment.text.toString().toDoubleOrNull() ?: 0.0
-                val finalTotal=subtotal-discount
+                val finalTotal=subtotal-combinedDiscount
                 val deferred=paymentStatus.selectedItemPosition>=2
                 val id=if(collectionMode.selectedItemPosition==1) {
                     val tenders=mixedRows.mapNotNull { (money,values,account) ->
