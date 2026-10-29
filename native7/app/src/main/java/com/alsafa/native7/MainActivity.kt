@@ -86,6 +86,11 @@ class MainActivity : Activity() {
     private fun dp(value:Int) = (value * resources.displayMetrics.density + 0.5f).toInt()
     private fun text(value:String, size:Float, color:Int = ink):TextView = TextView(this).apply {
         text = value; textSize = size; setTextColor(color); gravity = Gravity.CENTER
+        layoutDirection = View.LAYOUT_DIRECTION_RTL
+        textDirection = View.TEXT_DIRECTION_FIRST_STRONG
+        includeFontPadding = false
+        breakStrategy = android.text.Layout.BREAK_STRATEGY_HIGH_QUALITY
+        hyphenationFrequency = android.text.Layout.HYPHENATION_FREQUENCY_NONE
         setPadding(dp(9),dp(8),dp(9),dp(8))
         typeface = legacyTypeface
     }
