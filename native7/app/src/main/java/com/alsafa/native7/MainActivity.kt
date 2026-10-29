@@ -1004,6 +1004,13 @@ class MainActivity : Activity() {
                     val matched=LegacyProductRepository.list(legacyBackupStore.readableDatabase,code,0,30).firstOrNull { it.barcode==code }
                     if(matched!=null) saleBarcode.post {
                         liveQuery.setText(code)
+                        for(i in 0 until liveMatches.childCount) {
+                            val candidate=liveMatches.getChildAt(i) as? TextView ?: continue
+                            if(candidate.text.toString().contains(matched.barcode)) {
+                                candidate.performClick()
+                                break
+                            }
+                        }
                         saleBarcode.setText("")
                     }
                 } catch(_:Exception) {}
