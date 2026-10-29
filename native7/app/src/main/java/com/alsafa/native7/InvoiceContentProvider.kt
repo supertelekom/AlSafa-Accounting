@@ -21,7 +21,7 @@ class InvoiceContentProvider:ContentProvider() {
         require(mode=="r") { "للقراءة فقط" }
         require(uri.authority==context?.packageName+".invoices")
         val name=uri.lastPathSegment ?: error("اسم الملف مفقود")
-        require(Regex("sale-[A-Za-z0-9_-]+\\.pdf").matches(name)) { "اسم ملف غير صالح" }
+        require(Regex("sale-[A-Za-z0-9_-]+(?:-[0-9]{2,3}mm)?\\.pdf").matches(name)) { "اسم ملف غير صالح" }
         val dir=File(requireNotNull(context).cacheDir,"invoices").canonicalFile
         val file=File(dir,name).canonicalFile
         require(file.parentFile==dir && file.isFile) { "الفاتورة غير موجودة" }
