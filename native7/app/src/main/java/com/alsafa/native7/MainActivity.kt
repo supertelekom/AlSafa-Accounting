@@ -997,7 +997,6 @@ class MainActivity : Activity() {
             }
             liveSubtotal.text=if(valid) "مجموع الأصناف: "+sum.stripTrailingZeros().toPlainString() else "مجموع الأصناف: —"
         }
-        manualSaleItemPreview(lines,1,false,updateSubtotal)
         var nextLine=2
         liveQuery.addTextChangedListener(object:android.text.TextWatcher {
             override fun beforeTextChanged(s:CharSequence?,start:Int,count:Int,after:Int) {}
