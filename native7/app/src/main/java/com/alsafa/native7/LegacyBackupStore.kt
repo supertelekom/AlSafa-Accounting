@@ -5,6 +5,7 @@ import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 import org.json.JSONArray
 import org.json.JSONObject
+import java.security.MessageDigest
 
 /**
  * Local-only legacy backup storage. Raw JSON is retained losslessly so that
@@ -30,7 +31,11 @@ internal class LegacyBackupStore(context: Context) :
         if (oldVersion < 4) LegacyDomainTables.create(db)
     }
 
-    data class Inspection(val counts: Map<String, Int>, val format: String)
+    data class Inspection(val counts: Map<String, Int>, val format: String,
+        val sha256: String, val exportedAt: String)
+    private fun digest(text: String): String = MessageDigest.getInstance("SHA-256")
+        .digest(text.toByteArray(Charsets.UTF_8))
+        .joinToString("") { "%02x".format(it) }
     fun inspect(text: String): Inspection {
         val wrapper = JSONObject(text.trimStart('\uFEFF'))
         val wrapped = wrapper.optString("format") == "alsafa-accounting-backup"
@@ -48,7 +53,8 @@ internal class LegacyBackupStore(context: Context) :
             val value = data.opt(key)
             if (value is JSONArray) counts[key] = value.length()
         }
-        return Inspection(counts, if (wrapped) "alsafa-accounting-backup" else "legacy-raw")
+        return Inspection(counts, if (wrapped) "alsafa-accounting-backup" else "legacy-raw",
+            digest(text), wrapper.optString("exportedAt"))
     }
 
     fun hasData(): Boolean = readableDatabase.rawQuery(
@@ -89,6 +95,10 @@ internal class LegacyBackupStore(context: Context) :
             }
             db.execSQL("INSERT INTO legacy_metadata(name,payload) VALUES(?,?)",
                 arrayOf("original_backup", text))
+            db.execSQL("INSERT INTO legacy_metadata(name,payload) VALUES(?,?)",
+                arrayOf("backup_sha256",inspection.sha256))
+            db.execSQL("INSERT INTO legacy_metadata(name,payload) VALUES(?,?)",
+                arrayOf("backup_exported_at",inspection.exportedAt))
             LegacyDomainTables.audit(db)
             val persisted = db.rawQuery("SELECT COUNT(*) FROM legacy_sections", null).use {
                 check(it.moveToFirst())
