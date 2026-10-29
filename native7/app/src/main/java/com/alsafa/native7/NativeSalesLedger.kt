@@ -236,6 +236,11 @@ internal object NativeSalesLedger {
         try {
             val sale=find(db,id) ?: error("الفاتورة غير موجودة")
             require(sale.status=="active") { "الفاتورة ملغاة مسبقاً" }
+            // Legacy deleteRecord forbids cancelling/deleting a sale with linked returns.
+            db.rawQuery("SELECT COUNT(*) FROM native_sale_returns WHERE sale_id=?",arrayOf(id)).use { c ->
+                c.moveToFirst()
+                require(c.getInt(0)==0) { "لا يمكن حذف فاتورة لها مرتجع/استبدال. احتفظ بها كسجل محاسبي." }
+            }
             db.rawQuery("SELECT product_id,-SUM(delta) FROM native_sale_stock WHERE sale_id=? GROUP BY product_id HAVING SUM(delta)<0",arrayOf(id)).use { c ->
                 while(c.moveToNext()) db.execSQL("INSERT INTO native_sale_stock VALUES (?,?,?,?,?,?)",
                     arrayOf<Any>(UUID.randomUUID().toString(),id,c.getString(0),c.getInt(1),"cancel: "+reason,at))
