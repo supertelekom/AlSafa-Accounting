@@ -257,6 +257,13 @@ internal object NativeSalesLedger {
         }
         return totals
     }
+    data class PartnerShare(val name:String,val percent:Int,val profit:Double)
+    fun partnerShares(db:SQLiteDatabase,from:Long,to:Long):Map<String,List<PartnerShare>> =
+        profitByCurrency(db,from,to).mapValues { (_,value) ->
+            listOf(PartnerShare("الأب",40,value*0.40),
+                PartnerShare("عبد الكريم",35,value*0.35),
+                PartnerShare("يزن",25,value*0.25))
+        }
     /** Returned cost uses weighted average historical cost of the sold product. */
     fun returnedCost(db:SQLiteDatabase,saleId:String):Double {
         create(db)
