@@ -29,45 +29,54 @@ internal object NativeSalesLedger {
     }
     fun save(db:SQLiteDatabase,lines:List<Line>,currency:String,channel:String,customer:String,phone:String,
              initialCollection:Double=0.0,account:String="درج المحل",changeAccount:String=account,changeCurrency:String=currency):String {
+        require(changeCurrency==currency) { "إرجاع الباقي بعملة أخرى يحتاج سعر تحويل صريح" }
+        create(db)
+        db.beginTransaction()
+        try {
+            val id=saveInternal(db,lines,currency,channel,customer,phone,initialCollection,account,changeAccount)
+            db.setTransactionSuccessful()
+            return id
+        } finally { db.endTransaction() }
+    }
+    private fun saveInternal(db:SQLiteDatabase,lines:List<Line>,currency:String,channel:String,
+        customer:String,phone:String,initialCollection:Double,account:String,changeAccount:String=account):String {
         require(lines.isNotEmpty()) { "أضف صنفاً إلى الفاتورة" }
         require(currency in setOf("USD","TRY","SYP")) { "عملة غير مدعومة" }
         require(initialCollection.isFinite() && initialCollection>=0) { "قيمة القبض غير صالحة" }
-        require(changeCurrency==currency) { "إرجاع الباقي بعملة أخرى يحتاج سعر تحويل صريح" }
         require(lines.all { it.quantity>0 && it.unitPrice.isFinite() && it.unitPrice>=0 && it.productId.isNotBlank() }) { "بيانات الأصناف غير صالحة" }
-        create(db)
         val id=UUID.randomUUID().toString()
-        db.beginTransaction()
-        try {
-            val grouped=lines.groupBy { it.productId }
-            var total=0.0
-            var cost=0.0
-            val now=System.currentTimeMillis()
-            for((productId,entries) in grouped) {
-                val product=LegacyProductRepository.findById(db,productId) ?: error("المنتج غير موجود")
-                val requested=entries.sumOf { it.quantity }
-                require(product.id==productId) { "تعذر تحديد المنتج" }
-                require(product.stock>=requested) { "المخزون غير كافٍ: "+product.name }
-                require(product.currency==currency) { "تحتاج أسعار العملات المختلفة إلى سعر تحويل صريح" }
-                require(product.cost.isFinite() && product.cost>=0) { "كلفة المنتج غير صالحة" }
-                for(line in entries) {
-                    total+=line.unitPrice*line.quantity
-                    cost+=product.cost*line.quantity
-                    db.execSQL("INSERT INTO native_sale_lines VALUES (?,?,?,?,?,?)",arrayOf<Any>(UUID.randomUUID().toString(),id,productId,line.quantity,line.unitPrice,product.cost))
-                }
-                db.execSQL("INSERT INTO native_sale_stock VALUES (?,?,?,?,?,?)",arrayOf<Any>(UUID.randomUUID().toString(),id,productId,-requested,"sale",now))
+        val grouped=lines.groupBy { it.productId }
+        var total=0.0
+        var cost=0.0
+        val now=System.currentTimeMillis()
+        for((productId,entries) in grouped) {
+            val product=LegacyProductRepository.findById(db,productId) ?: error("المنتج غير موجود")
+            val requested=entries.sumOf { it.quantity }
+            require(product.id==productId) { "تعذر تحديد المنتج" }
+            require(product.stock>=requested) { "المخزون غير كافٍ: "+product.name }
+            require(product.currency==currency) { "تحتاج أسعار العملات المختلفة إلى سعر تحويل صريح" }
+            require(product.cost.isFinite() && product.cost>=0) { "كلفة المنتج غير صالحة" }
+            for(line in entries) {
+                total+=line.unitPrice*line.quantity
+                cost+=product.cost*line.quantity
+                db.execSQL("INSERT INTO native_sale_lines VALUES (?,?,?,?,?,?)",arrayOf<Any>(UUID.randomUUID().toString(),id,productId,line.quantity,line.unitPrice,product.cost))
             }
-            require(total.isFinite() && cost.isFinite()) { "قيمة الفاتورة غير صالحة" }
-            db.execSQL("INSERT INTO native_sales VALUES (?,?,?,?,?,?,?,?,?)",arrayOf<Any>(id,now,currency,channel,customer,phone,total,cost,"active"))
-            if(initialCollection>0) insertCollection(db,id,initialCollection,currency,account,now,"collection")
-            val change=(initialCollection-total).coerceAtLeast(0.0)
-            if(change>0.000001) insertCollection(db,id,-change,currency,changeAccount,now,"change")
-            db.setTransactionSuccessful()
-        } finally { db.endTransaction() }
+            db.execSQL("INSERT INTO native_sale_stock VALUES (?,?,?,?,?,?)",arrayOf<Any>(UUID.randomUUID().toString(),id,productId,-requested,"sale",now))
+        }
+        require(total.isFinite() && cost.isFinite()) { "قيمة الفاتورة غير صالحة" }
+        db.execSQL("INSERT INTO native_sales VALUES (?,?,?,?,?,?,?,?,?)",arrayOf<Any>(id,now,currency,channel,customer,phone,total,cost,"active"))
+        if(initialCollection>0) insertCollection(db,id,initialCollection,currency,account,now,"collection")
+        val change=(initialCollection-total).coerceAtLeast(0.0)
+        if(change>0.000001) insertCollection(db,id,-change,currency,changeAccount,now,"change")
         return id
     }
     /**
      * Record customer tender and change as one transaction. The change payout is
      * tracked separately, with an explicit exchange rate for another currency.
+     */
+    /**
+     * One outer transaction for sale, stock, tender and change. SQLite transaction
+     * nesting is avoided by delegating to a transaction-aware internal save.
      */
     fun saveWithChange(db:SQLiteDatabase,lines:List<Line>,currency:String,channel:String,
         customer:String,phone:String,tendered:Double,tenderAccount:String,
@@ -79,7 +88,7 @@ internal object NativeSalesLedger {
         create(db)
         db.beginTransaction()
         try {
-            val id=save(db,lines,currency,channel,customer,phone,0.0,tenderAccount)
+            val id=saveInternal(db,lines,currency,channel,customer,phone,0.0,tenderAccount)
             val sale=find(db,id) ?: error("تعذر قراءة الفاتورة")
             val collected=tendered.coerceAtMost(sale.total)
             val change=(tendered-sale.total).coerceAtLeast(0.0)
