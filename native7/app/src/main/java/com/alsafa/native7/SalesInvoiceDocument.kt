@@ -171,32 +171,42 @@ internal object SalesInvoiceDocument {
             else -> ""
         }
         if(number.isNotEmpty()) {
-            android.app.AlertDialog.Builder(activity)
-                .setTitle("واتساب العميل")
-                .setMessage("العميل: +"+number+"\nلا يمكن ضمان إرفاق PDF تلقائياً بالمحادثة المحددة. للمرفق اختر المشاركة وحدد العميل داخل واتساب.")
-                .setNeutralButton("فتح محادثة العميل") { _,_ ->
-                    runCatching { activity.startActivity(Intent(Intent.ACTION_VIEW,
-                        Uri.parse("https://wa.me/"+number))) }
-                }
-                .setPositiveButton("مشاركة PDF") { _,_ -> shareAttachment(activity,uri) }
-                .setNegativeButton("إلغاء",null).show()
-            return
+            shareAttachment(activity,uri,number)
+        } else {
+            shareAttachment(activity,uri,null)
         }
-        shareAttachment(activity,uri)
     }
-    private fun shareAttachment(activity:Activity,uri:Uri) {
+    private fun shareAttachment(activity:Activity,uri:Uri,number:String?) {
+        // WhatsApp's commonly supported Android recipient hint uses a JID.
+        // This is not a public guarantee, so keep a user-visible fallback.
+        val packages=listOf("com.whatsapp.w4b","com.whatsapp")
+        val manager=activity.packageManager
+        val available=packages.filter { pkg ->
+            runCatching { manager.getPackageInfo(pkg,0);true }.getOrDefault(false)
+        }
         val intent=Intent(Intent.ACTION_SEND).apply {
             type="application/pdf"
             putExtra(Intent.EXTRA_STREAM,uri)
             putExtra(Intent.EXTRA_TEXT,"فاتورة الصفا للساعات")
+            if(number!=null) putExtra("jid",number+"@s.whatsapp.net")
+            clipData=android.content.ClipData.newUri(activity.contentResolver,"فاتورة الصفا",uri)
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-            setPackage("com.whatsapp.w4b")
         }
-        // WhatsApp does not provide a supported API to force a document into a
-        // particular recipient chat. Let the user choose the recipient in WhatsApp.
-        try { activity.startActivity(intent) } catch(_:android.content.ActivityNotFoundException) {
+        var launched=false
+        for(pkg in available) {
+            try {
+                intent.setPackage(pkg)
+                activity.grantUriPermission(pkg,uri,Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                activity.startActivity(intent)
+                launched=true
+                break
+            } catch(_:Exception) { /* Try the next installed WhatsApp package. */ }
+        }
+        if(!launched) {
+            intent.removeExtra("jid")
             intent.setPackage(null)
             activity.startActivity(Intent.createChooser(intent,"مشاركة الفاتورة"))
         }
     }
+
 }
