@@ -1239,7 +1239,17 @@ class MainActivity : Activity() {
                     }
                     val received=tenders.sumOf { it.amount*it.rate }
                     require(!deferred || received==0.0) { "البيع الآجل أو عند الاستلام لا يقبل قبضاً الآن" }
-                    require(paymentStatus.selectedItemPosition!=0 || kotlin.math.abs(received-finalTotal)<0.000001) {
+                    // Original saveSale: a fully paid mixed tender below the total
+                    // becomes a bargaining discount, with tax recalculated.
+                    val bargainingDiscount=if(paymentStatus.selectedItemPosition==0 &&
+                        tenders.isNotEmpty() && received>0 && received<finalTotal-0.005) {
+                        val taxable=(subtotal-combinedDiscount).coerceAtLeast(0.0)
+                        val targetTaxable=received/(1.0+enteredTaxRate/100.0)
+                        (taxable-targetTaxable).coerceIn(0.0,taxable)
+                    } else 0.0
+                    val actualTotal=(subtotal-combinedDiscount-bargainingDiscount)*(1.0+enteredTaxRate/100.0)
+                    require(received<=actualTotal+0.01) { "مجموع الدفعات المختلطة يتجاوز قيمة الفاتورة" }
+                    require(paymentStatus.selectedItemPosition!=0 || kotlin.math.abs(received-actualTotal)<0.01) {
                         "حالة مدفوع بالكامل تتطلب قبض إجمالي الفاتورة"
                     }
                     if(tenders.isEmpty()) NativeSalesLedger.save(legacyBackupStore.writableDatabase,saleLines,
@@ -1247,7 +1257,7 @@ class MainActivity : Activity() {
                         saleCustomer.text.toString(),salePhone.text.toString(),manualDiscount=manualPart,ruleDiscount=ruleDiscount,taxRate=enteredTaxRate)
                     else NativeSalesLedger.saveMixed(legacyBackupStore.writableDatabase,saleLines,
                         saleCurrency.selectedItem.toString(),saleType.selectedItem.toString(),
-                        saleCustomer.text.toString(),salePhone.text.toString(),tenders,manualPart,ruleDiscount,enteredTaxRate)
+                        saleCustomer.text.toString(),salePhone.text.toString(),tenders,manualPart+bargainingDiscount,ruleDiscount,enteredTaxRate)
                 } else {
                     require(!deferred || amount==0.0) { "البيع الآجل أو عند الاستلام لا يقبل قبضاً الآن" }
                     require(paymentStatus.selectedItemPosition!=0 || amount+0.000001>=finalTotal) { "حالة مدفوع بالكامل تتطلب قبض إجمالي الفاتورة" }
