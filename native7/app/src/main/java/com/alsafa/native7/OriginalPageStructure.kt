@@ -60,6 +60,9 @@ internal class OriginalPageStructure(
     private fun label(value:String,size:Float=13f,color:Int=ink,bold:Boolean=false) = TextView(activity).apply {
         text=value;textSize=size;setTextColor(color);typeface=if(bold) Typeface.create(font,Typeface.BOLD) else font
         gravity=Gravity.RIGHT or Gravity.CENTER_VERTICAL;includeFontPadding=false
+        layoutDirection=View.LAYOUT_DIRECTION_RTL;textDirection=View.TEXT_DIRECTION_FIRST_STRONG
+        breakStrategy=android.text.Layout.BREAK_STRATEGY_HIGH_QUALITY
+        hyphenationFrequency=android.text.Layout.HYPHENATION_FREQUENCY_NONE
     }
     fun contains(route:String) = pages.has(route)
     fun show(parent:LinearLayout,route:String) {
@@ -153,7 +156,8 @@ internal class OriginalPageStructure(
         val date=type in listOf("date","month","time")
         val edit=EditText(activity).apply {
             typeface=font;textSize=14f;setTextColor(ink);setHintTextColor(muted)
-            gravity=Gravity.RIGHT or if(type=="multiline") Gravity.TOP else Gravity.CENTER_VERTICAL
+            gravity=Gravity.RIGHT or (if(type=="multiline") Gravity.TOP else Gravity.CENTER_VERTICAL)
+            layoutDirection=View.LAYOUT_DIRECTION_RTL;textDirection=View.TEXT_DIRECTION_FIRST_STRONG
             setPadding(dp(10),dp(9),dp(10),dp(9));background=bg(Color.rgb(255,252,247),10)
             minHeight=dp(42);hint=n.optString("placeholder")
             inputType=when {
@@ -196,7 +200,8 @@ internal class OriginalPageStructure(
             background=bg(Color.rgb(255,252,247),10);setPadding(dp(6),dp(4),dp(6),dp(4));minimumHeight=dp(42)
             layoutDirection=View.LAYOUT_DIRECTION_RTL
             adapter=object:ArrayAdapter<String>(activity,android.R.layout.simple_spinner_dropdown_item,options.map { it.optString("label") }) {
-                private fun style(view:View)=view.apply { (this as? TextView)?.apply { typeface=font;textSize=13f;setTextColor(ink);gravity=Gravity.RIGHT or Gravity.CENTER_VERTICAL } }
+                private fun style(view:View)=view.apply { (this as? TextView)?.apply { typeface=font;textSize=13f;setTextColor(ink);gravity=Gravity.RIGHT or Gravity.CENTER_VERTICAL
+                    layoutDirection=View.LAYOUT_DIRECTION_RTL;textDirection=View.TEXT_DIRECTION_FIRST_STRONG } }
                 override fun getView(position:Int,convertView:View?,parent:ViewGroup)=style(super.getView(position,convertView,parent))
                 override fun getDropDownView(position:Int,convertView:View?,parent:ViewGroup)=style(super.getDropDownView(position,convertView,parent))
                 override fun isEnabled(position:Int)=!options[position].optBoolean("disabled")
