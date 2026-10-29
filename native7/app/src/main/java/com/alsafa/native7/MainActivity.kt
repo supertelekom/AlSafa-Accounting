@@ -178,15 +178,18 @@ class MainActivity : Activity() {
             setOnClickListener {
                 pendingBarcodeField=target
                 try {
-                    com.google.zxing.integration.android.IntentIntegrator(this@MainActivity)
-                        .setDesiredBarcodeFormats(com.google.zxing.integration.android.IntentIntegrator.ONE_D_CODE_TYPES)
-                        .setPrompt("وجّه الكاميرا إلى باركود الساعة")
-                        .setBeepEnabled(false)
-                        .setOrientationLocked(false)
-                        .initiateScan()
+                    // Keep compilation independent of the scanner library while Gradle syncs.
+                    val integratorClass=Class.forName("com.google.zxing.integration.android.IntentIntegrator")
+                    val integrator=integratorClass.getConstructor(Activity::class.java).newInstance(this@MainActivity)
+                    val formats=integratorClass.getField("ONE_D_CODE_TYPES").get(null) as java.util.Collection<*>
+                    integratorClass.getMethod("setDesiredBarcodeFormats",java.util.Collection::class.java).invoke(integrator,formats)
+                    integratorClass.getMethod("setPrompt",String::class.java).invoke(integrator,"وجّه الكاميرا إلى باركود الساعة")
+                    integratorClass.getMethod("setBeepEnabled",Boolean::class.javaPrimitiveType).invoke(integrator,false)
+                    integratorClass.getMethod("setOrientationLocked",Boolean::class.javaPrimitiveType).invoke(integrator,false)
+                    integratorClass.getMethod("initiateScan").invoke(integrator)
                 } catch(e:Exception) {
                     pendingBarcodeField=null
-                    android.widget.Toast.makeText(this@MainActivity,"تعذر تشغيل قارئ الباركود: "+e.message,android.widget.Toast.LENGTH_LONG).show()
+                    android.widget.Toast.makeText(this@MainActivity,"قارئ الباركود غير متاح. تأكد من تنزيل مكتبة ZXing في Gradle Sync.",android.widget.Toast.LENGTH_LONG).show()
                 }
             }
         })
@@ -194,9 +197,11 @@ class MainActivity : Activity() {
     @Deprecated("Deprecated in Java")
     override fun onActivityResult(requestCode:Int,resultCode:Int,data:android.content.Intent?) {
         super.onActivityResult(requestCode,resultCode,data)
-        val scan=com.google.zxing.integration.android.IntentIntegrator.parseActivityResult(requestCode,resultCode,data)
-        if(scan!=null) {
-            if(scan.contents!=null) pendingBarcodeField?.setText(scan.contents)
+        // ZXing embedded returns the scanned text in this intent extra.
+        if(requestCode==49374) {
+            if(resultCode==RESULT_OK) {
+                data?.getStringExtra("SCAN_RESULT")?.let { pendingBarcodeField?.setText(it) }
+            }
             pendingBarcodeField=null
             return
         }
