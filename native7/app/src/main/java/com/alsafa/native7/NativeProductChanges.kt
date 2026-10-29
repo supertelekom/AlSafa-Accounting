@@ -286,6 +286,19 @@ internal object NativeProductChanges {
         } finally { db.endTransaction() }
     }
 
+    data class StockAdjustment(val before:Double,val after:Double,val reason:String,
+        val reference:String,val recordedAt:Long)
+    fun stockAdjustmentHistory(db:SQLiteDatabase,productId:String):List<StockAdjustment> {
+        create(db)
+        db.execSQL("CREATE TABLE IF NOT EXISTS native_stock_movements (event_id TEXT PRIMARY KEY NOT NULL, product_id TEXT NOT NULL, before_qty REAL NOT NULL, after_qty REAL NOT NULL, reason TEXT NOT NULL, reference_type TEXT NOT NULL, recorded_at INTEGER NOT NULL)")
+        val result=mutableListOf<StockAdjustment>()
+        db.rawQuery("SELECT before_qty,after_qty,reason,event_id,recorded_at FROM native_stock_movements WHERE product_id=? ORDER BY recorded_at DESC,event_id DESC",
+            arrayOf(productId)).use { c ->
+            while(c.moveToNext())result.add(StockAdjustment(c.getDouble(0),c.getDouble(1),
+                c.getString(2),c.getString(3),c.getLong(4)))
+        }
+        return result
+    }
     /** Exact local port of inventoryAdjustmentFunding + saveProductStockAdjustment.
      * Reduction removes newest funding first; increase creates an adjustment lot.
      */
