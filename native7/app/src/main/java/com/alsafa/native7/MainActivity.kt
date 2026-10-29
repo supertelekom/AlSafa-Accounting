@@ -1079,7 +1079,7 @@ class MainActivity : Activity() {
         select(parent,"قاعدة الخصم",listOf("بدون قاعدة خصم"))
         parent.addView(text("قاعدة الخصم = خصم محفوظ مسبقاً لتستخدمه بسرعة، مثل «عميل مميز 10%».",12f))
         disabledAction(parent,"＋ إنشاء قاعدة خصم")
-        field(parent,"خصم الفاتورة اليدوي","0").inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
+        val manualDiscount=field(parent,"خصم الفاتورة اليدوي","0").apply { inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL }
         field(parent,"نقاط الولاء المستخدمة","0").apply {
             isEnabled=false
             inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
@@ -1122,6 +1122,7 @@ class MainActivity : Activity() {
                     val price=(pair.second as? EditText)?.text?.toString()?.toDoubleOrNull() ?: -1.0
                     saleLines.add(NativeSalesLedger.Line(productId,qty,price))
                 }
+                require((manualDiscount.text.toString().toDoubleOrNull() ?: 0.0)==0.0) { "الخصم يحتاج توزيعاً محاسبياً على الأصناف قبل الحفظ" }
                 val amount=initialPayment.text.toString().toDoubleOrNull() ?: 0.0
                 val id=NativeSalesLedger.save(
                     legacyBackupStore.writableDatabase,saleLines,saleCurrency.selectedItem.toString(),
