@@ -44,63 +44,82 @@ internal object SalesInvoiceDocument {
         return Detail(sale,header.first,header.second,header.third,rows,refunded)
     }
     private fun money(value:Double)=String.format(java.util.Locale.US,"%.2f",value)
-    fun createPdf(activity:Activity,db:SQLiteDatabase,id:String):File {
+    /** Thermal roll PDF. Width is physical millimetres; height follows invoice content. */
+    fun createPdf(activity:Activity,db:SQLiteDatabase,id:String,rollWidthMm:Int=80):File {
+        require(rollWidthMm in 38..110) { "عرض رول الطابعة غير مدعوم" }
         val d=detail(db,id)
+        val width=(rollWidthMm*72.0/25.4).toInt()
+        val margin=9f
+        val lineHeight=15f
         val doc=PdfDocument()
-        val width=595
-        val height=842
-        val paint=Paint(Paint.ANTI_ALIAS_FLAG).apply { color=Color.rgb(65,55,45);textSize=13f }
-        val gold=Color.rgb(153,112,55)
-        val pages=d.rows.chunked(8).ifEmpty { listOf(emptyList()) }
+        val paint=Paint(Paint.ANTI_ALIAS_FLAG).apply { color=Color.BLACK;textSize=9f }
         val tajawal=runCatching { Typeface.createFromAsset(activity.assets,"Tajawal-Medium.ttf") }.getOrNull()
         val logo=runCatching { activity.assets.open("invoice-logo.png").use { BitmapFactory.decodeStream(it) } }.getOrNull()
-        try {
-            pages.forEachIndexed { pageIndex,items ->
-                val page=doc.startPage(PdfDocument.PageInfo.Builder(width,height,pageIndex+1).create())
-                val canvas=page.canvas
-                canvas.drawColor(Color.WHITE)
-                logo?.let { canvas.drawBitmap(it,null,RectF(35f,25f,105f,85f),Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)) }
-                fun right(value:String,y:Float,size:Float=13f,bold:Boolean=false) {
-                    paint.textSize=size
-                    paint.typeface=if(tajawal!=null) Typeface.create(tajawal,if(bold)Typeface.BOLD else Typeface.NORMAL)
-                        else Typeface.create("sans-serif",if(bold)Typeface.BOLD else Typeface.NORMAL)
-                    paint.color=Color.rgb(65,55,45)
-                    canvas.drawText(value,width-38f-paint.measureText(value),y,paint)
-                }
-                paint.color=gold;paint.strokeWidth=2f
-                canvas.drawLine(35f,92f,width-35f,92f,paint)
-                right("الصفا للساعات",58f,25f,true)
-                right("Alsafa Watches",81f,13f)
-                right("فاتورة مبيع  •  "+id.take(16),126f,14f,true)
-                right("التاريخ: "+java.text.SimpleDateFormat("yyyy-MM-dd HH:mm",java.util.Locale.US).format(java.util.Date(d.createdAt)),151f)
-                right("العميل: "+d.customer,176f)
-                right("الهاتف: "+d.phone,201f)
-                right("العملة: "+d.sale.currency,226f)
-                right("الساعة / الصنف",268f,13f,true)
-                var y=296f
-                items.forEach { row ->
-                    right(row.name.take(45),y)
-                    right("${row.qty} × ${money(row.price)} = ${money(row.qty*row.price)}",y+19f,11f)
-                    y+=42f
-                }
-                if(pageIndex==pages.lastIndex) {
-                    right("إجمالي الفاتورة: ${money(d.sale.total)} ${d.sale.currency}",y+18f,15f,true)
-                    right("المرتجعات: ${money(d.refunded)}",y+42f)
-                    right("المقبوض: ${money(d.sale.collected)}",y+66f)
-                    right("المتبقي: ${money(NativeSalesLedger.remaining(db,id))}",y+90f,14f,true)
-                    right(if(d.sale.status=="active")"سارية" else "ملغاة",y+114f)
-                }
-                right("الصفا للساعات  •  ${pageIndex+1}/${pages.size}",810f,12f,true)
-                doc.finishPage(page)
+        fun fit(value:String,size:Float):List<String> {
+            paint.textSize=size
+            val maxWidth=width-2*margin
+            val result=mutableListOf<String>()
+            var part=""
+            for(word in value.split(" ")) {
+                val candidate=if(part.isEmpty())word else "$"+"{part} $"+"word"
+                if(paint.measureText(candidate)>maxWidth && part.isNotEmpty()) {
+                    result.add(part)
+                    part=word
+                } else part=candidate
             }
+            if(part.isNotEmpty()) result.add(part)
+            return result.ifEmpty { listOf("") }
+        }
+        val lines=mutableListOf<Pair<String,Float>>()
+        fun add(value:String,size:Float=9f) { fit(value,size).forEach { lines.add(it to size) } }
+        add("الصفا للساعات",13f)
+        add("Alsafa Watches",10f)
+        add("فاتورة مبيع: $id")
+        add("التاريخ: "+java.text.SimpleDateFormat("yyyy-MM-dd HH:mm",java.util.Locale.US).format(java.util.Date(d.createdAt)))
+        add("العميل: "+d.customer)
+        add("الهاتف: "+d.phone)
+        add("العملة: "+d.sale.currency)
+        add("--------------------------------")
+        d.rows.forEach { row ->
+            add(row.name,10f)
+            add("$"+"{row.qty} × $"+"{money(row.price)} = $"+"{money(row.qty*row.price)} $"+"{d.sale.currency}")
+        }
+        add("--------------------------------")
+        add("إجمالي الفاتورة: $"+"{money(d.sale.total)} $"+"{d.sale.currency}",11f)
+        add("المرتجعات: $"+"{money(d.refunded)}")
+        add("المقبوض: $"+"{money(d.sale.collected)}")
+        add("المتبقي: $"+"{money(NativeSalesLedger.remaining(db,id))}",11f)
+        add(if(d.sale.status=="active") "سارية" else "ملغاة")
+        add("الصفا للساعات")
+        val logoHeight=if(logo==null)0f else 42f
+        val height=(margin*2+logoHeight+lines.size*lineHeight+12f).toInt()
+        try {
+            val page=doc.startPage(PdfDocument.PageInfo.Builder(width,height,1).create())
+            val canvas=page.canvas
+            canvas.drawColor(Color.WHITE)
+            var y=margin
+            logo?.let {
+                val logoWidth=(it.width.toFloat()/it.height*36f).coerceAtMost(width*0.65f)
+                canvas.drawBitmap(it,null,RectF((width-logoWidth)/2,y,(width+logoWidth)/2,y+36f),
+                    Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG))
+                y+=logoHeight
+            }
+            paint.typeface=tajawal ?: Typeface.create("sans-serif",Typeface.NORMAL)
+            for((value,size) in lines) {
+                paint.textSize=size
+                paint.color=Color.BLACK
+                y+=lineHeight
+                canvas.drawText(value,width-margin-paint.measureText(value),y,paint)
+            }
+            doc.finishPage(page)
             val dir=File(activity.cacheDir,"invoices").apply { mkdirs() }
-            val file=File(dir,"sale-"+id.replace(Regex("[^A-Za-z0-9_-]"),"")+".pdf")
+            val file=File(dir,"sale-"+id.replace(Regex("[^A-Za-z0-9_-]"),"")+"-"+rollWidthMm+"mm.pdf")
             FileOutputStream(file).use { doc.writeTo(it) }
             return file
-        } finally { doc.close() }
+        } finally { doc.close();logo?.recycle() }
     }
-    fun print(activity:Activity,db:SQLiteDatabase,id:String) {
-        val file=createPdf(activity,db,id)
+    fun print(activity:Activity,db:SQLiteDatabase,id:String,rollWidthMm:Int=80) {
+        val file=createPdf(activity,db,id,rollWidthMm)
         val manager=activity.getSystemService(Activity.PRINT_SERVICE) as PrintManager
         manager.print("الصفا - فاتورة مبيع",object:PrintDocumentAdapter() {
             override fun onLayout(oldAttributes:PrintAttributes?,newAttributes:PrintAttributes?,
@@ -119,7 +138,8 @@ internal object SalesInvoiceDocument {
                     callback?.onWriteFinished(arrayOf(android.print.PageRange.ALL_PAGES))
                 } catch(e:Exception) { callback?.onWriteFailed(e.message) }
             }
-        },PrintAttributes.Builder().setMediaSize(PrintAttributes.MediaSize.ISO_A4).build())
+        },PrintAttributes.Builder().setMediaSize(PrintAttributes.MediaSize.UNKNOWN_PORTRAIT)
+            .setMinMargins(PrintAttributes.Margins.NO_MARGINS).build())
     }
     fun share(activity:Activity,db:SQLiteDatabase,id:String) {
         val file=createPdf(activity,db,id)
