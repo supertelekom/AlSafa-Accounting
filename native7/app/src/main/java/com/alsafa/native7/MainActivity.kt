@@ -731,6 +731,7 @@ class MainActivity : Activity() {
         var chosen:LegacyProductRepository.Product?=null
         lateinit var price:EditText
         lateinit var currency:Spinner
+        lateinit var productCost:android.widget.TextView
         fun updateResults(query:String) {
             results.removeAllViews()
             if(query.isBlank()) return
@@ -759,7 +760,7 @@ class MainActivity : Activity() {
                 results.addView(text("تعذر البحث: "+(e.message ?: ""),12f))
             }
         }
-        val productCost=text("كلفة القطعة: —",13f,gold)
+        productCost=text("كلفة القطعة: —",13f,gold)
         parent.addView(productCost)
         quickStep(parent,2,"سعر البيع النهائي")
         price=field(parent,"سعر البيع","0").apply { inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL }
