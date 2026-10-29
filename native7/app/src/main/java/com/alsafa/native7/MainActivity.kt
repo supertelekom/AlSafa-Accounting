@@ -1545,22 +1545,50 @@ class MainActivity : Activity() {
         val imageKeys=listOf("photo" to "الصورة الرئيسية للساعة",
             "photo2" to "صورة إضافية 1","photo3" to "صورة إضافية 2",
             "barcodePhoto" to "صورة الباركود")
-        for((key,label) in imageKeys) {
-            parent.addView(text(label,14f))
-            val preview=ProductImageView.create(this,newProductPhotos[key].orEmpty(),dp(90),dp(90))
-            parent.addView(preview,LinearLayout.LayoutParams(dp(90),dp(90)))
-            preview.setOnClickListener { ProductImageView.show(this,newProductPhotos[key].orEmpty(),label) }
-            val controls=LinearLayout(this).apply { orientation=LinearLayout.HORIZONTAL }
-            controls.addView(Button(this).apply {
-                text="الكاميرا";setOnClickListener { photoPreview=preview;selectProductPhoto(key,true) }
-            })
-            controls.addView(Button(this).apply {
-                text="الاستوديو";setOnClickListener { photoPreview=preview;selectProductPhoto(key,false) }
-            })
-            controls.addView(Button(this).apply {
-                text="حذف الصورة";setOnClickListener { newProductPhotos.remove(key);preview.setImageDrawable(null) }
-            })
-            parent.addView(controls)
+        val imageGrid=LinearLayout(this).apply {
+            orientation=LinearLayout.VERTICAL
+            layoutDirection=View.LAYOUT_DIRECTION_RTL
+        }
+        parent.addView(imageGrid)
+        imageKeys.chunked(2).forEach { pair ->
+            val imageRow=LinearLayout(this).apply {
+                orientation=LinearLayout.HORIZONTAL
+                layoutDirection=View.LAYOUT_DIRECTION_RTL
+                gravity=Gravity.TOP
+            }
+            imageGrid.addView(imageRow,LinearLayout.LayoutParams(-1,-2))
+            pair.forEach { (key,label) ->
+                val tile=LinearLayout(this).apply {
+                    orientation=LinearLayout.VERTICAL
+                    layoutDirection=View.LAYOUT_DIRECTION_RTL
+                    background=panel(paper,12)
+                    setPadding(dp(8),dp(8),dp(8),dp(8))
+                }
+                tile.addView(text(label,13f).apply { gravity=Gravity.RIGHT })
+                val preview=ProductImageView.create(this,newProductPhotos[key].orEmpty(),dp(78),dp(78))
+                tile.addView(preview,LinearLayout.LayoutParams(dp(78),dp(78)))
+                preview.setOnClickListener { ProductImageView.show(this,newProductPhotos[key].orEmpty(),label) }
+                val controls=LinearLayout(this).apply {
+                    orientation=LinearLayout.HORIZONTAL
+                    layoutDirection=View.LAYOUT_DIRECTION_RTL
+                }
+                controls.addView(Button(this).apply {
+                    text="الكاميرا";textSize=11f
+                    setOnClickListener { photoPreview=preview;selectProductPhoto(key,true) }
+                },LinearLayout.LayoutParams(0,-2,1f))
+                controls.addView(Button(this).apply {
+                    text="الاستوديو";textSize=11f
+                    setOnClickListener { photoPreview=preview;selectProductPhoto(key,false) }
+                },LinearLayout.LayoutParams(0,-2,1f))
+                controls.addView(Button(this).apply {
+                    text="حذف الصورة";textSize=11f
+                    setOnClickListener { newProductPhotos.remove(key);preview.setImageDrawable(null) }
+                },LinearLayout.LayoutParams(0,-2,1f))
+                tile.addView(controls)
+                imageRow.addView(tile,LinearLayout.LayoutParams(0,-2,1f).apply {
+                    marginEnd=dp(6);bottomMargin=dp(8)
+                })
+            }
         }
         data class VariantDraft(val color:EditText,val qty:EditText,val price:EditText,
             val cost:EditText,val barcode:EditText,val photoKey:String)
