@@ -315,6 +315,40 @@ internal object NativeProductChanges {
     /** Exact local port of inventoryAdjustmentFunding + saveProductStockAdjustment.
      * Reduction removes newest funding first; increase creates an adjustment lot.
      */
+    /** Read-only reconciliation of product quantities and funding lots.
+     * Sales are counted once from the append-only stock ledger.
+     */
+    data class InventoryAuditIssue(val productId:String,val description:String)
+    fun auditInventory(db:SQLiteDatabase):List<InventoryAuditIssue> {
+        create(db)
+        NativeSalesLedger.create(db)
+        val issues=mutableListOf<InventoryAuditIssue>()
+        val sql="""SELECT p.id,COALESCE(e.payload,p.raw_json)
+            FROM domain_products p LEFT JOIN native_product_edits e ON e.product_id=p.id
+            UNION ALL
+            SELECT n.product_id,COALESCE(e.payload,n.payload)
+            FROM native_new_products n LEFT JOIN native_product_edits e ON e.product_id=n.product_id"""
+        db.rawQuery(sql,null).use { c ->
+            while(c.moveToNext()) {
+                val id=c.getString(0)
+                try {
+                    val product=JSONObject(c.getString(1))
+                    val base=LegacyAccountingRules.number(product.opt("stock"))
+                    if(!base.isFinite() || base<0 || kotlin.math.abs(base-base.toInt())>0.0001)
+                        issues.add(InventoryAuditIssue(id,"كمية الأساس غير صالحة"))
+                    if(LegacyProductRules.fundingMismatch(product))
+                        issues.add(InventoryAuditIssue(id,"دفعات التمويل لا تطابق كمية الأساس"))
+                    val effective=base+NativeSalesLedger.stockDelta(db,id)
+                    if(effective< -0.0001)
+                        issues.add(InventoryAuditIssue(id,"حركات البيع والمرتجع جعلت المخزون سالباً"))
+                } catch(e:Exception) {
+                    issues.add(InventoryAuditIssue(id,"تعذر تدقيق المنتج: "+(e.message ?: "بيانات غير صالحة")))
+                }
+            }
+        }
+        return issues
+    }
+
     fun adjustStock(db:SQLiteDatabase,productId:String,newStock:Int,reason:String,notes:String="") {
         require(newStock>=0 && reason in setOf("جرد فعلي","خطأ إدخال سابق","تلف أو فقد","تصحيح بعد مراجعة المخزون"))
         create(db)
