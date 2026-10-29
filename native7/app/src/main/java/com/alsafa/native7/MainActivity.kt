@@ -47,11 +47,22 @@ class MainActivity : Activity() {
     private var repairDraftScreen:String? = null
     private val newProductPhotos=mutableMapOf<String,String>()
     private var pendingProductPhotoKey:String?=null
+    private var pendingProductCameraUri:android.net.Uri?=null
     private var photoPreview:android.widget.ImageView?=null
     private fun selectProductPhoto(key:String,camera:Boolean) {
         pendingProductPhotoKey=key
-        val intent=if(camera)android.content.Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE)
-            else android.content.Intent(android.content.Intent.ACTION_GET_CONTENT).apply {
+        val intent=if(camera) {
+            val values=android.content.ContentValues().apply {
+                put(android.provider.MediaStore.Images.Media.DISPLAY_NAME,"alsafa-product-"+System.currentTimeMillis()+".jpg")
+                put(android.provider.MediaStore.Images.Media.MIME_TYPE,"image/jpeg")
+            }
+            pendingProductCameraUri=contentResolver.insert(android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI,values)
+                ?: throw IllegalStateException("تعذر تجهيز الكاميرا")
+            android.content.Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE).apply {
+                putExtra(android.provider.MediaStore.EXTRA_OUTPUT,pendingProductCameraUri)
+                addFlags(android.content.Intent.FLAG_GRANT_WRITE_URI_PERMISSION or android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+        } else android.content.Intent(android.content.Intent.ACTION_GET_CONTENT).apply {
                 type="image/*";addCategory(android.content.Intent.CATEGORY_OPENABLE)
             }
         startActivityForResult(intent,if(camera)7312 else 7311)
@@ -157,14 +168,17 @@ class MainActivity : Activity() {
         if(requestCode in 7311..7312 && resultCode==RESULT_OK) {
             val key=pendingProductPhotoKey
             if(key!=null)try {
-                val bitmap=if(requestCode==7312) {
-                    @Suppress("DEPRECATION")
-                    data?.extras?.get("data") as? android.graphics.Bitmap
-                } else {
-                    val uri=data?.data ?: throw IllegalArgumentException("لم تُحدد صورة")
-                    contentResolver.openInputStream(uri)?.use {
-                        android.graphics.BitmapFactory.decodeStream(it)
-                    }
+                val uri=if(requestCode==7312)pendingProductCameraUri else data?.data
+                require(uri!=null) { "لم تُحدد صورة" }
+                val bounds=android.graphics.BitmapFactory.Options().apply { inJustDecodeBounds=true }
+                contentResolver.openInputStream(uri)?.use {
+                    android.graphics.BitmapFactory.decodeStream(it,null,bounds)
+                }
+                var sample=1
+                while(bounds.outWidth/sample>1600 || bounds.outHeight/sample>1600)sample*=2
+                val bitmap=contentResolver.openInputStream(uri)?.use {
+                    android.graphics.BitmapFactory.decodeStream(it,null,
+                        android.graphics.BitmapFactory.Options().apply { inSampleSize=sample })
                 } ?: throw IllegalArgumentException("تعذر قراءة الصورة")
                 newProductPhotos[key]=productPhotoData(bitmap)
                 photoPreview?.setImageBitmap(bitmap)
@@ -172,6 +186,7 @@ class MainActivity : Activity() {
                 android.app.AlertDialog.Builder(this).setMessage(e.message ?: "تعذر قراءة الصورة")
                     .setPositiveButton("حسناً",null).show()
             }
+            if(requestCode==7312)pendingProductCameraUri=null
             pendingProductPhotoKey=null
         }
         if (requestCode == 7107 && resultCode == RESULT_OK && data?.data != null) {
