@@ -1239,7 +1239,6 @@ class MainActivity : Activity() {
                     countLabel.text="$count منتج محفوظ. أضف ساعاتك وأسعارها وكمياتها وباركودها، ثم اخترها مباشرة في الفاتورة."
                 }
                 val products=LegacyProductRepository.list(db,search.text.toString(),offset,24)
-                    .sortedWith(compareBy(java.text.Collator.getInstance(java.util.Locale("ar"))) { it.name })
                 for(p in products) {
                     val row=LinearLayout(this).apply {
                         orientation=LinearLayout.VERTICAL
@@ -1266,6 +1265,18 @@ class MainActivity : Activity() {
                     row.addView(text("المخزون الفعلي: $stock    سعر البيع: ${p.salePrice} ${p.currency}",13f))
                     row.addView(text("كلفة الشراء للقطعة: ${p.cost} ${p.currency}",13f))
                     row.addView(text("الباركود: "+p.barcode.ifBlank { "—" },12f))
+                    val extraPhotos=listOf("photo2","photo3").mapNotNull { key ->
+                        p.raw.optString(key).takeIf { it.isNotBlank() }?.let { key to it }
+                    }
+                    if(extraPhotos.isNotEmpty()) {
+                        val photos=LinearLayout(this).apply { orientation=LinearLayout.HORIZONTAL }
+                        extraPhotos.forEachIndexed { index,pair ->
+                            photos.addView(ProductImageView.create(this,pair.second,dp(76),dp(76)).apply {
+                                setOnClickListener { ProductImageView.show(this@MainActivity,pair.second,p.name) }
+                            },LinearLayout.LayoutParams(dp(76),dp(76)).apply { marginEnd=dp(8) })
+                        }
+                        row.addView(photos)
+                    }
                     if(stock<=LegacyAccountingRules.number(p.raw.opt("minStock")))
                         row.addView(text("تنبيه: المخزون وصل للحد الأدنى",12f,Color.RED))
                     val actions=LinearLayout(this).apply { orientation=LinearLayout.HORIZONTAL }
