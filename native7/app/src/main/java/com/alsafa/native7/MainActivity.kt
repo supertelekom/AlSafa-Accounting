@@ -1391,6 +1391,28 @@ class MainActivity : Activity() {
         val color=field(parent,"اللون")
         val dial=field(parent,"لون المينا")
         val strap=field(parent,"لون الحزام")
+        val details=linkedMapOf<String,Spinner>()
+        listOf(
+            "watchType" to "نوع الساعة",
+            "gender" to "الجنس",
+            "movement" to "نوع الحركة",
+            "displayType" to "نوع العرض",
+            "diameter" to "قطر الساعة",
+            "caseMaterial" to "مادة الهيكل",
+            "strapMaterial" to "مادة الحزام",
+            "glassType" to "نوع الزجاج",
+            "waterResistance" to "مقاومة الماء",
+            "warrantyMonths" to "مدة الكفالة"
+        ).forEach { (key,label) ->
+            val values=originalWatchDetails[key].orEmpty()
+            details[key]=select(parent,label,listOf("غير محدد")+values)
+        }
+        val description=field(parent,"وصف الساعة")
+        val specs=field(parent,"مواصفات إضافية")
+        val notes=field(parent,"ملاحظات داخلية")
+        val minStock=field(parent,"حد التنبيه الأدنى").apply {
+            setText("1");inputType=InputType.TYPE_CLASS_NUMBER
+        }
         val imageKeys=listOf("photo" to "الصورة الرئيسية للساعة",
             "photo2" to "صورة إضافية 1","photo3" to "صورة إضافية 2",
             "barcodePhoto" to "صورة الباركود")
@@ -1486,6 +1508,14 @@ class MainActivity : Activity() {
                         put("dialColor",dial.text.toString().trim())
                         put("strapColor",strap.text.toString().trim())
                         put("fundingLots",funding);put("createdAt",now)
+                        put("description",description.text.toString())
+                        put("specs",specs.text.toString())
+                        put("notes",notes.text.toString())
+                        put("minStock",minStock.text.toString().toIntOrNull() ?: 1)
+                        for((key,spinner) in details) {
+                            val value=spinner.selectedItem.toString()
+                            if(value!="غير محدد")put(key,if(key=="warrantyMonths")value.toIntOrNull() ?: 0 else value)
+                        }
                         for((key,value) in newProductPhotos)put(key,value)
                     }
                     val all=mutableListOf(product)
