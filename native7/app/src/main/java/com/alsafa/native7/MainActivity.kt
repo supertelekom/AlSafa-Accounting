@@ -1220,17 +1220,35 @@ class MainActivity : Activity() {
             isClickable=true
             setOnClickListener { navigateTo("preview:إضافة منتج جديد") }
         })
-        field(parent,"ابحث باسم المنتج أو الباركود أو REF / Model...")
-        if(legacyBackupStore.hasData()) {
-            try {
-                val products=LegacyProductRepository.list(legacyBackupStore.readableDatabase,limit=50)
-                products.forEach { product ->
-                    parent.addView(text(product.name+"  •  "+product.stock+"  •  "+product.salePrice+" "+product.currency,14f))
-                }
-            } catch(error:Exception) {
-                parent.addView(text(error.message ?: "تعذر تحميل المنتجات",13f))
+        val productSearch=field(parent,"ابحث باسم المنتج أو الباركود أو REF / Model...")
+        val productResults=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL }
+        parent.addView(productResults)
+        var productOffset=0
+        fun showProducts(reset:Boolean) {
+            if(reset) { productOffset=0;productResults.removeAllViews() }
+            if(!legacyBackupStore.hasData()) {
+                if(reset)productResults.addView(text("استعد النسخة الاحتياطية لعرض المنتجات.",15f))
+                return
             }
-        } else parent.addView(text("استعد النسخة الاحتياطية لعرض المنتجات.",15f))
+            try {
+                val products=LegacyProductRepository.list(legacyBackupStore.readableDatabase,
+                    productSearch.text.toString(),productOffset,40)
+                products.forEach { product ->
+                    productResults.addView(text(product.name+"  •  "+product.stock+"  •  "+product.salePrice+" "+product.currency,14f))
+                }
+                productOffset+=products.size
+            } catch(error:Exception) {
+                productResults.addView(text(error.message ?: "تعذر تحميل المنتجات",13f))
+            }
+        }
+        productSearch.addTextChangedListener(object:android.text.TextWatcher {
+            override fun beforeTextChanged(s:CharSequence?,start:Int,count:Int,after:Int){}
+            override fun onTextChanged(s:CharSequence?,start:Int,before:Int,count:Int){showProducts(true)}
+            override fun afterTextChanged(s:android.text.Editable?){}
+        })
+        parent.addView(Button(this).apply { text="عرض المزيد";setOnClickListener { showProducts(false) } })
+        showProducts(true)
+
     }
     // v3.9.359 assets/main.js: WATCH_DETAIL_DEFAULTS (same order and labels).
     private val originalWatchDetails = mapOf(
