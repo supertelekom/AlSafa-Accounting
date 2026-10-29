@@ -95,9 +95,6 @@ class MainActivity : Activity() {
         super.onCreate(savedInstanceState)
         if(android.os.Build.VERSION.SDK_INT>=30) {
             window.setDecorFitsSystemWindows(false)
-            val appearance=android.view.WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS or
-                android.view.WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS
-            window.insetsController?.setSystemBarsAppearance(appearance,appearance)
         } else {
             @Suppress("DEPRECATION")
             window.decorView.systemUiVisibility=View.SYSTEM_UI_FLAG_LAYOUT_STABLE or
@@ -1736,6 +1733,15 @@ class MainActivity : Activity() {
             insets
         }
         setContentView(root)
+        if(android.os.Build.VERSION.SDK_INT>=30) {
+            // PhoneWindow may have no decor before setContentView. Ask the attached
+            // content view for its controller, after attachment, instead of the window.
+            root.post {
+                val appearance=android.view.WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS or
+                    android.view.WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS
+                root.windowInsetsController?.setSystemBarsAppearance(appearance,appearance)
+            }
+        }
         root.requestApplyInsets()
         activeRoot=root
         originalTopbar(root)
