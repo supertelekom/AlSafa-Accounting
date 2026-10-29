@@ -13,14 +13,15 @@ internal object LegacyProductRepository {
         val variantGroupId:String,val variantRole:String,val raw:JSONObject)
     fun list(db:SQLiteDatabase,search:String="",offset:Int=0,limit:Int=50):List<Product> {
         require(offset>=0 && limit in 1..200)
+        NativeProductChanges.create(db)
         val term=search.trim()
         val where=if(term.isBlank())"" else
-            "WHERE name LIKE ? ESCAPE '!' OR barcode LIKE ? ESCAPE '!' OR model LIKE ? ESCAPE '!' OR sku LIKE ? ESCAPE '!'"
+            "WHERE p.name LIKE ? ESCAPE '!' OR p.barcode LIKE ? ESCAPE '!' OR p.model LIKE ? ESCAPE '!' OR p.sku LIKE ? ESCAPE '!'"
         val escaped=term.replace("!","!!").replace("%","!%").replace("_","!_")
         val args=if(term.isBlank())arrayOf(limit.toString(),offset.toString())
             else arrayOf(*Array(4){"%$escaped%"},limit.toString(),offset.toString())
         val output=ArrayList<Product>()
-        db.rawQuery("SELECT raw_json FROM domain_products $where ORDER BY ordinal LIMIT ? OFFSET ?",args).use { c ->
+        db.rawQuery("SELECT COALESCE(e.payload,p.raw_json) FROM domain_products p LEFT JOIN native_product_edits e ON e.product_id=p.id $where ORDER BY p.ordinal LIMIT ? OFFSET ?",args).use { c ->
             while(c.moveToNext()) {
                 val row=JSONObject(c.getString(0))
                 output.add(Product(row.optString("id"),row.optString("name"),
@@ -34,7 +35,8 @@ internal object LegacyProductRepository {
         return output
     }
     fun findById(db:SQLiteDatabase,id:String):Product? {
-        db.rawQuery("SELECT raw_json FROM domain_products WHERE id=? LIMIT 1",arrayOf(id)).use { c ->
+        NativeProductChanges.create(db)
+        db.rawQuery("SELECT COALESCE(e.payload,p.raw_json) FROM domain_products p LEFT JOIN native_product_edits e ON e.product_id=p.id WHERE p.id=? LIMIT 1",arrayOf(id)).use { c ->
             if(!c.moveToFirst())return null
             val row=JSONObject(c.getString(0))
             return Product(row.optString("id"),row.optString("name"),
