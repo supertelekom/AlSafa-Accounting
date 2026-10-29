@@ -3266,7 +3266,7 @@ class MainActivity : Activity() {
             arrangeOriginalFormGrid(body)
         if(screen in listOf("preview:مبيع كامل","preview:طلب صيانة","preview:استلام صيانة"))
             arrangeOriginalFormActions(body)
-        if(!sourceStructure && screen!="chooser") body.addView(text("العودة",17f,gold).apply {
+        if(!screen.startsWith("structure:") && screen!="chooser") body.addView(text("العودة",17f,gold).apply {
             isClickable=true;setOnClickListener {
                 returnToPrevious()
             }
