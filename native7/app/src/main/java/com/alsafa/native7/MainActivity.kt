@@ -1285,6 +1285,10 @@ class MainActivity : Activity() {
                         setOnClickListener { selectedInventoryProduct=p.id;navigateTo("native:product-edit") }
                     }
                     actions.addView(edit)
+                    actions.addView(Button(this).apply {
+                        text="تسوية المخزون"
+                        setOnClickListener { selectedInventoryProduct=p.id;navigateTo("native:stock-adjustment") }
+                    })
                     val barcodePhoto=p.raw.optString("barcodePhoto")
                     if(barcodePhoto.isNotBlank())actions.addView(Button(this).apply {
                         text="صورة الباركود"
@@ -1345,6 +1349,62 @@ class MainActivity : Activity() {
                 } catch(e:Exception) {
                     android.app.AlertDialog.Builder(this@MainActivity).setMessage(e.message ?: "تعذر الحفظ")
                         .setPositiveButton("حسناً",null).show()
+                }
+            }
+        })
+    }
+    private fun inventoryAdjustmentPage(parent:LinearLayout) {
+        val id=selectedInventoryProduct ?: return
+        val db=legacyBackupStore.writableDatabase
+        val product=NativeProductChanges.get(db,id) ?: return
+        parent.addView(text("تسوية المخزون",23f,gold))
+        parent.addView(text(product.optString("name"),17f))
+        parent.addView(text("المخزون الحالي: "+LegacyProductRules.stock(product),15f))
+        val lots=product.optJSONArray("fundingLots")
+        if(lots==null || lots.length()==0) {
+            parent.addView(text("لا توجد دفعات تمويل؛ لا يمكن تنفيذ تسوية آمنة.",14f))
+            return
+        }
+        val names=ArrayList<String>()
+        val ids=ArrayList<String>()
+        for(i in 0 until lots.length()) {
+            val lot=lots.optJSONObject(i) ?: continue
+            ids.add(lot.optString("id"))
+            names.add(lot.optString("id")+" — "+lot.optString("qtyRemaining"))
+        }
+        if(ids.isEmpty())return
+        val selected=select(parent,"دفعة التمويل",names)
+        val quantity=field(parent,"الكمية الجديدة للمخزون").apply {
+            setText(LegacyProductRules.stock(product).toString())
+            inputType=InputType.TYPE_CLASS_NUMBER
+        }
+        val lotQuantity=field(parent,"الكمية المتبقية في الدفعة").apply {
+            setText(lots.optJSONObject(0)?.optString("qtyRemaining") ?: "0")
+            inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
+        }
+        selected.onItemSelectedListener=object:android.widget.AdapterView.OnItemSelectedListener {
+            override fun onNothingSelected(parent:android.widget.AdapterView<*>?){}
+            override fun onItemSelected(parent:android.widget.AdapterView<*>?,view:View?,position:Int,rowId:Long) {
+                lotQuantity.setText(lots.optJSONObject(position)?.optString("qtyRemaining") ?: "0")
+            }
+        }
+        val reason=field(parent,"سبب التسوية *")
+        parent.addView(text("لن تحفظ التسوية إلا إذا طابق المخزون مجموع دفعات التمويل.",12f))
+        parent.addView(Button(this).apply {
+            text="حفظ التسوية"
+            setOnClickListener {
+                try {
+                    val newStock=quantity.text.toString().toIntOrNull()
+                        ?: throw IllegalArgumentException("كمية المخزون غير صالحة")
+                    val newLot=lotQuantity.text.toString().toDoubleOrNull()
+                        ?: throw IllegalArgumentException("كمية الدفعة غير صالحة")
+                    NativeProductChanges.adjustStock(db,id,ids[selected.selectedItemPosition],
+                        newStock,newLot,reason.text.toString().trim())
+                    android.widget.Toast.makeText(this@MainActivity,"تم حفظ التسوية",android.widget.Toast.LENGTH_SHORT).show()
+                    returnToPrevious()
+                } catch(e:Exception) {
+                    android.app.AlertDialog.Builder(this@MainActivity).setTitle("لم تحفظ التسوية")
+                        .setMessage(e.message ?: "تعذر الحفظ").setPositiveButton("حسناً",null).show()
                 }
             }
         })
@@ -2087,6 +2147,7 @@ class MainActivity : Activity() {
             "preview:فاتورة شراء" -> legacyFormCard(body) { purchaseInvoicePreview(it) }
             "preview:المنتجات والمخزون" -> productsPreview(body)
             "native:product-edit" -> inventoryEditPage(body)
+            "native:stock-adjustment" -> inventoryAdjustmentPage(body)
             "preview:إضافة منتج جديد" -> legacyFormCard(body) { productFormPreview(it) }
             "preview:قطع الصيانة" -> maintenancePartsPreview(body)
             "preview:فواتير المرتجع" -> returnsPreview(body)
