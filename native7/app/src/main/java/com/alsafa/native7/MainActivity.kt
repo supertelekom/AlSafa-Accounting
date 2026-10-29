@@ -46,6 +46,7 @@ class MainActivity : Activity() {
     private var repairDraftSelections:List<Int>? = null
     private var repairDraftScreen:String? = null
     private val repairStore by lazy { RepairStore(this) }
+    private val originalPages by lazy { OriginalPageStructure(this,{ route -> navigateTo(OriginalRoutes.screen(route)) },{ returnToPrevious() }) }
 
     private fun walkForm(view:View,edit:(EditText)->Unit,spin:(Spinner)->Unit) {
         when(view) {
@@ -184,7 +185,7 @@ class MainActivity : Activity() {
         parent.addView(card,LinearLayout.LayoutParams(0,dp(122),1f))
     }
     private fun actionGrid(parent:LinearLayout,items:List<Triple<String,String,String>>,simple:Boolean,management:Boolean=false) {
-        val columns=if(!simple && !management && resources.configuration.screenWidthDp>=720) 4 else 2
+        val columns=if(resources.configuration.screenWidthDp>=720) { if(management) 4 else if(!simple) 3 else 2 } else 2
         items.chunked(columns).forEach { pair ->
             val row=LinearLayout(this).apply { orientation=LinearLayout.HORIZONTAL;layoutDirection=View.LAYOUT_DIRECTION_RTL }
             parent.addView(row,LinearLayout.LayoutParams(-1,-2).apply { bottomMargin=dp(if(simple) 7 else if(management) 10 else 9) })
@@ -232,9 +233,10 @@ class MainActivity : Activity() {
                     }
                 }
                 row.addView(box,LinearLayout.LayoutParams(0,dp(if(simple) 93 else if(management) 115 else 72),1f).apply {
-                    if(index==0) marginEnd=dp(if(simple) 7 else if(management) 10 else 9)
+                    if(index<pair.lastIndex) marginEnd=dp(if(simple) 7 else if(management) 10 else 9)
                 })
             }
+            repeat(columns-pair.size) { row.addView(View(this),LinearLayout.LayoutParams(0,dp(1),1f)) }
         }
     }
     private fun currencySummary(parent:LinearLayout) {
@@ -1668,33 +1670,34 @@ class MainActivity : Activity() {
             layoutDirection=View.LAYOUT_DIRECTION_RTL
             gravity=Gravity.CENTER_VERTICAL
         }
-        val mark=text("◷",18f,Color.rgb(122,81,24)).apply {
-            gravity=Gravity.CENTER
-            background=GradientDrawable().apply {
-                setColor(Color.rgb(249,243,232))
-                cornerRadius=dp(22).toFloat()
-                setStroke(dp(2),gold)
-            }
+        val mark=android.widget.ImageView(this).apply {
+            assets.open("invoice-logo.png").use { setImageBitmap(android.graphics.BitmapFactory.decodeStream(it)) }
+            scaleType=android.widget.ImageView.ScaleType.FIT_CENTER
+            contentDescription="شعار الصفا للساعات"
         }
-        brand.addView(mark,LinearLayout.LayoutParams(dp(43),dp(43)))
+        brand.addView(mark,LinearLayout.LayoutParams(dp(if(resources.configuration.screenWidthDp>=720) 100 else 56),dp(48)))
         val labels=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL }
         labels.addView(text("الصفا للساعات",if(resources.configuration.screenWidthDp>=720) 21f else 19f,Color.rgb(122,81,24)).apply {
             gravity=Gravity.RIGHT
             typeface=Typeface.create(typeface,Typeface.BOLD)
             setPadding(0,0,0,0)
         })
-        labels.addView(text("Alsafa Watches",11f,Color.rgb(138,123,108)).apply {
+        labels.addView(text("مبيعات · مخزون · صيانة · حسابات",11f,Color.rgb(138,123,108)).apply {
             gravity=Gravity.RIGHT
             setPadding(0,dp(3),0,0)
         })
         brand.addView(labels,LinearLayout.LayoutParams(-2,-2).apply { marginStart=dp(11) })
         bar.addView(brand,LinearLayout.LayoutParams(0,-2,1f))
-        if(screen!="chooser") {
-            bar.addView(text("رجوع",12f,gold).apply {
-                background=panel(Color.rgb(255,253,249),10)
-                isClickable=true
-                setOnClickListener { returnToPrevious() }
-            })
+        val sourceRoute=OriginalRoutes.source(screen)
+        val simplified=screen in listOf("chooser","simple") || sourceRoute?.startsWith("father-")==true
+        if(!simplified) {
+            listOf("↻","☰").forEach { symbol ->
+                bar.addView(text(symbol,19f,gold).apply {
+                    contentDescription=if(symbol=="↻") "تحديث" else "الإدارة"
+                    background=panel(paper,10);isClickable=true
+                    setOnClickListener { if(symbol=="☰") navigateTo("management") else previewOnly() }
+                },LinearLayout.LayoutParams(dp(40),dp(40)).apply { marginStart=dp(8) })
+            }
         }
         parent.addView(bar,LinearLayout.LayoutParams(-1,-2))
     }
@@ -1707,9 +1710,8 @@ class MainActivity : Activity() {
         activeRoot=root
         originalTopbar(root)
         val width=resources.displayMetrics.widthPixels
-        val simpleMode=screen=="simple" || screen=="preview:مبيع" ||
-            screen=="preview:صيانة سريعة" || screen=="preview:تسليم الساعات" ||
-            screen=="preview:تسليم الوردية"
+        val simpleMode=screen=="chooser" || screen=="simple" || screen=="preview:مبيع" ||
+            screen=="preview:صيانة سريعة" || screen=="preview:تسليم الساعات"
         val showNavigation=!simpleMode && screen!="advisor"
         val sidebar=showNavigation && resources.configuration.screenWidthDp>=720
         val workArea=LinearLayout(this).apply {
@@ -1733,7 +1735,7 @@ class MainActivity : Activity() {
         val landscape=resources.configuration.orientation==android.content.res.Configuration.ORIENTATION_LANDSCAPE
         val wideLandscape=resources.configuration.screenWidthDp>=1200 && landscape
         // Legacy v3.9.359 Honor Pad X8b: portrait 720-1199, landscape >=1200.
-        val maxWidth=dp(if(wideLandscape) 1440 else if(tablet) 1180 else 680)
+        val maxWidth=dp(if(screen=="chooser") 920 else if(wideLandscape) 1440 else if(tablet) 1180 else 680)
         val sidebarWidth=if(sidebar) dp(if(wideLandscape) 230 else 200) else 0
         val available=width-sidebarWidth
         val horizontalPadding=if(wideLandscape) 28 else if(tablet) 20 else 15
@@ -1748,7 +1750,10 @@ class MainActivity : Activity() {
             nav.show(false,screen) { navigateTo(it) }
             root.addView(nav,LinearLayout.LayoutParams(-1,dp(68)))
         }
-        when(screen) {
+        val sourceRoute=OriginalRoutes.source(screen)
+        val sourceStructure=sourceRoute!=null && originalPages.contains(sourceRoute)
+        if(sourceStructure) originalPages.show(body,requireNotNull(sourceRoute))
+        else when(screen) {
             "chooser" -> {
                 body.addView(text("ALSAFA WATCHES",13f,gold))
                 body.addView(text("كيف تريد أن تبدأ؟",28f))
@@ -1887,7 +1892,7 @@ class MainActivity : Activity() {
             arrangeOriginalFormGrid(body)
         if(screen in listOf("preview:مبيع كامل","preview:طلب صيانة","preview:استلام صيانة"))
             arrangeOriginalFormActions(body)
-        if(screen!="chooser") body.addView(text("العودة",17f,gold).apply {
+        if(!sourceStructure && screen!="chooser") body.addView(text("العودة",17f,gold).apply {
             isClickable=true;setOnClickListener {
                 returnToPrevious()
             }

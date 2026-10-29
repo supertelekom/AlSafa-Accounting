@@ -1,0 +1,411 @@
+package com.alsafa.native7
+
+import android.app.Activity
+import android.graphics.Color
+import android.graphics.Typeface
+import android.graphics.drawable.GradientDrawable
+import android.text.InputType
+import android.view.Gravity
+import android.view.View
+import android.view.ViewGroup
+import android.widget.*
+import org.json.JSONArray
+import org.json.JSONObject
+import java.util.IdentityHashMap
+
+/**
+ * Android Views built from a source-derived layout specification. No HTML renderer,
+ * WebView, JavaScript, network, database, or accounting writes are used here.
+ * Values are layout previews. Submission actions deliberately remain inactive.
+ */
+internal class OriginalPageStructure(
+    private val activity: Activity,
+    private val navigate: (String) -> Unit,
+    private val back: () -> Unit
+) {
+    private val pages by lazy { JSONObject(java.util.zip.GZIPInputStream(activity.assets.open("original-structure.json.gz")).bufferedReader().use { it.readText() }).getJSONObject("pages") }
+    private val font by lazy { Typeface.createFromAsset(activity.assets, "Tajawal-Medium.ttf") }
+    private val ink = Color.rgb(62,52,41)
+    private val muted = Color.rgb(138,123,108)
+    private val gold = Color.rgb(122,81,24)
+    private val line = Color.rgb(234,223,206)
+    private val metadata = IdentityHashMap<View,JSONObject>()
+    private val controls = mutableMapOf<String,View>()
+    private val radioNames = mutableMapOf<String,MutableList<RadioButton>>()
+    private var root: View? = null
+    private var currentRoute = ""
+    private var unique = 0
+    private fun dp(n:Int) = (n*activity.resources.displayMetrics.density+.5f).toInt()
+    private fun items(array:JSONArray?) = (0 until (array?.length() ?: 0)).map { requireNotNull(array).getJSONObject(it) }
+    private fun classes(n:JSONObject) = (0 until (n.optJSONArray("sourceClasses")?.length() ?: 0)).map { n.getJSONArray("sourceClasses").getString(it) }
+    private fun bg(color:Int=Color.rgb(255,253,249),radius:Int=17,border:Int=line) = GradientDrawable().apply { setColor(color);cornerRadius=dp(radius).toFloat();setStroke(dp(1),border) }
+    private fun column() = LinearLayout(activity).apply { orientation=LinearLayout.VERTICAL;layoutDirection=View.LAYOUT_DIRECTION_RTL }
+    private fun label(value:String,size:Float=13f,color:Int=ink,bold:Boolean=false) = TextView(activity).apply {
+        text=value;textSize=size;setTextColor(color);typeface=if(bold) Typeface.create(font,Typeface.BOLD) else font
+        gravity=Gravity.RIGHT or Gravity.CENTER_VERTICAL;includeFontPadding=false
+    }
+    fun contains(route:String) = pages.has(route)
+    fun show(parent:LinearLayout,route:String) {
+        metadata.clear();controls.clear();radioNames.clear();currentRoute=route
+        val view=build(pages.getJSONObject(route))
+        root=view
+        parent.addView(view,LinearLayout.LayoutParams(-1,-2))
+        view.post { conditions() }
+    }
+    private fun register(view:View,n:JSONObject):View {
+        metadata[view]=n
+        if(n.has("sourceId")) controls[n.getString("sourceId")]=view
+        view.tag=n.optString("key")
+        if(n.optBoolean("hidden")) view.visibility=View.GONE
+        return view
+    }
+    private fun build(n:JSONObject):View {
+        val kind=n.getString("kind")
+        val cs=classes(n)
+        val children=items(n.optJSONArray("children"))
+        val view:View=when(kind) {
+            "input" -> input(n)
+            "select" -> selection(n)
+            "toggle" -> toggle(n)
+            "button" -> button(n)
+            "title","text" -> label(n.optString("text"),n.optDouble("size",13.0).toFloat(),if(n.optBoolean("muted")) muted else ink,n.optString("weight")=="bold").apply {
+                setPadding(0,dp(if(kind=="title") 3 else 2),0,dp(if(kind=="title") 7 else 5))
+                if(cs.any { it in listOf("barcode-help","help") }) { textSize=11f;setTextColor(muted) }
+                if(cs.contains("simple-icon")) { textSize=25f;gravity=Gravity.CENTER;background=bg(Color.rgb(248,237,219),14) }
+            }
+            "picture" -> label(n.optString("text","لا توجد صورة"),10f,muted).apply {
+                gravity=Gravity.CENTER;minHeight=dp(84);background=bg(Color.rgb(255,250,242),12,Color.rgb(223,201,164))
+            }
+            "line" -> View(activity).apply { setBackgroundColor(line);minimumHeight=dp(1) }
+            "formGrid","summaryGrid","reportGrid","manageGrid","simpleGrid","actionGrid","repairGrid","radioGrid","modeGrid","choiceGrid","modernGrid" -> {
+                val tablet=activity.resources.configuration.screenWidthDp>=720
+                val wide=activity.resources.configuration.screenWidthDp>=1200 && activity.resources.configuration.orientation==android.content.res.Configuration.ORIENTATION_LANDSCAPE
+                val count=when(kind) {
+                    "formGrid" -> if(wide) 3 else if(activity.resources.configuration.screenWidthDp>380) 2 else 1
+                    "manageGrid" -> if(tablet) 4 else 2
+                    "modernGrid" -> if(tablet) 3 else 2
+                    "summaryGrid","reportGrid" -> if(cs.contains("currency-home-values")) 3 else if(cs.contains("home-currency-ledger")) { if(activity.resources.configuration.screenWidthDp>760) 3 else 1 } else if(tablet) 3 else 1
+                    "choiceGrid" -> if(tablet) 4 else 2
+                    "actionGrid" -> if(tablet) 3 else 2
+                    "repairGrid" -> if(activity.resources.configuration.screenWidthDp>=1024) 4 else if(tablet) 3 else 2
+                    else -> 2
+                }
+                SourceGrid(activity,count,dp(if(kind=="manageGrid") 10 else 11)).apply {
+                    children.forEach { addCell(build(it),it.optBoolean("full")) }
+                }
+            }
+            "heading","inputRow","photoRow","searchRow" -> LinearLayout(activity).apply {
+                orientation=LinearLayout.HORIZONTAL;layoutDirection=View.LAYOUT_DIRECTION_RTL;gravity=Gravity.CENTER_VERTICAL
+                children.forEachIndexed { index,child ->
+                    val content=build(child)
+                    addView(content,LinearLayout.LayoutParams(if(index==0 && kind!="photoRow") 0 else if(index==0 && kind=="photoRow") dp(116) else if(kind=="photoRow") 0 else -2,-2,
+                        if(index==0 && kind!="photoRow" || index>0 && kind=="photoRow") 1f else 0f).apply { if(index<children.lastIndex) marginEnd=dp(if(kind=="photoRow") 12 else 9) })
+                }
+                if(kind=="heading") setPadding(0,dp(2),0,dp(14))
+            }
+            "actions" -> SourceGrid(activity,children.size.coerceIn(1,3),dp(9)).apply {
+                setPadding(0,dp(18),0,dp(9))
+                children.forEach { addCell(build(it),false) }
+            }
+            "flow" -> SourceFlow(activity,dp(9)).apply {
+                children.forEach { addView(build(it),ViewGroup.LayoutParams(-2,-2)) }
+                if(kind=="actions") setPadding(0,dp(18),0,dp(9))
+            }
+            "fold" -> column().apply {
+                val body=column().apply { visibility=View.GONE }
+                val summary=children.firstOrNull()
+                if(summary!=null) addView(build(summary).apply { isClickable=true;setOnClickListener { body.visibility=if(body.visibility==View.VISIBLE) View.GONE else View.VISIBLE } })
+                children.drop(1).forEach { body.addView(build(it)) }
+                addView(body)
+            }
+            else -> column().apply {
+                children.forEach { child -> addView(build(child),LinearLayout.LayoutParams(-1,-2).apply { bottomMargin=dp(if(child.optString("kind") in listOf("section","form","summaryGrid","reportGrid")) 14 else if(kind=="field") 4 else 2) }) }
+                when(kind) {
+                    "section","form" -> { background=bg();setPadding(dp(15),dp(15),dp(15),dp(15)) }
+                    "stat" -> { background=bg(Color.rgb(255,250,242),12);setPadding(dp(12),dp(12),dp(12),dp(12)) }
+                    "sectionHeading" -> setPadding(0,dp(14),0,dp(10))
+                    "empty" -> { setPadding(dp(18),dp(22),dp(18),dp(22));gravity=Gravity.CENTER }
+                    "help" -> setPadding(0,dp(4),0,dp(10))
+                }
+            }
+        }
+        return register(view,n)
+    }
+    private fun input(n:JSONObject):View {
+        val type=n.optString("type")
+        val date=type in listOf("date","month","time")
+        val edit=EditText(activity).apply {
+            typeface=font;textSize=14f;setTextColor(ink);setHintTextColor(muted)
+            gravity=Gravity.RIGHT or if(type=="multiline") Gravity.TOP else Gravity.CENTER_VERTICAL
+            setPadding(dp(10),dp(9),dp(10),dp(9));background=bg(Color.rgb(255,252,247),10)
+            minHeight=dp(42);hint=n.optString("placeholder")
+            inputType=when {
+                type=="multiline" -> InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_MULTI_LINE
+                type=="password" -> InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
+                n.optString("inputmode")=="tel" -> InputType.TYPE_CLASS_PHONE
+                type=="number" -> InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
+                else -> InputType.TYPE_CLASS_TEXT
+            }
+            if(type=="multiline") { minLines=3;maxLines=8 } else setSingleLine(true)
+            val value=when(n.optString("value")) {
+                "@today" -> java.time.LocalDate.now().toString()
+                "@monthStart" -> java.time.LocalDate.now().withDayOfMonth(1).toString()
+                "@time" -> java.time.LocalTime.now().format(java.time.format.DateTimeFormatter.ofPattern("HH:mm"))
+                "@month" -> java.time.YearMonth.now().toString()
+                else -> n.optString("value")
+            }
+            setText(value)
+            isEnabled=!n.optBoolean("disabled")
+            if(date) {
+                isFocusable=false;isClickable=true
+                setOnClickListener {
+                    if(type=="time") {
+                        val now=runCatching { java.time.LocalTime.parse(text.toString()) }.getOrDefault(java.time.LocalTime.now())
+                        android.app.TimePickerDialog(activity,{ _,h,m -> setText(String.format(java.util.Locale.US,"%02d:%02d",h,m)) },now.hour,now.minute,true).show()
+                    } else {
+                        val now=runCatching { java.time.LocalDate.parse(if(type=="month") text.toString()+"-01" else text.toString()) }.getOrDefault(java.time.LocalDate.now())
+                        android.app.DatePickerDialog(activity,{ _,y,m,d ->
+                            setText(if(type=="month") java.time.YearMonth.of(y,m+1).toString() else java.time.LocalDate.of(y,m+1,d).toString())
+                        },now.year,now.monthValue-1,now.dayOfMonth).show()
+                    }
+                }
+            }
+        }
+        return edit
+    }
+    private fun selection(n:JSONObject):View {
+        val options=items(n.optJSONArray("options"))
+        return Spinner(activity).apply {
+            background=bg(Color.rgb(255,252,247),10);setPadding(dp(6),dp(4),dp(6),dp(4));minimumHeight=dp(42)
+            layoutDirection=View.LAYOUT_DIRECTION_RTL
+            adapter=object:ArrayAdapter<String>(activity,android.R.layout.simple_spinner_dropdown_item,options.map { it.optString("label") }) {
+                private fun style(view:View)=view.apply { (this as? TextView)?.apply { typeface=font;textSize=13f;setTextColor(ink);gravity=Gravity.RIGHT or Gravity.CENTER_VERTICAL } }
+                override fun getView(position:Int,convertView:View?,parent:ViewGroup)=style(super.getView(position,convertView,parent))
+                override fun getDropDownView(position:Int,convertView:View?,parent:ViewGroup)=style(super.getDropDownView(position,convertView,parent))
+                override fun isEnabled(position:Int)=!options[position].optBoolean("disabled")
+            }
+            if(options.isNotEmpty()) setSelection(n.optInt("selected").coerceIn(options.indices))
+            onItemSelectedListener=object:AdapterView.OnItemSelectedListener {
+                override fun onNothingSelected(parent:AdapterView<*>?) {}
+                override fun onItemSelected(parent:AdapterView<*>?,view:View?,position:Int,id:Long) { conditions() }
+            }
+        }
+    }
+    private fun toggle(n:JSONObject):View {
+        val radio=n.optString("inputType")=="radio"
+        val control=if(radio) RadioButton(activity) else CheckBox(activity)
+        control.apply {
+            text=n.optString("text");typeface=font;textSize=12f;setTextColor(ink);layoutDirection=View.LAYOUT_DIRECTION_RTL
+            isChecked=n.optBoolean("checked");minHeight=dp(42)
+            if(radio) {
+                val group=radioNames.getOrPut(n.optString("name")) { mutableListOf() }
+                group.add(this as RadioButton)
+                setOnClickListener { group.forEach { it.isChecked=it===this };conditions() }
+            }
+        }
+        return control
+    }
+    private fun button(n:JSONObject):View {
+        val cs=classes(n)
+        val rich=n.optJSONArray("children")
+        val view=if(rich!=null) column().apply {
+            val horizontal=cs.any { it in listOf("simple-action","modern-feature-card","mode-card","mode-advisor-card") }
+            orientation=if(horizontal) LinearLayout.HORIZONTAL else LinearLayout.VERTICAL
+            gravity=if(cs.contains("father-main-card")) Gravity.CENTER else Gravity.CENTER_VERTICAL
+            items(rich).forEachIndexed { index,child ->
+                val content=build(child).apply { if(this is TextView && index==0) {
+                    textSize=if(cs.contains("father-main-card")) 42f else 25f
+                    if(!horizontal) gravity=Gravity.CENTER
+                } else if(this is TextView && index>0) {
+                    textSize=if(cs.contains("father-main-card") && index==1) 20f else if(index==1) 14f else 10f
+                } }
+                addView(content,if(horizontal) LinearLayout.LayoutParams(if(index==1) 0 else if(index==0) dp(46) else -2,-2,if(index==1) 1f else 0f).apply { if(index==0) marginEnd=dp(12) }
+                    else LinearLayout.LayoutParams(-1,-2))
+            }
+            minimumHeight=dp(when { cs.contains("father-main-card") -> 185;cs.contains("mode-card") -> 122;cs.contains("manage-card") -> 115;else -> 104 })
+            setPadding(dp(15),dp(15),dp(15),dp(15))
+            background=when {
+                cs.contains("father-main-card") -> GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(Color.rgb(255,253,249),Color.rgb(247,234,211))).apply { cornerRadius=dp(24).toFloat();setStroke(dp(2),Color.rgb(216,189,136)) }
+                cs.contains("advanced") || cs.contains("mode-advisor-card") -> GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(Color.rgb(46,40,34),Color.rgb(62,51,39))).apply { cornerRadius=dp(26).toFloat() }
+                cs.contains("father") -> GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(Color.rgb(255,250,242),Color.rgb(248,237,217))).apply { cornerRadius=dp(26).toFloat();setStroke(dp(2),Color.rgb(216,189,136)) }
+                else -> bg(radius=if(cs.contains("manage-card")) 16 else 18)
+            }
+        } else label(n.optString("text"),13f,if(n.optBoolean("primary")) Color.WHITE else gold,true).apply {
+            gravity=Gravity.CENTER;setPadding(dp(12),dp(10),dp(12),dp(10));minHeight=dp(if(cs.contains("close")) 32 else if(cs.contains("tiny-button")) 25 else if(cs.contains("father-complete")) 64 else 44)
+            background=if(n.optBoolean("primary")) GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(Color.rgb(179,131,50),Color.rgb(139,96,31))).apply { cornerRadius=dp(12).toFloat() }
+                else bg(Color.rgb(247,237,221),12,Color.rgb(223,201,164))
+        }
+        if(cs.contains("advanced") || cs.contains("mode-advisor-card")) {
+            fun light(child:View) {
+                if(child is TextView) child.setTextColor(Color.rgb(239,226,206))
+                if(child is ViewGroup) for(i in 0 until child.childCount) light(child.getChildAt(i))
+            }
+            light(view)
+        }
+        view.isClickable=true;view.isFocusable=true;view.contentDescription=n.optString("text")
+        view.isEnabled=!n.optBoolean("disabled")
+        view.setOnClickListener {
+            val route=n.optString("route").ifEmpty { n.optString("targetRoute") }
+            val action=n.optString("action")
+            when {
+                route.isNotEmpty() -> navigate(route)
+                action=="close-modal" -> back()
+                action in actionPages -> navigate(actionPages.getValue(action))
+                action=="purchase-add-line" -> duplicatePurchaseLine(false)
+                action=="purchase-quick-add" -> duplicatePurchaseLine(true)
+                action=="purchase-remove-line" -> removePurchaseLine(view)
+                action=="add-manual-item" -> addTemplate("sale-items","sale-line-template")
+                action=="add-color-variant" -> addVariant(view)
+                action=="remove-color-variant" -> removeMatching(view,"color-variant-row")
+                action=="select-quick-repair" -> {
+                    val manual=n.optJSONObject("data")?.optString("data-manual-price")=="1"
+                    controls["father-custom-repair"]?.visibility=if(manual) View.VISIBLE else View.GONE
+                    view.background=bg(Color.rgb(243,229,204),14,Color.rgb(183,138,62))
+                }
+                action=="remove-item" -> removeMatching(view,"line-item")
+                else -> Toast.makeText(activity,"معاينة الواجهة فقط — الوظيفة غير مفعلة بعد",Toast.LENGTH_SHORT).show()
+            }
+        }
+        return view
+    }
+    private fun ancestors(view:View):Sequence<View> = generateSequence(view) { it.parent as? View }
+    private fun purchaseRow(view:View)=ancestors(view).firstOrNull { metadata[it]?.let { n -> classes(n).contains("purchase-line") }==true }
+    private fun removePurchaseLine(view:View) { purchaseRow(view)?.let { (it.parent as? ViewGroup)?.removeView(it) } }
+    private fun duplicatePurchaseLine(quick:Boolean) {
+        val host=controls["purchase-lines"] as? ViewGroup ?: return
+        val template=metadata.entries.firstOrNull { classes(it.value).contains("purchase-line") }?.value ?: return
+        val copy=JSONObject(template.toString()).apply { put("key","purchase-copy-${++unique}") }
+        fun prepare(node:JSONObject) {
+            if(quick && node.optJSONObject("data")?.has("data-purchase-item")==true) node.put("selected",1)
+            if(node.optString("text").matches(Regex("الصنف [0-9٠-٩]+"))) node.put("text","الصنف "+java.text.NumberFormat.getIntegerInstance(java.util.Locale.forLanguageTag("ar-EG")).format(host.childCount+1))
+            items(node.optJSONArray("children")).forEach { prepare(it) }
+        }
+        prepare(copy)
+        host.addView(build(copy));conditions()
+    }
+    private fun conditions() {
+        // Visibility only, mirroring the original form groups. No monetary calculation or saving.
+        val rows=metadata.keys.filter { metadata[it]?.let { n -> classes(n).contains("purchase-line") }==true }
+        rows.forEach { row ->
+            val descendants=metadata.keys.filter { view -> ancestors(view).any { it===row } }
+            val selects=descendants.filterIsInstance<Spinner>()
+            val kind=selects.firstOrNull { metadata[it]?.optJSONObject("data")?.has("data-purchase-kind")==true }
+            val item=selects.firstOrNull { metadata[it]?.optJSONObject("data")?.has("data-purchase-item")==true }
+            val isNew=item?.selectedItemPosition==1
+            val isPart=kind?.selectedItemPosition==1
+            descendants.forEach { child ->
+                val cs=metadata[child]?.let { classes(it) } ?: emptyList()
+                if(cs.contains("purchase-new-field")) child.visibility=if(isNew && (!cs.contains("purchase-watch-field") || !isPart) && (!cs.contains("purchase-part-field") || isPart)) View.VISIBLE else View.GONE
+            }
+        }
+        metadata.keys.filterIsInstance<Spinner>().forEach { brand ->
+            val node=metadata[brand] ?: return@forEach
+            if(node.optJSONObject("data")?.has("data-watch-brand-select")==true) {
+                val scope=ancestors(brand).firstOrNull { metadata[it]?.optJSONObject("data")?.has("data-watch-lookup-scope")==true } ?: root
+                val field=ancestors(brand).firstOrNull { metadata[it]?.let { n -> classes(n).contains("field") }==true }
+                metadata.forEach { (view,meta) ->
+                    if(meta.optJSONObject("data")?.has("data-casio-only")==true && ancestors(view).any { it===scope })
+                        view.visibility=if(brand.selectedItem?.toString()=="كاسيو") View.VISIBLE else View.GONE
+                    if(meta.optJSONObject("data")?.has("data-watch-brand-custom-box")==true && ancestors(view).any { it===field })
+                        view.visibility=if(brand.selectedItemPosition==brand.count-1) View.VISIBLE else View.GONE
+                }
+            }
+        }
+        (controls["quick-repair-price-mode"] as? Spinner)?.let {
+            controls["quick-repair-fixed-price"]?.visibility=if(it.selectedItemPosition==1) View.GONE else View.VISIBLE
+        }
+        (controls["sale-type"] as? Spinner)?.let {
+            controls["online-sale-hint"]?.visibility=if(it.selectedItemPosition==1) View.VISIBLE else View.GONE
+        }
+        val receipt=controls["sale-receipt-mode"] as? Spinner
+        if(receipt!=null) {
+            controls["sale-mixed-payment-box"]?.visibility=if(receipt.selectedItemPosition==1) View.VISIBLE else View.GONE
+            metadata.forEach { (view,node) -> if(node.optJSONObject("data")?.has("data-single-payment")==true) view.visibility=if(receipt.selectedItemPosition==0) View.VISIBLE else View.GONE }
+        }
+        radioNames["deliverNow"]?.firstOrNull { it.isChecked }?.let { radio ->
+            controls["father-repair-customer-fields"]?.visibility=if(metadata[radio]?.optString("value")=="0") View.VISIBLE else View.GONE
+        }
+    }
+    private fun addTemplate(hostId:String,template:String) {
+        val host=controls[hostId] as? ViewGroup ?: return
+        if(pages.has(template)) {
+            val copy=JSONObject(pages.getJSONObject(template).toString())
+            fun number(node:JSONObject) {
+                if(node.optString("text").matches(Regex("الصنف [0-9٠-٩]+"))) node.put("text","الصنف "+java.text.NumberFormat.getIntegerInstance(java.util.Locale.forLanguageTag("ar-EG")).format(host.childCount+1))
+                items(node.optJSONArray("children")).forEach { number(it) }
+            }
+            number(copy)
+            val view=build(copy)
+            if(host is SourceGrid) host.addCell(view,false) else host.addView(view)
+        }
+    }
+    private fun addVariant(button:View) {
+        val scope=purchaseRow(button) ?: root ?: return
+        val target=metadata.entries.firstOrNull { (view,node) -> node.optJSONObject("data")?.has("data-color-variants")==true && ancestors(view).any { it===scope } }?.key as? ViewGroup ?: return
+        target.addView(build(pages.getJSONObject("variant-row-template")))
+    }
+    private fun removeMatching(button:View,sourceClass:String) {
+        ancestors(button).firstOrNull { metadata[it]?.let { n -> classes(n).contains(sourceClass) }==true }?.let {
+            (it.parent as? ViewGroup)?.removeView(it)
+        }
+    }
+    private val actionPages=mapOf(
+        "new-supplier" to "supplier-form", "new-maintenance-part" to "maintenance-part-form",
+        "new-product" to "product-form", "opening-new-product" to "product-form",
+        "opening-new-part" to "maintenance-part-form", "partner-withdrawal-new" to "partner-withdrawal-form",
+        "quick-repair-button-new" to "quick-repair-button-form", "new-customer-order" to "customer-order-form",
+        "customer-order-new" to "customer-order-form", "open-maintenance-parts-from-quick" to "maintenance-parts",
+        "modern-new-discount" to "discount-rule-form", "quick-repair-button-edit" to "quick-repair-button-form",
+        "modern-quick-shortcuts" to "shortcut-settings", "cash-movement-new" to "cash-movement-form",
+        "new-cash-movement" to "cash-movement-form", "open-cash-movement" to "cash-movement-form", "opening-quick-product" to "product-quick-form"
+    )
+}
+
+/** A real native grid with full-width fields; hidden fields reflow without leaving holes. */
+private class SourceGrid(context:android.content.Context,private val columns:Int,private val gap:Int):ViewGroup(context) {
+    private val full=IdentityHashMap<View,Boolean>()
+    private val frames=IdentityHashMap<View,android.graphics.Rect>()
+    fun addCell(view:View,span:Boolean) { full[view]=span;addView(view,LayoutParams(-1,-2)) }
+    override fun onMeasure(widthMeasureSpec:Int,heightMeasureSpec:Int) {
+        val width=MeasureSpec.getSize(widthMeasureSpec);val usable=(width-paddingLeft-paddingRight).coerceAtLeast(0)
+        val cell=((usable-gap*(columns-1))/columns).coerceAtLeast(0)
+        var column=0;var top=paddingTop;var rowHeight=0
+        frames.clear()
+        fun nextRow() { if(column>0) { top+=rowHeight+gap;column=0;rowHeight=0 } }
+        for(i in 0 until childCount) {
+            val child=getChildAt(i);if(child.visibility==GONE) continue
+            val span=if(full[child]==true) columns else 1
+            if(span==columns) nextRow()
+            val w=if(span==columns) usable else cell
+            child.measure(MeasureSpec.makeMeasureSpec(w,MeasureSpec.EXACTLY),MeasureSpec.makeMeasureSpec(0,MeasureSpec.UNSPECIFIED))
+            val right=width-paddingRight-column*(cell+gap)
+            frames[child]=android.graphics.Rect(right-w,top,right,top+child.measuredHeight)
+            rowHeight=maxOf(rowHeight,child.measuredHeight);column+=span
+            if(column>=columns) { top+=rowHeight+gap;column=0;rowHeight=0 }
+        }
+        val height=if(column>0) top+rowHeight else (top-gap).coerceAtLeast(paddingTop)
+        setMeasuredDimension(width,resolveSize(height+paddingBottom,heightMeasureSpec))
+    }
+    override fun onLayout(changed:Boolean,l:Int,t:Int,r:Int,b:Int) { frames.forEach { (view,rect) -> view.layout(rect.left,rect.top,rect.right,rect.bottom) } }
+}
+
+/** Native wrapping action row; RTL order is retained at every width. */
+private class SourceFlow(context:android.content.Context,private val gap:Int):ViewGroup(context) {
+    private val frames=IdentityHashMap<View,android.graphics.Rect>()
+    override fun onMeasure(widthMeasureSpec:Int,heightMeasureSpec:Int) {
+        val width=MeasureSpec.getSize(widthMeasureSpec);val usable=(width-paddingLeft-paddingRight).coerceAtLeast(0)
+        var used=0;var top=paddingTop;var height=0;var widest=0;frames.clear()
+        for(i in 0 until childCount) {
+            val child=getChildAt(i);if(child.visibility==GONE) continue
+            child.measure(MeasureSpec.makeMeasureSpec(usable,MeasureSpec.AT_MOST),MeasureSpec.makeMeasureSpec(0,MeasureSpec.UNSPECIFIED))
+            if(used>0 && used+child.measuredWidth>usable) { used=0;top+=height+gap;height=0 }
+            val right=width-paddingRight-used
+            frames[child]=android.graphics.Rect(right-child.measuredWidth,top,right,top+child.measuredHeight)
+            used+=child.measuredWidth+gap;widest=maxOf(widest,used-gap);height=maxOf(height,child.measuredHeight)
+        }
+        val measured=if(MeasureSpec.getMode(widthMeasureSpec)==MeasureSpec.EXACTLY) width else (widest+paddingLeft+paddingRight).coerceAtMost(width)
+        if(measured!=width) frames.values.forEach { it.offset(measured-width,0) }
+        setMeasuredDimension(measured,resolveSize(top+height+paddingBottom,heightMeasureSpec))
+    }
+    override fun onLayout(changed:Boolean,l:Int,t:Int,r:Int,b:Int) { frames.forEach { (view,rect) -> view.layout(rect.left,rect.top,rect.right,rect.bottom) } }
+}
