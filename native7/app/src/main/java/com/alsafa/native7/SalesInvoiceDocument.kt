@@ -51,7 +51,7 @@ internal object SalesInvoiceDocument {
         val height=842
         val paint=Paint(Paint.ANTI_ALIAS_FLAG).apply { color=Color.rgb(65,55,45);textSize=13f }
         val gold=Color.rgb(153,112,55)
-        val pages=d.rows.chunked(12).ifEmpty { listOf(emptyList()) }
+        val pages=d.rows.chunked(8).ifEmpty { listOf(emptyList()) }
         val tajawal=runCatching { Typeface.createFromAsset(activity.assets,"Tajawal-Medium.ttf") }.getOrNull()
         val logo=runCatching { activity.assets.open("invoice-logo.png").use { BitmapFactory.decodeStream(it) } }.getOrNull()
         try {
