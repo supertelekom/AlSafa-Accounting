@@ -1199,11 +1199,19 @@ class MainActivity : Activity() {
                 for(i in 0 until lines.childCount) {
                     val card=lines.getChildAt(i)
                     val productId=card.getTag(android.R.id.content) as? String
-                    require(!productId.isNullOrBlank()) { "يجب اختيار الأصناف من المخزون قبل الحفظ" }
                     val pair=card.tag as? Pair<*,*> ?: error("بيانات الصنف غير مكتملة")
                     val qty=(pair.first as? EditText)?.text?.toString()?.toIntOrNull() ?: 0
                     val price=(pair.second as? EditText)?.text?.toString()?.toDoubleOrNull() ?: -1.0
-                    saleLines.add(NativeSalesLedger.Line(productId,qty,price))
+                    val edits=mutableListOf<EditText>()
+                    fun gather(v:View) {
+                        if(v is EditText) edits.add(v)
+                        if(v is android.view.ViewGroup) for(j in 0 until v.childCount) gather(v.getChildAt(j))
+                    }
+                    gather(card)
+                    val name=edits.getOrNull(0)?.text?.toString()?.trim().orEmpty()
+                    val model=edits.getOrNull(1)?.text?.toString()?.trim().orEmpty()
+                    require(!productId.isNullOrBlank() || name.isNotBlank()) { "اسم الصنف مطلوب" }
+                    saleLines.add(NativeSalesLedger.Line(productId.orEmpty(),qty,price,name,model))
                 }
                 val discount=manualDiscount.text.toString().toDoubleOrNull() ?: 0.0
                 require(discount.isFinite() && discount>=0) { "الخصم غير صالح" }
