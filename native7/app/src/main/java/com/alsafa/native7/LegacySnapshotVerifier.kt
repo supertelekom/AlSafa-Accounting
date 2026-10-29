@@ -63,7 +63,7 @@ internal object LegacySnapshotVerifier {
                 val item=rows.optJSONObject(j) ?: continue
                 val id=item.optString("itemId")
                 val kind=item.optString("itemKind")
-                val target=if(kind=="maintenancePart")"maintenanceParts" else "products"
+                val target=if(kind=="part" || kind=="maintenancePart")"maintenanceParts" else "products"
                 val known=if(target=="maintenanceParts")parts else products
                 if(id.isNotBlank() && id !in known)
                     unresolved.add(Finding("purchases",i,"items[$j].itemId",target,id))
