@@ -273,6 +273,7 @@ internal class OriginalPageStructure(
                 route.isNotEmpty() -> navigate(route)
                 action=="close-modal" -> back()
                 action in actionPages -> navigate(actionPages.getValue(action))
+                action in operationalActions -> navigate(operationalActions.getValue(action))
                 action=="purchase-add-line" -> duplicatePurchaseLine(false)
                 action=="purchase-quick-add" -> duplicatePurchaseLine(true)
                 action=="purchase-remove-line" -> removePurchaseLine(view)
@@ -371,6 +372,19 @@ internal class OriginalPageStructure(
             (it.parent as? ViewGroup)?.removeView(it)
         }
     }
+    private val operationalActions=mapOf(
+        "open-products" to "products",
+        "open-sales" to "sales",
+        "open-repairs" to "repairs",
+        "open-purchases" to "purchases",
+        "open-vaults" to "vaults",
+        "open-reports" to "reports",
+        "open-settings" to "settings",
+        "open-expenses" to "expenses",
+        "open-debts" to "debts",
+        "open-customers" to "customers",
+        "open-maintenance-parts" to "maintenance-parts"
+    )
     private val actionPages=mapOf(
         "new-supplier" to "supplier-form", "new-maintenance-part" to "maintenance-part-form",
         "new-product" to "product-form", "opening-new-product" to "product-form",
