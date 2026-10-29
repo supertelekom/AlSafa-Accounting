@@ -286,10 +286,25 @@ internal object NativeSalesLedger {
                 fun withdrawn(start:Long,end:Long):Double =
                     db.rawQuery("SELECT COALESCE(SUM(amount),0) FROM native_partner_withdrawals WHERE partner=? AND currency=? AND created_at>=? AND created_at<?",
                         arrayOf(name,currency,start.toString(),end.toString())).use { c -> c.moveToFirst();c.getDouble(0) }
-                val currentWithdrawals=withdrawn(from,to)
+                val currentWithdrawals=withdrawn(from,to)+legacyWithdrawn(db,name,currency,from,to)
+                val historicalWithdrawals=withdrawn(0,from)+legacyWithdrawn(db,name,currency,0,from)
                 PartnerBalance(name,currency,earned,currentWithdrawals,earned-currentWithdrawals,
-                    old-withdrawn(0,from))
+                    old-historicalWithdrawals)
             }
+        }
+    }
+    private fun legacyWithdrawn(db:SQLiteDatabase,name:String,currency:String,from:Long,to:Long):Double {
+        val start=java.text.SimpleDateFormat("yyyy-MM-dd",java.util.Locale.US).format(java.util.Date(from))
+        val end=java.text.SimpleDateFormat("yyyy-MM-dd",java.util.Locale.US).format(java.util.Date(to))
+        val aliases=when(name) {
+            "عبد الكريم" -> arrayOf("عبد الكريم","عبدالكريم","Abdul-Karim")
+            "يزن" -> arrayOf("يزن","Yazan")
+            else -> arrayOf("الأب","الوالد","father")
+        }
+        val placeholders=aliases.joinToString(",") { "?" }
+        val args=(listOf(currency,start,end)+aliases.toList()).toTypedArray()
+        db.rawQuery("SELECT COALESCE(SUM(amount),0) FROM domain_partnerWithdrawals WHERE currency=? AND substr(date,1,10)>=? AND substr(date,1,10)<? AND partnerName IN ($placeholders)",args).use { c ->
+            c.moveToFirst();return c.getDouble(0)
         }
     }
     data class Audit(val currency:String,val sales:Double,val collected:Double,
