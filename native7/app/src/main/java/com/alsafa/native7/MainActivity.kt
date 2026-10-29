@@ -1237,8 +1237,8 @@ class MainActivity : Activity() {
                         if(paid<=0) null else NativeSalesLedger.Tender(paid,money,account.selectedItem.toString(),
                             values.second.text.toString().toDoubleOrNull() ?: 0.0)
                     }
-                    val received=tenders.sumOf { it.amount*it.rate }
-                    require(!deferred || received==0.0) { "البيع الآجل أو عند الاستلام لا يقبل قبضاً الآن" }
+                    val received=if(deferred) 0.0 else tenders.sumOf { it.amount*it.rate }
+                    if(deferred) tenders.clear()
                     // Original saveSale: a fully paid mixed tender below the total
                     // becomes a bargaining discount, with tax recalculated.
                     val bargainingDiscount=if(paymentStatus.selectedItemPosition==0 &&
@@ -1259,11 +1259,10 @@ class MainActivity : Activity() {
                         saleCurrency.selectedItem.toString(),saleType.selectedItem.toString(),
                         saleCustomer.text.toString(),salePhone.text.toString(),tenders,manualPart+bargainingDiscount,ruleDiscount,enteredTaxRate)
                 } else {
-                    require(!deferred || amount==0.0) { "البيع الآجل أو عند الاستلام لا يقبل قبضاً الآن" }
-                    require(paymentStatus.selectedItemPosition!=0 || amount+0.000001>=finalTotal) { "حالة مدفوع بالكامل تتطلب قبض إجمالي الفاتورة" }
+                    val effectiveAmount=if(deferred) 0.0 else if(paymentStatus.selectedItemPosition==0) finalTotal else amount
                     NativeSalesLedger.saveWithChange(
                     legacyBackupStore.writableDatabase,saleLines,saleCurrency.selectedItem.toString(),
-                    saleType.selectedItem.toString(),saleCustomer.text.toString(),salePhone.text.toString(),amount,
+                    saleType.selectedItem.toString(),saleCustomer.text.toString(),salePhone.text.toString(),effectiveAmount,
                     when(paymentMethod.selectedItemPosition) { 1 -> "شام كاش"; 2 -> "البنك"; else -> "درج المحل" },
                     changeCurrency.selectedItem.toString(),changeAccount.selectedItem.toString(),
                     changeRate.text.toString().toDoubleOrNull() ?: 0.0,manualPart,ruleDiscount,enteredTaxRate
