@@ -40,7 +40,7 @@ internal object LegacyProductRepository {
             while(c.moveToNext()) {
                 val row=JSONObject(c.getString(0))
                 output.add(Product(row.optString("id"),row.optString("name"),
-                    row.optString("barcode"),LegacyProductRules.stock(row),
+                    row.optString("barcode"),LegacyProductRules.stock(row)+NativeSalesLedger.stockDelta(db,row.optString("id")),
                     row.optString("currency","USD"),
                     LegacyAccountingRules.number(row.opt("salePrice")),
                     LegacyAccountingRules.number(row.opt("cost")),
@@ -53,7 +53,7 @@ internal object LegacyProductRepository {
         NativeProductChanges.create(db)
         NativeProductChanges.get(db,id)?.let { row ->
             return Product(row.optString("id"),row.optString("name"),
-                row.optString("barcode"),LegacyProductRules.stock(row),
+                row.optString("barcode"),LegacyProductRules.stock(row)+NativeSalesLedger.stockDelta(db,row.optString("id")),
                 row.optString("currency","USD"),LegacyAccountingRules.number(row.opt("salePrice")),
                 LegacyAccountingRules.number(row.opt("cost")),
                 row.optString("variantGroupId"),row.optString("variantRole"),row)
