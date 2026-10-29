@@ -1319,6 +1319,34 @@ class MainActivity : Activity() {
         if(!repair) {
             formSection(parent,"قبض / إلغاء فاتورة")
             val invoiceId=field(parent,"رقم الفاتورة","أدخل رقم الفاتورة")
+            val invoiceSearch=field(parent,"بحث بالفاتورة أو العميل أو الهاتف","تظهر النتائج تلقائياً")
+            val invoiceMatches=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL }
+            parent.addView(invoiceMatches)
+            invoiceSearch.addTextChangedListener(object:android.text.TextWatcher {
+                override fun beforeTextChanged(s:CharSequence?,start:Int,count:Int,after:Int) {}
+                override fun afterTextChanged(s:android.text.Editable?) {}
+                override fun onTextChanged(s:CharSequence?,start:Int,before:Int,count:Int) {
+                    invoiceMatches.removeAllViews()
+                    val term=s?.toString()?.trim().orEmpty()
+                    if(term.isBlank()) return
+                    try {
+                        val db=legacyBackupStore.readableDatabase
+                        NativeSalesLedger.create(db)
+                        db.rawQuery("SELECT id,customer,phone,total,currency,status FROM native_sales WHERE id LIKE ? OR customer LIKE ? OR phone LIKE ? ORDER BY created_at DESC LIMIT 30",arrayOf("%"+term+"%","%"+term+"%","%"+term+"%")).use { cursor ->
+                            while(cursor.moveToNext()) {
+                                val id=cursor.getString(0)
+                                invoiceMatches.addView(text(cursor.getString(1)+" · "+cursor.getString(2)+" · "+cursor.getDouble(3)+" "+cursor.getString(4)+" · "+cursor.getString(5),13f,gold).apply {
+                                    isClickable=true
+                                    setOnClickListener { invoiceId.setText(id) }
+                                })
+                            }
+                        }
+                    } catch(e:Exception) {
+                        invoiceMatches.addView(text("تعذر البحث: "+e.message,12f))
+                    }
+                }
+            })
+
             val collectedAmount=field(parent,"المبلغ المقبوض","0").apply {
                 inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
             }
