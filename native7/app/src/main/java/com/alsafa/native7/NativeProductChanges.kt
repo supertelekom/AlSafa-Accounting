@@ -35,9 +35,9 @@ internal object NativeProductChanges {
                 require(get(db,id)==null) { "معرف المنتج مكرر" }
                 validateUniqueness(db,product,id)
                 db.execSQL("INSERT INTO native_new_products(product_id,payload,created_at) VALUES (?,?,?)",
-                    arrayOf(id,product.toString(),now))
+                    arrayOf<Any?>(id,product.toString(),now))
                 db.execSQL("INSERT INTO native_product_audit(event_id,product_id,previous_payload,new_payload,reason,recorded_at) VALUES (?,?,?,?,?,?)",
-                    arrayOf(UUID.randomUUID().toString(),id,null,product.toString(),"إضافة منتج جديد",now))
+                    arrayOf<Any?>(UUID.randomUUID().toString(),id,null,product.toString(),"إضافة منتج جديد",now))
             }
             db.setTransactionSuccessful()
         } finally { db.endTransaction() }
@@ -192,9 +192,9 @@ internal object NativeProductChanges {
                 "تغيير دفعات التمويل يتطلب معاملة مخزون مستقلة"
             }
             db.execSQL("INSERT OR REPLACE INTO native_product_edits(product_id,payload,revision) VALUES (?,?,?)",
-                arrayOf(id,edited.toString(),revision+1))
+                arrayOf<Any?>(id,edited.toString(),revision+1))
             db.execSQL("INSERT INTO native_product_audit(event_id,product_id,previous_payload,new_payload,reason,recorded_at) VALUES (?,?,?,?,?,?)",
-                arrayOf(UUID.randomUUID().toString(),id,old,edited.toString(),reason,System.currentTimeMillis()))
+                arrayOf<Any?>(UUID.randomUUID().toString(),id,old,edited.toString(),reason,System.currentTimeMillis()))
             db.setTransactionSuccessful()
         } finally {
             db.endTransaction()
@@ -325,7 +325,7 @@ internal object NativeProductChanges {
             db.execSQL("INSERT OR REPLACE INTO native_product_edits(product_id,payload,revision) VALUES (?,?,COALESCE((SELECT revision+1 FROM native_product_edits WHERE product_id=?),1))",
                 arrayOf(productId,updated.toString(),productId))
             db.execSQL("INSERT INTO native_stock_movements(event_id,product_id,before_qty,after_qty,reason,reference_type,recorded_at) VALUES (?,?,?,?,?,?,?)",
-                arrayOf(reference,productId,before,newStock,description,"inventory-adjustment",now))
+                arrayOf<Any?>(reference,productId,before,newStock,description,"inventory-adjustment",now))
             db.execSQL("INSERT INTO native_product_audit(event_id,product_id,previous_payload,new_payload,reason,recorded_at) VALUES (?,?,?,?,?,?)",
                 arrayOf(UUID.randomUUID().toString(),productId,old.toString(),updated.toString(),description,now))
             db.setTransactionSuccessful()
