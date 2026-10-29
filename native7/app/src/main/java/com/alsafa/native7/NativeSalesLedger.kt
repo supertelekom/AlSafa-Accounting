@@ -174,6 +174,10 @@ internal object NativeSalesLedger {
                             -c.getDouble(2),c.getString(3),c.getString(4),c.getString(5),c.getDouble(6),at))
                 }
             }
+            db.rawQuery("SELECT amount,currency,account,invoice_equivalent,exchange_rate FROM native_sale_mixed WHERE sale_id=? AND amount>0",arrayOf(id)).use { c ->
+                while(c.moveToNext()) db.execSQL("INSERT INTO native_sale_mixed VALUES (?,?,?,?,?,?,?,?)",
+                    arrayOf<Any>(UUID.randomUUID().toString(),id,-c.getDouble(0),c.getString(1),c.getString(2),-c.getDouble(3),c.getDouble(4),at))
+            }
             db.execSQL("UPDATE native_sales SET status='cancelled' WHERE id=?",arrayOf(id))
             db.setTransactionSuccessful()
         } finally { db.endTransaction() }
@@ -222,9 +226,11 @@ internal object NativeSalesLedger {
             val collected=c.getDouble(0)
             val tenderExcess=db.rawQuery("SELECT COALESCE(SUM(amount_in_invoice_currency),0) FROM native_sale_change WHERE tender_account=? AND invoice_currency=? AND created_at>=? AND created_at<?",
                 arrayOf(account,currency,from.toString(),to.toString())).use { x -> x.moveToFirst();x.getDouble(0) }
+            val mixed=db.rawQuery("SELECT COALESCE(SUM(amount),0) FROM native_sale_mixed WHERE account=? AND currency=? AND created_at>=? AND created_at<?",
+                arrayOf(account,currency,from.toString(),to.toString())).use { x -> x.moveToFirst();x.getDouble(0) }
             val paidChange=db.rawQuery("SELECT COALESCE(SUM(payout),0) FROM native_sale_change WHERE payout_account=? AND payout_currency=? AND created_at>=? AND created_at<?",
                 arrayOf(account,currency,from.toString(),to.toString())).use { x -> x.moveToFirst();x.getDouble(0) }
-            return collected+tenderExcess-paidChange
+            return collected+tenderExcess+mixed-paidChange
         }
     }
     fun profitByCurrency(db:SQLiteDatabase,from:Long,to:Long):Map<String,Double> {
