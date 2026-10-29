@@ -46,7 +46,10 @@ class MainActivity : Activity() {
     private var repairDraftSelections:List<Int>? = null
     private var repairDraftScreen:String? = null
     private val legacyBackupStore by lazy { LegacyBackupStore(this) }
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: android.content.Intent?) {\n        super.onActivityResult(requestCode, resultCode, data)\n        if (requestCode == 7107 && resultCode == RESULT_OK && data?.data != null) {\n            val uri = requireNotNull(data.data)
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: android.content.Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == 7107 && resultCode == RESULT_OK && data?.data != null) {
+            val uri = requireNotNull(data.data)
             try {
                 val text = contentResolver.openInputStream(uri)?.bufferedReader(Charsets.UTF_8)?.use { it.readText() }
                     ?: throw IllegalArgumentException("تعذر قراءة الملف")
@@ -75,7 +78,13 @@ class MainActivity : Activity() {
             }
         }
     }
-    private fun openLegacyRestore() {\n        val intent = android.content.Intent(android.content.Intent.ACTION_OPEN_DOCUMENT).apply {\n            addCategory(android.content.Intent.CATEGORY_OPENABLE)\n            type = "application/json"\n        }\n        startActivityForResult(intent, 7107)\n    }
+    private fun openLegacyRestore() {
+        val intent = android.content.Intent(android.content.Intent.ACTION_OPEN_DOCUMENT).apply {
+            addCategory(android.content.Intent.CATEGORY_OPENABLE)
+            type = "application/json"
+        }
+        startActivityForResult(intent, 7107)
+    }
     private val repairStore by lazy { RepairStore(this) }
     private val originalPages by lazy { OriginalPageStructure(this,{ route -> navigateTo(OriginalRoutes.screen(route)) },{ returnToPrevious() }) }
 
