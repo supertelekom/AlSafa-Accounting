@@ -1742,6 +1742,17 @@ class MainActivity : Activity() {
                         text="تسوية المخزون"
                         setOnClickListener { selectedInventoryProduct=p.id;navigateTo("native:stock-adjustment") }
                     })
+                    actions.addView(Button(this).apply {
+                        text="طباعة باركود"
+                        setOnClickListener {
+                            try { BarcodeLabelPrinter.print(this@MainActivity,p.raw) }
+                            catch(e:Exception) {
+                                android.app.AlertDialog.Builder(this@MainActivity)
+                                    .setMessage(e.message ?: "تعذرت طباعة الباركود")
+                                    .setPositiveButton("حسناً",null).show()
+                            }
+                        }
+                    })
                     val barcodePhoto=p.raw.optString("barcodePhoto")
                     if(barcodePhoto.isNotBlank())actions.addView(Button(this).apply {
                         text="صورة الباركود"
