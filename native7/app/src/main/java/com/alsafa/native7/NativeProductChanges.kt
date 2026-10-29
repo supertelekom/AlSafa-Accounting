@@ -309,15 +309,20 @@ internal object NativeProductChanges {
         db.beginTransaction()
         try {
             val old=get(db,productId) ?: throw IllegalArgumentException("المنتج غير موجود")
-            val before=LegacyProductRules.stock(old)
+            val saleDelta=NativeSalesLedger.stockDelta(db,productId)
+            val baseBefore=LegacyProductRules.stock(old)
+            val before=baseBefore+saleDelta
+            require(before>=0) { "رصيد المخزون الناتج عن الحركات غير صالح" }
             require(before!=newStock) { "الكمية الفعلية مطابقة للمخزون المسجل" }
+            val baseAfter=newStock-saleDelta
+            require(baseAfter>=0) { "التسوية تتعارض مع حركات البيع والمرتجعات" }
             require(!LegacyProductRules.fundingMismatch(old)) { "دفعات التمويل لا تطابق المخزون قبل التسوية" }
             val updated=JSONObject(old.toString())
             val lots=updated.optJSONArray("fundingLots") ?: org.json.JSONArray()
             val result=org.json.JSONArray()
             val tracked=LegacyProductRules.trackedQuantity(old)
-            if(newStock<tracked) {
-                var remove=tracked-newStock
+            if(baseAfter<tracked) {
+                var remove=tracked-baseAfter
                 for(i in lots.length()-1 downTo 0) {
                     val lot=lots.optJSONObject(i) ?: continue
                     val q=kotlin.math.max(0.0,LegacyAccountingRules.number(lot.opt("qtyRemaining")))
@@ -332,8 +337,8 @@ internal object NativeProductChanges {
                 }
             } else {
                 for(i in 0 until lots.length())result.put(lots.get(i))
-                if(newStock>tracked) {
-                    val add=newStock-tracked
+                if(baseAfter>tracked) {
+                    val add=baseAfter-tracked
                     // Legacy external partner associations remain historical only.
                     // New inventory adjustments are recorded as shop-funded stock.
                     result.put(JSONObject().apply {
@@ -352,7 +357,7 @@ internal object NativeProductChanges {
                 }
             }
             updated.put("fundingLots",result)
-            updated.put("stock",newStock)
+            updated.put("stock",baseAfter)
             require(!LegacyProductRules.fundingMismatch(updated)) { "فشل تطابق التمويل مع المخزون" }
             val now=System.currentTimeMillis()
             val reference="inventory-adjustment-"+UUID.randomUUID().toString()
