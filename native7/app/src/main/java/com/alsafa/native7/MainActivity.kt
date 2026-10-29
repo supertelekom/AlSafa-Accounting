@@ -1836,7 +1836,26 @@ class MainActivity : Activity() {
         }
         val sourceRoute=OriginalRoutes.source(screen)
         val sourceStructure=sourceRoute!=null && originalPages.contains(sourceRoute)
-        if(sourceStructure) originalPages.show(body,requireNotNull(sourceRoute))
+        if(sourceStructure) {
+            originalPages.show(body,requireNotNull(sourceRoute))
+            if(sourceRoute=="settings") {
+                val restoreAction=text("استعادة نسخة الصفا القديمة",16f,gold).apply {
+                    gravity=Gravity.CENTER
+                    background=panel(paper,12)
+                    isClickable=true
+                    isFocusable=true
+                    setOnClickListener { openLegacyRestore() }
+                }
+                body.addView(restoreAction,LinearLayout.LayoutParams(-1,dp(52)).apply {
+                    topMargin=dp(12);bottomMargin=dp(12)
+                })
+                body.addView(text(
+                    if(legacyBackupStore.hasData()) "توجد نسخة محفوظة محلياً؛ لن تُستبدل دون مراجعة."
+                    else "استعادة أولية إلى SQLite دون حذف بيانات موجودة. ربط الحسابات لم يكتمل بعد.",
+                    12f
+                ).apply { gravity=Gravity.RIGHT })
+            }
+        }
         else when(screen) {
             "chooser" -> {
                 body.addView(text("ALSAFA WATCHES",13f,gold))
