@@ -179,7 +179,7 @@ internal object SalesInvoiceDocument {
     private fun shareAttachment(activity:Activity,uri:Uri,number:String?) {
         // WhatsApp's commonly supported Android recipient hint uses a JID.
         // This is not a public guarantee, so keep a user-visible fallback.
-        val packages=listOf("com.whatsapp.w4b","com.whatsapp")
+        val packages=listOf("com.whatsapp.w4b")
         val manager=activity.packageManager
         val available=packages.filter { pkg ->
             runCatching { manager.getPackageInfo(pkg,0);true }.getOrDefault(false)
@@ -200,12 +200,10 @@ internal object SalesInvoiceDocument {
                 activity.startActivity(intent)
                 launched=true
                 break
-            } catch(_:Exception) { /* Try the next installed WhatsApp package. */ }
+            } catch(_:Exception) { /* Fall back to a clear error if WhatsApp Business cannot open. */ }
         }
         if(!launched) {
-            intent.removeExtra("jid")
-            intent.setPackage(null)
-            activity.startActivity(Intent.createChooser(intent,"مشاركة الفاتورة"))
+            error("تعذر فتح واتساب أعمال. تأكد من تثبيت WhatsApp Business وتحديثه.")
         }
     }
 
