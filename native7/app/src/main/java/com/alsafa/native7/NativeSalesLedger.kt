@@ -19,6 +19,7 @@ internal object NativeSalesLedger {
         db.execSQL("CREATE INDEX IF NOT EXISTS idx_native_sale_stock_product ON native_sale_stock(product_id)")
         db.execSQL("CREATE TABLE IF NOT EXISTS native_sale_returns (id TEXT PRIMARY KEY, sale_id TEXT NOT NULL, product_id TEXT NOT NULL, quantity INTEGER NOT NULL, refund REAL NOT NULL, reason TEXT NOT NULL, created_at INTEGER NOT NULL)")
         db.execSQL("CREATE TABLE IF NOT EXISTS native_sale_change (id TEXT PRIMARY KEY, sale_id TEXT NOT NULL, amount_in_invoice_currency REAL NOT NULL, invoice_currency TEXT NOT NULL, payout REAL NOT NULL, payout_currency TEXT NOT NULL, payout_account TEXT NOT NULL, tender_account TEXT NOT NULL, exchange_rate REAL NOT NULL, created_at INTEGER NOT NULL)")
+        db.execSQL("CREATE TABLE IF NOT EXISTS native_sale_mixed (id TEXT PRIMARY KEY, sale_id TEXT NOT NULL, amount REAL NOT NULL, currency TEXT NOT NULL, account TEXT NOT NULL, invoice_equivalent REAL NOT NULL, exchange_rate REAL NOT NULL, created_at INTEGER NOT NULL)")
         db.execSQL("CREATE TABLE IF NOT EXISTS native_sale_collections (id TEXT PRIMARY KEY, sale_id TEXT NOT NULL, amount REAL NOT NULL, currency TEXT NOT NULL, account TEXT NOT NULL, created_at INTEGER NOT NULL, reason TEXT NOT NULL)")
     }
     fun stockDelta(db:SQLiteDatabase,productId:String):Int {
@@ -102,6 +103,30 @@ internal object NativeSalesLedger {
                 db.execSQL("INSERT INTO native_sale_change VALUES (?,?,?,?,?,?,?,?,?,?)",
                     arrayOf<Any>(UUID.randomUUID().toString(),id,change,currency,payout,changeCurrency,changeAccount,tenderAccount,changeRate,now))
             }
+            db.setTransactionSuccessful()
+            return id
+        } finally { db.endTransaction() }
+    }
+    data class Tender(val amount:Double,val currency:String,val account:String,val rate:Double)
+    fun saveMixed(db:SQLiteDatabase,lines:List<Line>,currency:String,channel:String,
+        customer:String,phone:String,tenders:List<Tender>):String {
+        require(tenders.isNotEmpty()) { "حدد مبالغ القبض" }
+        require(tenders.all { it.amount.isFinite() && it.amount>0 && it.rate.isFinite() && it.rate>0 &&
+            it.currency in setOf("USD","TRY","SYP") && it.account.isNotBlank() &&
+            (it.currency!=currency || kotlin.math.abs(it.rate-1.0)<0.000001) }) { "المبالغ أو أسعار الصرف غير صالحة" }
+        create(db)
+        db.beginTransaction()
+        try {
+            val id=saveInternal(db,lines,currency,channel,customer,phone,0.0,tenders.first().account)
+            val sale=find(db,id) ?: error("الفاتورة غير موجودة")
+            val total=tenders.sumOf { it.amount*it.rate }
+            require(total.isFinite() && total<=sale.total+0.000001) { "الدفع المختلط أكبر من قيمة الفاتورة؛ استخدم إرجاع الباقي" }
+            val now=System.currentTimeMillis()
+            tenders.forEach { t ->
+                db.execSQL("INSERT INTO native_sale_mixed VALUES (?,?,?,?,?,?,?,?)",
+                    arrayOf<Any>(UUID.randomUUID().toString(),id,t.amount,t.currency,t.account,t.amount*t.rate,t.rate,now))
+            }
+            if(total>0) insertCollection(db,id,total,currency,"mixed",now,"mixed_collection")
             db.setTransactionSuccessful()
             return id
         } finally { db.endTransaction() }
