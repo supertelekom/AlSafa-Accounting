@@ -2045,6 +2045,7 @@ class MainActivity : Activity() {
                     inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
                 }
                 val bc=field(card,"باركود اللون")
+                barcodeScanButton(card,bc)
                 val key="variant-photo-"+java.util.UUID.randomUUID().toString()
                 val preview=ProductImageView.create(this@MainActivity,"",dp(84),dp(84))
                 card.addView(preview,LinearLayout.LayoutParams(dp(84),dp(84)))
