@@ -171,9 +171,35 @@ class MainActivity : Activity() {
         render()
         restoreRepairDraft()
     }
+    private var pendingBarcodeField:EditText?=null
+    private fun barcodeScanButton(parent:LinearLayout,target:EditText) {
+        parent.addView(Button(this).apply {
+            text="قراءة الباركود بالكاميرا"
+            setOnClickListener {
+                pendingBarcodeField=target
+                try {
+                    com.google.zxing.integration.android.IntentIntegrator(this@MainActivity)
+                        .setDesiredBarcodeFormats(com.google.zxing.integration.android.IntentIntegrator.ONE_D_CODE_TYPES)
+                        .setPrompt("وجّه الكاميرا إلى باركود الساعة")
+                        .setBeepEnabled(false)
+                        .setOrientationLocked(false)
+                        .initiateScan()
+                } catch(e:Exception) {
+                    pendingBarcodeField=null
+                    android.widget.Toast.makeText(this@MainActivity,"تعذر تشغيل قارئ الباركود: "+e.message,android.widget.Toast.LENGTH_LONG).show()
+                }
+            }
+        })
+    }
     @Deprecated("Deprecated in Java")
     override fun onActivityResult(requestCode:Int,resultCode:Int,data:android.content.Intent?) {
         super.onActivityResult(requestCode,resultCode,data)
+        val scan=com.google.zxing.integration.android.IntentIntegrator.parseActivityResult(requestCode,resultCode,data)
+        if(scan!=null) {
+            if(scan.contents!=null) pendingBarcodeField?.setText(scan.contents)
+            pendingBarcodeField=null
+            return
+        }
         if(requestCode in 7311..7312 && resultCode!=RESULT_OK) {
             if(requestCode==7312)pendingProductCameraUri?.let { contentResolver.delete(it,null,null) }
             pendingProductCameraUri=null
@@ -1408,6 +1434,7 @@ class MainActivity : Activity() {
         formPair(parent,{ model=field(it,"REF / الموديل") },
             { sku=field(it,"كود المنتج") })
         val barcode=field(parent,"باركود المنتج")
+        barcodeScanButton(parent,barcode)
         val stock=field(parent,"الكمية بالمخزون *").apply {
             setText("1");inputType=InputType.TYPE_CLASS_NUMBER
         }
