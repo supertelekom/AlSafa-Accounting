@@ -111,4 +111,44 @@ internal object NativeProductChanges {
         } finally { db.endTransaction() }
     }
 
+    /** Adjusts stock and a designated funding lot in the SAME SQLite transaction.
+     * This is an isolated manual correction, not a sale or supplier purchase.
+     */
+    fun adjustStock(db:SQLiteDatabase,productId:String,lotId:String,
+        newStock:Int,newLotRemaining:Double,reason:String) {
+        require(reason.isNotBlank() && newStock>=0 && newLotRemaining>=0.0 &&
+            newLotRemaining.isFinite())
+        create(db)
+        db.execSQL("CREATE TABLE IF NOT EXISTS native_stock_movements (event_id TEXT PRIMARY KEY NOT NULL, product_id TEXT NOT NULL, lot_id TEXT NOT NULL, before_qty REAL NOT NULL, after_qty REAL NOT NULL, reason TEXT NOT NULL, recorded_at INTEGER NOT NULL)")
+        db.beginTransaction()
+        try {
+            val old=get(db,productId) ?: throw IllegalArgumentException("المنتج غير موجود")
+            val updated=JSONObject(old.toString())
+            val lots=updated.optJSONArray("fundingLots") ?: throw IllegalArgumentException("لا توجد دفعات تمويل")
+            var matched=0
+            for(i in 0 until lots.length()) {
+                val lot=lots.optJSONObject(i) ?: continue
+                if(lot.optString("id")==lotId) {
+                    lot.put("qtyRemaining",newLotRemaining)
+                    matched++
+                }
+            }
+            require(matched==1) { "دفعة التمويل غير موجودة أو مكررة" }
+            updated.put("stock",newStock)
+            require(!LegacyProductRules.fundingMismatch(updated)) {
+                "المخزون لا يطابق مجموع الكميات في دفعات التمويل"
+            }
+            val previous=LegacyAccountingRules.number(old.opt("stock"))
+            db.execSQL("INSERT OR REPLACE INTO native_product_edits(product_id,payload,revision) VALUES (?,?,COALESCE((SELECT revision+1 FROM native_product_edits WHERE product_id=?),1))",
+                arrayOf(productId,updated.toString(),productId))
+            val event=UUID.randomUUID().toString()
+            val now=System.currentTimeMillis()
+            db.execSQL("INSERT INTO native_stock_movements(event_id,product_id,lot_id,before_qty,after_qty,reason,recorded_at) VALUES (?,?,?,?,?,?,?)",
+                arrayOf(event,productId,lotId,previous,newStock,reason,now))
+            db.execSQL("INSERT INTO native_product_audit(event_id,product_id,previous_payload,new_payload,reason,recorded_at) VALUES (?,?,?,?,?,?)",
+                arrayOf(UUID.randomUUID().toString(),productId,old.toString(),updated.toString(),reason,now))
+            db.setTransactionSuccessful()
+        } finally { db.endTransaction() }
+    }
+
 }
