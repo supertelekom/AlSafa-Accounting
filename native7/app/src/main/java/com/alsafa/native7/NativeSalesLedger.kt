@@ -100,6 +100,8 @@ internal object NativeSalesLedger {
         require(currency in setOf("USD","TRY","SYP")) { "عملة غير مدعومة" }
         require(initialCollection.isFinite() && initialCollection>=0) { "قيمة القبض غير صالحة" }
         require(lines.all { it.quantity>0 && it.unitPrice.isFinite() && it.unitPrice>=0 && it.productId.isNotBlank() }) { "بيانات الأصناف غير صالحة" }
+        require(channel in setOf("بيع من المحل","بيع أونلاين")) { "نوع البيع غير صالح" }
+        require(account.isNotBlank() && changeAccount.isNotBlank()) { "حدد خزنة القبض والباقي" }
         val id=UUID.randomUUID().toString()
         val grouped=lines.groupBy { it.productId }
         var total=0.0
