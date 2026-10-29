@@ -17,23 +17,28 @@ internal object NativeProductChanges {
         db.execSQL("CREATE TABLE IF NOT EXISTS native_product_audit (event_id TEXT PRIMARY KEY NOT NULL, product_id TEXT NOT NULL, previous_payload TEXT, new_payload TEXT NOT NULL, reason TEXT NOT NULL, recorded_at INTEGER NOT NULL)")
         db.execSQL("CREATE TABLE IF NOT EXISTS native_new_products (product_id TEXT PRIMARY KEY NOT NULL, payload TEXT NOT NULL, created_at INTEGER NOT NULL)")
     }
-    fun createProduct(db:SQLiteDatabase,product:JSONObject) {
-        val id=product.optString("id")
-        require(id.isNotBlank() && product.optString("name").isNotBlank()) { "اسم المنتج مطلوب" }
-        require(LegacyAccountingRules.number(product.opt("salePrice"))>=0 &&
-            LegacyAccountingRules.number(product.opt("cost"))>=0) { "سعر أو كلفة غير صالحة" }
-        val stock=LegacyProductRules.stock(product)
-        require(!LegacyProductRules.fundingMismatch(product)) { "دفعات التمويل لا تطابق المخزون" }
+    fun createProduct(db:SQLiteDatabase,product:JSONObject)=createProducts(db,listOf(product))
+    fun createProducts(db:SQLiteDatabase,products:List<JSONObject>) {
+        require(products.isNotEmpty())
+        val ids=products.map { it.optString("id") }
+        require(ids.distinct().size==ids.size)
         create(db)
         db.beginTransaction()
         try {
-            require(get(db,id)==null) { "معرف المنتج موجود مسبقاً" }
-            validateUniqueness(db,product,id)
             val now=System.currentTimeMillis()
-            db.execSQL("INSERT INTO native_new_products(product_id,payload,created_at) VALUES (?,?,?)",
-                arrayOf(id,product.toString(),now))
-            db.execSQL("INSERT INTO native_product_audit(event_id,product_id,previous_payload,new_payload,reason,recorded_at) VALUES (?,?,?,?,?,?)",
-                arrayOf(UUID.randomUUID().toString(),id,null,product.toString(),"إضافة منتج جديد",now))
+            for(product in products) {
+                val id=product.optString("id")
+                require(id.isNotBlank() && product.optString("name").isNotBlank()) { "اسم المنتج مطلوب" }
+                require(LegacyAccountingRules.number(product.opt("salePrice"))>=0 &&
+                    LegacyAccountingRules.number(product.opt("cost"))>=0) { "السعر أو الكلفة غير صالحة" }
+                require(!LegacyProductRules.fundingMismatch(product)) { "دفعات التمويل لا تطابق المخزون" }
+                require(get(db,id)==null) { "معرف المنتج مكرر" }
+                validateUniqueness(db,product,id)
+                db.execSQL("INSERT INTO native_new_products(product_id,payload,created_at) VALUES (?,?,?)",
+                    arrayOf(id,product.toString(),now))
+                db.execSQL("INSERT INTO native_product_audit(event_id,product_id,previous_payload,new_payload,reason,recorded_at) VALUES (?,?,?,?,?,?)",
+                    arrayOf(UUID.randomUUID().toString(),id,null,product.toString(),"إضافة منتج جديد",now))
+            }
             db.setTransactionSuccessful()
         } finally { db.endTransaction() }
     }
