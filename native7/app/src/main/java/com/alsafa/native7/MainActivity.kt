@@ -1472,7 +1472,17 @@ class MainActivity : Activity() {
         if(!repair) {
             formSection(parent,"قبض / إلغاء فاتورة")
             val invoiceId=field(parent,"رقم الفاتورة","أدخل رقم الفاتورة")
-            val invoiceSearch=field(parent,"بحث بالفاتورة أو العميل أو الهاتف","تظهر النتائج تلقائياً")
+            val invoiceSearch=field(parent,"بحث بالفاتورة أو العميل أو الهاتف أو المنتج","تظهر النتائج تلقائياً")
+            val searchFrom=field(parent,"من تاريخ","YYYY-MM-DD")
+            val searchTo=field(parent,"إلى تاريخ","YYYY-MM-DD")
+            fun searchDay(value:String):Long? {
+                if(value.isBlank()) return null
+                val format=java.text.SimpleDateFormat("yyyy-MM-dd",java.util.Locale.US).apply {
+                    isLenient=false
+                    timeZone=java.util.TimeZone.getTimeZone("Asia/Damascus")
+                }
+                return format.parse(value)?.time
+            }
             val invoiceMatches=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL }
             parent.addView(invoiceMatches)
             invoiceSearch.addTextChangedListener(object:android.text.TextWatcher {
@@ -1485,7 +1495,21 @@ class MainActivity : Activity() {
                     try {
                         val db=legacyBackupStore.readableDatabase
                         NativeSalesLedger.create(db)
-                        db.rawQuery("SELECT id,customer,phone,total,currency,status FROM native_sales WHERE id LIKE ? OR customer LIKE ? OR phone LIKE ? ORDER BY created_at DESC LIMIT 30",arrayOf("%"+term+"%","%"+term+"%","%"+term+"%")).use { cursor ->
+                        val start=searchDay(searchFrom.text.toString().trim())
+                        val end=searchDay(searchTo.text.toString().trim())?.plus(86400000L)
+                        val like="%"+term+"%"
+                        db.rawQuery("""SELECT DISTINCT s.id,s.customer,s.phone,s.total,s.currency,s.status
+                            FROM native_sales s
+                            WHERE (s.id LIKE ? OR s.customer LIKE ? OR s.phone LIKE ?
+                                OR EXISTS(SELECT 1 FROM native_sale_lines l
+                                    WHERE l.sale_id=s.id AND
+                                    (l.product_id LIKE ? OR EXISTS(
+                                        SELECT 1 FROM domain_products p WHERE p.id=l.product_id AND p.name LIKE ?))))
+                                AND (? IS NULL OR s.created_at>=?)
+                                AND (? IS NULL OR s.created_at<?)
+                            ORDER BY s.created_at DESC LIMIT 30""".trimIndent(),
+                            arrayOf(like,like,like,like,like,
+                                start?.toString(),start?.toString(),end?.toString(),end?.toString())).use { cursor ->
                             while(cursor.moveToNext()) {
                                 val id=cursor.getString(0)
                                 invoiceMatches.addView(text(cursor.getString(1)+" · "+cursor.getString(2)+" · "+cursor.getDouble(3)+" "+cursor.getString(4)+" · "+cursor.getString(5),13f,gold).apply {
