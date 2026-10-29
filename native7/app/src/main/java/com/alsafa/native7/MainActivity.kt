@@ -1572,6 +1572,94 @@ class MainActivity : Activity() {
             }
         })
     }
+    private fun productGroupEditPage(parent:LinearLayout) {
+        val id=selectedInventoryProduct ?: return
+        val db=legacyBackupStore.writableDatabase
+        val current=NativeProductChanges.get(db,id) ?: return
+        val groupId=current.optString("variantGroupId")
+        if(groupId.isBlank()) {
+            inventoryEditPage(parent)
+            return
+        }
+        val members=mutableListOf<org.json.JSONObject>()
+        db.rawQuery("SELECT p.id FROM domain_products p WHERE p.variantGroupId=? UNION SELECT n.product_id FROM native_new_products n WHERE json_extract(n.payload,'$.variantGroupId')=?",
+            arrayOf(groupId,groupId)).use { c ->
+            while(c.moveToNext())NativeProductChanges.get(db,c.getString(0))?.let { members.add(it) }
+        }
+        parent.addView(text("تعديل ألوان المنتج",22f,gold))
+        parent.addView(text("لكل لون صورة وسعر وتكلفة وباركود مستقل. تسوية الكميات تتم من صفحة المخزون.",13f))
+        data class Entry(val original:org.json.JSONObject,val color:EditText,val barcode:EditText,
+            val sale:EditText,val cost:EditText,val photoKey:String)
+        val entries=mutableListOf<Entry>()
+        for(member in members) {
+            val card=LinearLayout(this).apply {
+                orientation=LinearLayout.VERTICAL
+                background=panel(paper,12)
+                setPadding(dp(12),dp(12),dp(12),dp(12))
+            }
+            val key="group-"+member.optString("id")
+            card.addView(text(member.optString("name"),17f,gold))
+            val color=field(card,"اللون العام").apply {
+                setText(member.optString("variantColor").ifBlank { member.optString("color") })
+            }
+            val barcode=field(card,"باركود اللون").apply { setText(member.optString("barcode")) }
+            val sale=field(card,"سعر البيع").apply {
+                setText(member.optString("salePrice"))
+                inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
+            }
+            val cost=field(card,"كلفة الشراء للقطعة").apply {
+                setText(member.optString("cost"))
+                inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
+            }
+            card.addView(text("المخزون الفعلي: "+LegacyProductRules.stock(member),13f))
+            val preview=ProductImageView.create(this,member.optString("photo"),dp(92),dp(92))
+            card.addView(preview,LinearLayout.LayoutParams(dp(92),dp(92)))
+            preview.setOnClickListener { ProductImageView.show(this,member.optString("photo"),member.optString("name")) }
+            card.addView(Button(this).apply {
+                text="اختيار صورة من الاستوديو"
+                setOnClickListener { photoPreview=preview;selectProductPhoto(key,false) }
+            })
+            card.addView(Button(this).apply {
+                text="الكاميرا"
+                setOnClickListener { photoPreview=preview;selectProductPhoto(key,true) }
+            })
+            entries.add(Entry(member,color,barcode,sale,cost,key))
+            parent.addView(card)
+        }
+        parent.addView(Button(this).apply {
+            text="حفظ ألوان المنتج"
+            setOnClickListener {
+                try {
+                    val changes=entries.map { entry ->
+                        val newColor=entry.color.text.toString().trim()
+                        val newSale=entry.sale.text.toString().toDoubleOrNull()
+                        val newCost=entry.cost.text.toString().toDoubleOrNull()
+                        require(newColor.isNotBlank() && newSale!=null && newSale.isFinite() &&
+                            newSale>=0 && newCost!=null && newCost.isFinite() && newCost>=0) {
+                            "تحقق من اللون والسعر والتكلفة"
+                        }
+                        org.json.JSONObject(entry.original.toString()).apply {
+                            put("variantColor",newColor)
+                            put("color",newColor)
+                            put("variantKey",LegacyProductRules.variantIdentity(newColor,newColor,
+                                optString("dialColor"),optString("strapColor")))
+                            put("barcode",entry.barcode.text.toString().trim())
+                            put("salePrice",newSale)
+                            put("cost",newCost)
+                            newProductPhotos[entry.photoKey]?.let { put("photo",it) }
+                        }
+                    }
+                    NativeProductChanges.saveColorGroup(db,changes,"تعديل ألوان المنتج")
+                    newProductPhotos.clear()
+                    android.widget.Toast.makeText(this@MainActivity,"تم حفظ الألوان",android.widget.Toast.LENGTH_SHORT).show()
+                    returnToPrevious()
+                } catch(e:Exception) {
+                    android.app.AlertDialog.Builder(this@MainActivity).setTitle("لم تحفظ الألوان")
+                        .setMessage(e.message ?: "تعذر الحفظ").setPositiveButton("حسناً",null).show()
+                }
+            }
+        })
+    }
     private fun inventoryEditPage(parent:LinearLayout) {
         val id=selectedInventoryProduct ?: return
         val db=legacyBackupStore.writableDatabase
@@ -2423,6 +2511,7 @@ class MainActivity : Activity() {
             "preview:فاتورة شراء" -> legacyFormCard(body) { purchaseInvoicePreview(it) }
             "preview:المنتجات والمخزون" -> productsPreview(body)
             "native:product-edit" -> inventoryEditPage(body)
+            "native:group-edit" -> productGroupEditPage(body)
             "native:stock-adjustment" -> inventoryAdjustmentPage(body)
             "preview:إضافة منتج جديد" -> legacyFormCard(body) { productCreatePage(it) }
             "preview:قطع الصيانة" -> maintenancePartsPreview(body)
