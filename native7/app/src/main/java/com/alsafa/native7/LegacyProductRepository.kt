@@ -24,7 +24,7 @@ internal object LegacyProductRepository {
             SELECT COALESCE(e.payload,p.raw_json) payload,
               COALESCE(json_extract(e.payload,'$.name'),p.name) name,
               COALESCE(json_extract(e.payload,'$.barcode'),p.barcode) barcode,
-              p.model model,p.sku sku,p.ordinal sort_order
+              COALESCE(json_extract(e.payload,'$.model'),p.model) model,COALESCE(json_extract(e.payload,'$.sku'),p.sku) sku,p.ordinal sort_order
             FROM domain_products p LEFT JOIN native_product_edits e ON e.product_id=p.id
             UNION ALL
             SELECT COALESCE(e.payload,n.payload) payload,
