@@ -315,27 +315,27 @@ class MainActivity : Activity() {
         val columns=if(resources.configuration.screenWidthDp>=720) { if(management) 4 else if(!simple) 3 else 2 } else 2
         items.chunked(columns).forEach { pair ->
             val row=LinearLayout(this).apply { orientation=LinearLayout.HORIZONTAL;layoutDirection=View.LAYOUT_DIRECTION_RTL }
-            parent.addView(row,LinearLayout.LayoutParams(-1,-2).apply { bottomMargin=dp(if(simple) 7 else if(management) 10 else 9) })
+            parent.addView(row,LinearLayout.LayoutParams(-1,-2).apply { bottomMargin=dp(if(simple) 4 else if(management) 10 else 9) })
             pair.forEachIndexed { index,item ->
                 val box=LinearLayout(this).apply {
                     orientation=if(simple || management) LinearLayout.VERTICAL else LinearLayout.HORIZONTAL
                     gravity=if(management) Gravity.CENTER_VERTICAL else Gravity.CENTER_VERTICAL
                     layoutDirection=View.LAYOUT_DIRECTION_RTL
                     background=panel(if(simple) Color.rgb(255,250,242) else paper,
-                        if(simple) 24 else if(management) 16 else 14,
+                        if(simple) 12 else if(management) 16 else 14,
                         if(simple) Color.rgb(216,189,136) else Color.rgb(234,223,206))
-                    setPadding(dp(if(simple) 9 else if(management) 15 else 13),
-                        dp(if(simple) 9 else if(management) 15 else 13),
-                        dp(if(simple) 9 else if(management) 15 else 13),
-                        dp(if(simple) 9 else if(management) 15 else 13))
+                    setPadding(dp(if(simple) 4 else if(management) 15 else 13),
+                        dp(if(simple) 4 else if(management) 15 else 13),
+                        dp(if(simple) 4 else if(management) 15 else 13),
+                        dp(if(simple) 4 else if(management) 15 else 13))
                     isClickable=true
                     setOnClickListener { navigateTo(if(screen=="full" && item.first=="مبيع") "preview:مبيع كامل" else "preview:" + item.first) }
                 }
                 when {
                     simple -> {
-                        box.addView(text(item.third,27f,gold))
-                        box.addView(text(item.first,16f))
-                        box.addView(text(item.second,9f,Color.rgb(138,123,108)))
+                        box.addView(text(item.third,16f,gold).apply { gravity=Gravity.CENTER })
+                        box.addView(text(item.first,12f).apply { gravity=Gravity.CENTER;maxLines=1 })
+                        box.addView(text(item.second,8f,Color.rgb(138,123,108)).apply { gravity=Gravity.CENTER;maxLines=1 })
                     }
                     management -> {
                         box.addView(text(item.third,25f,gold).apply {
@@ -359,8 +359,8 @@ class MainActivity : Activity() {
                         box.addView(labels,LinearLayout.LayoutParams(0,-2,1f))
                     }
                 }
-                row.addView(box,LinearLayout.LayoutParams(0,dp(if(simple) 93 else if(management) 115 else 72),1f).apply {
-                    if(index<pair.lastIndex) marginEnd=dp(if(simple) 7 else if(management) 10 else 9)
+                row.addView(box,LinearLayout.LayoutParams(0,dp(if(simple) 47 else if(management) 115 else 72),1f).apply {
+                    if(index<pair.lastIndex) marginEnd=dp(if(simple) 4 else if(management) 10 else 9)
                 })
             }
             repeat(columns-pair.size) { row.addView(View(this),LinearLayout.LayoutParams(0,dp(1),1f)) }
@@ -543,10 +543,11 @@ class MainActivity : Activity() {
             bottomMargin=dp(14)
         })
     }
+    private var compactProductCreationForm=false
     private fun field(parent:LinearLayout,label:String,hint:String=""):EditText {
         parent.addView(text(label,11f,Color.rgb(138,123,108)).apply {
             gravity=Gravity.RIGHT
-            setPadding(dp(2),dp(5),dp(2),dp(6))
+            setPadding(dp(2),dp(if(compactProductCreationForm) 1 else 5),dp(2),dp(if(compactProductCreationForm) 2 else 6))
         })
         return EditText(this).apply {
             this.hint=hint
@@ -557,7 +558,7 @@ class MainActivity : Activity() {
             setHintTextColor(Color.rgb(138,123,108))
             background=panel(Color.rgb(255,252,247),10,Color.rgb(234,223,206))
             setPadding(dp(10),dp(9),dp(10),dp(9))
-            parent.addView(this,LinearLayout.LayoutParams(-1,dp(42)).apply { bottomMargin=dp(11) })
+            parent.addView(this,LinearLayout.LayoutParams(-1,dp(if(compactProductCreationForm) 36 else 42)).apply { bottomMargin=dp(if(compactProductCreationForm) 4 else 11) })
         }
     }
     private fun multilineField(parent:LinearLayout,label:String,hint:String=""):EditText {
@@ -572,7 +573,7 @@ class MainActivity : Activity() {
     private fun select(parent:LinearLayout,label:String,options:List<String>):Spinner {
         parent.addView(text(label,11f,Color.rgb(138,123,108)).apply {
             gravity=Gravity.RIGHT
-            setPadding(dp(2),dp(5),dp(2),dp(6))
+            setPadding(dp(2),dp(if(compactProductCreationForm) 1 else 5),dp(2),dp(if(compactProductCreationForm) 2 else 6))
         })
         val spinner=Spinner(this).apply {
             layoutDirection=View.LAYOUT_DIRECTION_RTL
@@ -592,7 +593,7 @@ class MainActivity : Activity() {
             override fun getDropDownView(position:Int,convertView:View?,parent:android.view.ViewGroup):View =
                 style(super.getDropDownView(position,convertView,parent))
         }
-        parent.addView(spinner,LinearLayout.LayoutParams(-1,dp(42)).apply { bottomMargin=dp(11) })
+        parent.addView(spinner,LinearLayout.LayoutParams(-1,dp(if(compactProductCreationForm) 36 else 42)).apply { bottomMargin=dp(if(compactProductCreationForm) 4 else 11) })
         return spinner
     }
     private fun finalAmountCurrency(parent:LinearLayout, defaultCurrency:String) {
@@ -1392,7 +1393,8 @@ class MainActivity : Activity() {
     }
     private var selectedInventoryProduct:String?=null
     private fun productCreatePage(parent:LinearLayout) {
-        parent.addView(text("إضافة منتج جديد",23f,gold))
+        compactProductCreationForm=true
+        parent.addView(text("إضافة منتج جديد",20f,gold))
         lateinit var name:EditText
         lateinit var brand:EditText
         formPair(parent,{ name=field(it,"اسم الساعة / المنتج *") },
@@ -1598,6 +1600,7 @@ class MainActivity : Activity() {
                 }
             }
         })
+        compactProductCreationForm=false
     }
     private fun productGroupEditPage(parent:LinearLayout) {
         val id=selectedInventoryProduct ?: return
