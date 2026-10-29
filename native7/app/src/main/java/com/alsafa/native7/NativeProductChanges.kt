@@ -129,6 +129,7 @@ internal object NativeProductChanges {
         val id=edited.optString("id")
         require(id.isNotBlank()) { "معرف المنتج مفقود" }
         require(reason.isNotBlank()) { "سبب التعديل مطلوب" }
+        require(!isDeleted(db,id)) { "لا يمكن تعديل منتج محذوف" }
         require(edited.optString("name").isNotBlank()) { "اسم المنتج مطلوب" }
         val stock=LegacyAccountingRules.number(edited.opt("stock"))
         require(stock.isFinite() && stock>=0 && abs(stock-stock.toInt())<0.0001) { "كمية المخزون غير صالحة" }
@@ -382,6 +383,7 @@ internal object NativeProductChanges {
         db.beginTransaction()
         try {
             val old=get(db,productId) ?: throw IllegalArgumentException("المنتج غير موجود")
+            require(!isDeleted(db,productId)) { "لا يمكن تسوية منتج محذوف" }
             val saleDelta=NativeSalesLedger.stockDelta(db,productId)
             val baseBefore=LegacyProductRules.stock(old)
             val before=baseBefore+saleDelta
