@@ -1240,6 +1240,18 @@ class MainActivity : Activity() {
                 )
                 }
                 android.widget.Toast.makeText(this,"تم حفظ الفاتورة: "+id,android.widget.Toast.LENGTH_LONG).show()
+                android.app.AlertDialog.Builder(this@MainActivity)
+                    .setTitle("فاتورة الصفا")
+                    .setMessage("تم حفظ الفاتورة. هل تريد طباعتها أم مشاركتها؟")
+                    .setPositiveButton("واتساب") { _,_ ->
+                        runCatching { SalesInvoiceDocument.share(this@MainActivity,legacyBackupStore.readableDatabase,id) }
+                            .onFailure { android.widget.Toast.makeText(this@MainActivity,it.message,android.widget.Toast.LENGTH_LONG).show() }
+                    }
+                    .setNeutralButton("طباعة") { _,_ ->
+                        runCatching { SalesInvoiceDocument.print(this@MainActivity,legacyBackupStore.readableDatabase,id) }
+                            .onFailure { android.widget.Toast.makeText(this@MainActivity,it.message,android.widget.Toast.LENGTH_LONG).show() }
+                    }
+                    .setNegativeButton("لاحقاً",null).show()
                 navigateTo("preview:المبيعات والفواتير")
             } catch(e:Exception) {
                 android.widget.Toast.makeText(this,e.message ?: "تعذر حفظ الفاتورة",android.widget.Toast.LENGTH_LONG).show()
@@ -1488,6 +1500,28 @@ class MainActivity : Activity() {
                 }
             })
 
+            parent.addView(Button(this).apply {
+                text="طباعة الفاتورة"
+                setOnClickListener {
+                    try {
+                        SalesInvoiceDocument.print(this@MainActivity,legacyBackupStore.readableDatabase,
+                            invoiceId.text.toString().trim())
+                    } catch(e:Exception) {
+                        android.widget.Toast.makeText(this@MainActivity,e.message ?: "تعذرت الطباعة",android.widget.Toast.LENGTH_LONG).show()
+                    }
+                }
+            })
+            parent.addView(Button(this).apply {
+                text="إرسال الفاتورة عبر واتساب"
+                setOnClickListener {
+                    try {
+                        SalesInvoiceDocument.share(this@MainActivity,legacyBackupStore.readableDatabase,
+                            invoiceId.text.toString().trim())
+                    } catch(e:Exception) {
+                        android.widget.Toast.makeText(this@MainActivity,e.message ?: "تعذرت المشاركة",android.widget.Toast.LENGTH_LONG).show()
+                    }
+                }
+            })
             val collectedAmount=field(parent,"المبلغ المقبوض","0").apply {
                 inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
             }
