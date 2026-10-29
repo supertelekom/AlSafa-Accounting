@@ -12,12 +12,13 @@ import org.json.JSONObject
  * unknown fields. No cloud, JavaScript, or WebView is involved.
  */
 internal class LegacyBackupStore(context: Context) :
-    SQLiteOpenHelper(context.applicationContext, "alsafa_native7.db", null, 3) {
+    SQLiteOpenHelper(context.applicationContext, "alsafa_native7.db", null, 4) {
     override fun onCreate(db: SQLiteDatabase) {
         db.execSQL("CREATE TABLE legacy_sections (name TEXT PRIMARY KEY NOT NULL, payload TEXT NOT NULL, item_count INTEGER NOT NULL)")
         db.execSQL("CREATE TABLE legacy_metadata (name TEXT PRIMARY KEY NOT NULL, payload TEXT NOT NULL)")
         createRecordTable(db)
         LegacyOperationalSchema.create(db)
+        LegacyDomainTables.create(db)
     }
     private fun createRecordTable(db: SQLiteDatabase) {
         db.execSQL("CREATE TABLE IF NOT EXISTS legacy_records (section TEXT NOT NULL, ordinal INTEGER NOT NULL, original_id TEXT, payload TEXT NOT NULL, PRIMARY KEY(section,ordinal))")
@@ -26,6 +27,7 @@ internal class LegacyBackupStore(context: Context) :
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
         if (oldVersion < 2) createRecordTable(db)
         if (oldVersion < 3) LegacyOperationalSchema.create(db)
+        if (oldVersion < 4) LegacyDomainTables.create(db)
     }
 
     data class Inspection(val counts: Map<String, Int>, val format: String)
@@ -76,6 +78,7 @@ internal class LegacyBackupStore(context: Context) :
                     arrayOf(key, raw, count))
                 if (value is JSONArray) {
                     LegacyOperationalSchema.importSection(db,key,value)
+                    LegacyDomainTables.importSection(db,key,value)
                     for (index in 0 until value.length()) {
                         val record = value.get(index)
                         val originalId = (record as? JSONObject)?.optString("id")?.takeIf { it.isNotBlank() }
@@ -86,6 +89,7 @@ internal class LegacyBackupStore(context: Context) :
             }
             db.execSQL("INSERT INTO legacy_metadata(name,payload) VALUES(?,?)",
                 arrayOf("original_backup", text))
+            LegacyDomainTables.audit(db)
             val persisted = db.rawQuery("SELECT COUNT(*) FROM legacy_sections", null).use {
                 check(it.moveToFirst())
                 it.getInt(0)
