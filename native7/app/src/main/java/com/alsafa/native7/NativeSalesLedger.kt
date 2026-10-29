@@ -18,6 +18,7 @@ internal object NativeSalesLedger {
         db.execSQL("CREATE TABLE IF NOT EXISTS native_sale_stock (id TEXT PRIMARY KEY, sale_id TEXT NOT NULL, product_id TEXT NOT NULL, delta INTEGER NOT NULL, reason TEXT NOT NULL, created_at INTEGER NOT NULL)")
         db.execSQL("CREATE INDEX IF NOT EXISTS idx_native_sale_stock_product ON native_sale_stock(product_id)")
         db.execSQL("CREATE TABLE IF NOT EXISTS native_sale_returns (id TEXT PRIMARY KEY, sale_id TEXT NOT NULL, product_id TEXT NOT NULL, quantity INTEGER NOT NULL, refund REAL NOT NULL, reason TEXT NOT NULL, created_at INTEGER NOT NULL)")
+        db.execSQL("CREATE TABLE IF NOT EXISTS native_sale_change (id TEXT PRIMARY KEY, sale_id TEXT NOT NULL, amount_in_invoice_currency REAL NOT NULL, invoice_currency TEXT NOT NULL, payout REAL NOT NULL, payout_currency TEXT NOT NULL, payout_account TEXT NOT NULL, exchange_rate REAL NOT NULL, created_at INTEGER NOT NULL)")
         db.execSQL("CREATE TABLE IF NOT EXISTS native_sale_collections (id TEXT PRIMARY KEY, sale_id TEXT NOT NULL, amount REAL NOT NULL, currency TEXT NOT NULL, account TEXT NOT NULL, created_at INTEGER NOT NULL, reason TEXT NOT NULL)")
     }
     fun stockDelta(db:SQLiteDatabase,productId:String):Int {
@@ -63,6 +64,36 @@ internal object NativeSalesLedger {
             db.setTransactionSuccessful()
         } finally { db.endTransaction() }
         return id
+    }
+    /**
+     * Record customer tender and change as one transaction. The change payout is
+     * tracked separately, with an explicit exchange rate for another currency.
+     */
+    fun saveWithChange(db:SQLiteDatabase,lines:List<Line>,currency:String,channel:String,
+        customer:String,phone:String,tendered:Double,tenderAccount:String,
+        changeCurrency:String,changeAccount:String,changeRate:Double):String {
+        require(tendered.isFinite() && tendered>=0) { "المبلغ المدفوع غير صالح" }
+        require(changeCurrency in setOf("USD","TRY","SYP")) { "عملة الباقي غير صالحة" }
+        require(changeRate.isFinite() && changeRate>0) { "سعر الصرف غير صالح" }
+        if(currency==changeCurrency) require(kotlin.math.abs(changeRate-1.0)<0.000001) { "سعر الصرف لنفس العملة يجب أن يكون 1" }
+        create(db)
+        db.beginTransaction()
+        try {
+            val id=save(db,lines,currency,channel,customer,phone,0.0,tenderAccount)
+            val sale=find(db,id) ?: error("تعذر قراءة الفاتورة")
+            val collected=tendered.coerceAtMost(sale.total)
+            val change=(tendered-sale.total).coerceAtLeast(0.0)
+            val now=System.currentTimeMillis()
+            if(collected>0) insertCollection(db,id,collected,currency,tenderAccount,now,"collection")
+            if(change>0) {
+                val payout=change*changeRate
+                require(payout.isFinite()) { "قيمة الباقي غير صالحة" }
+                db.execSQL("INSERT INTO native_sale_change VALUES (?,?,?,?,?,?,?,?,?)",
+                    arrayOf<Any>(UUID.randomUUID().toString(),id,change,currency,payout,changeCurrency,changeAccount,changeRate,now))
+            }
+            db.setTransactionSuccessful()
+            return id
+        } finally { db.endTransaction() }
     }
     private fun insertCollection(db:SQLiteDatabase,id:String,amount:Double,currency:String,account:String,at:Long,reason:String) {
         db.execSQL("INSERT INTO native_sale_collections VALUES (?,?,?,?,?,?,?)",arrayOf<Any>(UUID.randomUUID().toString(),id,amount,currency,account,at,reason))
