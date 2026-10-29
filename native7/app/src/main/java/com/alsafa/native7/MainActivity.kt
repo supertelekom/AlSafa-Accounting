@@ -1318,6 +1318,9 @@ class MainActivity : Activity() {
         parent.addView(text("تعديل",23f,gold))
         val name=field(parent,"اسم الساعة / المنتج *").apply { setText(product.optString("name")) }
         val color=field(parent,"اللون").apply { setText(product.optString("color")) }
+        val dialColor=field(parent,"لون المينا").apply { setText(product.optString("dialColor")) }
+        val strapColor=field(parent,"لون الحزام").apply { setText(product.optString("strapColor")) }
+        val variantColor=field(parent,"لون النسخة").apply { setText(product.optString("variantColor")) }
         val barcode=field(parent,"باركود المنتج").apply { setText(product.optString("barcode")) }
         val cost=field(parent,"كلفة الشراء للقطعة").apply {
             setText(product.optString("cost"))
@@ -1339,6 +1342,14 @@ class MainActivity : Activity() {
                     val candidate=org.json.JSONObject(product.toString()).apply {
                         put("name",name.text.toString().trim())
                         put("color",color.text.toString().trim())
+                        put("dialColor",dialColor.text.toString().trim())
+                        put("strapColor",strapColor.text.toString().trim())
+                        if(optString("variantGroupId").isNotBlank()) {
+                            put("variantColor",variantColor.text.toString().trim())
+                            put("variantKey",LegacyProductRules.variantIdentity(
+                                variantColor.text.toString(),color.text.toString(),
+                                dialColor.text.toString(),strapColor.text.toString()))
+                        }
                         put("barcode",barcode.text.toString().trim())
                         put("salePrice",amount)
                         put("cost",costAmount)
