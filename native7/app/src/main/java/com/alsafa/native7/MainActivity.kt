@@ -1285,7 +1285,7 @@ class MainActivity : Activity() {
         disabledAction(parent,"حفظ فاتورة الشراء كاملة")
     }
     private fun productsPreview(parent:LinearLayout) {
-        parent.addView(text("المنتجات والمخزون",26f,gold))
+        parent.addView(text("المنتجات والمخزون",22f,gold).apply { gravity=Gravity.RIGHT })
         val addProduct=text("＋ منتج",16f,gold).apply {
             gravity=Gravity.CENTER_VERTICAL or Gravity.RIGHT
             background=panel(paper,12)
@@ -1380,7 +1380,7 @@ class MainActivity : Activity() {
                         setOnClickListener { ProductImageView.show(this@MainActivity,barcodePhoto,"صورة الباركود") }
                     })
                     row.addView(actions,LinearLayout.LayoutParams(-1,-2).apply { topMargin=dp(6) })
-                    list.addView(row,LinearLayout.LayoutParams(-1,-2).apply { bottomMargin=dp(10) })
+                    list.addView(row,LinearLayout.LayoutParams(-1,-2).apply { bottomMargin=dp(8) })
                 }
                 offset+=products.size
             } catch(e:Exception) {
