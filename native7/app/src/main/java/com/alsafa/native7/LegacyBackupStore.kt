@@ -70,6 +70,11 @@ internal class LegacyBackupStore(context: Context) :
             }
             db.execSQL("INSERT INTO legacy_metadata(name,payload) VALUES(?,?)",
                 arrayOf("original_backup", text))
+            val persisted = db.rawQuery("SELECT COUNT(*) FROM legacy_sections", null).use {
+                check(it.moveToFirst())
+                it.getInt(0)
+            }
+            check(persisted == data.length()) { "لم يتم حفظ جميع أقسام النسخة" }
             db.setTransactionSuccessful()
         } finally {
             db.endTransaction()
