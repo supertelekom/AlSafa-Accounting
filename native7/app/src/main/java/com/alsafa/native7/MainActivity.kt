@@ -1106,7 +1106,7 @@ class MainActivity : Activity() {
         })
         parent.addView(liveSubtotal)
         formSection(parent,"الدفع والإرسال")
-        select(parent,"حالة الدفع",listOf("مدفوع بالكامل","دفعة جزئية","عند الاستلام","آجل"))
+        val paymentStatus=select(parent,"حالة الدفع",listOf("مدفوع بالكامل","دفعة جزئية","عند الاستلام","آجل"))
         select(parent,"قاعدة الخصم",listOf("بدون قاعدة خصم"))
         parent.addView(text("قاعدة الخصم = خصم محفوظ مسبقاً لتستخدمه بسرعة، مثل «عميل مميز 10%».",12f))
         disabledAction(parent,"＋ إنشاء قاعدة خصم")
@@ -1197,22 +1197,36 @@ class MainActivity : Activity() {
                     for(i in saleLines.indices) saleLines[i]=saleLines[i].copy(unitPrice=saleLines[i].unitPrice*factor)
                 }
                 val amount=initialPayment.text.toString().toDoubleOrNull() ?: 0.0
+                val finalTotal=subtotal-discount
+                val deferred=paymentStatus.selectedItemPosition>=2
                 val id=if(collectionMode.selectedItemPosition==1) {
                     val tenders=mixedRows.mapNotNull { (money,values,account) ->
                         val paid=values.first.text.toString().toDoubleOrNull() ?: 0.0
                         if(paid<=0) null else NativeSalesLedger.Tender(paid,money,account.selectedItem.toString(),
                             values.second.text.toString().toDoubleOrNull() ?: 0.0)
                     }
-                    NativeSalesLedger.saveMixed(legacyBackupStore.writableDatabase,saleLines,
+                    val received=tenders.sumOf { it.amount*it.rate }
+                    require(!deferred || received==0.0) { "البيع الآجل أو عند الاستلام لا يقبل قبضاً الآن" }
+                    require(paymentStatus.selectedItemPosition!=0 || kotlin.math.abs(received-finalTotal)<0.000001) {
+                        "حالة مدفوع بالكامل تتطلب قبض إجمالي الفاتورة"
+                    }
+                    if(tenders.isEmpty()) NativeSalesLedger.save(legacyBackupStore.writableDatabase,saleLines,
+                        saleCurrency.selectedItem.toString(),saleType.selectedItem.toString(),
+                        saleCustomer.text.toString(),salePhone.text.toString())
+                    else NativeSalesLedger.saveMixed(legacyBackupStore.writableDatabase,saleLines,
                         saleCurrency.selectedItem.toString(),saleType.selectedItem.toString(),
                         saleCustomer.text.toString(),salePhone.text.toString(),tenders)
-                } else NativeSalesLedger.saveWithChange(
+                } else {
+                    require(!deferred || amount==0.0) { "البيع الآجل أو عند الاستلام لا يقبل قبضاً الآن" }
+                    require(paymentStatus.selectedItemPosition!=0 || amount+0.000001>=finalTotal) { "حالة مدفوع بالكامل تتطلب قبض إجمالي الفاتورة" }
+                    NativeSalesLedger.saveWithChange(
                     legacyBackupStore.writableDatabase,saleLines,saleCurrency.selectedItem.toString(),
                     saleType.selectedItem.toString(),saleCustomer.text.toString(),salePhone.text.toString(),amount,
                     when(paymentMethod.selectedItemPosition) { 1 -> "شام كاش"; 2 -> "البنك"; else -> "درج المحل" },
                     changeCurrency.selectedItem.toString(),changeAccount.selectedItem.toString(),
                     changeRate.text.toString().toDoubleOrNull() ?: 0.0
                 )
+                }
                 android.widget.Toast.makeText(this,"تم حفظ الفاتورة: "+id,android.widget.Toast.LENGTH_LONG).show()
                 navigateTo("preview:المبيعات والفواتير")
             } catch(e:Exception) {
