@@ -138,7 +138,7 @@ class MainActivity : Activity() {
         layoutDirection = View.LAYOUT_DIRECTION_RTL
         textDirection = View.TEXT_DIRECTION_FIRST_STRONG
         includeFontPadding = false
-        breakStrategy = android.text.Layout.BREAK_STRATEGY_HIGH_QUALITY
+        breakStrategy = android.text.Layout.BREAK_STRATEGY_HIGH_QUALITY // Android line-break quality
         hyphenationFrequency = android.text.Layout.HYPHENATION_FREQUENCY_NONE
         setPadding(dp(9),dp(8),dp(9),dp(8))
         typeface = legacyTypeface
@@ -349,8 +349,16 @@ class MainActivity : Activity() {
         outState.putString("pendingCameraUri",pendingCameraUri?.toString())
         super.onSaveInstanceState(outState)
     }
-    @Deprecated("Deprecated in Java")
-    override fun onBackPressed() { if(screen!="chooser") returnToPrevious() else super.onBackPressed() }
+    @Deprecated("Legacy navigation fallback on Android versions before predictive back")
+    override fun onBackPressed() {
+        if(android.os.Build.VERSION.SDK_INT>=33) {
+            super.onBackPressed()
+        } else if(screen!="chooser") {
+            returnToPrevious()
+        } else {
+            super.onBackPressed()
+        }
+    }
     private fun card(parent:LinearLayout, title:String, description:String, target:String, dark:Boolean=false) {
         val card=LinearLayout(this).apply {
             orientation=LinearLayout.VERTICAL
