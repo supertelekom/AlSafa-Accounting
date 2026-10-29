@@ -51,6 +51,32 @@ internal object NativeSalesLedger {
         }
         return issues
     }
+    /** Reconciles the invoice-currency collection entry with the actual mixed tenders.
+     * The synthetic "mixed" account is not a physical cashbox.
+     */
+    data class MixedAuditIssue(val saleId:String,val tenderEquivalent:Double,
+        val recordedEquivalent:Double)
+    fun auditMixedCollections(db:SQLiteDatabase):List<MixedAuditIssue> {
+        create(db)
+        val issues=mutableListOf<MixedAuditIssue>()
+        db.rawQuery("""
+            SELECT s.id,
+                COALESCE((SELECT SUM(m.invoice_equivalent) FROM native_sale_mixed m
+                    WHERE m.sale_id=s.id),0),
+                COALESCE((SELECT SUM(c.amount) FROM native_sale_collections c
+                    WHERE c.sale_id=s.id AND c.account='mixed'),0)
+            FROM native_sales s
+            WHERE EXISTS(SELECT 1 FROM native_sale_mixed m WHERE m.sale_id=s.id)
+        """.trimIndent(),null).use { c ->
+            while(c.moveToNext()) {
+                val tenders=c.getDouble(1)
+                val recorded=c.getDouble(2)
+                if(kotlin.math.abs(tenders-recorded)>0.000001)
+                    issues.add(MixedAuditIssue(c.getString(0),tenders,recorded))
+            }
+        }
+        return issues
+    }
     fun stockDelta(db:SQLiteDatabase,productId:String):Int {
         create(db)
         db.rawQuery("SELECT COALESCE(SUM(delta),0) FROM native_sale_stock WHERE product_id=?",arrayOf(productId)).use { c ->
