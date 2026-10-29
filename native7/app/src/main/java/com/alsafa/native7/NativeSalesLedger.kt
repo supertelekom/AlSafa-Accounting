@@ -279,12 +279,38 @@ internal object NativeSalesLedger {
                 arrayOf<Any>(UUID.randomUUID().toString(),saleId,productId,quantity,refund,reason,at))
             db.execSQL("INSERT INTO native_sale_stock VALUES (?,?,?,?,?,?)",
                 arrayOf<Any>(UUID.randomUUID().toString(),saleId,productId,quantity,"return: "+reason,at))
+            // Mixed tender is held in native_sale_mixed, while the invoice-equivalent
+            // collection uses the synthetic account "mixed". Never pay a refund
+            // from a physical account without reversing its matching tender row.
+            val mixedAvailable=db.rawQuery("SELECT COALESCE(SUM(invoice_equivalent),0) FROM native_sale_mixed WHERE sale_id=?",arrayOf(saleId)).use { c -> c.moveToFirst();c.getDouble(0) }
+            require(mixedAvailable<=0.000001 || account=="mixed") {
+                "المرتجع بعد القبض المختلط يحتاج عكس دفعاته الأصلية؛ لا يمكن الصرف من خزنة مختلفة"
+            }
             val refundable=db.rawQuery("SELECT COALESCE(SUM(amount),0) FROM native_sale_collections WHERE sale_id=? AND account=?",arrayOf(saleId,account)).use { c -> c.moveToFirst();c.getDouble(0).coerceAtLeast(0.0) }
             // An unpaid return reduces receivables; never pay out more cash than
             // the customer's actual net collections on the whole invoice.
             val netCollected=db.rawQuery("SELECT COALESCE(SUM(amount),0) FROM native_sale_collections WHERE sale_id=?",
                 arrayOf(saleId)).use { c -> c.moveToFirst();c.getDouble(0).coerceAtLeast(0.0) }
+            // For mixed tenders, reverse the exact physical amounts proportionally
+            // to their invoice-equivalent contributions, preserving each currency.
             val cashRefund=refund.coerceAtMost(refundable).coerceAtMost(netCollected)
+            if(cashRefund>0.000001 && account=="mixed") {
+                val tenders=mutableListOf<Array<Any>>()
+                db.rawQuery("SELECT currency,account,COALESCE(SUM(amount),0),COALESCE(SUM(invoice_equivalent),0) FROM native_sale_mixed WHERE sale_id=? GROUP BY currency,account HAVING SUM(invoice_equivalent)>0",arrayOf(saleId)).use { c ->
+                    while(c.moveToNext()) tenders.add(arrayOf(c.getString(0),c.getString(1),c.getDouble(2),c.getDouble(3)))
+                }
+                val totalEquivalent=tenders.sumOf { it[3] as Double }
+                require(totalEquivalent+0.000001>=cashRefund) { "مبالغ القبض المختلط غير كافية للمرتجع" }
+                for(t in tenders) {
+                    val ratio=cashRefund/totalEquivalent
+                    val originalAmount=t[2] as Double
+                    val originalEquivalent=t[3] as Double
+                    db.execSQL("INSERT INTO native_sale_mixed VALUES (?,?,?,?,?,?,?,?)",
+                        arrayOf<Any>(UUID.randomUUID().toString(),saleId,-originalAmount*ratio,
+                            t[0],t[1],-originalEquivalent*ratio,
+                            if(originalAmount>0) originalEquivalent/originalAmount else 1.0,at))
+                }
+            }
             if(cashRefund>0) insertCollection(db,saleId,-cashRefund,sale.currency,account,at,"return: "+reason)
             val collected=db.rawQuery("SELECT COALESCE(SUM(amount),0) FROM native_sale_collections WHERE sale_id=?",arrayOf(saleId)).use { c -> c.moveToFirst();c.getDouble(0) }
             val returnedCost=returnedCost(db,saleId)
