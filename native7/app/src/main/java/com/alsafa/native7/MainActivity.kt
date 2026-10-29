@@ -45,6 +45,40 @@ class MainActivity : Activity() {
     private var repairDraftTexts:List<String>? = null
     private var repairDraftSelections:List<Int>? = null
     private var repairDraftScreen:String? = null
+    private val legacyBackupStore by lazy { LegacyBackupStore(this) }
+    private val restorePicker = registerForActivityResult(
+        android.app.ActivityResultContracts.GetContent()
+    ) { uri ->
+        if (uri != null) {
+            try {
+                val text = contentResolver.openInputStream(uri)?.bufferedReader(Charsets.UTF_8)?.use { it.readText() }
+                    ?: throw IllegalArgumentException("تعذر قراءة الملف")
+                val info = legacyBackupStore.inspect(text)
+                val summary = info.counts.entries.joinToString("\\n") { "${it.key}: ${it.value}" }
+                android.app.AlertDialog.Builder(this)
+                    .setTitle("تأكيد استعادة نسخة الصفا")
+                    .setMessage("تم فحص النسخة.\\n${summary}\\n\\nسيتم حفظ جميع الأقسام محلياً. لا يتم حذف بيانات سابقة.")
+                    .setNegativeButton("إلغاء", null)
+                    .setPositiveButton("استعادة") { _, _ ->
+                        try {
+                            legacyBackupStore.importInitial(text)
+                            android.app.AlertDialog.Builder(this).setTitle("تم حفظ النسخة")
+                                .setMessage("حُفظت بيانات النسخة الأصلية في SQLite. ربطها بصفحات المبيع والمخزون والصيانة لم يكتمل بعد.")
+                                .setPositiveButton("حسناً", null).show()
+                        } catch (error: Exception) {
+                            android.app.AlertDialog.Builder(this).setTitle("لم تُنفذ الاستعادة")
+                                .setMessage(error.message ?: "تعذر حفظ النسخة؛ لم يتم تغيير البيانات")
+                                .setPositiveButton("حسناً", null).show()
+                        }
+                    }.show()
+            } catch (error: Exception) {
+                android.app.AlertDialog.Builder(this).setTitle("ملف غير صالح")
+                    .setMessage(error.message ?: "تعذر قراءة النسخة")
+                    .setPositiveButton("حسناً", null).show()
+            }
+        }
+    }
+    private fun openLegacyRestore() = restorePicker.launch("application/json")
     private val repairStore by lazy { RepairStore(this) }
     private val originalPages by lazy { OriginalPageStructure(this,{ route -> navigateTo(OriginalRoutes.screen(route)) },{ returnToPrevious() }) }
 
@@ -1475,6 +1509,12 @@ class MainActivity : Activity() {
         parent.addView(text("لا توجد حسابات فعلية في معاينة الواجهة.",12f))
     }
     private fun settingsPreview(parent:LinearLayout) {
+        parent.addView(text("استعادة نسخة الصفا القديمة",17f,gold).apply {
+            isClickable = true
+            setOnClickListener { openLegacyRestore() }
+        })
+        parent.addView(text("استيراد أولي آمن إلى SQLite، دون استبدال بيانات مستعادة أو تفعيل العمليات المحاسبية.",12f))
+
         parent.addView(text("الإعدادات",26f,gold))
         parent.addView(text("تخصيص المتجر والعملات والنسخة الاحتياطية.",14f))
         parent.addView(text("بيانات المتجر",20f,gold))
