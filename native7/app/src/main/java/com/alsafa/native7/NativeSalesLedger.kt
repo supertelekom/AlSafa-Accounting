@@ -238,9 +238,15 @@ internal object NativeSalesLedger {
                             -c.getDouble(2),c.getString(3),c.getString(4),c.getString(5),c.getDouble(6),at))
                 }
             }
-            db.rawQuery("SELECT amount,currency,account,invoice_equivalent,exchange_rate FROM native_sale_mixed WHERE sale_id=? AND amount>0",arrayOf(id)).use { c ->
-                while(c.moveToNext()) db.execSQL("INSERT INTO native_sale_mixed VALUES (?,?,?,?,?,?,?,?)",
-                    arrayOf<Any>(UUID.randomUUID().toString(),id,-c.getDouble(0),c.getString(1),c.getString(2),-c.getDouble(3),c.getDouble(4),at))
+            // Reverse only the remaining net tender after any prior returns.
+            db.rawQuery("SELECT currency,account,SUM(amount),SUM(invoice_equivalent) FROM native_sale_mixed WHERE sale_id=? GROUP BY currency,account HAVING SUM(amount)>0",arrayOf(id)).use { c ->
+                while(c.moveToNext()) {
+                    val amount=c.getDouble(2)
+                    val equivalent=c.getDouble(3)
+                    db.execSQL("INSERT INTO native_sale_mixed VALUES (?,?,?,?,?,?,?,?)",
+                        arrayOf<Any>(UUID.randomUUID().toString(),id,-amount,c.getString(0),c.getString(1),
+                            -equivalent,if(amount>0)equivalent/amount else 1.0,at))
+                }
             }
             val originalProfit=db.rawQuery("SELECT COALESCE(SUM(CASE WHEN amount>0 THEN amount ELSE 0 END),0) FROM native_sale_collections WHERE sale_id=?",arrayOf(id)).use { c -> c.moveToFirst();c.getDouble(0) } * (if(sale.total>0) (sale.total-sale.cost)/sale.total else 0.0)
             val adjusted=db.rawQuery("SELECT COALESCE(SUM(amount),0) FROM native_sale_profit_adjustments WHERE sale_id=?",arrayOf(id)).use { c -> c.moveToFirst();c.getDouble(0) }
