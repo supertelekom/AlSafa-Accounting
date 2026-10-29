@@ -2417,8 +2417,11 @@ class MainActivity : Activity() {
         }
         val sourceRoute=OriginalRoutes.source(screen)
         val sourceStructure=sourceRoute!=null && originalPages.contains(sourceRoute)
-        if(screen=="preview:إضافة منتج جديد") {
+        if(sourceRoute=="product-form" || screen=="preview:إضافة منتج جديد") {
             legacyFormCard(body) { productCreatePage(it) }
+        }
+        else if(sourceRoute=="products" || screen=="preview:المنتجات والمخزون") {
+            productsPreview(body)
         }
         else if(sourceStructure) {
             originalPages.show(body,requireNotNull(sourceRoute))
