@@ -132,3 +132,41 @@ test fixtures through both implementations and comparing each invoice.
 
 Do not enable accounting writes until invoice-level parity, currency handling,
 inventory/funding, supplier settlement, daily close and partner profit tests pass.
+
+## Moving-target backup policy (required)
+
+The 2026-10-26 backup is a **frozen regression snapshot**, not the future
+production import. Old app remains active, so sales, repairs, withdrawals,
+supplier balances and daily closings will continue changing.
+
+- Each import must derive counts from its own file, not from this document.
+- `LegacyBackupStore.Inspection` now captures SHA-256 and exportedAt;
+  the import stores both in `legacy_metadata`.
+- Never silently merge a newer snapshot with an older imported database:
+  that can double-apply purchases, collections, stock and withdrawals.
+- A later replace/upgrade flow needs an explicit non-destructive preview,
+  complete backup of the existing Native7 DB, stable-ID comparison, financial
+  parity validation and atomic commit/rollback. **Not implemented yet**.
+- No financial writes are enabled until that policy and parity tests pass.
+
+## Original online sale event rule port
+
+`LegacyOnlineCollections.events` is a read-only Kotlin port of
+`onlineSaleReceiptEvents` and `onlineSaleReceiptCost` from old `main.js`.
+It uses immutable cash income rows for opening receipts on invoice date,
+subtracts same-day explicit payments to prevent double counting, respects
+payment-correction markers for legacy fallback, and records later payments
+on their actual dates. Each event's recognized cost is
+`saleCost * clamp((amount + onlineCollectionDiscount)/saleTotal, 0, 1)`.
+Currency conversion is an injected callback; original exchange snapshots
+must be supplied by a source-derived converter.
+
+**Testing performed:** local source-formula reference calculation on the
+2026-10-26 JSON snapshot: 111 sales and 308 repairs, with totals and status
+counts recorded above. This is NOT yet a Kotlin execution test. No Gradle
+APK build or device parity run has occurred.
+
+**Still missing:** supplier balance/settlement, complete stock funding-lot
+allocation and reversals, return cash/stock effects, cashbox reconciliation,
+daily close carryover, partner profit distribution, and Kotlin-vs-old-JS
+invoice-by-invoice test harness. Keep all mutation paths disabled.
