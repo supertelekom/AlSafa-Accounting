@@ -10,11 +10,12 @@ import java.util.UUID
  * conversion rate and must not be silently summed.
  */
 internal object NativeSalesLedger {
-    data class Line(val productId:String,val quantity:Int,val unitPrice:Double)
+    data class Line(val productId:String,val quantity:Int,val unitPrice:Double,val name:String="",val model:String="")
     data class Sale(val id:String,val currency:String,val total:Double,val cost:Double,val collected:Double,val status:String)
     fun create(db:SQLiteDatabase) {
         db.execSQL("CREATE TABLE IF NOT EXISTS native_sales (id TEXT PRIMARY KEY, created_at INTEGER NOT NULL, currency TEXT NOT NULL, channel TEXT NOT NULL, customer TEXT NOT NULL, phone TEXT NOT NULL, total REAL NOT NULL, cost REAL NOT NULL, status TEXT NOT NULL DEFAULT 'active')")
         db.execSQL("CREATE TABLE IF NOT EXISTS native_sale_lines (id TEXT PRIMARY KEY, sale_id TEXT NOT NULL, product_id TEXT NOT NULL, quantity INTEGER NOT NULL, unit_price REAL NOT NULL, unit_cost REAL NOT NULL)")
+        db.execSQL("CREATE TABLE IF NOT EXISTS native_sale_manual_items (line_id TEXT PRIMARY KEY, name TEXT NOT NULL, model TEXT NOT NULL)")
         db.execSQL("CREATE TABLE IF NOT EXISTS native_sale_stock (id TEXT PRIMARY KEY, sale_id TEXT NOT NULL, product_id TEXT NOT NULL, delta INTEGER NOT NULL, reason TEXT NOT NULL, created_at INTEGER NOT NULL)")
         db.execSQL("CREATE INDEX IF NOT EXISTS idx_native_sale_stock_product ON native_sale_stock(product_id)")
         db.execSQL("CREATE TABLE IF NOT EXISTS native_sale_returns (id TEXT PRIMARY KEY, sale_id TEXT NOT NULL, product_id TEXT NOT NULL, quantity INTEGER NOT NULL, refund REAL NOT NULL, reason TEXT NOT NULL, created_at INTEGER NOT NULL)")
@@ -40,7 +41,7 @@ internal object NativeSalesLedger {
                 ELSE 0 END AS expected,
               COALESCE((SELECT SUM(st.delta) FROM native_sale_stock st
                 WHERE st.sale_id=s.id AND st.product_id=l.product_id),0) AS actual
-            FROM native_sales s JOIN native_sale_lines l ON l.sale_id=s.id
+            FROM native_sales s JOIN native_sale_lines l ON l.sale_id=s.id AND l.product_id<>''
             GROUP BY s.id,l.product_id
         """.trimIndent(),null).use { c ->
             while(c.moveToNext()) {
@@ -99,11 +100,11 @@ internal object NativeSalesLedger {
         require(lines.isNotEmpty()) { "أضف صنفاً إلى الفاتورة" }
         require(currency in setOf("USD","TRY","SYP")) { "عملة غير مدعومة" }
         require(initialCollection.isFinite() && initialCollection>=0) { "قيمة القبض غير صالحة" }
-        require(lines.all { it.quantity>0 && it.unitPrice.isFinite() && it.unitPrice>=0 && it.productId.isNotBlank() }) { "بيانات الأصناف غير صالحة" }
+        require(lines.all { it.quantity>0 && it.unitPrice.isFinite() && it.unitPrice>=0 && (it.productId.isNotBlank() || it.name.isNotBlank()) }) { "بيانات الأصناف غير صالحة" }
         require(channel in setOf("بيع من المحل","بيع أونلاين")) { "نوع البيع غير صالح" }
         require(account.isNotBlank() && changeAccount.isNotBlank()) { "حدد خزنة القبض والباقي" }
         val id=UUID.randomUUID().toString()
-        val grouped=lines.groupBy { it.productId }
+        val grouped=lines.filter { it.productId.isNotBlank() }.groupBy { it.productId }
         var total=0.0
         var cost=0.0
         val now=System.currentTimeMillis()
@@ -120,6 +121,14 @@ internal object NativeSalesLedger {
                 db.execSQL("INSERT INTO native_sale_lines VALUES (?,?,?,?,?,?)",arrayOf<Any>(UUID.randomUUID().toString(),id,productId,line.quantity,line.unitPrice,product.cost))
             }
             db.execSQL("INSERT INTO native_sale_stock VALUES (?,?,?,?,?,?)",arrayOf<Any>(UUID.randomUUID().toString(),id,productId,-requested,"sale",now))
+        }
+        for(line in lines.filter { it.productId.isBlank() }) {
+            val lineId=UUID.randomUUID().toString()
+            total+=line.unitPrice*line.quantity
+            db.execSQL("INSERT INTO native_sale_lines VALUES (?,?,?,?,?,?)",
+                arrayOf<Any>(lineId,id,"",line.quantity,line.unitPrice,0.0))
+            db.execSQL("INSERT INTO native_sale_manual_items VALUES (?,?,?)",
+                arrayOf<Any>(lineId,line.name.trim(),line.model.trim()))
         }
         require(total.isFinite() && cost.isFinite() && total>=0) { "قيمة الفاتورة غير صالحة" }
         require(total>0 || initialCollection==0.0) { "لا يمكن قبض مبلغ لفاتورة قيمتها صفر" }
