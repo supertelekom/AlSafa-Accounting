@@ -299,6 +299,12 @@ internal object NativeSalesLedger {
                 arrayOf(saleId)).use { c -> c.moveToFirst();c.getDouble(0).coerceAtLeast(0.0) }
             // For mixed tenders, reverse the exact physical amounts proportionally
             // to their invoice-equivalent contributions, preserving each currency.
+            // The refund must never leave net collections above the reduced
+            // invoice total. Unpaid portions of a return reduce receivables.
+            val minimumCashRefund=(netCollected-(sale.total-existingRefund-refund)).coerceAtLeast(0.0)
+            require(refundable+0.000001>=minimumCashRefund) {
+                "لا تكفي مبالغ القبض في الخزنة المحددة لإعادة قيمة المرتجع"
+            }
             val cashRefund=refund.coerceAtMost(refundable).coerceAtMost(netCollected)
             if(cashRefund>0.000001 && account=="mixed") {
                 val tenders=mutableListOf<Array<Any>>()
