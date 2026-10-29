@@ -25,7 +25,13 @@ internal object LegacyAccountingRules {
         val value=sale.opt("subtotal")
         if(value!=null && value!=JSONObject.NULL && value.toString().toDoubleOrNull()!=null)
             return max(0.0,number(value))
-        return items(sale.optJSONArray("items"),"price").let { max(0.0,it) }
+        val rows=sale.optJSONArray("items")
+        var total=0.0
+        for(i in 0 until (rows?.length() ?: 0)) {
+            val item=rows?.optJSONObject(i) ?: continue
+            total+=max(0.0,number(item.opt("qty")))*max(0.0,number(item.opt("price")))
+        }
+        return total
     }
     fun saleCost(sale:JSONObject)=items(sale.optJSONArray("items"),"cost")
     fun repairPartsTotal(repair:JSONObject)=items(repair.optJSONArray("usedParts"),"price")
