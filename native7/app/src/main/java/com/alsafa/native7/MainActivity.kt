@@ -1544,6 +1544,9 @@ class MainActivity : Activity() {
         val product=NativeProductChanges.get(db,id) ?: return
         parent.addView(text("تعديل",23f,gold))
         val name=field(parent,"اسم الساعة / المنتج *").apply { setText(product.optString("name")) }
+        val brand=field(parent,"الماركة").apply { setText(product.optString("brand")) }
+        val model=field(parent,"REF / الموديل").apply { setText(product.optString("model")) }
+        val sku=field(parent,"كود المنتج").apply { setText(product.optString("sku")) }
         val color=field(parent,"اللون").apply { setText(product.optString("color")) }
         val dialColor=field(parent,"لون المينا").apply { setText(product.optString("dialColor")) }
         val strapColor=field(parent,"لون الحزام").apply { setText(product.optString("strapColor")) }
@@ -1557,6 +1560,28 @@ class MainActivity : Activity() {
             setText(product.optString("salePrice"))
             inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
         }
+        val editPhotoKeys=listOf("photo" to "الصورة الرئيسية للساعة",
+            "photo2" to "صورة إضافية 1","photo3" to "صورة إضافية 2",
+            "barcodePhoto" to "صورة الباركود")
+        for((key,label) in editPhotoKeys) {
+            parent.addView(text(label,13f))
+            val preview=ProductImageView.create(this,product.optString(key),dp(90),dp(90))
+            parent.addView(preview,LinearLayout.LayoutParams(dp(90),dp(90)))
+            val row=LinearLayout(this).apply { orientation=LinearLayout.HORIZONTAL }
+            row.addView(Button(this).apply {
+                text="الكاميرا"
+                setOnClickListener { photoPreview=preview;selectProductPhoto(key,true) }
+            })
+            row.addView(Button(this).apply {
+                text="الاستوديو"
+                setOnClickListener { photoPreview=preview;selectProductPhoto(key,false) }
+            })
+            row.addView(Button(this).apply {
+                text="حذف الصورة"
+                setOnClickListener { newProductPhotos[key]="";preview.setImageDrawable(null) }
+            })
+            parent.addView(row)
+        }
         parent.addView(text("المخزون الفعلي: "+LegacyProductRules.stock(product),13f))
         parent.addView(Button(this).apply {
             text="حفظ"
@@ -1568,6 +1593,10 @@ class MainActivity : Activity() {
                     require(costAmount!=null && costAmount.isFinite() && costAmount>=0){"كلفة الشراء غير صالحة"}
                     val candidate=org.json.JSONObject(product.toString()).apply {
                         put("name",name.text.toString().trim())
+                        put("brand",brand.text.toString().trim())
+                        put("model",model.text.toString().trim())
+                        put("sku",sku.text.toString().trim())
+                        for((key,value) in newProductPhotos)if(key in listOf("photo","photo2","photo3","barcodePhoto"))put(key,value)
                         put("color",color.text.toString().trim())
                         put("dialColor",dialColor.text.toString().trim())
                         put("strapColor",strapColor.text.toString().trim())
@@ -1582,6 +1611,7 @@ class MainActivity : Activity() {
                         put("cost",costAmount)
                     }
                     NativeProductChanges.save(db,candidate,"تعديل بيانات المنتج")
+                    newProductPhotos.clear()
                     android.widget.Toast.makeText(this@MainActivity,"تم الحفظ",android.widget.Toast.LENGTH_SHORT).show()
                     returnToPrevious()
                 } catch(e:Exception) {
