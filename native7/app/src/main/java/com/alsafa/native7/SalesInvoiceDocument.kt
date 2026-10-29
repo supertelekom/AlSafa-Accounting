@@ -3,6 +3,8 @@ package com.alsafa.native7
 import android.app.Activity
 import android.content.Intent
 import android.graphics.Color
+import android.graphics.BitmapFactory
+import android.graphics.RectF
 import android.graphics.Paint
 import android.graphics.Typeface
 import android.graphics.pdf.PdfDocument
@@ -49,15 +51,19 @@ internal object SalesInvoiceDocument {
         val height=842
         val paint=Paint(Paint.ANTI_ALIAS_FLAG).apply { color=Color.rgb(65,55,45);textSize=13f }
         val gold=Color.rgb(153,112,55)
-        val pages=d.rows.chunked(20).ifEmpty { listOf(emptyList()) }
+        val pages=d.rows.chunked(12).ifEmpty { listOf(emptyList()) }
+        val tajawal=runCatching { Typeface.createFromAsset(activity.assets,"Tajawal-Medium.ttf") }.getOrNull()
+        val logo=runCatching { activity.assets.open("invoice-logo.png").use { BitmapFactory.decodeStream(it) } }.getOrNull()
         try {
             pages.forEachIndexed { pageIndex,items ->
                 val page=doc.startPage(PdfDocument.PageInfo.Builder(width,height,pageIndex+1).create())
                 val canvas=page.canvas
                 canvas.drawColor(Color.WHITE)
+                logo?.let { canvas.drawBitmap(it,null,RectF(35f,25f,105f,85f),Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)) }
                 fun right(value:String,y:Float,size:Float=13f,bold:Boolean=false) {
                     paint.textSize=size
-                    paint.typeface=if(bold)Typeface.create("sans-serif",Typeface.BOLD) else Typeface.create("sans-serif",Typeface.NORMAL)
+                    paint.typeface=if(tajawal!=null) Typeface.create(tajawal,if(bold)Typeface.BOLD else Typeface.NORMAL)
+                        else Typeface.create("sans-serif",if(bold)Typeface.BOLD else Typeface.NORMAL)
                     paint.color=Color.rgb(65,55,45)
                     canvas.drawText(value,width-38f-paint.measureText(value),y,paint)
                 }
@@ -84,7 +90,7 @@ internal object SalesInvoiceDocument {
                     right("المتبقي: ${money(NativeSalesLedger.remaining(db,id))}",y+90f,14f,true)
                     right(if(d.sale.status=="active")"سارية" else "ملغاة",y+114f)
                 }
-                right("الصفا للساعات",810f,12f,true)
+                right("الصفا للساعات  •  ${pageIndex+1}/${pages.size}",810f,12f,true)
                 doc.finishPage(page)
             }
             val dir=File(activity.cacheDir,"invoices").apply { mkdirs() }
