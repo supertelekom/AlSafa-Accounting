@@ -22,6 +22,19 @@ internal object NativeProductChanges {
         require(products.isNotEmpty())
         val ids=products.map { it.optString("id") }
         require(ids.distinct().size==ids.size)
+        // Check the entire batch before inserting anything. Database checks alone
+        // cannot detect a duplicated colour or barcode between two new variants.
+        val codes=mutableSetOf<String>()
+        val colours=mutableSetOf<String>()
+        for(product in products) {
+            val code=product.optString("barcode").replace(Regex("\\s+"),"")
+            require(code.isBlank() || codes.add(code)) { "الباركود مكرر بين ألوان المنتج" }
+            val group=product.optString("variantGroupId")
+            if(group.isNotBlank()) {
+                val identity=group+"|"+LegacyProductRules.productVariantIdentity(product)
+                require(colours.add(identity)) { "اللون مكرر داخل مجموعة المنتج" }
+            }
+        }
         require(products.all {
             val stock=LegacyAccountingRules.number(it.opt("stock"))
             stock.isFinite() && stock>=0 && kotlin.math.abs(stock-stock.toInt())<0.0001
