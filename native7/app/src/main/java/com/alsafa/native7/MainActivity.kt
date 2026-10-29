@@ -1221,7 +1221,16 @@ class MainActivity : Activity() {
             setOnClickListener { navigateTo("preview:إضافة منتج جديد") }
         })
         field(parent,"ابحث باسم المنتج أو الباركود أو REF / Model...")
-        parent.addView(text("لم يتم تحميل المنتجات بعد.",15f))
+        if(legacyBackupStore.hasData()) {
+            try {
+                val products=LegacyProductRepository.list(legacyBackupStore.readableDatabase,limit=50)
+                products.forEach { product ->
+                    parent.addView(text(product.name+"  •  "+product.stock+"  •  "+product.salePrice+" "+product.currency,14f))
+                }
+            } catch(error:Exception) {
+                parent.addView(text(error.message ?: "تعذر تحميل المنتجات",13f))
+            }
+        } else parent.addView(text("استعد النسخة الاحتياطية لعرض المنتجات.",15f))
     }
     // v3.9.359 assets/main.js: WATCH_DETAIL_DEFAULTS (same order and labels).
     private val originalWatchDetails = mapOf(
