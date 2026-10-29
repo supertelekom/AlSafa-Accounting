@@ -147,6 +147,13 @@ internal object NativeProductChanges {
                 "لا يمكن تغيير المخزون دون مطابقة الكمية مع دفعات التمويل"
             }
         }
+        val original=get(db,id) ?: throw IllegalArgumentException("المنتج غير موجود")
+        require(LegacyAccountingRules.number(original.opt("stock"))==stock) {
+            "تعديل المخزون يتطلب تسوية مستقلة"
+        }
+        require(original.optJSONArray("fundingLots")?.toString()==edited.optJSONArray("fundingLots")?.toString()) {
+            "تعديل دفعات التمويل يتطلب تسوية مستقلة"
+        }
         val barcode=edited.optString("barcode").replace(Regex("\\s+"),"")
         if(barcode.isNotBlank()) {
             create(db)
