@@ -917,7 +917,7 @@ class MainActivity : Activity() {
     private fun fullSalePreview(parent:LinearLayout) {
         formHeader(parent,"فاتورة مبيعات","اختر من المنتجات أو امسح الباركود بالكاميرا لإضافة الساعة فوراً.","قائمة الفواتير","preview:المبيعات والفواتير")
         formSection(parent,"بيانات الفاتورة")
-        select(parent,"نوع البيع *",listOf("بيع من المحل","بيع أونلاين"))
+        val saleType=select(parent,"نوع البيع *",listOf("بيع من المحل","بيع أونلاين"))
         parent.addView(text("الأونلاين يخرج من المخزون فوراً، والمال يدخل الخزنة فقط عند التحصيل.",12f))
         formPair(parent,{ column ->
             field(column,"التاريخ *","YYYY-MM-DD").apply {
@@ -944,14 +944,17 @@ class MainActivity : Activity() {
                 }
             }
         })
+        lateinit var saleCurrency:Spinner
         formPair(parent,{ column ->
-            select(column,"عملة البيع / القبض *",listOf("USD","TRY","SYP"))
+            saleCurrency=select(column,"عملة البيع / القبض *",listOf("USD","TRY","SYP"))
             column.addView(text("المبلغ يدخل صندوق هذه العملة نفسها.",11f,Color.rgb(138,123,108)))
         },{ column ->
             select(column,"طريقة الدفع *",listOf("نقدي","شام كاش","تحويل بنكي"))
             column.addView(text("اختر نقدي أو شام كاش قبل حفظ الفاتورة.",11f,Color.rgb(138,123,108)))
         })
-        formPair(parent,{ field(it,"اسم العميل","مهم للضمان والفاتورة") },{ field(it,"رقم واتساب العميل","مثال: 09xxxxxxxx").inputType=InputType.TYPE_CLASS_PHONE })
+        lateinit var saleCustomer:EditText
+        lateinit var salePhone:EditText
+        formPair(parent,{ saleCustomer=field(it,"اسم العميل","مهم للضمان والفاتورة") },{ salePhone=field(it,"رقم واتساب العميل","مثال: 09xxxxxxxx").apply { inputType=InputType.TYPE_CLASS_PHONE } })
         select(parent,"مدة الضمان",listOf("بدون ضمان","3 أشهر","6 أشهر","سنة","سنتان")).setSelection(3)
         parent.addView(text("يرتبط الضمان تلقائياً بالعميل والفاتورة.",12f))
         formSection(parent,"إضافة من المخزون")
@@ -1059,7 +1062,7 @@ class MainActivity : Activity() {
         parent.addView(text("للدفع مثل 55$ + 100₺ اختر دفع مختلط.",12f))
         val singlePayment=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL }
         parent.addView(singlePayment)
-        field(singlePayment,"المبلغ المقبوض الآن","0").inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
+        val initialPayment=field(singlePayment,"المبلغ المقبوض الآن","0").apply { inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL }
         val mixedPayment=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL }
         parent.addView(mixedPayment)
         mixedPayment.addView(text("المبالغ المقبوضة فعلياً",16f,gold))
@@ -1078,7 +1081,28 @@ class MainActivity : Activity() {
         parent.addView(text("عند وجود رقم العميل تُرسل الفاتورة تلقائياً عبر واتساب أعمال بعد الحفظ.",12f))
         saleCalculationBox(parent)
         formActions(parent,{ returnToPrevious() },"حفظ الفاتورة") {
-            android.widget.Toast.makeText(this,"حفظ الفاتورة غير مفعّل حتى اكتمال دورة المبيع",android.widget.Toast.LENGTH_LONG).show()
+            try {
+                require(collectionMode.selectedItemPosition==0) { "القبض المختلط يحتاج تحديد سعر تحويل لكل عملة" }
+                val saleLines=mutableListOf<NativeSalesLedger.Line>()
+                for(i in 0 until lines.childCount) {
+                    val card=lines.getChildAt(i)
+                    val productId=card.getTag(android.R.id.content) as? String
+                    require(!productId.isNullOrBlank()) { "يجب اختيار الأصناف من المخزون قبل الحفظ" }
+                    val pair=card.tag as? Pair<*,*> ?: error("بيانات الصنف غير مكتملة")
+                    val qty=(pair.first as? EditText)?.text?.toString()?.toIntOrNull() ?: 0
+                    val price=(pair.second as? EditText)?.text?.toString()?.toDoubleOrNull() ?: -1.0
+                    saleLines.add(NativeSalesLedger.Line(productId,qty,price))
+                }
+                val amount=initialPayment.text.toString().toDoubleOrNull() ?: 0.0
+                val id=NativeSalesLedger.save(
+                    legacyBackupStore.writableDatabase,saleLines,saleCurrency.selectedItem.toString(),
+                    saleType.selectedItem.toString(),saleCustomer.text.toString(),salePhone.text.toString(),amount
+                )
+                android.widget.Toast.makeText(this,"تم حفظ الفاتورة: "+id,android.widget.Toast.LENGTH_LONG).show()
+                navigateTo("preview:المبيعات والفواتير")
+            } catch(e:Exception) {
+                android.widget.Toast.makeText(this,e.message ?: "تعذر حفظ الفاتورة",android.widget.Toast.LENGTH_LONG).show()
+            }
         }
         
     }
