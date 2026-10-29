@@ -187,9 +187,8 @@ internal object NativeProductChanges {
                 for(i in 0 until lots.length())result.put(lots.get(i))
                 if(newStock>tracked) {
                     val add=newStock-tracked
-                    val partnerId=old.optString("externalPartnerId")
-                    // External partner metadata must be resolved from original settings, not guessed.
-                    require(partnerId.isBlank()) { "تسوية زيادة مخزون الشريك الخارجي تتطلب بيانات الشريك الأصلية" }
+                    // Legacy external partner associations remain historical only.
+                    // New inventory adjustments are recorded as shop-funded stock.
                     result.put(JSONObject().apply {
                         put("id","funding-lot-"+UUID.randomUUID().toString())
                         put("purchaseId","inventory-adjustment")
