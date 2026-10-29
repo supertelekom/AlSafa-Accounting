@@ -2417,7 +2417,10 @@ class MainActivity : Activity() {
         }
         val sourceRoute=OriginalRoutes.source(screen)
         val sourceStructure=sourceRoute!=null && originalPages.contains(sourceRoute)
-        if(sourceStructure) {
+        if(screen=="preview:إضافة منتج جديد") {
+            legacyFormCard(body) { productCreatePage(it) }
+        }
+        else if(sourceStructure) {
             originalPages.show(body,requireNotNull(sourceRoute))
             if(sourceRoute=="settings") {
                 val restoreAction=text("استعادة نسخة الصفا القديمة",16f,gold).apply {
