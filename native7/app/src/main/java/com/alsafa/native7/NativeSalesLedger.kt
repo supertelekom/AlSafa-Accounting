@@ -292,6 +292,22 @@ internal object NativeSalesLedger {
             }
         }
     }
+    data class Audit(val currency:String,val sales:Double,val collected:Double,
+        val returned:Double,val recognizedProfit:Double)
+    fun monthlyAudit(db:SQLiteDatabase,from:Long,to:Long):List<Audit> {
+        require(to>from)
+        create(db)
+        val profit=profitByCurrency(db,from,to)
+        return listOf("USD","TRY","SYP").map { currency ->
+            fun sum(sql:String):Double=db.rawQuery(sql,arrayOf(currency,from.toString(),to.toString())).use { c ->
+                c.moveToFirst();c.getDouble(0)
+            }
+            val sales=sum("SELECT COALESCE(SUM(total),0) FROM native_sales WHERE currency=? AND created_at>=? AND created_at<?")
+            val collected=sum("SELECT COALESCE(SUM(c.amount),0) FROM native_sale_collections c JOIN native_sales s ON s.id=c.sale_id WHERE s.currency=? AND c.created_at>=? AND c.created_at<?")
+            val returned=sum("SELECT COALESCE(SUM(r.refund),0) FROM native_sale_returns r JOIN native_sales s ON s.id=r.sale_id WHERE s.currency=? AND r.created_at>=? AND r.created_at<?")
+            Audit(currency,sales,collected,returned,profit[currency] ?: 0.0)
+        }
+    }
     /** Returned cost uses weighted average historical cost of the sold product. */
     fun returnedCost(db:SQLiteDatabase,saleId:String):Double {
         create(db)
