@@ -22,6 +22,10 @@ internal object NativeProductChanges {
         require(products.isNotEmpty())
         val ids=products.map { it.optString("id") }
         require(ids.distinct().size==ids.size)
+        require(products.all {
+            val stock=LegacyAccountingRules.number(it.opt("stock"))
+            stock.isFinite() && stock>=0 && kotlin.math.abs(stock-stock.toInt())<0.0001
+        }) { "كمية المخزون غير صالحة" }
         create(db)
         db.beginTransaction()
         try {
