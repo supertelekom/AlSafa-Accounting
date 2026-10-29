@@ -46,38 +46,6 @@ class MainActivity : Activity() {
     private var repairDraftSelections:List<Int>? = null
     private var repairDraftScreen:String? = null
     private val legacyBackupStore by lazy { LegacyBackupStore(this) }
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: android.content.Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == 7107 && resultCode == RESULT_OK && data?.data != null) {
-            val uri = requireNotNull(data.data)
-            try {
-                val text = contentResolver.openInputStream(uri)?.bufferedReader(Charsets.UTF_8)?.use { it.readText() }
-                    ?: throw IllegalArgumentException("تعذر قراءة الملف")
-                val info = legacyBackupStore.inspect(text)
-                val summary = info.counts.entries.joinToString("\\n") { "${it.key}: ${it.value}" }
-                android.app.AlertDialog.Builder(this)
-                    .setTitle("تأكيد استعادة نسخة الصفا")
-                    .setMessage("تم فحص النسخة.\\n${summary}\\n\\nسيتم حفظ جميع الأقسام محلياً. لا يتم حذف بيانات سابقة.")
-                    .setNegativeButton("إلغاء", null)
-                    .setPositiveButton("استعادة") { _, _ ->
-                        try {
-                            legacyBackupStore.importInitial(text)
-                            android.app.AlertDialog.Builder(this).setTitle("تم حفظ النسخة")
-                                .setMessage("حُفظت بيانات النسخة الأصلية في SQLite. ربطها بصفحات المبيع والمخزون والصيانة لم يكتمل بعد.")
-                                .setPositiveButton("حسناً", null).show()
-                        } catch (error: Exception) {
-                            android.app.AlertDialog.Builder(this).setTitle("لم تُنفذ الاستعادة")
-                                .setMessage(error.message ?: "تعذر حفظ النسخة؛ لم يتم تغيير البيانات")
-                                .setPositiveButton("حسناً", null).show()
-                        }
-                    }.show()
-            } catch (error: Exception) {
-                android.app.AlertDialog.Builder(this).setTitle("ملف غير صالح")
-                    .setMessage(error.message ?: "تعذر قراءة النسخة")
-                    .setPositiveButton("حسناً", null).show()
-            }
-        }
-    }
     private fun openLegacyRestore() {
         val intent = android.content.Intent(android.content.Intent.ACTION_OPEN_DOCUMENT).apply {
             addCategory(android.content.Intent.CATEGORY_OPENABLE)
@@ -165,6 +133,35 @@ class MainActivity : Activity() {
     @Deprecated("Deprecated in Java")
     override fun onActivityResult(requestCode:Int,resultCode:Int,data:android.content.Intent?) {
         super.onActivityResult(requestCode,resultCode,data)
+        if (requestCode == 7107 && resultCode == RESULT_OK && data?.data != null) {
+            val uri = requireNotNull(data.data)
+            try {
+                val text = contentResolver.openInputStream(uri)?.bufferedReader(Charsets.UTF_8)?.use { it.readText() }
+                    ?: throw IllegalArgumentException("تعذر قراءة الملف")
+                val info = legacyBackupStore.inspect(text)
+                val summary = info.counts.entries.joinToString("\\n") { "${it.key}: ${it.value}" }
+                android.app.AlertDialog.Builder(this)
+                    .setTitle("تأكيد استعادة نسخة الصفا")
+                    .setMessage("تم فحص النسخة.\\n${summary}\\n\\nسيتم حفظ جميع الأقسام محلياً. لا يتم حذف بيانات سابقة.")
+                    .setNegativeButton("إلغاء", null)
+                    .setPositiveButton("استعادة") { _, _ ->
+                        try {
+                            legacyBackupStore.importInitial(text)
+                            android.app.AlertDialog.Builder(this).setTitle("تم حفظ النسخة")
+                                .setMessage("حُفظت بيانات النسخة الأصلية في SQLite. ربطها بصفحات المبيع والمخزون والصيانة لم يكتمل بعد.")
+                                .setPositiveButton("حسناً", null).show()
+                        } catch (error: Exception) {
+                            android.app.AlertDialog.Builder(this).setTitle("لم تُنفذ الاستعادة")
+                                .setMessage(error.message ?: "تعذر حفظ النسخة؛ لم يتم تغيير البيانات")
+                                .setPositiveButton("حسناً", null).show()
+                        }
+                    }.show()
+            } catch (error: Exception) {
+                android.app.AlertDialog.Builder(this).setTitle("ملف غير صالح")
+                    .setMessage(error.message ?: "تعذر قراءة النسخة")
+                    .setPositiveButton("حسناً", null).show()
+            }
+        }
         if(requestCode==702) {
             val pending=pendingCameraUri
             pendingCameraUri=null
