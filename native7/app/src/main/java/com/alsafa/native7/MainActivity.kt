@@ -955,9 +955,9 @@ class MainActivity : Activity() {
         select(parent,"مدة الضمان",listOf("بدون ضمان","3 أشهر","6 أشهر","سنة","سنتان")).setSelection(3)
         parent.addView(text("يرتبط الضمان تلقائياً بالعميل والفاتورة.",12f))
         formSection(parent,"إضافة من المخزون")
-        field(parent,"بحث سريع عن المنتج","اكتب جزءاً من الاسم أو REF أو الرقم أو الباركود")
-        select(parent,"",listOf("لا توجد منتجات محمّلة بعد"))
-        disabledAction(parent,"＋ إضافة المنتج")
+        val liveQuery=field(parent,"بحث سريع عن المنتج","اكتب جزءاً من الاسم أو REF أو الرقم أو الباركود")
+        val liveMatches=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL }
+        parent.addView(liveMatches)
         field(parent,"","امسح أو اكتب باركود الساعة")
         disabledAction(parent,"⌁ قراءة بالكاميرا")
         disabledAction(parent,"إضافة بالباركود")
@@ -982,6 +982,47 @@ class MainActivity : Activity() {
         }
         manualSaleItemPreview(lines,1,false,updateSubtotal)
         var nextLine=2
+        liveQuery.addTextChangedListener(object:android.text.TextWatcher {
+            override fun beforeTextChanged(s:CharSequence?,start:Int,count:Int,after:Int) {}
+            override fun afterTextChanged(s:android.text.Editable?) {}
+            override fun onTextChanged(s:CharSequence?,start:Int,before:Int,count:Int) {
+                liveMatches.removeAllViews()
+                val query=s?.toString()?.trim().orEmpty()
+                if(query.isBlank()) return
+                try {
+                    LegacyProductRepository.list(legacyBackupStore.readableDatabase,query,0,20).forEach { product ->
+                        liveMatches.addView(text(product.name+" · "+product.barcode+" · "+product.stock,13f,gold).apply {
+                            gravity=Gravity.RIGHT
+                            isClickable=true
+                            setOnClickListener {
+                                if(product.stock<=0) {
+                                    android.widget.Toast.makeText(this@MainActivity,"المخزون غير كافٍ",android.widget.Toast.LENGTH_SHORT).show()
+                                } else {
+                                    manualSaleItemPreview(lines,nextLine++,true,updateSubtotal)
+                                    val card=lines.getChildAt(lines.childCount-1)
+                                    val edits=mutableListOf<EditText>()
+                                    fun collect(v:View) {
+                                        if(v is EditText) edits.add(v)
+                                        if(v is android.view.ViewGroup) for(i in 0 until v.childCount) collect(v.getChildAt(i))
+                                    }
+                                    collect(card)
+                                    if(edits.size>=4) {
+                                        edits[0].setText(product.name)
+                                        edits[1].setText(product.raw.optString("model"))
+                                        edits[2].setText("1")
+                                        edits[3].setText(product.salePrice.toString())
+                                        card.setTag(android.R.id.content,product.id)
+                                    }
+                                    updateSubtotal()
+                                }
+                            }
+                        })
+                    }
+                } catch(e:Exception) {
+                    liveMatches.addView(text("تعذر البحث: "+e.message,12f))
+                }
+            }
+        })
         parent.addView(text("＋ إضافة صنف يدوي",16f,gold).apply {
             isClickable=true
             setOnClickListener { manualSaleItemPreview(lines,nextLine++,true,updateSubtotal);updateSubtotal() }
