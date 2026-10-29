@@ -1394,7 +1394,13 @@ class MainActivity : Activity() {
                     countLabel.text="${count+nativeCount} منتج محفوظ."
                 }
                 val products=LegacyProductRepository.list(db,search.text.toString(),offset,24)
-                for(p in products) {
+                val twoColumns=resources.configuration.screenWidthDp>=600
+                var cardRow:LinearLayout?=null
+                for((cardIndex,p) in products.withIndex()) {
+                    if(twoColumns && cardIndex%2==0) {
+                        cardRow=LinearLayout(this).apply { orientation=LinearLayout.HORIZONTAL;layoutDirection=View.LAYOUT_DIRECTION_RTL;gravity=Gravity.TOP }
+                        list.addView(cardRow,LinearLayout.LayoutParams(-1,-2))
+                    }
                     val row=LinearLayout(this).apply {
                         orientation=LinearLayout.VERTICAL
                         background=panel(paper,14)
@@ -1455,7 +1461,11 @@ class MainActivity : Activity() {
                         setOnClickListener { ProductImageView.show(this@MainActivity,barcodePhoto,"صورة الباركود") }
                     })
                     row.addView(actions,LinearLayout.LayoutParams(-1,-2).apply { topMargin=dp(6) })
-                    list.addView(row,LinearLayout.LayoutParams(-1,-2).apply { bottomMargin=dp(8) })
+                    if(twoColumns) {
+                        cardRow?.addView(row,LinearLayout.LayoutParams(0,-2,1f).apply { marginEnd=dp(6);bottomMargin=dp(8) })
+                        if(cardIndex==products.lastIndex && cardIndex%2==0)
+                            cardRow?.addView(View(this),LinearLayout.LayoutParams(0,dp(1),1f))
+                    } else list.addView(row,LinearLayout.LayoutParams(-1,-2).apply { bottomMargin=dp(8) })
                 }
                 offset+=products.size
             } catch(e:Exception) {
