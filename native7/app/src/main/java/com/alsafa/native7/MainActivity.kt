@@ -1123,6 +1123,32 @@ class MainActivity : Activity() {
         val singlePayment=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL }
         parent.addView(singlePayment)
         val initialPayment=field(singlePayment,"المبلغ المقبوض الآن","0").apply { inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL }
+        val changeAccount=select(parent,"إرجاع الباقي عبر",listOf("درج المحل","الصندوق الخارجي","شام كاش","البنك"))
+        val changeCurrency=select(parent,"عملة الباقي",listOf("USD","TRY","SYP"))
+        val changeRate=field(parent,"سعر صرف الباقي (عملة الباقي لكل وحدة من عملة الفاتورة)","1").apply {
+            setText("1")
+            inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
+        }
+        val changePreview=text("الباقي للعميل: 0",14f,gold)
+        parent.addView(changePreview)
+        val updateChange= {
+            val total=(0 until lines.childCount).sumOf { index ->
+                val pair=lines.getChildAt(index).tag as? Pair<*,*>
+                val qty=(pair?.first as? EditText)?.text?.toString()?.toIntOrNull() ?: 0
+                val price=(pair?.second as? EditText)?.text?.toString()?.toDoubleOrNull() ?: 0.0
+                qty*price
+            }-(manualDiscount.text.toString().toDoubleOrNull() ?: 0.0)
+            val tender=initialPayment.text.toString().toDoubleOrNull() ?: 0.0
+            val rate=changeRate.text.toString().toDoubleOrNull() ?: 0.0
+            changePreview.text="الباقي للعميل: "+((tender-total).coerceAtLeast(0.0)*rate)+" "+changeCurrency.selectedItem.toString()
+        }
+        listOf(initialPayment,manualDiscount,changeRate).forEach { edit ->
+            edit.addTextChangedListener(object:android.text.TextWatcher {
+                override fun beforeTextChanged(s:CharSequence?,start:Int,count:Int,after:Int) {}
+                override fun afterTextChanged(s:android.text.Editable?) {}
+                override fun onTextChanged(s:CharSequence?,start:Int,before:Int,count:Int) { updateChange() }
+            })
+        }
         val mixedPayment=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL }
         parent.addView(mixedPayment)
         mixedPayment.addView(text("المبالغ المقبوضة فعلياً",16f,gold))
@@ -1163,10 +1189,12 @@ class MainActivity : Activity() {
                     for(i in saleLines.indices) saleLines[i]=saleLines[i].copy(unitPrice=saleLines[i].unitPrice*factor)
                 }
                 val amount=initialPayment.text.toString().toDoubleOrNull() ?: 0.0
-                val id=NativeSalesLedger.save(
+                val id=NativeSalesLedger.saveWithChange(
                     legacyBackupStore.writableDatabase,saleLines,saleCurrency.selectedItem.toString(),
                     saleType.selectedItem.toString(),saleCustomer.text.toString(),salePhone.text.toString(),amount,
-                    when(paymentMethod.selectedItemPosition) { 1 -> "شام كاش"; 2 -> "البنك"; else -> "درج المحل" }
+                    when(paymentMethod.selectedItemPosition) { 1 -> "شام كاش"; 2 -> "البنك"; else -> "درج المحل" },
+                    changeCurrency.selectedItem.toString(),changeAccount.selectedItem.toString(),
+                    changeRate.text.toString().toDoubleOrNull() ?: 0.0
                 )
                 android.widget.Toast.makeText(this,"تم حفظ الفاتورة: "+id,android.widget.Toast.LENGTH_LONG).show()
                 navigateTo("preview:المبيعات والفواتير")
