@@ -720,66 +720,96 @@ class MainActivity : Activity() {
     }
     private fun salePreview(parent:LinearLayout) {
         formHeader(parent,"مبيع سريع","ابحث عن الساعة أو امسح الباركود، ثم اختر طريقة الدفع وعملة البيع.","رجوع","simple")
-        val steps=listOf("اختر الساعة","سعر البيع النهائي","طريقة الدفع")
-        quickStep(parent,1,steps[0])
-        field(parent,"بحث بالاسم أو REF أو الرقم أو الباركود","مثال: CASIO أو MTP أو 002")
-        val barcodeActions=LinearLayout(this).apply {
-            orientation=LinearLayout.HORIZONTAL
-            layoutDirection=View.LAYOUT_DIRECTION_RTL
-            gravity=Gravity.CENTER_VERTICAL
+        quickStep(parent,1,"اختر الساعة")
+        val search=field(parent,"بحث بالاسم أو REF أو الرقم أو الباركود","اكتب للبحث فوراً")
+        val barcode=field(parent,"الباركود","امسح أو اكتب الباركود")
+        barcodeScanButton(parent,barcode)
+        val results=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL }
+        parent.addView(results)
+        val selected=text("لم يتم اختيار ساعة بعد",14f,gold)
+        parent.addView(selected)
+        var chosen:LegacyProductRepository.Product?=null
+        lateinit var price:EditText
+        lateinit var currency:Spinner
+        fun updateResults(query:String) {
+            results.removeAllViews()
+            if(query.isBlank()) return
+            try {
+                val products=LegacyProductRepository.list(legacyBackupStore.readableDatabase,query,0,20)
+                products.forEach { product ->
+                    results.addView(text(product.name+" · "+product.barcode+" · المخزون "+product.stock+" · "+product.salePrice+" "+product.currency,13f,gold).apply {
+                        isClickable=true
+                        setPadding(dp(8),dp(9),dp(8),dp(9))
+                        setOnClickListener {
+                            if(product.stock<=0) {
+                                android.widget.Toast.makeText(this@MainActivity,"المخزون غير كافٍ",android.widget.Toast.LENGTH_SHORT).show()
+                            } else {
+                                chosen=product
+                                selected.text=product.name+" · "+product.raw.optString("color")+" · المتاح "+product.stock
+                                price.setText(product.salePrice.toString())
+                                currency.setSelection(listOf("USD","TRY","SYP").indexOf(product.currency).coerceAtLeast(0))
+                                results.removeAllViews()
+                            }
+                        }
+                    })
+                }
+                if(products.isEmpty()) results.addView(text("لا توجد نتائج مطابقة",12f))
+            } catch(e:Exception) {
+                results.addView(text("تعذر البحث: "+(e.message ?: ""),12f))
+            }
         }
-        parent.addView(barcodeActions,LinearLayout.LayoutParams(-1,-2))
-        val barcodeInput=EditText(this).apply {
-            hint="امسح أو اكتب الباركود"
-            textSize=14f
-            background=panel(Color.rgb(255,252,247),10,Color.rgb(234,223,206))
-            setPadding(dp(10),dp(8),dp(10),dp(8))
+        quickStep(parent,2,"سعر البيع النهائي")
+        price=field(parent,"سعر البيع","0").apply { inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL }
+        val quantity=field(parent,"الكمية","1").apply {
+            setText("1")
             inputType=InputType.TYPE_CLASS_NUMBER
         }
-        barcodeActions.addView(barcodeInput,LinearLayout.LayoutParams(0,dp(58),1f))
-        listOf("📷 قراءة الباركود","إضافة").forEach { label ->
-            val action=text(label,13f,gold).apply {
-                background=panel(Color.rgb(247,237,221),12,Color.rgb(223,201,164))
-                isClickable=true
-                setOnClickListener {
-                    if(label.contains("قراءة الباركود")) {
-                        pendingBarcodeField=barcodeInput
-                        try {
-                            val values=android.content.ContentValues().apply {
-                                put(android.provider.MediaStore.Images.Media.DISPLAY_NAME,"alsafa_barcode_"+System.currentTimeMillis()+".jpg")
-                                put(android.provider.MediaStore.Images.Media.MIME_TYPE,"image/jpeg")
-                            }
-                            val uri=contentResolver.insert(android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI,values)
-                                ?: throw IllegalStateException("تعذر تجهيز صورة الباركود")
-                            pendingBarcodeImageUri=uri
-                            startActivityForResult(android.content.Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE).apply {
-                                putExtra(android.provider.MediaStore.EXTRA_OUTPUT,uri)
-                                addFlags(android.content.Intent.FLAG_GRANT_WRITE_URI_PERMISSION or android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                            },7313)
-                        } catch(e:Exception) {
-                            pendingBarcodeImageUri?.let { contentResolver.delete(it,null,null) }
-                            pendingBarcodeImageUri=null
-                            pendingBarcodeField=null
-                            android.widget.Toast.makeText(this@MainActivity,e.message ?: "تعذر فتح الكاميرا",android.widget.Toast.LENGTH_LONG).show()
-                        }
-                    } else {
-                        navigateTo("preview:مبيع كامل")
-                    }
+        currency=select(parent,"العملة",listOf("USD","TRY","SYP"))
+        quickStep(parent,3,"طريقة الدفع")
+        val account=select(parent,"طريقة الدفع",listOf("درج المحل","الصندوق الخارجي","شام كاش","البنك"))
+        val payment=field(parent,"المبلغ المقبوض الآن","0").apply {
+            setText("0")
+            inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
+        }
+        val customer=field(parent,"اسم العميل","اختياري")
+        val phone=field(parent,"رقم العميل","اختياري").apply { inputType=InputType.TYPE_CLASS_PHONE }
+        val online=select(parent,"نوع البيع",listOf("بيع من المحل","بيع أونلاين"))
+        val watcher=object:android.text.TextWatcher {
+            override fun beforeTextChanged(s:CharSequence?,start:Int,count:Int,after:Int) {}
+            override fun afterTextChanged(s:android.text.Editable?) {}
+            override fun onTextChanged(s:CharSequence?,start:Int,before:Int,count:Int) { updateResults(search.text.toString().trim()) }
+        }
+        search.addTextChangedListener(watcher)
+        barcode.addTextChangedListener(object:android.text.TextWatcher {
+            override fun beforeTextChanged(s:CharSequence?,start:Int,count:Int,after:Int) {}
+            override fun afterTextChanged(s:android.text.Editable?) {}
+            override fun onTextChanged(s:CharSequence?,start:Int,before:Int,count:Int) {
+                val code=s?.toString()?.trim().orEmpty()
+                if(code.isNotBlank()) search.setText(code)
+            }
+        })
+        parent.addView(Button(this).apply {
+            text="✓ إتمام الفاتورة"
+            setOnClickListener {
+                try {
+                    val product=chosen ?: error("اختر المنتج أولاً")
+                    val current=LegacyProductRepository.findById(legacyBackupStore.readableDatabase,product.id)
+                        ?: error("المنتج غير موجود")
+                    val qty=quantity.text.toString().toIntOrNull() ?: 0
+                    require(qty>0 && current.stock>=qty) { "المخزون غير كافٍ" }
+                    val amount=price.text.toString().toDoubleOrNull() ?: -1.0
+                    val paid=payment.text.toString().toDoubleOrNull() ?: -1.0
+                    val id=NativeSalesLedger.save(legacyBackupStore.writableDatabase,
+                        listOf(NativeSalesLedger.Line(product.id,qty,amount)),currency.selectedItem.toString(),
+                        online.selectedItem.toString(),customer.text.toString(),phone.text.toString(),paid,
+                        account.selectedItem.toString())
+                    android.widget.Toast.makeText(this@MainActivity,"تم حفظ الفاتورة: "+id,android.widget.Toast.LENGTH_LONG).show()
+                    navigateTo("preview:المبيعات والفواتير")
+                } catch(e:Exception) {
+                    android.widget.Toast.makeText(this@MainActivity,e.message ?: "تعذر الحفظ",android.widget.Toast.LENGTH_LONG).show()
                 }
             }
-            barcodeActions.addView(action,LinearLayout.LayoutParams(-2,dp(58)).apply { marginStart=dp(8) })
-        }
-        parent.addView(text("لم يتم اختيار ساعة بعد",15f,Color.rgb(138,123,108)).apply {
-            background=panel(Color.rgb(255,250,242),15,Color.rgb(212,189,146))
-        },LinearLayout.LayoutParams(-1,dp(64)).apply { topMargin=dp(12);bottomMargin=dp(21) })
-        quickStep(parent,2,steps[1])
-        finalAmountCurrency(parent,"USD")
-        quickStep(parent,3,steps[2])
-        paymentChoices(parent)
-        parent.addView(text("✓ إتمام الفاتورة",13f,Color.WHITE).apply {
-            background=panel(Color.rgb(139,96,31),12)
-        },LinearLayout.LayoutParams(-1,dp(44)))
-        parent.addView(text("معاينة شكلية فقط — لا يتم حفظ أي فاتورة.",12f))
+        })
     }
     private fun handoverPreview(parent:LinearLayout) {
         parent.addView(text("تسليم الوردية",26f,gold))
