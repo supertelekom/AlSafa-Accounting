@@ -131,6 +131,13 @@ internal object NativeSalesLedger {
             db.rawQuery("SELECT account,SUM(amount) FROM native_sale_collections WHERE sale_id=? GROUP BY account HAVING SUM(amount)>0",arrayOf(id)).use { c ->
                 while(c.moveToNext()) insertCollection(db,id,-c.getDouble(1),sale.currency,c.getString(0),at,"cancel: "+reason)
             }
+            db.rawQuery("SELECT amount_in_invoice_currency,invoice_currency,payout,payout_currency,payout_account,tender_account,exchange_rate FROM native_sale_change WHERE sale_id=? AND amount_in_invoice_currency>0",arrayOf(id)).use { c ->
+                while(c.moveToNext()) {
+                    db.execSQL("INSERT INTO native_sale_change VALUES (?,?,?,?,?,?,?,?,?,?)",
+                        arrayOf<Any>(UUID.randomUUID().toString(),id,-c.getDouble(0),c.getString(1),
+                            -c.getDouble(2),c.getString(3),c.getString(4),c.getString(5),c.getDouble(6),at))
+                }
+            }
             db.execSQL("UPDATE native_sales SET status='cancelled' WHERE id=?",arrayOf(id))
             db.setTransactionSuccessful()
         } finally { db.endTransaction() }
