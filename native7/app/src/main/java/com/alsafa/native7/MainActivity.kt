@@ -1446,6 +1446,7 @@ class MainActivity : Activity() {
             parent.addView(text(label,14f))
             val preview=ProductImageView.create(this,newProductPhotos[key].orEmpty(),dp(90),dp(90))
             parent.addView(preview,LinearLayout.LayoutParams(dp(90),dp(90)))
+            preview.setOnClickListener { ProductImageView.show(this,newProductPhotos[key].orEmpty(),label) }
             val controls=LinearLayout(this).apply { orientation=LinearLayout.HORIZONTAL }
             controls.addView(Button(this).apply {
                 text="الكاميرا";setOnClickListener { photoPreview=preview;selectProductPhoto(key,true) }
@@ -1640,7 +1641,7 @@ class MainActivity : Activity() {
             card.addView(text("المخزون الفعلي: "+LegacyProductRules.stock(member),13f))
             val preview=ProductImageView.create(this,member.optString("photo"),dp(92),dp(92))
             card.addView(preview,LinearLayout.LayoutParams(dp(92),dp(92)))
-            preview.setOnClickListener { ProductImageView.show(this,member.optString("photo"),member.optString("name")) }
+            preview.setOnClickListener { ProductImageView.show(this,newProductPhotos[key] ?: member.optString("photo"),member.optString("name")) }
             card.addView(Button(this).apply {
                 text="اختيار صورة من الاستوديو"
                 setOnClickListener { photoPreview=preview;selectProductPhoto(key,false) }
@@ -1715,6 +1716,7 @@ class MainActivity : Activity() {
             parent.addView(text(label,13f))
             val preview=ProductImageView.create(this,product.optString(key),dp(90),dp(90))
             parent.addView(preview,LinearLayout.LayoutParams(dp(90),dp(90)))
+            preview.setOnClickListener { ProductImageView.show(this,newProductPhotos[key] ?: product.optString(key),label) }
             val row=LinearLayout(this).apply { orientation=LinearLayout.HORIZONTAL }
             row.addView(Button(this).apply {
                 text="الكاميرا"
