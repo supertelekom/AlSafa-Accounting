@@ -333,15 +333,18 @@ internal object NativeSalesLedger {
         val start=dateFormat.format(java.util.Date(from))
         val end=dateFormat.format(java.util.Date(to))
         val result=mutableListOf<CashComparison>()
+        val pairs=linkedSetOf<Pair<String,String>>()
         db.rawQuery("SELECT DISTINCT vault,currency FROM domain_cashTransactions WHERE vault IS NOT NULL AND currency IS NOT NULL",null).use { c ->
-            while(c.moveToNext()) {
-                val account=c.getString(0)
-                val currency=c.getString(1)
-                val legacy=db.rawQuery("SELECT COALESCE(SUM(amount),0) FROM domain_cashTransactions WHERE vault=? AND currency=? AND substr(date,1,10)>=? AND substr(date,1,10)<?",
-                    arrayOf(account,currency,start,end)).use { x -> x.moveToFirst();x.getDouble(0) }
-                val native=accountMovement(db,account,currency,from,to)
-                result.add(CashComparison(account,currency,legacy,native,legacy+native))
-            }
+            while(c.moveToNext()) pairs.add(c.getString(0) to c.getString(1))
+        }
+        db.rawQuery("SELECT DISTINCT account,currency FROM native_sale_collections UNION SELECT DISTINCT account,currency FROM native_sale_mixed UNION SELECT DISTINCT payout_account,payout_currency FROM native_sale_change",null).use { c ->
+            while(c.moveToNext()) pairs.add(c.getString(0) to c.getString(1))
+        }
+        for((account,currency) in pairs) {
+            val legacy=db.rawQuery("SELECT COALESCE(SUM(amount),0) FROM domain_cashTransactions WHERE vault=? AND currency=? AND substr(date,1,10)>=? AND substr(date,1,10)<?",
+                arrayOf(account,currency,start,end)).use { c -> c.moveToFirst();c.getDouble(0) }
+            val native=accountMovement(db,account,currency,from,to)
+            result.add(CashComparison(account,currency,legacy,native,legacy+native))
         }
         return result
     }
