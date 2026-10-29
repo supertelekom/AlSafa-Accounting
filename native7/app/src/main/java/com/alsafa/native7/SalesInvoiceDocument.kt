@@ -61,7 +61,7 @@ internal object SalesInvoiceDocument {
             val result=mutableListOf<String>()
             var part=""
             for(word in value.split(" ")) {
-                val candidate=if(part.isEmpty())word else "$"+"{part} $"+"word"
+                val candidate=if(part.isEmpty())word else part+" "+word
                 if(paint.measureText(candidate)>maxWidth && part.isNotEmpty()) {
                     result.add(part)
                     part=word
@@ -143,12 +143,35 @@ internal object SalesInvoiceDocument {
         },PrintAttributes.Builder().setMediaSize(PrintAttributes.MediaSize.UNKNOWN_PORTRAIT)
             .setMinMargins(PrintAttributes.Margins.NO_MARGINS).build())
     }
-    fun share(activity:Activity,db:SQLiteDatabase,id:String) {
-        val file=createPdf(activity,db,id)
+    fun share(activity:Activity,db:SQLiteDatabase,id:String,rollWidthMm:Int=80) {
+        val file=createPdf(activity,db,id,rollWidthMm)
         val phone=db.rawQuery("SELECT phone FROM native_sales WHERE id=?",arrayOf(id)).use { c ->
             if(c.moveToFirst())c.getString(0) else ""
         }
         val uri=Uri.parse("content://"+activity.packageName+".invoices/"+Uri.encode(file.name))
+        val digits=phone.filter { it.isDigit() }
+        val number=when {
+            digits.startsWith("00963") -> digits.drop(2)
+            digits.startsWith("963") -> digits
+            digits.startsWith("0") && digits.length==10 -> "963"+digits.drop(1)
+            digits.length==9 -> "963"+digits
+            else -> ""
+        }
+        if(number.isNotEmpty()) {
+            android.app.AlertDialog.Builder(activity)
+                .setTitle("واتساب العميل")
+                .setMessage("العميل: +"+number+"\\nلا يمكن ضمان إرفاق PDF تلقائياً بالمحادثة المحددة. للمرفق اختر المشاركة وحدد العميل داخل واتساب.")
+                .setNeutralButton("فتح محادثة العميل") { _,_ ->
+                    runCatching { activity.startActivity(Intent(Intent.ACTION_VIEW,
+                        Uri.parse("https://wa.me/"+number))) }
+                }
+                .setPositiveButton("مشاركة PDF") { _,_ -> shareAttachment(activity,uri) }
+                .setNegativeButton("إلغاء",null).show()
+            return
+        }
+        shareAttachment(activity,uri)
+    }
+    private fun shareAttachment(activity:Activity,uri:Uri) {
         val intent=Intent(Intent.ACTION_SEND).apply {
             type="application/pdf"
             putExtra(Intent.EXTRA_STREAM,uri)
