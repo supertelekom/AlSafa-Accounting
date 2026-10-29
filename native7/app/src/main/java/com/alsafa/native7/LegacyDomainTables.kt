@@ -89,8 +89,7 @@ internal object LegacyDomainTables {
     fun audit(db:SQLiteDatabase) {
         val relations=listOf(
             arrayOf("purchases","supplierId","suppliers"),
-            arrayOf("supplierLedger","supplierId","suppliers"),
-            arrayOf("inventoryMovements","itemId","products")
+            arrayOf("supplierLedger","supplierId","suppliers")
         )
         for(relation in relations) {
             val (source,field,target)=relation
