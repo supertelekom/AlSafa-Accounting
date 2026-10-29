@@ -77,6 +77,20 @@ internal class LegacyBackupStore(context: Context) :
         return inspection
     }
 
+    fun storedCounts(): Map<String, Int> {
+        val result = linkedMapOf<String, Int>()
+        readableDatabase.rawQuery(
+            "SELECT name,item_count FROM legacy_sections ORDER BY name", null
+        ).use { cursor ->
+            while (cursor.moveToNext()) result[cursor.getString(0)] = cursor.getInt(1)
+        }
+        return result
+    }
+
+    fun originalBackup(): String? = readableDatabase.rawQuery(
+        "SELECT payload FROM legacy_metadata WHERE name=?", arrayOf("original_backup")
+    ).use { if (it.moveToFirst()) it.getString(0) else null }
+
     fun section(name: String): String? = readableDatabase.rawQuery(
         "SELECT payload FROM legacy_sections WHERE name=?", arrayOf(name)
     ).use { if (it.moveToFirst()) it.getString(0) else null }
