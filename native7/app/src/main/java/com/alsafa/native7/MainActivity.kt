@@ -1236,7 +1236,7 @@ class MainActivity : Activity() {
                         val paid=values.first.text.toString().toDoubleOrNull() ?: 0.0
                         if(paid<=0) null else NativeSalesLedger.Tender(paid,money,account.selectedItem.toString(),
                             values.second.text.toString().toDoubleOrNull() ?: 0.0)
-                    }
+                    }.toMutableList()
                     val received=if(deferred) 0.0 else tenders.sumOf { it.amount*it.rate }
                     if(deferred) tenders.clear()
                     // Original saveSale: a fully paid mixed tender below the total
