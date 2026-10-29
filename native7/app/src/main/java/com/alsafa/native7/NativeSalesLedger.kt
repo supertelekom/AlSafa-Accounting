@@ -288,6 +288,7 @@ internal object NativeSalesLedger {
     }
     fun partnerBalances(db:SQLiteDatabase,from:Long,to:Long):List<PartnerBalance> {
         require(to>from)
+        LegacyDomainTables.create(db)
         val monthly=partnerShares(db,from,to)
         val previous=partnerShares(db,0,from)
         return listOf("USD","TRY","SYP").flatMap { currency ->
