@@ -9,11 +9,7 @@ import kotlin.math.max
  * netPaidFor/balanceFor/paymentStatusFor rules. No postings or stock writes.
  */
 internal object LegacyReceivables {
-    private fun number(value:Any?):Double = when(value) {
-        is Number -> value.toDouble().takeIf { it.isFinite() } ?: 0.0
-        is String -> value.toDoubleOrNull() ?: 0.0
-        else -> 0.0
-    }
+    private fun number(value:Any?):Double = LegacyAccountingRules.number(value)
     private fun rows(array:JSONArray?)= (0 until (array?.length() ?: 0)).mapNotNull { array?.optJSONObject(it) }
     private fun matching(array:JSONArray?,type:String,id:String)=rows(array).filter {
         it.optString("referenceType")==type && it.optString("referenceId")==id
@@ -40,11 +36,11 @@ internal object LegacyReceivables {
         val status=when {
             effective<=0.0001 && matchedReturns.isNotEmpty() -> "مسوّاة/مسترجعة"
             effective<=0.0001 && type=="repair" && paid<=0.0001 -> "عند الاستلام"
-            effective<=0.0001 -> record.optString("paymentStatus","—")
+            effective<=0.0001 -> record.optString("paymentStatus").ifBlank { "—" }
             balance<0.01 && (paid>0.0001 || collectionDiscount>0) -> "مدفوع بالكامل"
             paid>0.0001 -> "دفعة جزئية"
             type=="repair" -> "عند الاستلام"
-            else -> record.optString("paymentStatus","آجل")
+            else -> record.optString("paymentStatus").ifBlank { "آجل" }
         }
         return Result(paid,refunded,netPaid,effective,balance,status)
     }
