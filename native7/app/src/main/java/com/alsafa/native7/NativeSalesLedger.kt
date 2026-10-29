@@ -43,7 +43,7 @@ internal object NativeSalesLedger {
             for((productId,entries) in grouped) {
                 val product=LegacyProductRepository.findById(db,productId) ?: error("المنتج غير موجود")
                 val requested=entries.sumOf { it.quantity }
-                require(product.stock+stockDelta(db,productId)>=requested) { "المخزون غير كافٍ: "+product.name }
+                require(product.stock>=requested) { "المخزون غير كافٍ: "+product.name }
                 require(product.currency==currency) { "تحتاج أسعار العملات المختلفة إلى سعر تحويل صريح" }
                 require(product.cost.isFinite() && product.cost>=0) { "كلفة المنتج غير صالحة" }
                 for(line in entries) {
