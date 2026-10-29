@@ -1495,6 +1495,8 @@ class MainActivity : Activity() {
                     try {
                         val db=legacyBackupStore.readableDatabase
                         NativeSalesLedger.create(db)
+                        LegacyDomainTables.create(db)
+                        NativeProductChanges.create(db)
                         val start=searchDay(searchFrom.text.toString().trim())
                         val end=searchDay(searchTo.text.toString().trim())?.plus(86400000L)
                         val like="%"+term+"%"
