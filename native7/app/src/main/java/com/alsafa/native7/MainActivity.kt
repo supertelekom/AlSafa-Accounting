@@ -45,6 +45,27 @@ class MainActivity : Activity() {
     private var repairDraftTexts:List<String>? = null
     private var repairDraftSelections:List<Int>? = null
     private var repairDraftScreen:String? = null
+    private val newProductPhotos=mutableMapOf<String,String>()
+    private var pendingProductPhotoKey:String?=null
+    private var photoPreview:android.widget.ImageView?=null
+    private fun selectProductPhoto(key:String,camera:Boolean) {
+        pendingProductPhotoKey=key
+        val intent=if(camera)android.content.Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE)
+            else android.content.Intent(android.content.Intent.ACTION_GET_CONTENT).apply {
+                type="image/*";addCategory(android.content.Intent.CATEGORY_OPENABLE)
+            }
+        startActivityForResult(intent,if(camera)7312 else 7311)
+    }
+    private fun productPhotoData(bitmap:android.graphics.Bitmap):String {
+        val width=bitmap.width
+        val height=bitmap.height
+        val ratio=minOf(1.0,1024.0/maxOf(width,height).toDouble())
+        val scaled=if(ratio<1)android.graphics.Bitmap.createScaledBitmap(bitmap,
+            (width*ratio).toInt().coerceAtLeast(1),(height*ratio).toInt().coerceAtLeast(1),true) else bitmap
+        val out=java.io.ByteArrayOutputStream()
+        scaled.compress(android.graphics.Bitmap.CompressFormat.JPEG,78,out)
+        return "data:image/jpeg;base64,"+android.util.Base64.encodeToString(out.toByteArray(),android.util.Base64.NO_WRAP)
+    }
     private val legacyBackupStore by lazy { LegacyBackupStore(this) }
     private fun openLegacyRestore() {
         val intent = android.content.Intent(android.content.Intent.ACTION_OPEN_DOCUMENT).apply {
@@ -133,6 +154,26 @@ class MainActivity : Activity() {
     @Deprecated("Deprecated in Java")
     override fun onActivityResult(requestCode:Int,resultCode:Int,data:android.content.Intent?) {
         super.onActivityResult(requestCode,resultCode,data)
+        if(requestCode in 7311..7312 && resultCode==RESULT_OK) {
+            val key=pendingProductPhotoKey
+            if(key!=null)try {
+                val bitmap=if(requestCode==7312) {
+                    @Suppress("DEPRECATION")
+                    data?.extras?.get("data") as? android.graphics.Bitmap
+                } else {
+                    val uri=data?.data ?: throw IllegalArgumentException("لم تُحدد صورة")
+                    contentResolver.openInputStream(uri)?.use {
+                        android.graphics.BitmapFactory.decodeStream(it)
+                    }
+                } ?: throw IllegalArgumentException("تعذر قراءة الصورة")
+                newProductPhotos[key]=productPhotoData(bitmap)
+                photoPreview?.setImageBitmap(bitmap)
+            } catch(e:Exception) {
+                android.app.AlertDialog.Builder(this).setMessage(e.message ?: "تعذر قراءة الصورة")
+                    .setPositiveButton("حسناً",null).show()
+            }
+            pendingProductPhotoKey=null
+        }
         if (requestCode == 7107 && resultCode == RESULT_OK && data?.data != null) {
             val uri = requireNotNull(data.data)
             try {
