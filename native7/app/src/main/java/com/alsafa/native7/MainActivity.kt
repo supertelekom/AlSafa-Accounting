@@ -2320,16 +2320,36 @@ class MainActivity : Activity() {
             background=panel(paper,17)
             setPadding(dp(12),dp(12),dp(12),dp(12))
         }
-        val hint=text("لا توجد نتائج.",13f,Color.rgb(138,123,108))
-        results.addView(hint)
         parent.addView(results)
+        fun updateSearch() {
+            results.removeAllViews()
+            val term=query.text.toString().trim()
+            if(term.isBlank()) {
+                results.addView(text("اكتب اسم المنتج أو الباركود أو الموديل للبحث فوراً.",13f))
+                return
+            }
+            try {
+                val matches=LegacyProductRepository.list(legacyBackupStore.readableDatabase,term,0,30)
+                results.addView(text("نتائج المنتجات والمخزون: ${matches.size}"+if(matches.size==30) " (أول 30 نتيجة)" else "",13f,gold))
+                matches.forEach { product ->
+                    results.addView(text("${product.name} — ${product.barcode} — المخزون: ${product.stock}",14f).apply {
+                        gravity=Gravity.RIGHT
+                        setPadding(dp(8),dp(9),dp(8),dp(9))
+                        isClickable=true
+                        setOnClickListener { navigateTo("preview:المنتجات والمخزون") }
+                    })
+                }
+                if(matches.isEmpty())results.addView(text("لا توجد منتجات مطابقة.",13f))
+            } catch(e:Exception) {
+                results.addView(text("تعذر البحث في المنتجات: "+(e.message ?: "خطأ غير معروف"),13f))
+            }
+        }
         query.addTextChangedListener(object:android.text.TextWatcher {
             override fun beforeTextChanged(s:CharSequence?,start:Int,count:Int,after:Int) {}
-            override fun onTextChanged(s:CharSequence?,start:Int,before:Int,count:Int) {
-                hint.text=if(s.isNullOrBlank()) "لا توجد نتائج." else "البحث في المبيعات والمخزون غير متصل بالبيانات بعد."
-            }
+            override fun onTextChanged(s:CharSequence?,start:Int,before:Int,count:Int) { updateSearch() }
             override fun afterTextChanged(s:android.text.Editable?) {}
         })
+        updateSearch()
     }
     private fun cashWalletPreview(parent:LinearLayout) {
         parent.addView(text("الحافظة",26f,gold))
