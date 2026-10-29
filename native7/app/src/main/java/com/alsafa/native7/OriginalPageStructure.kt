@@ -233,11 +233,11 @@ internal class OriginalPageStructure(
         val view=if(rich!=null) column().apply {
             val horizontal=cs.any { it in listOf("simple-action","modern-feature-card","mode-card","mode-advisor-card") }
             orientation=if(horizontal) LinearLayout.HORIZONTAL else LinearLayout.VERTICAL
-            gravity=if(cs.contains("father-main-card")) Gravity.CENTER else Gravity.CENTER_VERTICAL
+            gravity=if(cs.contains("father-main-card") || cs.contains("simple-action")) Gravity.CENTER else Gravity.CENTER_VERTICAL
             items(rich).forEachIndexed { index,child ->
                 val content=build(child).apply { if(this is TextView && index==0) {
                     textSize=if(cs.contains("father-main-card")) { if(activity.resources.configuration.screenWidthDp<=420) 23f else 27f } else if(cs.contains("mode-card")) 31f else if(cs.contains("modern-feature-card")) 28f else if(cs.contains("simple-action")) 17f else 25f
-                    if(!horizontal) gravity=Gravity.CENTER
+                    if(!horizontal || cs.contains("simple-action")) gravity=Gravity.CENTER
                 } else if(this is TextView && index>0) {
                     textSize=when { cs.contains("father-main-card") && index==1 -> if(activity.resources.configuration.screenWidthDp<=420) 14f else 16f;cs.contains("mode-card") && index==1 -> 20f;cs.contains("simple-action") && index==1 -> if(activity.resources.configuration.screenWidthDp<=420) 12f else 13f;cs.contains("modern-feature-card") && index==1 -> 15f;index==1 -> 14f;cs.contains("father-main-card") -> 9f;cs.contains("mode-card") -> 11f;cs.contains("simple-action") -> 9f;else -> 10f }
                 } }
