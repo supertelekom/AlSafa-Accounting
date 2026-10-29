@@ -16,6 +16,7 @@ internal object NativeProductChanges {
         db.execSQL("CREATE TABLE IF NOT EXISTS native_product_edits (product_id TEXT PRIMARY KEY NOT NULL, payload TEXT NOT NULL, revision INTEGER NOT NULL)")
         db.execSQL("CREATE TABLE IF NOT EXISTS native_product_audit (event_id TEXT PRIMARY KEY NOT NULL, product_id TEXT NOT NULL, previous_payload TEXT, new_payload TEXT NOT NULL, reason TEXT NOT NULL, recorded_at INTEGER NOT NULL)")
         db.execSQL("CREATE TABLE IF NOT EXISTS native_new_products (product_id TEXT PRIMARY KEY NOT NULL, payload TEXT NOT NULL, created_at INTEGER NOT NULL)")
+        db.execSQL("CREATE TABLE IF NOT EXISTS native_deleted_products (product_id TEXT PRIMARY KEY NOT NULL, deleted_at INTEGER NOT NULL, reason TEXT NOT NULL)")
     }
     fun createProduct(db:SQLiteDatabase,product:JSONObject)=createProducts(db,listOf(product))
     fun createProducts(db:SQLiteDatabase,products:List<JSONObject>) {
@@ -85,6 +86,31 @@ internal object NativeProductChanges {
                 }
             }
         }
+    }
+    /** Hide a product from active inventory without destroying historical invoice references. */
+    fun isDeleted(db:SQLiteDatabase,id:String):Boolean {
+        create(db)
+        db.rawQuery("SELECT 1 FROM native_deleted_products WHERE product_id=? LIMIT 1",arrayOf(id)).use {
+            return it.moveToFirst()
+        }
+    }
+    fun deleteProduct(db:SQLiteDatabase,id:String,reason:String) {
+        require(id.isNotBlank() && reason.isNotBlank()) { "المنتج وسبب الحذف مطلوبان" }
+        create(db)
+        NativeSalesLedger.create(db)
+        db.beginTransaction()
+        try {
+            val product=get(db,id) ?: error("المنتج غير موجود")
+            require(!isDeleted(db,id)) { "المنتج محذوف مسبقاً" }
+            val effective=LegacyProductRules.stock(product)+NativeSalesLedger.stockDelta(db,id)
+            require(effective==0) { "لا يمكن حذف منتج له مخزون. سوِّ الكمية أولاً" }
+            db.execSQL("INSERT INTO native_deleted_products(product_id,deleted_at,reason) VALUES (?,?,?)",
+                arrayOf<Any>(id,System.currentTimeMillis(),reason))
+            db.execSQL("INSERT INTO native_product_audit(event_id,product_id,previous_payload,new_payload,reason,recorded_at) VALUES (?,?,?,?,?,?)",
+                arrayOf<Any>(UUID.randomUUID().toString(),id,product.toString(),product.toString(),
+                    "حذف منتج — "+reason,System.currentTimeMillis()))
+            db.setTransactionSuccessful()
+        } finally { db.endTransaction() }
     }
     fun get(db:SQLiteDatabase,id:String):JSONObject? {
         create(db)
