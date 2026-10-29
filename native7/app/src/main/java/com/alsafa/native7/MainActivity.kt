@@ -1807,7 +1807,9 @@ class MainActivity : Activity() {
                     countLabel.text="${count+nativeCount} منتج محفوظ."
                 }
                 val products=LegacyProductRepository.list(db,search.text.toString(),offset,24)
-                val twoColumns=resources.configuration.screenWidthDp>=600
+                // Keep product cards full-width on the tablet: two half-width cards
+                // squeezed product details and made action buttons hard to use.
+                val twoColumns=false
                 var cardRow:LinearLayout?=null
                 for((cardIndex,p) in products.withIndex()) {
                     if(twoColumns && cardIndex%2==0) {
