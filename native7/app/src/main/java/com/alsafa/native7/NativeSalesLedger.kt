@@ -340,7 +340,9 @@ internal object NativeSalesLedger {
             require(refundable+0.000001>=minimumCashRefund) {
                 "لا تكفي مبالغ القبض في الخزنة المحددة لإعادة قيمة المرتجع"
             }
-            val cashRefund=refund.coerceAtMost(refundable).coerceAtMost(netCollected)
+            // A return first reduces the unpaid balance. Only the excess of
+            // collected funds over the revised invoice total is paid back.
+            val cashRefund=minimumCashRefund.coerceAtMost(refundable).coerceAtMost(netCollected)
             if(cashRefund>0.000001 && account=="mixed") {
                 val tenders=mutableListOf<Array<Any>>()
                 db.rawQuery("SELECT currency,account,COALESCE(SUM(amount),0),COALESCE(SUM(invoice_equivalent),0) FROM native_sale_mixed WHERE sale_id=? GROUP BY currency,account HAVING SUM(invoice_equivalent)>0",arrayOf(saleId)).use { c ->
