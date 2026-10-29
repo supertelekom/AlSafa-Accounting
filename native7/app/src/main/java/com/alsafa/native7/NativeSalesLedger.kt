@@ -241,6 +241,35 @@ internal object NativeSalesLedger {
             db.setTransactionSuccessful()
         } finally { db.endTransaction() }
     }
+    /**
+     * Legacy appendPayment records the amount against the invoice currency and
+     * the actual cash receipt against the selected payment currency. The
+     * exchange rate must be supplied from the invoice's saved rate snapshot.
+     */
+    fun collectInCurrency(db:SQLiteDatabase,id:String,amount:Double,
+        paymentCurrency:String,account:String,invoiceToPaymentRate:Double,
+        at:Long=System.currentTimeMillis()) {
+        require(amount.isFinite() && amount>0) { "قيمة القبض غير صالحة" }
+        require(paymentCurrency in setOf("USD","TRY","SYP")) { "عملة القبض غير صالحة" }
+        require(invoiceToPaymentRate.isFinite() && invoiceToPaymentRate>0) { "سعر الصرف غير متوفر" }
+        require(account.isNotBlank()) { "حدد خزنة القبض" }
+        create(db)
+        db.execSQL("CREATE TABLE IF NOT EXISTS native_sale_payment_currency (id TEXT PRIMARY KEY, sale_id TEXT NOT NULL, invoice_amount REAL NOT NULL, invoice_currency TEXT NOT NULL, payment_amount REAL NOT NULL, payment_currency TEXT NOT NULL, account TEXT NOT NULL, exchange_rate REAL NOT NULL, created_at INTEGER NOT NULL)")
+        db.beginTransaction()
+        try {
+            val sale=find(db,id) ?: error("الفاتورة غير موجودة")
+            require(sale.status=="active") { "الفاتورة ملغاة" }
+            require(paymentCurrency!=sale.currency || kotlin.math.abs(invoiceToPaymentRate-1.0)<0.000001) { "سعر الصرف لنفس العملة يجب أن يكون 1" }
+            val applied=amount.coerceAtMost(remaining(db,id))
+            if(applied<=0) { db.setTransactionSuccessful();return }
+            val actual=applied*invoiceToPaymentRate
+            require(actual.isFinite()) { "مبلغ القبض غير صالح" }
+            insertCollection(db,id,applied,sale.currency,"converted",at,"collection")
+            db.execSQL("INSERT INTO native_sale_payment_currency VALUES (?,?,?,?,?,?,?,?,?)",
+                arrayOf<Any>(UUID.randomUUID().toString(),id,applied,sale.currency,actual,paymentCurrency,account,invoiceToPaymentRate,at))
+            db.setTransactionSuccessful()
+        } finally { db.endTransaction() }
+    }
     fun cancel(db:SQLiteDatabase,id:String,reason:String,at:Long=System.currentTimeMillis()) {
         require(reason.isNotBlank()) { "سبب الإلغاء مطلوب" }
         create(db)
