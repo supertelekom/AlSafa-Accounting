@@ -88,7 +88,7 @@ internal class OriginalPageStructure(
             "select" -> selection(n)
             "toggle" -> toggle(n)
             "button" -> button(n)
-            "title","text" -> label(n.optString("text"),if(cs.contains("field-label")) 11f else n.optDouble("size",13.0).toFloat(),if(n.optBoolean("muted")) muted else ink,n.optString("weight")=="bold").apply {
+            "title","text" -> label(n.optString("text"),if(kind=="text" && n.optString("tag")=="label") 11f else n.optDouble("size",13.0).toFloat(),if(n.optBoolean("muted")) muted else ink,n.optString("weight")=="bold").apply {
                 setPadding(0,dp(if(kind=="title") 3 else 2),0,dp(if(kind=="title") 7 else 5))
                 if(cs.any { it in listOf("barcode-help","help") }) { textSize=11f;setTextColor(muted) }
                 if(cs.contains("simple-icon")) { textSize=25f;gravity=Gravity.CENTER;background=bg(Color.rgb(248,237,219),14) }
@@ -101,16 +101,16 @@ internal class OriginalPageStructure(
                 val tablet=activity.resources.configuration.screenWidthDp>=720
                 val wide=activity.resources.configuration.screenWidthDp>=1200 && activity.resources.configuration.orientation==android.content.res.Configuration.ORIENTATION_LANDSCAPE
                 val count=when(kind) {
-                    "formGrid" -> if(activity.resources.configuration.screenWidthDp>=1080) 4 else if(activity.resources.configuration.screenWidthDp>380) 2 else 1
+                    "formGrid" -> if(activity.resources.configuration.screenWidthDp>=1080) 4 else if(activity.resources.configuration.screenWidthDp>=720) 3 else if(activity.resources.configuration.screenWidthDp>380) 2 else 1
                     "manageGrid" -> if(tablet) 4 else 2
                     "modernGrid" -> if(tablet) 3 else 2
-                    "summaryGrid","reportGrid" -> if(cs.contains("currency-home-values")) 3 else if(cs.contains("home-currency-ledger")) { if(activity.resources.configuration.screenWidthDp>760) 3 else 1 } else if(tablet) 3 else 1
+                    "summaryGrid","reportGrid" -> if(cs.contains("currency-home-values")) 3 else if(cs.contains("home-currency-ledger")) { if(activity.resources.configuration.screenWidthDp>760) 3 else 1 } else if(tablet) 3 else 2
                     "choiceGrid" -> if(tablet) 4 else 2
                     "actionGrid" -> if(tablet) 3 else 2
                     "repairGrid" -> if(activity.resources.configuration.screenWidthDp>=1024) 4 else if(tablet) 3 else 2
                     else -> 2
                 }
-                SourceGrid(activity,count,dp(if(kind in listOf("manageGrid","summaryGrid","reportGrid")) 10 else 11)).apply {
+                SourceGrid(activity,count,dp(when(kind) { "reportGrid" -> 9; "manageGrid","summaryGrid" -> 10; else -> 11 })).apply {
                     children.forEach { addCell(build(it),it.optBoolean("full")) }
                 }
             }
