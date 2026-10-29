@@ -5,6 +5,10 @@
     <application android:label="الصفا Native 7" android:theme="@style/Theme.AlSafa.Native7"
         android:usesCleartextTraffic="false" android:allowBackup="false" android:supportsRtl="true"
         android:enableOnBackInvokedCallback="true">
+        <provider android:name=".InvoiceContentProvider"
+            android:authorities="${applicationId}.invoices"
+            android:exported="true"
+            android:grantUriPermissions="true" />
         <activity android:name=".MainActivity" android:exported="true"
             android:resizeableActivity="true" android:windowSoftInputMode="adjustResize">
             <intent-filter>
