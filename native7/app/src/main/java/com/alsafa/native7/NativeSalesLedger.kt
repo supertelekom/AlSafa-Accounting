@@ -179,6 +179,10 @@ internal object NativeSalesLedger {
                 while(c.moveToNext()) db.execSQL("INSERT INTO native_sale_mixed VALUES (?,?,?,?,?,?,?,?)",
                     arrayOf<Any>(UUID.randomUUID().toString(),id,-c.getDouble(0),c.getString(1),c.getString(2),-c.getDouble(3),c.getDouble(4),at))
             }
+            val originalProfit=db.rawQuery("SELECT COALESCE(SUM(CASE WHEN amount>0 AND ? > 0 THEN amount*(? - ?)/? ELSE 0 END),0) FROM native_sale_collections WHERE sale_id=?",arrayOf(sale.total.toString(),sale.total.toString(),sale.cost.toString(),sale.total.toString(),id)).use { c -> c.moveToFirst();c.getDouble(0) }
+            val adjusted=db.rawQuery("SELECT COALESCE(SUM(amount),0) FROM native_sale_profit_adjustments WHERE sale_id=?",arrayOf(id)).use { c -> c.moveToFirst();c.getDouble(0) }
+            val difference=-(originalProfit+adjusted)
+            if(kotlin.math.abs(difference)>0.000001) db.execSQL("INSERT INTO native_sale_profit_adjustments VALUES (?,?,?,?,?,?)",arrayOf<Any>(UUID.randomUUID().toString(),id,difference,sale.currency,at,"cancel: "+reason))
             db.execSQL("UPDATE native_sales SET status='cancelled' WHERE id=?",arrayOf(id))
             db.setTransactionSuccessful()
         } finally { db.endTransaction() }
