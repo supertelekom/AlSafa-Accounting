@@ -241,6 +241,15 @@ internal object NativeSalesLedger {
         }
         return result
     }
+    /** Returned cost uses weighted average historical cost of the sold product. */
+    fun returnedCost(db:SQLiteDatabase,saleId:String):Double {
+        create(db)
+        db.rawQuery("SELECT COALESCE(SUM(r.quantity * (SELECT SUM(l.unit_cost*l.quantity)*1.0/NULLIF(SUM(l.quantity),0) FROM native_sale_lines l WHERE l.sale_id=r.sale_id AND l.product_id=r.product_id)),0) FROM native_sale_returns r WHERE r.sale_id=?",
+            arrayOf(saleId)).use { c ->
+            c.moveToFirst()
+            return c.getDouble(0)
+        }
+    }
     /** Profit is earned only on the actual collection day, proportionally to cash received. */
     fun recognizedProfit(db:SQLiteDatabase,from:Long,to:Long):Double {
         create(db)
