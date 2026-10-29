@@ -256,9 +256,9 @@ internal object NativeProductChanges {
                 val id=edited.getString("id")
                 val old=originals.getValue(id)
                 db.execSQL("INSERT OR REPLACE INTO native_product_edits(product_id,payload,revision) VALUES (?,?,COALESCE((SELECT revision+1 FROM native_product_edits WHERE product_id=?),1))",
-                    arrayOf(id,edited.toString(),id))
+                    arrayOf<Any?>(id,edited.toString(),id))
                 db.execSQL("INSERT INTO native_product_audit(event_id,product_id,previous_payload,new_payload,reason,recorded_at) VALUES (?,?,?,?,?,?)",
-                    arrayOf(UUID.randomUUID().toString(),id,old.toString(),edited.toString(),reason,System.currentTimeMillis()))
+                    arrayOf<Any?>(UUID.randomUUID().toString(),id,old.toString(),edited.toString(),reason,System.currentTimeMillis()))
             }
             db.setTransactionSuccessful()
         } finally { db.endTransaction() }
@@ -323,11 +323,11 @@ internal object NativeProductChanges {
             val reference="inventory-adjustment-"+UUID.randomUUID().toString()
             val description="تسوية مخزون — "+reason+(if(notes.isBlank())"" else " — "+notes.trim())
             db.execSQL("INSERT OR REPLACE INTO native_product_edits(product_id,payload,revision) VALUES (?,?,COALESCE((SELECT revision+1 FROM native_product_edits WHERE product_id=?),1))",
-                arrayOf(productId,updated.toString(),productId))
+                arrayOf<Any?>(productId,updated.toString(),productId))
             db.execSQL("INSERT INTO native_stock_movements(event_id,product_id,before_qty,after_qty,reason,reference_type,recorded_at) VALUES (?,?,?,?,?,?,?)",
                 arrayOf<Any?>(reference,productId,before,newStock,description,"inventory-adjustment",now))
             db.execSQL("INSERT INTO native_product_audit(event_id,product_id,previous_payload,new_payload,reason,recorded_at) VALUES (?,?,?,?,?,?)",
-                arrayOf(UUID.randomUUID().toString(),productId,old.toString(),updated.toString(),description,now))
+                arrayOf<Any?>(UUID.randomUUID().toString(),productId,old.toString(),updated.toString(),description,now))
             db.setTransactionSuccessful()
         } finally { db.endTransaction() }
     }
