@@ -339,6 +339,7 @@ internal object NativeSalesLedger {
     }
     fun remaining(db:SQLiteDatabase,id:String):Double {
         val sale=find(db,id) ?: error("الفاتورة غير موجودة")
+        if(sale.status=="cancelled") return 0.0
         val returns=db.rawQuery("SELECT COALESCE(SUM(refund),0) FROM native_sale_returns WHERE sale_id=?",arrayOf(id)).use { c -> c.moveToFirst();c.getDouble(0) }
         return (sale.total-returns-sale.collected).coerceAtLeast(0.0)
     }
