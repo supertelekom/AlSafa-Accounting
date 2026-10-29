@@ -12,13 +12,18 @@ import org.json.JSONObject
  * unknown fields. No cloud, JavaScript, or WebView is involved.
  */
 internal class LegacyBackupStore(context: Context) :
-    SQLiteOpenHelper(context.applicationContext, "alsafa_native7.db", null, 1) {
+    SQLiteOpenHelper(context.applicationContext, "alsafa_native7.db", null, 2) {
     override fun onCreate(db: SQLiteDatabase) {
         db.execSQL("CREATE TABLE legacy_sections (name TEXT PRIMARY KEY NOT NULL, payload TEXT NOT NULL, item_count INTEGER NOT NULL)")
         db.execSQL("CREATE TABLE legacy_metadata (name TEXT PRIMARY KEY NOT NULL, payload TEXT NOT NULL)")
+        createRecordTable(db)
+    }
+    private fun createRecordTable(db: SQLiteDatabase) {
+        db.execSQL("CREATE TABLE IF NOT EXISTS legacy_records (section TEXT NOT NULL, ordinal INTEGER NOT NULL, original_id TEXT, payload TEXT NOT NULL, PRIMARY KEY(section,ordinal))")
+        db.execSQL("CREATE INDEX IF NOT EXISTS idx_legacy_records_id ON legacy_records(section,original_id)")
     }
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
-        // Future schema changes must use additive migrations; never drop tables.
+        if (oldVersion < 2) createRecordTable(db)
     }
 
     data class Inspection(val counts: Map<String, Int>, val format: String)
@@ -67,6 +72,14 @@ internal class LegacyBackupStore(context: Context) :
                 val count = if (value is JSONArray) value.length() else 0
                 db.execSQL("INSERT INTO legacy_sections(name,payload,item_count) VALUES(?,?,?)",
                     arrayOf(key, raw, count))
+                if (value is JSONArray) {
+                    for (index in 0 until value.length()) {
+                        val record = value.get(index)
+                        val originalId = (record as? JSONObject)?.optString("id")?.takeIf { it.isNotBlank() }
+                        db.execSQL("INSERT INTO legacy_records(section,ordinal,original_id,payload) VALUES(?,?,?,?)",
+                            arrayOf(key, index, originalId, record.toString()))
+                    }
+                }
             }
             db.execSQL("INSERT INTO legacy_metadata(name,payload) VALUES(?,?)",
                 arrayOf("original_backup", text))
@@ -75,6 +88,11 @@ internal class LegacyBackupStore(context: Context) :
                 it.getInt(0)
             }
             check(persisted == data.length()) { "لم يتم حفظ جميع أقسام النسخة" }
+            val staged = db.rawQuery("SELECT COUNT(*) FROM legacy_records", null).use {
+                check(it.moveToFirst())
+                it.getInt(0)
+            }
+            check(staged == inspection.counts.values.sum()) { "لم يتم حفظ جميع السجلات" }
             db.setTransactionSuccessful()
         } finally {
             db.endTransaction()
