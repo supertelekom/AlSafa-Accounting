@@ -98,3 +98,37 @@ checking `saleTotal` and `repairInvoiceTotal`.
   returns, currency conversion, daily closings and partner accounting rules.
 - Compare all financial outputs with the original application before enabling
   live writes.
+
+## Read-only accounting parity baseline (2026-10-26 actual backup)
+
+Source JS inspected: `saleTotal`, `saleSubtotalValue`, `saleCost`,
+`repairPartsInvoiceTotal`, `repairPartsCost`, `repairLaborPrice`,
+`repairInvoiceTotal`, `paidFor`, `refundedFor`, `effectiveTotalFor`,
+`netPaidFor`, `balanceFor`, `paymentStatusFor`.
+
+Kotlin read-only ports: `LegacyAccountingRules.kt` and
+`LegacyReceivables.kt`. These are not wired into any mutation path.
+
+Reference dataset baseline calculated from source-equivalent formulas on the
+actual JSON (values in mixed original currencies; **not consolidated money**):
+
+| Domain | Records | Sum of original invoice totals | Sum net paid | Sum balance |
+|---|---:|---:|---:|---:|
+| Sales | 111 | 77696.1737 | 77447.1737 | 11.0 |
+| Repairs | 308 | 37591.1597 | 37011.1597 | 500.0 |
+
+Sales status counts: paid in full 108, partial 1, settled/returned 2.
+Repairs: paid in full 297, due on delivery 10, settled/returned 1.
+Sale item cost sum (mixed original currencies): 33529.8859415.
+Repair used-parts cost sum (mixed original currencies): 3824.125864.
+
+**Caution:** these aggregates mix USD, TRY and SYP and cannot be presented as
+profit, cash or balance sheet values. They are numeric regression checks only.
+
+The reference calculations were run on the JSON in Python using formulas
+transcribed from the old JS; **a Kotlin runtime test and APK build have not
+yet run**. Do not claim full JS-versus-Kotlin parity until running identical
+test fixtures through both implementations and comparing each invoice.
+
+Do not enable accounting writes until invoice-level parity, currency handling,
+inventory/funding, supplier settlement, daily close and partner profit tests pass.
