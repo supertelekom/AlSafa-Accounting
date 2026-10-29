@@ -1213,42 +1213,121 @@ class MainActivity : Activity() {
     }
     private fun productsPreview(parent:LinearLayout) {
         parent.addView(text("المنتجات والمخزون",26f,gold))
-        parent.addView(text("أضف ساعاتك وأسعارها وكمياتها وباركودها، ثم اخترها مباشرة في الفاتورة.",14f))
-        disabledAction(parent,"↻ تحديث")
         disabledAction(parent,"⬆ استيراد آمن")
         parent.addView(text("＋ منتج",18f,gold).apply {
             isClickable=true
             setOnClickListener { navigateTo("preview:إضافة منتج جديد") }
         })
-        val productSearch=field(parent,"ابحث باسم المنتج أو الباركود أو REF / Model...")
-        val productResults=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL }
-        parent.addView(productResults)
-        var productOffset=0
-        fun showProducts(reset:Boolean) {
-            if(reset) { productOffset=0;productResults.removeAllViews() }
+        val search=field(parent,"ابحث باسم المنتج أو الباركود أو REF / Model...")
+        val countLabel=text("",13f)
+        parent.addView(countLabel)
+        val list=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL }
+        parent.addView(list)
+        var offset=0
+        fun load(reset:Boolean) {
+            if(reset) { offset=0;list.removeAllViews() }
             if(!legacyBackupStore.hasData()) {
-                if(reset)productResults.addView(text("استعد النسخة الاحتياطية لعرض المنتجات.",15f))
+                countLabel.text="استعد النسخة الاحتياطية لعرض المنتجات."
                 return
             }
             try {
-                val products=LegacyProductRepository.list(legacyBackupStore.readableDatabase,
-                    productSearch.text.toString(),productOffset,40)
-                products.forEach { product ->
-                    productResults.addView(text(product.name+"  •  "+product.stock+"  •  "+product.salePrice+" "+product.currency,14f))
+                val db=legacyBackupStore.readableDatabase
+                if(reset) {
+                    val count=db.rawQuery("SELECT COUNT(*) FROM domain_products",null).use {
+                        if(it.moveToFirst())it.getInt(0) else 0
+                    }
+                    countLabel.text="$"+"{count} منتج محفوظ. أضف ساعاتك وأسعارها وكمياتها وباركودها، ثم اخترها مباشرة في الفاتورة."
                 }
-                productOffset+=products.size
-            } catch(error:Exception) {
-                productResults.addView(text(error.message ?: "تعذر تحميل المنتجات",13f))
+                val products=LegacyProductRepository.list(db,search.text.toString(),offset,24)
+                for(p in products) {
+                    val row=LinearLayout(this).apply {
+                        orientation=LinearLayout.VERTICAL
+                        background=panel(paper,14)
+                        setPadding(dp(10),dp(10),dp(10),dp(10))
+                    }
+                    val header=LinearLayout(this).apply {
+                        orientation=LinearLayout.HORIZONTAL
+                        gravity=Gravity.CENTER_VERTICAL
+                        layoutDirection=View.LAYOUT_DIRECTION_RTL
+                    }
+                    val photo=ProductImageView.create(this,p.raw.optString("photo"),dp(84),dp(84))
+                    photo.setOnClickListener {
+                        ProductImageView.show(this@MainActivity,p.raw.optString("photo"),p.name)
+                    }
+                    header.addView(photo,LinearLayout.LayoutParams(dp(84),dp(84)))
+                    val labels=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL }
+                    labels.addView(text(p.name,16f).apply { gravity=Gravity.RIGHT })
+                    labels.addView(text(p.raw.optString("brand")+" · "+p.raw.optString("model"),12f).apply { gravity=Gravity.RIGHT })
+                    header.addView(labels,LinearLayout.LayoutParams(0,-2,1f))
+                    row.addView(header)
+                    val stock=p.stock
+                    val reserved=0 // Reservation projection is not ported yet; do not invent a value.
+                    row.addView(text("المخزون الفعلي: $stock    سعر البيع: "+"$"+"{p.salePrice} "+"$"+"{p.currency}",13f))
+                    row.addView(text("الباركود: "+p.barcode.ifBlank { "—" },12f))
+                    if(stock<=LegacyAccountingRules.number(p.raw.opt("minStock")))
+                        row.addView(text("تنبيه: المخزون وصل للحد الأدنى",12f,Color.RED))
+                    val actions=LinearLayout(this).apply { orientation=LinearLayout.HORIZONTAL }
+                    val edit=Button(this).apply {
+                        text="تعديل"
+                        setOnClickListener { selectedInventoryProduct=p.id;navigateTo("native:product-edit") }
+                    }
+                    actions.addView(edit)
+                    val barcodePhoto=p.raw.optString("barcodePhoto")
+                    if(barcodePhoto.isNotBlank())actions.addView(Button(this).apply {
+                        text="صورة الباركود"
+                        setOnClickListener { ProductImageView.show(this@MainActivity,barcodePhoto,"صورة الباركود") }
+                    })
+                    row.addView(actions)
+                    list.addView(row,LinearLayout.LayoutParams(-1,-2).apply { bottomMargin=dp(10) })
+                }
+                offset+=products.size
+            } catch(e:Exception) {
+                list.addView(text(e.message ?: "تعذر تحميل المنتجات",13f))
             }
         }
-        productSearch.addTextChangedListener(object:android.text.TextWatcher {
+        search.addTextChangedListener(object:android.text.TextWatcher {
             override fun beforeTextChanged(s:CharSequence?,start:Int,count:Int,after:Int){}
-            override fun onTextChanged(s:CharSequence?,start:Int,before:Int,count:Int){showProducts(true)}
+            override fun onTextChanged(s:CharSequence?,start:Int,before:Int,count:Int){load(true)}
             override fun afterTextChanged(s:android.text.Editable?){}
         })
-        parent.addView(Button(this).apply { text="عرض المزيد";setOnClickListener { showProducts(false) } })
-        showProducts(true)
-
+        parent.addView(Button(this).apply { text="عرض المزيد";setOnClickListener { load(false) } })
+        load(true)
+    }
+    private var selectedInventoryProduct:String?=null
+    private fun inventoryEditPage(parent:LinearLayout) {
+        val id=selectedInventoryProduct ?: return
+        val db=legacyBackupStore.writableDatabase
+        val product=NativeProductChanges.get(db,id) ?: return
+        parent.addView(text("تعديل",23f,gold))
+        val name=field(parent,"اسم الساعة / المنتج *").apply { setText(product.optString("name")) }
+        val color=field(parent,"اللون").apply { setText(product.optString("color")) }
+        val barcode=field(parent,"باركود المنتج").apply { setText(product.optString("barcode")) }
+        val price=field(parent,"سعر البيع *").apply {
+            setText(product.optString("salePrice"))
+            inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
+        }
+        parent.addView(text("المخزون الفعلي: "+LegacyProductRules.stock(product),13f))
+        parent.addView(Button(this).apply {
+            text="حفظ"
+            setOnClickListener {
+                try {
+                    val amount=price.text.toString().toDoubleOrNull()
+                    require(amount!=null && amount.isFinite() && amount>=0){"سعر البيع غير صالح"}
+                    val candidate=org.json.JSONObject(product.toString()).apply {
+                        put("name",name.text.toString().trim())
+                        put("color",color.text.toString().trim())
+                        put("barcode",barcode.text.toString().trim())
+                        put("salePrice",amount)
+                    }
+                    NativeProductChanges.save(db,candidate,"تعديل بيانات المنتج")
+                    android.widget.Toast.makeText(this@MainActivity,"تم الحفظ",android.widget.Toast.LENGTH_SHORT).show()
+                    returnToPrevious()
+                } catch(e:Exception) {
+                    android.app.AlertDialog.Builder(this@MainActivity).setMessage(e.message ?: "تعذر الحفظ")
+                        .setPositiveButton("حسناً",null).show()
+                }
+            }
+        })
     }
     // v3.9.359 assets/main.js: WATCH_DETAIL_DEFAULTS (same order and labels).
     private val originalWatchDetails = mapOf(
@@ -1987,6 +2066,7 @@ class MainActivity : Activity() {
             "preview:المشتريات والموردون" -> supplierPurchasesPreview(body)
             "preview:فاتورة شراء" -> legacyFormCard(body) { purchaseInvoicePreview(it) }
             "preview:المنتجات والمخزون" -> productsPreview(body)
+            "native:product-edit" -> inventoryEditPage(body)
             "preview:إضافة منتج جديد" -> legacyFormCard(body) { productFormPreview(it) }
             "preview:قطع الصيانة" -> maintenancePartsPreview(body)
             "preview:فواتير المرتجع" -> returnsPreview(body)
