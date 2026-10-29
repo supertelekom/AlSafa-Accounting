@@ -1504,11 +1504,16 @@ class MainActivity : Activity() {
                                 OR EXISTS(SELECT 1 FROM native_sale_lines l
                                     WHERE l.sale_id=s.id AND
                                     (l.product_id LIKE ? OR EXISTS(
-                                        SELECT 1 FROM domain_products p WHERE p.id=l.product_id AND p.name LIKE ?))))
+                                        SELECT 1 FROM domain_products p WHERE p.id=l.product_id AND
+                                        COALESCE((SELECT json_extract(e.payload,'$.name') FROM native_product_edits e WHERE e.product_id=p.id),p.name) LIKE ?)
+                                    OR EXISTS(SELECT 1 FROM native_new_products n
+                                        WHERE n.product_id=l.product_id AND
+                                        COALESCE((SELECT json_extract(e.payload,'$.name') FROM native_product_edits e WHERE e.product_id=n.product_id),
+                                        json_extract(n.payload,'$.name')) LIKE ?)))))
                                 AND (? IS NULL OR s.created_at>=?)
                                 AND (? IS NULL OR s.created_at<?)
                             ORDER BY s.created_at DESC LIMIT 30""".trimIndent(),
-                            arrayOf(like,like,like,like,like,
+                            arrayOf(like,like,like,like,like,like,
                                 start?.toString(),start?.toString(),end?.toString(),end?.toString())).use { cursor ->
                             while(cursor.moveToNext()) {
                                 val id=cursor.getString(0)
