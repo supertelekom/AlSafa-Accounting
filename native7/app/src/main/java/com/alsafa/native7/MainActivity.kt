@@ -3104,7 +3104,7 @@ class MainActivity : Activity() {
         else if(sourceRoute=="products" || screen=="preview:المنتجات والمخزون") {
             productsPreview(body)
         }
-        else if(sourceStructure) {
+        else if(sourceStructure && screen.startsWith("structure:")) {
             originalPages.show(body,requireNotNull(sourceRoute))
             if(sourceRoute=="settings") {
                 val restoreAction=text("استعادة نسخة الصفا القديمة",16f,gold).apply {
