@@ -277,7 +277,11 @@ internal object NativeSalesLedger {
             db.execSQL("INSERT INTO native_sale_stock VALUES (?,?,?,?,?,?)",
                 arrayOf<Any>(UUID.randomUUID().toString(),saleId,productId,quantity,"return: "+reason,at))
             val refundable=db.rawQuery("SELECT COALESCE(SUM(amount),0) FROM native_sale_collections WHERE sale_id=? AND account=?",arrayOf(saleId,account)).use { c -> c.moveToFirst();c.getDouble(0).coerceAtLeast(0.0) }
-            val cashRefund=refund.coerceAtMost(refundable)
+            // An unpaid return reduces receivables; never pay out more cash than
+            // the customer's actual net collections on the whole invoice.
+            val netCollected=db.rawQuery("SELECT COALESCE(SUM(amount),0) FROM native_sale_collections WHERE sale_id=?",
+                arrayOf(saleId)).use { c -> c.moveToFirst();c.getDouble(0).coerceAtLeast(0.0) }
+            val cashRefund=refund.coerceAtMost(refundable).coerceAtMost(netCollected)
             if(cashRefund>0) insertCollection(db,saleId,-cashRefund,sale.currency,account,at,"return: "+reason)
             val collected=db.rawQuery("SELECT COALESCE(SUM(amount),0) FROM native_sale_collections WHERE sale_id=?",arrayOf(saleId)).use { c -> c.moveToFirst();c.getDouble(0) }
             val returnedCost=returnedCost(db,saleId)
@@ -308,7 +312,9 @@ internal object NativeSalesLedger {
                 arrayOf(account,currency,from.toString(),to.toString())).use { x -> x.moveToFirst();x.getDouble(0) }
             val paidChange=db.rawQuery("SELECT COALESCE(SUM(payout),0) FROM native_sale_change WHERE payout_account=? AND payout_currency=? AND created_at>=? AND created_at<?",
                 arrayOf(account,currency,from.toString(),to.toString())).use { x -> x.moveToFirst();x.getDouble(0) }
-            return collected+tenderExcess+mixed-paidChange
+            // Mixed invoice-equivalent collections are a bookkeeping entry, not cash.
+            // Only physical tender rows contribute to the actual account balance.
+            return (if(account=="mixed") 0.0 else collected)+tenderExcess+mixed-paidChange
         }
     }
     fun profitByCurrency(db:SQLiteDatabase,from:Long,to:Long):Map<String,Double> {
