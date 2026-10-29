@@ -1345,6 +1345,10 @@ class MainActivity : Activity() {
                         setOnClickListener { newProductPhotos.clear();selectedInventoryProduct=p.id;navigateTo("native:product-edit") }
                     }
                     actions.addView(edit)
+                    if(p.variantGroupId.isNotBlank())actions.addView(Button(this).apply {
+                        text="تعديل ألوان المنتج"
+                        setOnClickListener { newProductPhotos.clear();selectedInventoryProduct=p.id;navigateTo("native:group-edit") }
+                    })
                     actions.addView(Button(this).apply {
                         text="تسوية المخزون"
                         setOnClickListener { selectedInventoryProduct=p.id;navigateTo("native:stock-adjustment") }
