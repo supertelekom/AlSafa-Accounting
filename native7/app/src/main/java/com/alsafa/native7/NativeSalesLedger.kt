@@ -217,14 +217,16 @@ internal object NativeSalesLedger {
             val refundable=db.rawQuery("SELECT COALESCE(SUM(amount),0) FROM native_sale_collections WHERE sale_id=? AND account=?",arrayOf(saleId,account)).use { c -> c.moveToFirst();c.getDouble(0).coerceAtLeast(0.0) }
             val cashRefund=refund.coerceAtMost(refundable)
             if(cashRefund>0) insertCollection(db,saleId,-cashRefund,sale.currency,account,at,"return: "+reason)
-            val costOfReturned=db.rawQuery("SELECT COALESCE(SUM(quantity*unit_cost),0) FROM native_sale_lines WHERE sale_id=? AND product_id=?",arrayOf(saleId,productId)).use { c -> c.moveToFirst();c.getDouble(0) }
-            val costPerUnit=costOfReturned/sold.first
-            val returnedMargin=refund-costPerUnit*quantity
-            val historicalCollected=db.rawQuery("SELECT COALESCE(SUM(CASE WHEN amount>0 THEN amount ELSE 0 END),0) FROM native_sale_collections WHERE sale_id=? AND reason IN ('collection','mixed_collection')",arrayOf(saleId)).use { c -> c.moveToFirst();c.getDouble(0) }
-            val collectedShare=if(sale.total>0) (historicalCollected/sale.total).coerceIn(0.0,1.0) else 0.0
-            val profitReversal=-returnedMargin*collectedShare
-            if(profitReversal!=0.0) db.execSQL("INSERT INTO native_sale_profit_adjustments VALUES (?,?,?,?,?,?)",
-                arrayOf<Any>(UUID.randomUUID().toString(),saleId,profitReversal,sale.currency,at,"return: "+reason))
+            val collected=db.rawQuery("SELECT COALESCE(SUM(amount),0) FROM native_sale_collections WHERE sale_id=?",arrayOf(saleId)).use { c -> c.moveToFirst();c.getDouble(0) }
+            val returnedCost=returnedCost(db,saleId)
+            val netValue=sale.total-existingRefund-refund
+            val target=if(netValue>0.000001) collected*(netValue-sale.cost+returnedCost)/netValue else 0.0
+            val baseline=db.rawQuery("SELECT COALESCE(SUM(CASE WHEN amount>0 THEN amount ELSE 0 END),0) FROM native_sale_collections WHERE sale_id=?",arrayOf(saleId)).use { c -> c.moveToFirst();c.getDouble(0) } *
+                (if(sale.total>0) (sale.total-sale.cost)/sale.total else 0.0)
+            val previous=db.rawQuery("SELECT COALESCE(SUM(amount),0) FROM native_sale_profit_adjustments WHERE sale_id=?",arrayOf(saleId)).use { c -> c.moveToFirst();c.getDouble(0) }
+            val correction=target-baseline-previous
+            if(kotlin.math.abs(correction)>0.000001) db.execSQL("INSERT INTO native_sale_profit_adjustments VALUES (?,?,?,?,?,?)",
+                arrayOf<Any>(UUID.randomUUID().toString(),saleId,correction,sale.currency,at,"return: "+reason))
             db.setTransactionSuccessful()
         } finally { db.endTransaction() }
     }
