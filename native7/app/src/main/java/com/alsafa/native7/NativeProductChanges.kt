@@ -83,6 +83,19 @@ internal object NativeProductChanges {
                     }
                 }
             }
+            val groupId=edited.optString("variantGroupId")
+            if(groupId.isNotBlank()) {
+                val identity=LegacyProductRules.productVariantIdentity(edited)
+                db.rawQuery("SELECT COALESCE(e.payload,p.raw_json) FROM domain_products p LEFT JOIN native_product_edits e ON e.product_id=p.id WHERE p.variantGroupId=? AND p.id!=?",
+                    arrayOf(groupId,id)).use { cursor ->
+                    while(cursor.moveToNext()) {
+                        val other=JSONObject(cursor.getString(0))
+                        require(LegacyProductRules.productVariantIdentity(other)!=identity) {
+                            "هذا اللون موجود مسبقاً في مجموعة المنتج"
+                        }
+                    }
+                }
+            }
             val previous=JSONObject(old!!)
             // Financial movements require their own atomic stock/cash posting.
             require(LegacyAccountingRules.number(previous.opt("stock"))==stock) {
