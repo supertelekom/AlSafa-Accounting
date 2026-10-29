@@ -975,11 +975,12 @@ class MainActivity : Activity() {
             }
         })
         lateinit var saleCurrency:Spinner
+        lateinit var paymentMethod:Spinner
         formPair(parent,{ column ->
             saleCurrency=select(column,"عملة البيع / القبض *",listOf("USD","TRY","SYP"))
             column.addView(text("المبلغ يدخل صندوق هذه العملة نفسها.",11f,Color.rgb(138,123,108)))
         },{ column ->
-            select(column,"طريقة الدفع *",listOf("نقدي","شام كاش","تحويل بنكي"))
+            paymentMethod=select(column,"طريقة الدفع *",listOf("نقدي","شام كاش","تحويل بنكي"))
             column.addView(text("اختر نقدي أو شام كاش قبل حفظ الفاتورة.",11f,Color.rgb(138,123,108)))
         })
         lateinit var saleCustomer:EditText
@@ -1085,7 +1086,7 @@ class MainActivity : Activity() {
             inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
         }
         parent.addView(text("برنامج الولاء متوقف حالياً.",12f))
-        field(parent,"نسبة الضريبة %","0").inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
+        val taxRate=field(parent,"نسبة الضريبة %","0").apply { inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL }
         parent.addView(text("اختياري ومجهز للمستقبل. اتركه 0 حالياً.",12f))
         val collectionMode=select(parent,"نوع القبض",listOf("عملة واحدة","دفع مختلط (أكثر من عملة)"))
         parent.addView(text("للدفع مثل 55$ + 100₺ اختر دفع مختلط.",12f))
@@ -1122,11 +1123,20 @@ class MainActivity : Activity() {
                     val price=(pair.second as? EditText)?.text?.toString()?.toDoubleOrNull() ?: -1.0
                     saleLines.add(NativeSalesLedger.Line(productId,qty,price))
                 }
-                require((manualDiscount.text.toString().toDoubleOrNull() ?: 0.0)==0.0) { "الخصم يحتاج توزيعاً محاسبياً على الأصناف قبل الحفظ" }
+                val discount=manualDiscount.text.toString().toDoubleOrNull() ?: 0.0
+                require(discount.isFinite() && discount>=0) { "الخصم غير صالح" }
+                require((taxRate.text.toString().toDoubleOrNull() ?: 0.0)==0.0) { "لا يمكن حفظ الضريبة قبل تفعيل حسابها" }
+                val subtotal=saleLines.sumOf { it.quantity*it.unitPrice }
+                require(subtotal>0 && discount<=subtotal) { "الخصم أكبر من قيمة الفاتورة" }
+                if(discount>0) {
+                    val factor=(subtotal-discount)/subtotal
+                    for(i in saleLines.indices) saleLines[i]=saleLines[i].copy(unitPrice=saleLines[i].unitPrice*factor)
+                }
                 val amount=initialPayment.text.toString().toDoubleOrNull() ?: 0.0
                 val id=NativeSalesLedger.save(
                     legacyBackupStore.writableDatabase,saleLines,saleCurrency.selectedItem.toString(),
-                    saleType.selectedItem.toString(),saleCustomer.text.toString(),salePhone.text.toString(),amount
+                    saleType.selectedItem.toString(),saleCustomer.text.toString(),salePhone.text.toString(),amount,
+                    when(paymentMethod.selectedItemPosition) { 1 -> "شام كاش"; 2 -> "البنك"; else -> "درج المحل" }
                 )
                 android.widget.Toast.makeText(this,"تم حفظ الفاتورة: "+id,android.widget.Toast.LENGTH_LONG).show()
                 navigateTo("preview:المبيعات والفواتير")
