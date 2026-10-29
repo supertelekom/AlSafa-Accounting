@@ -1272,7 +1272,7 @@ class MainActivity : Activity() {
         disabledAction(parent,"⬆ استيراد آمن")
         parent.addView(text("＋ منتج",18f,gold).apply {
             isClickable=true
-            setOnClickListener { navigateTo("preview:إضافة منتج جديد") }
+            setOnClickListener { newProductPhotos.clear();navigateTo("preview:إضافة منتج جديد") }
         })
         val search=field(parent,"ابحث باسم المنتج أو الباركود أو REF / Model...")
         val countLabel=text("",13f)
@@ -1342,7 +1342,7 @@ class MainActivity : Activity() {
                     val actions=LinearLayout(this).apply { orientation=LinearLayout.HORIZONTAL }
                     val edit=Button(this).apply {
                         text="تعديل"
-                        setOnClickListener { selectedInventoryProduct=p.id;navigateTo("native:product-edit") }
+                        setOnClickListener { newProductPhotos.clear();selectedInventoryProduct=p.id;navigateTo("native:product-edit") }
                     }
                     actions.addView(edit)
                     actions.addView(Button(this).apply {
