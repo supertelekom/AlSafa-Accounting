@@ -294,17 +294,20 @@ internal object NativeSalesLedger {
         }
     }
     private fun legacyWithdrawn(db:SQLiteDatabase,name:String,currency:String,from:Long,to:Long):Double {
-        val start=java.text.SimpleDateFormat("yyyy-MM-dd",java.util.Locale.US).format(java.util.Date(from))
-        val end=java.text.SimpleDateFormat("yyyy-MM-dd",java.util.Locale.US).format(java.util.Date(to))
-        val aliases=when(name) {
-            "عبد الكريم" -> arrayOf("عبد الكريم","عبدالكريم","Abdul-Karim")
-            "يزن" -> arrayOf("يزن","Yazan")
-            else -> arrayOf("الأب","الوالد","father")
+        val format=java.text.SimpleDateFormat("yyyy-MM-dd",java.util.Locale.US).apply {
+            timeZone=java.util.TimeZone.getTimeZone("Asia/Damascus")
         }
-        val placeholders=aliases.joinToString(",") { "?" }
-        val args=(listOf(currency,start,end)+aliases.toList()).toTypedArray()
-        db.rawQuery("SELECT COALESCE(SUM(amount),0) FROM domain_partnerWithdrawals WHERE currency=? AND substr(date,1,10)>=? AND substr(date,1,10)<? AND partnerName IN ($placeholders)",args).use { c ->
-            c.moveToFirst();return c.getDouble(0)
+        val start=format.format(java.util.Date(from))
+        val end=format.format(java.util.Date(to))
+        val partnerId=when(name) {
+            "عبد الكريم" -> "me"
+            "يزن" -> "brother"
+            else -> "father"
+        }
+        db.rawQuery("SELECT COALESCE(SUM(amount),0) FROM domain_partnerWithdrawals WHERE currency=? AND date>=? AND date<? AND partnerId=?",
+            arrayOf(currency,start,end,partnerId)).use { c ->
+            c.moveToFirst()
+            return c.getDouble(0)
         }
     }
     data class CashComparison(val account:String,val currency:String,
