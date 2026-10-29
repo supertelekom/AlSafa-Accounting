@@ -68,6 +68,21 @@ internal object NativeProductChanges {
                 }
             }
             require(old!=null) { "المنتج غير موجود؛ إضافة المنتجات الجديدة تحتاج مساراً مستقلاً" }
+            val proposedBarcode=edited.optString("barcode").replace(Regex("\\s+"),"")
+            if(proposedBarcode.isNotBlank()) {
+                db.rawQuery("SELECT p.id FROM domain_products p LEFT JOIN native_product_edits e ON e.product_id=p.id WHERE p.id!=? AND REPLACE(COALESCE(json_extract(e.payload,'$.barcode'),p.barcode),' ','')=? LIMIT 1",
+                    arrayOf(id,proposedBarcode)).use { cursor ->
+                    require(!cursor.moveToFirst()) { "الباركود مستخدم في منتج آخر" }
+                }
+                db.rawQuery("SELECT raw_json FROM domain_maintenance_parts",null).use { cursor ->
+                    while(cursor.moveToNext()) {
+                        val part=JSONObject(cursor.getString(0))
+                        require(part.optString("barcode").replace(Regex("\\s+"),"")!=proposedBarcode) {
+                            "الباركود مستخدم في قطعة صيانة"
+                        }
+                    }
+                }
+            }
             val previous=JSONObject(old!!)
             // Financial movements require their own atomic stock/cash posting.
             require(LegacyAccountingRules.number(previous.opt("stock"))==stock) {
