@@ -14,3 +14,6 @@ android {
     }
 }
 
+
+// Embedded offline Code 128/EAN/UPC barcode reader; no external scanner app needed.
+dependencies { implementation("com.journeyapps:zxing-android-embedded:4.3.0") }
