@@ -15,5 +15,5 @@ android {
 }
 
 
-// Embedded offline Code 128/EAN/UPC barcode reader; no external scanner app needed.
-dependencies { implementation("com.journeyapps:zxing-android-embedded:4.3.0") }
+// Bundled ML Kit barcode model: works offline without Play Services download.
+dependencies { implementation("com.google.mlkit:barcode-scanning:17.3.0") }
