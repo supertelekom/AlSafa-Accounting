@@ -36,6 +36,7 @@ class SalesCancellationTest {
         }
     private fun verify(db:SQLiteDatabase,id:String) {
         assertEquals("cancelled",NativeSalesLedger.find(db,id)?.status)
+        assertEquals(0.0,NativeSalesLedger.remaining(db,id),0.000001)
         assertEquals(0.0,sum(db,"native_sale_stock","delta",id),0.000001)
         assertEquals(0.0,sum(db,"native_sale_collections","amount",id),0.000001)
         assertTrue(NativeSalesLedger.auditStock(db).isEmpty())
