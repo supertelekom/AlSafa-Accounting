@@ -74,23 +74,25 @@ internal object SalesInvoiceDocument {
         fun add(value:String,size:Float=9f) { fit(value,size).forEach { lines.add(it to size) } }
         add("الصفا للساعات",13f)
         add("Alsafa Watches",10f)
-        add("فاتورة مبيع: $id")
-        add("التاريخ: "+java.text.SimpleDateFormat("yyyy-MM-dd HH:mm",java.util.Locale.US).format(java.util.Date(d.createdAt)))
-        add("العميل: "+d.customer)
-        add("الهاتف: "+d.phone)
-        add("العملة: "+d.sale.currency)
-        add("--------------------------------")
+        add("فاتورة مبيع",12f)
+        add("رقم الفاتورة : "+id)
+        add("التاريخ والوقت : "+java.text.SimpleDateFormat("yyyy/MM/dd HH:mm",java.util.Locale.US).format(java.util.Date(d.createdAt)))
+        add("إسم العميل / الشركة : "+d.customer)
         d.rows.forEach { row ->
-            add(row.name,10f)
-            add("$"+"{row.qty} × $"+"{money(row.price)} = $"+"{money(row.qty*row.price)} $"+"{d.sale.currency}")
+            add("نوع المنتج : "+row.name,10f)
+            add("سعر المنتج الإفرادي : "+money(row.price)+" "+d.sale.currency)
+            add("عدد المنتجات : "+row.qty)
         }
-        add("--------------------------------")
-        add("إجمالي الفاتورة: $"+"{money(d.sale.total)} $"+"{d.sale.currency}",11f)
-        add("المرتجعات: $"+"{money(d.refunded)}")
-        add("المقبوض: $"+"{money(d.sale.collected)}")
-        add("المتبقي: $"+"{money(NativeSalesLedger.remaining(db,id))}",11f)
-        add(if(d.sale.status=="active") "سارية" else "ملغاة")
-        add("الصفا للساعات")
+        // The supplied legacy PDF has a tax row with zero tax. Do not invent
+        // a nonzero tax amount without an actual stored tax field.
+        add("الضريبة : 0")
+        add("الإجمالي : "+money(d.sale.total)+" "+d.sale.currency,11f)
+        add("المقبوض : "+money(d.sale.collected)+" "+d.sale.currency)
+        add("المتبقي : "+money(NativeSalesLedger.remaining(db,id))+" "+d.sale.currency,11f)
+        add("طريقة الدفع : "+d.sale.channel)
+        if(d.refunded>0.000001) add("المرتجعات : "+money(d.refunded)+" "+d.sale.currency)
+        if(d.sale.status!="active") add("ملغاة")
+        add("شكراً لثقتكم بنا",11f)
         val logoHeight=if(logo==null)0f else 42f
         val height=(margin*2+logoHeight+lines.size*lineHeight+12f).toInt()
         try {
