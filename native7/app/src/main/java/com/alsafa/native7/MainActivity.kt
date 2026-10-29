@@ -1505,7 +1505,7 @@ class MainActivity : Activity() {
                 setOnClickListener {
                     try {
                         SalesInvoiceDocument.print(this@MainActivity,legacyBackupStore.readableDatabase,
-                            invoiceId.text.toString().trim())
+                            invoiceId.text.toString().trim(),getSharedPreferences("alsafa_printer",MODE_PRIVATE).getInt("roll_width_mm",80))
                     } catch(e:Exception) {
                         android.widget.Toast.makeText(this@MainActivity,e.message ?: "تعذرت الطباعة",android.widget.Toast.LENGTH_LONG).show()
                     }
@@ -1516,7 +1516,7 @@ class MainActivity : Activity() {
                 setOnClickListener {
                     try {
                         SalesInvoiceDocument.share(this@MainActivity,legacyBackupStore.readableDatabase,
-                            invoiceId.text.toString().trim())
+                            invoiceId.text.toString().trim(),getSharedPreferences("alsafa_printer",MODE_PRIVATE).getInt("roll_width_mm",80))
                     } catch(e:Exception) {
                         android.widget.Toast.makeText(this@MainActivity,e.message ?: "تعذرت المشاركة",android.widget.Toast.LENGTH_LONG).show()
                     }
@@ -2786,8 +2786,28 @@ class MainActivity : Activity() {
     }
     private fun thermalPrinterPreview(parent:LinearLayout) {
         parent.addView(text("الطابعة الحرارية",26f,gold))
-        parent.addView(text("Bluetooth · اختيار الطابعة وعرض الورق",14f))
-        parent.addView(text("إعدادات الطابعة والورق غير مفعلة في معاينة الواجهة.",13f))
+        parent.addView(text("اختيار عرض الرول والطابعة",14f))
+        val sizes=listOf(38,40,44,48,50,57,58,60,76,80,100,110)
+        val prefs=getSharedPreferences("alsafa_printer",MODE_PRIVATE)
+        val selected=Spinner(this)
+        selected.adapter=ArrayAdapter(this,android.R.layout.simple_spinner_dropdown_item,
+            sizes.map { "$"+"it ملم" })
+        selected.setSelection(sizes.indexOf(prefs.getInt("roll_width_mm",80)).coerceAtLeast(0))
+        parent.addView(selected)
+        parent.addView(Button(this).apply {
+            text="حفظ عرض الرول"
+            setOnClickListener {
+                prefs.edit().putInt("roll_width_mm",sizes[selected.selectedItemPosition]).apply()
+                android.widget.Toast.makeText(this@MainActivity,"تم حفظ عرض الرول",android.widget.Toast.LENGTH_SHORT).show()
+            }
+        })
+        parent.addView(Button(this).apply {
+            text="إعدادات البلوتوث والطابعة"
+            setOnClickListener {
+                startActivity(android.content.Intent(android.provider.Settings.ACTION_BLUETOOTH_SETTINGS))
+            }
+        })
+        parent.addView(text("تتم الطباعة عبر خدمة طباعة Android المتوافقة مع الطابعة. الاقتران وحده لا يضمن دعم الطباعة؛ يحتاج اختباراً على الجهاز.",12f))
     }
     private fun inventoryAnalysisPreview(parent:LinearLayout) {
         parent.addView(text("تحليل المخزون",26f,gold))
