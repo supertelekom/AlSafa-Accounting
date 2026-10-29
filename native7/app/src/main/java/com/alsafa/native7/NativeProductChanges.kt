@@ -208,25 +208,53 @@ internal object NativeProductChanges {
         require(edits.isNotEmpty() && reason.isNotBlank())
         val ids=edits.map { it.optString("id") }
         require(ids.none(String::isBlank) && ids.distinct().size==ids.size)
-        val keys=edits.map { LegacyProductRules.productVariantIdentity(it) }
-        require(keys.distinct().size==keys.size) { "تكرار اللون في المجموعة" }
+        val group=edits.first().optString("variantGroupId")
+        require(group.isNotBlank() && edits.all { it.optString("variantGroupId")==group })
         create(db)
         db.beginTransaction()
         try {
+            val originals=edits.associate { edit ->
+                val id=edit.getString("id")
+                id to (get(db,id) ?: throw IllegalArgumentException("منتج غير موجود"))
+            }
+            // Preserve pre-existing legacy duplicate identities when unchanged.
+            val seen=mutableMapOf<String,String>()
+            for(edit in edits) {
+                val id=edit.getString("id")
+                val old=originals.getValue(id)
+                require(old.optString("variantGroupId")==group) { "مجموعة المنتج مختلفة" }
+                require(LegacyAccountingRules.number(old.opt("stock"))==
+                    LegacyAccountingRules.number(edit.opt("stock"))) { "تعديل المخزون يتطلب التسوية" }
+                require(old.optJSONArray("fundingLots")?.toString()==
+                    edit.optJSONArray("fundingLots")?.toString()) { "لا يمكن تعديل التمويل هنا" }
+                val identity=LegacyProductRules.productVariantIdentity(edit)
+                val first=seen.putIfAbsent(identity,id)
+                if(first!=null) {
+                    val firstOld=originals.getValue(first)
+                    require(LegacyProductRules.productVariantIdentity(old)==identity &&
+                        LegacyProductRules.productVariantIdentity(firstOld)==identity) {
+                        "هذا اللون مكرر داخل المجموعة"
+                    }
+                }
+            }
+            val codes=mutableSetOf<String>()
+            for(edit in edits) {
+                val code=edit.optString("barcode").replace(Regex("\\s+"),"")
+                require(code.isBlank() || codes.add(code)) { "الباركود مكرر بين الألوان" }
+                if(code.isNotBlank()) {
+                    db.rawQuery("SELECT p.id FROM domain_products p LEFT JOIN native_product_edits e ON e.product_id=p.id WHERE REPLACE(COALESCE(json_extract(e.payload,'$.barcode'),p.barcode),' ','')=?",
+                        arrayOf(code)).use { c ->
+                        while(c.moveToNext())require(c.getString(0) in ids) { "الباركود مستخدم في منتج آخر" }
+                    }
+                    db.rawQuery("SELECT n.product_id FROM native_new_products n LEFT JOIN native_product_edits e ON e.product_id=n.product_id WHERE REPLACE(json_extract(COALESCE(e.payload,n.payload),'$.barcode'),' ','')=?",
+                        arrayOf(code)).use { c ->
+                        while(c.moveToNext())require(c.getString(0) in ids) { "الباركود مستخدم في منتج آخر" }
+                    }
+                }
+            }
             for(edited in edits) {
                 val id=edited.getString("id")
-                val old=get(db,id) ?: throw IllegalArgumentException("منتج غير موجود")
-                require(old.optString("variantGroupId")==edited.optString("variantGroupId")) {
-                    "تغيير مجموعة الألوان يتطلب معالجة مستقلة"
-                }
-                require(LegacyAccountingRules.number(old.opt("stock"))==
-                    LegacyAccountingRules.number(edited.opt("stock"))) {
-                    "لا يمكن تغيير المخزون من تعديل الألوان"
-                }
-                require(old.optJSONArray("fundingLots")?.toString()==
-                    edited.optJSONArray("fundingLots")?.toString()) {
-                    "لا يمكن تغيير التمويل من تعديل الألوان"
-                }
+                val old=originals.getValue(id)
                 db.execSQL("INSERT OR REPLACE INTO native_product_edits(product_id,payload,revision) VALUES (?,?,COALESCE((SELECT revision+1 FROM native_product_edits WHERE product_id=?),1))",
                     arrayOf(id,edited.toString(),id))
                 db.execSQL("INSERT INTO native_product_audit(event_id,product_id,previous_payload,new_payload,reason,recorded_at) VALUES (?,?,?,?,?,?)",
