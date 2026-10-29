@@ -25,7 +25,7 @@ internal object LegacyProductRepository {
               COALESCE(json_extract(e.payload,'$.name'),p.name) name,
               COALESCE(json_extract(e.payload,'$.barcode'),p.barcode) barcode,
               COALESCE(json_extract(e.payload,'$.model'),p.model) model,COALESCE(json_extract(e.payload,'$.sku'),p.sku) sku,p.ordinal sort_order
-            FROM domain_products p LEFT JOIN native_product_edits e ON e.product_id=p.id
+            FROM domain_products p LEFT JOIN native_product_edits e ON e.product_id=p.id\n            WHERE NOT EXISTS (SELECT 1 FROM native_deleted_products d WHERE d.product_id=p.id)
             UNION ALL
             SELECT COALESCE(e.payload,n.payload) payload,
               json_extract(COALESCE(e.payload,n.payload),'$.name') name,
@@ -33,7 +33,7 @@ internal object LegacyProductRepository {
               json_extract(COALESCE(e.payload,n.payload),'$.model') model,
               json_extract(COALESCE(e.payload,n.payload),'$.sku') sku,
               1000000+n.created_at sort_order
-            FROM native_new_products n LEFT JOIN native_product_edits e ON e.product_id=n.product_id
+            FROM native_new_products n LEFT JOIN native_product_edits e ON e.product_id=n.product_id\n            WHERE NOT EXISTS (SELECT 1 FROM native_deleted_products d WHERE d.product_id=n.product_id)
          ) $where ORDER BY name COLLATE NOCASE, sort_order LIMIT ? OFFSET ?"""
         val output=ArrayList<Product>()
         db.rawQuery(sql,args).use { c ->
@@ -51,7 +51,7 @@ internal object LegacyProductRepository {
     }
     fun findById(db:SQLiteDatabase,id:String):Product? {
         NativeProductChanges.create(db)
-        NativeProductChanges.get(db,id)?.let { row ->
+        if(NativeProductChanges.isDeleted(db,id))return null\n        NativeProductChanges.get(db,id)?.let { row ->
             return Product(row.optString("id"),row.optString("name"),
                 row.optString("barcode"),LegacyProductRules.stock(row)+NativeSalesLedger.stockDelta(db,row.optString("id")),
                 row.optString("currency","USD"),LegacyAccountingRules.number(row.opt("salePrice")),
