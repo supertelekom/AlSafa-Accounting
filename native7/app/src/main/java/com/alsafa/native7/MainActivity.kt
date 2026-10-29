@@ -1391,6 +1391,47 @@ class MainActivity : Activity() {
             })
             parent.addView(controls)
         }
+        data class VariantDraft(val color:EditText,val qty:EditText,val price:EditText,
+            val cost:EditText,val barcode:EditText,val photoKey:String)
+        val variantDrafts=mutableListOf<VariantDraft>()
+        val variantContainer=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL }
+        parent.addView(variantContainer)
+        parent.addView(Button(this).apply {
+            text="＋ إضافة لون آخر"
+            setOnClickListener {
+                val card=LinearLayout(this@MainActivity).apply {
+                    orientation=LinearLayout.VERTICAL
+                    background=panel(paper,12)
+                }
+                val c=field(card,"اللون العام الإضافي *")
+                val q=field(card,"الكمية *").apply { setText("1");inputType=InputType.TYPE_CLASS_NUMBER }
+                val pr=field(card,"سعر بيع الإضافي").apply {
+                    inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
+                }
+                val co=field(card,"كلفة شراء الإضافي").apply {
+                    inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
+                }
+                val bc=field(card,"باركود اللون")
+                val key="variant-photo-"+java.util.UUID.randomUUID().toString()
+                val preview=ProductImageView.create(this@MainActivity,"",dp(84),dp(84))
+                card.addView(preview,LinearLayout.LayoutParams(dp(84),dp(84)))
+                card.addView(Button(this@MainActivity).apply {
+                    text="صورة اللون من الاستوديو"
+                    setOnClickListener { photoPreview=preview;selectProductPhoto(key,false) }
+                })
+                card.addView(Button(this@MainActivity).apply {
+                    text="تصوير اللون"
+                    setOnClickListener { photoPreview=preview;selectProductPhoto(key,true) }
+                })
+                val draft=VariantDraft(c,q,pr,co,bc,key)
+                variantDrafts.add(draft)
+                card.addView(Button(this@MainActivity).apply {
+                    text="حذف اللون"
+                    setOnClickListener { variantDrafts.remove(draft);variantContainer.removeView(card);newProductPhotos.remove(key) }
+                })
+                variantContainer.addView(card)
+            }
+        })
         parent.addView(Button(this).apply {
             text="حفظ المنتج"
             setOnClickListener {
@@ -1428,7 +1469,50 @@ class MainActivity : Activity() {
                         put("fundingLots",funding);put("createdAt",now)
                         for((key,value) in newProductPhotos)put(key,value)
                     }
-                    NativeProductChanges.createProduct(legacyBackupStore.writableDatabase,product)
+                    val all=mutableListOf(product)
+                    if(variantDrafts.isNotEmpty()) {
+                        val groupId=java.util.UUID.randomUUID().toString()
+                        product.put("variantGroupId",groupId)
+                        product.put("variantRole","base")
+                        product.put("variantOrder",0)
+                        product.put("variantColor",color.text.toString().trim())
+                        product.put("variantKey",LegacyProductRules.variantIdentity(
+                            color.text.toString(),color.text.toString(),dial.text.toString(),strap.text.toString()))
+                        variantDrafts.forEachIndexed { index,v ->
+                            val vColor=v.color.text.toString().trim()
+                            require(vColor.isNotBlank()){"اسم اللون الإضافي مطلوب"}
+                            val vQty=v.qty.text.toString().toIntOrNull()
+                            require(vQty!=null && vQty>=0){"كمية اللون غير صالحة"}
+                            val vPrice=v.price.text.toString().toDoubleOrNull() ?: price
+                            val vCost=v.cost.text.toString().toDoubleOrNull() ?: unitCost
+                            require(vPrice.isFinite() && vPrice>=0 && vCost.isFinite() && vCost>=0){"السعر أو الكلفة غير صالح"}
+                            val vId=java.util.UUID.randomUUID().toString()
+                            val vFunding=org.json.JSONArray()
+                            if(vQty>0)vFunding.put(org.json.JSONObject().apply {
+                                put("id",java.util.UUID.randomUUID().toString())
+                                put("source","shop");put("purchaseId","")
+                                put("qtyOriginal",vQty);put("qtyRemaining",vQty)
+                                put("unitCost",vCost);put("currency",currency.selectedItem.toString())
+                                put("createdAt",now)
+                            })
+                            val variant=org.json.JSONObject(product.toString()).apply {
+                                put("id",vId);put("name",LegacyProductRules.variantName(
+                                    name.text.toString().trim(),vColor,vColor,"",""))
+                                put("color",vColor);put("variantColor",vColor)
+                                put("dialColor","");put("strapColor","")
+                                put("variantGroupId",groupId);put("variantRole","variant")
+                                put("variantOrder",index+1)
+                                put("variantKey",LegacyProductRules.variantIdentity(vColor,vColor,"",""))
+                                put("stock",vQty);put("salePrice",vPrice);put("cost",vCost)
+                                put("barcode",v.barcode.text.toString().trim())
+                                put("fundingLots",vFunding)
+                                if(newProductPhotos.containsKey(v.photoKey))put("photo",newProductPhotos.getValue(v.photoKey))
+                                else put("photo",product.optString("photo"))
+                            }
+                            all.add(variant)
+                        }
+                    }
+                    NativeProductChanges.createProducts(legacyBackupStore.writableDatabase,all)
                     newProductPhotos.clear()
                     android.widget.Toast.makeText(this@MainActivity,"تم حفظ المنتج",android.widget.Toast.LENGTH_SHORT).show()
                     returnToPrevious()
