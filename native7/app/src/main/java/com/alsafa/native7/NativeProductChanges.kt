@@ -138,42 +138,71 @@ internal object NativeProductChanges {
         } finally { db.endTransaction() }
     }
 
-    /** Adjusts stock and a designated funding lot in the SAME SQLite transaction.
-     * This is an isolated manual correction, not a sale or supplier purchase.
+    /** Exact local port of inventoryAdjustmentFunding + saveProductStockAdjustment.
+     * Reduction removes newest funding first; increase creates an adjustment lot.
      */
-    fun adjustStock(db:SQLiteDatabase,productId:String,lotId:String,
-        newStock:Int,newLotRemaining:Double,reason:String) {
-        require(reason.isNotBlank() && newStock>=0 && newLotRemaining>=0.0 &&
-            newLotRemaining.isFinite())
+    fun adjustStock(db:SQLiteDatabase,productId:String,newStock:Int,reason:String,notes:String="") {
+        require(newStock>=0 && reason in setOf("جرد فعلي","خطأ إدخال سابق","تلف أو فقد","تصحيح بعد مراجعة المخزون"))
         create(db)
-        db.execSQL("CREATE TABLE IF NOT EXISTS native_stock_movements (event_id TEXT PRIMARY KEY NOT NULL, product_id TEXT NOT NULL, lot_id TEXT NOT NULL, before_qty REAL NOT NULL, after_qty REAL NOT NULL, reason TEXT NOT NULL, recorded_at INTEGER NOT NULL)")
+        db.execSQL("CREATE TABLE IF NOT EXISTS native_stock_movements (event_id TEXT PRIMARY KEY NOT NULL, product_id TEXT NOT NULL, before_qty REAL NOT NULL, after_qty REAL NOT NULL, reason TEXT NOT NULL, reference_type TEXT NOT NULL, recorded_at INTEGER NOT NULL)")
         db.beginTransaction()
         try {
             val old=get(db,productId) ?: throw IllegalArgumentException("المنتج غير موجود")
+            val before=LegacyProductRules.stock(old)
+            require(before!=newStock) { "الكمية الفعلية مطابقة للمخزون المسجل" }
+            require(!LegacyProductRules.fundingMismatch(old)) { "دفعات التمويل لا تطابق المخزون قبل التسوية" }
             val updated=JSONObject(old.toString())
-            val lots=updated.optJSONArray("fundingLots") ?: throw IllegalArgumentException("لا توجد دفعات تمويل")
-            var matched=0
-            for(i in 0 until lots.length()) {
-                val lot=lots.optJSONObject(i) ?: continue
-                if(lot.optString("id")==lotId) {
-                    lot.put("qtyRemaining",newLotRemaining)
-                    matched++
+            val lots=updated.optJSONArray("fundingLots") ?: org.json.JSONArray()
+            val result=org.json.JSONArray()
+            val tracked=LegacyProductRules.trackedQuantity(old)
+            if(newStock<tracked) {
+                var remove=tracked-newStock
+                for(i in lots.length()-1 downTo 0) {
+                    val lot=lots.optJSONObject(i) ?: continue
+                    val q=kotlin.math.max(0.0,LegacyAccountingRules.number(lot.opt("qtyRemaining")))
+                    val take=kotlin.math.min(q,remove)
+                    lot.put("qtyRemaining",q-take)
+                    remove-=take
+                    if(remove<=0.0001)break
+                }
+                for(i in 0 until lots.length()) {
+                    val lot=lots.optJSONObject(i) ?: continue
+                    if(LegacyAccountingRules.number(lot.opt("qtyRemaining"))>0.0001)result.put(lot)
+                }
+            } else {
+                for(i in 0 until lots.length())result.put(lots.get(i))
+                if(newStock>tracked) {
+                    val add=newStock-tracked
+                    val partnerId=old.optString("externalPartnerId")
+                    // External partner metadata must be resolved from original settings, not guessed.
+                    require(partnerId.isBlank()) { "تسوية زيادة مخزون الشريك الخارجي تتطلب بيانات الشريك الأصلية" }
+                    result.put(JSONObject().apply {
+                        put("id","funding-lot-"+UUID.randomUUID().toString())
+                        put("purchaseId","inventory-adjustment")
+                        put("source","shop")
+                        put("partnerId","")
+                        put("partnerName","")
+                        put("share",0)
+                        put("qtyOriginal",add)
+                        put("qtyRemaining",add)
+                        put("unitCost",LegacyAccountingRules.number(old.opt("cost")))
+                        put("currency",old.optString("currency","USD"))
+                        put("createdAt",System.currentTimeMillis())
+                    })
                 }
             }
-            require(matched==1) { "دفعة التمويل غير موجودة أو مكررة" }
+            updated.put("fundingLots",result)
             updated.put("stock",newStock)
-            require(!LegacyProductRules.fundingMismatch(updated)) {
-                "المخزون لا يطابق مجموع الكميات في دفعات التمويل"
-            }
-            val previous=LegacyAccountingRules.number(old.opt("stock"))
+            require(!LegacyProductRules.fundingMismatch(updated)) { "فشل تطابق التمويل مع المخزون" }
+            val now=System.currentTimeMillis()
+            val reference="inventory-adjustment-"+UUID.randomUUID().toString()
+            val description="تسوية مخزون — "+reason+(if(notes.isBlank())"" else " — "+notes.trim())
             db.execSQL("INSERT OR REPLACE INTO native_product_edits(product_id,payload,revision) VALUES (?,?,COALESCE((SELECT revision+1 FROM native_product_edits WHERE product_id=?),1))",
                 arrayOf(productId,updated.toString(),productId))
-            val event=UUID.randomUUID().toString()
-            val now=System.currentTimeMillis()
-            db.execSQL("INSERT INTO native_stock_movements(event_id,product_id,lot_id,before_qty,after_qty,reason,recorded_at) VALUES (?,?,?,?,?,?,?)",
-                arrayOf(event,productId,lotId,previous,newStock,reason,now))
+            db.execSQL("INSERT INTO native_stock_movements(event_id,product_id,before_qty,after_qty,reason,reference_type,recorded_at) VALUES (?,?,?,?,?,?,?)",
+                arrayOf(reference,productId,before,newStock,description,"inventory-adjustment",now))
             db.execSQL("INSERT INTO native_product_audit(event_id,product_id,previous_payload,new_payload,reason,recorded_at) VALUES (?,?,?,?,?,?)",
-                arrayOf(UUID.randomUUID().toString(),productId,old.toString(),updated.toString(),reason,now))
+                arrayOf(UUID.randomUUID().toString(),productId,old.toString(),updated.toString(),description,now))
             db.setTransactionSuccessful()
         } finally { db.endTransaction() }
     }
