@@ -1435,12 +1435,23 @@ class MainActivity : Activity() {
             "glassType" to "نوع الزجاج",
             "waterResistance" to "مقاومة الماء",
             "warrantyMonths" to "مدة الكفالة"
-        ).forEach { (key,label) ->
-            val values=originalWatchDetails[key].orEmpty()
-            details[key]=select(parent,label,listOf("غير محدد")+values)
+        ).chunked(2).forEach { pair ->
+            formPair(parent,
+                { host ->
+                    val (key,label)=pair[0]
+                    details[key]=select(host,label,listOf("غير محدد")+originalWatchDetails[key].orEmpty())
+                },
+                { host ->
+                    if(pair.size>1) {
+                        val (key,label)=pair[1]
+                        details[key]=select(host,label,listOf("غير محدد")+originalWatchDetails[key].orEmpty())
+                    }
+                }
+            )
         }
-        val description=field(parent,"وصف الساعة")
-        val specs=field(parent,"مواصفات إضافية")
+        lateinit var description:EditText
+        lateinit var specs:EditText
+        formPair(parent,{ description=field(it,"وصف الساعة") },{ specs=field(it,"مواصفات إضافية") })
         val notes=field(parent,"ملاحظات داخلية")
         val minStock=field(parent,"حد التنبيه الأدنى").apply {
             setText("1");inputType=InputType.TYPE_CLASS_NUMBER
