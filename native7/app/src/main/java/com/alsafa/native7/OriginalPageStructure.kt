@@ -394,6 +394,9 @@ internal class OriginalPageStructure(
                                     if(childCss.contains("list-main")) 1f else 0f
                                 ).apply { if(i>0) marginStart=dp(11) }
                             }
+                            // The actual final visible sibling is handled by
+                            // the parent after children are inserted. A source
+                            // JSON 'last' flag is not equivalent to :last-child.
                             if(n.optBoolean("last")) {
                                 background=null
                             } else {
@@ -1084,6 +1087,13 @@ internal class OriginalPageStructure(
                 else bg(Color.rgb(247,237,221),12,Color.rgb(223,201,164))
         }
         if(cs.contains("tiny-button")) {
+            if(cs.contains("delete")) {
+                view.background=GradientDrawable().apply {
+                    setColor(Color.rgb(255,242,239))
+                    cornerRadius=dp(7).toFloat()
+                    setStroke(dp(1),Color.rgb(241,201,193))
+                }
+            }
             view.minimumHeight=dp(25)
             view.setPadding(dp(7),dp(3),dp(7),dp(3))
             view.background=GradientDrawable().apply {
@@ -1093,7 +1103,7 @@ internal class OriginalPageStructure(
             }
             if(view is TextView) {
                 view.textSize=10f
-                view.setTextColor(Color.rgb(122,81,24))
+                view.setTextColor(if(cs.contains("delete")) Color.rgb(173,54,54) else Color.rgb(122,81,24))
             }
         }
         if(cs.contains("close")) {
