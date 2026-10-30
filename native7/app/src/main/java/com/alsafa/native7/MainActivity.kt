@@ -1046,7 +1046,7 @@ class MainActivity : Activity() {
                         liveQuery.setText(code)
                         for(i in 0 until liveMatches.childCount) {
                             val candidate=liveMatches.getChildAt(i) as? TextView ?: continue
-                            if(candidate.getTag(android.R.id.content)==matched.id) {
+                            if(candidate.getTag(saleProductTagKey)==matched.id) {
                                 candidate.performClick()
                                 break
                             }
@@ -1086,7 +1086,7 @@ class MainActivity : Activity() {
                 try {
                     LegacyProductRepository.list(legacyBackupStore.readableDatabase,query,0,20).forEach { product ->
                         liveMatches.addView(text(product.name+" · "+product.barcode+" · "+product.stock,13f,gold).apply {
-                            setTag(android.R.id.content,product.id)
+                            setTag(saleProductTagKey,product.id)
                             gravity=Gravity.RIGHT
                             isClickable=true
                             setOnClickListener {
@@ -1106,7 +1106,7 @@ class MainActivity : Activity() {
                                         edits[1].setText(product.raw.optString("model"))
                                         edits[2].setText("1")
                                         edits[3].setText(product.salePrice.toString())
-                                        card.setTag(android.R.id.content,product.id)
+                                        card.setTag(saleProductTagKey,product.id)
                                     }
                                     updateSubtotal()
                                 }
@@ -1199,7 +1199,7 @@ class MainActivity : Activity() {
                 val saleLines=mutableListOf<NativeSalesLedger.Line>()
                 for(i in 0 until lines.childCount) {
                     val card=lines.getChildAt(i)
-                    val productId=card.getTag(android.R.id.content) as? String
+                    val productId=card.getTag(saleProductTagKey) as? String
                     val pair=card.tag as? Pair<*,*> ?: error("بيانات الصنف غير مكتملة")
                     val qty=(pair.first as? EditText)?.text?.toString()?.toIntOrNull() ?: 0
                     val price=(pair.second as? EditText)?.text?.toString()?.toDoubleOrNull() ?: -1.0
@@ -1298,6 +1298,7 @@ class MainActivity : Activity() {
         }
         
     }
+    private val saleProductTagKey:Int = com.alsafa.native7.R.id.sale_product_tag_key
     private fun disabledAction(parent:LinearLayout,label:String) {
         val action=text(label,13f,Color.rgb(122,81,24)).apply {
             typeface=Typeface.create(typeface,Typeface.BOLD)
