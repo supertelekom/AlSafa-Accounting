@@ -274,7 +274,7 @@ internal object NativeSalesLedger {
         } finally { db.endTransaction() }
     }
     fun cancel(db:SQLiteDatabase,id:String,reason:String,at:Long=System.currentTimeMillis()) {
-        require(reason.isNotBlank()) { "سبب الإلغاء مطلوب" }
+        // Original deleteRecord(type, recordId) does not require a cancellation reason.
         create(db)
         db.beginTransaction()
         try {
