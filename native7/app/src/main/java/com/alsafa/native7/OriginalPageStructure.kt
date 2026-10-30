@@ -363,7 +363,9 @@ internal class OriginalPageStructure(
     }
     private fun duplicatePurchaseLine(quick:Boolean) {
         val host=controls["purchase-lines"] as? ViewGroup ?: return
-        val template=metadata.entries.firstOrNull { classes(it.value).contains("purchase-line") }?.value ?: return
+        val template=metadata.entries.firstOrNull { (view,node) ->
+            classes(node).contains("purchase-line") && ancestors(view).any { it===host }
+        }?.value ?: return
         val copy=JSONObject(template.toString()).also { uniqueDynamicIds(it) }
         fun prepare(node:JSONObject) {
             if(quick && node.optJSONObject("data")?.has("data-purchase-item")==true) node.put("selected",1)
