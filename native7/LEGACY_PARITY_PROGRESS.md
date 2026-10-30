@@ -277,3 +277,27 @@ Direct inspection of original tablet v3.9.359 archive `assets/style.css` found l
 Native 7 commit `e2c7641387e2b32847a8b422367e57e5e5224dc5` applies the grid gap and column breakpoint. **The individual quick-service card dimensions remain to be checked against the current renderer and original source**; do not claim complete parity.
 
 All nine principal sections remain subject to route-specific verification (labels/order/controls/images/modal behavior). No APK build or device screenshots in this batch.
+
+## Nine-section shared UI batch — original tablet CSS verification, 2026-10-30
+
+Directly inspected `assets/style.css` inside the original v3.9.359 tablet source archive. Changes apply to shared UI nodes used by the home, products, sales, maintenance, suppliers, expenses, cashboxes, reports and settings routes where these source classes occur.
+
+| Area | Source-grounded details | Commit |
+|---|---|---|
+| Quick repair grid | 7px gap; landscape 900px+ uses 4 columns | `e2c7641387e2b32847a8b422367e57e5e5224dc5` |
+| Quick repair cards | min-height 78px, 6px/5px padding, 14px radius; landscape 900px+ min-height 72px and 5px/4px padding; 23px icon, 16px title, 15px price, 3px vertical spacing | `6b374d7ea6d47e76a6e759d0fbd45bec76f4c7a6`, `ed1f7f8c58a3e33a4031f7ff75dc84a52dccd1b3` |
+| Transaction icon | 34px square, 11px radius, #f7eddd background | `b397a553fdd58f6d39aca758d9423e374dcb8058` |
+| Transaction amount | 12px bold and single line, negative red | `b397a553fdd58f6d39aca758d9423e374dcb8058` |
+
+### Coverage by section
+- Home: shared cards and transaction display; header/logo/layout still unverified.
+- Products: shared forms; product photos, variants and edit dialogs still unverified.
+- Sales: shared form/transaction presentation; complete invoice and payment dialogs still unverified.
+- Maintenance: quick-repair card and grid source override implemented; photos, intake and delivery still unverified.
+- Suppliers: shared form and transaction presentation; purchase invoice controls still unverified.
+- Expenses: shared transaction styles; filters and forms still unverified.
+- Cashboxes: shared transaction styles; movement and closing screens still unverified.
+- Reports: shared report and transaction styles; tables, periods and partners still unverified.
+- Settings: shared card/form styles; nested settings, restore and printer dialogs still unverified.
+
+These changes were committed to the GitHub development branch. **No Android Studio compilation, Honor Pad X8b device test, screenshot comparison, full source-label/order audit or modal animation audit occurred in this batch.** Native preview-only actions remain preview-only.
