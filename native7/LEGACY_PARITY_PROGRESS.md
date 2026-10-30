@@ -258,3 +258,11 @@ The source CSS also specifies `.section-title h3` at 15px; actual per-route mark
 - Settings: shared cards improved; settings screens and backup/print dialogs pending.
 
 **Build and device testing still pending.** No Android Studio build, runtime verification, screenshot diff or full button/navigation audit has been performed here. Changes are committed but not yet certified as pixel-identical or functionally complete.
+
+## Source CSS accent and report text corrections — 2026-10-30
+
+Inspected original tablet v3.9.359 `assets/style.css` directly and corrected the following shared typography:
+- `.metric-card.accent .metric-label` and `.metric-card.accent .metric-note` require **#fcebd0**, whereas ordinary accent content uses **#fff9ec**. Previously the renderer tinted all text uniformly. `4b66b96fe0f0db698ecbd14c1ee5e6d75158ab06` applies the source distinction recursively by source class.
+- `.report-tile small` uses muted 10px and `.report-tile b` uses gold-deep 14px with 7px top spacing. `a2addd80f9387dcad475e6362fb33d4025cd48d1` handles source-class `report-tile-label` and `report-tile-value` nodes. Note that unclassified child nodes may still differ.
+
+**Nine-section review status:** common metrics and report tiles impact the home, products, sales, maintenance, suppliers, expenses, cashboxes, reports and settings where source-class nodes are present. Their individual screen labels, ordering, modal dimensions, icons, photo handling, complete navigation and animations have **not** been fully inspected or proven equivalent. Need screenshots of all original and native routes on Honor Pad X8b, compile and runtime tests, accessibility/RTL tests, and button-by-button verification. No APK was built in this batch.
