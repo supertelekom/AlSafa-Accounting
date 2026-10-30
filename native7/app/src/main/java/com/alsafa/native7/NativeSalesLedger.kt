@@ -183,7 +183,10 @@ internal object NativeSalesLedger {
                     (1.0-(c.getDouble(1)+c.getDouble(2))/c.getDouble(0))*(1.0+c.getDouble(3)/100.0)
                 else gross
             }
-            val replacementValue=convert(replacement.salePrice,replacement.currency)*replacementQuantity
+            val replacementBase=convert(replacement.salePrice,replacement.currency)*replacementQuantity
+            val taxRate=db.rawQuery("SELECT tax_rate FROM native_sale_discounts WHERE sale_id=?",
+                arrayOf(saleId)).use { c -> if(c.moveToFirst()) c.getDouble(0) else 0.0 }
+            val replacementValue=replacementBase*(1.0+taxRate/100.0)
             val oldReturns=db.rawQuery("SELECT COALESCE(SUM(refund),0) FROM native_sale_returns WHERE sale_id=?",
                 arrayOf(saleId)).use { c -> c.moveToFirst();c.getDouble(0) }
             val credit=returnValue-replacementValue-penalty
