@@ -360,3 +360,27 @@ Native commits:
 **Remaining difference:** `SourceGrid` currently divides the available width into equal cells, whereas the original filter uses two flexible columns plus an **auto-width** action. This is an approximation, not pixel parity. The source's nested `.report-filter .field label` 10px and button horizontal padding12px still require source-node-aware verification.
 
 **Nine-section status:** this batch specifically changes shared report-filter presentation and may affect reports and other routes using the same class. Home, products, sales, maintenance, suppliers, expenses, cashboxes, reports and settings still require complete original-label/order comparisons, modal and animation review, tablet screenshots, compilation and runtime verification. No APK built or device tested.
+
+## Consolidated shared-renderer batch — 2026-10-30
+
+**Authoritative source inspected:** original tablet v3.9.359 ZIP `assets/style.css` (86,920 bytes); `assets/index.html` is a small entry point, not the complete screen markup. This batch does **not** claim a complete route-by-route extraction from the original JS or structure JSON.
+
+### Changes actually committed
+- `a235f646da4896b73ce1822a4fcd5018f5c0c1d9`: remove duplicated equal-width report-filter layout paths and implement a shared `reportFilter` renderer. On normal/tablet widths, fields use equal *flexible* weights and the action uses intrinsic width, matching original CSS `1fr 1fr auto`; on <=380dp the button moves below the fields and spans the available width. Preserve source child order.
+- `98f57fc93665a79a3c807a346f25853ee2bb042e`: apply source `.report-filter .field label` 10px typography and action 12px horizontal padding; action min-height42dp.
+- Existing related commits: `24b9c924` shared structural-kind/class styling; `0e87e130` accent metric source metadata; `5687e7bc` stale navigation callback guard.
+
+### Cross-section regression checklist (not completed)
+| Route | Shared area to test | Remaining source comparison |
+|---|---|---|
+| Home | metric cards, navigation | hero, all dashboard tiles and exact text/order |
+| Products | form fields and cards | list/edit/variants/images/barcode, original labels |
+| Sales | form grids and actions | full/simple invoices, payments, discount, returns, print dialogs |
+| Maintenance | quick service cards, grids | intake, ready, delivered, photos and original modals |
+| Suppliers | forms and action groups | supplier invoices, payments and debt displays |
+| Expenses | shared fields and action styles | date filters, expense records and movement details |
+| Cashboxes | cards and shared controls | currency balances, transfers, closing and dialogs |
+| Reports | report filters and accent metrics | filter dates, partner breakdowns, all report grids |
+| Settings | shared form/card styling | nested pages, backup/restore and printer controls |
+
+**Important limitation:** No full nine-route visual or behavior audit, no modal/animation parity certification, no Android Studio build, no Honor Pad X8b device test. The filter renderer assumes the original source has two fields followed by its action, which must be verified against actual source-derived nodes. The source layout has been matched structurally, but Android view measurement and RTL placement need a screenshot comparison. Do not claim 100% parity.
