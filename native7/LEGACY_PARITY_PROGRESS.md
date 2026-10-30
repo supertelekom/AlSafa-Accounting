@@ -344,3 +344,19 @@ Reviewed `OriginalPageStructure.kt` alongside the original tablet v3.9.359 sourc
 - Settings: shared navigation inspected; backup, printer and nested settings unverified.
 
 The source CSS, source JSON, Kotlin route mapping, modal behaviors and every button's operational behavior have **not** been exhaustively compared in this batch. The code is committed but **no APK build, compilation or Honor Pad X8b test was performed**. Do not interpret these commits as nine-section pixel parity or functional certification.
+
+## Report-filter structural parity audit — 2026-10-30
+
+Inspected original tablet v3.9.359 archive `assets/style.css` for the actual `.report-filter` CSS:
+- display:grid; grid-template-columns:`1fr 1fr auto`; gap:8px; align-items:end; padding:13px; paper background; line border; radius15px.
+- button min-height42px and horizontal padding12px.
+- at <=380px: two columns, with button spanning both columns.
+
+Native commits:
+- `34b906a7858ff1e0eb06c5425adaca89575bdb0d`: source-style `reportFilter` structural kind.
+- `67e3a74e37f7f75d19b9dbd9cae62de543cba956`: apply the grid when the source node is a generic container with `report-filter` class, avoiding the previous vertical-stack fallback.
+- `1227600a0026e8fca103514bfe66169d54d8f03a`: report filter action min-height42dp in both renderer paths.
+
+**Remaining difference:** `SourceGrid` currently divides the available width into equal cells, whereas the original filter uses two flexible columns plus an **auto-width** action. This is an approximation, not pixel parity. The source's nested `.report-filter .field label` 10px and button horizontal padding12px still require source-node-aware verification.
+
+**Nine-section status:** this batch specifically changes shared report-filter presentation and may affect reports and other routes using the same class. Home, products, sales, maintenance, suppliers, expenses, cashboxes, reports and settings still require complete original-label/order comparisons, modal and animation review, tablet screenshots, compilation and runtime verification. No APK built or device tested.
