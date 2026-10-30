@@ -50,3 +50,18 @@ Verified directly in tablet v3.9.359 `assets/style.css`:
 **Nine-section review targets:** Home (shared notes), Products (photo-picker and product pictures), Sales (invoice details), Maintenance (service photos), Suppliers (supplier forms), Expenses (form notes), Cashboxes (movement details), Reports (report notes), Settings (backup/settings notes). Verify actual occurrence of these CSS classes per source JSON; no claim every route uses them.
 
 **Important limitations:** The `picture` node in the Native renderer still uses a text placeholder rather than loading a real photo; photo-picker layout does not implement image capture/gallery or zoom. Source CSS may override these rules in later stylesheets; screenshot comparison is required. Build, Kotlin compilation and Honor Pad X8b testing were not performed. No change to `native6` or accounting data.
+
+## Integrated responsive/forms/details batch — 2026-10-30
+
+Compared against original tablet v3.9.359 `assets/style.css`:
+- `.photo-picker` defaults to 116px preview + flexible second column, 12px gap. **At viewport <=520px** source overrides to one column and 170px high preview. This responsive override was missing from Native 7.
+- `.form-actions` is horizontal flex, 9px gap, 18px top margin; all direct children grow equally.
+- `.detail-list li` uses a horizontal row with space-between, 8px gap, 10px vertical padding, 12px font, bottom border except final row; descendant span muted.
+
+**Changes committed:**
+1. `21201cc3b76c9b927fe54c63fa5bb233c54255d7`: photo picker responsive layout at <=520dp; equal-width form actions and 18dp top margin.
+2. `d9b00c21b6719427395bfecabf265c1144f762f5`: detail-list horizontal rows with 10dp vertical padding, 8dp gap, 12sp text, muted span, and divider except last row.
+
+**Shared cross-route review targets:** Dashboard (form actions), Products (photo picker/details), Sales (invoice detail rows), Repairs (service photos and detail rows), Purchases (supplier detail lists), Expenses (form actions), Vaults (movement detail lists), Reports (detail rows), Settings (form actions). Exact source node occurrence per route must be checked before calling any screen complete.
+
+**Not tested:** Android Studio Kotlin compilation, image loading, camera/gallery, photo zoom, action wiring, source JSON ordering, tablet portrait/landscape and mobile screenshot comparisons. No accounting rules modified. Only `native7` touched.
