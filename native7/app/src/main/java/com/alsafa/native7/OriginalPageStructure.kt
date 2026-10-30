@@ -526,6 +526,13 @@ internal class OriginalPageStructure(
     }
     private fun removeMatching(button:View,sourceClass:String) {
         ancestors(button).firstOrNull { metadata[it]?.let { n -> classes(n).contains(sourceClass) }==true }?.let { removed ->
+            if(sourceClass=="color-variant-row") {
+                val savedId=metadata[removed]?.optJSONObject("data")?.optString("data-variant-id").orEmpty()
+                if(savedId.isNotBlank()) {
+                    Toast.makeText(activity,"لا يمكن حذف لون محفوظ من معاينة الواجهة؛ يجب التحقق من سجله وعملياته أولاً.",Toast.LENGTH_LONG).show()
+                    return
+                }
+            }
             (removed.parent as? ViewGroup)?.removeView(removed)
             unregisterDetached(removed)
             conditions()
