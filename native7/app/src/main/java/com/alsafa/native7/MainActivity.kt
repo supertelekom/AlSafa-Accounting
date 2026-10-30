@@ -286,7 +286,7 @@ class MainActivity : Activity() {
                 val text = contentResolver.openInputStream(uri)?.bufferedReader(Charsets.UTF_8)?.use { it.readText() }
                     ?: throw IllegalArgumentException("تعذر قراءة الملف")
                 val info = legacyBackupStore.inspect(text)
-                val summary = info.counts.entries.joinToString("\\n") { "${it.key}: ${it.value}" }
+                val summary = info.counts.entries.joinToString(10.toChar().toString()) { "${it.key}: ${it.value}" }
                 android.app.AlertDialog.Builder(this)
                     .setTitle("تأكيد استعادة نسخة الصفا")
                     .setMessage("تم فحص النسخة.\\n${summary}\\n\\nسيتم حفظ جميع الأقسام محلياً. لا يتم حذف بيانات سابقة.")
@@ -1730,7 +1730,7 @@ class MainActivity : Activity() {
                                 }.joinToString("\\n")
                                 android.app.AlertDialog.Builder(this@MainActivity)
                                     .setTitle("فاتورة #$id · $name · $watch")
-                                    .setMessage(detail+"\\nحالة الطلب: "+item.getString("status"))
+                                    .setMessage(detail+10.toChar()+"حالة الطلب: "+item.getString("status"))
                                     .setPositiveButton("إغلاق",null).show()
                             }
                         })
