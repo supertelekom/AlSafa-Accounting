@@ -384,3 +384,25 @@ Native commits:
 | Settings | shared form/card styling | nested pages, backup/restore and printer controls |
 
 **Important limitation:** No full nine-route visual or behavior audit, no modal/animation parity certification, no Android Studio build, no Honor Pad X8b device test. The filter renderer assumes the original source has two fields followed by its action, which must be verified against actual source-derived nodes. The source layout has been matched structurally, but Android view measurement and RTL placement need a screenshot comparison. Do not claim 100% parity.
+
+## Nine-route original JavaScript inventory — 2026-10-30
+
+Unlike prior CSS-only passes, directly inspected the original v3.9.359 tablet archive `assets/main.js` (1,052,953 bytes). The following source function headings and control captions were extracted from the original `render...` functions. **This is an inventory for parity verification, not a claim the Kotlin implementation already matches.**
+
+| Section | Original source function | Original heading | Representative source control labels (in extracted order) |
+|---|---|---|---|
+| Home | `renderDashboard` | كيف تريد أن تبدأ؟ | Dashboard branches to additional `renderFatherHome` and `renderAdvancedHome`; inspect these separately |
+| Products | `renderProducts` | المنتجات والمخزون | ↻ تحديث؛ ⬆ استيراد آمن؛ ＋ منتج؛ 🏷 لصاقة المنتج؛ تعديل؛ ⚖ تسوية المخزون؛ صورة الباركود؛ حذف |
+| Sales | `renderSales` | المبيعات والفواتير | ＋ فاتورة؛ التفاصيل؛ تعديل؛ مرتجع/استبدال؛ تصحيح عملة القبض؛ 🧰 إصلاح آثار الفاتورة؛ 💵 استكمال قبض مختلط؛ PDF؛ 🖨️ طباعة؛ تحصيل الأونلاين؛ واتساب أعمال؛ 💬 شكر؛ حذف |
+| Maintenance | `renderRepairs` | قسم الصيانة | ＋ طلب؛ التفاصيل؛ تعديل؛ مرتجع/استبدال؛ صورة الساعة؛ تحديث العطل؛ تحديث الحالة؛ فاتورة PDF؛ 🖨️ طباعة؛ واتساب أعمال؛ 💬 شكر؛ جاهزة؛ تم التسليم؛ حذف |
+| Suppliers | `renderPurchases` | المشتريات والموردون | ＋ مورد؛ ＋ فاتورة شراء؛ الموردون؛ كشف الحساب؛ رصيد سابق؛ دفع؛ تعديل؛ حذف؛ فواتير الشراء؛ تسديد؛ إلغاء الفاتورة |
+| Expenses | `renderExpenses` | المصاريف | ＋ مصروف؛ حذف |
+| Cashboxes | `renderVaults` | الخزائن والأرصدة | إقفال اليوم؛ ＋ حركة مالية؛ سجل الحركات |
+| Reports | `renderReports` | التقارير | اختيار شهر؛ من تاريخ؛ إلى تاريخ؛ تحديث؛ حركة الفترة |
+| Settings | `renderSettings` | الإعدادات | اسم المتجر؛ عملة التطبيق (الوضع الكامل)؛ رقم واتساب المتجر (اختياري)؛ حفظ الإعدادات؛ نسب الشركاء؛ الإنترنت وأسعار العملات؛ فحص الاتصال |
+
+**Important intentional exception:** The old `renderSettings` contains a `الشريكان الخارجيان` section, but Native 7 must **not** restore those removed partners; preserve the user-approved active father 40%, Abdul-Karim 35%, Yazan 25% arrangement. The original suppliers view also contains a cloud/phone synchronization control; Native 7 is intentionally offline-only, so do not recreate online sync.
+
+**Additional implementation:** `0165d02fa3ac3b04a7b994ce460565a3ad8e9bde` adjusts empty-state vertical padding from 22dp to source 27dp and adds transaction-title/subtitle class styling. Confirm these classes exist in the source-derived JSON; source's original transaction-info children are `strong` and `span` tags.
+
+**Next required verification:** extract complete nested markup/conditions from all nine functions, compare against original-structure JSON and native route mapping, check dialogs, action bindings, images and actual device screenshot parity. No Android Studio compile or Honor Pad X8b device test was performed. This inventory alone is not a complete audit.
