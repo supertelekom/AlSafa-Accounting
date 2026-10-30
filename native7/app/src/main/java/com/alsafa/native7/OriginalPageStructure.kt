@@ -466,7 +466,9 @@ internal class OriginalPageStructure(
                             // action lists into multiple visible rows.
                             val tablet=activity.resources.configuration.screenWidthDp>=720
                             val perRow=if(tablet) {
-                                if(activity.resources.configuration.screenWidthDp>=1200) 6 else 4
+                                // Keep every control visible. A smaller tablet
+                                // gets fewer actions per line than landscape.
+                                if(activity.resources.configuration.screenWidthDp>=1200) 5 else 3
                             } else Int.MAX_VALUE
                             val gap=dp(5)
                             if(tablet && childCount>perRow) {
