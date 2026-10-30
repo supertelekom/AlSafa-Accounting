@@ -151,6 +151,18 @@ internal class OriginalPageStructure(
                 }
                 if(cs.any { it in listOf("barcode-help","help") }) { textSize=11f;setTextColor(muted) }
                 if(cs.contains("metric-label")) { textSize=11f;setTextColor(muted) }
+                if(cs.contains("photo-preview")) {
+                    minWidth=dp(116)
+                    minHeight=dp(84)
+                    textSize=10f
+                    gravity=Gravity.CENTER
+                    setTextColor(muted)
+                    background=GradientDrawable().apply {
+                        setColor(Color.rgb(255,250,242))
+                        cornerRadius=dp(12).toFloat()
+                        setStroke(dp(1),Color.rgb(223,201,164),dp(4).toFloat(),dp(3).toFloat())
+                    }
+                }
                 if(cs.contains("note-box")) {
                     textSize=11f
                     setTextColor(muted)
@@ -655,6 +667,20 @@ internal class OriginalPageStructure(
                                 cornerRadius=dp(10).toFloat()
                             }
                             setPadding(dp(10),dp(10),dp(10),dp(10))
+                        }
+                        if(cs.contains("photo-picker")) {
+                            // Source .photo-picker: preview and flexible controls,
+                            // with 12dp gap. Do not force source images into text.
+                            orientation=LinearLayout.HORIZONTAL
+                            gravity=Gravity.CENTER_VERTICAL
+                            for(i in 0 until childCount) {
+                                val child=getChildAt(i)
+                                child.layoutParams=LinearLayout.LayoutParams(
+                                    if(i==0) dp(116) else if(i==1) 0 else -2,-2,
+                                    if(i==0) dp(84) else -2,
+                                    if(i==1) 1f else 0f
+                                ).apply { if(i>0) marginStart=dp(12) }
+                            }
                         }
                         if(cs.contains("detail-list")) {
                             // Source .detail-list is a flush vertical list.
