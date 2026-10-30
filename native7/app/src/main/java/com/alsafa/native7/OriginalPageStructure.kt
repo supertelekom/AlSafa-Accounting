@@ -201,18 +201,7 @@ internal class OriginalPageStructure(
             }
             // The legacy report filter is a CSS grid, not a vertical stack:
             // two flexible fields and one auto-width action on tablets.
-            "reportFilter" -> SourceGrid(activity,
-                if(activity.resources.configuration.screenWidthDp<=380) 2 else 3,dp(8)).apply {
-                background=bg(Color.rgb(255,253,249),15)
-                setPadding(dp(13),dp(13),dp(13),dp(13))
-                children.forEach { child ->
-                    val built=build(child)
-                    if(child.optString("kind")=="button") built.minimumHeight=dp(42)
-                    addCell(built,
-                        activity.resources.configuration.screenWidthDp<=380 &&
-                            child.optString("kind")=="button")
-                }
-            }
+            "reportFilter" -> reportFilter(children)
             "actions" -> SourceGrid(activity,children.size.coerceIn(1,3),dp(9)).apply {
                 setPadding(0,dp(18),0,dp(9))
                 children.forEach { addCell(build(it),false) }
@@ -244,23 +233,7 @@ internal class OriginalPageStructure(
                 children.drop(1).forEach { body.addView(build(it)) }
                 addView(body)
             }
-            else -> if(cs.contains("report-filter")) {
-                // Class-based layout takes precedence over generic container kind.
-                // CSS: 1fr 1fr auto, 8px gap; compact <=380: 1fr 1fr
-                // with the action spanning the full row.
-                SourceGrid(activity,
-                    if(activity.resources.configuration.screenWidthDp<=380) 2 else 3,dp(8)).apply {
-                    background=bg(Color.rgb(255,253,249),15)
-                    setPadding(dp(13),dp(13),dp(13),dp(13))
-                    children.forEach { child ->
-                        val built=build(child)
-                        if(child.optString("kind")=="button") built.minimumHeight=dp(42)
-                        addCell(built,
-                            activity.resources.configuration.screenWidthDp<=380 &&
-                                child.optString("kind")=="button")
-                    }
-                }
-            } else column().apply {
+            else -> if(cs.contains("report-filter")) reportFilter(children) else column().apply {
                 children.forEach { child -> addView(build(child),childParams(child,kind)) }
                 when(kind) {
                     "section","form" -> { background=bg();setPadding(dp(if(kind=="form" && activity.resources.configuration.screenWidthDp>=720) 22 else 15),dp(if(kind=="form" && activity.resources.configuration.screenWidthDp>=720) 22 else 15),dp(if(kind=="form" && activity.resources.configuration.screenWidthDp>=720) 22 else 15),dp(if(kind=="form" && activity.resources.configuration.screenWidthDp>=720) 22 else 15)) }
@@ -348,6 +321,46 @@ internal class OriginalPageStructure(
             }
         }
         return register(view,n)
+    }
+    /**
+     * Source .report-filter: two flexible columns and an intrinsic-width action.
+     * At <=380dp the action occupies a separate full-width row.
+     * Keep child ordering unchanged for keyboard navigation and accessibility.
+     */
+    private fun reportFilter(nodes:List<JSONObject>):View {
+        val compact=activity.resources.configuration.screenWidthDp<=380
+        val outer=column().apply {
+            background=bg(Color.rgb(255,253,249),15)
+            setPadding(dp(13),dp(13),dp(13),dp(13))
+        }
+        val row=LinearLayout(activity).apply {
+            orientation=LinearLayout.HORIZONTAL
+            layoutDirection=View.LAYOUT_DIRECTION_RTL
+            gravity=Gravity.BOTTOM
+        }
+        var fields=0
+        for(node in nodes) {
+            val child=build(node)
+            val action=node.optString("kind")=="button"
+            if(action) {
+                child.minimumHeight=dp(42)
+                if(compact) {
+                    outer.addView(row,LinearLayout.LayoutParams(-1,-2))
+                    outer.addView(child,LinearLayout.LayoutParams(-1,-2).apply { topMargin=dp(8) })
+                    return outer
+                }
+                row.addView(child,LinearLayout.LayoutParams(-2,-2).apply {
+                    if(fields>0) marginStart=dp(8)
+                })
+            } else {
+                row.addView(child,LinearLayout.LayoutParams(0,-2,1f).apply {
+                    if(fields>0) marginStart=dp(8)
+                })
+                fields++
+            }
+        }
+        outer.addView(row,LinearLayout.LayoutParams(-1,-2))
+        return outer
     }
     private fun input(n:JSONObject):View {
         val type=n.optString("type")
