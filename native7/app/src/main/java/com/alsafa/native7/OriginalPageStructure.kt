@@ -618,13 +618,19 @@ internal class OriginalPageStructure(
                             // centered and rounded on tablet. Dialog positioning
                             // is owned by the Activity host, not this child view.
                             val widthDp=activity.resources.configuration.screenWidthDp
-                            val radius=if(widthDp>=720) 20 else 22
                             background=GradientDrawable().apply {
                                 setColor(Color.rgb(255,253,249))
-                                cornerRadius=dp(radius).toFloat()
+                                if(widthDp>=720) {
+                                    cornerRadius=dp(20).toFloat()
+                                } else {
+                                    // Bottom sheet: only the upper corners are rounded.
+                                    val top=dp(22).toFloat()
+                                    cornerRadii=floatArrayOf(top,top,top,top,0f,0f,0f,0f)
+                                }
                             }
                             val horizontal=if(widthDp>=720) 22 else 15
-                            setPadding(dp(horizontal),dp(18),dp(horizontal),dp(18))
+                            val bottom=if(widthDp>=720) 18 else 22
+                            setPadding(dp(horizontal),dp(18),dp(horizontal),dp(bottom))
                             clipToOutline=true
                             // Width constraints must be applied by the modal host:
                             // 660dp default tablet, 820dp mid-tablet,
