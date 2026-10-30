@@ -406,3 +406,27 @@ Unlike prior CSS-only passes, directly inspected the original v3.9.359 tablet ar
 **Additional implementation:** `0165d02fa3ac3b04a7b994ce460565a3ad8e9bde` adjusts empty-state vertical padding from 22dp to source 27dp and adds transaction-title/subtitle class styling. Confirm these classes exist in the source-derived JSON; source's original transaction-info children are `strong` and `span` tags.
 
 **Next required verification:** extract complete nested markup/conditions from all nine functions, compare against original-structure JSON and native route mapping, check dialogs, action bindings, images and actual device screenshot parity. No Android Studio compile or Honor Pad X8b device test was performed. This inventory alone is not a complete audit.
+
+## Shared nine-route renderer regression batch — 2026-10-30
+
+**Source cross-check:** Original tablet v3.9.359 `assets/style.css` was opened directly from the archived source. Confirmed `.transaction-info strong` 12px bold, one-line ellipsis; `.transaction-info span` 10px muted with 3px top gap; `.form-section` 20px top and 14px bottom spacing; `.report-filter` two flexible fields plus intrinsic-width action, 8px gap, compact button full width. These selectors are contextual: styles apply based on the **parent** source class, not on invented classes on child tags.
+
+**Code commit `321e6cdea4ecaef649280b03346ea84cfd2d1ab0`:**
+1. Applies original strong/span typography to direct children of source-class `transaction-info` containers, based on registered source tag metadata. This fixes the prior ineffective reliance on hypothetical `transaction-title` and `transaction-subtitle` classes.
+2. Applies `form-section` 20dp top and 14dp bottom margins through the shared child layout helper. Check first-child override: original CSS has `.form-section:first-child { margin-top:0 }`, not yet represented.
+3. Removes early return from compact `reportFilter` rendering, so nodes after its action are no longer silently dropped. Keeps all fields/actions in their source order within their respective rows. Compact filter still needs screenshot comparison and verification of source node sequences.
+
+### Route impact and acceptance status
+| Route | Shared renderer changes potentially relevant | Required verification |
+|---|---|---|
+| Home | transaction text, section spacing | dashboard branches, actual layout and navigation |
+| Products | form-section spacing | list, edit, images, colors, barcode |
+| Sales | transaction text, form sections | invoice full/simple, returns, collection, modal actions |
+| Maintenance | transaction text, form sections | photo preview, ready/delivered, quick repairs |
+| Suppliers | transaction text, form sections | purchase lines, supplier payments, debts |
+| Expenses | transaction text, form sections | expense forms and transaction lists |
+| Cashboxes | transaction text, form sections | movements, currency totals, closing |
+| Reports | report-filter, transaction text | report dates, partners, filter layout |
+| Settings | form sections | settings fields, restore, printer dialogs |
+
+**Not completed:** full screen-by-screen source JS/JSON label/order audit; all modal and animation parity; complete UI/functional regression; Android Studio compilation; Honor Pad X8b screenshot comparison. No APK built. This is a cross-route shared-renderer fix, not certification of nine complete pages.
