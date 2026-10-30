@@ -530,8 +530,11 @@ internal class OriginalPageStructure(
             } else {
                 // Original CSS: .report-filter .field label { font-size:10px }
                 fun adjustLabels(view:View) {
-                    if(view is TextView && metadata[view]?.optString("tag")=="label")
+                    if(view is TextView && metadata[view]?.optString("tag")=="label") {
                         view.textSize=10f
+                        view.setTextColor(muted)
+                        view.setPadding(0,0,0,0)
+                    }
                     if(view is ViewGroup) for(i in 0 until view.childCount)
                         adjustLabels(view.getChildAt(i))
                 }
