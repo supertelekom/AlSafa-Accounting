@@ -613,6 +613,25 @@ internal class OriginalPageStructure(
                                 override fun getOpacity()=android.graphics.PixelFormat.TRANSLUCENT
                             }
                         }
+                        if(cs.contains("modal")) {
+                            // Source .modal is a bottom sheet on narrow screens,
+                            // centered and rounded on tablet. Dialog positioning
+                            // is owned by the Activity host, not this child view.
+                            val widthDp=activity.resources.configuration.screenWidthDp
+                            val landscape=activity.resources.configuration.orientation==
+                                android.content.res.Configuration.ORIENTATION_LANDSCAPE
+                            val radius=if(widthDp>=720) 20 else 22
+                            background=GradientDrawable().apply {
+                                setColor(Color.rgb(255,253,249))
+                                cornerRadius=dp(radius).toFloat()
+                            }
+                            val horizontal=if(widthDp>=720) 22 else 15
+                            setPadding(dp(horizontal),dp(18),dp(horizontal),dp(18))
+                            clipToOutline=true
+                            // Width constraints must be applied by the modal host:
+                            // 660dp default tablet, 820dp mid-tablet,
+                            // 900dp wide landscape; never resize arbitrary rows.
+                        }
                         if(cs.contains("modal-head")) {
                             // Original .modal-head: horizontal title/close row.
                             orientation=LinearLayout.HORIZONTAL
