@@ -956,7 +956,12 @@ internal class OriginalPageStructure(
         // spanning the next row. Do not introduce an unsupported 600dp cutoff.
         val compact=activity.resources.configuration.screenWidthDp<=380
         val outer=column().apply {
-            background=bg(Color.rgb(255,253,249),15)
+            // Original .report-filter: paper fill, 1px --line border, 15px radius.
+            background=GradientDrawable().apply {
+                setColor(Color.rgb(255,253,249))
+                cornerRadius=dp(15).toFloat()
+                setStroke(dp(1),line)
+            }
             setPadding(dp(13),dp(13),dp(13),dp(13))
         }
         val row=LinearLayout(activity).apply {
