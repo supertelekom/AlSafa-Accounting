@@ -37,3 +37,16 @@ Directly inspected the supplied v3.9.359 ZIP `assets/style.css` again. The mobil
 - `44cc0b529c948ce8c5d15c486b3c8a1fe3825d11`: detail-list container uses flush vertical layout with zero outer padding.
 
 **Still not matched:** Android safe-area bottom inset, dialog window placement/width/max height, per-row detail-list 10px padding and border, photo preview image behavior, exact animations, original source labels/order and all button actions. Nine-screen regression targets remain home, products, sales, maintenance, suppliers, expenses, cashboxes, reports and settings. No APK compilation or Honor Pad X8b test was performed. All modifications remain inside `native7/`.
+
+## Source ZIP review — photo picker and notes (2026-10-30)
+
+Verified directly in tablet v3.9.359 `assets/style.css`:
+- `.note-box`: margin-top 12px, padding 10px, radius 10px, background `#faf4e9`, muted text 11px, line-height 1.6.
+- `.photo-picker`: 116px fixed preview + flexible controls, 12px gap, centered vertically.
+- `.photo-preview`: 116×84px, 12px radius, dashed sand border, `#fffaf2` background, muted 10px text.
+
+**Commits:** `5a015e2f2bca4957170589f0a36a0cb8633ff85f` styles note boxes as both text and container nodes and applies the source top margin. `6b9642193da9b0ecbca5e1442601753c937e8cf9` implements horizontal photo-picker layout and dashed photo-preview text surface.
+
+**Nine-section review targets:** Home (shared notes), Products (photo-picker and product pictures), Sales (invoice details), Maintenance (service photos), Suppliers (supplier forms), Expenses (form notes), Cashboxes (movement details), Reports (report notes), Settings (backup/settings notes). Verify actual occurrence of these CSS classes per source JSON; no claim every route uses them.
+
+**Important limitations:** The `picture` node in the Native renderer still uses a text placeholder rather than loading a real photo; photo-picker layout does not implement image capture/gallery or zoom. Source CSS may override these rules in later stylesheets; screenshot comparison is required. Build, Kotlin compilation and Honor Pad X8b testing were not performed. No change to `native6` or accounting data.
