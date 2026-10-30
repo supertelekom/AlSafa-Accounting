@@ -61,6 +61,18 @@ internal object LegacyProductRepository {
                 LegacyAccountingRules.number(row.opt("cost")),
                 row.optString("variantGroupId"),row.optString("variantRole"),row)
         }
+        db.rawQuery("SELECT raw_json FROM domain_products WHERE id=? LIMIT 1",arrayOf(id)).use { c ->
+            if(c.moveToFirst()) {
+                val row=JSONObject(c.getString(0))
+                return Product(row.optString("id"),row.optString("name"),
+                    row.optString("barcode"),
+                    LegacyProductRules.stock(row)+NativeSalesLedger.stockDelta(db,id),
+                    row.optString("currency","USD"),
+                    LegacyAccountingRules.number(row.opt("salePrice")),
+                    LegacyAccountingRules.number(row.opt("cost")),
+                    row.optString("variantGroupId"),row.optString("variantRole"),row)
+            }
+        }
         return null
     }
 }
