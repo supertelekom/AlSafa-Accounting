@@ -1231,6 +1231,16 @@ class MainActivity : Activity() {
                 val amount=initialPayment.text.toString().toDoubleOrNull() ?: 0.0
                 val finalTotal=(subtotal-combinedDiscount)*(1.0+enteredTaxRate/100.0)
                 val deferred=paymentStatus.selectedItemPosition>=2
+                // Legacy currentSnapshot() reads data.rates, not a live market quote.
+                val rateSnapshot=legacyBackupStore.readableDatabase.rawQuery(
+                    "SELECT payload FROM legacy_sections WHERE name='rates'",null
+                ).use { c ->
+                    if(!c.moveToFirst()) null else {
+                        val rates=org.json.JSONObject(c.getString(0))
+                        fun rate(key:String):Double? = rates.optDouble(key,0.0).takeIf { it.isFinite() && it>0.0 }
+                        NativeSalesLedger.RateSnapshot(rate("TRY"),rate("SYP"),rate("TRY_SYP"))
+                    }
+                }
                 val id=if(collectionMode.selectedItemPosition==1) {
                     val tenders=mixedRows.mapNotNull { (money,values,account) ->
                         val paid=values.first.text.toString().toDoubleOrNull() ?: 0.0
@@ -1254,10 +1264,10 @@ class MainActivity : Activity() {
                     }
                     if(tenders.isEmpty()) NativeSalesLedger.save(legacyBackupStore.writableDatabase,saleLines,
                         saleCurrency.selectedItem.toString(),saleType.selectedItem.toString(),
-                        saleCustomer.text.toString(),salePhone.text.toString(),manualDiscount=manualPart,ruleDiscount=ruleDiscount,taxRate=enteredTaxRate)
+                        saleCustomer.text.toString(),salePhone.text.toString(),manualDiscount=manualPart,ruleDiscount=ruleDiscount,taxRate=enteredTaxRate,rateSnapshot=rateSnapshot)
                     else NativeSalesLedger.saveMixed(legacyBackupStore.writableDatabase,saleLines,
                         saleCurrency.selectedItem.toString(),saleType.selectedItem.toString(),
-                        saleCustomer.text.toString(),salePhone.text.toString(),tenders,manualPart+bargainingDiscount,ruleDiscount,enteredTaxRate)
+                        saleCustomer.text.toString(),salePhone.text.toString(),tenders,manualPart+bargainingDiscount,ruleDiscount,enteredTaxRate,rateSnapshot)
                 } else {
                     val effectiveAmount=if(deferred) 0.0 else if(paymentStatus.selectedItemPosition==0) finalTotal else amount
                     NativeSalesLedger.saveWithChange(
@@ -1265,7 +1275,7 @@ class MainActivity : Activity() {
                     saleType.selectedItem.toString(),saleCustomer.text.toString(),salePhone.text.toString(),effectiveAmount,
                     when(paymentMethod.selectedItemPosition) { 1 -> "شام كاش"; 2 -> "البنك"; else -> "درج المحل" },
                     changeCurrency.selectedItem.toString(),changeAccount.selectedItem.toString(),
-                    changeRate.text.toString().toDoubleOrNull() ?: 0.0,manualPart,ruleDiscount,enteredTaxRate
+                    changeRate.text.toString().toDoubleOrNull() ?: 0.0,manualPart,ruleDiscount,enteredTaxRate,rateSnapshot
                 )
                 }
                 android.widget.Toast.makeText(this,"تم حفظ الفاتورة: "+id,android.widget.Toast.LENGTH_LONG).show()
