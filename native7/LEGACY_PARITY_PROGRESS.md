@@ -688,3 +688,13 @@ Balanced-brace extraction of each `function renderX()` in `assets/main.js`; the 
 **Important limitation:** The Kotlin `product-info` container still uses its generic vertical LinearLayout; its exact two-column CSS grid, gaps, margins and top divider are **not** implemented by this patch. No claim of complete product-card parity. The other eight routes share the renderer, but this patch only affects nodes with the source `product-info` or `stock-warning` classes.
 
 **Nine-page regression to run:** Dashboard, Products, Sales, Maintenance, Suppliers, Expenses, Cashboxes, Reports, Settings. Confirm that no source-class collision causes unwanted styling and compare each route to original screenshots. Product card details, photo thumbnails, full UI labels/order, modal geometry and animation, button action parity, APK compile and tablet test remain outstanding. No build/device testing was performed.
+
+## Product metadata two-column renderer — 2026-10-30
+
+**Source CSS:** Tablet v3.9.359 `.product-info` is a two-column grid with 12px horizontal and 7px vertical gaps, 11px top padding, muted 10px labels and bold deep-gold 12px values.
+
+**Implementation:** `68661821a4257e8b8aedb15d6dc7a5e512bf8dbb` changes the product-info wrapper from vertical stack to RTL horizontal rows, pairing source-order children two at a time with weighted first column and intrinsic second column. `d66037bf6954290a2b33a343280f646149569d9b` immediately removes a duplicate local declaration introduced during the refactor. Both changes are limited to `native7`.
+
+**Source fidelity limits:** The grid is approximated using nested LinearLayouts, not a native CSS grid; original 14px top/8px bottom outer margins and top divider still need comparison. If the JSON contains wrapper nodes rather than flat alternating labels and values, pair ordering must be verified on-device. This is not a completed screen.
+
+**Regression checklist across all nine:** Dashboard (home cards), Products (metadata, stock alerts, variants), Sales (product picker and invoices), Maintenance (product/service entries), Suppliers (item summaries), Expenses (shared text), Cashboxes (transactions), Reports (report cards), Settings (forms). Confirm no unexpected source-class reuse, preserve Tajawal, and check responsive tablet widths. No APK build or Honor Pad X8b test has been performed. Full source label/order, modal, animations, actions and image parity remain open.
