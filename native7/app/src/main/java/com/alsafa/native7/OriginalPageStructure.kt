@@ -83,6 +83,7 @@ internal class OriginalPageStructure(
             if(css.contains("section-card")) topMargin=dp(14)
             if(css.contains("product-info")) topMargin=dp(14)
             if(css.contains("stock-warning")) topMargin=dp(10)
+            if(css.contains("note-box")) topMargin=dp(12)
             if(kind=="reportGrid" || css.contains("report-grid")) {
                 topMargin=dp(13)
                 bottomMargin=dp(13)
@@ -150,6 +151,16 @@ internal class OriginalPageStructure(
                 }
                 if(cs.any { it in listOf("barcode-help","help") }) { textSize=11f;setTextColor(muted) }
                 if(cs.contains("metric-label")) { textSize=11f;setTextColor(muted) }
+                if(cs.contains("note-box")) {
+                    textSize=11f
+                    setTextColor(muted)
+                    setPadding(dp(10),dp(10),dp(10),dp(10))
+                    background=GradientDrawable().apply {
+                        setColor(Color.rgb(250,244,233))
+                        cornerRadius=dp(10).toFloat()
+                    }
+                    setLineSpacing(0f,1.6f)
+                }
                 if(cs.contains("stock-warning")) {
                     textSize=10f
                     setTextColor(Color.rgb(173,54,54))
@@ -635,6 +646,15 @@ internal class OriginalPageStructure(
                             // Width constraints must be applied by the modal host:
                             // 660dp default tablet, 820dp mid-tablet,
                             // 900dp wide landscape; never resize arbitrary rows.
+                        }
+                        if(cs.contains("note-box")) {
+                            // Source .note-box: 12px top gap, 10px padding,
+                            // 10px radius and warm sand background.
+                            background=GradientDrawable().apply {
+                                setColor(Color.rgb(250,244,233))
+                                cornerRadius=dp(10).toFloat()
+                            }
+                            setPadding(dp(10),dp(10),dp(10),dp(10))
                         }
                         if(cs.contains("detail-list")) {
                             // Source .detail-list is a flush vertical list.
