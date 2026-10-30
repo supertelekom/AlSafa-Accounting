@@ -142,6 +142,13 @@ internal class OriginalPageStructure(
                     if(cs.contains("negative")) setTextColor(Color.rgb(173,54,54))
                 }
                 if(cs.contains("transaction-info")) { textSize=12f;maxLines=2 }
+                if(n.optString("tag")=="strong" && cs.contains("transaction-title")) {
+                    textSize=12f;typeface=Typeface.create(font,Typeface.BOLD)
+                    setSingleLine(true);ellipsize=android.text.TextUtils.TruncateAt.END
+                }
+                if(cs.contains("transaction-subtitle")) {
+                    textSize=10f;setTextColor(muted);setPadding(0,dp(3),0,0)
+                }
                 if(cs.contains("section-title") && kind=="title") { textSize=15f;typeface=Typeface.create(font,Typeface.BOLD) }
                 if(kind=="text" && n.optString("tag")=="label") setPadding(0,0,0,dp(6))
                 if(cs.contains("simple-icon")) {
@@ -250,7 +257,7 @@ internal class OriginalPageStructure(
                         }
                     }
                     "sectionHeading" -> setPadding(0,dp(20),0,dp(14))
-                    "empty" -> { setPadding(dp(18),dp(22),dp(18),dp(22));gravity=Gravity.CENTER }
+                    "empty" -> { setPadding(dp(18),dp(27),dp(18),dp(27));gravity=Gravity.CENTER }
                     "field" -> setPadding(0,0,0,0)
                     "help" -> setPadding(0,dp(4),0,dp(10))
                     else -> Unit
