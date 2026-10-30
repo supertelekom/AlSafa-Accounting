@@ -143,6 +143,9 @@ internal class OriginalPageStructure(
                 }
                 if(cs.any { it in listOf("barcode-help","help") }) { textSize=11f;setTextColor(muted) }
                 if(cs.contains("metric-label")) { textSize=11f;setTextColor(muted) }
+                if(n.optString("tag")=="small" && cs.contains("report-tile-label")) {
+                    textSize=10f;setTextColor(muted);setPadding(0,0,0,0)
+                }
                 if(cs.contains("metric-value")) { textSize=18f;typeface=Typeface.create(font,Typeface.BOLD);setPadding(0,dp(8),0,0) }
                 if(cs.contains("metric-note")) { textSize=10f;setTextColor(muted);setPadding(0,dp(5),0,0) }
                 if(cs.contains("form-section")) { textSize=13f;typeface=Typeface.create(font,Typeface.BOLD);setTextColor(Color.rgb(122,81,24)) }
