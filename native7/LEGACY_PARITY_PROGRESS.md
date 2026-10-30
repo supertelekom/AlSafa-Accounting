@@ -565,3 +565,13 @@ Read the tablet v3.9.359 archive `assets/style.css` directly and checked the com
 **Nine-route scope of inspection:** Home (summary metrics), Products (inventory summaries), Sales (invoice summaries), Maintenance (repair summaries), Suppliers (purchase balances), Expenses (expense summaries), Cashboxes (cash balances), Reports (report tiles), Settings (summary cards). These are potential shared renderer usages, not confirmation each page contains a report tile.
 
 **Remaining tests:** Inspect source JSON to verify actual `small`/`b` tag preservation and report-tile child nesting, screenshot typography on the tablet, and run regression for the nine routes. No APK build, Kotlin compile, or device test was performed. Full labels, field order, dialogs, animations and action parity are still pending.
+
+## Section-title border and padding parity — 2026-10-30
+
+**Old source:** Tablet v3.9.359 `assets/style.css` has `.section-title {display:flex;justify-content:space-between;align-items:center;padding:14px 15px;border-bottom:1px solid var(--line)}`; `h3` is 15px bold; `.link-button` is 12px gold-deep. Previous Native 7 fixes removed outer `section-card` padding but did not apply this source header padding/divider, leaving card headers visibly compressed.
+
+**Implemented:** Commit `a01f8a1c3d876f9ff720afc26a2828d9c82ce6ab` applies 15dp horizontal and 14dp vertical padding and draws a 1dp bottom rule using the existing source `line` color on shared `section-title` containers. The existing descendant typography, horizontal layout, and zero outer card padding are preserved.
+
+**Nine-route regression:** Dashboard, products, sales, maintenance, suppliers, expenses, cashboxes, reports, and settings must be inspected wherever source-class `section-title` is used. Check text wrapping, button hit targets, RTL alignment, divider continuity, and clipping against rounded `section-card` edges.
+
+**Pending:** Full per-route original JS markup and names/order audit, modal dimensions/transitions, source animations, photo rendering, action parity, Android Studio compilation and Honor Pad X8b screenshots. This shared fix is not a complete nine-screen implementation; no build/device test was run.
