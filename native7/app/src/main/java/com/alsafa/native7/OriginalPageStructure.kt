@@ -383,6 +383,35 @@ internal class OriginalPageStructure(
                                 }
                             }
                         }
+                        if(cs.contains("product-card")) {
+                            // Original .product-card: 14px padding, 16px radius.
+                            background=bg(Color.rgb(255,253,249),16,
+                                if(cs.contains("low-stock")) Color.rgb(229,183,170) else line)
+                            setPadding(dp(14),dp(14),dp(14),dp(14))
+                        }
+                        if(cs.contains("product-card-head")) {
+                            // Original card head is a flex row with 9px gap.
+                            orientation=LinearLayout.HORIZONTAL
+                            gravity=Gravity.CENTER_VERTICAL
+                            for(i in 0 until childCount) {
+                                val child=getChildAt(i)
+                                val source=metadata[child]
+                                child.layoutParams=LinearLayout.LayoutParams(
+                                    if(i==childCount-1) 0 else -2,-2,
+                                    if(i==childCount-1) 1f else 0f
+                                ).apply { if(i>0) marginStart=dp(9) }
+                                if(child is TextView && source!=null) {
+                                    when(source.optString("tag")) {
+                                        "b" -> { child.textSize=13f;child.typeface=Typeface.create(font,Typeface.BOLD) }
+                                        "small" -> { child.textSize=10f;child.setTextColor(muted) }
+                                    }
+                                    if(source.optString("tag")=="b" || source.optString("tag")=="small") {
+                                        child.setSingleLine(true)
+                                        child.ellipsize=android.text.TextUtils.TruncateAt.END
+                                    }
+                                }
+                            }
+                        }
                         if(cs.contains("report-tile")) {
                             background=bg(Color.rgb(255,253,249),13)
                             minimumHeight=dp(78)
