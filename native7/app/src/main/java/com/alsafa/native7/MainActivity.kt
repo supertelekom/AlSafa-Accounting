@@ -1734,6 +1734,34 @@ class MainActivity : Activity() {
                                     .setPositiveButton("إغلاق",null).show()
                             }
                         })
+                        if(item.isNull("delivered_at")) {
+                            entries.addView(text("تحديث العطل",15f,gold).apply {
+                                isClickable=true
+                                setOnClickListener {
+                                    val edit=android.widget.EditText(this@MainActivity).apply {
+                                        setText(values?.optString(6).orEmpty())
+                                        minLines=3
+                                        inputType=InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_MULTI_LINE
+                                    }
+                                    android.app.AlertDialog.Builder(this@MainActivity)
+                                        .setTitle("تحديث العطل")
+                                        .setView(edit)
+                                        .setNegativeButton("إلغاء",null)
+                                        .setPositiveButton("حفظ") { _,_ ->
+                                            try {
+                                                val updated=org.json.JSONObject(payload.toString())
+                                                val texts=org.json.JSONArray(values?.toString() ?: "[]")
+                                                texts.put(6,edit.text.toString())
+                                                updated.put("form_texts",texts)
+                                                repairStore.save(updated,item.optString("photo_path").takeIf { it.isNotBlank() && it!="null" },item.getString("status"),id)
+                                                navigateTo("preview:كل الصيانة")
+                                            } catch(e:Exception) {
+                                                android.widget.Toast.makeText(this@MainActivity,e.message ?: "تعذر تحديث العطل",android.widget.Toast.LENGTH_LONG).show()
+                                            }
+                                        }.show()
+                                }
+                            })
+                        }
                         val photoPath=item.optString("photo_path")
                         if(photoPath.isNotBlank() && photoPath!="null") {
                             entries.addView(text("صورة الساعة",15f,gold).apply {
