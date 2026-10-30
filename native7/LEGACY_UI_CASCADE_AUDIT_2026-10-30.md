@@ -64,3 +64,10 @@ The original tablet `assets/style.css` was inspected directly for these rules:
 - Corrected wrap measurement to include the inter-item gap, and positioned each RTL child using the same measured offset. This is a shared component change affecting any page using `SourceFlow`, not a change to labels, original routes, or accounting rules.
 - Code commit: `203b7eaeb736334ea4e2f53fae66622f394fd231`.
 - Remaining verification: Android Studio compilation, actual tablet portrait/landscape, long Arabic action labels, and nine-screen screenshot comparisons. This change does not establish that all screens match the old UI or that search/photo actions work.
+
+## Follow-up: narrow report filter layout (3d81c3ea)
+
+- Reviewed `OriginalPageStructure.reportFilter` and confirmed the existing 380dp compact threshold left 381–599dp widths displaying two flexible date fields plus a button in one row, potentially squeezing Arabic date controls.
+- Updated the compact threshold to widths below 600dp. The action is placed beneath the two date fields at narrow widths; larger tablet layouts preserve the original single-row arrangement.
+- Code commit: `3d81c3eab66e491b56fe4f9c27e1191a264975c3`.
+- Verification still required: screenshot comparisons of report filters at 380/420/600dp and on Honor Pad X8b, Android Studio build, all nine screens, and functional searches/photos. No accounting logic or native6 files changed.
