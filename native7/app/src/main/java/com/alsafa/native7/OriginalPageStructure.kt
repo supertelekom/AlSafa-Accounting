@@ -293,7 +293,13 @@ internal class OriginalPageStructure(
     }
     private fun ancestors(view:View):Sequence<View> = generateSequence(view) { it.parent as? View }
     private fun purchaseRow(view:View)=ancestors(view).firstOrNull { metadata[it]?.let { n -> classes(n).contains("purchase-line") }==true }
-    private fun removePurchaseLine(view:View) { purchaseRow(view)?.let { (it.parent as? ViewGroup)?.removeView(it) } }
+    private fun removePurchaseLine(view:View) {
+        purchaseRow(view)?.let { row ->
+            (row.parent as? ViewGroup)?.removeView(row)
+            unregisterDetached(row)
+            conditions()
+        }
+    }
     private fun duplicatePurchaseLine(quick:Boolean) {
         val host=controls["purchase-lines"] as? ViewGroup ?: return
         val template=metadata.entries.firstOrNull { classes(it.value).contains("purchase-line") }?.value ?: return
@@ -372,17 +378,16 @@ internal class OriginalPageStructure(
         target.addView(build(copy))
         conditions()
     }
+    private fun unregisterDetached(view:View) {
+        metadata.remove(view)
+        controls.entries.removeAll { it.value === view }
+        radioNames.values.forEach { group -> group.removeAll { it === view } }
+        if(view is ViewGroup) for(i in 0 until view.childCount) unregisterDetached(view.getChildAt(i))
+    }
     private fun removeMatching(button:View,sourceClass:String) {
         ancestors(button).firstOrNull { metadata[it]?.let { n -> classes(n).contains(sourceClass) }==true }?.let { removed ->
             (removed.parent as? ViewGroup)?.removeView(removed)
-            // Detached fields must not participate in subsequent visibility rules.
-            fun unregister(view:View) {
-                metadata.remove(view)
-                controls.entries.removeAll { it.value === view }
-                radioNames.values.forEach { group -> group.removeAll { it === view } }
-                if(view is ViewGroup) for(i in 0 until view.childCount) unregister(view.getChildAt(i))
-            }
-            unregister(removed)
+            unregisterDetached(removed)
             conditions()
         }
     }
