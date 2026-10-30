@@ -436,9 +436,11 @@ internal class OriginalPageStructure(
         val candidates=metadata.entries.filter { (_,node) ->
             node.optJSONObject("data")?.has("data-color-variants")==true
         }.mapNotNull { it.key as? ViewGroup }
-        val target=candidates.firstOrNull { candidate ->
-            ancestors(button).any { parent -> parent===candidate.parent || parent===candidate }
-        } ?: candidates.singleOrNull() ?: return
+        fun lineage(view:View):List<View> = listOf(view)+ancestors(view)
+        val buttonLineage=lineage(button)
+        val target=candidates.maxByOrNull { candidate ->
+            lineage(candidate).count { it in buttonLineage }
+        } ?: return
         val copy=JSONObject(pages.getJSONObject("variant-row-template").toString()).also { uniqueDynamicIds(it) }
         val row=build(copy)
         if(target is SourceGrid) target.addCell(row,false) else target.addView(row)
