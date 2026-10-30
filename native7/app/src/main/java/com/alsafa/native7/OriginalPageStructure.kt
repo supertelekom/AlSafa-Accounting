@@ -113,7 +113,7 @@ internal class OriginalPageStructure(
                 val tablet=activity.resources.configuration.screenWidthDp>=720
                 val wide=activity.resources.configuration.screenWidthDp>=1200 && activity.resources.configuration.orientation==android.content.res.Configuration.ORIENTATION_LANDSCAPE
                 val count=when(kind) {
-                    "formGrid" -> if(activity.resources.configuration.screenWidthDp>=1080) 4 else if(activity.resources.configuration.screenWidthDp>=720) 3 else if(activity.resources.configuration.screenWidthDp>380) 2 else 1
+                    "formGrid" -> if(wide) 3 else if(tablet) 2 else if(activity.resources.configuration.screenWidthDp>380) 2 else 1
                     "manageGrid" -> if(tablet) 4 else 2
                     "modernGrid" -> if(tablet) 3 else 2
                     "summaryGrid","reportGrid" -> if(cs.contains("currency-home-values")) 3 else if(cs.contains("home-currency-ledger")) { if(activity.resources.configuration.screenWidthDp>760) 3 else 1 } else if(kind=="reportGrid" && tablet) 3 else 2
@@ -124,7 +124,12 @@ internal class OriginalPageStructure(
                     else -> 2
                 }
                 SourceGrid(activity,count,dp(when(kind) { "reportGrid" -> 9; "manageGrid","summaryGrid" -> 10; else -> 11 })).apply {
-                    children.forEach { addCell(build(it),it.optBoolean("full")) }
+                    children.forEach { child ->
+                        val childClasses=classes(child)
+                        val fullSpan=child.optBoolean("full") || childClasses.contains("full") ||
+                            child.optString("sourceStyle").contains("grid-column: 1 / -1")
+                        addCell(build(child),fullSpan)
+                    }
                 }
             }
             "heading","inputRow","photoRow","searchRow" -> LinearLayout(activity).apply {
