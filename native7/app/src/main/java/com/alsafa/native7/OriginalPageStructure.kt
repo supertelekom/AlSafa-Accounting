@@ -432,25 +432,28 @@ internal class OriginalPageStructure(
                             minimumHeight=dp(78)
                             setPadding(dp(12),dp(12),dp(12),dp(12))
                             // CSS uses descendant small/b tags inside report tiles.
-                            for(i in 0 until childCount) {
-                                val child=getChildAt(i)
-                                val source=metadata[child]
-                                if(child is TextView && source!=null) {
+                            fun styleReportTileDescendants(view:View) {
+                                val source=metadata[view]
+                                if(view is TextView && source!=null) {
                                     when(source.optString("tag")) {
                                         "small" -> {
-                                            child.textSize=10f
-                                            child.setTextColor(muted)
-                                            child.setPadding(0,0,0,0)
+                                            view.textSize=10f
+                                            view.setTextColor(muted)
+                                            view.setPadding(0,0,0,0)
                                         }
                                         "b" -> {
-                                            child.textSize=14f
-                                            child.typeface=Typeface.create(font,Typeface.BOLD)
-                                            child.setTextColor(Color.rgb(122,81,24))
-                                            child.setPadding(0,dp(7),0,0)
+                                            view.textSize=14f
+                                            view.typeface=Typeface.create(font,Typeface.BOLD)
+                                            view.setTextColor(Color.rgb(122,81,24))
+                                            view.setPadding(0,dp(7),0,0)
                                         }
                                     }
                                 }
+                                if(view is ViewGroup) for(j in 0 until view.childCount)
+                                    styleReportTileDescendants(view.getChildAt(j))
                             }
+                            for(i in 0 until childCount)
+                                styleReportTileDescendants(getChildAt(i))
                         }
                         if(cs.contains("metric-card")) {
                             background=bg(Color.rgb(255,253,249),16)
