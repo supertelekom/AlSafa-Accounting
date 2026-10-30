@@ -78,7 +78,7 @@ internal class OriginalPageStructure(
             })
             if(css.contains("form-section")) topMargin=dp(20)
             if(css.contains("section-card")) topMargin=dp(14)
-            if(css.contains("reportGrid")) {
+            if(kind=="reportGrid" || css.contains("report-grid")) {
                 topMargin=dp(13)
                 bottomMargin=dp(13)
             }
