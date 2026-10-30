@@ -27,3 +27,13 @@ Source of truth: supplied tablet v3.9.359 source ZIP, `assets/style.css`; Kotlin
 - Android Studio compilation, APK and visual device tests on Honor Pad X8b.
 - The native Tajawal mandate is retained; no changes to data or accounting rules.
 - These are shared-renderer code fixes, **not** nine completed and tested screens.
+
+## Follow-up source comparison and fixes (2026-10-30)
+
+Directly inspected the supplied v3.9.359 ZIP `assets/style.css` again. The mobile `.modal` CSS specifies `border-radius:22px 22px 0 0` and `padding:18px 15px calc(22px + env(safe-area-inset-bottom))`; tablet overrides use 20px radius. The previous Native renderer rounded **all four** mobile corners and used 18dp bottom padding. The `.detail-list` source has no outer padding.
+
+**Saved code:**
+- `c406adb68b7f8d62ce941d21ea9ee82c70d8a891`: mobile modal now rounds only the two top corners, and uses 22dp bottom padding; tablet retains all-corner 20dp.
+- `44cc0b529c948ce8c5d15c486b3c8a1fe3825d11`: detail-list container uses flush vertical layout with zero outer padding.
+
+**Still not matched:** Android safe-area bottom inset, dialog window placement/width/max height, per-row detail-list 10px padding and border, photo preview image behavior, exact animations, original source labels/order and all button actions. Nine-screen regression targets remain home, products, sales, maintenance, suppliers, expenses, cashboxes, reports and settings. No APK compilation or Honor Pad X8b test was performed. All modifications remain inside `native7/`.
