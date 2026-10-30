@@ -2710,6 +2710,21 @@ class MainActivity : Activity() {
         }
         val reason=field(parent,"سبب المرتجع","سبب المرتجع مطلوب")
         val account=select(parent,"الخزنة",listOf("درج المحل","الصندوق الخارجي","شام كاش","البنك"))
+        val kind=select(parent,"نوع العملية",listOf("مرتجع","استبدال"))
+        val replacementId=field(parent,"معرّف المنتج البديل","اختر المنتج البديل")
+        val replacementQty=field(parent,"كمية البديل","1").apply {
+            setText("1")
+            inputType=InputType.TYPE_CLASS_NUMBER
+        }
+        val extraPayment=field(parent,"فرق الاستبدال المقبوض","0").apply {
+            setText("0")
+            inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
+        }
+        val penalty=field(parent,"غرامة المرتجع","0").apply {
+            setText("0")
+            inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
+        }
+
         val matches=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL }
         parent.addView(matches)
         fun showLines() {
@@ -2741,7 +2756,17 @@ class MainActivity : Activity() {
             text="حفظ المرتجع"
             setOnClickListener {
                 try {
-                    NativeSalesLedger.returnLine(legacyBackupStore.writableDatabase,
+                    if(kind.selectedItemPosition==1) NativeSalesLedger.exchangeLine(
+                        legacyBackupStore.writableDatabase,
+                        saleId.text.toString().trim(),productId.text.toString().trim(),
+                        qty.text.toString().toIntOrNull() ?: 0,
+                        replacementId.text.toString().trim(),
+                        replacementQty.text.toString().toIntOrNull() ?: 0,
+                        account.selectedItem.toString(),
+                        extraPayment.text.toString().toDoubleOrNull() ?: 0.0,
+                        penalty.text.toString().toDoubleOrNull() ?: 0.0,
+                        reason.text.toString().trim())
+                    else NativeSalesLedger.returnLine(legacyBackupStore.writableDatabase,
                         saleId.text.toString().trim(),productId.text.toString().trim(),
                         qty.text.toString().toIntOrNull() ?: 0,reason.text.toString().trim(),
                         account.selectedItem.toString())
