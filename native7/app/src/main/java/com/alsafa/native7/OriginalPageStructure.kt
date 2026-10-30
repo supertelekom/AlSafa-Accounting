@@ -244,7 +244,12 @@ internal class OriginalPageStructure(
                 addView(body)
             }
             else -> if(cs.contains("report-filter")) reportFilter(children) else column().apply {
-                children.forEach { child -> addView(build(child),childParams(child,kind)) }
+                children.forEachIndexed { index,child ->
+                    val params=childParams(child,kind)
+                    // CSS .form-section:first-child removes the default top margin.
+                    if(index==0 && classes(child).contains("form-section")) params.topMargin=0
+                    addView(build(child),params)
+                }
                 when(kind) {
                     "section","form" -> { background=bg();setPadding(dp(if(kind=="form" && activity.resources.configuration.screenWidthDp>=720) 22 else 15),dp(if(kind=="form" && activity.resources.configuration.screenWidthDp>=720) 22 else 15),dp(if(kind=="form" && activity.resources.configuration.screenWidthDp>=720) 22 else 15),dp(if(kind=="form" && activity.resources.configuration.screenWidthDp>=720) 22 else 15)) }
                     "stat" -> {
