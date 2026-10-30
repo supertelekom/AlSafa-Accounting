@@ -125,6 +125,20 @@ internal class OriginalPageStructure(
                 if(cs.contains("form-section")) { textSize=13f;typeface=Typeface.create(font,Typeface.BOLD);setTextColor(gold) }
                 if(cs.contains("report-tile-value")) { textSize=14f;typeface=Typeface.create(font,Typeface.BOLD);setTextColor(gold);setPadding(0,dp(7),0,0) }
                 if(cs.contains("report-tile-label")) { textSize=10f;setTextColor(muted) }
+                if(cs.contains("transaction-icon")) {
+                    textSize=18f;gravity=Gravity.CENTER
+                    minWidth=dp(34);minHeight=dp(34)
+                    background=GradientDrawable().apply {
+                        setColor(Color.rgb(247,237,221));cornerRadius=dp(11).toFloat()
+                    }
+                    setTextColor(goldAccent)
+                }
+                if(cs.contains("transaction-amount")) {
+                    textSize=12f;typeface=Typeface.create(font,Typeface.BOLD)
+                    setSingleLine(true)
+                    if(cs.contains("negative")) setTextColor(Color.rgb(173,54,54))
+                }
+                if(cs.contains("transaction-info")) { textSize=12f;maxLines=2 }
                 if(cs.contains("section-title") && kind=="title") { textSize=15f;typeface=Typeface.create(font,Typeface.BOLD) }
                 if(kind=="text" && n.optString("tag")=="label") setPadding(0,0,0,dp(6))
                 if(cs.contains("simple-icon")) {
