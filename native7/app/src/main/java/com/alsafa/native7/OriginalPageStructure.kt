@@ -67,7 +67,10 @@ internal class OriginalPageStructure(
             kind in listOf("section","form","summaryGrid","reportGrid") -> 14
             else -> 2
         }
-        return LinearLayout.LayoutParams(-1,-2).apply { bottomMargin=dp(margin) }
+        return LinearLayout.LayoutParams(-1,-2).apply {
+            bottomMargin=dp(if(classes(node).contains("form-section")) 14 else margin)
+            if(classes(node).contains("form-section")) topMargin=dp(20)
+        }
     }
      private fun tintAccentMetric(view:View,node:JSONObject) {
         val cs=classes(node)
@@ -265,6 +268,30 @@ internal class OriginalPageStructure(
                 // Source classes are orthogonal to the structural kind. Apply these
                 // after the kind switch so a 'section' or 'form' also gets its CSS.
                 run {
+                        if(cs.contains("transaction-info")) {
+                            // The original CSS targets nested strong/span tags, not
+                            // fabricated transaction-title/subtitle classes.
+                            for(i in 0 until childCount) {
+                                val child=getChildAt(i)
+                                val source=metadata[child]
+                                if(child is TextView && source!=null) {
+                                    when(source.optString("tag")) {
+                                        "strong" -> {
+                                            child.textSize=12f
+                                            child.typeface=Typeface.create(font,Typeface.BOLD)
+                                            child.setSingleLine(true)
+                                            child.ellipsize=android.text.TextUtils.TruncateAt.END
+                                        }
+                                        "span" -> {
+                                            child.textSize=10f
+                                            child.setTextColor(muted)
+                                            child.setPadding(child.paddingLeft,dp(3),
+                                                child.paddingRight,child.paddingBottom)
+                                        }
+                                    }
+                                }
+                            }
+                        }
                         if(cs.contains("report-tile")) {
                             background=bg(Color.rgb(255,253,249),13)
                             minimumHeight=dp(78)
@@ -346,6 +373,7 @@ internal class OriginalPageStructure(
             gravity=Gravity.BOTTOM
         }
         var fields=0
+        val compactActions=mutableListOf<View>()
         for(node in nodes) {
             val child=build(node)
             val action=node.optString("kind")=="button"
@@ -363,12 +391,8 @@ internal class OriginalPageStructure(
                 adjustLabels(child)
             }
             if(action) {
-                if(compact) {
-                    outer.addView(row,LinearLayout.LayoutParams(-1,-2))
-                    outer.addView(child,LinearLayout.LayoutParams(-1,-2).apply { topMargin=dp(8) })
-                    return outer
-                }
-                row.addView(child,LinearLayout.LayoutParams(-2,-2).apply {
+                if(compact) compactActions.add(child)
+                else row.addView(child,LinearLayout.LayoutParams(-2,-2).apply {
                     if(fields>0) marginStart=dp(8)
                 })
             } else {
@@ -379,6 +403,9 @@ internal class OriginalPageStructure(
             }
         }
         outer.addView(row,LinearLayout.LayoutParams(-1,-2))
+        compactActions.forEach { action ->
+            outer.addView(action,LinearLayout.LayoutParams(-1,-2).apply { topMargin=dp(8) })
+        }
         return outer
     }
     private fun input(n:JSONObject):View {
