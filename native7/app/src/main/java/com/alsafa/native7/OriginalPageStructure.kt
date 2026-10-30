@@ -306,6 +306,10 @@ internal class OriginalPageStructure(
                                 override fun getOpacity()=android.graphics.PixelFormat.TRANSLUCENT
                             }
                         }
+                        if(cs.contains("report-filter")) {
+                            background=bg(Color.rgb(255,253,249),15)
+                            setPadding(dp(13),dp(13),dp(13),dp(13))
+                        }
                         if(cs.contains("form-card")) {
                             background=bg(Color.rgb(255,253,249),17)
                             val inset=if(activity.resources.configuration.screenWidthDp>=720) 22 else 15
