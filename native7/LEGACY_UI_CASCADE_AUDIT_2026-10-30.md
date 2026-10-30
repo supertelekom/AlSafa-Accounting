@@ -85,3 +85,14 @@ The original renderer inventory remains `renderDashboard`, `renderProducts`, `re
 
 ### Tests pending
 Android Studio compile and device tests, screenshots on Honor Pad X8b, source-derived node-by-node labels/order/actions comparison, search behavior, gallery/camera/zoom, RTL text truncation, modal lifecycle and nine-route regression. No Native6, financial-rule or user-data changes.
+
+## Cross-screen source field parity — d72748c7
+
+Compared legacy tablet `assets/style.css` rules at `input, select, textarea` (42px minimum height, 9x10 padding, `#fffcf7` fill, `1px solid var(--line)`, 10px radius) and `input:focus, select:focus, textarea:focus` (gold border) against `OriginalPageStructure.kt`.
+
+- Corrected shared `EditText` background to include the missing 1dp `--line` border, preserving the source fill, radius, padding and existing Tajawal/RTL behavior. Added focus listener to switch to the original gold border when focused. Native Android does not yet reproduce the CSS 3px focus shadow.
+- Corrected shared `Spinner` background to include the missing 1dp `--line` border, preserving its existing dimensions and source-derived options.
+- These shared controls can appear on dashboard, products, sales, repairs, purchases, expenses, vaults, reports and settings, but route-specific presence and complete element-order parity are not yet certified.
+- Code commit: `d72748c7b9f3f54dfa9a2a9f841d0aba5e171290`.
+- Device tests pending: focus state and keyboard, dropdown readability, long Arabic labels, screen captures on Honor Pad X8b, Android Studio build, camera/gallery/zoom and real-time search.
+- No native6, database, financial or user-data changes.
