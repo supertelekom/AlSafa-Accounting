@@ -60,6 +60,15 @@ internal class OriginalPageStructure(
     private fun classes(n:JSONObject) = (0 until (n.optJSONArray("sourceClasses")?.length() ?: 0)).map { n.getJSONArray("sourceClasses").getString(it) }
     private fun bg(color:Int=Color.rgb(255,253,249),radius:Int=17,border:Int=line) = GradientDrawable().apply { setColor(color);cornerRadius=dp(radius).toFloat();setStroke(dp(1),border) }
     private fun column() = LinearLayout(activity).apply { orientation=LinearLayout.VERTICAL;layoutDirection=View.LAYOUT_DIRECTION_RTL }
+    private fun childParams(node:JSONObject,parentKind:String):LinearLayout.LayoutParams {
+        val kind=node.optString("kind")
+        val margin=when {
+            parentKind=="field" -> 6
+            kind in listOf("section","form","summaryGrid","reportGrid") -> 14
+            else -> 2
+        }
+        return LinearLayout.LayoutParams(-1,-2).apply { bottomMargin=dp(margin) }
+    }
     private fun tintTextTree(view:View,color:Int) {
         if(view is TextView) view.setTextColor(color)
         if(view is ViewGroup) for(i in 0 until view.childCount) tintTextTree(view.getChildAt(i),color)
@@ -184,7 +193,7 @@ internal class OriginalPageStructure(
                 addView(body)
             }
             else -> column().apply {
-                children.forEach { child -> addView(build(child),LinearLayout.LayoutParams(-1,-2).apply { bottomMargin=dp(if(child.optString("kind") in listOf("section","form","summaryGrid","reportGrid")) 14 else if(kind=="field") 6 else 2) }) }
+                children.forEach { child -> addView(build(child),childParams(child,kind)) }
                 when(kind) {
                     "section","form" -> { background=bg();setPadding(dp(if(kind=="form" && activity.resources.configuration.screenWidthDp>=720) 22 else 15),dp(if(kind=="form" && activity.resources.configuration.screenWidthDp>=720) 22 else 15),dp(if(kind=="form" && activity.resources.configuration.screenWidthDp>=720) 22 else 15),dp(if(kind=="form" && activity.resources.configuration.screenWidthDp>=720) 22 else 15)) }
                     "stat" -> {
@@ -229,15 +238,16 @@ internal class OriginalPageStructure(
                             orientation=LinearLayout.HORIZONTAL
                             gravity=Gravity.CENTER_VERTICAL
                             for(i in 0 until childCount) {
-                                getChildAt(i).layoutParams=LinearLayout.LayoutParams(
+                                val child=getChildAt(i)
+                                val existing=child.layoutParams as? LinearLayout.LayoutParams
+                                child.layoutParams=LinearLayout.LayoutParams(
                                     if(i==0) 0 else -2,-2,if(i==0) 1f else 0f
-                                ).apply { if(i>0) marginStart=dp(9) }
+                                ).apply {
+                                    if(i>0) marginStart=dp(9)
+                                    bottomMargin=existing?.bottomMargin ?: 0
+                                }
                             }
                             setPadding(dp(15),dp(14),dp(15),dp(14))
-                            background=GradientDrawable().apply {
-                                setColor(Color.TRANSPARENT)
-                                setStroke(dp(1),line)
-                            }
                         }
                         if(cs.contains("form-card")) {
                             background=bg(Color.rgb(255,253,249),17)
