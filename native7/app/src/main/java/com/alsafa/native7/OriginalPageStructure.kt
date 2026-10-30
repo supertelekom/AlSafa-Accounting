@@ -364,7 +364,23 @@ internal class OriginalPageStructure(
                 action=="remove-color-variant" -> removeMatching(view,"color-variant-row")
                 action=="select-quick-repair" -> {
                     val manual=n.optJSONObject("data")?.optString("data-manual-price")=="1"
-                    controls["father-custom-repair"]?.visibility=if(manual) View.VISIBLE else View.GONE
+                    val data=n.optJSONObject("data")
+                    val service=data?.optString("data-service").orEmpty()
+                    val price=data?.optString("data-price").orEmpty()
+                    val quickId=data?.optString("data-quick-id").orEmpty()
+                    fun fill(id:String,value:String) {
+                        (controls[id] as? EditText)?.setText(value)
+                    }
+                    fill("father-repair-service",service)
+                    fill("father-repair-quick-id",quickId)
+                    fill("father-repair-price",if(manual) "" else price)
+                    fill("father-repair-base-amount",if(manual) "" else price)
+                    fill("father-custom-repair-amount",if(manual) "" else price)
+                    fill("father-custom-repair-work","")
+                    controls["father-custom-repair"]?.visibility=View.VISIBLE
+                    if(manual) (controls["father-custom-repair-amount"] as? EditText)?.post {
+                        (controls["father-custom-repair-amount"] as? EditText)?.requestFocus()
+                    }
                     // Only one quick-repair choice should remain visually selected.
                     metadata.forEach { (other,node) ->
                         if(node.optString("action")=="select-quick-repair") {
