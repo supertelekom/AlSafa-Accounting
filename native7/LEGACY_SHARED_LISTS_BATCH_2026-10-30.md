@@ -56,3 +56,18 @@ Re-read the original tablet ZIP `assets/style.css` **including later overrides**
 - `2ac8f6ab6b1780b80abbdafabc649f7a988b1573`: use actual final visible sibling to remove list-row and transaction divider; removes dependence on a JSON `last` flag.
 
 **Important regression check:** The shared parent removes the divider only if its last visible child is a list-row or transaction; nested source structure and sibling groups must be inspected in all nine screens. Do not infer this makes every list identical. Still no Kotlin compilation, APK, device screenshot comparison, or complete action verification.
+
+## Tablet override and shared status styles — user instruction, 2026-10-30
+
+**Explicit user constraint:** On the tablet, action buttons must not require horizontal scrolling. This overrides phone-specific source behavior.
+
+**Verified original `assets/style.css`:** The 720–1199px and >=1200px landscape media queries set `[data-invoice-row="repair"] .row-actions { flex-wrap: wrap; overflow-x: visible; touch-action: auto; }`. The generic source status variants are:
+- `.status`: padding 3px 7px, pill radius 99px, 9px type, background `#f7eddd`, deep gold text.
+- `.status.done`: `#eaf4ec` and `--success:#5a8a67`.
+- `.status.debt`: `#fff0ed` and `--danger:#b8584b`.
+
+**Implemented in commit `4e73b550d11efcfe03e390a4479f6ad1d3603423`:** Native 7 shared row-actions on tablet (screen width >=720dp) show every action in visible lines with no horizontal scroll. At 720–1199dp they group at most four controls per line; >=1200dp group at most six. This grouping is an Android adaptation to CSS flex-wrap, not a pixel-perfect equivalent. The common text renderer also styles status, done and debt labels with source colors and geometry.
+
+**Nine-route impact:** Any dashboard, product, sale, maintenance, supplier, expense, cashbox, report or settings component carrying `row-actions` or `status` will receive these shared styles. Actual usage and appearance per route remain to be checked.
+
+**Pending:** Need compile/test on Honor Pad X8b, verify tablet screenWidthDp and rotation, inspect row wrapping for long Arabic button labels, verify `status` tags are text nodes, compare against original screenshots, verify all actions are operational, and audit original labels/order/animations per screen. No changes to accounting or `native6`.
