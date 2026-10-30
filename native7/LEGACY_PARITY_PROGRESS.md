@@ -266,3 +266,14 @@ Inspected original tablet v3.9.359 `assets/style.css` directly and corrected the
 - `.report-tile small` uses muted 10px and `.report-tile b` uses gold-deep 14px with 7px top spacing. `a2addd80f9387dcad475e6362fb33d4025cd48d1` handles source-class `report-tile-label` and `report-tile-value` nodes. Note that unclassified child nodes may still differ.
 
 **Nine-section review status:** common metrics and report tiles impact the home, products, sales, maintenance, suppliers, expenses, cashboxes, reports and settings where source-class nodes are present. Their individual screen labels, ordering, modal dimensions, icons, photo handling, complete navigation and animations have **not** been fully inspected or proven equivalent. Need screenshots of all original and native routes on Honor Pad X8b, compile and runtime tests, accessibility/RTL tests, and button-by-button verification. No APK was built in this batch.
+
+## Source precedence: quick repair grid — 2026-10-30
+
+Direct inspection of original tablet v3.9.359 archive `assets/style.css` found later rules labelled v3.9.90 and v3.9.91 that override earlier generic quick-service layouts:
+- `body.father-mode .quick-service-grid` has **7px** gap.
+- Landscape tablets from **900px** width have **4 columns**, even below the generic 1024px breakpoint.
+- Individual quick-service cards are **72px minimum height** in this landscape mode, with **5px 4px** padding; outside that rule they are 78px minimum height with 6px 5px padding.
+
+Native 7 commit `e2c7641387e2b32847a8b422367e57e5e5224dc5` applies the grid gap and column breakpoint. **The individual quick-service card dimensions remain to be checked against the current renderer and original source**; do not claim complete parity.
+
+All nine principal sections remain subject to route-specific verification (labels/order/controls/images/modal behavior). No APK build or device screenshots in this batch.
