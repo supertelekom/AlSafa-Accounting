@@ -228,6 +228,11 @@ internal class OriginalPageStructure(
                         if(cs.contains("section-title")) {
                             orientation=LinearLayout.HORIZONTAL
                             gravity=Gravity.CENTER_VERTICAL
+                            for(i in 0 until childCount) {
+                                getChildAt(i).layoutParams=LinearLayout.LayoutParams(
+                                    if(i==0) 0 else -2,-2,if(i==0) 1f else 0f
+                                ).apply { if(i>0) marginStart=dp(9) }
+                            }
                             setPadding(dp(15),dp(14),dp(15),dp(14))
                             background=GradientDrawable().apply {
                                 setColor(Color.TRANSPARENT)
