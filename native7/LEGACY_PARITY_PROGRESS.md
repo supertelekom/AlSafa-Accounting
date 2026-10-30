@@ -137,3 +137,8 @@
 - `simple-action`: original icon 25px (40/46px container), title 17px, description 11px, horizontal padding 14px, gap 12px. Corrected text sizing and horizontal padding; existing user-requested half-height remains an intentional exception to legacy CSS.
 - Previous `SourceGrid` row-stretch correction: commit `2ccb93b766916c181f618f16bcb941c69e3f5d22`.
 - NOT verified: full screen pixel parity, all media queries, actual APK build and tablet screenshots. UI preview actions are not a substitute for operational logic.
+
+## Tablet interface layout corrections — 2026-10-30
+- `90f9303c81d6a44de081ca0a7aa85539cd7caf88`: SourceGrid now measures children to the final tallest-row height, not just stretching their layout rectangles. Affects tablet grids across sections.
+- `8587c9c96d14f80192c1e825240b32af35635cc6`: horizontal quick-action labels use remaining weighted width to avoid text overflowing beside their fixed-size icons.
+- Visual parity still unverified on Honor Pad X8b. No APK build or screenshot comparison was performed. These are layout consistency fixes, not evidence of complete pixel parity.
