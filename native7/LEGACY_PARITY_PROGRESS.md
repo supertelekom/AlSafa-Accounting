@@ -324,3 +324,23 @@ Inspected original tablet source ZIP `assets/style.css` and Native 7 shared `Ori
 **Sections affected:** home, products, sales, maintenance, suppliers, expenses, cashboxes, reports and settings, to the extent they use shared source-class nodes. This was a structural code audit, **not** a full label/order/animation comparison of every route.
 
 **Still unverified:** Android Studio compilation; Honor Pad X8b screenshots; screen-by-screen element ordering and names; all dialogs, keyboard/focus, images, animations, accessibility, functional save/restore and print operations. No APK was built or device test run.
+
+## Shared view tree integrity and navigation race review — 2026-10-30
+
+Reviewed `OriginalPageStructure.kt` alongside the original tablet v3.9.359 source stylesheet and the native app entry-point's shared `OriginalPageStructure` usage.
+
+1. **Source-node-aware accent typography:** `0e87e130f88f68297c347366c2f5252d17a6a155` replaces positional pairing of source children with native child views when applying accent card colors. Native wrappers and optional/hidden nodes can invalidate positional pairing; the renderer now follows registered source metadata on each built child. This is a consistency fix for any route rendering accent metrics.
+2. **Navigation race guard:** `5687e7bcac0d3d9e0cfdff8ecc1227df04c9d352` ensures the deferred `conditions()` pass runs only when the original view and route are still current. This prevents a previously posted UI update from touching controls of a subsequently navigated route.
+
+### Nine-section audit coverage and remaining tests
+- Home: shared metric typography and navigation callbacks inspected; shell, logo and route layout unverified.
+- Products: shared condition lifecycle inspected; product photos, forms, color variants and source ordering unverified.
+- Sales: shared condition lifecycle inspected; full/simple invoices, dialogs and totals unverified.
+- Maintenance: shared condition lifecycle inspected; intake, photos and delivery unverified.
+- Suppliers: shared condition lifecycle inspected; purchase lines, debts and dialogs unverified.
+- Expenses: shared condition lifecycle inspected; forms and movement lists unverified.
+- Cashboxes: shared condition lifecycle inspected; balance cards and closing unverified.
+- Reports: shared accent card rendering inspected; tables, filters and partners unverified.
+- Settings: shared navigation inspected; backup, printer and nested settings unverified.
+
+The source CSS, source JSON, Kotlin route mapping, modal behaviors and every button's operational behavior have **not** been exhaustively compared in this batch. The code is committed but **no APK build, compilation or Honor Pad X8b test was performed**. Do not interpret these commits as nine-section pixel parity or functional certification.
