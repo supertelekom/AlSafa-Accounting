@@ -97,7 +97,11 @@ internal class OriginalPageStructure(
         val view=build(pages.getJSONObject(route))
         root=view
         parent.addView(view,LinearLayout.LayoutParams(-1,-2))
-        view.post { conditions() }
+        view.post {
+            // A posted callback from an older route must not update controls
+            // belonging to a newly displayed route.
+            if(root===view && currentRoute==route && view.parent!=null) conditions()
+        }
     }
     private fun register(view:View,n:JSONObject):View {
         metadata[view]=n
