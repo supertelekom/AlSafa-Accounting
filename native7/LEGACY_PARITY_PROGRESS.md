@@ -192,3 +192,29 @@ Directly inspected `assets/style.css` in the attached original v3.9.359 tablet s
 Commits: `480a5a91b6fc9b7fb029ce20a4f046ebdfde8c8e`, `86e8f67f4102bb78fa527f0870d57a0540f1c195`.
 
 Scope inspected: shared UI renderer for home, products, sales, maintenance, suppliers, expenses, cashboxes, reports and settings. The source structure is used for route-specific content; this batch did **not** individually certify every label, screen, modal or motion. The CSS also has general responsive `auto-fit` rules; some pages may still differ from source when their usable content width changes. **No APK build or on-device screenshot comparison performed.** Dialogs, pictures, dynamic interactions, app shell and route-specific card styles require further work. All preview-only actions remain non-operational.
+
+## Cross-section UI audit and source-grounded fixes — 2026-10-30 (batch)
+
+Original archive actually opened and inspected: `AlSafaAccounting-v3.9.359-TABLET-PARTNER-DATE-REPORT-FIX-SOURCE.zip` / `assets/style.css`. This is a shared-component audit covering the home, products, sales, maintenance, suppliers, expenses, cashboxes, reports and settings route renderer, **not** a pixel-by-pixel certification of all nine sections.
+
+| Source rule or original behavior | Change | Commit |
+|---|---|---|
+| Native `details/summary` should not acquire an invented 150ms fade | Removed unverified animation and kept immediate fold visibility changes | `d78ca95a76a301b7e3d9bde9a9aa5dd1179511bf` |
+| `.metric-card.accent`: gradient #b28232 → #8b601f, foreground #fff9ec | Restored accent gradient and readable text for stat/metric-card source classes | `2ecd3795ff237e162ea730e30a0f05179ef3a282` |
+| `.section-title`: horizontal heading/actions, padding 14px 15px | Added RTL horizontal layout and weighted title with wrap-width actions; prevent overflow | `7d965770a36d540daafe41df5ee0f628167717e9`, `376320f65db7ee0f6ba335f5ff33405a110d879c` |
+| `.form-card`: paper background, radius 17px, tablet padding 22px | Source-class form-card padding and background | `7d965770a36d540daafe41df5ee0f628167717e9` |
+
+Original root CSS palette verified: paper #fffdf9; ink #3e3429; muted #8a7b6c; line #eadfce; gold #a97929; gold-deep #7a5118. Native uses Tajawal per the project's explicit typography requirement; original root CSS itself lists Tahoma/Arial, so claiming the original CSS requires Tajawal would be inaccurate.
+
+### Coverage / remaining acceptance tests
+- **Home:** shell/topbar/logo, main card dimensions and mode chooser screenshot comparison pending.
+- **Products:** list cards, image preview and color variant forms pending.
+- **Sales:** full/simple invoices, manual items, receipt controls, discount dialogs and invoice print view pending.
+- **Maintenance:** intake, status cards, photo preview and quick-repair screens pending.
+- **Suppliers:** purchase line controls, supplier dialogs and debt pages pending.
+- **Expenses:** form field and payment method layout pending.
+- **Cashboxes:** currency panels, movement dialogs and daily close layout pending.
+- **Reports:** report tiles, tables, filters and partner reports pending.
+- **Settings:** nested pages, restore/backup and printer dialogs pending.
+
+**Not tested:** Android Studio compilation, actual Honor Pad X8b screenshot comparison, all click interactions, keyboard behavior, long text overflow, modal sizing and animations. The changes affect layout rendering only; no accounting logic is certified. Follow-up must build locally and compare screenshots against the old tablet app.
