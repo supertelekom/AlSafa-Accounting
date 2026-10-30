@@ -42,8 +42,41 @@ internal object NativeSalesLedger {
     }
     // Original consumeFundingLots: oldest createdAt first, consuming qtyRemaining.
     // Caller must run this inside the same SQLite transaction as the sale/return.
+    // Preserve the original funding batches from an already imported legacy product.
+    // Idempotent: do not reconstruct batches after native movements have begun.
+    fun importLegacyFunding(db:SQLiteDatabase,productId:String,raw:org.json.JSONObject) {
+        create(db)
+        val lots=raw.optJSONArray("fundingLots") ?: return
+        val existing=db.rawQuery("SELECT COUNT(*) FROM native_funding_lots WHERE product_id=?",arrayOf(productId)).use { c ->
+            c.moveToFirst();c.getInt(0)
+        }
+        if(existing>0) return
+        val touched=db.rawQuery("SELECT COUNT(*) FROM native_sale_stock WHERE product_id=?",arrayOf(productId)).use { c ->
+            c.moveToFirst();c.getInt(0)
+        }
+        if(touched>0) return
+        for(i in 0 until lots.length()) {
+            val lot=lots.optJSONObject(i) ?: continue
+            val id=lot.optString("id")
+            require(id.isNotBlank()) { "دفعة تمويل بدون معرف للمنتج $productId" }
+            val remaining=LegacyAccountingRules.number(lot.opt("qtyRemaining"))
+            val original=LegacyAccountingRules.number(lot.opt("qtyOriginal"))
+            require(remaining.isFinite() && original.isFinite() && remaining>=0 && original>=remaining)
+            db.execSQL("INSERT OR IGNORE INTO native_funding_lots VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
+                arrayOf<Any>(id,productId,lot.optString("purchaseId"),lot.optString("source","shop"),
+                    lot.optString("partnerId"),lot.optString("partnerName"),
+                    LegacyAccountingRules.number(lot.opt("share")).coerceIn(0.0,100.0),
+                    original,remaining,LegacyAccountingRules.number(lot.opt("unitCost")),
+                    lot.optString("currency",raw.optString("currency","USD")),
+                    LegacyAccountingRules.number(lot.opt("createdAt")).toLong()))
+        }
+    }
     fun consumeFundingLots(db:SQLiteDatabase,productId:String,quantity:Double):List<FundingAllocation> {
         require(quantity.isFinite() && quantity>=0.0)
+        // Also supports backups restored before funding migration was introduced.
+        db.rawQuery("SELECT raw_json FROM domain_products WHERE id=? LIMIT 1",arrayOf(productId)).use { c ->
+            if(c.moveToFirst()) importLegacyFunding(db,productId,org.json.JSONObject(c.getString(0)))
+        }
         var need=quantity
         val allocations=mutableListOf<FundingAllocation>()
         db.rawQuery("SELECT id,purchase_id,source,partner_id,partner_name,share,qty_remaining,unit_cost,currency FROM native_funding_lots WHERE product_id=? ORDER BY created_at ASC,id ASC",
