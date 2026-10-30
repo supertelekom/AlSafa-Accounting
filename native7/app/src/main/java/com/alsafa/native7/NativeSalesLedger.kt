@@ -113,6 +113,7 @@ internal object NativeSalesLedger {
     }
     fun create(db:SQLiteDatabase) {
         db.execSQL("CREATE TABLE IF NOT EXISTS native_sale_vault_movements (id TEXT PRIMARY KEY, sale_id TEXT NOT NULL, vault TEXT NOT NULL, currency TEXT NOT NULL, amount REAL NOT NULL, type TEXT NOT NULL, created_at INTEGER NOT NULL)")
+        db.execSQL("CREATE TABLE IF NOT EXISTS native_sale_rate_snapshots (sale_id TEXT PRIMARY KEY, try_rate REAL, syp_rate REAL, try_syp_rate REAL)")
         db.execSQL("CREATE TABLE IF NOT EXISTS native_funding_lots (id TEXT PRIMARY KEY, product_id TEXT NOT NULL, purchase_id TEXT NOT NULL, source TEXT NOT NULL, partner_id TEXT NOT NULL, partner_name TEXT NOT NULL, share REAL NOT NULL, qty_original REAL NOT NULL, qty_remaining REAL NOT NULL, unit_cost REAL NOT NULL, currency TEXT NOT NULL, created_at INTEGER NOT NULL)")
         db.execSQL("CREATE TABLE IF NOT EXISTS native_sale_funding_allocations (id TEXT PRIMARY KEY, sale_id TEXT NOT NULL, product_id TEXT NOT NULL, lot_id TEXT NOT NULL, purchase_id TEXT NOT NULL, source TEXT NOT NULL, partner_id TEXT NOT NULL, partner_name TEXT NOT NULL, share REAL NOT NULL, qty REAL NOT NULL, unit_cost REAL NOT NULL, currency TEXT NOT NULL, created_at INTEGER NOT NULL)")
         db.execSQL("CREATE TABLE IF NOT EXISTS native_sales (id TEXT PRIMARY KEY, created_at INTEGER NOT NULL, currency TEXT NOT NULL, channel TEXT NOT NULL, customer TEXT NOT NULL, phone TEXT NOT NULL, total REAL NOT NULL, cost REAL NOT NULL, status TEXT NOT NULL DEFAULT 'active')")
@@ -189,12 +190,12 @@ internal object NativeSalesLedger {
         }
     }
     fun save(db:SQLiteDatabase,lines:List<Line>,currency:String,channel:String,customer:String,phone:String,
-             initialCollection:Double=0.0,account:String="درج المحل",changeAccount:String=account,changeCurrency:String=currency,manualDiscount:Double=0.0,ruleDiscount:Double=0.0,taxRate:Double=0.0):String {
+             initialCollection:Double=0.0,account:String="درج المحل",changeAccount:String=account,changeCurrency:String=currency,manualDiscount:Double=0.0,ruleDiscount:Double=0.0,taxRate:Double=0.0,rateSnapshot:RateSnapshot?=null):String {
         require(changeCurrency==currency) { "إرجاع الباقي بعملة أخرى يحتاج سعر تحويل صريح" }
         create(db)
         db.beginTransaction()
         try {
-            val id=saveInternal(db,lines,currency,channel,customer,phone,initialCollection,account,changeAccount,manualDiscount,ruleDiscount,taxRate)
+            val id=saveInternal(db,lines,currency,channel,customer,phone,initialCollection,account,changeAccount,manualDiscount,ruleDiscount,taxRate,rateSnapshot)
             db.setTransactionSuccessful()
             return id
         } finally { db.endTransaction() }
@@ -264,6 +265,8 @@ internal object NativeSalesLedger {
             arrayOf<Any>(id,subtotal,manualDiscount,ruleDiscount,taxRate,tax))
         require(total>0 || initialCollection==0.0) { "لا يمكن قبض مبلغ لفاتورة قيمتها صفر" }
         db.execSQL("INSERT INTO native_sales VALUES (?,?,?,?,?,?,?,?,?)",arrayOf<Any>(id,now,currency,channel,customer,phone,total,cost,"active"))
+        if(rateSnapshot!=null) db.execSQL("INSERT INTO native_sale_rate_snapshots VALUES (?,?,?,?)",
+            arrayOf(id,rateSnapshot.TRY,rateSnapshot.SYP,rateSnapshot.TRY_SYP))
         if(initialCollection>0) insertCollection(db,id,initialCollection,currency,account,now,"collection")
         val change=(initialCollection-total).coerceAtLeast(0.0)
         if(change>0.000001) insertCollection(db,id,-change,currency,changeAccount,now,"change")
@@ -279,7 +282,7 @@ internal object NativeSalesLedger {
      */
     fun saveWithChange(db:SQLiteDatabase,lines:List<Line>,currency:String,channel:String,
         customer:String,phone:String,tendered:Double,tenderAccount:String,
-        changeCurrency:String,changeAccount:String,changeRate:Double,manualDiscount:Double=0.0,ruleDiscount:Double=0.0,taxRate:Double=0.0):String {
+        changeCurrency:String,changeAccount:String,changeRate:Double,manualDiscount:Double=0.0,ruleDiscount:Double=0.0,taxRate:Double=0.0,rateSnapshot:RateSnapshot?=null):String {
         require(tendered.isFinite() && tendered>=0) { "المبلغ المدفوع غير صالح" }
         require(changeCurrency in setOf("USD","TRY","SYP")) { "عملة الباقي غير صالحة" }
         require(changeRate.isFinite() && changeRate>0) { "سعر الصرف غير صالح" }
@@ -288,7 +291,7 @@ internal object NativeSalesLedger {
         create(db)
         db.beginTransaction()
         try {
-            val id=saveInternal(db,lines,currency,channel,customer,phone,0.0,tenderAccount,manualDiscount=manualDiscount,ruleDiscount=ruleDiscount,taxRate=taxRate)
+            val id=saveInternal(db,lines,currency,channel,customer,phone,0.0,tenderAccount,manualDiscount=manualDiscount,ruleDiscount=ruleDiscount,taxRate=taxRate,rateSnapshot=rateSnapshot)
             val sale=find(db,id) ?: error("تعذر قراءة الفاتورة")
             val collected=tendered.coerceAtMost(sale.total)
             val change=(tendered-sale.total).coerceAtLeast(0.0)
@@ -307,7 +310,7 @@ internal object NativeSalesLedger {
     }
     data class Tender(val amount:Double,val currency:String,val account:String,val rate:Double)
     fun saveMixed(db:SQLiteDatabase,lines:List<Line>,currency:String,channel:String,
-        customer:String,phone:String,tenders:List<Tender>,manualDiscount:Double=0.0,ruleDiscount:Double=0.0,taxRate:Double=0.0):String {
+        customer:String,phone:String,tenders:List<Tender>,manualDiscount:Double=0.0,ruleDiscount:Double=0.0,taxRate:Double=0.0,rateSnapshot:RateSnapshot?=null):String {
         require(tenders.isNotEmpty()) { "حدد مبالغ القبض" }
         require(tenders.all { it.amount.isFinite() && it.amount>0 && it.rate.isFinite() && it.rate>0 &&
             it.currency in setOf("USD","TRY","SYP") && it.account.isNotBlank() &&
@@ -315,7 +318,7 @@ internal object NativeSalesLedger {
         create(db)
         db.beginTransaction()
         try {
-            val id=saveInternal(db,lines,currency,channel,customer,phone,0.0,tenders.first().account,manualDiscount=manualDiscount,ruleDiscount=ruleDiscount,taxRate=taxRate)
+            val id=saveInternal(db,lines,currency,channel,customer,phone,0.0,tenders.first().account,manualDiscount=manualDiscount,ruleDiscount=ruleDiscount,taxRate=taxRate,rateSnapshot=rateSnapshot)
             val sale=find(db,id) ?: error("الفاتورة غير موجودة")
             val total=tenders.sumOf { it.amount*it.rate }
             require(total.isFinite() && total<=sale.total+0.000001) { "الدفع المختلط أكبر من قيمة الفاتورة؛ استخدم إرجاع الباقي" }
