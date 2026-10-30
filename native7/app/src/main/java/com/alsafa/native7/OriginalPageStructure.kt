@@ -500,5 +500,14 @@ private class SourceFlow(context:android.content.Context,private val gap:Int):Vi
         if(measured!=width) frames.values.forEach { it.offset(measured-width,0) }
         setMeasuredDimension(measured,resolveSize(top+height+paddingBottom,heightMeasureSpec))
     }
-    override fun onLayout(changed:Boolean,l:Int,t:Int,r:Int,b:Int) { frames.forEach { (view,rect) -> view.layout(rect.left,rect.top,rect.right,rect.bottom) } }
+    override fun onViewRemoved(child:View) {
+        super.onViewRemoved(child)
+        frames.remove(child)
+    }
+    override fun onLayout(changed:Boolean,l:Int,t:Int,r:Int,b:Int) {
+        for(i in 0 until childCount) {
+            val child=getChildAt(i)
+            frames[child]?.let { rect -> child.layout(rect.left,rect.top,rect.right,rect.bottom) }
+        }
+    }
 }
