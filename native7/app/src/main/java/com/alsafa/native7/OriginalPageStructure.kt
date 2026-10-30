@@ -951,10 +951,10 @@ internal class OriginalPageStructure(
      * Keep child ordering unchanged for keyboard navigation and accessibility.
      */
     private fun reportFilter(nodes:List<JSONObject>):View {
-        // The source report filter has two flexible fields plus an action.
-        // At phone widths the action must wrap below the fields; 380dp left
-        // 381-599dp layouts with unusably narrow date inputs.
-        val compact=activity.resources.configuration.screenWidthDp<600
+        // Original tablet style.css: @media (max-width: 380px) changes
+        // .report-filter from 1fr 1fr auto to two columns with the button
+        // spanning the next row. Do not introduce an unsupported 600dp cutoff.
+        val compact=activity.resources.configuration.screenWidthDp<=380
         val outer=column().apply {
             background=bg(Color.rgb(255,253,249),15)
             setPadding(dp(13),dp(13),dp(13),dp(13))
