@@ -430,3 +430,25 @@ Unlike prior CSS-only passes, directly inspected the original v3.9.359 tablet ar
 | Settings | form sections | settings fields, restore, printer dialogs |
 
 **Not completed:** full screen-by-screen source JS/JSON label/order audit; all modal and animation parity; complete UI/functional regression; Android Studio compilation; Honor Pad X8b screenshot comparison. No APK built. This is a cross-route shared-renderer fix, not certification of nine complete pages.
+
+## Source JavaScript controls audit — 2026-10-30
+
+**Method:** Opened the actual archived `assets/main.js` (approximately 1.05 MB) and extracted original markup `id`, `data-action` and literal heading/label text from the opening 9,000 characters of each of nine `render...` functions. This is a **partial lexical inventory**, not a full function/conditional execution or screen parity test.
+
+| Original function | Verified original action IDs / controls | Implementation test target |
+|---|---|---|
+| `renderDashboard` | `الوضع المبسط`, `الوضع الكامل`, `مبيع`, `صيانة سريعة`, `استلام أو تسليم مباشر` | Mode selection and quick-entry navigation |
+| `renderProducts` | `refresh-products`, `safe-products-import`, `new-product`, `view-product-photo`, `product-label`, `edit-product`, `adjust-product-stock`, `view-product-barcode-photo`, `delete-product` | Search, product images, variants, stock adjustment and original button ordering |
+| `renderSales` | `view-sale`, `edit-invoice`, `sale-return`, `correct-sale-payment`, `repair-sale-footprint`, `repair-mixed-sale-cash`, `pdf-sale`, `print-sale`, `collect-online-sale`, `wa-sale`, `thanks-sale`, `delete-sale` | Full/simple invoice, mixed collection, returns, printing and WhatsApp |
+| `renderRepairs` | `view-repair-photo`, `view-repair`, `edit-invoice`, `repair-return`, `repair-problem-update`, `repair-status-update`, `pdf-repair`, `print-repair`, `wa-repair`, `thanks-repair`, `repair-ready`, `repair-delivered`, `delete-repair` | Photos, status updates, delivery and print/share |
+| `renderPurchases` | `new-supplier`, `supplier-statement`, `supplier-opening-debt`, `supplier-direct-payment`, `edit-supplier`, `delete-supplier`, `pay-purchase`, `cancel-purchase` | Supplier balances, payments, purchases and cancellation |
+| `renderExpenses` | `delete-expense`; source heading `المصاريف`, button `＋ مصروف` | Expense form, delete and ledger |
+| `renderVaults` | `open-cash-movement`, `cash-movement-form`; source `إقفال اليوم`, `＋ حركة مالية`, `سجل الحركات` | Cash movement modal, currency selectors, daily closing |
+| `renderReports` | `report-form`, `report-month`; `اختيار شهر`, `من تاريخ`, `إلى تاريخ`, `تحديث` | Monthly/custom period filters, metric cards and partner reports |
+| `renderSettings` | `settings-form`, `partners-settings-form`, `rates-form`, `message-templates-form`, `backup-export-file`, `backup-import-file`, `quick-repair-button-new`, `quick-repair-button-edit`, `backup-auto-now` | Offline backup, partners, quick buttons, printer and settings |
+
+**Source compatibility constraints:** The old JavaScript also contains `external-partners-settings-form`, `test-connection`, `refresh-rates`, `purchase-sync-missing`. Do **not** blindly port these: the two external partners were removed by user decision and the target is offline-only. Preserve the approved three-partner split and existing local backup policy. Keep original display labels for retained functionality.
+
+**Shared renderer commit:** `73c2027b157bf83a6b3863571704a62d3f659bb4` fixes `.form-section:first-child` top margin so the original CSS's zero-margin exception is respected.
+
+**Outstanding:** Complete extraction of every nested conditional and dialog in each function, compare the resulting source structure with `original-structure.json`, inspect the Native Kotlin screen mapping, verify Tajawal and colors/measurements in screenshots, and test every action. No APK build or Honor Pad X8b test performed.
