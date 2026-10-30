@@ -433,8 +433,12 @@ internal class OriginalPageStructure(
         }
     }
     private fun addVariant(button:View) {
-        val scope=purchaseRow(button) ?: root ?: return
-        val target=metadata.entries.firstOrNull { (view,node) -> node.optJSONObject("data")?.has("data-color-variants")==true && ancestors(view).any { it===scope } }?.key as? ViewGroup ?: return
+        val candidates=metadata.entries.filter { (_,node) ->
+            node.optJSONObject("data")?.has("data-color-variants")==true
+        }.mapNotNull { it.key as? ViewGroup }
+        val target=candidates.firstOrNull { candidate ->
+            ancestors(button).any { parent -> parent===candidate.parent || parent===candidate }
+        } ?: candidates.singleOrNull() ?: return
         val copy=JSONObject(pages.getJSONObject("variant-row-template").toString()).also { uniqueDynamicIds(it) }
         val row=build(copy)
         if(target is SourceGrid) target.addCell(row,false) else target.addView(row)
