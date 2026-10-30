@@ -130,3 +130,10 @@
 - `.manage-card`: ارتفاع أدنى أصلي `115px` بدلاً من `84dp` السابق؛ عُدّل.
 - `.simple-action`: استثناء المستخدم السابق بتصغير ارتفاع الأزرار إلى النصف ما زال محفوظاً؛ لا يُعد مطابقاً لقيمة CSS الافتراضية `104px` إلا إذا وافق المستخدم على العودة للمقاس القديم.
 - هذه مطابقة نصية لجزء من مقاسات CSS، **وليست شهادة تطابق شامل**: يلزم مراجعة الشاشات والوسائط المتجاوبة، ومقارنة screenshots على Honor Pad X8b وبناء APK. لم يُختبر البناء بعد.
+
+## Tablet UI parity batch — 2026-10-30
+- Source inspected: legacy tablet v3.9.359 `assets/style.css` from source ZIP.
+- `manage-card`: original icon 25px, title 14px, description 10px, icon margin 8px, description margin 5px. Kotlin card typography and spacing adjusted in commit `843b4eaa2b37e61dfefa8c8593f4c9dc4e6432c3`.
+- `simple-action`: original icon 25px (40/46px container), title 17px, description 11px, horizontal padding 14px, gap 12px. Corrected text sizing and horizontal padding; existing user-requested half-height remains an intentional exception to legacy CSS.
+- Previous `SourceGrid` row-stretch correction: commit `2ccb93b766916c181f618f16bcb941c69e3f5d22`.
+- NOT verified: full screen pixel parity, all media queries, actual APK build and tablet screenshots. UI preview actions are not a substitute for operational logic.
