@@ -106,6 +106,7 @@ internal class OriginalPageStructure(
                     "modernGrid" -> if(tablet) 3 else 2
                     "summaryGrid","reportGrid" -> if(cs.contains("currency-home-values")) 3 else if(cs.contains("home-currency-ledger")) { if(activity.resources.configuration.screenWidthDp>760) 3 else 1 } else if(kind=="reportGrid" && tablet) 3 else 2
                     "choiceGrid" -> if(tablet) 4 else 2
+                    "simpleGrid" -> if(tablet) 3 else 2
                     "actionGrid" -> if(tablet) 3 else 2
                     "repairGrid" -> if(activity.resources.configuration.screenWidthDp>=1024) 4 else if(tablet) 3 else 2
                     else -> 2
