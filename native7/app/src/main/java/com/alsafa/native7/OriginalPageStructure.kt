@@ -363,26 +363,29 @@ internal class OriginalPageStructure(
                         if(cs.contains("transaction-info")) {
                             // The original CSS targets nested strong/span tags, not
                             // fabricated transaction-title/subtitle classes.
-                            for(i in 0 until childCount) {
-                                val child=getChildAt(i)
-                                val source=metadata[child]
-                                if(child is TextView && source!=null) {
+                            fun styleTransactionInfoDescendants(view:View) {
+                                val source=metadata[view]
+                                if(view is TextView && source!=null) {
                                     when(source.optString("tag")) {
                                         "strong" -> {
-                                            child.textSize=12f
-                                            child.typeface=Typeface.create(font,Typeface.BOLD)
-                                            child.setSingleLine(true)
-                                            child.ellipsize=android.text.TextUtils.TruncateAt.END
+                                            view.textSize=12f
+                                            view.typeface=Typeface.create(font,Typeface.BOLD)
+                                            view.setSingleLine(true)
+                                            view.ellipsize=android.text.TextUtils.TruncateAt.END
                                         }
                                         "span" -> {
-                                            child.textSize=10f
-                                            child.setTextColor(muted)
-                                            child.setPadding(child.paddingLeft,dp(3),
-                                                child.paddingRight,child.paddingBottom)
+                                            view.textSize=10f
+                                            view.setTextColor(muted)
+                                            view.setPadding(view.paddingLeft,dp(3),
+                                                view.paddingRight,view.paddingBottom)
                                         }
                                     }
                                 }
+                                if(view is ViewGroup) for(j in 0 until view.childCount)
+                                    styleTransactionInfoDescendants(view.getChildAt(j))
                             }
+                            for(i in 0 until childCount)
+                                styleTransactionInfoDescendants(getChildAt(i))
                         }
                         if(cs.contains("product-card")) {
                             // Original .product-card: 14px padding, 16px radius.
