@@ -280,6 +280,25 @@ internal object NativeSalesLedger {
         try {
             val sale=find(db,id) ?: error("الفاتورة غير موجودة")
             require(sale.status=="active") { "الفاتورة ملغاة مسبقاً" }
+            // Legacy deleteRecord additionally refuses sales linked to customer orders
+            // or used-watch exchanges. These links are stored by the legacy import.
+            val linkedOrder=db.rawQuery(
+                "SELECT name FROM sqlite_master WHERE type='table' AND name='legacy_customer_orders'",null
+            ).use { it.moveToFirst() }
+            if(linkedOrder) {
+                // The imported record's exact relationship is checked in its source
+                // table; do not infer an order from the customer's name or phone.
+                val columns=mutableSetOf<String>()
+                db.rawQuery("PRAGMA table_info(legacy_customer_orders)",null).use { c ->
+                    while(c.moveToNext()) columns.add(c.getString(1))
+                }
+                if("sale_id" in columns) {
+                    db.rawQuery("SELECT COUNT(*) FROM legacy_customer_orders WHERE sale_id=?",arrayOf(id)).use { c ->
+                        c.moveToFirst()
+                        require(c.getInt(0)==0) { "لا يمكن حذف فاتورة ناتجة عن طلب عميل؛ فهي مرتبطة بعربون وتسوية الطلب. احتفظ بها كسجل محاسبي." }
+                    }
+                }
+            }
             // Legacy deleteRecord forbids cancelling/deleting a sale with linked returns.
             db.rawQuery("SELECT COUNT(*) FROM native_sale_returns WHERE sale_id=?",arrayOf(id)).use { c ->
                 c.moveToFirst()
