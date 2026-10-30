@@ -417,7 +417,7 @@ internal class OriginalPageStructure(
                                     if(childCss.contains("list-main")) 1f else 0f
                                 ).apply { if(i>0) marginStart=dp(11) }
                             }
-                            if(metadata[view]?.optBoolean("last")==true) {
+                            if(n.optBoolean("last")) {
                                 background=null
                             } else {
                                 background=object:android.graphics.drawable.Drawable() {
