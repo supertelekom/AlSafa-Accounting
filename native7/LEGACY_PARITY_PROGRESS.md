@@ -555,3 +555,13 @@ The two commits were written to GitHub branch `native6-development` under `nativ
 **Nine-section test matrix:** Dashboard: summary and reports entry; Products: form grids; Sales: full/simple forms; Repairs: repair form grid; Purchases: supplier/purchase forms; Expenses: expense forms; Cashboxes: movement form; Reports: report-grid tiles and filter; Settings: settings forms. These are affected component types or test targets, **not evidence of verified screen parity**.
 
 **Not completed:** Full nine-screen markup and exact labels/order comparison, responsive modal and transition implementation, image/photo viewers, every button action, font rendering comparison, APK compilation and Honor Pad X8b device test. The report-grid patch is a limited source-based improvement; further shared component work is required.
+
+## Nine-section shared report-tile typography correction — 2026-10-30
+
+Read the tablet v3.9.359 archive `assets/style.css` directly and checked the complete three-rule `.report-tile` block: card 12px padding, paper background, 1px line border, 13px radius; descendant `small` is muted 10px; descendant `b` is bold 14px, 7px top margin and `--gold-deep` (`#7a5118`). The Kotlin renderer previously recognized hypothetical `report-tile-label` and `report-tile-value` classes on text nodes, which cannot substitute for the original descendant selectors when source JSON retains HTML tags.
+
+**Code commits:** `048e3ab148438d3f46b07da7ac6769b0034591fb` now applies typography to source-tagged `small` and `b` children within a `report-tile` container; `e3a4065be71f3a98a1e36a5b19811f6ebbbcfe57` sets `b` to original deep gold.
+
+**Nine-route scope of inspection:** Home (summary metrics), Products (inventory summaries), Sales (invoice summaries), Maintenance (repair summaries), Suppliers (purchase balances), Expenses (expense summaries), Cashboxes (cash balances), Reports (report tiles), Settings (summary cards). These are potential shared renderer usages, not confirmation each page contains a report tile.
+
+**Remaining tests:** Inspect source JSON to verify actual `small`/`b` tag preservation and report-tile child nesting, screenshot typography on the tablet, and run regression for the nine routes. No APK build, Kotlin compile, or device test was performed. Full labels, field order, dialogs, animations and action parity are still pending.
