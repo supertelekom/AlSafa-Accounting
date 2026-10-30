@@ -379,6 +379,25 @@ internal class OriginalPageStructure(
                             background=bg(Color.rgb(255,253,249),13)
                             minimumHeight=dp(78)
                             setPadding(dp(12),dp(12),dp(12),dp(12))
+                            // CSS uses descendant small/b tags inside report tiles.
+                            for(i in 0 until childCount) {
+                                val child=getChildAt(i)
+                                val source=metadata[child]
+                                if(child is TextView && source!=null) {
+                                    when(source.optString("tag")) {
+                                        "small" -> {
+                                            child.textSize=10f
+                                            child.setTextColor(muted)
+                                            child.setPadding(0,0,0,0)
+                                        }
+                                        "b" -> {
+                                            child.textSize=14f
+                                            child.typeface=Typeface.create(font,Typeface.BOLD)
+                                            child.setPadding(0,dp(7),0,0)
+                                        }
+                                    }
+                                }
+                            }
                         }
                         if(cs.contains("metric-card")) {
                             background=bg(Color.rgb(255,253,249),16)
