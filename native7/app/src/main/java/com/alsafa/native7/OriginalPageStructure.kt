@@ -108,7 +108,11 @@ internal class OriginalPageStructure(
             "picture" -> label(n.optString("text","لا توجد صورة"),10f,muted).apply {
                 gravity=Gravity.CENTER;minHeight=dp(84);background=bg(Color.rgb(255,250,242),12,Color.rgb(223,201,164))
             }
-            "line" -> View(activity).apply { setBackgroundColor(line);minimumHeight=dp(1) }
+            "line" -> View(activity).apply {
+                setBackgroundColor(line)
+                minimumHeight=dp(1)
+                layoutParams=ViewGroup.LayoutParams(-1,dp(1))
+            }
             "formGrid","summaryGrid","reportGrid","manageGrid","simpleGrid","actionGrid","repairGrid","radioGrid","modeGrid","choiceGrid","modernGrid" -> {
                 val tablet=activity.resources.configuration.screenWidthDp>=720
                 val wide=activity.resources.configuration.screenWidthDp>=1200 && activity.resources.configuration.orientation==android.content.res.Configuration.ORIENTATION_LANDSCAPE
@@ -140,6 +144,7 @@ internal class OriginalPageStructure(
                         if(index==0 && kind!="photoRow" || index>0 && kind=="photoRow") 1f else 0f).apply { if(index<children.lastIndex) marginEnd=dp(if(kind=="photoRow") 12 else 9) })
                 }
                 if(kind=="heading") setPadding(0,dp(2),0,dp(14))
+                if(kind=="searchRow") minimumHeight=dp(42)
             }
             "actions" -> SourceGrid(activity,children.size.coerceIn(1,3),dp(9)).apply {
                 setPadding(0,dp(18),0,dp(9))
