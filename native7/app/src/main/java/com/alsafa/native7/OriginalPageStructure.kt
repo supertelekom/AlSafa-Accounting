@@ -317,10 +317,20 @@ internal class OriginalPageStructure(
             conditions()
         }
     }
+    /** Dynamic rows must never reuse DOM-derived IDs from their source template. */
+    private fun uniqueDynamicIds(node:JSONObject) {
+        val suffix="-copy-${++unique}"
+        fun visit(part:JSONObject) {
+            if(part.has("sourceId")) part.put("sourceId",part.getString("sourceId")+suffix)
+            if(part.has("key")) part.put("key",part.getString("key")+suffix)
+            items(part.optJSONArray("children")).forEach { visit(it) }
+        }
+        visit(node)
+    }
     private fun duplicatePurchaseLine(quick:Boolean) {
         val host=controls["purchase-lines"] as? ViewGroup ?: return
         val template=metadata.entries.firstOrNull { classes(it.value).contains("purchase-line") }?.value ?: return
-        val copy=JSONObject(template.toString()).apply { put("key","purchase-copy-${++unique}") }
+        val copy=JSONObject(template.toString()).also { uniqueDynamicIds(it) }
         fun prepare(node:JSONObject) {
             if(quick && node.optJSONObject("data")?.has("data-purchase-item")==true) node.put("selected",1)
             if(node.optString("text").matches(Regex("الصنف [0-9٠-٩]+"))) node.put("text","الصنف "+java.text.NumberFormat.getIntegerInstance(java.util.Locale.forLanguageTag("ar-EG")).format(host.childCount+1))
@@ -375,7 +385,7 @@ internal class OriginalPageStructure(
     private fun addTemplate(hostId:String,template:String) {
         val host=controls[hostId] as? ViewGroup ?: return
         if(pages.has(template)) {
-            val copy=JSONObject(pages.getJSONObject(template).toString())
+            val copy=JSONObject(pages.getJSONObject(template).toString()).also { uniqueDynamicIds(it) }
             fun number(node:JSONObject) {
                 if(node.optString("text").matches(Regex("الصنف [0-9٠-٩]+"))) node.put("text","الصنف "+java.text.NumberFormat.getIntegerInstance(java.util.Locale.forLanguageTag("ar-EG")).format(host.childCount+1))
                 items(node.optJSONArray("children")).forEach { number(it) }
@@ -389,9 +399,7 @@ internal class OriginalPageStructure(
     private fun addVariant(button:View) {
         val scope=purchaseRow(button) ?: root ?: return
         val target=metadata.entries.firstOrNull { (view,node) -> node.optJSONObject("data")?.has("data-color-variants")==true && ancestors(view).any { it===scope } }?.key as? ViewGroup ?: return
-        val copy=JSONObject(pages.getJSONObject("variant-row-template").toString()).apply {
-            put("key","variant-copy-${++unique}")
-        }
+        val copy=JSONObject(pages.getJSONObject("variant-row-template").toString()).also { uniqueDynamicIds(it) }
         target.addView(build(copy))
         conditions()
     }
