@@ -123,6 +123,8 @@ internal class OriginalPageStructure(
                 if(cs.contains("metric-value")) { textSize=18f;typeface=Typeface.create(font,Typeface.BOLD);setPadding(0,dp(8),0,0) }
                 if(cs.contains("metric-note")) { textSize=10f;setTextColor(muted);setPadding(0,dp(5),0,0) }
                 if(cs.contains("form-section")) { textSize=13f;typeface=Typeface.create(font,Typeface.BOLD);setTextColor(gold) }
+                if(cs.contains("report-tile-value")) { textSize=14f;typeface=Typeface.create(font,Typeface.BOLD);setTextColor(gold);setPadding(0,dp(7),0,0) }
+                if(cs.contains("report-tile-label")) { textSize=10f;setTextColor(muted) }
                 if(cs.contains("section-title") && kind=="title") { textSize=15f;typeface=Typeface.create(font,Typeface.BOLD) }
                 if(kind=="text" && n.optString("tag")=="label") setPadding(0,0,0,dp(6))
                 if(cs.contains("simple-icon")) {
