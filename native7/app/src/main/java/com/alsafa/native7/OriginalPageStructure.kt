@@ -638,7 +638,15 @@ private class SourceGrid(context:android.content.Context,private val columns:Int
             if(column>0) {
                 // CSS grid items stretch to the tallest cell in their row.
                 rowViews.forEach { child ->
-                    frames[child]?.let { rect -> rect.bottom=rect.top+rowHeight }
+                    frames[child]?.let { rect ->
+                        if(child.measuredHeight!=rowHeight) {
+                            child.measure(
+                                MeasureSpec.makeMeasureSpec(rect.width(),MeasureSpec.EXACTLY),
+                                MeasureSpec.makeMeasureSpec(rowHeight,MeasureSpec.EXACTLY)
+                            )
+                        }
+                        rect.bottom=rect.top+rowHeight
+                    }
                 }
                 rowViews.clear()
                 top+=rowHeight+gap;column=0;rowHeight=0
@@ -658,7 +666,15 @@ private class SourceGrid(context:android.content.Context,private val columns:Int
         }
         val pendingRowHeight=if(column>0) rowHeight else 0
         if(column>0) rowViews.forEach { child ->
-            frames[child]?.let { rect -> rect.bottom=rect.top+rowHeight }
+            frames[child]?.let { rect ->
+                if(child.measuredHeight!=rowHeight) {
+                    child.measure(
+                        MeasureSpec.makeMeasureSpec(rect.width(),MeasureSpec.EXACTLY),
+                        MeasureSpec.makeMeasureSpec(rowHeight,MeasureSpec.EXACTLY)
+                    )
+                }
+                rect.bottom=rect.top+rowHeight
+            }
         }
         val height=if(column>0) top+pendingRowHeight else if(frames.isEmpty()) paddingTop else (top-gap).coerceAtLeast(paddingTop)
         setMeasuredDimension(width,resolveSize(height+paddingBottom,heightMeasureSpec))
