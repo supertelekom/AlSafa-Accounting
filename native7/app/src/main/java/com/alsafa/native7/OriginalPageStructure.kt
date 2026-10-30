@@ -111,6 +111,8 @@ internal class OriginalPageStructure(
         metadata.clear();controls.clear();radioNames.clear();currentRoute=route
         val view=build(pages.getJSONObject(route))
         root=view
+        // Reusing a page host must not stack the previous route underneath it.
+        parent.removeAllViews()
         parent.addView(view,LinearLayout.LayoutParams(-1,-2))
         view.post {
             // A posted callback from an older route must not update controls
