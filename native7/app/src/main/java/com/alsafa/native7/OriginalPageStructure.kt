@@ -344,6 +344,18 @@ internal class OriginalPageStructure(
             val action=node.optString("kind")=="button"
             if(action) {
                 child.minimumHeight=dp(42)
+                child.setPadding(dp(12),child.paddingTop,dp(12),child.paddingBottom)
+            } else {
+                // Original CSS: .report-filter .field label { font-size:10px }
+                fun adjustLabels(view:View) {
+                    if(view is TextView && metadata[view]?.optString("tag")=="label")
+                        view.textSize=10f
+                    if(view is ViewGroup) for(i in 0 until view.childCount)
+                        adjustLabels(view.getChildAt(i))
+                }
+                adjustLabels(child)
+            }
+            if(action) {
                 if(compact) {
                     outer.addView(row,LinearLayout.LayoutParams(-1,-2))
                     outer.addView(child,LinearLayout.LayoutParams(-1,-2).apply { topMargin=dp(8) })
