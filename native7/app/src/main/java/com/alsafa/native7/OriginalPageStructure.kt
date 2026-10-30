@@ -709,6 +709,42 @@ internal class OriginalPageStructure(
                             // Source .detail-list is a flush vertical list.
                             orientation=LinearLayout.VERTICAL
                             setPadding(0,0,0,0)
+                            for(i in 0 until childCount) {
+                                val item=getChildAt(i)
+                                if(item is LinearLayout) {
+                                    item.orientation=LinearLayout.HORIZONTAL
+                                    item.gravity=Gravity.CENTER_VERTICAL
+                                    item.setPadding(0,dp(10),0,dp(10))
+                                    for(j in 0 until item.childCount) {
+                                        val entry=item.getChildAt(j)
+                                        entry.layoutParams=LinearLayout.LayoutParams(
+                                            if(j==0) 0 else -2,-2,if(j==0) 1f else 0f
+                                        ).apply { if(j>0) marginStart=dp(8) }
+                                        if(entry is TextView) {
+                                            entry.textSize=12f
+                                            if(metadata[entry]?.optString("tag")=="span")
+                                                entry.setTextColor(muted)
+                                        }
+                                    }
+                                    if(i<childCount-1) item.background=
+                                        object:android.graphics.drawable.Drawable() {
+                                            private val paint=android.graphics.Paint().apply {
+                                                color=line;strokeWidth=dp(1).toFloat()
+                                            }
+                                            override fun draw(canvas:android.graphics.Canvas) {
+                                                val y=bounds.bottom-dp(1)/2f
+                                                canvas.drawLine(bounds.left.toFloat(),y,
+                                                    bounds.right.toFloat(),y,paint)
+                                            }
+                                            override fun setAlpha(alpha:Int) { paint.alpha=alpha;invalidateSelf() }
+                                            override fun setColorFilter(filter:android.graphics.ColorFilter?) {
+                                                paint.colorFilter=filter;invalidateSelf()
+                                            }
+                                            @Deprecated("Deprecated in Java")
+                                            override fun getOpacity()=android.graphics.PixelFormat.TRANSLUCENT
+                                        }
+                                }
+                            }
                         }
                         if(cs.contains("modal-head")) {
                             // Original .modal-head: horizontal title/close row.
