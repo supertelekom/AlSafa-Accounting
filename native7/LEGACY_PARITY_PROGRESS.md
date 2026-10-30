@@ -605,3 +605,13 @@ Balanced-brace extraction of each `function renderX()` in `assets/main.js`; the 
 **Deliberate native-only exclusions:** Source `purchase-sync-missing`, `test-connection`, `refresh-rates` are tied to legacy cloud/network functionality and must not be reinstated solely to match old markup. External partners must remain removed.
 
 **Unverified:** Full generated markup including helper functions, exact route labels and order, every dialog and transition, source-vs-native image treatment, device font rendering, action functionality, Android compilation, tablet screenshots. A CSS and static JavaScript audit is not a functional parity test.
+
+## Source-node variant consistency patch — 2026-10-30
+
+**Context:** Native 7's shared renderer supports both source-derived tag metadata (`small`, `b`) and class-labelled text nodes (`report-tile-label`, `report-tile-value`, `form-section`). Previous changes fixed container descendant styling, but class-labelled direct text still used the lighter `gold` variable. This created different colors depending on which original structure representation a route used.
+
+**Code changes:** `555db13ced34daa6c23af6a61f2f1e4d33dc1bc2` unifies direct `form-section` and `report-tile-value` to `#7a5118`, matching the source CSS deep-gold color. `2bb8ac53a4c747527b69e0166947cf0de78add50` removes generic text padding from `small.report-tile-label` nodes to avoid adding space that the original source does not specify. Earlier container-level `report-tile small/b` handling remains intact.
+
+**Cross-route audit checklist:** Main/home metrics, product summaries, sales summaries, repair summaries, supplier balances, expense totals, cashbox totals, report tiles and settings summary text. Check that direct class and tag-descendant representations render identically. This is a shared-code consistency fix, not evidence every route has been visually tested.
+
+**Pending:** Complete exact source field/control order, modal geometry and animation, photo rendering, responsive RTL alignment, click action parity, build verification and Honor Pad X8b screenshots. No build or device tests were run.
