@@ -191,6 +191,40 @@ internal class OriginalPageStructure(
                 if(cs.contains("form-section")) { textSize=13f;typeface=Typeface.create(font,Typeface.BOLD);setTextColor(Color.rgb(122,81,24)) }
                 if(cs.contains("report-tile-value")) { textSize=14f;typeface=Typeface.create(font,Typeface.BOLD);setTextColor(Color.rgb(122,81,24));setPadding(0,dp(7),0,0) }
                 if(cs.contains("report-tile-label")) { textSize=10f;setTextColor(muted) }
+                if(cs.contains("list-icon")) {
+                    textSize=18f
+                    gravity=Gravity.CENTER
+                    minWidth=dp(38);minHeight=dp(38)
+                    background=GradientDrawable().apply {
+                        setColor(Color.rgb(248,237,219))
+                        cornerRadius=dp(11).toFloat()
+                    }
+                    setTextColor(goldAccent)
+                }
+                if(cs.contains("list-main") || cs.contains("list-side")) {
+                    fun styleListDescendants(v:View) {
+                        val node=metadata[v]
+                        if(v is TextView && node!=null) {
+                            when(node.optString("tag")) {
+                                "b" -> {
+                                    v.textSize=12f
+                                    v.typeface=Typeface.create(font,Typeface.BOLD)
+                                    v.setSingleLine(true)
+                                    v.ellipsize=android.text.TextUtils.TruncateAt.END
+                                }
+                                "small" -> {
+                                    v.textSize=10f
+                                    v.setTextColor(muted)
+                                    v.setSingleLine(true)
+                                    v.ellipsize=android.text.TextUtils.TruncateAt.END
+                                    if(cs.contains("list-main")) v.setPadding(0,dp(4),0,0)
+                                }
+                            }
+                        }
+                        if(v is ViewGroup) for(j in 0 until v.childCount) styleListDescendants(v.getChildAt(j))
+                    }
+                    styleListDescendants(this)
+                }
                 if(cs.contains("transaction-icon")) {
                     textSize=18f;gravity=Gravity.CENTER
                     minWidth=dp(34);minHeight=dp(34)
@@ -370,6 +404,49 @@ internal class OriginalPageStructure(
                 // Source classes are orthogonal to the structural kind. Apply these
                 // after the kind switch so a 'section' or 'form' also gets its CSS.
                 run {
+                        if(cs.contains("list-row")) {
+                            // Original .list-row is a horizontal flex record row.
+                            orientation=LinearLayout.HORIZONTAL
+                            gravity=Gravity.CENTER_VERTICAL
+                            setPadding(dp(14),dp(13),dp(14),dp(13))
+                            for(i in 0 until childCount) {
+                                val child=getChildAt(i)
+                                val childCss=metadata[child]?.let { classes(it) } ?: emptySet<String>()
+                                child.layoutParams=LinearLayout.LayoutParams(
+                                    if(childCss.contains("list-main")) 0 else -2,-2,
+                                    if(childCss.contains("list-main")) 1f else 0f
+                                ).apply { if(i>0) marginStart=dp(11) }
+                            }
+                            if(metadata[view]?.optBoolean("last")==true) {
+                                background=null
+                            } else {
+                                background=object:android.graphics.drawable.Drawable() {
+                                    private val paint=android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
+                                        color=Color.rgb(242,235,223)
+                                        strokeWidth=dp(1).toFloat()
+                                    }
+                                    override fun draw(canvas:android.graphics.Canvas) {
+                                        val y=bounds.bottom-dp(1)/2f
+                                        canvas.drawLine(bounds.left.toFloat(),y,bounds.right.toFloat(),y,paint)
+                                    }
+                                    override fun setAlpha(alpha:Int) { paint.alpha=alpha;invalidateSelf() }
+                                    override fun setColorFilter(filter:android.graphics.ColorFilter?) {
+                                        paint.colorFilter=filter;invalidateSelf()
+                                    }
+                                    @Deprecated("Deprecated in Java")
+                                    override fun getOpacity()=android.graphics.PixelFormat.TRANSLUCENT
+                                }
+                            }
+                        }
+                        if(cs.contains("row-actions")) {
+                            orientation=LinearLayout.HORIZONTAL
+                            gravity=Gravity.CENTER_VERTICAL
+                            for(i in 0 until childCount) {
+                                getChildAt(i).layoutParams=LinearLayout.LayoutParams(-2,-2).apply {
+                                    if(i>0) marginStart=dp(5)
+                                }
+                            }
+                        }
                         if(cs.contains("transaction")) {
                             // Source .transaction is a horizontal flex row, not
                             // a vertical generic container.
@@ -1003,6 +1080,19 @@ internal class OriginalPageStructure(
             gravity=Gravity.CENTER;setPadding(dp(12),dp(10),dp(12),dp(10));minHeight=dp(if(cs.contains("close")) 32 else if(cs.contains("tiny-button")) 25 else if(cs.contains("father-complete")) 64 else 44)
             background=if(n.optBoolean("primary")) GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(Color.rgb(179,131,50),Color.rgb(139,96,31))).apply { cornerRadius=dp(12).toFloat() }
                 else bg(Color.rgb(247,237,221),12,Color.rgb(223,201,164))
+        }
+        if(cs.contains("tiny-button")) {
+            view.minimumHeight=dp(25)
+            view.setPadding(dp(7),dp(3),dp(7),dp(3))
+            view.background=GradientDrawable().apply {
+                setColor(Color.rgb(250,241,227))
+                cornerRadius=dp(7).toFloat()
+                setStroke(dp(1),Color.rgb(223,201,164))
+            }
+            if(view is TextView) {
+                view.textSize=10f
+                view.setTextColor(Color.rgb(122,81,24))
+            }
         }
         if(cs.contains("close")) {
             // Source .close: 32x32, 10px radius, 19px deep-gold glyph.
