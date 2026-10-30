@@ -1493,6 +1493,9 @@ class MainActivity : Activity() {
                     val photo=repairPhotoUri?.toString()
                     val id=repairStore.save(payload,photo,"قيد الصيانة")
                     android.widget.Toast.makeText(this@MainActivity,"تم حفظ طلب الصيانة رقم $id محلياً",android.widget.Toast.LENGTH_LONG).show()
+                    repairDraftTexts=null
+                    repairDraftSelections=null
+                    navigateTo("preview:كل الصيانة")
                 } catch(e:Exception) {
                     android.widget.Toast.makeText(this@MainActivity,"فشل حفظ الطلب: "+e.message,android.widget.Toast.LENGTH_LONG).show()
                 }
@@ -1719,7 +1722,7 @@ class MainActivity : Activity() {
                                         .setMessage("تأكيد تسليم طلب الصيانة رقم $id؟ لا يتم تسجيل قبض تلقائي.")
                                         .setNegativeButton("إلغاء",null)
                                         .setPositiveButton("تأكيد"){ _,_ ->
-                                            try { repairStore.deliver(id); render() }
+                                            try { android.widget.Toast.makeText(this@MainActivity,"يجب استكمال بيانات التسليم والقبض قبل تغيير حالة الطلب",android.widget.Toast.LENGTH_LONG).show() }
                                             catch(e:Exception) { android.widget.Toast.makeText(this@MainActivity,e.message,android.widget.Toast.LENGTH_LONG).show() }
                                         }.show()
                                 }
