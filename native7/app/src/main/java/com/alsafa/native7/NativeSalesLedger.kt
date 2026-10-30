@@ -86,7 +86,7 @@ internal object NativeSalesLedger {
         db.rawQuery("SELECT lot_id,purchase_id,source,partner_id,partner_name,share,qty,unit_cost,currency FROM native_sale_funding_allocations WHERE sale_id=? AND product_id=? ORDER BY created_at ASC,rowid ASC",
             arrayOf(saleId,productId)).use { c ->
             while(c.moveToNext()) out.add(FundingAllocation(c.getString(0),c.getString(1),
-                c.getString(2),c.getString(3),c.getString(4),c.getString(5),
+                c.getString(2),c.getString(3),c.getString(4),c.getDouble(5),
                 c.getDouble(6),c.getDouble(7),c.getString(8)))
         }
         return out
