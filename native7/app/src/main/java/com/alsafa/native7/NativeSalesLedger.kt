@@ -111,6 +111,43 @@ internal object NativeSalesLedger {
         if(fromRate==null || toRate==null || fromRate<=0.0 || toRate<=0.0) return null
         return value/fromRate*toRate
     }
+    // Verify that the physical-vault journal agrees with payment detail.
+    // This does not replace comparison against imported legacy vault balances.
+    data class VaultAudit(val vault:String,val currency:String,val recorded:Double,val expected:Double) {
+        val difference:Double get()=recorded-expected
+    }
+    fun auditSaleVaultMovements(db:SQLiteDatabase,saleId:String):List<VaultAudit> {
+        create(db)
+        val actual=linkedMapOf<Pair<String,String>,Double>()
+        db.rawQuery("SELECT vault,currency,SUM(amount) FROM native_sale_vault_movements WHERE sale_id=? GROUP BY vault,currency",
+            arrayOf(saleId)).use { c ->
+            while(c.moveToNext()) actual[c.getString(0) to c.getString(1)]=c.getDouble(2)
+        }
+        val expected=linkedMapOf<Pair<String,String>,Double>()
+        fun add(vault:String,currency:String,amount:Double) {
+            val key=vault to currency
+            expected[key]=(expected[key]?:0.0)+amount
+        }
+        db.rawQuery("SELECT account,currency,SUM(amount) FROM native_sale_collections WHERE sale_id=? AND account NOT IN ('mixed','converted') GROUP BY account,currency",
+            arrayOf(saleId)).use { c ->
+            while(c.moveToNext()) add(c.getString(0),c.getString(1),c.getDouble(2))
+        }
+        db.rawQuery("SELECT account,currency,SUM(amount) FROM native_sale_mixed WHERE sale_id=? GROUP BY account,currency",
+            arrayOf(saleId)).use { c ->
+            while(c.moveToNext()) add(c.getString(0),c.getString(1),c.getDouble(2))
+        }
+        db.rawQuery("SELECT account,payment_currency,SUM(payment_amount) FROM native_sale_payment_currency WHERE sale_id=? GROUP BY account,payment_currency",
+            arrayOf(saleId)).use { c ->
+            while(c.moveToNext()) add(c.getString(0),c.getString(1),c.getDouble(2))
+        }
+        db.rawQuery("SELECT payout_account,payout_currency,SUM(payout) FROM native_sale_change WHERE sale_id=? GROUP BY payout_account,payout_currency",
+            arrayOf(saleId)).use { c ->
+            while(c.moveToNext()) add(c.getString(0),c.getString(1),-c.getDouble(2))
+        }
+        return (actual.keys+expected.keys).map { k ->
+            VaultAudit(k.first,k.second,actual[k]?:0.0,expected[k]?:0.0)
+        }.filter { kotlin.math.abs(it.difference)>0.000001 }
+    }
     fun create(db:SQLiteDatabase) {
         db.execSQL("CREATE TABLE IF NOT EXISTS native_sale_vault_movements (id TEXT PRIMARY KEY, sale_id TEXT NOT NULL, vault TEXT NOT NULL, currency TEXT NOT NULL, amount REAL NOT NULL, type TEXT NOT NULL, created_at INTEGER NOT NULL)")
         db.execSQL("CREATE TABLE IF NOT EXISTS native_sale_rate_snapshots (sale_id TEXT PRIMARY KEY, try_rate REAL, syp_rate REAL, try_syp_rate REAL)")
