@@ -2854,7 +2854,10 @@ class MainActivity : Activity() {
         disabledAction(parent,"استعادة القوالب الجاهزة")
         parent.addView(text("النسخ الاحتياطي الآمن",20f,gold))
         disabledAction(parent,"⬇ تصدير نسخة كاملة كملف")
-        disabledAction(parent,"⬆ استعادة نسخة من ملف")
+        parent.addView(text("⬆ استعادة نسخة من ملف",16f,gold).apply {
+            isClickable=true
+            setOnClickListener { openLegacyRestore() }
+        })
         parent.addView(text("لا يمكن استعادة أو تصدير بيانات قبل تنفيذ قاعدة البيانات والتحقق من سلامتها.",12f))
     }
     private fun dailyClosingPreview(parent:LinearLayout) {
