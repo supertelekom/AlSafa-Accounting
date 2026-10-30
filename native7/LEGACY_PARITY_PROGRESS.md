@@ -676,3 +676,15 @@ Balanced-brace extraction of each `function renderX()` in `assets/main.js`; the 
 **Nine-route lifecycle test:** Repeatedly navigate Home → Products → Sales → Maintenance → Suppliers → Expenses → Cashboxes → Reports → Settings → Home; switch back and forth; verify exactly one source page in the host, no duplicate action controls, no stale condition updates and no loss of host-level navigation chrome. Confirm that the actual host is dedicated to the page content, because this change removes all its children on every render.
 
 **Pending:** Exact per-route labels and order, source modal and motion behavior, photo support, functional button parity, Kotlin compile and Honor Pad X8b device test. No build or device test performed.
+
+## Product inventory metadata + stock-warning source parity — 2026-10-30
+
+**Source archive:** The actual v3.9.359 tablet `assets/style.css` defines `.product-info` as a two-column grid with 7px vertical/12px horizontal gaps, margin 14px top and 8px bottom, 11px top padding and 1px top border. Its `span` labels are muted 10px; `strong` values are 12px deep gold. The `.stock-warning` banner has 10px danger text, `#fff0ed` background, 7px corners and 6px/8px padding. This source stylesheet also defines 38px product symbol and photo buttons, which are not yet fully rendered.
+
+**Changes pushed:**
+- `b8c609fd07fbe5641ec1b812b91ace7ad450177a`: Adds source `product-info` child typography and 11dp top padding; adds stock-warning background/padding for container nodes.
+- `f50ded4d5cca0ab10a303fd8f2e7c17a0f166b78`: Handles source `stock-warning` when represented as a text node, including 10sp danger text, background, radius and padding.
+
+**Important limitation:** The Kotlin `product-info` container still uses its generic vertical LinearLayout; its exact two-column CSS grid, gaps, margins and top divider are **not** implemented by this patch. No claim of complete product-card parity. The other eight routes share the renderer, but this patch only affects nodes with the source `product-info` or `stock-warning` classes.
+
+**Nine-page regression to run:** Dashboard, Products, Sales, Maintenance, Suppliers, Expenses, Cashboxes, Reports, Settings. Confirm that no source-class collision causes unwanted styling and compare each route to original screenshots. Product card details, photo thumbnails, full UI labels/order, modal geometry and animation, button action parity, APK compile and tablet test remain outstanding. No build/device testing was performed.
