@@ -447,8 +447,14 @@ internal class OriginalPageStructure(
         conditions()
     }
     private fun unregisterDetached(view:View) {
+        val sourceId=metadata[view]?.optString("sourceId").orEmpty()
         metadata.remove(view)
         controls.entries.removeAll { it.value === view }
+        if(sourceId.isNotEmpty() && sourceId !in controls) {
+            metadata.entries.firstOrNull { (other,node) ->
+                other !== view && node.optString("sourceId")==sourceId
+            }?.let { (other,_) -> controls[sourceId]=other }
+        }
         radioNames.values.forEach { group -> group.removeAll { it === view } }
         if(view is ViewGroup) for(i in 0 until view.childCount) unregisterDetached(view.getChildAt(i))
     }
