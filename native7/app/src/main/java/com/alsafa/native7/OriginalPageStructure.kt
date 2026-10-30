@@ -73,7 +73,7 @@ internal class OriginalPageStructure(
                 css.contains("form-section") -> 14
                 css.contains("section-card") -> 14
                 css.contains("section-title") -> 0
-                css.contains("transaction") -> 0
+                css.contains("transaction") || css.contains("list-row") -> 0
                 css.contains("product-info") -> 8
                 css.contains("stock-warning") -> 0
                 css.contains("modal-head") -> 15
