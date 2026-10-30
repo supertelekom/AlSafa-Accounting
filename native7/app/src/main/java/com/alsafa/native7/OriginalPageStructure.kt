@@ -213,6 +213,7 @@ internal class OriginalPageStructure(
                     "sectionHeading" -> setPadding(0,dp(20),0,dp(14))
                     "empty" -> { setPadding(dp(18),dp(22),dp(18),dp(22));gravity=Gravity.CENTER }
                     "field" -> setPadding(0,0,0,0)
+                    "help" -> setPadding(0,dp(4),0,dp(10))
                     else -> {
                         if(cs.contains("report-tile")) {
                             background=bg(Color.rgb(255,253,249),13)
@@ -270,7 +271,6 @@ internal class OriginalPageStructure(
                             setPadding(dp(inset),dp(inset),dp(inset),dp(inset))
                         }
                     }
-                    "help" -> setPadding(0,dp(4),0,dp(10))
                 }
             }
         }
