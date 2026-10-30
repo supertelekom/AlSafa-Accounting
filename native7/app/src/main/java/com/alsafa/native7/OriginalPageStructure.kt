@@ -224,6 +224,8 @@ internal class OriginalPageStructure(
                 val group=radioNames.getOrPut(n.optString("name")) { mutableListOf() }
                 group.add(this as RadioButton)
                 setOnClickListener { group.forEach { it.isChecked=it===this };conditions() }
+            } else {
+                setOnCheckedChangeListener { _,_ -> conditions() }
             }
         }
         return control
@@ -323,6 +325,8 @@ internal class OriginalPageStructure(
         fun visit(part:JSONObject) {
             if(part.has("sourceId")) part.put("sourceId",part.getString("sourceId")+suffix)
             if(part.has("key")) part.put("key",part.getString("key")+suffix)
+            if(part.optString("kind")=="toggle" && part.optString("inputType")=="radio" && part.has("name"))
+                part.put("name",part.getString("name")+suffix)
             items(part.optJSONArray("children")).forEach { visit(it) }
         }
         visit(node)
@@ -471,7 +475,7 @@ private class SourceGrid(context:android.content.Context,private val columns:Int
             rowHeight=maxOf(rowHeight,child.measuredHeight);column+=span
             if(column>=columns) { top+=rowHeight+gap;column=0;rowHeight=0 }
         }
-        val height=if(column>0) top+rowHeight else (top-gap).coerceAtLeast(paddingTop)
+        val height=if(column>0) top+rowHeight else if(frames.isEmpty()) paddingTop else (top-gap).coerceAtLeast(paddingTop)
         setMeasuredDimension(width,resolveSize(height+paddingBottom,heightMeasureSpec))
     }
     override fun onLayout(changed:Boolean,l:Int,t:Int,r:Int,b:Int) {
