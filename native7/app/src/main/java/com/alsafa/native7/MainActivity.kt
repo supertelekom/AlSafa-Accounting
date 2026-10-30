@@ -1837,6 +1837,34 @@ class MainActivity : Activity() {
                             })
                         }
                         if(item.isNull("delivered_at")) {
+                            entries.addView(text("نتيجة الفحص أو تحديث العميل",15f,gold).apply {
+                                isClickable=true
+                                setOnClickListener {
+                                    val updated=org.json.JSONArray(payload.optJSONArray("form_texts")?.toString() ?: "[]")
+                                    val edit=android.widget.EditText(this@MainActivity).apply {
+                                        setText(updated.optString(7))
+                                        minLines=3
+                                        gravity=Gravity.RIGHT or Gravity.TOP
+                                    }
+                                    android.app.AlertDialog.Builder(this@MainActivity)
+                                        .setTitle("نتيجة الفحص أو تحديث العميل")
+                                        .setView(edit)
+                                        .setNegativeButton("إلغاء",null)
+                                        .setPositiveButton("حفظ") { _,_ ->
+                                            try {
+                                                updated.put(7,edit.text.toString())
+                                                val revised=org.json.JSONObject(payload.toString())
+                                                revised.put("form_texts",updated)
+                                                repairStore.save(revised,photoPath.takeUnless { it.isBlank() || it=="null" },item.getString("status"),id)
+                                                navigateTo("preview:كل الصيانة")
+                                            } catch(e:Exception) {
+                                                android.widget.Toast.makeText(this@MainActivity,e.message,android.widget.Toast.LENGTH_LONG).show()
+                                            }
+                                        }.show()
+                                }
+                            })
+                        }
+                        if(item.isNull("delivered_at")) {
                             entries.addView(text("تحديث الحالة",15f,gold).apply {
                                 isClickable=true
                                 setOnClickListener {
