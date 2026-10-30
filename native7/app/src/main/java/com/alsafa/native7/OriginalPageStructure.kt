@@ -272,6 +272,12 @@ internal class OriginalPageStructure(
                     if(index==0 && classes(child).contains("form-section")) params.topMargin=0
                     addView(build(child),params)
                 }
+                // Original .transaction:last-child has no bottom border.
+                // Do not remove borders from non-transaction siblings.
+                val lastVisible=(childCount-1 downTo 0)
+                    .map { getChildAt(it) }.firstOrNull { it.visibility!=View.GONE }
+                if(lastVisible!=null && metadata[lastVisible]?.let { classes(it).contains("transaction") }==true)
+                    lastVisible.background=null
                 when(kind) {
                     "section","form" -> { background=bg();setPadding(dp(if(kind=="form" && activity.resources.configuration.screenWidthDp>=720) 22 else 15),dp(if(kind=="form" && activity.resources.configuration.screenWidthDp>=720) 22 else 15),dp(if(kind=="form" && activity.resources.configuration.screenWidthDp>=720) 22 else 15),dp(if(kind=="form" && activity.resources.configuration.screenWidthDp>=720) 22 else 15)) }
                     "stat" -> {
@@ -370,6 +376,10 @@ internal class OriginalPageStructure(
                         }
                         if(cs.contains("section-card")) {
                             background=bg(Color.rgb(255,253,249),17)
+                            // CSS overflow:hidden keeps section headers and rows
+                            // inside the rounded card boundary.
+                            clipToOutline=true
+                            clipChildren=true
                         }
                         if(cs.contains("section-title")) {
                             orientation=LinearLayout.HORIZONTAL
