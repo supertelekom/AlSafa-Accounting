@@ -668,3 +668,11 @@ Balanced-brace extraction of each `function renderX()` in `assets/main.js`; the 
 **Nine-screen regression scope:** Home metrics; product stock/summary; sales invoice transactions; repair entries; supplier ledger; expenses; cashbox movements; reports; settings summaries. The shared selector changes only affect containers that carry the matching source CSS classes, and their actual occurrence per route must still be checked against the original structure asset.
 
 **Remaining:** Full source-derived control labels and order across all nine pages, modal geometry/animations, functional actions, images, APK compilation and tablet screenshot comparisons. No device test or build performed; this batch is not a completed full-interface parity claim.
+
+## Route host lifecycle correction — 2026-10-30
+
+**Code commit:** `e60cd54ae02e34ff0b868ff0b6d0106255410fd6` updates `OriginalPageStructure.show(parent, route)` to clear existing children from the supplied page host before adding a newly built route view. Previously, repeated calls appended an entire new route underneath the old one, while resetting `metadata` and `controls`, leaving old visible controls without the current registry. This could cause stacked screens, duplicated labels and incorrect interactive controls across all nine sections. The existing posted callback guard (`root===view` and route match) remains in place.
+
+**Nine-route lifecycle test:** Repeatedly navigate Home → Products → Sales → Maintenance → Suppliers → Expenses → Cashboxes → Reports → Settings → Home; switch back and forth; verify exactly one source page in the host, no duplicate action controls, no stale condition updates and no loss of host-level navigation chrome. Confirm that the actual host is dedicated to the page content, because this change removes all its children on every render.
+
+**Pending:** Exact per-route labels and order, source modal and motion behavior, photo support, functional button parity, Kotlin compile and Honor Pad X8b device test. No build or device test performed.
