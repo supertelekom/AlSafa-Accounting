@@ -91,7 +91,16 @@ internal object NativeSalesLedger {
         }
         return out
     }
+    private fun recordVaultMovement(db:SQLiteDatabase,saleId:String,vault:String,
+        currency:String,amount:Double,type:String,at:Long) {
+        require(vault.isNotBlank() && vault!="mixed" && vault!="converted") { "الخزنة الفعلية مطلوبة" }
+        require(currency in setOf("USD","TRY","SYP") && amount.isFinite())
+        if(amount==0.0) return
+        db.execSQL("INSERT INTO native_sale_vault_movements VALUES (?,?,?,?,?,?,?)",
+            arrayOf<Any>(UUID.randomUUID().toString(),saleId,vault,currency,amount,type,at))
+    }
     fun create(db:SQLiteDatabase) {
+        db.execSQL("CREATE TABLE IF NOT EXISTS native_sale_vault_movements (id TEXT PRIMARY KEY, sale_id TEXT NOT NULL, vault TEXT NOT NULL, currency TEXT NOT NULL, amount REAL NOT NULL, type TEXT NOT NULL, created_at INTEGER NOT NULL)")
         db.execSQL("CREATE TABLE IF NOT EXISTS native_funding_lots (id TEXT PRIMARY KEY, product_id TEXT NOT NULL, purchase_id TEXT NOT NULL, source TEXT NOT NULL, partner_id TEXT NOT NULL, partner_name TEXT NOT NULL, share REAL NOT NULL, qty_original REAL NOT NULL, qty_remaining REAL NOT NULL, unit_cost REAL NOT NULL, currency TEXT NOT NULL, created_at INTEGER NOT NULL)")
         db.execSQL("CREATE TABLE IF NOT EXISTS native_sale_funding_allocations (id TEXT PRIMARY KEY, sale_id TEXT NOT NULL, product_id TEXT NOT NULL, lot_id TEXT NOT NULL, purchase_id TEXT NOT NULL, source TEXT NOT NULL, partner_id TEXT NOT NULL, partner_name TEXT NOT NULL, share REAL NOT NULL, qty REAL NOT NULL, unit_cost REAL NOT NULL, currency TEXT NOT NULL, created_at INTEGER NOT NULL)")
         db.execSQL("CREATE TABLE IF NOT EXISTS native_sales (id TEXT PRIMARY KEY, created_at INTEGER NOT NULL, currency TEXT NOT NULL, channel TEXT NOT NULL, customer TEXT NOT NULL, phone TEXT NOT NULL, total REAL NOT NULL, cost REAL NOT NULL, status TEXT NOT NULL DEFAULT 'active')")
@@ -275,6 +284,7 @@ internal object NativeSalesLedger {
                 require(payout.isFinite()) { "قيمة الباقي غير صالحة" }
                 db.execSQL("INSERT INTO native_sale_change VALUES (?,?,?,?,?,?,?,?,?,?)",
                     arrayOf<Any>(UUID.randomUUID().toString(),id,change,currency,payout,changeCurrency,changeAccount,tenderAccount,changeRate,now))
+                recordVaultMovement(db,id,changeAccount,changeCurrency,-payout,"change",now)
             }
             db.setTransactionSuccessful()
             return id
@@ -299,6 +309,7 @@ internal object NativeSalesLedger {
                 db.execSQL("INSERT INTO native_sale_mixed VALUES (?,?,?,?,?,?,?,?)",
                     arrayOf<Any>(UUID.randomUUID().toString(),id,t.amount,t.currency,t.account,t.amount*t.rate,t.rate,now))
             }
+            tenders.forEach { t -> recordVaultMovement(db,id,t.account,t.currency,t.amount,"mixed_collection",now) }
             if(total>0) insertCollection(db,id,total,currency,"mixed",now,"mixed_collection")
             db.setTransactionSuccessful()
             return id
@@ -306,6 +317,7 @@ internal object NativeSalesLedger {
     }
     private fun insertCollection(db:SQLiteDatabase,id:String,amount:Double,currency:String,account:String,at:Long,reason:String) {
         db.execSQL("INSERT INTO native_sale_collections VALUES (?,?,?,?,?,?,?)",arrayOf<Any>(UUID.randomUUID().toString(),id,amount,currency,account,at,reason))
+        if(account!="mixed" && account!="converted") recordVaultMovement(db,id,account,currency,amount,reason,at)
     }
     fun find(db:SQLiteDatabase,id:String):Sale? {
         create(db)
@@ -363,6 +375,7 @@ internal object NativeSalesLedger {
             insertCollection(db,id,applied,sale.currency,"converted",at,"collection")
             db.execSQL("INSERT INTO native_sale_payment_currency VALUES (?,?,?,?,?,?,?,?,?)",
                 arrayOf<Any>(UUID.randomUUID().toString(),id,applied,sale.currency,actual,paymentCurrency,account,invoiceToPaymentRate,at))
+            recordVaultMovement(db,id,account,paymentCurrency,actual,"collection",at)
             db.setTransactionSuccessful()
         } finally { db.endTransaction() }
     }
