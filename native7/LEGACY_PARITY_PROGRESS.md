@@ -218,3 +218,15 @@ Original root CSS palette verified: paper #fffdf9; ink #3e3429; muted #8a7b6c; l
 - **Settings:** nested pages, restore/backup and printer dialogs pending.
 
 **Not tested:** Android Studio compilation, actual Honor Pad X8b screenshot comparison, all click interactions, keyboard behavior, long text overflow, modal sizing and animations. The changes affect layout rendering only; no accounting logic is certified. Follow-up must build locally and compare screenshots against the old tablet app.
+
+## Shared renderer conflict review — 2026-10-30
+
+Reviewed the shared Native 7 view tree and grid measurement used by the nine primary sections (home, products, sales, maintenance, suppliers, expenses, cashboxes, reports, settings). This is a code-level conflict review, not a full screenshot audit.
+
+- `f228af8abcdb3b785e8fd71304cfdfe9cf701208`: removed a newly introduced `section-title` border which was not established by the original CSS. Preserved existing child bottom margins when converting title children to a horizontal RTL row. Extracted shared child margin selection into `childParams` so field spacing and section spacing use a consistent rule.
+- `8cfd33e9f33bc3c4e5cb0484db73e4b798bea381`: `SourceGrid` now respects the parent-provided width measurement constraint when reporting its measured width.
+
+### Remaining verification by section
+Home: header, main cards, navigation; Products: list, add/edit, image and variants; Sales: full/simple invoice and dialogs; Maintenance: intake/delivery and photos; Suppliers: purchases and balances; Expenses: forms and filters; Cashboxes: currency/movements/closing; Reports: tables and periods; Settings: nested settings and backup/printing. These all still require actual old-vs-new screenshots and interactive tablet tests.
+
+No APK compilation or Honor Pad X8b on-device test was run in this batch. The visual renderer still includes preview-only controls and does not establish full feature parity.
