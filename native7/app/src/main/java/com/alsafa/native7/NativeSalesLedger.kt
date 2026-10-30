@@ -564,6 +564,7 @@ internal object NativeSalesLedger {
                         arrayOf<Any>(UUID.randomUUID().toString(),id,-c.getDouble(0),c.getString(1),
                             -c.getDouble(2),c.getString(3),c.getString(4),c.getString(5),c.getDouble(6),at))
                     recordVaultMovement(db,id,c.getString(4),c.getString(3),c.getDouble(2),"cancel-change",at)
+                    recordVaultMovement(db,id,c.getString(5),c.getString(1),-c.getDouble(0),"cancel-tender-excess",at)
                 }
             }
             // Reverse only the remaining net tender after any prior returns.
