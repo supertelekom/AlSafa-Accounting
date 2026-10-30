@@ -194,6 +194,21 @@ internal class OriginalPageStructure(
                     "sectionHeading" -> setPadding(0,dp(20),0,dp(14))
                     "empty" -> { setPadding(dp(18),dp(22),dp(18),dp(22));gravity=Gravity.CENTER }
                     "field" -> setPadding(0,0,0,0)
+                    else -> {
+                        if(cs.contains("report-tile")) {
+                            background=bg(Color.rgb(255,253,249),13)
+                            minimumHeight=dp(78)
+                            setPadding(dp(12),dp(12),dp(12),dp(12))
+                        }
+                        if(cs.contains("metric-card")) {
+                            background=bg(Color.rgb(255,253,249),16)
+                            minimumHeight=dp(101)
+                            setPadding(dp(14),dp(14),dp(14),dp(14))
+                        }
+                        if(cs.contains("section-card")) {
+                            background=bg(Color.rgb(255,253,249),17)
+                        }
+                    }
                     "help" -> setPadding(0,dp(4),0,dp(10))
                 }
             }
