@@ -755,7 +755,7 @@ private class SourceGrid(context:android.content.Context,private val columns:Int
             }
         }
         val height=if(column>0) top+pendingRowHeight else if(frames.isEmpty()) paddingTop else (top-gap).coerceAtLeast(paddingTop)
-        setMeasuredDimension(width,resolveSize(height+paddingBottom,heightMeasureSpec))
+        setMeasuredDimension(resolveSize(width,widthMeasureSpec),resolveSize(height+paddingBottom,heightMeasureSpec))
     }
     override fun onLayout(changed:Boolean,l:Int,t:Int,r:Int,b:Int) {
         for(i in 0 until childCount) {
