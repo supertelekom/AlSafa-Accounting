@@ -452,3 +452,17 @@ Unlike prior CSS-only passes, directly inspected the original v3.9.359 tablet ar
 **Shared renderer commit:** `73c2027b157bf83a6b3863571704a62d3f659bb4` fixes `.form-section:first-child` top margin so the original CSS's zero-margin exception is respected.
 
 **Outstanding:** Complete extraction of every nested conditional and dialog in each function, compare the resulting source structure with `original-structure.json`, inspect the Native Kotlin screen mapping, verify Tajawal and colors/measurements in screenshots, and test every action. No APK build or Honor Pad X8b test performed.
+
+## Cross-page section heading parity and source modal audit — 2026-10-30
+
+**Code commit `4b0a159b2e9e89fff00a79209a994fb126c08eae`:** Native `OriginalPageStructure.kt` now applies original CSS descendant rules to registered child nodes of `.section-title`: `h3` is 15sp bold with zero padding and `.link-button` is 12sp gold-deep `#7a5118` with zero padding. It also sets `.report-filter button` vertical padding to zero, consistent with source `padding:0 12px`. These changes apply to all nine routes wherever those shared source classes occur.
+
+**Original modal CSS reviewed directly from `assets/style.css`:**
+- Mobile `.modal-backdrop`: fixed, dim `rgba(62,52,41,.36)`, bottom-aligned; `.modal` bottom-sheet rounded upper corners 22px, width min(100%,680px), max-height90vh, padding18px 15px plus safe area.
+- Tablet breakpoint >=720px: backdrop centered with padding25px; modal width min(820px, viewport minus48px).
+- Landscape >=1200px: modal width min(900px, viewport minus64px).
+- A separate `.modal` rule also specifies width min(660px,100%), max-height viewport minus50px, radius20px; cascade and breakpoint ordering must be checked when implementing. `.modal-head` flex, justify-between, margin-bottom15px; heading `h3` 17px.
+
+**Audit matrix:** Home (dashboard/metric/section title), Products (form/section title), Sales (section titles and modal invoices), Maintenance (quick repairs and modals), Suppliers (purchase forms and dialogs), Expenses (forms and modal), Cashboxes (movement dialogs), Reports (filter and section titles), Settings (forms and modals). The shared section-title changes are implemented; **none of these nine complete screens is yet certified visually**.
+
+**Still outstanding:** Implement/verify actual native modal geometry against original CSS and Android window insets; compare complete original JS conditional markup to native route nodes; compare exact text/order, pictures, all actions and animations; compile APK and test on Honor Pad X8b. No APK build or device test performed in this batch.
