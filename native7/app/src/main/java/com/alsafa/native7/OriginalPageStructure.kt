@@ -288,6 +288,38 @@ internal class OriginalPageStructure(
                 // Source classes are orthogonal to the structural kind. Apply these
                 // after the kind switch so a 'section' or 'form' also gets its CSS.
                 run {
+                        if(cs.contains("transaction")) {
+                            // Source .transaction is a horizontal flex row, not
+                            // a vertical generic container.
+                            orientation=LinearLayout.HORIZONTAL
+                            gravity=Gravity.CENTER_VERTICAL
+                            setPadding(dp(15),dp(12),dp(15),dp(12))
+                            for(i in 0 until childCount) {
+                                val child=getChildAt(i)
+                                val source=metadata[child]
+                                val childClasses=source?.let { classes(it) } ?: emptySet<String>()
+                                child.layoutParams=LinearLayout.LayoutParams(
+                                    if(childClasses.contains("transaction-info")) 0 else -2,
+                                    -2,
+                                    if(childClasses.contains("transaction-info")) 1f else 0f
+                                ).apply { if(i>0) marginStart=dp(10) }
+                            }
+                            // CSS: 1px bottom divider #f4ede3.
+                            background=object:android.graphics.drawable.Drawable() {
+                                private val paint=android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
+                                    color=Color.rgb(244,237,227)
+                                    strokeWidth=dp(1).toFloat()
+                                }
+                                override fun draw(canvas:android.graphics.Canvas) {
+                                    val y=bounds.bottom-dp(1)/2f
+                                    canvas.drawLine(bounds.left.toFloat(),y,bounds.right.toFloat(),y,paint)
+                                }
+                                override fun setAlpha(alpha:Int) { paint.alpha=alpha;invalidateSelf() }
+                                override fun setColorFilter(filter:android.graphics.ColorFilter?) { paint.colorFilter=filter;invalidateSelf() }
+                                @Deprecated("Deprecated in Java")
+                                override fun getOpacity()=android.graphics.PixelFormat.TRANSLUCENT
+                            }
+                        }
                         if(cs.contains("transaction-info")) {
                             // The original CSS targets nested strong/span tags, not
                             // fabricated transaction-title/subtitle classes.
