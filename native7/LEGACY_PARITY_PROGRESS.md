@@ -656,3 +656,15 @@ Balanced-brace extraction of each `function renderX()` in `assets/main.js`; the 
 **Cross-route shared component review:** Home, Products, Sales, Maintenance, Suppliers, Expenses, Cashboxes, Reports and Settings all use `OriginalPageStructure` as a common renderer. This patch is scoped to nodes carrying `product-card-head`, so other pages should not change unless they reuse that source class. Recheck product cards, product selection inside sales/maintenance, and any product summaries.
 
 **Still pending:** Full source markup and JSON comparison for all nine screens; source modal dimensions, transitions, real photos and button actions; Android Studio compilation and Honor Pad X8b screenshot comparison. No device test or APK build was performed. **Do not claim nine-screen completion.**
+
+## Shared nested-selector batch — 2026-10-30
+
+**Root cause:** The source tablet stylesheet uses descendant selectors inside `.report-tile` (`small`, `b`) and `.transaction-info` (`strong`, `span`). The Native 7 renderer previously styled only *direct* children. Original HTML/JSON may place these nodes under one or more wrappers, silently losing typography and spacing.
+
+**Commits:**
+- `26878a1b971f18b317ee2c91a26af1c84503d2dd` recursively styles report tile `small` and `b`: 10sp muted and 14sp bold deep gold with 7dp top gap.
+- `1041fe97df5153fc00c4027642e60a089ca0e39a` recursively styles transaction-info `strong` and `span`: 12sp bold single-line ellipsis and 10sp muted with 3dp top gap.
+
+**Nine-screen regression scope:** Home metrics; product stock/summary; sales invoice transactions; repair entries; supplier ledger; expenses; cashbox movements; reports; settings summaries. The shared selector changes only affect containers that carry the matching source CSS classes, and their actual occurrence per route must still be checked against the original structure asset.
+
+**Remaining:** Full source-derived control labels and order across all nine pages, modal geometry/animations, functional actions, images, APK compilation and tablet screenshot comparisons. No device test or build performed; this batch is not a completed full-interface parity claim.
