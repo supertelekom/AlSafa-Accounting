@@ -337,7 +337,9 @@ internal class OriginalPageStructure(
             items(node.optJSONArray("children")).forEach { prepare(it) }
         }
         prepare(copy)
-        host.addView(build(copy));conditions()
+        val row=build(copy)
+        if(host is SourceGrid) host.addCell(row,false) else host.addView(row)
+        conditions()
     }
     private fun conditions() {
         // Visibility only, mirroring the original form groups. No monetary calculation or saving.
@@ -400,7 +402,8 @@ internal class OriginalPageStructure(
         val scope=purchaseRow(button) ?: root ?: return
         val target=metadata.entries.firstOrNull { (view,node) -> node.optJSONObject("data")?.has("data-color-variants")==true && ancestors(view).any { it===scope } }?.key as? ViewGroup ?: return
         val copy=JSONObject(pages.getJSONObject("variant-row-template").toString()).also { uniqueDynamicIds(it) }
-        target.addView(build(copy))
+        val row=build(copy)
+        if(target is SourceGrid) target.addCell(row,false) else target.addView(row)
         conditions()
     }
     private fun unregisterDetached(view:View) {
