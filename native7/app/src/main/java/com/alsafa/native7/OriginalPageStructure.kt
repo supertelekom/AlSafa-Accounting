@@ -91,7 +91,17 @@ internal class OriginalPageStructure(
             "title","text" -> label(n.optString("text"),if(kind=="text" && n.optString("tag")=="label") 11f else n.optDouble("size",13.0).toFloat(),if(n.optBoolean("muted") || (kind=="text" && n.optString("tag")=="label")) muted else ink,n.optString("weight")=="bold").apply {
                 setPadding(0,dp(if(kind=="title") 3 else 2),0,dp(if(kind=="title") 7 else 5))
                 if(cs.any { it in listOf("barcode-help","help") }) { textSize=11f;setTextColor(muted) }
-                if(cs.contains("simple-icon")) { textSize=16f;gravity=Gravity.CENTER;background=bg(Color.rgb(248,237,219),10) }
+                if(cs.contains("simple-icon")) {
+                    val compact=activity.resources.configuration.screenWidthDp<=420
+                    textSize=if(compact) 22f else 25f
+                    gravity=Gravity.CENTER
+                    minWidth=dp(if(compact) 40 else 46)
+                    minHeight=dp(if(compact) 40 else 46)
+                    background=GradientDrawable().apply {
+                        setColor(Color.rgb(248,237,219))
+                        cornerRadius=dp(14).toFloat()
+                    }
+                }
             }
             "picture" -> label(n.optString("text","لا توجد صورة"),10f,muted).apply {
                 gravity=Gravity.CENTER;minHeight=dp(84);background=bg(Color.rgb(255,250,242),12,Color.rgb(223,201,164))
@@ -244,7 +254,7 @@ internal class OriginalPageStructure(
                 } else if(this is TextView && index>0) {
                     textSize=when { cs.contains("father-main-card") && index==1 -> if(activity.resources.configuration.screenWidthDp<=420) 14f else 16f;cs.contains("mode-card") && index==1 -> 20f;cs.contains("simple-action") && index==1 -> if(activity.resources.configuration.screenWidthDp<=420) 12f else 13f;cs.contains("modern-feature-card") && index==1 -> 15f;index==1 -> 14f;cs.contains("father-main-card") -> 9f;cs.contains("mode-card") -> 11f;cs.contains("simple-action") -> 9f;else -> 10f }
                 } }
-                addView(content,if(horizontal) LinearLayout.LayoutParams(if(index==1 && !cs.contains("simple-action")) 0 else if(index==1 && cs.contains("simple-action")) -2 else if(index==0) dp(if(cs.contains("mode-card")) 58 else if(cs.contains("modern-feature-card")) 42 else if(cs.contains("simple-action")) 28 else 46) else -2,-2,if(index==1 && !cs.contains("simple-action")) 1f else 0f).apply { if(index==0) marginEnd=dp(if(cs.contains("mode-card")) 15 else if(cs.contains("modern-feature-card")) 13 else if(cs.contains("simple-action")) 12 else 12) }
+                addView(content,if(horizontal) LinearLayout.LayoutParams(if(index==1 && !cs.contains("simple-action")) 0 else if(index==1 && cs.contains("simple-action")) -2 else if(index==0) dp(if(cs.contains("mode-card")) 58 else if(cs.contains("modern-feature-card")) 42 else if(cs.contains("simple-action")) (if(activity.resources.configuration.screenWidthDp<=420) 40 else 46) else 46) else -2,-2,if(index==1 && !cs.contains("simple-action")) 1f else 0f).apply { if(index==0) marginEnd=dp(if(cs.contains("mode-card")) 15 else if(cs.contains("modern-feature-card")) 13 else if(cs.contains("simple-action")) (if(activity.resources.configuration.screenWidthDp<=420) 9 else 12) else 12) }
                     else LinearLayout.LayoutParams(-1,-2))
             }
             minimumHeight=dp(when { cs.contains("father-main-card") -> if(activity.resources.configuration.screenWidthDp<=420) 82 else 96;cs.contains("mode-card") -> 122;cs.contains("manage-card") -> 84;cs.contains("modern-feature-card") -> 86;cs.contains("simple-action") -> 52;else -> 104 })
