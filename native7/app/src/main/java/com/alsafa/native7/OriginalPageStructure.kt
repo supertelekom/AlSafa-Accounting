@@ -84,6 +84,7 @@ internal class OriginalPageStructure(
             if(css.contains("product-info")) topMargin=dp(14)
             if(css.contains("stock-warning")) topMargin=dp(10)
             if(css.contains("note-box")) topMargin=dp(12)
+            if(css.contains("form-actions")) topMargin=dp(18)
             if(kind=="reportGrid" || css.contains("report-grid")) {
                 topMargin=dp(13)
                 bottomMargin=dp(13)
@@ -671,15 +672,37 @@ internal class OriginalPageStructure(
                         if(cs.contains("photo-picker")) {
                             // Source .photo-picker: preview and flexible controls,
                             // with 12dp gap. Do not force source images into text.
-                            orientation=LinearLayout.HORIZONTAL
+                            val narrow=activity.resources.configuration.screenWidthDp<=520
+                            orientation=if(narrow) LinearLayout.VERTICAL else LinearLayout.HORIZONTAL
                             gravity=Gravity.CENTER_VERTICAL
                             for(i in 0 until childCount) {
                                 val child=getChildAt(i)
-                                child.layoutParams=LinearLayout.LayoutParams(
-                                    if(i==0) dp(116) else if(i==1) 0 else -2,-2,
-                                    if(i==0) dp(84) else -2,
-                                    if(i==1) 1f else 0f
-                                ).apply { if(i>0) marginStart=dp(12) }
+                                child.layoutParams=if(narrow) {
+                                    LinearLayout.LayoutParams(-1,-2).apply {
+                                        if(i>0) topMargin=dp(12)
+                                    }
+                                } else {
+                                    LinearLayout.LayoutParams(
+                                        if(i==0) dp(116) else if(i==1) 0 else -2,-2,
+                                        if(i==0) dp(84) else -2,
+                                        if(i==1) 1f else 0f
+                                    ).apply { if(i>0) marginStart=dp(12) }
+                                }
+                                if(narrow && i==0) {
+                                    child.minimumHeight=dp(170)
+                                    if(child is TextView) child.minHeight=dp(170)
+                                }
+                            }
+                        }
+                        if(cs.contains("form-actions")) {
+                            // Source form action buttons share the available width.
+                            orientation=LinearLayout.HORIZONTAL
+                            gravity=Gravity.CENTER_VERTICAL
+                            for(i in 0 until childCount) {
+                                getChildAt(i).layoutParams=
+                                    LinearLayout.LayoutParams(0,-2,1f).apply {
+                                        if(i>0) marginStart=dp(9)
+                                    }
                             }
                         }
                         if(cs.contains("detail-list")) {
