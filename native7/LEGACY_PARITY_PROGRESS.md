@@ -60,3 +60,8 @@
 - Commit `0e8ee547e54cc75bcb410e72f98edf4b520444eb`: تصحيح `simpleGrid` في `OriginalPageStructure.kt` إلى 3 أعمدة للأجهزة اللوحية بعرض >=720dp، وعمودين للأصغر، بدلاً من عمودين دائماً.
 - تفاصيل CSS التي لا تزال تحتاج تدقيقاً بصرياً: `.simple-action:active {transform:scale(.985)}`، رمز 46px، وتفاصيل اختلاف المقاسات بناءً على طلب المستخدم السابق بتصغير أزرار الوضع المبسط.
 - هذا تعديل حقيقي واحد موثق؛ لا توجد شهادة بناء APK أو مطابقة شاملة حتى الآن.
+
+## نقل حركة أصلية — 2026-10-30
+- المصدر المؤكد من ZIP القديم `assets/style.css`: `.simple-action:active { transform:scale(.985); }`.
+- Commit `9d10b7baad01401c74693258d3d670969ff59e39`: تطبيق تصغير مؤقت `scaleX/scaleY=0.985f` لأزرار `simple-action` أثناء `ACTION_DOWN` وإعادتها عند `ACTION_UP/CANCEL` مع إبقاء `OnClickListener` يعمل.
+- لا توجد حتى الآن شهادة اختبار حركة الضغط على جهاز Honor Pad X8b؛ لا يُعتبر النقل الشامل مكتملاً.
