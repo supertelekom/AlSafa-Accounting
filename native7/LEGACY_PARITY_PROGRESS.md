@@ -476,3 +476,33 @@ Unlike prior CSS-only passes, directly inspected the original v3.9.359 tablet ar
 **Affected shared UI:** Cards/headings may be present in home, products, sales, maintenance, suppliers, expenses, cashboxes, reports and settings. This patch is shared, not nine independently verified page implementations.
 
 **Still requires validation:** exact route-by-route labels/order and complete nested JS/JSON markup; section-card clipping and shadow; dialog geometry and transitions; fonts and images in all screens; navigation and every button action; APK compilation and tablet screenshots. No build/device test was executed. 
+
+## Shared transaction row / empty-state source parity — 2026-10-30
+
+Read the original tablet v3.9.359 `assets/style.css` directly from the provided ZIP. Source declarations:
+- `.transaction`: flex horizontal, align-items center, gap10px, padding12px 15px, bottom border1px `#f4ede3`; `:last-child` has no border.
+- `.transaction-info`: flex1/min-width0, with `strong` and `span` descendant styles.
+- `.transaction-icon`: 34x34, radius11, paper-gold background.
+- `.transaction-amount`: RTL, 12px, bold.
+- `.empty`: padding27px 18px, muted, center, 13px, line-height1.7.
+
+### Implemented and committed
+- `485858400dde06685e5d9c305a220973f0b98d71`: Shared generic renderer now switches containers carrying `transaction` source class to horizontal layout with flexible `transaction-info` and intrinsic-width siblings, 10dp gap, 12x15dp padding, original 1dp divider.
+- `9becd6551b1b02841f13094da350b42061594d13`: Shared text renderer now applies `empty` source-class muted center alignment, 13sp typography, 1.7 line-height multiplier, 27x18dp padding.
+
+### Remaining source fidelity and validation
+The original `.transaction:last-child` divider exception is **not yet implemented**. Original `.transaction` must be checked against actual source-derived JSON node structure to ensure source classes are on the intended container, not just descendants. No screenshots or compilation have been run.
+
+| Route | Cross-page audit checkpoint |
+|---|---|
+| Home | recent transaction list and empty dashboard cards |
+| Products | stock movement rows and no-results state |
+| Sales | sales/payment movement rows and empty invoice list |
+| Maintenance | maintenance activity rows and no-results state |
+| Suppliers | supplier ledger and no-results state |
+| Expenses | expense transaction list and empty state |
+| Cashboxes | cash movements and empty state |
+| Reports | report transaction rows and empty filtered period |
+| Settings | empty lists and shared layout consistency |
+
+The table is a regression **test plan**, not evidence that all nine routes have been individually visually verified. Full markup, dialogs, animations, images, button wiring, original labels/order, font asset checks, and Android Studio/Honor Pad X8b validation remain pending.
