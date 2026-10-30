@@ -74,7 +74,7 @@ internal object NativeSalesLedger {
             val existing=db.rawQuery("SELECT COUNT(*) FROM native_funding_lots WHERE id=? AND product_id=?",
                 arrayOf(a.lotId,productId)).use { c -> c.moveToFirst();c.getInt(0)>0 }
             if(existing) db.execSQL("UPDATE native_funding_lots SET qty_remaining=qty_remaining+? WHERE id=? AND product_id=?",
-                arrayOf(q,a.lotId,productId))
+                arrayOf<Any>(q,a.lotId,productId))
             else db.execSQL("INSERT INTO native_funding_lots VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
                 arrayOf<Any>(if(a.lotId.isBlank()||a.lotId=="untracked") UUID.randomUUID().toString() else a.lotId,
                     productId,if(a.purchaseId.isBlank()) "return" else a.purchaseId,a.source,a.partnerId,a.partnerName,
@@ -379,7 +379,7 @@ internal object NativeSalesLedger {
         require(total>0 || initialCollection==0.0) { "لا يمكن قبض مبلغ لفاتورة قيمتها صفر" }
         db.execSQL("INSERT INTO native_sales VALUES (?,?,?,?,?,?,?,?,?)",arrayOf<Any>(id,now,currency,channel,customer,phone,total,cost,"active"))
         if(rateSnapshot!=null) db.execSQL("INSERT INTO native_sale_rate_snapshots VALUES (?,?,?,?)",
-            arrayOf(id,rateSnapshot.TRY,rateSnapshot.SYP,rateSnapshot.TRY_SYP))
+            arrayOf<Any?>(id,rateSnapshot.TRY,rateSnapshot.SYP,rateSnapshot.TRY_SYP))
         if(initialCollection>0) insertCollection(db,id,initialCollection,currency,account,now,"collection")
         val change=(initialCollection-total).coerceAtLeast(0.0)
         if(change>0.000001) insertCollection(db,id,-change,currency,changeAccount,now,"change")
