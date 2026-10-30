@@ -199,6 +199,18 @@ internal class OriginalPageStructure(
                 if(kind=="heading") setPadding(0,dp(2),0,dp(14))
                 if(kind=="searchRow") minimumHeight=dp(42)
             }
+            // The legacy report filter is a CSS grid, not a vertical stack:
+            // two flexible fields and one auto-width action on tablets.
+            "reportFilter" -> SourceGrid(activity,
+                if(activity.resources.configuration.screenWidthDp<=380) 2 else 3,dp(8)).apply {
+                background=bg(Color.rgb(255,253,249),15)
+                setPadding(dp(13),dp(13),dp(13),dp(13))
+                children.forEach { child ->
+                    addCell(build(child),
+                        activity.resources.configuration.screenWidthDp<=380 &&
+                            child.optString("kind")=="button")
+                }
+            }
             "actions" -> SourceGrid(activity,children.size.coerceIn(1,3),dp(9)).apply {
                 setPadding(0,dp(18),0,dp(9))
                 children.forEach { addCell(build(it),false) }
