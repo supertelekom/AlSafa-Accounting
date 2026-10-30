@@ -25,6 +25,7 @@ internal object NativeSalesLedger {
         db.execSQL("CREATE TABLE IF NOT EXISTS native_partner_withdrawals (id TEXT PRIMARY KEY, partner TEXT NOT NULL, currency TEXT NOT NULL, amount REAL NOT NULL, created_at INTEGER NOT NULL, note TEXT NOT NULL)")
         db.execSQL("CREATE TABLE IF NOT EXISTS native_sale_profit_adjustments (id TEXT PRIMARY KEY, sale_id TEXT NOT NULL, amount REAL NOT NULL, currency TEXT NOT NULL, created_at INTEGER NOT NULL, reason TEXT NOT NULL)")
         db.execSQL("CREATE TABLE IF NOT EXISTS native_sale_collections (id TEXT PRIMARY KEY, sale_id TEXT NOT NULL, amount REAL NOT NULL, currency TEXT NOT NULL, account TEXT NOT NULL, created_at INTEGER NOT NULL, reason TEXT NOT NULL)")
+        db.execSQL("CREATE TABLE IF NOT EXISTS native_sale_payment_currency (id TEXT PRIMARY KEY, sale_id TEXT NOT NULL, invoice_amount REAL NOT NULL, invoice_currency TEXT NOT NULL, payment_amount REAL NOT NULL, payment_currency TEXT NOT NULL, account TEXT NOT NULL, exchange_rate REAL NOT NULL, created_at INTEGER NOT NULL)")
     }
     /** Verifies every native invoice's net stock movements against sold and returned units.
      * A cancelled invoice must have zero net stock effect.
@@ -256,7 +257,6 @@ internal object NativeSalesLedger {
         require(invoiceToPaymentRate.isFinite() && invoiceToPaymentRate>0) { "سعر الصرف غير متوفر" }
         require(account.isNotBlank()) { "حدد خزنة القبض" }
         create(db)
-        db.execSQL("CREATE TABLE IF NOT EXISTS native_sale_payment_currency (id TEXT PRIMARY KEY, sale_id TEXT NOT NULL, invoice_amount REAL NOT NULL, invoice_currency TEXT NOT NULL, payment_amount REAL NOT NULL, payment_currency TEXT NOT NULL, account TEXT NOT NULL, exchange_rate REAL NOT NULL, created_at INTEGER NOT NULL)")
         db.beginTransaction()
         try {
             val sale=find(db,id) ?: error("الفاتورة غير موجودة")
