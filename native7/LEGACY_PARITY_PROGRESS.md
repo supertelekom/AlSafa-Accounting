@@ -506,3 +506,17 @@ The original `.transaction:last-child` divider exception is **not yet implemente
 | Settings | empty lists and shared layout consistency |
 
 The table is a regression **test plan**, not evidence that all nine routes have been individually visually verified. Full markup, dialogs, animations, images, button wiring, original labels/order, font asset checks, and Android Studio/Honor Pad X8b validation remain pending.
+
+## Original nine-render-function locations and shared card/row fix — 2026-10-30
+
+**Actual source archive check:** `assets/main.js` in tablet v3.9.359 ZIP contains all nine entry functions. Character offsets in UTF-8-decoded JavaScript (not line numbers): `renderDashboard` 210402; `renderProducts` 327860; `renderSales` 296807; `renderRepairs` 535888; `renderPurchases` 580671; `renderExpenses` 612885; `renderVaults` 626566; `renderReports` 656757; `renderSettings` 688251. These are reference locations for a deeper nested-markup audit, **not** evidence that all their contents were ported.
+
+**CSS cross-check:** Original `.section-card` includes `overflow:hidden`, which the native shared renderer had not applied; `.transaction:last-child` suppresses the 1px bottom rule.
+
+**Code commit `132cebf94b04d320a1d696109541a9eca244363b`:**
+- Shared `section-card` now clips children to the rounded outline, matching original overflow behavior.
+- Shared vertical container suppresses the trailing transaction row's divider when the final visible child is a `transaction`. This is a structural approximation; dynamic visibility and nested wrappers still require device tests.
+
+**All nine sections:** Home, products, sales, maintenance, suppliers, expenses, cashboxes, reports and settings should be regression-tested for shared card clipping and any transaction list dividers. The above changes do not certify full nine-screen parity.
+
+**Remaining before acceptance:** extract complete source markup/labels/order from the nine JavaScript functions; verify original-structure JSON mapping; compare font asset and full responsive CSS; implement and inspect modals, animations, images, controls; compile APK in Android Studio and compare screenshots on Honor Pad X8b. No APK/device test was performed.
