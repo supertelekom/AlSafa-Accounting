@@ -47,6 +47,7 @@ internal class OriginalPageStructure(
     private val ink = Color.rgb(62,52,41)
     private val muted = Color.rgb(138,123,108)
     private val gold = Color.rgb(122,81,24)
+    private val goldAccent = Color.rgb(169,121,41)
     private val line = Color.rgb(234,223,206)
     private val metadata = IdentityHashMap<View,JSONObject>()
     private val controls = mutableMapOf<String,View>()
@@ -93,6 +94,7 @@ internal class OriginalPageStructure(
             "title","text" -> label(n.optString("text"),if(kind=="text" && n.optString("tag")=="label") 11f else n.optDouble("size",13.0).toFloat(),if(n.optBoolean("muted") || (kind=="text" && n.optString("tag")=="label")) muted else ink,n.optString("weight")=="bold").apply {
                 setPadding(0,dp(if(kind=="title") 3 else 2),0,dp(if(kind=="title") 7 else 5))
                 if(cs.any { it in listOf("barcode-help","help") }) { textSize=11f;setTextColor(muted) }
+                if(kind=="text" && n.optString("tag")=="label") setPadding(0,0,0,dp(6))
                 if(cs.contains("simple-icon")) {
                     val compact=activity.resources.configuration.screenWidthDp<=420
                     textSize=if(compact) 22f else 25f
@@ -184,9 +186,14 @@ internal class OriginalPageStructure(
                 children.forEach { child -> addView(build(child),LinearLayout.LayoutParams(-1,-2).apply { bottomMargin=dp(if(child.optString("kind") in listOf("section","form","summaryGrid","reportGrid")) 14 else if(kind=="field") 6 else 2) }) }
                 when(kind) {
                     "section","form" -> { background=bg();setPadding(dp(if(kind=="form" && activity.resources.configuration.screenWidthDp>=720) 22 else 15),dp(if(kind=="form" && activity.resources.configuration.screenWidthDp>=720) 22 else 15),dp(if(kind=="form" && activity.resources.configuration.screenWidthDp>=720) 22 else 15),dp(if(kind=="form" && activity.resources.configuration.screenWidthDp>=720) 22 else 15)) }
-                    "stat" -> { background=bg(Color.rgb(255,250,242),12);setPadding(dp(12),dp(12),dp(12),dp(12)) }
-                    "sectionHeading" -> setPadding(0,dp(14),0,dp(10))
+                    "stat" -> {
+                        background=bg(Color.rgb(255,253,249),16)
+                        minimumHeight=dp(101)
+                        setPadding(dp(14),dp(14),dp(14),dp(14))
+                    }
+                    "sectionHeading" -> setPadding(0,dp(20),0,dp(14))
                     "empty" -> { setPadding(dp(18),dp(22),dp(18),dp(22));gravity=Gravity.CENTER }
+                    "field" -> setPadding(0,0,0,0)
                     "help" -> setPadding(0,dp(4),0,dp(10))
                 }
             }
@@ -211,7 +218,7 @@ internal class OriginalPageStructure(
                 n.optString("inputmode")=="numeric" -> InputType.TYPE_CLASS_NUMBER
                 else -> InputType.TYPE_CLASS_TEXT
             }
-            if(type=="multiline") { minLines=3;maxLines=8 } else setSingleLine(true)
+            if(type=="multiline") { minHeight=dp(78);minLines=3;maxLines=8 } else setSingleLine(true)
             val value=when(n.optString("value")) {
                 "@today" -> java.time.LocalDate.now().toString()
                 "@monthStart" -> java.time.LocalDate.now().withDayOfMonth(1).toString()
