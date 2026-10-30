@@ -346,7 +346,8 @@ internal object NativeSalesLedger {
      */
     fun returnLine(db:SQLiteDatabase,saleId:String,productId:String,quantity:Int,reason:String,
                    account:String="درج المحل",at:Long=System.currentTimeMillis()) {
-        require(quantity>0 && reason.isNotBlank()) { "الكمية وسبب المرتجع مطلوبان" }
+        // saveSaleReturn reads notes optionally; it does not require a reason.
+        require(quantity>0) { "كمية المرتجع غير صالحة" }
         create(db)
         db.beginTransaction()
         try {
