@@ -69,3 +69,34 @@ Source of truth: `assets/main.js`, `assets/style.css`, `assets/styles.css` in th
 3. Implement all supported actions for that screen, including persistence and failure behavior, not decorative controls.
 4. Check duplicate local variable names, repeated buttons, field indices and Kotlin syntax; run build when available.
 5. Update this log with precise commits and remaining gaps. Never mark a screen 10/10 without screenshot and functional tests.
+
+
+## Persistent progress log — 2026-10-30 (read before every edit)
+This section is the **source of truth for work already performed**. Do not reimplement the same button or change a completed action without first comparing the current `MainActivity.kt` and this log.
+
+### Implemented in Native 7 source (not APK-certified)
+- Repair creation screen and local save; navigation to repairs list after save.
+- Repairs list search/date filter; «التفاصيل» dialog; «صورة الساعة» image dialog when available.
+- «تحديث العطل» updates `form_texts[6]` on the same repair ID.
+- «نتيجة الفحص أو تحديث العميل» updates `form_texts[7]` on the same repair ID.
+- «تحديث الحالة» allows «قيد الصيانة», «بانتظار القطعة», «جاهز للاستلام» on undelivered repairs.
+- «تسليم» intentionally blocked because cash/collection accounting is not implemented.
+- Focused text fields use champagne accent border; Tajawal typeface is used by field/text helpers.
+- Removed duplicated malformed repair action block and corrected details title to «طلب صيانة».
+
+### Existing code, parity NOT proven
+- Products, product creation, stock changes, barcode, sales, returns, exchange, cash journals, expenses, partners, settings, backup import.
+- No full APK build or pixel-diff verified; no section marked 10/10.
+
+### Not implemented or not equivalent — do not call done
+- Repair «تعديل» whole request, original paid/delivered workflow, payment and currency, PDF/print, WhatsApp, deletion, maintenance parts consumption.
+- Original sale/funding/returns accounting equivalence and fully operational restored data.
+- All CSS selectors, modal dimensions, tablet responsive states, and animations must be compared to legacy source.
+- Full original button inventory for every page and conditional visibility needs explicit audit.
+
+### Change discipline
+1. Fetch latest source and this log at the start of each task.
+2. Make one cohesive change; never duplicate an existing control.
+3. Record commit SHA and exactly what was changed, including what remains.
+4. Verify compilation before claiming success; user must not be told that a visual match is complete without screenshots.
+5. Never edit `native6/`, delete backups, or invent original labels.
