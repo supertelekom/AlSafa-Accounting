@@ -144,6 +144,10 @@ internal object NativeSalesLedger {
             arrayOf(saleId)).use { c ->
             while(c.moveToNext()) add(c.getString(0),c.getString(1),-c.getDouble(2))
         }
+        db.rawQuery("SELECT tender_account,invoice_currency,SUM(amount_in_invoice_currency) FROM native_sale_change WHERE sale_id=? GROUP BY tender_account,invoice_currency",
+            arrayOf(saleId)).use { c ->
+            while(c.moveToNext()) add(c.getString(0),c.getString(1),c.getDouble(2))
+        }
         return (actual.keys+expected.keys).map { k ->
             VaultAudit(k.first,k.second,actual[k]?:0.0,expected[k]?:0.0)
         }.filter { kotlin.math.abs(it.difference)>0.000001 }
@@ -406,6 +410,10 @@ internal object NativeSalesLedger {
             val change=(tendered-sale.total).coerceAtLeast(0.0)
             val now=System.currentTimeMillis()
             if(collected>0) insertCollection(db,id,collected,currency,tenderAccount,now,"collection")
+            // The customer physically hands over the full tender. The invoice
+            // collection is capped at total, so the excess must still enter the
+            // vault before the change is paid out.
+            if(change>0) recordVaultMovement(db,id,tenderAccount,currency,change,"tender-excess",now)
             if(change>0) {
                 val payout=change*changeRate
                 require(payout.isFinite()) { "قيمة الباقي غير صالحة" }
