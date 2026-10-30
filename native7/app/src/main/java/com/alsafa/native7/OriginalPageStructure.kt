@@ -173,6 +173,8 @@ internal class OriginalPageStructure(
                 }
                 if(cs.contains("form-section")) {
                     // The original source uses --gold-deep for section headings.
+                    textSize=13f
+                    typeface=Typeface.create(font,Typeface.BOLD)
                     setTextColor(Color.rgb(122,81,24))
                 }
                 if(kind=="text" && n.optString("tag")=="label") setPadding(0,0,0,dp(6))
@@ -279,7 +281,17 @@ internal class OriginalPageStructure(
                 if(lastVisible!=null && metadata[lastVisible]?.let { classes(it).contains("transaction") }==true)
                     lastVisible.background=null
                 when(kind) {
-                    "section","form" -> { background=bg();setPadding(dp(if(kind=="form" && activity.resources.configuration.screenWidthDp>=720) 22 else 15),dp(if(kind=="form" && activity.resources.configuration.screenWidthDp>=720) 22 else 15),dp(if(kind=="form" && activity.resources.configuration.screenWidthDp>=720) 22 else 15),dp(if(kind=="form" && activity.resources.configuration.screenWidthDp>=720) 22 else 15)) }
+                    "section","form" -> {
+                        background=bg()
+                        // .section-card is a border-only wrapper; its heading and
+                        // body own their padding. A .form-card is padded instead.
+                        val inset=when {
+                            cs.contains("section-card") -> 0
+                            kind=="form" && activity.resources.configuration.screenWidthDp>=720 -> 22
+                            else -> 15
+                        }
+                        setPadding(dp(inset),dp(inset),dp(inset),dp(inset))
+                    }
                     "stat" -> {
                         background=bg(Color.rgb(255,253,249),16)
                         minimumHeight=dp(101)
@@ -376,6 +388,7 @@ internal class OriginalPageStructure(
                         }
                         if(cs.contains("section-card")) {
                             background=bg(Color.rgb(255,253,249),17)
+                            setPadding(0,0,0,0)
                             // CSS overflow:hidden keeps section headers and rows
                             // inside the rounded card boundary.
                             clipToOutline=true
@@ -409,7 +422,7 @@ internal class OriginalPageStructure(
                                     if(i==0) 0 else -2,-2,if(i==0) 1f else 0f
                                 ).apply {
                                     if(i>0) marginStart=dp(9)
-                                    bottomMargin=existing?.bottomMargin ?: 0
+                                    bottomMargin=0
                                 }
                             }
                             setPadding(dp(15),dp(14),dp(15),dp(14))
