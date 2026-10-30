@@ -71,3 +71,17 @@ The original tablet `assets/style.css` was inspected directly for these rules:
 - Updated the compact threshold to widths below 600dp. The action is placed beneath the two date fields at narrow widths; larger tablet layouts preserve the original single-row arrangement.
 - Code commit: `3d81c3eab66e491b56fe4f9c27e1191a264975c3`.
 - Verification still required: screenshot comparisons of report filters at 380/420/600dp and on Honor Pad X8b, Android Studio build, all nine screens, and functional searches/photos. No accounting logic or native6 files changed.
+
+## Direct source comparison corrections (2026-10-30)
+
+Compared the actual supplied v3.9.359 `assets/style.css` against Native7 `OriginalPageStructure.kt` rather than inferring UI values from previous notes.
+
+- **54145456**: restored the exact source `@media (max-width: 380px)` report-filter breakpoint. Reverses the unsupported 600dp threshold introduced in 3d81c3ea. Source base rule is `grid-template-columns: 1fr 1fr auto`; narrow rule is `1fr 1fr` with button spanning both columns.
+- **109416ad**: restored the missing 1px `--line` (#eadfce) border around the paper-colored report-filter panel, retaining the source 15px radius and 13px padding.
+- **203b7eae** (earlier): shared RTL wrapping fix for action rows includes inter-item gaps in overflow calculations.
+
+### Nine-screen status
+The original renderer inventory remains `renderDashboard`, `renderProducts`, `renderSales`, `renderRepairs`, `renderPurchases`, `renderExpenses`, `renderVaults`, `renderReports`, `renderSettings`. Shared styling changes can affect multiple routes but are **not** evidence of complete element-by-element comparison. In this source pass, report-filter differences were directly verified; the other eight route comparisons and modal/animation parity are still open.
+
+### Tests pending
+Android Studio compile and device tests, screenshots on Honor Pad X8b, source-derived node-by-node labels/order/actions comparison, search behavior, gallery/camera/zoom, RTL text truncation, modal lifecycle and nine-route regression. No Native6, financial-rule or user-data changes.
