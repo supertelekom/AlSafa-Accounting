@@ -153,6 +153,11 @@ internal class OriginalPageStructure(
                     textSize=10f;setTextColor(muted);setPadding(0,dp(3),0,0)
                 }
                 if(cs.contains("section-title") && kind=="title") { textSize=15f;typeface=Typeface.create(font,Typeface.BOLD) }
+                if(cs.contains("link-button")) {
+                    textSize=12f
+                    setTextColor(Color.rgb(122,81,24))
+                    setPadding(0,0,0,0)
+                }
                 if(kind=="text" && n.optString("tag")=="label") setPadding(0,0,0,dp(6))
                 if(cs.contains("simple-icon")) {
                     val compact=activity.resources.configuration.screenWidthDp<=420
@@ -320,6 +325,24 @@ internal class OriginalPageStructure(
                         if(cs.contains("section-title")) {
                             orientation=LinearLayout.HORIZONTAL
                             gravity=Gravity.CENTER_VERTICAL
+                            // CSS .section-title h3 and .link-button are
+                            // descendant selectors: match source tags/classes.
+                            for(i in 0 until childCount) {
+                                val child=getChildAt(i)
+                                val source=metadata[child]
+                                if(child is TextView && source!=null) {
+                                    if(source.optString("tag")=="h3") {
+                                        child.textSize=15f
+                                        child.typeface=Typeface.create(font,Typeface.BOLD)
+                                        child.setPadding(0,0,0,0)
+                                    }
+                                    if(classes(source).contains("link-button")) {
+                                        child.textSize=12f
+                                        child.setTextColor(Color.rgb(122,81,24))
+                                        child.setPadding(0,0,0,0)
+                                    }
+                                }
+                            }
                             for(i in 0 until childCount) {
                                 val child=getChildAt(i)
                                 val existing=child.layoutParams as? LinearLayout.LayoutParams
@@ -384,7 +407,7 @@ internal class OriginalPageStructure(
             val action=node.optString("kind")=="button"
             if(action) {
                 child.minimumHeight=dp(42)
-                child.setPadding(dp(12),child.paddingTop,dp(12),child.paddingBottom)
+                child.setPadding(dp(12),0,dp(12),0)
             } else {
                 // Original CSS: .report-filter .field label { font-size:10px }
                 fun adjustLabels(view:View) {
