@@ -99,6 +99,18 @@ internal object NativeSalesLedger {
         db.execSQL("INSERT INTO native_sale_vault_movements VALUES (?,?,?,?,?,?,?)",
             arrayOf<Any>(UUID.randomUUID().toString(),saleId,vault,currency,amount,type,at))
     }
+    // Exact currency path from legacy convertCurrencyAmount(amount,from,to,snapshot).
+    data class RateSnapshot(val TRY:Double?=null,val SYP:Double?=null,val TRY_SYP:Double?=null)
+    fun convertCurrencyAmount(value:Double,from:String,to:String,rates:RateSnapshot):Double? {
+        if(from==to) return value
+        val direct=rates.TRY_SYP
+        if(direct!=null && direct>0.0 && from=="TRY" && to=="SYP") return value*direct
+        if(direct!=null && direct>0.0 && from=="SYP" && to=="TRY") return value/direct
+        val fromRate=if(from=="USD") 1.0 else if(from=="TRY") rates.TRY else rates.SYP
+        val toRate=if(to=="USD") 1.0 else if(to=="TRY") rates.TRY else rates.SYP
+        if(fromRate==null || toRate==null || fromRate<=0.0 || toRate<=0.0) return null
+        return value/fromRate*toRate
+    }
     fun create(db:SQLiteDatabase) {
         db.execSQL("CREATE TABLE IF NOT EXISTS native_sale_vault_movements (id TEXT PRIMARY KEY, sale_id TEXT NOT NULL, vault TEXT NOT NULL, currency TEXT NOT NULL, amount REAL NOT NULL, type TEXT NOT NULL, created_at INTEGER NOT NULL)")
         db.execSQL("CREATE TABLE IF NOT EXISTS native_funding_lots (id TEXT PRIMARY KEY, product_id TEXT NOT NULL, purchase_id TEXT NOT NULL, source TEXT NOT NULL, partner_id TEXT NOT NULL, partner_name TEXT NOT NULL, share REAL NOT NULL, qty_original REAL NOT NULL, qty_remaining REAL NOT NULL, unit_cost REAL NOT NULL, currency TEXT NOT NULL, created_at INTEGER NOT NULL)")
@@ -189,7 +201,7 @@ internal object NativeSalesLedger {
     }
     private fun saveInternal(db:SQLiteDatabase,lines:List<Line>,currency:String,channel:String,
         customer:String,phone:String,initialCollection:Double,account:String,changeAccount:String=account,
-        manualDiscount:Double=0.0,ruleDiscount:Double=0.0,taxRate:Double=0.0):String {
+        manualDiscount:Double=0.0,ruleDiscount:Double=0.0,taxRate:Double=0.0,rateSnapshot:RateSnapshot?=null):String {
         require(lines.isNotEmpty()) { "أضف صنفاً إلى الفاتورة" }
         require(currency in setOf("USD","TRY","SYP")) { "عملة غير مدعومة" }
         require(initialCollection.isFinite() && initialCollection>=0) { "قيمة القبض غير صالحة" }
@@ -206,12 +218,16 @@ internal object NativeSalesLedger {
             val requested=entries.sumOf { it.quantity }
             require(product.id==productId) { "تعذر تحديد المنتج" }
             require(product.stock>=requested) { "المخزون غير كافٍ: "+product.name }
-            require(product.currency==currency) { "تحتاج أسعار العملات المختلفة إلى سعر تحويل صريح" }
             require(product.cost.isFinite() && product.cost>=0) { "كلفة المنتج غير صالحة" }
             // The original sale consumes funding lots before recording the sale.
             // Persist the exact allocations so a return/cancellation can restore them.
             val allocations=consumeFundingLots(db,productId,requested.toDouble())
-            val fundingCost=allocations.sumOf { it.qty*it.unitCost }
+            val fundingCost=allocations.sumOf { a ->
+                val converted=if(a.currency==currency) a.unitCost else
+                    rateSnapshot?.let { convertCurrencyAmount(a.unitCost,a.currency,currency,it) }
+                require(converted!=null && converted.isFinite()) { "سعر الصرف المحفوظ مطلوب لتحويل كلفة التمويل" }
+                a.qty*converted
+            }
             for(a in allocations) db.execSQL(
                 "INSERT INTO native_sale_funding_allocations VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",
                 arrayOf<Any>(UUID.randomUUID().toString(),id,productId,a.lotId,a.purchaseId,a.source,
@@ -220,7 +236,6 @@ internal object NativeSalesLedger {
                 total+=line.unitPrice*line.quantity
                 // Funding unit costs are persisted in their original currencies.
                 // Currency conversion must be supplied from the sale snapshot.
-                require(allocations.all { it.currency==currency }) { "سعر الصرف المحفوظ مطلوب لتحويل كلفة التمويل" }
                 val unitCost=if(requested>0) fundingCost/requested else 0.0
                 cost+=unitCost*line.quantity
                 db.execSQL("INSERT INTO native_sale_lines VALUES (?,?,?,?,?,?)",arrayOf<Any>(UUID.randomUUID().toString(),id,productId,line.quantity,line.unitPrice,unitCost))
