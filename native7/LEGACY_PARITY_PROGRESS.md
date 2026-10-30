@@ -466,3 +466,13 @@ Unlike prior CSS-only passes, directly inspected the original v3.9.359 tablet ar
 **Audit matrix:** Home (dashboard/metric/section title), Products (form/section title), Sales (section titles and modal invoices), Maintenance (quick repairs and modals), Suppliers (purchase forms and dialogs), Expenses (forms and modal), Cashboxes (movement dialogs), Reports (filter and section titles), Settings (forms and modals). The shared section-title changes are implemented; **none of these nine complete screens is yet certified visually**.
 
 **Still outstanding:** Implement/verify actual native modal geometry against original CSS and Android window insets; compare complete original JS conditional markup to native route nodes; compare exact text/order, pictures, all actions and animations; compile APK and test on Honor Pad X8b. No APK build or device test performed in this batch.
+
+## Shared card spacing and typography cross-route patch — 2026-10-30
+
+**Original source independently checked:** `assets/style.css` from tablet v3.9.359 ZIP. Confirmed `.section-card {margin:14px 0; background:var(--paper); border:1px solid var(--line); border-radius:17px}` and `.form-section {margin:20px 0 14px; color:var(--gold-deep); font-size:13px; font-weight:800}`, plus `.form-section:first-child {margin-top:0}`. `--gold-deep` resolves to `#7a5118`.
+
+**Implementation commit `3826d990dd64afa0420dd362b71a3263cb736468`:** shared child layout params now preserve top and bottom 14dp margins for source-class `section-card`, and source-class `form-section` text now uses the original deep gold rather than the lighter accent. Existing first-child top-margin override is retained.
+
+**Affected shared UI:** Cards/headings may be present in home, products, sales, maintenance, suppliers, expenses, cashboxes, reports and settings. This patch is shared, not nine independently verified page implementations.
+
+**Still requires validation:** exact route-by-route labels/order and complete nested JS/JSON markup; section-card clipping and shadow; dialog geometry and transitions; fonts and images in all screens; navigation and every button action; APK compilation and tablet screenshots. No build/device test was executed. 
