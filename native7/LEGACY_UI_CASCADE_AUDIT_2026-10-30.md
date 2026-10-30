@@ -40,3 +40,19 @@ python native7/tools/audit_legacy_ui.py AlSafaAccounting-v3.9.359-TABLET-PARTNER
 - **No Android Studio build, APK install, or tablet test was run in this batch.** The audit script was committed but has not been executed from GitHub in the user environment.
 
 No changes to Native 6, database rules, or user data.
+
+## Follow-up: shared search and photo controls
+
+The original tablet `assets/style.css` was inspected directly for these rules:
+- `.search-box`: horizontal flex, 9px gap, 10px vertical / 12px horizontal padding, 2px sand border, 15px radius, white background, 12px bottom margin; nested span 22px and input 46px min-height / 15px text / transparent background.
+- `.simple-recent`: 14px vertical margins, paper fill, 1px line border, 17px radius and clipped content.
+- `.product-photo-button, .repair-photo-button`: 38×38px, no padding, 1px sand border, 11px radius, sand fill.
+- `.simple-action`: 104px source height, but **Native 7 intentionally uses 52dp** as explicitly requested by the user. Preserve that override.
+
+**Implemented commits:**
+- `138d9d705287543fd03bffae0219612e5a404aa1`: shared search-box container and input appearance; recent list card geometry.
+- `52dca62ab780c60cb571de839c2668477e1da141`: product/repair photo action geometry.
+
+**Review impact across nine routes:** dashboard recent records; product search/photo actions; sales search; maintenance photo actions and search; supplier search; expense search; cashbox movement search; report filters/search; settings search if present. These are cross-route *targets*, not verified occurrences.
+
+**Pending verification:** Search must actually filter as text is typed; styling does not implement search logic. Photo buttons are still not proof of camera/gallery/zoom functionality. Android compilation, APK, device screenshots and all nine route visual parity remain untested. No modifications to accounting rules or `native6`.
