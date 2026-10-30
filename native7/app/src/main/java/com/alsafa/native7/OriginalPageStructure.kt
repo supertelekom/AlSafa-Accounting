@@ -145,6 +145,15 @@ internal class OriginalPageStructure(
                 }
                 if(cs.any { it in listOf("barcode-help","help") }) { textSize=11f;setTextColor(muted) }
                 if(cs.contains("metric-label")) { textSize=11f;setTextColor(muted) }
+                if(cs.contains("stock-warning")) {
+                    textSize=10f
+                    setTextColor(Color.rgb(173,54,54))
+                    setPadding(dp(8),dp(6),dp(8),dp(6))
+                    background=GradientDrawable().apply {
+                        setColor(Color.rgb(255,240,237))
+                        cornerRadius=dp(7).toFloat()
+                    }
+                }
                 if(n.optString("tag")=="small" && cs.contains("report-tile-label")) {
                     textSize=10f;setTextColor(muted);setPadding(0,0,0,0)
                 }
