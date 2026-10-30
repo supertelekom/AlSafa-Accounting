@@ -563,21 +563,6 @@ internal class OriginalPageStructure(
                             orientation=LinearLayout.HORIZONTAL
                             gravity=Gravity.CENTER_VERTICAL
                             setPadding(dp(15),dp(14),dp(15),dp(14))
-                            // The original section header has a bottom divider.
-                            background=object:android.graphics.drawable.Drawable() {
-                                private val paint=android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
-                                    color=line
-                                    strokeWidth=dp(1).toFloat()
-                                }
-                                override fun draw(canvas:android.graphics.Canvas) {
-                                    val y=bounds.bottom-dp(1)/2f
-                                    canvas.drawLine(bounds.left.toFloat(),y,bounds.right.toFloat(),y,paint)
-                                }
-                                override fun setAlpha(alpha:Int) { paint.alpha=alpha;invalidateSelf() }
-                                override fun setColorFilter(filter:android.graphics.ColorFilter?) { paint.colorFilter=filter;invalidateSelf() }
-                                @Deprecated("Deprecated in Java")
-                                override fun getOpacity()=android.graphics.PixelFormat.TRANSLUCENT
-                            }
                             // CSS .section-title h3 and .link-button are
                             // descendant selectors: match source tags/classes.
                             for(i in 0 until childCount) {
@@ -598,7 +583,6 @@ internal class OriginalPageStructure(
                             }
                             for(i in 0 until childCount) {
                                 val child=getChildAt(i)
-                                val existing=child.layoutParams as? LinearLayout.LayoutParams
                                 child.layoutParams=LinearLayout.LayoutParams(
                                     if(i==0) 0 else -2,-2,if(i==0) 1f else 0f
                                 ).apply {
