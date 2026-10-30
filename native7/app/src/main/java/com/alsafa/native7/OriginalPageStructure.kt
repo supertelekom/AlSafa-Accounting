@@ -143,9 +143,28 @@ internal class OriginalPageStructure(
                 if(kind=="actions") setPadding(0,dp(18),0,dp(9))
             }
             "fold" -> column().apply {
-                val body=column().apply { visibility=View.GONE }
+                val initiallyOpen=n.optBoolean("open") || n.optJSONObject("data")?.optString("open")=="true"
+                val body=column().apply { visibility=if(initiallyOpen) View.VISIBLE else View.GONE }
                 val summary=children.firstOrNull()
-                if(summary!=null) addView(build(summary).apply { isClickable=true;setOnClickListener { body.visibility=if(body.visibility==View.VISIBLE) View.GONE else View.VISIBLE } })
+                if(summary!=null) addView(build(summary).apply {
+                    isClickable=true
+                    isFocusable=true
+                    contentDescription=summary.optString("text").ifEmpty { "تفاصيل" }
+                    setOnClickListener {
+                        val expand=body.visibility!=View.VISIBLE
+                        if(expand) {
+                            body.alpha=0f
+                            body.visibility=View.VISIBLE
+                            body.animate().alpha(1f).setDuration(150L).start()
+                        } else {
+                            body.animate().cancel()
+                            body.visibility=View.GONE
+                            body.alpha=1f
+                        }
+                        isSelected=expand
+                    }
+                    isSelected=initiallyOpen
+                })
                 children.drop(1).forEach { body.addView(build(it)) }
                 addView(body)
             }
@@ -174,8 +193,10 @@ internal class OriginalPageStructure(
             inputType=when {
                 type=="multiline" -> InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_MULTI_LINE
                 type=="password" -> InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
-                n.optString("inputmode")=="tel" -> InputType.TYPE_CLASS_PHONE
-                type=="number" -> InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
+                type=="email" -> InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS
+                type=="tel" || n.optString("inputmode")=="tel" -> InputType.TYPE_CLASS_PHONE
+                type=="number" || n.optString("inputmode")=="decimal" -> InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL or InputType.TYPE_NUMBER_FLAG_SIGNED
+                n.optString("inputmode")=="numeric" -> InputType.TYPE_CLASS_NUMBER
                 else -> InputType.TYPE_CLASS_TEXT
             }
             if(type=="multiline") { minLines=3;maxLines=8 } else setSingleLine(true)
@@ -188,6 +209,11 @@ internal class OriginalPageStructure(
             }
             setText(value)
             isEnabled=!n.optBoolean("disabled")
+            if(n.optBoolean("readonly")) {
+                isFocusable=false
+                isCursorVisible=false
+                if(!date) isClickable=false
+            }
             if(date) {
                 isFocusable=false;isClickable=true
                 setOnClickListener {
@@ -236,6 +262,7 @@ internal class OriginalPageStructure(
         control.apply {
             text=n.optString("text");typeface=font;textSize=12f;setTextColor(ink);layoutDirection=View.LAYOUT_DIRECTION_RTL
             isChecked=n.optBoolean("checked");minHeight=dp(42)
+            isEnabled=!n.optBoolean("disabled")
             if(radio) {
                 val group=radioNames.getOrPut(n.optString("name")) { mutableListOf() }
                 group.add(this as RadioButton)
