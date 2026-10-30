@@ -67,9 +67,15 @@ internal class OriginalPageStructure(
             kind in listOf("section","form","summaryGrid","reportGrid") -> 14
             else -> 2
         }
+        val css=classes(node)
         return LinearLayout.LayoutParams(-1,-2).apply {
-            bottomMargin=dp(if(classes(node).contains("form-section")) 14 else margin)
-            if(classes(node).contains("form-section")) topMargin=dp(20)
+            bottomMargin=dp(when {
+                css.contains("form-section") -> 14
+                css.contains("section-card") -> 14
+                else -> margin
+            })
+            if(css.contains("form-section")) topMargin=dp(20)
+            if(css.contains("section-card")) topMargin=dp(14)
         }
     }
      private fun tintAccentMetric(view:View,node:JSONObject) {
@@ -157,6 +163,10 @@ internal class OriginalPageStructure(
                     textSize=12f
                     setTextColor(Color.rgb(122,81,24))
                     setPadding(0,0,0,0)
+                }
+                if(cs.contains("form-section")) {
+                    // The original source uses --gold-deep for section headings.
+                    setTextColor(Color.rgb(122,81,24))
                 }
                 if(kind=="text" && n.optString("tag")=="label") setPadding(0,0,0,dp(6))
                 if(cs.contains("simple-icon")) {
