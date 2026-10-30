@@ -7,9 +7,9 @@ import org.json.JSONArray
 import org.json.JSONObject
 
 /** Offline repair storage. All writes are local and transactional. */
-class RepairStore(context: Context) : SQLiteOpenHelper(context, "alsafa_native7.db", null, 1) {
+class RepairStore(context: Context) : SQLiteOpenHelper(context, "alsafa_native7.db", null, 4) {
     override fun onCreate(db: SQLiteDatabase) {
-        db.execSQL("""CREATE TABLE repairs (
+        db.execSQL("""CREATE TABLE IF NOT EXISTS repairs (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             payload TEXT NOT NULL,
             photo_path TEXT,
@@ -20,7 +20,11 @@ class RepairStore(context: Context) : SQLiteOpenHelper(context, "alsafa_native7.
         )""")
     }
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
-        throw IllegalStateException("Database migration must be explicit; refusing destructive upgrade")
+        onCreate(db)
+    }
+    override fun onOpen(db: SQLiteDatabase) {
+        super.onOpen(db)
+        if (!db.isReadOnly) onCreate(db)
     }
     fun save(payload: JSONObject, photoPath: String?, status: String, id: Long? = null): Long {
         val db = writableDatabase
