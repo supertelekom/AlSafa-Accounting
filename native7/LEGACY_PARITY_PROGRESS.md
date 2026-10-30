@@ -301,3 +301,14 @@ Directly inspected `assets/style.css` inside the original v3.9.359 tablet source
 - Settings: shared card/form styles; nested settings, restore and printer dialogs still unverified.
 
 These changes were committed to the GitHub development branch. **No Android Studio compilation, Honor Pad X8b device test, screenshot comparison, full source-label/order audit or modal animation audit occurred in this batch.** Native preview-only actions remain preview-only.
+
+## Compact quick-service source override and verification — 2026-10-30
+
+Verified directly in `assets/style.css` that the last original quick-service card rules are:
+- Baseline father-mode quick service: min-height 78px, padding 6px 5px, radius 14px.
+- `@media(max-width:420px)`: min-height 74px, padding 5px 4px.
+- `@media(min-width:900px) and (orientation:landscape)`: min-height 72px, padding 5px 4px, four-column grid and 7px gap.
+
+Commit `8c3bfde874e9eba0a8cf34849af3f61fa37f3884` fills the missing <=420dp case in the shared native renderer. This is responsive styling only; it does not certify the quick-service operations.
+
+**Acceptance checklist, nine sections:** home navigation/header; products fields/photos/variants; sales full/simple/returns; maintenance photos and quick actions; suppliers purchases/debts; expenses movements; cashboxes currencies/closing; reports date ranges/partner pages; settings backups/printing. Each still needs full label/order/modal/source parity verification and tablet screenshots. Tajawal asset loading is already in the shared renderer, but device font rendering has not been compared. APK compilation and on-device runtime tests were not performed.
