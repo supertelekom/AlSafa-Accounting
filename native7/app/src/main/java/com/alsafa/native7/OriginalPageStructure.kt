@@ -1015,7 +1015,18 @@ internal class OriginalPageStructure(
             typeface=font;textSize=14f;setTextColor(ink);setHintTextColor(muted)
             gravity=Gravity.RIGHT or (if(type=="multiline") Gravity.TOP else Gravity.CENTER_VERTICAL)
             layoutDirection=View.LAYOUT_DIRECTION_RTL;textDirection=View.TEXT_DIRECTION_FIRST_STRONG
-            setPadding(dp(10),dp(9),dp(10),dp(9));background=bg(Color.rgb(255,252,247),10)
+            setPadding(dp(10),dp(9),dp(10),dp(9))
+            // Source style.css: input/textarea border 1px --line, radius 10px;
+            // focused controls switch to --gold. Shared by all nine routes.
+            fun fieldBackground(focused:Boolean)=GradientDrawable().apply {
+                setColor(Color.rgb(255,252,247))
+                cornerRadius=dp(10).toFloat()
+                setStroke(dp(1),if(focused) goldAccent else line)
+            }
+            background=fieldBackground(false)
+            onFocusChangeListener=View.OnFocusChangeListener { _,focused ->
+                background=fieldBackground(focused)
+            }
             minHeight=dp(42);hint=n.optString("placeholder")
             inputType=when {
                 type=="multiline" -> InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_MULTI_LINE
@@ -1070,7 +1081,12 @@ internal class OriginalPageStructure(
     private fun selection(n:JSONObject):View {
         val options=items(n.optJSONArray("options"))
         return Spinner(activity).apply {
-            background=bg(Color.rgb(255,252,247),10);setPadding(dp(6),dp(4),dp(6),dp(4));minimumHeight=dp(42)
+            background=GradientDrawable().apply {
+                setColor(Color.rgb(255,252,247))
+                cornerRadius=dp(10).toFloat()
+                setStroke(dp(1),line)
+            }
+            setPadding(dp(6),dp(4),dp(6),dp(4));minimumHeight=dp(42)
             layoutDirection=View.LAYOUT_DIRECTION_RTL
             adapter=object:ArrayAdapter<String>(activity,android.R.layout.simple_spinner_dropdown_item,options.map { it.optString("label") }) {
                 private fun style(view:View)=view.apply { (this as? TextView)?.apply { typeface=font;textSize=13f;setTextColor(ink);gravity=Gravity.RIGHT or Gravity.CENTER_VERTICAL
