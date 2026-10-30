@@ -202,6 +202,24 @@ internal class OriginalPageStructure(
                     }
                     setTextColor(goldAccent)
                 }
+                if(cs.contains("status")) {
+                    textSize=9f
+                    gravity=Gravity.CENTER
+                    setPadding(dp(7),dp(3),dp(7),dp(3))
+                    background=GradientDrawable().apply {
+                        setColor(when {
+                            cs.contains("done") -> Color.rgb(234,244,236)
+                            cs.contains("debt") -> Color.rgb(255,240,237)
+                            else -> Color.rgb(247,237,221)
+                        })
+                        cornerRadius=dp(99).toFloat()
+                    }
+                    setTextColor(when {
+                        cs.contains("done") -> Color.rgb(90,138,103)
+                        cs.contains("debt") -> Color.rgb(184,88,75)
+                        else -> Color.rgb(122,81,24)
+                    })
+                }
                 if(cs.contains("transaction-icon")) {
                     textSize=18f;gravity=Gravity.CENTER
                     minWidth=dp(34);minHeight=dp(34)
@@ -443,11 +461,40 @@ internal class OriginalPageStructure(
                             for(i in 0 until childCount) styleListDescendants(getChildAt(i))
                         }
                         if(cs.contains("row-actions")) {
-                            orientation=LinearLayout.HORIZONTAL
-                            gravity=Gravity.CENTER_VERTICAL
-                            for(i in 0 until childCount) {
-                                getChildAt(i).layoutParams=LinearLayout.LayoutParams(-2,-2).apply {
-                                    if(i>0) marginStart=dp(5)
+                            // Tablet-specific user requirement: all actions remain
+                            // visible without horizontal scrolling. Group long
+                            // action lists into multiple visible rows.
+                            val tablet=activity.resources.configuration.screenWidthDp>=720
+                            val perRow=if(tablet) {
+                                if(activity.resources.configuration.screenWidthDp>=1200) 6 else 4
+                            } else Int.MAX_VALUE
+                            val gap=dp(5)
+                            if(tablet && childCount>perRow) {
+                                val actionViews=(0 until childCount).map { getChildAt(it) }
+                                removeAllViews()
+                                orientation=LinearLayout.VERTICAL
+                                actionViews.chunked(perRow).forEachIndexed { rowIndex, group ->
+                                    val row=LinearLayout(activity).apply {
+                                        orientation=LinearLayout.HORIZONTAL
+                                        layoutDirection=View.LAYOUT_DIRECTION_RTL
+                                        gravity=Gravity.CENTER_VERTICAL
+                                    }
+                                    group.forEachIndexed { index, child ->
+                                        row.addView(child,LinearLayout.LayoutParams(-2,-2).apply {
+                                            if(index>0) marginStart=gap
+                                        })
+                                    }
+                                    addView(row,LinearLayout.LayoutParams(-1,-2).apply {
+                                        if(rowIndex>0) topMargin=gap
+                                    })
+                                }
+                            } else {
+                                orientation=LinearLayout.HORIZONTAL
+                                gravity=Gravity.CENTER_VERTICAL
+                                for(i in 0 until childCount) {
+                                    getChildAt(i).layoutParams=LinearLayout.LayoutParams(-2,-2).apply {
+                                        if(i>0) marginStart=gap
+                                    }
                                 }
                             }
                         }
