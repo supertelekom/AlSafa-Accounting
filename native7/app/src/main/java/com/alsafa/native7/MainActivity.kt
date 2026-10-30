@@ -1788,23 +1788,6 @@ class MainActivity : Activity() {
                                 }
                             })
                         }
-                        val photoPath=item.optString("photo_path")
-                        if(photoPath.isNotBlank() && photoPath!="null") {
-                            entries.addView(text("صورة الساعة",15f,gold).apply {
-                                isClickable=true
-                                setOnClickListener {
-                                    val photoView=android.widget.ImageView(this@MainActivity).apply {
-                                        adjustViewBounds=true
-                                        scaleType=android.widget.ImageView.ScaleType.FIT_CENTER
-                                        setImageURI(android.net.Uri.parse(photoPath))
-                                    }
-                                    android.app.AlertDialog.Builder(this@MainActivity)
-                                        .setTitle("صورة الساعة")
-                                        .setView(photoView)
-                                        .setPositiveButton("إغلاق",null).show()
-                                }
-                            })
-                        }
                         if(item.isNull("delivered_at")) {
                             entries.addView(text("نتيجة الفحص أو تحديث العميل",15f,gold).apply {
                                 isClickable=true
