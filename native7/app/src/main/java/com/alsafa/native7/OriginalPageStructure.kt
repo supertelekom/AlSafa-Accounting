@@ -242,7 +242,21 @@ internal class OriginalPageStructure(
                 children.drop(1).forEach { body.addView(build(it)) }
                 addView(body)
             }
-            else -> column().apply {
+            else -> if(cs.contains("report-filter")) {
+                // Class-based layout takes precedence over generic container kind.
+                // CSS: 1fr 1fr auto, 8px gap; compact <=380: 1fr 1fr
+                // with the action spanning the full row.
+                SourceGrid(activity,
+                    if(activity.resources.configuration.screenWidthDp<=380) 2 else 3,dp(8)).apply {
+                    background=bg(Color.rgb(255,253,249),15)
+                    setPadding(dp(13),dp(13),dp(13),dp(13))
+                    children.forEach { child ->
+                        addCell(build(child),
+                            activity.resources.configuration.screenWidthDp<=380 &&
+                                child.optString("kind")=="button")
+                    }
+                }
+            } else column().apply {
                 children.forEach { child -> addView(build(child),childParams(child,kind)) }
                 when(kind) {
                     "section","form" -> { background=bg();setPadding(dp(if(kind=="form" && activity.resources.configuration.screenWidthDp>=720) 22 else 15),dp(if(kind=="form" && activity.resources.configuration.screenWidthDp>=720) 22 else 15),dp(if(kind=="form" && activity.resources.configuration.screenWidthDp>=720) 22 else 15),dp(if(kind=="form" && activity.resources.configuration.screenWidthDp>=720) 22 else 15)) }
