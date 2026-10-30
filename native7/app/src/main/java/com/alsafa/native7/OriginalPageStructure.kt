@@ -84,6 +84,7 @@ internal class OriginalPageStructure(
             if(css.contains("product-info")) topMargin=dp(14)
             if(css.contains("stock-warning")) topMargin=dp(10)
             if(css.contains("note-box")) topMargin=dp(12)
+            if(css.contains("row-actions")) topMargin=dp(7)
             if(css.contains("form-actions")) topMargin=dp(18)
             if(kind=="reportGrid" || css.contains("report-grid")) {
                 topMargin=dp(13)
