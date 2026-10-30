@@ -438,13 +438,19 @@ internal class OriginalPageStructure(
                     if(cs.contains("quick-service") && index==2) topMargin=dp(3) }
                     else LinearLayout.LayoutParams(-1,-2))
             }
-            minimumHeight=dp(when { cs.contains("father-main-card") -> if(activity.resources.configuration.screenWidthDp<=420) 155 else 185;cs.contains("mode-card") -> 122;cs.contains("manage-card") -> 115;cs.contains("modern-feature-card") -> 86;cs.contains("quick-service") -> if(activity.resources.configuration.screenWidthDp>=900 && activity.resources.configuration.orientation==android.content.res.Configuration.ORIENTATION_LANDSCAPE) 72 else 78;cs.contains("simple-action") -> 52;else -> 104 })
+            minimumHeight=dp(when { cs.contains("father-main-card") -> if(activity.resources.configuration.screenWidthDp<=420) 155 else 185;cs.contains("mode-card") -> 122;cs.contains("manage-card") -> 115;cs.contains("modern-feature-card") -> 86;cs.contains("quick-service") -> when {
+                activity.resources.configuration.screenWidthDp>=900 &&
+                    activity.resources.configuration.orientation==android.content.res.Configuration.ORIENTATION_LANDSCAPE -> 72
+                activity.resources.configuration.screenWidthDp<=420 -> 74
+                else -> 78
+            };cs.contains("simple-action") -> 52;else -> 104 })
             setPadding(dp(if(cs.contains("mode-card")) 18 else if(cs.contains("modern-feature-card")) 16 else if(cs.contains("simple-action")) 14 else if(cs.contains("father-main-card")) (if(activity.resources.configuration.screenWidthDp<=420) 8 else 18) else 15),dp(if(cs.contains("mode-card")) 18 else if(cs.contains("modern-feature-card")) 16 else if(cs.contains("simple-action")) 8 else if(cs.contains("father-main-card")) (if(activity.resources.configuration.screenWidthDp<=420) 13 else 18) else 15),dp(if(cs.contains("mode-card")) 18 else if(cs.contains("modern-feature-card")) 16 else if(cs.contains("simple-action")) 7 else if(cs.contains("father-main-card")) (if(activity.resources.configuration.screenWidthDp<=420) 8 else 18) else 15),dp(if(cs.contains("mode-card")) 18 else if(cs.contains("modern-feature-card")) 16 else if(cs.contains("simple-action")) 6 else if(cs.contains("father-main-card")) (if(activity.resources.configuration.screenWidthDp<=420) 13 else 18) else 15))
             if(cs.contains("quick-service")) {
-                val landscape=activity.resources.configuration.screenWidthDp>=900 &&
-                    activity.resources.configuration.orientation==android.content.res.Configuration.ORIENTATION_LANDSCAPE
-                setPadding(dp(if(landscape) 4 else 5),dp(if(landscape) 5 else 6),
-                    dp(if(landscape) 4 else 5),dp(if(landscape) 5 else 6))
+                val compact=activity.resources.configuration.screenWidthDp<=420 ||
+                    (activity.resources.configuration.screenWidthDp>=900 &&
+                    activity.resources.configuration.orientation==android.content.res.Configuration.ORIENTATION_LANDSCAPE)
+                setPadding(dp(if(compact) 4 else 5),dp(if(compact) 5 else 6),
+                    dp(if(compact) 4 else 5),dp(if(compact) 5 else 6))
                 gravity=Gravity.CENTER
             }
             background=when {
