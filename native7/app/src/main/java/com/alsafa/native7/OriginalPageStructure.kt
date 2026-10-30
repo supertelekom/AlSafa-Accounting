@@ -201,30 +201,6 @@ internal class OriginalPageStructure(
                     }
                     setTextColor(goldAccent)
                 }
-                if(cs.contains("list-main") || cs.contains("list-side")) {
-                    fun styleListDescendants(v:View) {
-                        val node=metadata[v]
-                        if(v is TextView && node!=null) {
-                            when(node.optString("tag")) {
-                                "b" -> {
-                                    v.textSize=12f
-                                    v.typeface=Typeface.create(font,Typeface.BOLD)
-                                    v.setSingleLine(true)
-                                    v.ellipsize=android.text.TextUtils.TruncateAt.END
-                                }
-                                "small" -> {
-                                    v.textSize=10f
-                                    v.setTextColor(muted)
-                                    v.setSingleLine(true)
-                                    v.ellipsize=android.text.TextUtils.TruncateAt.END
-                                    if(cs.contains("list-main")) v.setPadding(0,dp(4),0,0)
-                                }
-                            }
-                        }
-                        if(v is ViewGroup) for(j in 0 until v.childCount) styleListDescendants(v.getChildAt(j))
-                    }
-                    styleListDescendants(this)
-                }
                 if(cs.contains("transaction-icon")) {
                     textSize=18f;gravity=Gravity.CENTER
                     minWidth=dp(34);minHeight=dp(34)
@@ -437,6 +413,31 @@ internal class OriginalPageStructure(
                                     override fun getOpacity()=android.graphics.PixelFormat.TRANSLUCENT
                                 }
                             }
+                        }
+                        if(cs.contains("list-main") || cs.contains("list-side")) {
+                            fun styleListDescendants(v:View) {
+                                val node=metadata[v]
+                                if(v is TextView && node!=null) {
+                                    when(node.optString("tag")) {
+                                        "b" -> {
+                                            v.textSize=12f
+                                            v.typeface=Typeface.create(font,Typeface.BOLD)
+                                            v.setSingleLine(true)
+                                            v.ellipsize=android.text.TextUtils.TruncateAt.END
+                                        }
+                                        "small" -> {
+                                            v.textSize=10f
+                                            v.setTextColor(muted)
+                                            v.setSingleLine(true)
+                                            v.ellipsize=android.text.TextUtils.TruncateAt.END
+                                            if(cs.contains("list-main")) v.setPadding(0,dp(4),0,0)
+                                        }
+                                    }
+                                }
+                                if(v is ViewGroup) for(j in 0 until v.childCount)
+                                    styleListDescendants(v.getChildAt(j))
+                            }
+                            for(i in 0 until childCount) styleListDescendants(getChildAt(i))
                         }
                         if(cs.contains("row-actions")) {
                             orientation=LinearLayout.HORIZONTAL
