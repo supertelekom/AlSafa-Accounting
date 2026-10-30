@@ -230,3 +230,31 @@ Reviewed the shared Native 7 view tree and grid measurement used by the nine pri
 Home: header, main cards, navigation; Products: list, add/edit, image and variants; Sales: full/simple invoice and dialogs; Maintenance: intake/delivery and photos; Suppliers: purchases and balances; Expenses: forms and filters; Cashboxes: currency/movements/closing; Reports: tables and periods; Settings: nested settings and backup/printing. These all still require actual old-vs-new screenshots and interactive tablet tests.
 
 No APK compilation or Honor Pad X8b on-device test was run in this batch. The visual renderer still includes preview-only controls and does not establish full feature parity.
+
+## Original source verification and compile-safety audit — 2026-10-30
+
+Inspected the original v3.9.359 ZIP's `assets/style.css` directly. This audit targets shared renderer components used across all nine principal sections, rather than asserting completion of every screen.
+
+| Original source selector | Confirmed CSS | Applied code |
+| --- | --- | --- |
+| `.section-title` | flex, space-between, padding 14px 15px, **border-bottom** 1px `var(--line)` (no full border) | `93828dd44304d3d7fdf6694241324e804179dd21`: bottom divider drawable |
+| Kotlin renderer `when(kind)` | `else` must be the final branch | `147e6ab03e6e19474e6ddfa7071a78ad1075507a`: moved `help` before `else`; addresses a compile-blocking code issue |
+| `.metric-label` | 11px muted | `08fd4de9704178b16738cc367e5c2e27f5e52405`: label typography |
+| `.metric-value` | 18px bold, top margin 8px | same commit: value typography |
+| `.metric-note` | 10px muted, top margin 5px | same commit: note typography |
+| `.form-section` | 13px bold, gold-deep | same commit: heading typography |
+
+The source CSS also specifies `.section-title h3` at 15px; actual per-route markup mapping still needs checking. Source HTML order/labels, external shell, nested dialogs, photographs and animations have **not** been certified against all original screens.
+
+### Status by section
+- Home: shared cards and metric styles improved; header and logo comparison pending.
+- Products: shared form typography improved; cards, variants and image interaction pending.
+- Sales: shared form typography improved; full/simple invoice screens and dialogs pending.
+- Maintenance: shared fields and card layout improved; photos and state transitions pending.
+- Suppliers: shared fields and grid layout improved; purchase controls and dialogs pending.
+- Expenses: shared forms improved; transaction list and filters pending.
+- Cashboxes: metric styles improved; balances, currency controls and closing pending.
+- Reports: metric/report tiles improved; tables, period filters and partner reports pending.
+- Settings: shared cards improved; settings screens and backup/print dialogs pending.
+
+**Build and device testing still pending.** No Android Studio build, runtime verification, screenshot diff or full button/navigation audit has been performed here. Changes are committed but not yet certified as pixel-identical or functionally complete.
