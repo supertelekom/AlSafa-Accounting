@@ -1575,10 +1575,15 @@ private class SourceFlow(context:android.content.Context,private val gap:Int):Vi
         for(i in 0 until childCount) {
             val child=getChildAt(i);if(child.visibility==GONE) continue
             child.measure(MeasureSpec.makeMeasureSpec(usable,MeasureSpec.AT_MOST),MeasureSpec.makeMeasureSpec(0,MeasureSpec.UNSPECIFIED))
-            if(used>0 && used+child.measuredWidth>usable) { used=0;top+=height+gap;height=0 }
-            val right=width-paddingRight-used
+            // Account for the inter-item gap before testing wrap. The previous
+            // check omitted it, so two buttons could overflow the right edge.
+            val nextWidth=if(used==0) child.measuredWidth else used+gap+child.measuredWidth
+            if(used>0 && nextWidth>usable) { used=0;top+=height+gap;height=0 }
+            val offset=if(used==0) 0 else used+gap
+            val right=width-paddingRight-offset
             frames[child]=android.graphics.Rect(right-child.measuredWidth,top,right,top+child.measuredHeight)
-            used+=child.measuredWidth+gap;widest=maxOf(widest,used-gap);height=maxOf(height,child.measuredHeight)
+            used=offset+child.measuredWidth
+            widest=maxOf(widest,used);height=maxOf(height,child.measuredHeight)
         }
         val measured=if(MeasureSpec.getMode(widthMeasureSpec)==MeasureSpec.EXACTLY) width else (widest+paddingLeft+paddingRight).coerceAtMost(width)
         if(measured!=width) frames.values.forEach { it.offset(measured-width,0) }
