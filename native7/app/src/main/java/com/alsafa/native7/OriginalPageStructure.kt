@@ -63,7 +63,7 @@ internal class OriginalPageStructure(
     private fun childParams(node:JSONObject,parentKind:String):LinearLayout.LayoutParams {
         val kind=node.optString("kind")
         val margin=when {
-            parentKind=="field" -> 6
+            parentKind=="field" -> if(node.optString("tag")=="label") 6 else 0
             kind in listOf("section","form","summaryGrid","reportGrid") -> 14
             else -> 2
         }
@@ -136,6 +136,11 @@ internal class OriginalPageStructure(
             "button" -> button(n)
             "title","text" -> label(n.optString("text"),if(kind=="text" && n.optString("tag")=="label") 11f else n.optDouble("size",13.0).toFloat(),if(n.optBoolean("muted") || (kind=="text" && n.optString("tag")=="label")) muted else ink,n.optString("weight")=="bold").apply {
                 setPadding(0,dp(if(kind=="title") 3 else 2),0,dp(if(kind=="title") 7 else 5))
+                if(kind=="text" && n.optString("tag")=="label") {
+                    // .field label: 11px muted with 6px bottom margin;
+                    // spacing is owned by childParams, not text padding.
+                    setPadding(0,0,0,0)
+                }
                 if(cs.any { it in listOf("barcode-help","help") }) { textSize=11f;setTextColor(muted) }
                 if(cs.contains("metric-label")) { textSize=11f;setTextColor(muted) }
                 if(cs.contains("metric-value")) { textSize=18f;typeface=Typeface.create(font,Typeface.BOLD);setPadding(0,dp(8),0,0) }
