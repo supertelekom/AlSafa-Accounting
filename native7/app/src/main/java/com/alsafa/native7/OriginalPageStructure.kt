@@ -393,6 +393,7 @@ internal class OriginalPageStructure(
                                         "b" -> {
                                             child.textSize=14f
                                             child.typeface=Typeface.create(font,Typeface.BOLD)
+                                            child.setTextColor(Color.rgb(122,81,24))
                                             child.setPadding(0,dp(7),0,0)
                                         }
                                     }
