@@ -292,16 +292,21 @@ class MainActivity : Activity() {
                     .setMessage("تم فحص النسخة.\\n${summary}\\n\\nسيتم حفظ جميع الأقسام محلياً. لا يتم حذف بيانات سابقة.")
                     .setNegativeButton("إلغاء", null)
                     .setPositiveButton("استعادة") { _, _ ->
-                        try {
-                            legacyBackupStore.importInitial(text)
-                            android.app.AlertDialog.Builder(this).setTitle("تم حفظ النسخة")
-                                .setMessage("حُفظت بيانات النسخة الأصلية في SQLite. ربطها بصفحات المبيع والمخزون والصيانة لم يكتمل بعد.")
-                                .setPositiveButton("حسناً", null).show()
-                        } catch (error: Exception) {
-                            android.app.AlertDialog.Builder(this).setTitle("لم تُنفذ الاستعادة")
-                                .setMessage(error.message ?: "تعذر حفظ النسخة؛ لم يتم تغيير البيانات")
-                                .setPositiveButton("حسناً", null).show()
+                        val progress=android.app.ProgressDialog(this).apply {
+                            setMessage("جارٍ استعادة بيانات الصفا، يرجى الانتظار...")
+                            setCancelable(false)
+                            show()
                         }
+                        Thread {
+                            val failure=runCatching { legacyBackupStore.importInitial(text) }.exceptionOrNull()
+                            runOnUiThread {
+                                progress.dismiss()
+                                android.app.AlertDialog.Builder(this)
+                                    .setTitle(if(failure==null) "تم حفظ النسخة" else "لم تُنفذ الاستعادة")
+                                    .setMessage(failure?.message ?: "حُفظت بيانات النسخة في SQLite. يرجى التحقق من الأقسام قبل اعتمادها.")
+                                    .setPositiveButton("حسناً",null).show()
+                            }
+                        }.start()
                     }.show()
             } catch (error: Exception) {
                 android.app.AlertDialog.Builder(this).setTitle("ملف غير صالح")
