@@ -248,6 +248,21 @@ internal class OriginalPageStructure(
                                 }
                             }
                             setPadding(dp(15),dp(14),dp(15),dp(14))
+                            // Legacy .section-title has a bottom rule, not a full box border.
+                            background=object:android.graphics.drawable.Drawable() {
+                                private val rule=android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
+                                    color=line
+                                    strokeWidth=dp(1).toFloat()
+                                }
+                                override fun draw(canvas:android.graphics.Canvas) {
+                                    val y=bounds.bottom-dp(1).toFloat()/2f
+                                    canvas.drawLine(bounds.left.toFloat(),y,bounds.right.toFloat(),y,rule)
+                                }
+                                override fun setAlpha(alpha:Int) { rule.alpha=alpha;invalidateSelf() }
+                                override fun setColorFilter(filter:android.graphics.ColorFilter?) { rule.colorFilter=filter;invalidateSelf() }
+                                @Deprecated("Deprecated in Java")
+                                override fun getOpacity()=android.graphics.PixelFormat.TRANSLUCENT
+                            }
                         }
                         if(cs.contains("form-card")) {
                             background=bg(Color.rgb(255,253,249),17)
