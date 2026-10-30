@@ -262,7 +262,8 @@ internal object NativeSalesLedger {
             val sale=find(db,id) ?: error("الفاتورة غير موجودة")
             require(sale.status=="active") { "الفاتورة ملغاة" }
             require(paymentCurrency!=sale.currency || kotlin.math.abs(invoiceToPaymentRate-1.0)<0.000001) { "سعر الصرف لنفس العملة يجب أن يكون 1" }
-            val applied=amount.coerceAtMost(remaining(db,id))
+            // appendPayment: applied=min(max(0,amount),balanceFor(...)).
+            val applied=amount.coerceAtMost(remaining(db,id).coerceAtLeast(0.0))
             if(applied<=0) { db.setTransactionSuccessful();return }
             val actual=applied*invoiceToPaymentRate
             require(actual.isFinite()) { "مبلغ القبض غير صالح" }
