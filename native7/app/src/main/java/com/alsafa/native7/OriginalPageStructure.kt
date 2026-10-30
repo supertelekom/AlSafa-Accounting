@@ -389,6 +389,35 @@ internal class OriginalPageStructure(
                             for(i in 0 until childCount)
                                 styleTransactionInfoDescendants(getChildAt(i))
                         }
+                        if(cs.contains("product-info")) {
+                            // Source product metadata is a two-column grid, with
+                            // the left flexible text and right intrinsic value.
+                            setPadding(0,dp(11),0,0)
+                            for(i in 0 until childCount) {
+                                val child=getChildAt(i)
+                                val source=metadata[child]
+                                if(child is TextView && source!=null) {
+                                    when(source.optString("tag")) {
+                                        "span" -> {
+                                            child.textSize=10f
+                                            child.setTextColor(muted)
+                                        }
+                                        "strong" -> {
+                                            child.textSize=12f
+                                            child.setTextColor(Color.rgb(122,81,24))
+                                            child.typeface=Typeface.create(font,Typeface.BOLD)
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        if(cs.contains("stock-warning")) {
+                            background=GradientDrawable().apply {
+                                setColor(Color.rgb(255,240,237))
+                                cornerRadius=dp(7).toFloat()
+                            }
+                            setPadding(dp(8),dp(6),dp(8),dp(6))
+                        }
                         if(cs.contains("product-card")) {
                             // Original .product-card: 14px padding, 16px radius.
                             background=bg(Color.rgb(255,253,249),16,
