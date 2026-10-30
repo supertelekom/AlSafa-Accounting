@@ -73,6 +73,18 @@ internal class OriginalPageStructure(
         if(view is TextView) view.setTextColor(color)
         if(view is ViewGroup) for(i in 0 until view.childCount) tintTextTree(view.getChildAt(i),color)
     }
+    private fun tintAccentMetric(view:View,node:JSONObject) {
+        val cs=classes(node)
+        if(view is TextView) {
+            view.setTextColor(if(cs.contains("metric-label") || cs.contains("metric-note"))
+                Color.rgb(252,235,208) else Color.rgb(255,249,236))
+        }
+        if(view is ViewGroup) {
+            val nodes=items(node.optJSONArray("children"))
+            for(i in 0 until minOf(view.childCount,nodes.size))
+                tintAccentMetric(view.getChildAt(i),nodes[i])
+        }
+    }
     private fun label(value:String,size:Float=13f,color:Int=ink,bold:Boolean=false) = TextView(activity).apply {
         text=value;textSize=size;setTextColor(color);typeface=if(bold) Typeface.create(font,Typeface.BOLD) else font
         gravity=Gravity.RIGHT or Gravity.CENTER_VERTICAL;includeFontPadding=false
@@ -210,8 +222,8 @@ internal class OriginalPageStructure(
                                 GradientDrawable.Orientation.TL_BR,
                                 intArrayOf(Color.rgb(178,130,50),Color.rgb(139,96,31))
                             ).apply { cornerRadius=dp(16).toFloat() }
-                            children.forEachIndexed { index,_ ->
-                                tintTextTree(getChildAt(index),Color.rgb(255,249,236))
+                            children.forEachIndexed { index,child ->
+                                tintAccentMetric(getChildAt(index),child)
                             }
                         }
                     }
@@ -234,7 +246,9 @@ internal class OriginalPageStructure(
                                     GradientDrawable.Orientation.TL_BR,
                                     intArrayOf(Color.rgb(178,130,50),Color.rgb(139,96,31))
                                 ).apply { cornerRadius=dp(16).toFloat() }
-                                for(i in 0 until childCount) tintTextTree(getChildAt(i),Color.rgb(255,249,236))
+                                children.forEachIndexed { index,child ->
+                                    tintAccentMetric(getChildAt(index),child)
+                                }
                             }
                         }
                         if(cs.contains("section-card")) {
