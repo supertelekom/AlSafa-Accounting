@@ -158,10 +158,12 @@ internal class OriginalPageStructure(
                     "choiceGrid" -> if(tablet) 4 else 2
                     "simpleGrid" -> if(tablet) 3 else 2
                     "actionGrid" -> if(tablet) 3 else 2
-                    "repairGrid" -> if(activity.resources.configuration.screenWidthDp>=1024) 4 else if(tablet) 3 else 2
+                    "repairGrid" -> if(activity.resources.configuration.screenWidthDp>=1024 ||
+                        (activity.resources.configuration.screenWidthDp>=900 &&
+                         activity.resources.configuration.orientation==android.content.res.Configuration.ORIENTATION_LANDSCAPE)) 4 else if(tablet) 3 else 2
                     else -> 2
                 }
-                SourceGrid(activity,count,dp(when(kind) { "reportGrid" -> 9; "manageGrid","summaryGrid" -> 10; else -> 11 })).apply {
+                SourceGrid(activity,count,dp(when(kind) { "reportGrid" -> 9; "repairGrid" -> 7; "manageGrid","summaryGrid" -> 10; else -> 11 })).apply {
                     children.forEach { child ->
                         val childClasses=classes(child)
                         val fullSpan=child.optBoolean("full") || childClasses.contains("full") ||
