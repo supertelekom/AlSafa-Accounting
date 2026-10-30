@@ -151,6 +151,13 @@ internal class OriginalPageStructure(
                     if(cs.contains("negative")) setTextColor(Color.rgb(173,54,54))
                 }
                 if(cs.contains("transaction-info")) { textSize=12f;maxLines=2 }
+                if(cs.contains("empty")) {
+                    textSize=13f
+                    setTextColor(muted)
+                    gravity=Gravity.CENTER
+                    setLineSpacing(0f,1.7f)
+                    setPadding(dp(18),dp(27),dp(18),dp(27))
+                }
                 if(n.optString("tag")=="strong" && cs.contains("transaction-title")) {
                     textSize=12f;typeface=Typeface.create(font,Typeface.BOLD)
                     setSingleLine(true);ellipsize=android.text.TextUtils.TruncateAt.END
