@@ -636,6 +636,11 @@ internal class OriginalPageStructure(
                             // 660dp default tablet, 820dp mid-tablet,
                             // 900dp wide landscape; never resize arbitrary rows.
                         }
+                        if(cs.contains("detail-list")) {
+                            // Source .detail-list is a flush vertical list.
+                            orientation=LinearLayout.VERTICAL
+                            setPadding(0,0,0,0)
+                        }
                         if(cs.contains("modal-head")) {
                             // Original .modal-head: horizontal title/close row.
                             orientation=LinearLayout.HORIZONTAL
