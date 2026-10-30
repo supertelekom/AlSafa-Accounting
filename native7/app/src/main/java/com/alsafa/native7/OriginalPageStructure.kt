@@ -60,6 +60,10 @@ internal class OriginalPageStructure(
     private fun classes(n:JSONObject) = (0 until (n.optJSONArray("sourceClasses")?.length() ?: 0)).map { n.getJSONArray("sourceClasses").getString(it) }
     private fun bg(color:Int=Color.rgb(255,253,249),radius:Int=17,border:Int=line) = GradientDrawable().apply { setColor(color);cornerRadius=dp(radius).toFloat();setStroke(dp(1),border) }
     private fun column() = LinearLayout(activity).apply { orientation=LinearLayout.VERTICAL;layoutDirection=View.LAYOUT_DIRECTION_RTL }
+    private fun tintTextTree(view:View,color:Int) {
+        if(view is TextView) view.setTextColor(color)
+        if(view is ViewGroup) for(i in 0 until view.childCount) tintTextTree(view.getChildAt(i),color)
+    }
     private fun label(value:String,size:Float=13f,color:Int=ink,bold:Boolean=false) = TextView(activity).apply {
         text=value;textSize=size;setTextColor(color);typeface=if(bold) Typeface.create(font,Typeface.BOLD) else font
         gravity=Gravity.RIGHT or Gravity.CENTER_VERTICAL;includeFontPadding=false
@@ -187,6 +191,15 @@ internal class OriginalPageStructure(
                         background=bg(Color.rgb(255,253,249),16)
                         minimumHeight=dp(101)
                         setPadding(dp(14),dp(14),dp(14),dp(14))
+                        if(cs.contains("accent")) {
+                            background=GradientDrawable(
+                                GradientDrawable.Orientation.TL_BR,
+                                intArrayOf(Color.rgb(178,130,50),Color.rgb(139,96,31))
+                            ).apply { cornerRadius=dp(16).toFloat() }
+                            children.forEachIndexed { index,_ ->
+                                tintTextTree(getChildAt(index),Color.rgb(255,249,236))
+                            }
+                        }
                     }
                     "sectionHeading" -> setPadding(0,dp(20),0,dp(14))
                     "empty" -> { setPadding(dp(18),dp(22),dp(18),dp(22));gravity=Gravity.CENTER }
@@ -201,6 +214,13 @@ internal class OriginalPageStructure(
                             background=bg(Color.rgb(255,253,249),16)
                             minimumHeight=dp(101)
                             setPadding(dp(14),dp(14),dp(14),dp(14))
+                            if(cs.contains("accent")) {
+                                background=GradientDrawable(
+                                    GradientDrawable.Orientation.TL_BR,
+                                    intArrayOf(Color.rgb(178,130,50),Color.rgb(139,96,31))
+                                ).apply { cornerRadius=dp(16).toFloat() }
+                                for(i in 0 until childCount) tintTextTree(getChildAt(i),Color.rgb(255,249,236))
+                            }
                         }
                         if(cs.contains("section-card")) {
                             background=bg(Color.rgb(255,253,249),17)
