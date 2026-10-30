@@ -60,7 +60,7 @@ internal object NativeSalesLedger {
             val id=lot.optString("id")
             require(id.isNotBlank()) { "دفعة تمويل بدون معرف للمنتج $productId" }
             val remaining=LegacyAccountingRules.number(lot.opt("qtyRemaining"))
-            val original=LegacyAccountingRules.number(lot.opt("qtyOriginal"))
+            val original=maxOf(LegacyAccountingRules.number(lot.opt("qtyOriginal")),remaining)
             require(remaining.isFinite() && original.isFinite() && remaining>=0 && original>=remaining)
             db.execSQL("INSERT OR IGNORE INTO native_funding_lots VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
                 arrayOf<Any>(id,productId,lot.optString("purchaseId"),lot.optString("source","shop"),
