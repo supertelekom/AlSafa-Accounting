@@ -265,6 +265,22 @@ internal class OriginalPageStructure(
             }
             light(view)
         }
+        // Legacy CSS: .simple-action:active { transform:scale(.985) }.
+        if(cs.contains("simple-action")) {
+            view.setOnTouchListener { target,event ->
+                when(event.actionMasked) {
+                    android.view.MotionEvent.ACTION_DOWN -> {
+                        target.animate().cancel()
+                        target.scaleX=0.985f;target.scaleY=0.985f
+                    }
+                    android.view.MotionEvent.ACTION_UP,android.view.MotionEvent.ACTION_CANCEL -> {
+                        target.animate().cancel()
+                        target.scaleX=1f;target.scaleY=1f
+                    }
+                }
+                false // Preserve the normal click and accessibility behavior.
+            }
+        }
         view.isClickable=true;view.isFocusable=true;view.contentDescription=n.optString("text")
         view.isEnabled=!n.optBoolean("disabled")
         view.setOnClickListener {
