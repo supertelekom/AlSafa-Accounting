@@ -615,3 +615,24 @@ Balanced-brace extraction of each `function renderX()` in `assets/main.js`; the 
 **Cross-route audit checklist:** Main/home metrics, product summaries, sales summaries, repair summaries, supplier balances, expense totals, cashbox totals, report tiles and settings summary text. Check that direct class and tag-descendant representations render identically. This is a shared-code consistency fix, not evidence every route has been visually tested.
 
 **Pending:** Complete exact source field/control order, modal geometry and animation, photo rendering, responsive RTL alignment, click action parity, build verification and Honor Pad X8b screenshots. No build or device tests were run.
+
+## Product-card original CSS extraction and shared regression audit — 2026-10-30
+
+**Verified source:** `assets/style.css` inside supplied tablet v3.9.359 ZIP. The original `.product-card` has padding14px, paper background, 1px line border and radius16px; `.product-card.low-stock` changes border to `#e5b7aa`. `.product-card-head` is a horizontal flex row with align-items:center and gap9px; descendant `b` is 13px bold, `small` is 10px muted with 3px top margin; both truncate to one line.
+
+**Code:** `7ba9f6d10f4d8d374ebbbfb70a92bb4832e00e27` applies source card padding, radius and low-stock border, and horizontal product header spacing, with tag-based direct-child typography/ellipsis. The nested `small` margin and recursive descendant treatment require further checks; this is not a verified exact clone.
+
+**Cross-page regression matrix:**
+| Page | Shared items to check | Outstanding |
+|---|---|---|
+| الرئيسية | Cards, section titles, dashboard actions | original mode transitions and dynamic data |
+| المنتجات | Product cards, stock warning, header text, photo | nested text, image thumbnails, variants and buttons |
+| المبيعات | Cards, inputs, invoice controls | complete full/simple invoice flow |
+| الصيانة | Cards, inputs, photo placeholders | image viewer and service status flow |
+| الموردون | Cards, transactions, forms | supplier statements and debts |
+| المصروفات | Transaction rows, fields | expense actions |
+| الصناديق | Transaction rows, cards | movement forms and closing |
+| التقارير | Report tiles, filters, grids | date/partner reports |
+| الإعدادات | Form sections, buttons | backup dialogs and settings |
+
+**Not tested:** Android Studio compile, device screenshots, all nine routes end-to-end. **Not completed:** original UI names/order parity for all nested markup, source modals/animations, real images, and action wiring. No changes outside `native7`.
