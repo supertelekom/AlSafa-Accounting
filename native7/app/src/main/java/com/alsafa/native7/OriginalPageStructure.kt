@@ -449,6 +449,11 @@ private class SourceGrid(context:android.content.Context,private val columns:Int
     private val full=IdentityHashMap<View,Boolean>()
     private val frames=IdentityHashMap<View,android.graphics.Rect>()
     fun addCell(view:View,span:Boolean) { full[view]=span;addView(view,LayoutParams(-1,-2)) }
+    override fun onViewRemoved(child:View) {
+        super.onViewRemoved(child)
+        full.remove(child)
+        frames.remove(child)
+    }
     override fun onMeasure(widthMeasureSpec:Int,heightMeasureSpec:Int) {
         val width=MeasureSpec.getSize(widthMeasureSpec);val usable=(width-paddingLeft-paddingRight).coerceAtLeast(0)
         val cell=((usable-gap*(columns-1))/columns).coerceAtLeast(0)
@@ -469,7 +474,12 @@ private class SourceGrid(context:android.content.Context,private val columns:Int
         val height=if(column>0) top+rowHeight else (top-gap).coerceAtLeast(paddingTop)
         setMeasuredDimension(width,resolveSize(height+paddingBottom,heightMeasureSpec))
     }
-    override fun onLayout(changed:Boolean,l:Int,t:Int,r:Int,b:Int) { frames.forEach { (view,rect) -> view.layout(rect.left,rect.top,rect.right,rect.bottom) } }
+    override fun onLayout(changed:Boolean,l:Int,t:Int,r:Int,b:Int) {
+        for(i in 0 until childCount) {
+            val child=getChildAt(i)
+            frames[child]?.let { rect -> child.layout(rect.left,rect.top,rect.right,rect.bottom) }
+        }
+    }
 }
 
 /** Native wrapping action row; RTL order is retained at every width. */
