@@ -5,6 +5,8 @@ import android.graphics.Color
 import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
 import android.text.InputType
+import android.text.Editable
+import android.text.TextWatcher
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
@@ -208,6 +210,15 @@ internal class OriginalPageStructure(
                 else -> n.optString("value")
             }
             setText(value)
+            if(n.optJSONObject("data")?.let { data ->
+                listOf("data-purchase-qty","data-purchase-unit-cost","data-variant-qty","data-variant-cost").any { data.has(it) }
+            }==true || n.optString("sourceId")=="purchase-paid") {
+                addTextChangedListener(object:TextWatcher {
+                    override fun beforeTextChanged(s:CharSequence?,start:Int,count:Int,after:Int) {}
+                    override fun onTextChanged(s:CharSequence?,start:Int,before:Int,count:Int) { updatePurchaseTotals() }
+                    override fun afterTextChanged(s:Editable?) {}
+                })
+            }
             isEnabled=!n.optBoolean("disabled")
             if(n.optBoolean("readonly")) {
                 isFocusable=false
@@ -441,6 +452,44 @@ internal class OriginalPageStructure(
             row.post { row.parent?.let { _ -> row.requestRectangleOnScreen(android.graphics.Rect(0,0,row.width,row.height),true) } }
         }
     }
+    private fun purchaseNumber(view:View?):Double =
+        (view as? EditText)?.text?.toString()?.trim()?.replace("٫",".")?.replace(",","")?.toDoubleOrNull() ?: 0.0
+
+    private fun purchaseField(scope:View,key:String):View? =
+        metadata.entries.firstOrNull { (view,node) ->
+            node.optJSONObject("data")?.has(key)==true && ancestors(view).any { it===scope }
+        }?.key
+
+    private fun updatePurchaseTotals() {
+        // Port of main.js updatePurchaseTotals/readColorVariantRows: UI-only, no ledger writes.
+        val rows=metadata.entries.filter { (view,node) ->
+            classes(node).contains("purchase-line") && view.parent!=null
+        }.map { it.key }
+        if(rows.isEmpty()) return
+        var total=0.0
+        rows.forEach { row ->
+            val qty=kotlin.math.max(1.0,kotlin.math.floor(purchaseNumber(purchaseField(row,"data-purchase-qty"))))
+            val cost=kotlin.math.max(0.0,purchaseNumber(purchaseField(row,"data-purchase-unit-cost")))
+            val variants=metadata.entries.filter { (view,node) ->
+                node.optJSONObject("data")?.has("data-color-variant-row")==true &&
+                    ancestors(view).any { it===row }
+            }.map { it.key }
+            val variantsTotal=variants.sumOf { variant ->
+                val vqty=kotlin.math.max(1.0,kotlin.math.floor(purchaseNumber(purchaseField(variant,"data-variant-qty"))))
+                val costField=purchaseField(variant,"data-variant-cost") as? EditText
+                val raw=costField?.text?.toString()?.trim().orEmpty()
+                vqty*(if(raw.isEmpty()) cost else kotlin.math.max(0.0,purchaseNumber(costField)))
+            }
+            val amount=qty*cost+variantsTotal
+            total+=amount
+            (purchaseField(row,"data-purchase-line-total") as? EditText)?.setText(
+                String.format(java.util.Locale.US,"%.2f",amount)
+            )
+        }
+        val paid=kotlin.math.max(0.0,purchaseNumber(controls["purchase-paid"]))
+        (controls["purchase-grand-total"] as? EditText)?.setText(String.format(java.util.Locale.US,"%.2f",total))
+        (controls["purchase-balance"] as? EditText)?.setText(String.format(java.util.Locale.US,"%.2f",kotlin.math.max(0.0,total-paid)))
+    }
     private fun conditions() {
         // Visibility only, mirroring the original form groups. No monetary calculation or saving.
         val rows=metadata.keys.filter { metadata[it]?.let { n -> classes(n).contains("purchase-line") }==true }
@@ -483,6 +532,7 @@ internal class OriginalPageStructure(
         radioNames["deliverNow"]?.firstOrNull { it.isChecked }?.let { radio ->
             controls["father-repair-customer-fields"]?.visibility=if(metadata[radio]?.optString("value")=="0") View.VISIBLE else View.GONE
         }
+        updatePurchaseTotals()
     }
     private fun addTemplate(hostId:String,template:String) {
         val host=controls[hostId] as? ViewGroup ?: return
