@@ -1719,6 +1719,58 @@ class MainActivity : Activity() {
                         shown++
                         val id=item.getLong("id")
                         entries.addView(text("#$id — $name — $watch — $dateValue — "+item.getString("status"),15f))
+                        entries.addView(text("التفاصيل",15f,gold).apply {
+                            isClickable=true
+                            setOnClickListener {
+                                val fields=listOf("التاريخ","وقت الاستلام","اسم العميل","رقم واتساب العميل",
+                                    "الماركة / نوع الساعة","الموديل أو الرقم","العطل أو المطلوب",
+                                    "نتيجة الفحص أو تحديث العميل")
+                                val detail=fields.mapIndexed { index,label ->
+                                    "$label: ${values?.optString(index).orEmpty()}"
+                                }.joinToString("\\n")
+                                android.app.AlertDialog.Builder(this@MainActivity)
+                                    .setTitle("فاتورة #$id · $name · $watch")
+                                    .setMessage(detail+"\\nحالة الطلب: "+item.getString("status"))
+                                    .setPositiveButton("إغلاق",null).show()
+                            }
+                        })
+                        val photoPath=item.optString("photo_path")
+                        if(photoPath.isNotBlank() && photoPath!="null") {
+                            entries.addView(text("صورة الساعة",15f,gold).apply {
+                                isClickable=true
+                                setOnClickListener {
+                                    val photoView=android.widget.ImageView(this@MainActivity).apply {
+                                        adjustViewBounds=true
+                                        scaleType=android.widget.ImageView.ScaleType.FIT_CENTER
+                                        setImageURI(android.net.Uri.parse(photoPath))
+                                    }
+                                    android.app.AlertDialog.Builder(this@MainActivity)
+                                        .setTitle("صورة الساعة")
+                                        .setView(photoView)
+                                        .setPositiveButton("إغلاق",null).show()
+                                }
+                            })
+                        }
+                        if(item.isNull("delivered_at")) {
+                            entries.addView(text("تحديث الحالة",15f,gold).apply {
+                                isClickable=true
+                                setOnClickListener {
+                                    val states=arrayOf("قيد الصيانة","بانتظار القطعة","جاهز للاستلام")
+                                    android.app.AlertDialog.Builder(this@MainActivity)
+                                        .setTitle("تحديث الحالة")
+                                        .setSingleChoiceItems(states,states.indexOf(item.getString("status"))) { dialog,which ->
+                                            try {
+                                                repairStore.save(payload,photoPath.takeUnless { it=="null" || it.isBlank() },states[which],id)
+                                                dialog.dismiss()
+                                                navigateTo("preview:كل الصيانة")
+                                            } catch(e:Exception) {
+                                                android.widget.Toast.makeText(this@MainActivity,e.message,android.widget.Toast.LENGTH_LONG).show()
+                                            }
+                                        }
+                                        .setNegativeButton("إلغاء",null).show()
+                                }
+                            })
+                        }
                         if(item.isNull("delivered_at")) {
                             entries.addView(text("تسليم",15f,gold).apply {
                                 isClickable=true
