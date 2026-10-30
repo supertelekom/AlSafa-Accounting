@@ -446,6 +446,7 @@ internal object NativeSalesLedger {
                     db.execSQL("INSERT INTO native_sale_change VALUES (?,?,?,?,?,?,?,?,?,?)",
                         arrayOf<Any>(UUID.randomUUID().toString(),id,-c.getDouble(0),c.getString(1),
                             -c.getDouble(2),c.getString(3),c.getString(4),c.getString(5),c.getDouble(6),at))
+                    recordVaultMovement(db,id,c.getString(4),c.getString(3),c.getDouble(2),"cancel-change",at)
                 }
             }
             // Reverse only the remaining net tender after any prior returns.
@@ -456,6 +457,7 @@ internal object NativeSalesLedger {
                     db.execSQL("INSERT INTO native_sale_mixed VALUES (?,?,?,?,?,?,?,?)",
                         arrayOf<Any>(UUID.randomUUID().toString(),id,-amount,c.getString(0),c.getString(1),
                             -equivalent,if(amount>0)equivalent/amount else 1.0,at))
+                    recordVaultMovement(db,id,c.getString(1),c.getString(0),-amount,"cancel",at)
                 }
             }
             val originalProfit=db.rawQuery("SELECT COALESCE(SUM(CASE WHEN amount>0 THEN amount ELSE 0 END),0) FROM native_sale_collections WHERE sale_id=?",arrayOf(id)).use { c -> c.moveToFirst();c.getDouble(0) } * (if(sale.total>0) (sale.total-sale.cost)/sale.total else 0.0)
@@ -548,6 +550,8 @@ internal object NativeSalesLedger {
                         arrayOf<Any>(UUID.randomUUID().toString(),saleId,-originalAmount*ratio,
                             t[0],t[1],-originalEquivalent*ratio,
                             if(originalAmount>0) originalEquivalent/originalAmount else 1.0,at))
+                    recordVaultMovement(db,saleId,t[1] as String,t[0] as String,
+                        -originalAmount*ratio,"customer-refund",at)
                 }
             }
             if(cashRefund>0) insertCollection(db,saleId,-cashRefund,sale.currency,account,at,"return: "+reason)
