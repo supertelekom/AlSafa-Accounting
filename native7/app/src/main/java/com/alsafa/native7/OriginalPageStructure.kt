@@ -426,14 +426,16 @@ internal class OriginalPageStructure(
                     textSize=if(cs.contains("father-main-card")) { if(activity.resources.configuration.screenWidthDp<=420) 42f else 51f } else if(cs.contains("mode-card")) 31f else if(cs.contains("modern-feature-card")) 28f else if(cs.contains("manage-card")) 25f else if(cs.contains("quick-service")) 23f else if(cs.contains("simple-action")) 25f else 25f
                     if(!horizontal || cs.contains("simple-action")) gravity=Gravity.CENTER
                 } else if(this is TextView && index>0) {
-                    textSize=when { cs.contains("father-main-card") && index==1 -> if(activity.resources.configuration.screenWidthDp<=420) 20f else 24f;cs.contains("mode-card") && index==1 -> 20f;cs.contains("quick-service") && index==1 -> 16f;cs.contains("simple-action") && index==1 -> 17f;cs.contains("modern-feature-card") && index==1 -> 15f;cs.contains("manage-card") && index==1 -> 14f;index==1 -> 14f;cs.contains("father-main-card") -> 11f;cs.contains("mode-card") -> 11f;cs.contains("quick-service") -> 11f;cs.contains("simple-action") -> 11f;else -> 10f }
+                    textSize=when { cs.contains("father-main-card") && index==1 -> if(activity.resources.configuration.screenWidthDp<=420) 20f else 24f;cs.contains("mode-card") && index==1 -> 20f;cs.contains("quick-service") && index==1 -> 16f;cs.contains("quick-service") && index==2 -> 15f;cs.contains("simple-action") && index==1 -> 17f;cs.contains("modern-feature-card") && index==1 -> 15f;cs.contains("manage-card") && index==1 -> 14f;index==1 -> 14f;cs.contains("father-main-card") -> 11f;cs.contains("mode-card") -> 11f;cs.contains("quick-service") -> 11f;cs.contains("simple-action") -> 11f;else -> 10f }
                 } }
                 addView(content,if(horizontal) LinearLayout.LayoutParams(if(index==1) 0 else if(index==0) dp(if(cs.contains("mode-card")) 58 else if(cs.contains("modern-feature-card")) 42 else if(cs.contains("simple-action")) (if(activity.resources.configuration.screenWidthDp<=420) 40 else 46) else 46) else -2,-2,if(index==1) 1f else 0f).apply { if(index==0 && horizontal) marginEnd=dp(if(cs.contains("mode-card")) 15 else if(cs.contains("modern-feature-card")) 13 else if(cs.contains("simple-action")) (if(activity.resources.configuration.screenWidthDp<=420) 9 else 12) else 12)
                     if(cs.contains("father-main-card") && index==1) topMargin=dp(13)
                     if(cs.contains("father-main-card") && index==2) topMargin=dp(8)
                     if(cs.contains("manage-card") && index==1) topMargin=dp(8)
                     if(cs.contains("manage-card") && index==2) topMargin=dp(5)
-                    if(cs.contains("simple-action") && index==2) topMargin=dp(5) }
+                    if(cs.contains("simple-action") && index==2) topMargin=dp(5)
+                    if(cs.contains("quick-service") && index==1) topMargin=dp(3)
+                    if(cs.contains("quick-service") && index==2) topMargin=dp(3) }
                     else LinearLayout.LayoutParams(-1,-2))
             }
             minimumHeight=dp(when { cs.contains("father-main-card") -> if(activity.resources.configuration.screenWidthDp<=420) 155 else 185;cs.contains("mode-card") -> 122;cs.contains("manage-card") -> 115;cs.contains("modern-feature-card") -> 86;cs.contains("quick-service") -> if(activity.resources.configuration.screenWidthDp>=900 && activity.resources.configuration.orientation==android.content.res.Configuration.ORIENTATION_LANDSCAPE) 72 else 78;cs.contains("simple-action") -> 52;else -> 104 })
