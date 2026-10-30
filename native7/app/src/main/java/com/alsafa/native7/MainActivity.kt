@@ -646,6 +646,12 @@ class MainActivity : Activity() {
             setHintTextColor(Color.rgb(138,123,108))
             background=panel(Color.rgb(255,252,247),10,Color.rgb(234,223,206))
             setPadding(dp(10),dp(9),dp(10),dp(9))
+            // Original CSS: 42px minimum height, 10px radius, 1px line;
+            // focus switches to the champagne accent without changing size.
+            setOnFocusChangeListener { view,focused ->
+                view.background=panel(Color.rgb(255,252,247),10,
+                    if(focused) gold else Color.rgb(234,223,206))
+            }
             parent.addView(this,LinearLayout.LayoutParams(-1,dp(if(compactProductCreationForm) 36 else 42)).apply { bottomMargin=dp(if(compactProductCreationForm) 4 else 11) })
         }
     }
