@@ -312,3 +312,15 @@ Verified directly in `assets/style.css` that the last original quick-service car
 Commit `8c3bfde874e9eba0a8cf34849af3f61fa37f3884` fills the missing <=420dp case in the shared native renderer. This is responsive styling only; it does not certify the quick-service operations.
 
 **Acceptance checklist, nine sections:** home navigation/header; products fields/photos/variants; sales full/simple/returns; maintenance photos and quick actions; suppliers purchases/debts; expenses movements; cashboxes currencies/closing; reports date ranges/partner pages; settings backups/printing. Each still needs full label/order/modal/source parity verification and tablet screenshots. Tajawal asset loading is already in the shared renderer, but device font rendering has not been compared. APK compilation and on-device runtime tests were not performed.
+
+## Structural shared-class bug and report filters — 2026-10-30
+
+Inspected original tablet source ZIP `assets/style.css` and Native 7 shared `OriginalPageStructure.kt`.
+
+**Fixed:** source-class styling had been incorrectly placed inside the `else` of `when(kind)`. Consequently, nodes of kinds `section`, `form`, `stat`, `field`, `help` and `sectionHeading` bypassed the CSS-class styling, even if the original node declared classes such as `section-card`, `form-card`, `metric-card`, or `section-title`. Commit `24b9c9246a8ff0e3f74d3ea2d217e4292266c11f` moved class styling after the structural-kind switch so it applies consistently across all routes. This changes shared rendering behavior and therefore needs a full regression test.
+
+**Added:** `.report-filter` source CSS panel background `#fffdf9`, border `#eadfce`, 15px radius and 13px padding in commit `8ba677be5393c57c43372952a7bb1d3e8df9ac54`. Source report filter grid column sizing and nested label overrides still need verification.
+
+**Sections affected:** home, products, sales, maintenance, suppliers, expenses, cashboxes, reports and settings, to the extent they use shared source-class nodes. This was a structural code audit, **not** a full label/order/animation comparison of every route.
+
+**Still unverified:** Android Studio compilation; Honor Pad X8b screenshots; screen-by-screen element ordering and names; all dialogs, keyboard/focus, images, animations, accessibility, functional save/restore and print operations. No APK was built or device test run.
