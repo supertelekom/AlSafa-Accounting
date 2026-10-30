@@ -344,8 +344,10 @@ internal class OriginalPageStructure(
                 // Do not remove borders from non-transaction siblings.
                 val lastVisible=(childCount-1 downTo 0)
                     .map { getChildAt(it) }.firstOrNull { it.visibility!=View.GONE }
-                if(lastVisible!=null && metadata[lastVisible]?.let { classes(it).contains("transaction") }==true)
-                    lastVisible.background=null
+                if(lastVisible!=null && metadata[lastVisible]?.let {
+                    val c=classes(it)
+                    c.contains("transaction") || c.contains("list-row")
+                }==true) lastVisible.background=null
                 when(kind) {
                     "section","form" -> {
                         background=bg()
@@ -394,12 +396,9 @@ internal class OriginalPageStructure(
                                     if(childCss.contains("list-main")) 1f else 0f
                                 ).apply { if(i>0) marginStart=dp(11) }
                             }
-                            // The actual final visible sibling is handled by
-                            // the parent after children are inserted. A source
-                            // JSON 'last' flag is not equivalent to :last-child.
-                            if(n.optBoolean("last")) {
-                                background=null
-                            } else {
+                            // Parent removes the divider from the final
+                            // visible sibling, matching CSS :last-child.
+                            run {
                                 background=object:android.graphics.drawable.Drawable() {
                                     private val paint=android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
                                         color=Color.rgb(242,235,223)
