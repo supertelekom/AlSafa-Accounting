@@ -142,3 +142,35 @@
 - `90f9303c81d6a44de081ca0a7aa85539cd7caf88`: SourceGrid now measures children to the final tallest-row height, not just stretching their layout rectangles. Affects tablet grids across sections.
 - `8587c9c96d14f80192c1e825240b32af35635cc6`: horizontal quick-action labels use remaining weighted width to avoid text overflowing beside their fixed-size icons.
 - Visual parity still unverified on Honor Pad X8b. No APK build or screenshot comparison was performed. These are layout consistency fixes, not evidence of complete pixel parity.
+
+## Tablet-wide interface audit — 2026-10-30
+
+Reference: original tablet v3.9.359 source archive, `assets/style.css`; Android renderer: `OriginalPageStructure.kt`. Target: Honor Pad X8b. This batch inspected the shared layout engine used across home, products, sales, maintenance, suppliers, expenses, vaults, reports and settings. It does NOT establish individual pixel-perfect verification for every route.
+
+### Confirmed source CSS / native changes
+- **Form grid:** original baseline 2 columns, 720px+ 3 columns, 1080px+ 4 columns, but the *later Honor Pad override* sets **2 columns at 720–1199px** and **3 columns at 1200px+ landscape**. The later rule wins; native implementation previously ignored it and displayed 3 or 4 columns. Corrected in `de2749d4bcde5c60eb88f29ea5d72fce7e93fb6a`.
+- **Full-width fields:** original `.field.full {grid-column:1/-1}`. Native grids previously checked only `full` JSON boolean; now also recognize source class `full` and inline full-span declaration. Same commit.
+- **Row sizing:** `SourceGrid` measures children at final tallest row height (`90f9303c81d6a44de081ca0a7aa85539cd7caf88`), reducing inconsistent neighboring card heights.
+- **Quick action text:** weighted remaining horizontal width (`8587c9c96d14f80192c1e825240b32af35635cc6`); previously fixed text width could overflow.
+- **Shared separators/search row:** 1dp separator and 42dp minimum search row (`98c040c6ebcc4eb03fcec333f16241331d8dc2cd`).
+- **Existing source typography and card changes:** `843b4eaa2b37e61dfefa8c8593f4c9dc4e6432c3`, `15cdf41e`, `d4ead28f`. Simple action reduced height is an explicit user-requested exception, not literal original CSS.
+
+### Per-section coverage and open verification
+| Section | Shared native structure reviewed | Still needs direct original-screen comparison |
+| --- | --- | --- |
+| Home | Cards, RTL, quick-action grid | Header/sidebar, responsive shell, logo and exact margins |
+| Products | Form grids, fields, buttons | Product list/cards, photos, color variants, image zoom |
+| Sales | Form grids, buttons, dynamic rows | Full/simple invoice, discounts, dialogs, printable invoice |
+| Maintenance | Search rows, forms, quick actions | Intake/delivery dialogs, photos, repair status cards |
+| Suppliers | Purchase grid, dynamic lines, inputs | Supplier forms, debt history, selection dialogs |
+| Expenses | Shared forms, input sizing | Expense list, currency/payment controls |
+| Vaults | Summary grids and fields | Cash movement, currency panels, daily closing |
+| Reports | Report/summary grids | Tables, period filters, monthly and partner report screens |
+| Settings | Shared cards and forms | All nested dialogs, backup/restore and print settings |
+
+### Important limitations
+- No Android Studio build, instrumentation test or screenshot overlay was performed in this batch.
+- Shared renderer contains preview-only buttons; working actions and backend behavior are not proven by visual changes.
+- Original CSS modal/backdrop, app shell/sidebar and several route-specific layouts still require direct parity work.
+- The preview renderer includes unverified purchase total calculations; do not use them as accounting validation.
+- Next acceptance gate: build APK locally, capture corresponding old/new screens on Honor Pad X8b, verify text, font, colors, dimensions, alignment, scrolling, dialog open/close and navigation, then correct discrepancies.
