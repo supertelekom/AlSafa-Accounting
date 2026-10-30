@@ -426,7 +426,6 @@ internal class OriginalPageStructure(
                             }
                             for(i in 0 until originalChildren.size) {
                                 val child=originalChildren[i]
-                                val child=getChildAt(i)
                                 val source=metadata[child]
                                 if(child is TextView && source!=null) {
                                     when(source.optString("tag")) {
