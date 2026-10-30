@@ -40,3 +40,32 @@ Source of truth: `assets/main.js`, `assets/style.css`, `assets/styles.css` in th
 - Native 7 restore and original restore do not have identical semantics.
 - Native 7 funding and sale cost mapping has not been validated against the original dataset.
 - Build, runtime and visual parity have **not** been certified.
+
+
+## Persistent implementation log — 2026-10-30
+
+**Do not repeat completed code edits without checking current HEAD.** This file is the durable handoff across conversations; read it before every new UI edit. It records code edits, not successful Android builds or pixel parity.
+
+### Already edited in `MainActivity.kt`
+- Repair list «التفاصيل»: dialog with saved fields and correct «طلب صيانة» title; line-separated fields.
+- Repair «صورة الساعة»: opens stored URI in an image dialog; **one** button and **one** `photoPath` declaration per repair row (duplicate removed at commit `15af5326c1752fe0dac5fa2e5981b78c50850450`).
+- Repair «تحديث العطل»: edit `form_texts[6]`, save using `RepairStore.save(..., id)`; only for undelivered requests.
+- Repair «نتيجة الفحص أو تحديث العميل»: edit `form_texts[7]` independently; only for undelivered requests.
+- Repair «تحديث الحالة»: selection among قيد الصيانة / بانتظار القطعة / جاهز للاستلام, saved by ID.
+- Repair saving navigates to repair list after saving.
+- Repair «تسليم» is deliberately blocked until payment/cashbox flow is implemented; **not parity-complete**.
+- Shared form text inputs: focus border changes to champagne accent; unverified visual parity.
+
+### Important known gaps — NOT implemented
+- Original full repair edit, paid/delivery workflow, parts/costs, refund/exchange, PDF/print, WhatsApp, thank-you, deletion and status-dependent action order.
+- Exact CSS-to-native mapping for every page and all tablet viewport states.
+- All other modules' complete action inventories and their event/state transitions.
+- Original backup restore and funding lot parity; do not use production data for tests.
+- No confirmed successful Android Studio build or device screenshot comparison after these edits.
+
+### Mandatory next workflow
+1. Read this log and latest `MainActivity.kt` **before** editing.
+2. Inspect the matching original legacy JS/HTML/CSS source for one complete screen, including conditional buttons and event handlers.
+3. Implement all supported actions for that screen, including persistence and failure behavior, not decorative controls.
+4. Check duplicate local variable names, repeated buttons, field indices and Kotlin syntax; run build when available.
+5. Update this log with precise commits and remaining gaps. Never mark a screen 10/10 without screenshot and functional tests.
