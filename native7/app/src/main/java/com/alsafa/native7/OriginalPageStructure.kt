@@ -263,7 +263,27 @@ internal class OriginalPageStructure(
                 cs.contains("father-main-card") -> GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(Color.rgb(255,253,249),Color.rgb(247,234,211))).apply { cornerRadius=dp(24).toFloat();setStroke(dp(2),Color.rgb(216,189,136)) }
                 cs.contains("advanced") || cs.contains("mode-advisor-card") -> GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(Color.rgb(46,40,34),Color.rgb(62,51,39))).apply { cornerRadius=dp(26).toFloat() }
                 cs.contains("father") -> GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(Color.rgb(255,250,242),Color.rgb(248,237,217))).apply { cornerRadius=dp(26).toFloat();setStroke(dp(2),Color.rgb(216,189,136)) }
+                cs.contains("simple-action") -> bg(
+                    radius=18,
+                    border=if(cs.contains("sale")) Color.rgb(218,195,152) else line
+                )
                 else -> bg(radius=if(cs.contains("manage-card")) 16 else 18)
+            }
+            if(cs.contains("simple-action")) {
+                val iconColor=when {
+                    cs.contains("deliver") -> Color.rgb(234,244,236)
+                    cs.contains("debt") -> Color.rgb(255,245,223)
+                    cs.contains("expense") -> Color.rgb(255,240,237)
+                    else -> Color.rgb(248,237,219)
+                }
+                for(i in 0 until childCount) {
+                    val child=getChildAt(i)
+                    if(metadata[child]?.let { classes(it).contains("simple-icon") }==true)
+                        child.background=GradientDrawable().apply {
+                            setColor(iconColor)
+                            cornerRadius=dp(14).toFloat()
+                        }
+                }
             }
         } else label(n.optString("text"),13f,if(n.optBoolean("primary")) Color.WHITE else gold,true).apply {
             gravity=Gravity.CENTER;setPadding(dp(12),dp(10),dp(12),dp(10));minHeight=dp(if(cs.contains("close")) 32 else if(cs.contains("tiny-button")) 25 else if(cs.contains("father-complete")) 64 else 44)
