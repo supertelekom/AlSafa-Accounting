@@ -629,8 +629,18 @@ private class SourceGrid(context:android.content.Context,private val columns:Int
         val width=MeasureSpec.getSize(widthMeasureSpec);val usable=(width-paddingLeft-paddingRight).coerceAtLeast(0)
         val cell=((usable-gap*(columns-1))/columns).coerceAtLeast(0)
         var column=0;var top=paddingTop;var rowHeight=0
+        val rowViews=mutableListOf<View>()
         frames.clear()
-        fun nextRow() { if(column>0) { top+=rowHeight+gap;column=0;rowHeight=0 } }
+        fun nextRow() {
+            if(column>0) {
+                // CSS grid items stretch to the tallest cell in their row.
+                rowViews.forEach { child ->
+                    frames[child]?.let { rect -> rect.bottom=rect.top+rowHeight }
+                }
+                rowViews.clear()
+                top+=rowHeight+gap;column=0;rowHeight=0
+            }
+        }
         for(i in 0 until childCount) {
             val child=getChildAt(i);if(child.visibility==GONE) continue
             val span=if(full[child]==true) columns else 1
@@ -639,10 +649,15 @@ private class SourceGrid(context:android.content.Context,private val columns:Int
             child.measure(MeasureSpec.makeMeasureSpec(w,MeasureSpec.EXACTLY),MeasureSpec.makeMeasureSpec(0,MeasureSpec.UNSPECIFIED))
             val right=width-paddingRight-column*(cell+gap)
             frames[child]=android.graphics.Rect(right-w,top,right,top+child.measuredHeight)
+            rowViews.add(child)
             rowHeight=maxOf(rowHeight,child.measuredHeight);column+=span
-            if(column>=columns) { top+=rowHeight+gap;column=0;rowHeight=0 }
+            if(column>=columns) nextRow()
         }
-        val height=if(column>0) top+rowHeight else if(frames.isEmpty()) paddingTop else (top-gap).coerceAtLeast(paddingTop)
+        val pendingRowHeight=if(column>0) rowHeight else 0
+        if(column>0) rowViews.forEach { child ->
+            frames[child]?.let { rect -> rect.bottom=rect.top+rowHeight }
+        }
+        val height=if(column>0) top+pendingRowHeight else if(frames.isEmpty()) paddingTop else (top-gap).coerceAtLeast(paddingTop)
         setMeasuredDimension(width,resolveSize(height+paddingBottom,heightMeasureSpec))
     }
     override fun onLayout(changed:Boolean,l:Int,t:Int,r:Int,b:Int) {
