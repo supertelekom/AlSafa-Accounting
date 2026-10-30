@@ -76,6 +76,7 @@ internal class OriginalPageStructure(
                 css.contains("transaction") -> 0
                 css.contains("product-info") -> 8
                 css.contains("stock-warning") -> 0
+                css.contains("modal-head") -> 15
                 else -> margin
             })
             if(css.contains("form-section")) topMargin=dp(20)
@@ -612,6 +613,23 @@ internal class OriginalPageStructure(
                                 override fun getOpacity()=android.graphics.PixelFormat.TRANSLUCENT
                             }
                         }
+                        if(cs.contains("modal-head")) {
+                            // Original .modal-head: horizontal title/close row.
+                            orientation=LinearLayout.HORIZONTAL
+                            gravity=Gravity.CENTER_VERTICAL
+                            for(i in 0 until childCount) {
+                                val child=getChildAt(i)
+                                val source=metadata[child]
+                                child.layoutParams=LinearLayout.LayoutParams(
+                                    if(i==0) 0 else -2,-2,if(i==0) 1f else 0f
+                                )
+                                if(child is TextView && source?.optString("tag")=="h3") {
+                                    child.textSize=17f
+                                    child.typeface=Typeface.create(font,Typeface.BOLD)
+                                    child.setPadding(0,0,0,0)
+                                }
+                            }
+                        }
                         if(cs.contains("report-filter")) {
                             background=bg(Color.rgb(255,253,249),15)
                             setPadding(dp(13),dp(13),dp(13),dp(13))
@@ -852,6 +870,21 @@ internal class OriginalPageStructure(
             gravity=Gravity.CENTER;setPadding(dp(12),dp(10),dp(12),dp(10));minHeight=dp(if(cs.contains("close")) 32 else if(cs.contains("tiny-button")) 25 else if(cs.contains("father-complete")) 64 else 44)
             background=if(n.optBoolean("primary")) GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(Color.rgb(179,131,50),Color.rgb(139,96,31))).apply { cornerRadius=dp(12).toFloat() }
                 else bg(Color.rgb(247,237,221),12,Color.rgb(223,201,164))
+        }
+        if(cs.contains("close")) {
+            // Source .close: 32x32, 10px radius, 19px deep-gold glyph.
+            view.minimumWidth=dp(32)
+            view.minimumHeight=dp(32)
+            view.setPadding(0,0,0,0)
+            view.background=GradientDrawable().apply {
+                setColor(Color.rgb(247,237,221))
+                cornerRadius=dp(10).toFloat()
+            }
+            if(view is TextView) {
+                view.textSize=19f
+                view.setTextColor(Color.rgb(122,81,24))
+                view.gravity=Gravity.CENTER
+            }
         }
         if(cs.contains("advanced") || cs.contains("mode-advisor-card")) {
             fun light(child:View) {
