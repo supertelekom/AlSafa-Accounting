@@ -69,20 +69,19 @@ internal class OriginalPageStructure(
         }
         return LinearLayout.LayoutParams(-1,-2).apply { bottomMargin=dp(margin) }
     }
-    private fun tintTextTree(view:View,color:Int) {
-        if(view is TextView) view.setTextColor(color)
-        if(view is ViewGroup) for(i in 0 until view.childCount) tintTextTree(view.getChildAt(i),color)
-    }
-    private fun tintAccentMetric(view:View,node:JSONObject) {
+     private fun tintAccentMetric(view:View,node:JSONObject) {
         val cs=classes(node)
         if(view is TextView) {
             view.setTextColor(if(cs.contains("metric-label") || cs.contains("metric-note"))
                 Color.rgb(252,235,208) else Color.rgb(255,249,236))
         }
         if(view is ViewGroup) {
-            val nodes=items(node.optJSONArray("children"))
-            for(i in 0 until minOf(view.childCount,nodes.size))
-                tintAccentMetric(view.getChildAt(i),nodes[i])
+            // Native layout wrappers may contain extra views. Use the source
+            // metadata attached during build instead of matching child indices.
+            for(i in 0 until view.childCount) {
+                val child=view.getChildAt(i)
+                tintAccentMetric(child,metadata[child] ?: node)
+            }
         }
     }
     private fun label(value:String,size:Float=13f,color:Int=ink,bold:Boolean=false) = TextView(activity).apply {
@@ -240,9 +239,7 @@ internal class OriginalPageStructure(
                                 GradientDrawable.Orientation.TL_BR,
                                 intArrayOf(Color.rgb(178,130,50),Color.rgb(139,96,31))
                             ).apply { cornerRadius=dp(16).toFloat() }
-                            children.forEachIndexed { index,child ->
-                                tintAccentMetric(getChildAt(index),child)
-                            }
+                            for(i in 0 until childCount) tintAccentMetric(getChildAt(i),metadata[getChildAt(i)] ?: n)
                         }
                     }
                     "sectionHeading" -> setPadding(0,dp(20),0,dp(14))
@@ -268,9 +265,7 @@ internal class OriginalPageStructure(
                                     GradientDrawable.Orientation.TL_BR,
                                     intArrayOf(Color.rgb(178,130,50),Color.rgb(139,96,31))
                                 ).apply { cornerRadius=dp(16).toFloat() }
-                                children.forEachIndexed { index,child ->
-                                    tintAccentMetric(getChildAt(index),child)
-                                }
+                                for(i in 0 until childCount) tintAccentMetric(getChildAt(i),metadata[getChildAt(i)] ?: n)
                             }
                         }
                         if(cs.contains("section-card")) {
