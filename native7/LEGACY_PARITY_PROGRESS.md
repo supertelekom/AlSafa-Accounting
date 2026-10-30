@@ -575,3 +575,33 @@ Read the tablet v3.9.359 archive `assets/style.css` directly and checked the com
 **Nine-route regression:** Dashboard, products, sales, maintenance, suppliers, expenses, cashboxes, reports, and settings must be inspected wherever source-class `section-title` is used. Check text wrapping, button hit targets, RTL alignment, divider continuity, and clipping against rounded `section-card` edges.
 
 **Pending:** Full per-route original JS markup and names/order audit, modal dimensions/transitions, source animations, photo rendering, action parity, Android Studio compilation and Honor Pad X8b screenshots. This shared fix is not a complete nine-screen implementation; no build/device test was run.
+
+## Cross-route source extraction + shared field typography batch — 2026-10-30
+
+**Direct source verification:** Examined the actual supplied tablet v3.9.359 ZIP `assets/index.html`, `assets/style.css`, `assets/styles.css`, and `assets/main.js`. The index loads **both** CSS files in order: `style.css` then `styles.css?build=3.9.42`. The main stylesheet defines `.field label` as muted 11px with a 6px bottom margin; `.report-filter .field label` overrides it to 10px. The CSS body declares `font-family:Tahoma,Arial,sans-serif`, while the archive also contains `assets/Tajawal-Medium.ttf`. Native 7 intentionally retains the user's explicit **Tajawal** requirement; it is not correct to assert that the old stylesheet itself globally specified Tajawal.
+
+**Code commits:**
+- `a01f8a1c3d876f9ff720afc26a2828d9c82ce6ab`: Fixes source `field label` text padding and the shared field child margin: exactly 6dp after a label and no synthetic 6dp after input/select nodes. This prevents double vertical spacing in forms across routes.
+- `1f6d83f4a055ace6a48712139d82ac6f61e91579`: Report-filter label descendants use 10sp, muted text and zero padding while retaining the field's original label gap.
+- Previous source-derived `a01f8a1c3d876f9ff720afc26a2828d9c82ce6ab` (earlier commit, same prefix but different full hash) restored section-title 14x15 padding and its bottom divider. **Use full hashes when comparing similarly prefixed commits.**
+
+### Nine original render functions inspected
+Balanced-brace extraction of each `function renderX()` in `assets/main.js`; the numbers below count **literal** `data-action` attributes in those function bodies, not controls produced by nested helpers or dynamically generated markup.
+
+| Original function | Body characters | Unique literal data-action values |
+|---|---:|---:|
+| `renderDashboard` | 1,278 | 0 |
+| `renderProducts` | 2,969 | 9 |
+| `renderSales` | 3,143 | 12 |
+| `renderRepairs` | 3,515 | 13 |
+| `renderPurchases` | 3,074 | 9 |
+| `renderExpenses` | 884 | 1 |
+| `renderVaults` | 1,683 | 1 |
+| `renderReports` | 4,743 | 0 |
+| `renderSettings` | 9,250 | 14 |
+
+**Source controls by route:** Products: `refresh-products`, `safe-products-import`, `new-product`, `view-product-photo`, `product-label`, `edit-product`, `adjust-product-stock`, `view-product-barcode-photo`, `delete-product`. Sales: `view-sale`, `edit-invoice`, `sale-return`, `correct-sale-payment`, `repair-sale-footprint`, `repair-mixed-sale-cash`, `pdf-sale`, `print-sale`, `collect-online-sale`, `wa-sale`, `thanks-sale`, `delete-sale`. Maintenance: `view-repair-photo`, `view-repair`, `edit-invoice`, `repair-return`, `repair-problem-update`, `repair-status-update`, `pdf-repair`, `print-repair`, `wa-repair`, `thanks-repair`, `repair-ready`, `repair-delivered`, `delete-repair`. Suppliers: `new-supplier`, `supplier-statement`, `supplier-opening-debt`, `supplier-direct-payment`, `edit-supplier`, `delete-supplier`, `pay-purchase`, `purchase-sync-missing`, `cancel-purchase`. Expenses: `delete-expense`. Cashboxes: `open-cash-movement`. Settings: `test-connection`, `refresh-rates`, `quick-repair-button-new`, `quick-repair-button-edit`, `quick-repair-button-delete`, `message-templates-reset`, `backup-auto-now`, `backup-auto-latest`, `backup-auto-previous`, `backup-export-file`, `backup-import-file`, `backup-copy`, `backup-show`, `clear-data`. Dashboard and Reports contain no literal `data-action` attributes in their main functions; their controls may be rendered via forms/helpers.
+
+**Deliberate native-only exclusions:** Source `purchase-sync-missing`, `test-connection`, `refresh-rates` are tied to legacy cloud/network functionality and must not be reinstated solely to match old markup. External partners must remain removed.
+
+**Unverified:** Full generated markup including helper functions, exact route labels and order, every dialog and transition, source-vs-native image treatment, device font rendering, action functionality, Android compilation, tablet screenshots. A CSS and static JavaScript audit is not a functional parity test.
