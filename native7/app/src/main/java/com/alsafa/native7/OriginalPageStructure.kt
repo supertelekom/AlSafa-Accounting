@@ -360,12 +360,17 @@ internal class OriginalPageStructure(
             number(copy)
             val view=build(copy)
             if(host is SourceGrid) host.addCell(view,false) else host.addView(view)
+            conditions()
         }
     }
     private fun addVariant(button:View) {
         val scope=purchaseRow(button) ?: root ?: return
         val target=metadata.entries.firstOrNull { (view,node) -> node.optJSONObject("data")?.has("data-color-variants")==true && ancestors(view).any { it===scope } }?.key as? ViewGroup ?: return
-        target.addView(build(pages.getJSONObject("variant-row-template")))
+        val copy=JSONObject(pages.getJSONObject("variant-row-template").toString()).apply {
+            put("key","variant-copy-${++unique}")
+        }
+        target.addView(build(copy))
+        conditions()
     }
     private fun removeMatching(button:View,sourceClass:String) {
         ancestors(button).firstOrNull { metadata[it]?.let { n -> classes(n).contains(sourceClass) }==true }?.let { removed ->
