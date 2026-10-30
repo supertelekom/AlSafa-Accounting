@@ -40,7 +40,49 @@ internal object NativeSalesLedger {
         }
         return out
     }
+    // Original consumeFundingLots: oldest createdAt first, consuming qtyRemaining.
+    // Caller must run this inside the same SQLite transaction as the sale/return.
+    fun consumeFundingLots(db:SQLiteDatabase,productId:String,quantity:Double):List<FundingAllocation> {
+        require(quantity.isFinite() && quantity>=0.0)
+        var need=quantity
+        val allocations=mutableListOf<FundingAllocation>()
+        db.rawQuery("SELECT id,purchase_id,source,partner_id,partner_name,share,qty_remaining,unit_cost,currency FROM native_funding_lots WHERE product_id=? ORDER BY created_at ASC,id ASC",
+            arrayOf(productId)).use { c ->
+            while(c.moveToNext() && need>0.0) {
+                val available=c.getDouble(6).coerceAtLeast(0.0)
+                val take=minOf(need,available)
+                if(take<=0.0) continue
+                val lotId=c.getString(0)
+                db.execSQL("UPDATE native_funding_lots SET qty_remaining=qty_remaining-? WHERE id=?",arrayOf(take,lotId))
+                allocations.add(FundingAllocation(lotId,c.getString(1),c.getString(2),c.getString(3),c.getString(4),c.getDouble(5).coerceIn(0.0,100.0),take,c.getDouble(7),c.getString(8)))
+                need-=take
+            }
+        }
+        // Original returns [] on shortage. Throw here so SQLite rolls back any
+        // already consumed lots along with the enclosing sale/return.
+        require(need<=0.0001) { "لا يمكن البيع: يوجد عدم تطابق بين المخزون ورأس المال" }
+        return allocations
+    }
+    // Original restoreFundingAllocations: restore an existing lot, or recreate
+    // a missing lot using the original allocation's funding attributes.
+    fun restoreFundingAllocations(db:SQLiteDatabase,productId:String,
+        allocations:List<FundingAllocation>,ratio:Double=1.0,at:Long=System.currentTimeMillis()) {
+        require(ratio.isFinite() && ratio>=0.0)
+        for(a in allocations) {
+            val q=a.qty.coerceAtLeast(0.0)*ratio
+            if(q<=0.0) continue
+            val existing=db.rawQuery("SELECT COUNT(*) FROM native_funding_lots WHERE id=? AND product_id=?",
+                arrayOf(a.lotId,productId)).use { c -> c.moveToFirst();c.getInt(0)>0 }
+            if(existing) db.execSQL("UPDATE native_funding_lots SET qty_remaining=qty_remaining+? WHERE id=? AND product_id=?",
+                arrayOf(q,a.lotId,productId))
+            else db.execSQL("INSERT INTO native_funding_lots VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
+                arrayOf<Any>(if(a.lotId.isBlank()||a.lotId=="untracked") UUID.randomUUID().toString() else a.lotId,
+                    productId,if(a.purchaseId.isBlank()) "return" else a.purchaseId,a.source,a.partnerId,a.partnerName,
+                    a.share.coerceIn(0.0,100.0),q,q,a.unitCost,a.currency,at))
+        }
+    }
     fun create(db:SQLiteDatabase) {
+        db.execSQL("CREATE TABLE IF NOT EXISTS native_funding_lots (id TEXT PRIMARY KEY, product_id TEXT NOT NULL, purchase_id TEXT NOT NULL, source TEXT NOT NULL, partner_id TEXT NOT NULL, partner_name TEXT NOT NULL, share REAL NOT NULL, qty_original REAL NOT NULL, qty_remaining REAL NOT NULL, unit_cost REAL NOT NULL, currency TEXT NOT NULL, created_at INTEGER NOT NULL)")
         db.execSQL("CREATE TABLE IF NOT EXISTS native_sales (id TEXT PRIMARY KEY, created_at INTEGER NOT NULL, currency TEXT NOT NULL, channel TEXT NOT NULL, customer TEXT NOT NULL, phone TEXT NOT NULL, total REAL NOT NULL, cost REAL NOT NULL, status TEXT NOT NULL DEFAULT 'active')")
         db.execSQL("CREATE TABLE IF NOT EXISTS native_sale_lines (id TEXT PRIMARY KEY, sale_id TEXT NOT NULL, product_id TEXT NOT NULL, quantity INTEGER NOT NULL, unit_price REAL NOT NULL, unit_cost REAL NOT NULL)")
         db.execSQL("CREATE TABLE IF NOT EXISTS native_sale_manual_items (line_id TEXT PRIMARY KEY, name TEXT NOT NULL, model TEXT NOT NULL)")
