@@ -416,6 +416,14 @@ internal class OriginalPageStructure(
         val row=build(copy)
         if(host is SourceGrid) host.addCell(row,false) else host.addView(row)
         conditions()
+        if(quick) {
+            val name=metadata.entries.firstOrNull { (field,node) ->
+                field is EditText && node.optJSONObject("data")?.has("data-purchase-new-name")==true &&
+                    ancestors(field).any { it===row }
+            }?.key as? EditText
+            name?.post { name.requestFocus() }
+            row.post { row.parent?.let { _ -> row.requestRectangleOnScreen(android.graphics.Rect(0,0,row.width,row.height),true) } }
+        }
     }
     private fun conditions() {
         // Visibility only, mirroring the original form groups. No monetary calculation or saving.
