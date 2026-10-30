@@ -545,3 +545,13 @@ The table is a regression **test plan**, not evidence that all nine routes have 
 
 ### Status and constraints
 The two commits were written to GitHub branch `native6-development` under `native7` only. This is an **integrated shared-layout patch** with a nine-route regression checklist, **not a completed screen-by-screen comparison**. The original source remains authoritative for retained UI; intentionally excluded external partners and cloud-only features must not be reintroduced. No Android Studio compile, APK build, or Honor Pad X8b screenshot comparison was run. Remaining tasks: full JavaScript/JSON node-by-node audit, exact names/order, modal sizing and animations, image controls, event wiring, and device verification.
+
+## CSS cascade verification and report-grid margins — 2026-10-30
+
+**Read directly from old source archive:** `assets/style.css` (86,920 bytes) and inspected repeated CSS declarations, including later tablet overrides. The final v3.9.23 Honor Pad X8b rules override earlier form-grid breakpoints: `@media (min-width:720px) and (max-width:1199px)` uses two columns and `@media (min-width:1200px) and (orientation:landscape)` uses three columns. This agrees with current native `formGrid` counts. `.report-grid` uses two columns and 9px gap with 13px vertical margins, expanding to three columns at tablet widths. The native grid already matches column count and gap, but the shared vertical layout did not explicitly preserve the 13px outer margins.
+
+**Implemented commits:** `d32964db7049e1e58de1171587b86558a98651b3` added 13dp top and bottom margins to report grids; `7152c12c3ba5458f1ae611c298fb49af46647c86` corrected detection to recognize both the actual `reportGrid` node kind and source CSS `report-grid` class. Both commits are within `native7` on `native6-development`.
+
+**Nine-section test matrix:** Dashboard: summary and reports entry; Products: form grids; Sales: full/simple forms; Repairs: repair form grid; Purchases: supplier/purchase forms; Expenses: expense forms; Cashboxes: movement form; Reports: report-grid tiles and filter; Settings: settings forms. These are affected component types or test targets, **not evidence of verified screen parity**.
+
+**Not completed:** Full nine-screen markup and exact labels/order comparison, responsive modal and transition implementation, image/photo viewers, every button action, font rendering comparison, APK compilation and Honor Pad X8b device test. The report-grid patch is a limited source-based improvement; further shared component work is required.
