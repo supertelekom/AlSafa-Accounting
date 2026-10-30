@@ -85,6 +85,11 @@ internal class OriginalPageStructure(
             if(css.contains("stock-warning")) topMargin=dp(10)
             if(css.contains("note-box")) topMargin=dp(12)
             if(css.contains("row-actions")) topMargin=dp(7)
+            if(css.contains("search-box")) bottomMargin=dp(12)
+            if(css.contains("simple-recent")) {
+                topMargin=dp(14)
+                bottomMargin=dp(14)
+            }
             if(css.contains("form-actions")) topMargin=dp(18)
             if(kind=="reportGrid" || css.contains("report-grid")) {
                 topMargin=dp(13)
@@ -401,6 +406,39 @@ internal class OriginalPageStructure(
                 // Source classes are orthogonal to the structural kind. Apply these
                 // after the kind switch so a 'section' or 'form' also gets its CSS.
                 run {
+                        if(cs.contains("search-box")) {
+                            // Source search-box: horizontal icon/input, 9dp gap,
+                            // 10x12 padding, white fill and 2dp sand border.
+                            orientation=LinearLayout.HORIZONTAL
+                            gravity=Gravity.CENTER_VERTICAL
+                            setPadding(dp(12),dp(10),dp(12),dp(10))
+                            background=GradientDrawable().apply {
+                                setColor(Color.WHITE)
+                                cornerRadius=dp(15).toFloat()
+                                setStroke(dp(2),Color.rgb(223,201,164))
+                            }
+                            for(i in 0 until childCount) {
+                                val child=getChildAt(i)
+                                child.layoutParams=LinearLayout.LayoutParams(
+                                    if(child is EditText) 0 else -2,-2,
+                                    if(child is EditText) 1f else 0f
+                                ).apply { if(i>0) marginStart=dp(9) }
+                                if(child is EditText) {
+                                    child.minHeight=dp(46)
+                                    child.textSize=15f
+                                    child.background=null
+                                    child.setPadding(0,0,0,0)
+                                } else if(child is TextView) child.textSize=22f
+                            }
+                        }
+                        if(cs.contains("simple-recent")) {
+                            background=GradientDrawable().apply {
+                                setColor(Color.rgb(255,253,249))
+                                cornerRadius=dp(17).toFloat()
+                                setStroke(dp(1),line)
+                            }
+                            clipToOutline=true
+                        }
                         if(cs.contains("list-row")) {
                             // Original .list-row is a horizontal flex record row.
                             orientation=LinearLayout.HORIZONTAL
