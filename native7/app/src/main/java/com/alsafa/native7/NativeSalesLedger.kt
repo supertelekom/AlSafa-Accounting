@@ -692,20 +692,27 @@ internal object NativeSalesLedger {
         val returns=db.rawQuery("SELECT COALESCE(SUM(refund),0) FROM native_sale_returns WHERE sale_id=?",arrayOf(id)).use { c -> c.moveToFirst();c.getDouble(0) }
         return (sale.total-returns-sale.collected).coerceAtLeast(0.0)
     }
+    private fun vaultKey(account:String):String = when(account) {
+        "درج المحل","drawer" -> "drawer"
+        "الصندوق الخارجي","الخزنة الخارجية","external" -> "external"
+        "شام كاش","shamcash" -> "shamcash"
+        "البنك","bank" -> "bank"
+        else -> account
+    }
     fun accountMovement(db:SQLiteDatabase,account:String,currency:String,from:Long,to:Long):Double {
+        require(to>from)
         create(db)
-        db.rawQuery("SELECT COALESCE(SUM(amount),0) FROM native_sale_collections WHERE account=? AND currency=? AND created_at>=? AND created_at<?",arrayOf(account,currency,from.toString(),to.toString())).use { c ->
-            c.moveToFirst()
-            val collected=c.getDouble(0)
-            val tenderExcess=db.rawQuery("SELECT COALESCE(SUM(amount_in_invoice_currency),0) FROM native_sale_change WHERE tender_account=? AND invoice_currency=? AND created_at>=? AND created_at<?",
-                arrayOf(account,currency,from.toString(),to.toString())).use { x -> x.moveToFirst();x.getDouble(0) }
-            val mixed=db.rawQuery("SELECT COALESCE(SUM(amount),0) FROM native_sale_mixed WHERE account=? AND currency=? AND created_at>=? AND created_at<?",
-                arrayOf(account,currency,from.toString(),to.toString())).use { x -> x.moveToFirst();x.getDouble(0) }
-            val paidChange=db.rawQuery("SELECT COALESCE(SUM(payout),0) FROM native_sale_change WHERE payout_account=? AND payout_currency=? AND created_at>=? AND created_at<?",
-                arrayOf(account,currency,from.toString(),to.toString())).use { x -> x.moveToFirst();x.getDouble(0) }
-            // Mixed invoice-equivalent collections are a bookkeeping entry, not cash.
-            // Only physical tender rows contribute to the actual account balance.
-            return (if(account=="mixed") 0.0 else collected)+tenderExcess+mixed-paidChange
+        val names=when(vaultKey(account)) {
+            "drawer" -> listOf("drawer","درج المحل")
+            "external" -> listOf("external","الصندوق الخارجي","الخزنة الخارجية")
+            "shamcash" -> listOf("shamcash","شام كاش")
+            "bank" -> listOf("bank","البنك")
+            else -> listOf(account)
+        }
+        val placeholders=names.joinToString(",") { "?" }
+        val args=(names+listOf(currency,from.toString(),to.toString())).toTypedArray()
+        return db.rawQuery("SELECT COALESCE(SUM(amount),0) FROM native_sale_vault_movements WHERE vault IN ($placeholders) AND currency=? AND created_at>=? AND created_at<?",args).use { c ->
+            c.moveToFirst();c.getDouble(0)
         }
     }
     fun profitByCurrency(db:SQLiteDatabase,from:Long,to:Long):Map<String,Double> {
@@ -785,10 +792,10 @@ internal object NativeSalesLedger {
         val result=mutableListOf<CashComparison>()
         val pairs=linkedSetOf<Pair<String,String>>()
         db.rawQuery("SELECT DISTINCT vault,currency FROM domain_cashTransactions WHERE vault IS NOT NULL AND currency IS NOT NULL",null).use { c ->
-            while(c.moveToNext()) pairs.add(c.getString(0) to c.getString(1))
+            while(c.moveToNext()) pairs.add(vaultKey(c.getString(0)) to c.getString(1))
         }
-        db.rawQuery("SELECT DISTINCT account,currency FROM native_sale_collections UNION SELECT DISTINCT account,currency FROM native_sale_mixed UNION SELECT DISTINCT payout_account,payout_currency FROM native_sale_change",null).use { c ->
-            while(c.moveToNext()) pairs.add(c.getString(0) to c.getString(1))
+        db.rawQuery("SELECT DISTINCT vault,currency FROM native_sale_vault_movements",null).use { c ->
+            while(c.moveToNext()) pairs.add(vaultKey(c.getString(0)) to c.getString(1))
         }
         for((account,currency) in pairs) {
             val legacy=db.rawQuery("SELECT COALESCE(SUM(amount),0) FROM domain_cashTransactions WHERE vault=? AND currency=? AND substr(date,1,10)>=? AND substr(date,1,10)<?",
