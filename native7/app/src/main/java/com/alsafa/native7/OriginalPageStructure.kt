@@ -1172,6 +1172,17 @@ internal class OriginalPageStructure(
             background=if(n.optBoolean("primary")) GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(Color.rgb(179,131,50),Color.rgb(139,96,31))).apply { cornerRadius=dp(12).toFloat() }
                 else bg(Color.rgb(247,237,221),12,Color.rgb(223,201,164))
         }
+        if(cs.contains("product-photo-button") || cs.contains("repair-photo-button")) {
+            view.minimumWidth=dp(38)
+            view.minimumHeight=dp(38)
+            view.setPadding(0,0,0,0)
+            view.background=GradientDrawable().apply {
+                setColor(Color.rgb(248,237,219))
+                cornerRadius=dp(11).toFloat()
+                setStroke(dp(1),Color.rgb(223,201,164))
+            }
+            if(view is TextView) view.gravity=Gravity.CENTER
+        }
         if(cs.contains("tiny-button")) {
             if(cs.contains("delete")) {
                 view.background=GradientDrawable().apply {
