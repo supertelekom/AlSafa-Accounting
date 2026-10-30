@@ -145,8 +145,8 @@ internal class OriginalPageStructure(
                 if(cs.contains("metric-label")) { textSize=11f;setTextColor(muted) }
                 if(cs.contains("metric-value")) { textSize=18f;typeface=Typeface.create(font,Typeface.BOLD);setPadding(0,dp(8),0,0) }
                 if(cs.contains("metric-note")) { textSize=10f;setTextColor(muted);setPadding(0,dp(5),0,0) }
-                if(cs.contains("form-section")) { textSize=13f;typeface=Typeface.create(font,Typeface.BOLD);setTextColor(gold) }
-                if(cs.contains("report-tile-value")) { textSize=14f;typeface=Typeface.create(font,Typeface.BOLD);setTextColor(gold);setPadding(0,dp(7),0,0) }
+                if(cs.contains("form-section")) { textSize=13f;typeface=Typeface.create(font,Typeface.BOLD);setTextColor(Color.rgb(122,81,24)) }
+                if(cs.contains("report-tile-value")) { textSize=14f;typeface=Typeface.create(font,Typeface.BOLD);setTextColor(Color.rgb(122,81,24));setPadding(0,dp(7),0,0) }
                 if(cs.contains("report-tile-label")) { textSize=10f;setTextColor(muted) }
                 if(cs.contains("transaction-icon")) {
                     textSize=18f;gravity=Gravity.CENTER
