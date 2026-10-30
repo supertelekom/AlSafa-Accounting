@@ -618,8 +618,6 @@ internal class OriginalPageStructure(
                             // centered and rounded on tablet. Dialog positioning
                             // is owned by the Activity host, not this child view.
                             val widthDp=activity.resources.configuration.screenWidthDp
-                            val landscape=activity.resources.configuration.orientation==
-                                android.content.res.Configuration.ORIENTATION_LANDSCAPE
                             val radius=if(widthDp>=720) 20 else 22
                             background=GradientDrawable().apply {
                                 setColor(Color.rgb(255,253,249))
