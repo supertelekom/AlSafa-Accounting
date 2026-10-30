@@ -216,8 +216,14 @@ internal class OriginalPageStructure(
                 override fun getView(position:Int,convertView:View?,parent:ViewGroup)=style(super.getView(position,convertView,parent))
                 override fun getDropDownView(position:Int,convertView:View?,parent:ViewGroup)=style(super.getDropDownView(position,convertView,parent))
                 override fun isEnabled(position:Int)=!options[position].optBoolean("disabled")
+                override fun areAllItemsEnabled()=options.none { it.optBoolean("disabled") }
             }
-            if(options.isNotEmpty()) setSelection(n.optInt("selected").coerceIn(options.indices))
+            if(options.isNotEmpty()) {
+                val selected=n.optInt("selected").coerceIn(options.indices)
+                val valid=if(!options[selected].optBoolean("disabled")) selected
+                    else options.indices.firstOrNull { !options[it].optBoolean("disabled") } ?: selected
+                setSelection(valid)
+            }
             onItemSelectedListener=object:AdapterView.OnItemSelectedListener {
                 override fun onNothingSelected(parent:AdapterView<*>?) {}
                 override fun onItemSelected(parent:AdapterView<*>?,view:View?,position:Int,id:Long) { conditions() }
