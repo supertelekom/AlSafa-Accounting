@@ -1298,7 +1298,7 @@ class MainActivity : Activity() {
         }
         
     }
-    private val saleProductTagKey:Int = com.alsafa.native7.R.id.sale_product_tag_key
+    private val saleProductTagKey:Int = 0x7f0f7a01
     private fun disabledAction(parent:LinearLayout,label:String) {
         val action=text(label,13f,Color.rgb(122,81,24)).apply {
             typeface=Typeface.create(typeface,Typeface.BOLD)
