@@ -646,3 +646,13 @@ Balanced-brace extraction of each `function renderX()` in `assets/main.js`; the 
 **Nine-route regression targets:** Home mode forms; product create/edit; full/simple sales; repair intake/edit; supplier and purchase forms; expenses; cash movement; report date filters; settings. On every page inspect label-to-control gaps, RTL text alignment and long text truncation. In products also verify photo+name header and stock-warning borders.
 
 **Remaining unverified:** Whether all source labels are direct children of `field`, original source JSON fidelity, all nine screens' exact text/order, modal and motion fidelity, real photo rendering, every click handler, Kotlin compile, APK build and Honor Pad X8b screenshots. No device or build test has been performed.
+
+## Nested product-header selector correction — 2026-10-30
+
+**Original archive directly inspected:** `assets/style.css` in the supplied v3.9.359 tablet source. The source uses `.product-card-head > div:last-child { min-width:0 }` and descendant selectors `.product-card-head b, .product-card-head small`, with 13px bold for `b`, 10px muted and 3px top margin for `small`, and ellipsis on both. Previous native code styled only direct children of `product-card-head`. When original markup nests `b` and `small` in a final `div`, those text rules were silently skipped.
+
+**Implemented `2a0ad90fff918079dad26aeea844ea1fd9b73150`:** The renderer now recursively styles descendants of `product-card-head` by preserved source tag metadata. The outer header stays a 9dp-gap horizontal flex row with the last child taking remaining width; b/small now get source sizes, font weight, color, 3dp subtitle offset and single-line ellipsis even when nested. No change to invoice calculations, data storage or the old app.
+
+**Cross-route shared component review:** Home, Products, Sales, Maintenance, Suppliers, Expenses, Cashboxes, Reports and Settings all use `OriginalPageStructure` as a common renderer. This patch is scoped to nodes carrying `product-card-head`, so other pages should not change unless they reuse that source class. Recheck product cards, product selection inside sales/maintenance, and any product summaries.
+
+**Still pending:** Full source markup and JSON comparison for all nine screens; source modal dimensions, transitions, real photos and button actions; Android Studio compilation and Honor Pad X8b screenshot comparison. No device test or APK build was performed. **Do not claim nine-screen completion.**
