@@ -174,3 +174,21 @@ Reference: original tablet v3.9.359 source archive, `assets/style.css`; Android 
 - Original CSS modal/backdrop, app shell/sidebar and several route-specific layouts still require direct parity work.
 - The preview renderer includes unverified purchase total calculations; do not use them as accounting validation.
 - Next acceptance gate: build APK locally, capture corresponding old/new screens on Honor Pad X8b, verify text, font, colors, dimensions, alignment, scrolling, dialog open/close and navigation, then correct discrepancies.
+
+## Source archive cross-check and shared UI changes — 2026-10-30
+
+Directly inspected `assets/style.css` in the attached original v3.9.359 tablet source ZIP. The same source's `assets/Tajawal-Medium.ttf` exists. Changes target the common Native 7 renderer and therefore affect the nine principal sections where corresponding node kinds/classes are used.
+
+| Original CSS selector | Source value | Native change |
+|---|---|---|
+| `.field label` | 11px, bottom margin 6px | Text labels now have 6dp bottom padding |
+| `textarea` | min-height 78px | Multiline EditText now min-height 78dp |
+| `.metric-card` | min-height 101px, padding 14px, radius 16px | Common metric/stat cards updated |
+| `.report-tile` | min-height 78px, padding 12px, radius 13px | Source-class report tile renderer updated |
+| `.section-card` | radius 17px | Source-class section card background updated |
+| `.form-section` | margin 20px 0 14px | Section heading padding adjusted |
+| `.form-grid` | Honor Pad 720–1199px override 2 columns, 1200px+ landscape 3 columns | Previously corrected in `de2749d4` |
+
+Commits: `480a5a91b6fc9b7fb029ce20a4f046ebdfde8c8e`, `86e8f67f4102bb78fa527f0870d57a0540f1c195`.
+
+Scope inspected: shared UI renderer for home, products, sales, maintenance, suppliers, expenses, cashboxes, reports and settings. The source structure is used for route-specific content; this batch did **not** individually certify every label, screen, modal or motion. The CSS also has general responsive `auto-fit` rules; some pages may still differ from source when their usable content width changes. **No APK build or on-device screenshot comparison performed.** Dialogs, pictures, dynamic interactions, app shell and route-specific card styles require further work. All preview-only actions remain non-operational.
