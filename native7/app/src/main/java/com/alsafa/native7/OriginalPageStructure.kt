@@ -74,10 +74,14 @@ internal class OriginalPageStructure(
                 css.contains("section-card") -> 14
                 css.contains("section-title") -> 0
                 css.contains("transaction") -> 0
+                css.contains("product-info") -> 8
+                css.contains("stock-warning") -> 0
                 else -> margin
             })
             if(css.contains("form-section")) topMargin=dp(20)
             if(css.contains("section-card")) topMargin=dp(14)
+            if(css.contains("product-info")) topMargin=dp(14)
+            if(css.contains("stock-warning")) topMargin=dp(10)
             if(kind=="reportGrid" || css.contains("report-grid")) {
                 topMargin=dp(13)
                 bottomMargin=dp(13)
@@ -403,6 +407,20 @@ internal class OriginalPageStructure(
                             // the left flexible text and right intrinsic value.
                             orientation=LinearLayout.VERTICAL
                             setPadding(0,dp(11),0,0)
+                            background=object:android.graphics.drawable.Drawable() {
+                                private val rule=android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
+                                    color=line
+                                    strokeWidth=dp(1).toFloat()
+                                }
+                                override fun draw(canvas:android.graphics.Canvas) {
+                                    canvas.drawLine(bounds.left.toFloat(),bounds.top.toFloat(),
+                                        bounds.right.toFloat(),bounds.top.toFloat(),rule)
+                                }
+                                override fun setAlpha(alpha:Int) { rule.alpha=alpha;invalidateSelf() }
+                                override fun setColorFilter(filter:android.graphics.ColorFilter?) { rule.colorFilter=filter;invalidateSelf() }
+                                @Deprecated("Deprecated in Java")
+                                override fun getOpacity()=android.graphics.PixelFormat.TRANSLUCENT
+                            }
                             // Original product-info uses a two-column CSS grid.
                             // Preserve the source child order while pairing each
                             // label/value in a horizontal row.
@@ -437,6 +455,7 @@ internal class OriginalPageStructure(
                                             child.textSize=12f
                                             child.setTextColor(Color.rgb(122,81,24))
                                             child.typeface=Typeface.create(font,Typeface.BOLD)
+                                            child.gravity=Gravity.LEFT or Gravity.CENTER_VERTICAL
                                         }
                                     }
                                 }
