@@ -110,3 +110,10 @@
 - دعم لوحة مفاتيح البريد الإلكتروني `email` والهاتف `tel` والإدخال العشري/الرقمي؛ تطبيق `readonly` على المدخلات؛ احترام `disabled` على checkbox/radio.
 - تحقق مرجعي: `assets/style.css` يحتوي `.simple-action` بمقاسات 104px و18px radius و12px gap وscale(.985) عند الضغط؛ يظل ارتفاع 52dp المصغّر استثناءً بناءً على طلب المستخدم السابق.
 - لا يوجد اختبار APK أو ضمان مطابقة جميع الشاشات والحركات.
+
+## نقل مباشر من دوال main.js القديمة — 2026-10-30
+المصدر المعاين فعلياً: `assets/main.js` داخل `AlSafaAccounting-v3.9.359-TABLET-PARTNER-DATE-REPORT-FIX-SOURCE.zip`.
+- `purchase-quick-add` في المصدر: إنشاء سطر `purchaseLine({itemKind:'product',itemId:'__new__',isNew:true})` ثم `wireInteractiveElements` و`updatePurchaseTotals` وتركيز `data-purchase-new-name` والتمرير السلس. Commit `a62a3027fee96b8d40dd2533acdfb21dbfabf498` نقل التركيز والتمرير؛ **حساب الإجماليات لم يُنقل في هذه الدفعة**.
+- `select-quick-repair` في المصدر: يختار الخدمة، يعبيء `father-repair-service` و`father-repair-quick-id` والسعر والحقول اليدوية ويستدعي `updateFatherCurrencyAmount`. Commit `824f47789206fc9a4f4862668eb1d4f8a5b1649f` نقل تعبئة الحقول والتحكم اليدوي؛ **تحويل العملة لم يُنقل**.
+- `remove-color-variant` في المصدر: إذا كان اللون محفوظاً يتحقق من السجل و`variantRole` و`productCanBeFullyEdited` ثم يمر عبر `deleteRecord` المؤكد. Commit `b8c21015f65400d6ca36bd77bbaf99b0a8cf4427` يمنع حذف اللون المحفوظ من واجهة المعاينة دون مسار الحذف التشغيلي، ولا يدّعي تنفيذ الحذف المحاسبي.
+- المقارنة النهائية تتطلب تتبع دوال الحفظ والإجماليات والاستعادة والتصوير والبحث من `main.js`، ثم بناء APK واختبار فعلي.
