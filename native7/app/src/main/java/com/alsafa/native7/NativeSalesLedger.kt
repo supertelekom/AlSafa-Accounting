@@ -148,7 +148,76 @@ internal object NativeSalesLedger {
             VaultAudit(k.first,k.second,actual[k]?:0.0,expected[k]?:0.0)
         }.filter { kotlin.math.abs(it.difference)>0.000001 }
     }
+    fun exchangeLine(db:SQLiteDatabase,saleId:String,returnedProductId:String,
+        returnedQuantity:Int,replacementProductId:String,replacementQuantity:Int,
+        vault:String="درج المحل",extraPaymentNow:Double=0.0,
+        penalty:Double=0.0,reason:String="",at:Long=System.currentTimeMillis()) {
+        require(returnedQuantity>0 && replacementQuantity>0 && returnedProductId!=replacementProductId)
+        require(extraPaymentNow.isFinite() && extraPaymentNow>=0.0 && penalty.isFinite() && penalty>=0.0)
+        create(db)
+        db.beginTransaction()
+        try {
+            val sale=find(db,saleId) ?: error("الفاتورة غير موجودة")
+            require(sale.status=="active")
+            val sold=db.rawQuery("SELECT COALESCE(SUM(quantity),0),COALESCE(SUM(quantity*unit_price),0) FROM native_sale_lines WHERE sale_id=? AND product_id=?",
+                arrayOf(saleId,returnedProductId)).use { c -> c.moveToFirst();Pair(c.getInt(0),c.getDouble(1)) }
+            val prior=db.rawQuery("SELECT COALESCE(SUM(quantity),0) FROM native_sale_returns WHERE sale_id=? AND product_id=?",
+                arrayOf(saleId,returnedProductId)).use { c -> c.moveToFirst();c.getInt(0) }
+            require(sold.first>0 && prior+returnedQuantity<=sold.first) { "كمية المرتجع تتجاوز المبيع" }
+            val replacement=LegacyProductRepository.findById(db,replacementProductId) ?: error("البديل غير موجود")
+            require(replacement.stock>=replacementQuantity) { "مخزون البديل غير كاف" }
+            val snapshot=db.rawQuery("SELECT try_rate,syp_rate,try_syp_rate FROM native_sale_rate_snapshots WHERE sale_id=?",
+                arrayOf(saleId)).use { c ->
+                if(c.moveToFirst()) RateSnapshot(
+                    if(c.isNull(0)) null else c.getDouble(0),
+                    if(c.isNull(1)) null else c.getDouble(1),
+                    if(c.isNull(2)) null else c.getDouble(2)) else null
+            }
+            fun convert(value:Double,from:String):Double =
+                if(from==sale.currency) value else
+                    snapshot?.let { convertCurrencyAmount(value,from,sale.currency,it) }
+                        ?: error("سعر الصرف المحفوظ غير متوفر")
+            val gross=sold.second*returnedQuantity/sold.first
+            val returnValue=db.rawQuery("SELECT subtotal,manual_discount,rule_discount,tax_rate FROM native_sale_discounts WHERE sale_id=?",arrayOf(saleId)).use { c ->
+                if(c.moveToFirst() && c.getDouble(0)>0) gross*
+                    (1.0-(c.getDouble(1)+c.getDouble(2))/c.getDouble(0))*(1.0+c.getDouble(3)/100.0)
+                else gross
+            }
+            val replacementValue=convert(replacement.salePrice,replacement.currency)*replacementQuantity
+            val oldReturns=db.rawQuery("SELECT COALESCE(SUM(refund),0) FROM native_sale_returns WHERE sale_id=?",
+                arrayOf(saleId)).use { c -> c.moveToFirst();c.getDouble(0) }
+            val credit=returnValue-replacementValue-penalty
+            val paid=sale.collected
+            val newTotal=sale.total-oldReturns-credit
+            require(newTotal>=-0.000001) { "قيمة الاستبدال غير صالحة" }
+            val refund=(paid-newTotal).coerceAtLeast(0.0)
+            val extraDue=(newTotal-paid).coerceAtLeast(0.0)
+            require(extraPaymentNow<=extraDue+0.000001) { "فرق الاستبدال المقبوض يتجاوز المستحق" }
+            val funding=fundingAllocationsForSale(db,saleId,returnedProductId)
+            val restore=returnFundingAllocationsForQty(funding,returnedQuantity.toDouble(),prior.toDouble())
+            require(restore.sumOf { it.qty }+0.0001>=returnedQuantity) { "تخصيص التمويل للمرتجع غير مكتمل" }
+            val consumed=consumeFundingLots(db,replacementProductId,replacementQuantity.toDouble())
+            restoreFundingAllocations(db,returnedProductId,restore,at=at)
+            val eventId=UUID.randomUUID().toString()
+            db.execSQL("INSERT INTO native_sale_returns VALUES (?,?,?,?,?,?,?)",
+                arrayOf<Any>(eventId,saleId,returnedProductId,returnedQuantity,credit,reason,at))
+            db.execSQL("INSERT INTO native_sale_stock VALUES (?,?,?,?,?,?)",
+                arrayOf<Any>(UUID.randomUUID().toString(),saleId,returnedProductId,returnedQuantity,"exchange-return",at))
+            db.execSQL("INSERT INTO native_sale_stock VALUES (?,?,?,?,?,?)",
+                arrayOf<Any>(UUID.randomUUID().toString(),saleId,replacementProductId,-replacementQuantity,"exchange-replacement",at))
+            for(a in consumed) db.execSQL("INSERT INTO native_sale_funding_allocations VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                arrayOf<Any>(UUID.randomUUID().toString(),saleId,replacementProductId,a.lotId,a.purchaseId,a.source,
+                    a.partnerId,a.partnerName,a.share,a.qty,a.unitCost,a.currency,at))
+            db.execSQL("INSERT INTO native_sale_exchanges VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+                arrayOf<Any>(eventId,saleId,returnedProductId,replacementProductId,replacementQuantity,
+                    replacementValue,penalty,refund,extraPaymentNow,vault,at))
+            if(refund>0) insertCollection(db,saleId,-refund,sale.currency,vault,at,"customer-refund")
+            if(extraPaymentNow>0) insertCollection(db,saleId,extraPaymentNow,sale.currency,vault,at,"exchange-difference")
+            db.setTransactionSuccessful()
+        } finally { db.endTransaction() }
+    }
     fun create(db:SQLiteDatabase) {
+        db.execSQL("CREATE TABLE IF NOT EXISTS native_sale_exchanges (id TEXT PRIMARY KEY, sale_id TEXT NOT NULL, returned_product_id TEXT NOT NULL, replacement_product_id TEXT NOT NULL, replacement_quantity INTEGER NOT NULL, replacement_value REAL NOT NULL, penalty REAL NOT NULL, refund REAL NOT NULL, extra_collected REAL NOT NULL, vault TEXT NOT NULL, created_at INTEGER NOT NULL)")
         db.execSQL("CREATE TABLE IF NOT EXISTS native_sale_vault_movements (id TEXT PRIMARY KEY, sale_id TEXT NOT NULL, vault TEXT NOT NULL, currency TEXT NOT NULL, amount REAL NOT NULL, type TEXT NOT NULL, created_at INTEGER NOT NULL)")
         db.execSQL("CREATE TABLE IF NOT EXISTS native_sale_rate_snapshots (sale_id TEXT PRIMARY KEY, try_rate REAL, syp_rate REAL, try_syp_rate REAL)")
         db.execSQL("CREATE TABLE IF NOT EXISTS native_funding_lots (id TEXT PRIMARY KEY, product_id TEXT NOT NULL, purchase_id TEXT NOT NULL, source TEXT NOT NULL, partner_id TEXT NOT NULL, partner_name TEXT NOT NULL, share REAL NOT NULL, qty_original REAL NOT NULL, qty_remaining REAL NOT NULL, unit_cost REAL NOT NULL, currency TEXT NOT NULL, created_at INTEGER NOT NULL)")
