@@ -12,6 +12,34 @@ import java.util.UUID
 internal object NativeSalesLedger {
     data class Line(val productId:String,val quantity:Int,val unitPrice:Double,val name:String="",val model:String="",val unitCost:Double=0.0)
     data class Sale(val id:String,val currency:String,val total:Double,val cost:Double,val collected:Double,val status:String)
+    // Direct Kotlin port of returnFundingAllocationsForQty(item, qty, skipQty)
+    // in the original assets/main.js. Allocation order and reverse skipping matter.
+    data class FundingAllocation(
+        val lotId:String, val purchaseId:String, val source:String,
+        val partnerId:String, val partnerName:String, val share:Double,
+        val qty:Double, val unitCost:Double, val currency:String
+    )
+    fun returnFundingAllocationsForQty(
+        allocations:List<FundingAllocation>, qty:Double, skipQty:Double=0.0
+    ):List<FundingAllocation> {
+        var need=qty.coerceAtLeast(0.0)
+        var skip=skipQty.coerceAtLeast(0.0)
+        val out=mutableListOf<FundingAllocation>()
+        for(i in allocations.indices.reversed()) {
+            if(need<=0.0001 && skip<=0.0001) break
+            val a=allocations[i]
+            val available=a.qty.coerceAtLeast(0.0)
+            if(available<=0.0) continue
+            val skipped=minOf(skip,available)
+            skip-=skipped
+            val remaining=available-skipped
+            if(remaining<=0.0 || need<=0.0) continue
+            val take=minOf(need,remaining)
+            out.add(0,a.copy(qty=take))
+            need-=take
+        }
+        return out
+    }
     fun create(db:SQLiteDatabase) {
         db.execSQL("CREATE TABLE IF NOT EXISTS native_sales (id TEXT PRIMARY KEY, created_at INTEGER NOT NULL, currency TEXT NOT NULL, channel TEXT NOT NULL, customer TEXT NOT NULL, phone TEXT NOT NULL, total REAL NOT NULL, cost REAL NOT NULL, status TEXT NOT NULL DEFAULT 'active')")
         db.execSQL("CREATE TABLE IF NOT EXISTS native_sale_lines (id TEXT PRIMARY KEY, sale_id TEXT NOT NULL, product_id TEXT NOT NULL, quantity INTEGER NOT NULL, unit_price REAL NOT NULL, unit_cost REAL NOT NULL)")
