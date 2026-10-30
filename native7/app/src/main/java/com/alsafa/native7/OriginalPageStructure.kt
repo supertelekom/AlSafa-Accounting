@@ -206,7 +206,9 @@ internal class OriginalPageStructure(
                 background=bg(Color.rgb(255,253,249),15)
                 setPadding(dp(13),dp(13),dp(13),dp(13))
                 children.forEach { child ->
-                    addCell(build(child),
+                    val built=build(child)
+                    if(child.optString("kind")=="button") built.minimumHeight=dp(42)
+                    addCell(built,
                         activity.resources.configuration.screenWidthDp<=380 &&
                             child.optString("kind")=="button")
                 }
@@ -251,7 +253,9 @@ internal class OriginalPageStructure(
                     background=bg(Color.rgb(255,253,249),15)
                     setPadding(dp(13),dp(13),dp(13),dp(13))
                     children.forEach { child ->
-                        addCell(build(child),
+                        val built=build(child)
+                        if(child.optString("kind")=="button") built.minimumHeight=dp(42)
+                        addCell(built,
                             activity.resources.configuration.screenWidthDp<=380 &&
                                 child.optString("kind")=="button")
                     }
