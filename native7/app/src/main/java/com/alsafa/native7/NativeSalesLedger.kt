@@ -81,8 +81,19 @@ internal object NativeSalesLedger {
                     a.share.coerceIn(0.0,100.0),q,q,a.unitCost,a.currency,at))
         }
     }
+    private fun fundingAllocationsForSale(db:SQLiteDatabase,saleId:String,productId:String):List<FundingAllocation> {
+        val out=mutableListOf<FundingAllocation>()
+        db.rawQuery("SELECT lot_id,purchase_id,source,partner_id,partner_name,share,qty,unit_cost,currency FROM native_sale_funding_allocations WHERE sale_id=? AND product_id=? ORDER BY created_at ASC,rowid ASC",
+            arrayOf(saleId,productId)).use { c ->
+            while(c.moveToNext()) out.add(FundingAllocation(c.getString(0),c.getString(1),
+                c.getString(2),c.getString(3),c.getString(4),c.getString(5),
+                c.getDouble(6),c.getDouble(7),c.getString(8)))
+        }
+        return out
+    }
     fun create(db:SQLiteDatabase) {
         db.execSQL("CREATE TABLE IF NOT EXISTS native_funding_lots (id TEXT PRIMARY KEY, product_id TEXT NOT NULL, purchase_id TEXT NOT NULL, source TEXT NOT NULL, partner_id TEXT NOT NULL, partner_name TEXT NOT NULL, share REAL NOT NULL, qty_original REAL NOT NULL, qty_remaining REAL NOT NULL, unit_cost REAL NOT NULL, currency TEXT NOT NULL, created_at INTEGER NOT NULL)")
+        db.execSQL("CREATE TABLE IF NOT EXISTS native_sale_funding_allocations (id TEXT PRIMARY KEY, sale_id TEXT NOT NULL, product_id TEXT NOT NULL, lot_id TEXT NOT NULL, purchase_id TEXT NOT NULL, source TEXT NOT NULL, partner_id TEXT NOT NULL, partner_name TEXT NOT NULL, share REAL NOT NULL, qty REAL NOT NULL, unit_cost REAL NOT NULL, currency TEXT NOT NULL, created_at INTEGER NOT NULL)")
         db.execSQL("CREATE TABLE IF NOT EXISTS native_sales (id TEXT PRIMARY KEY, created_at INTEGER NOT NULL, currency TEXT NOT NULL, channel TEXT NOT NULL, customer TEXT NOT NULL, phone TEXT NOT NULL, total REAL NOT NULL, cost REAL NOT NULL, status TEXT NOT NULL DEFAULT 'active')")
         db.execSQL("CREATE TABLE IF NOT EXISTS native_sale_lines (id TEXT PRIMARY KEY, sale_id TEXT NOT NULL, product_id TEXT NOT NULL, quantity INTEGER NOT NULL, unit_price REAL NOT NULL, unit_cost REAL NOT NULL)")
         db.execSQL("CREATE TABLE IF NOT EXISTS native_sale_manual_items (line_id TEXT PRIMARY KEY, name TEXT NOT NULL, model TEXT NOT NULL)")
@@ -188,10 +199,22 @@ internal object NativeSalesLedger {
             require(product.stock>=requested) { "المخزون غير كافٍ: "+product.name }
             require(product.currency==currency) { "تحتاج أسعار العملات المختلفة إلى سعر تحويل صريح" }
             require(product.cost.isFinite() && product.cost>=0) { "كلفة المنتج غير صالحة" }
+            // The original sale consumes funding lots before recording the sale.
+            // Persist the exact allocations so a return/cancellation can restore them.
+            val allocations=consumeFundingLots(db,productId,requested.toDouble())
+            val fundingCost=allocations.sumOf { it.qty*it.unitCost }
+            for(a in allocations) db.execSQL(
+                "INSERT INTO native_sale_funding_allocations VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                arrayOf<Any>(UUID.randomUUID().toString(),id,productId,a.lotId,a.purchaseId,a.source,
+                    a.partnerId,a.partnerName,a.share,a.qty,a.unitCost,a.currency,now))
             for(line in entries) {
                 total+=line.unitPrice*line.quantity
-                cost+=product.cost*line.quantity
-                db.execSQL("INSERT INTO native_sale_lines VALUES (?,?,?,?,?,?)",arrayOf<Any>(UUID.randomUUID().toString(),id,productId,line.quantity,line.unitPrice,product.cost))
+                // Funding unit costs are persisted in their original currencies.
+                // Currency conversion must be supplied from the sale snapshot.
+                require(allocations.all { it.currency==currency }) { "سعر الصرف المحفوظ مطلوب لتحويل كلفة التمويل" }
+                val unitCost=if(requested>0) fundingCost/requested else 0.0
+                cost+=unitCost*line.quantity
+                db.execSQL("INSERT INTO native_sale_lines VALUES (?,?,?,?,?,?)",arrayOf<Any>(UUID.randomUUID().toString(),id,productId,line.quantity,line.unitPrice,unitCost))
             }
             db.execSQL("INSERT INTO native_sale_stock VALUES (?,?,?,?,?,?)",arrayOf<Any>(UUID.randomUUID().toString(),id,productId,-requested,"sale",now))
         }
@@ -374,6 +397,12 @@ internal object NativeSalesLedger {
                 c.moveToFirst()
                 require(c.getInt(0)==0) { "لا يمكن حذف فاتورة لها مرتجع/استبدال. احتفظ بها كسجل محاسبي." }
             }
+            db.rawQuery("SELECT DISTINCT product_id FROM native_sale_funding_allocations WHERE sale_id=?",arrayOf(id)).use { c ->
+                while(c.moveToNext()) {
+                    val productId=c.getString(0)
+                    restoreFundingAllocations(db,productId,fundingAllocationsForSale(db,id,productId),at=at)
+                }
+            }
             db.rawQuery("SELECT product_id,-SUM(delta) FROM native_sale_stock WHERE sale_id=? GROUP BY product_id HAVING SUM(delta)<0",arrayOf(id)).use { c ->
                 while(c.moveToNext()) db.execSQL("INSERT INTO native_sale_stock VALUES (?,?,?,?,?,?)",
                     arrayOf<Any>(UUID.randomUUID().toString(),id,c.getString(0),c.getInt(1),"cancel: "+reason,at))
@@ -438,6 +467,14 @@ internal object NativeSalesLedger {
             val existingRefund=db.rawQuery("SELECT COALESCE(SUM(refund),0) FROM native_sale_returns WHERE sale_id=?",
                 arrayOf(saleId)).use { c -> c.moveToFirst();c.getDouble(0) }
             require(existingRefund+refund<=sale.total+0.000001) { "قيمة المرتجعات تتجاوز الفاتورة" }
+            if(productId.isNotBlank()) {
+                val funding=fundingAllocationsForSale(db,saleId,productId)
+                val allocations=returnFundingAllocationsForQty(funding,quantity.toDouble(),returned.toDouble())
+                require(allocations.sumOf { it.qty }+0.0001>=quantity) {
+                    "تخصيصات رأس المال للمرتجع غير مكتملة"
+                }
+                restoreFundingAllocations(db,productId,allocations,at=at)
+            }
             db.execSQL("INSERT INTO native_sale_returns VALUES (?,?,?,?,?,?,?)",
                 arrayOf<Any>(UUID.randomUUID().toString(),saleId,productId,quantity,refund,reason,at))
             if(productId.isNotBlank()) db.execSQL("INSERT INTO native_sale_stock VALUES (?,?,?,?,?,?)",
