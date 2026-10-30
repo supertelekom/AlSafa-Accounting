@@ -56,3 +56,11 @@ The original tablet `assets/style.css` was inspected directly for these rules:
 **Review impact across nine routes:** dashboard recent records; product search/photo actions; sales search; maintenance photo actions and search; supplier search; expense search; cashbox movement search; report filters/search; settings search if present. These are cross-route *targets*, not verified occurrences.
 
 **Pending verification:** Search must actually filter as text is typed; styling does not implement search logic. Photo buttons are still not proof of camera/gallery/zoom functionality. Android compilation, APK, device screenshots and all nine route visual parity remain untested. No modifications to accounting rules or `native6`.
+
+## Follow-up: RTL wrapping geometry fix (203b7eae)
+
+- Inspected the current shared Native7 `SourceFlow` implementation rather than repeating the legacy CSS extraction.
+- Found a concrete cross-screen overflow defect: the wrap condition compared `used + childWidth` against available width but did not include the gap before the next item. A row could therefore exceed its measured width even when every button individually fit.
+- Corrected wrap measurement to include the inter-item gap, and positioned each RTL child using the same measured offset. This is a shared component change affecting any page using `SourceFlow`, not a change to labels, original routes, or accounting rules.
+- Code commit: `203b7eaeb736334ea4e2f53fae66622f394fd231`.
+- Remaining verification: Android Studio compilation, actual tablet portrait/landscape, long Arabic action labels, and nine-screen screenshot comparisons. This change does not establish that all screens match the old UI or that search/photo actions work.
