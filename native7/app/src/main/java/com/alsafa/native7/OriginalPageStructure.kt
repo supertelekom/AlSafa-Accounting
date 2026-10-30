@@ -368,8 +368,17 @@ internal class OriginalPageStructure(
         target.addView(build(pages.getJSONObject("variant-row-template")))
     }
     private fun removeMatching(button:View,sourceClass:String) {
-        ancestors(button).firstOrNull { metadata[it]?.let { n -> classes(n).contains(sourceClass) }==true }?.let {
-            (it.parent as? ViewGroup)?.removeView(it)
+        ancestors(button).firstOrNull { metadata[it]?.let { n -> classes(n).contains(sourceClass) }==true }?.let { removed ->
+            (removed.parent as? ViewGroup)?.removeView(removed)
+            // Detached fields must not participate in subsequent visibility rules.
+            fun unregister(view:View) {
+                metadata.remove(view)
+                controls.entries.removeAll { it.value === view }
+                radioNames.values.forEach { group -> group.removeAll { it === view } }
+                if(view is ViewGroup) for(i in 0 until view.childCount) unregister(view.getChildAt(i))
+            }
+            unregister(removed)
+            conditions()
         }
     }
     private val operationalActions=mapOf(
