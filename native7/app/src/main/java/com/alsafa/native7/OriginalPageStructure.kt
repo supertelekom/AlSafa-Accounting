@@ -391,27 +391,40 @@ internal class OriginalPageStructure(
                             setPadding(dp(14),dp(14),dp(14),dp(14))
                         }
                         if(cs.contains("product-card-head")) {
-                            // Original card head is a flex row with 9px gap.
+                            // Source .product-card-head > div:last-child owns the
+                            // flexible text column; b/small are nested inside it.
                             orientation=LinearLayout.HORIZONTAL
                             gravity=Gravity.CENTER_VERTICAL
+                            fun styleProductHeaderDescendants(view:View) {
+                                val source=metadata[view]
+                                if(view is TextView && source!=null) {
+                                    when(source.optString("tag")) {
+                                        "b" -> {
+                                            view.textSize=13f
+                                            view.typeface=Typeface.create(font,Typeface.BOLD)
+                                            view.setPadding(0,0,0,0)
+                                            view.setSingleLine(true)
+                                            view.ellipsize=android.text.TextUtils.TruncateAt.END
+                                        }
+                                        "small" -> {
+                                            view.textSize=10f
+                                            view.setTextColor(muted)
+                                            view.setPadding(0,dp(3),0,0)
+                                            view.setSingleLine(true)
+                                            view.ellipsize=android.text.TextUtils.TruncateAt.END
+                                        }
+                                    }
+                                }
+                                if(view is ViewGroup) for(j in 0 until view.childCount)
+                                    styleProductHeaderDescendants(view.getChildAt(j))
+                            }
                             for(i in 0 until childCount) {
                                 val child=getChildAt(i)
-                                val source=metadata[child]
                                 child.layoutParams=LinearLayout.LayoutParams(
                                     if(i==childCount-1) 0 else -2,-2,
                                     if(i==childCount-1) 1f else 0f
                                 ).apply { if(i>0) marginStart=dp(9) }
-                                if(child is TextView && source!=null) {
-                                    when(source.optString("tag")) {
-                                        "b" -> { child.textSize=13f;child.typeface=Typeface.create(font,Typeface.BOLD) }
-                                        "small" -> { child.textSize=10f;child.setTextColor(muted) }
-                                    }
-                                    if(source.optString("tag")=="b" || source.optString("tag")=="small") {
-                                        child.setPadding(0,if(source.optString("tag")=="small") dp(3) else 0,0,0)
-                                        child.setSingleLine(true)
-                                        child.ellipsize=android.text.TextUtils.TruncateAt.END
-                                    }
-                                }
+                                styleProductHeaderDescendants(child)
                             }
                         }
                         if(cs.contains("report-tile")) {
