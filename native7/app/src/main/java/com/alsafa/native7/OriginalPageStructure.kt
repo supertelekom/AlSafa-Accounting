@@ -72,6 +72,8 @@ internal class OriginalPageStructure(
             bottomMargin=dp(when {
                 css.contains("form-section") -> 14
                 css.contains("section-card") -> 14
+                css.contains("section-title") -> 0
+                css.contains("transaction") -> 0
                 else -> margin
             })
             if(css.contains("form-section")) topMargin=dp(20)
