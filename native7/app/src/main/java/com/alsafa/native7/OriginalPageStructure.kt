@@ -401,8 +401,31 @@ internal class OriginalPageStructure(
                         if(cs.contains("product-info")) {
                             // Source product metadata is a two-column grid, with
                             // the left flexible text and right intrinsic value.
+                            orientation=LinearLayout.VERTICAL
                             setPadding(0,dp(11),0,0)
-                            for(i in 0 until childCount) {
+                            // Original product-info uses a two-column CSS grid.
+                            // Preserve the source child order while pairing each
+                            // label/value in a horizontal row.
+                            val originalChildren=(0 until childCount).map { getChildAt(it) }
+                            removeAllViews()
+                            originalChildren.chunked(2).forEachIndexed { rowIndex,pair ->
+                                val row=LinearLayout(activity).apply {
+                                    orientation=LinearLayout.HORIZONTAL
+                                    layoutDirection=View.LAYOUT_DIRECTION_RTL
+                                    gravity=Gravity.CENTER_VERTICAL
+                                }
+                                pair.forEachIndexed { index,child ->
+                                    row.addView(child,LinearLayout.LayoutParams(
+                                        if(index==0) 0 else -2,-2,
+                                        if(index==0) 1f else 0f
+                                    ).apply { if(index>0) marginStart=dp(12) })
+                                }
+                                addView(row,LinearLayout.LayoutParams(-1,-2).apply {
+                                    if(rowIndex>0) topMargin=dp(7)
+                                })
+                            }
+                            for(i in 0 until originalChildren.size) {
+                                val child=originalChildren[i]
                                 val child=getChildAt(i)
                                 val source=metadata[child]
                                 if(child is TextView && source!=null) {
