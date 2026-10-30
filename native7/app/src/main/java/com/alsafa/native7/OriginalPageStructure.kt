@@ -249,7 +249,11 @@ internal class OriginalPageStructure(
                     "empty" -> { setPadding(dp(18),dp(22),dp(18),dp(22));gravity=Gravity.CENTER }
                     "field" -> setPadding(0,0,0,0)
                     "help" -> setPadding(0,dp(4),0,dp(10))
-                    else -> {
+                    else -> Unit
+                }
+                // Source classes are orthogonal to the structural kind. Apply these
+                // after the kind switch so a 'section' or 'form' also gets its CSS.
+                run {
                         if(cs.contains("report-tile")) {
                             background=bg(Color.rgb(255,253,249),13)
                             minimumHeight=dp(78)
@@ -307,7 +311,6 @@ internal class OriginalPageStructure(
                             val inset=if(activity.resources.configuration.screenWidthDp>=720) 22 else 15
                             setPadding(dp(inset),dp(inset),dp(inset),dp(inset))
                         }
-                    }
                 }
             }
         }
