@@ -636,3 +636,13 @@ Balanced-brace extraction of each `function renderX()` in `assets/main.js`; the 
 | الإعدادات | Form sections, buttons | backup dialogs and settings |
 
 **Not tested:** Android Studio compile, device screenshots, all nine routes end-to-end. **Not completed:** original UI names/order parity for all nested markup, source modals/animations, real images, and action wiring. No changes outside `native7`.
+
+## Shared label-gap conflict and product-card subtitle correction — 2026-10-30
+
+**Source-backed defect found:** Tablet v3.9.359 `assets/style.css` declares `.field label` margin-bottom 6px, and `.product-card-head small` margin-top 3px. Native renderer's `childParams` already adds a 6dp bottom margin to `label` children, but the generic text branch *also* executed `if(kind=="text" && tag=="label") setPadding(0,0,0,dp(6))`. That creates 12dp of vertical spacing and affects any form field using this shared renderer.
+
+**Code commit `e210b2ee6ceee261255f681e4682ec84b90f6067`:** Removed the duplicate label padding, leaving the 6dp gap under `childParams`. Added 3dp top padding for direct `small` children in the product-card header to match the original subtitle spacing. This does not change labels, field order, financial rules or database behavior.
+
+**Nine-route regression targets:** Home mode forms; product create/edit; full/simple sales; repair intake/edit; supplier and purchase forms; expenses; cash movement; report date filters; settings. On every page inspect label-to-control gaps, RTL text alignment and long text truncation. In products also verify photo+name header and stock-warning borders.
+
+**Remaining unverified:** Whether all source labels are direct children of `field`, original source JSON fidelity, all nine screens' exact text/order, modal and motion fidelity, real photo rendering, every click handler, Kotlin compile, APK build and Honor Pad X8b screenshots. No device or build test has been performed.
