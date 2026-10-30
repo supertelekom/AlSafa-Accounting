@@ -42,3 +42,17 @@ This matrix describes **what to test**, not confirmed usage of every class on ev
 - No accounting rules or Native 6 files were changed.
 
 **Status:** shared source-based list rendering updated and committed; nine-screen complete parity is **not** established.
+
+## 2026-10-30 follow-up — cascade and sibling correctness
+
+Re-read the original tablet ZIP `assets/style.css` **including later overrides**, not only the first CSS occurrence:
+- `.list-row:last-child` and `.transaction:last-child` remove the final divider based on sibling position, not on a synthetic JSON `last` property.
+- `.tiny-button.delete` has `#fff2ef` background, `#f1c9c1` border, and danger-colored text.
+- Later `[data-invoice-row="repair"] .row-actions` overrides the generic 5px gap to **6px**, forces one-line horizontally scrollable buttons with RTL direction, and changes layout on <=719px. Earlier audit had omitted this late cascade; this remains to be implemented faithfully.
+- A separate `.qr-product-card .row-actions` override centers actions and sets 12px top margin.
+
+**Commits saved:**
+- `e75e6f9402cf749e63d059a2837c90326b976010`: destructive tiny-button styling.
+- `2ac8f6ab6b1780b80abbdafabc649f7a988b1573`: use actual final visible sibling to remove list-row and transaction divider; removes dependence on a JSON `last` flag.
+
+**Important regression check:** The shared parent removes the divider only if its last visible child is a list-row or transaction; nested source structure and sibling groups must be inspected in all nine screens. Do not infer this makes every list identical. Still no Kotlin compilation, APK, device screenshot comparison, or complete action verification.
