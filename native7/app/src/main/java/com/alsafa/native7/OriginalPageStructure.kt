@@ -225,6 +225,20 @@ internal class OriginalPageStructure(
                         if(cs.contains("section-card")) {
                             background=bg(Color.rgb(255,253,249),17)
                         }
+                        if(cs.contains("section-title")) {
+                            orientation=LinearLayout.HORIZONTAL
+                            gravity=Gravity.CENTER_VERTICAL
+                            setPadding(dp(15),dp(14),dp(15),dp(14))
+                            background=GradientDrawable().apply {
+                                setColor(Color.TRANSPARENT)
+                                setStroke(dp(1),line)
+                            }
+                        }
+                        if(cs.contains("form-card")) {
+                            background=bg(Color.rgb(255,253,249),17)
+                            val inset=if(activity.resources.configuration.screenWidthDp>=720) 22 else 15
+                            setPadding(dp(inset),dp(inset),dp(inset),dp(inset))
+                        }
                     }
                     "help" -> setPadding(0,dp(4),0,dp(10))
                 }
