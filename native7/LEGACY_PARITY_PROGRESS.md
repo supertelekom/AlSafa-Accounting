@@ -520,3 +520,28 @@ The table is a regression **test plan**, not evidence that all nine routes have 
 **All nine sections:** Home, products, sales, maintenance, suppliers, expenses, cashboxes, reports and settings should be regression-tested for shared card clipping and any transaction list dividers. The above changes do not certify full nine-screen parity.
 
 **Remaining before acceptance:** extract complete source markup/labels/order from the nine JavaScript functions; verify original-structure JSON mapping; compare font asset and full responsive CSS; implement and inspect modals, animations, images, controls; compile APK in Android Studio and compare screenshots on Honor Pad X8b. No APK/device test was performed.
+
+## Integrated shared card layout audit — 2026-10-30
+
+**Original source inspected:** `assets/style.css` from the tablet v3.9.359 ZIP; source declarations `.section-card`, `.section-title`, `.form-card`, `.form-section`, `.transaction` and their descendants. The Android renderer previously treated every `section` as a padded card even when the source class was `section-card`, and injected generic 2dp child margins into header/transaction sequences. These were cross-route layout differences.
+
+### Implemented
+- **`027aa0cb3abb07d24c78ff078e81c9ef7751b5b4`**: `section-card` has zero internal padding so the original section title/body determine their own spacing; source `form-card` still retains its 15dp/22dp padding. Removes generic 2dp bottom gap inside `section-title` flex children and normalizes `form-section` to 13sp bold deep gold.
+- **`617cbf295693f56c12f146951fe79df1095c9e98`**: shared `childParams` stops adding synthetic bottom margins to `section-title` and `transaction` elements; the original CSS owns their dividers and spacing.
+
+### Nine-section regression matrix
+
+| Section | Shared parity checks after these commits | Not yet verified |
+|---|---|---|
+| الرئيسية | dashboard cards, section headers, transaction rows | mode switches, all card sizes and animations |
+| المنتجات | product form headings, stock movements | variants, image thumbnails, barcode controls, complete field order |
+| المبيعات | invoice card sections, collection rows | full/simple invoice dialogs, discount rules, print/WhatsApp |
+| الصيانة | repair sections, history rows | photo viewer, quick buttons, delivery dialogs |
+| الموردون | supplier card headers, debt and payment rows | source purchase forms and supplier statements |
+| المصروفات | expense card and transaction list spacing | all inputs and expense actions |
+| الصناديق | cash movement rows and sections | currency balances, daily closing UI |
+| التقارير | report sections and transaction list | date filters, partner report layout |
+| الإعدادات | form section headings | backup dialogs, all settings and controls |
+
+### Status and constraints
+The two commits were written to GitHub branch `native6-development` under `native7` only. This is an **integrated shared-layout patch** with a nine-route regression checklist, **not a completed screen-by-screen comparison**. The original source remains authoritative for retained UI; intentionally excluded external partners and cloud-only features must not be reintroduced. No Android Studio compile, APK build, or Honor Pad X8b screenshot comparison was run. Remaining tasks: full JavaScript/JSON node-by-node audit, exact names/order, modal sizing and animations, image controls, event wiring, and device verification.
