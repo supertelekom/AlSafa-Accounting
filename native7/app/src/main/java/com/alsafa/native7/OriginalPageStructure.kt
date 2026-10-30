@@ -166,18 +166,15 @@ internal class OriginalPageStructure(
                     contentDescription=summary.optString("text").ifEmpty { "تفاصيل" }
                     setOnClickListener {
                         val expand=body.visibility!=View.VISIBLE
-                        if(expand) {
-                            body.alpha=0f
-                            body.visibility=View.VISIBLE
-                            body.animate().alpha(1f).setDuration(150L).start()
-                        } else {
-                            body.animate().cancel()
-                            body.visibility=View.GONE
-                            body.alpha=1f
-                        }
+                        // Native details/summary semantics: show or hide immediately.
+                        // Do not invent a fade animation absent from the source.
+                        body.animate().cancel()
+                        body.alpha=1f
+                        body.visibility=if(expand) View.VISIBLE else View.GONE
                         isSelected=expand
                     }
                     isSelected=initiallyOpen
+                    importantForAccessibility=View.IMPORTANT_FOR_ACCESSIBILITY_YES
                 })
                 children.drop(1).forEach { body.addView(build(it)) }
                 addView(body)
