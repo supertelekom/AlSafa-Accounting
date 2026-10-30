@@ -191,7 +191,8 @@ internal class OriginalPageStructure(
                     typeface=Typeface.create(font,Typeface.BOLD)
                     setTextColor(Color.rgb(122,81,24))
                 }
-                if(kind=="text" && n.optString("tag")=="label") setPadding(0,0,0,dp(6))
+                // Field label spacing is assigned once by childParams (6dp).
+                // Do not also pad the TextView: that doubled the source gap.
                 if(cs.contains("simple-icon")) {
                     val compact=activity.resources.configuration.screenWidthDp<=420
                     textSize=if(compact) 22f else 25f
@@ -406,6 +407,7 @@ internal class OriginalPageStructure(
                                         "small" -> { child.textSize=10f;child.setTextColor(muted) }
                                     }
                                     if(source.optString("tag")=="b" || source.optString("tag")=="small") {
+                                        child.setPadding(0,if(source.optString("tag")=="small") dp(3) else 0,0,0)
                                         child.setSingleLine(true)
                                         child.ellipsize=android.text.TextUtils.TruncateAt.END
                                     }
