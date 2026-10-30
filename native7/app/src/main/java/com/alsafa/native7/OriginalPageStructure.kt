@@ -332,7 +332,14 @@ internal class OriginalPageStructure(
                 action=="select-quick-repair" -> {
                     val manual=n.optJSONObject("data")?.optString("data-manual-price")=="1"
                     controls["father-custom-repair"]?.visibility=if(manual) View.VISIBLE else View.GONE
-                    view.background=bg(Color.rgb(243,229,204),14,Color.rgb(183,138,62))
+                    // Only one quick-repair choice should remain visually selected.
+                    metadata.forEach { (other,node) ->
+                        if(node.optString("action")=="select-quick-repair") {
+                            other.background=if(other===view)
+                                bg(Color.rgb(243,229,204),14,Color.rgb(183,138,62))
+                            else bg(Color.rgb(247,237,221),12,Color.rgb(223,201,164))
+                        }
+                    }
                 }
                 action=="remove-item" -> removeMatching(view,"line-item")
                 else -> Toast.makeText(activity,"معاينة الواجهة فقط — الوظيفة غير مفعلة بعد",Toast.LENGTH_SHORT).show()
