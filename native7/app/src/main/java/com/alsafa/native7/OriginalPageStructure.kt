@@ -317,6 +317,8 @@ internal class OriginalPageStructure(
                         // body own their padding. A .form-card is padded instead.
                         val inset=when {
                             cs.contains("section-card") -> 0
+                            cs.contains("form-card") && activity.resources.configuration.screenWidthDp>=720 -> 22
+                            cs.contains("form-card") -> 15
                             kind=="form" && activity.resources.configuration.screenWidthDp>=720 -> 22
                             else -> 15
                         }
@@ -563,24 +565,27 @@ internal class OriginalPageStructure(
                             orientation=LinearLayout.HORIZONTAL
                             gravity=Gravity.CENTER_VERTICAL
                             setPadding(dp(15),dp(14),dp(15),dp(14))
-                            // CSS .section-title h3 and .link-button are
-                            // descendant selectors: match source tags/classes.
-                            for(i in 0 until childCount) {
-                                val child=getChildAt(i)
-                                val source=metadata[child]
-                                if(child is TextView && source!=null) {
+                            // Source selectors are descendants; headings and link
+                            // actions can be wrapped in additional layout nodes.
+                            fun styleSectionTitleDescendants(view:View) {
+                                val source=metadata[view]
+                                if(view is TextView && source!=null) {
                                     if(source.optString("tag")=="h3") {
-                                        child.textSize=15f
-                                        child.typeface=Typeface.create(font,Typeface.BOLD)
-                                        child.setPadding(0,0,0,0)
+                                        view.textSize=15f
+                                        view.typeface=Typeface.create(font,Typeface.BOLD)
+                                        view.setPadding(0,0,0,0)
                                     }
                                     if(classes(source).contains("link-button")) {
-                                        child.textSize=12f
-                                        child.setTextColor(Color.rgb(122,81,24))
-                                        child.setPadding(0,0,0,0)
+                                        view.textSize=12f
+                                        view.setTextColor(Color.rgb(122,81,24))
+                                        view.setPadding(0,0,0,0)
                                     }
                                 }
+                                if(view is ViewGroup) for(j in 0 until view.childCount)
+                                    styleSectionTitleDescendants(view.getChildAt(j))
                             }
+                            for(i in 0 until childCount)
+                                styleSectionTitleDescendants(getChildAt(i))
                             for(i in 0 until childCount) {
                                 val child=getChildAt(i)
                                 child.layoutParams=LinearLayout.LayoutParams(
