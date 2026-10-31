@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "tabletMinWidthDp": 600,
-  "description": "Source-derived native presentation overrides for opening balances, products, stock and sales. No source labels, records or actions are synthesized.",
+  "description": "Presentation-only overrides for source-derived forms, stock, invoices, discount rules, loyalty and collections. No accounting values or source labels are changed.",
   "routes": {
     "opening-balances": {
       "fieldPaddingDp": 16,
@@ -203,6 +203,52 @@
       "tableRowGapDp": 12,
       "saleLinePaddingDp": 16,
       "saleLineGapDp": 16
+    },
+    "discount-rules": {
+      "fieldPaddingDp": 16,
+      "fieldMinHeightDp": 56,
+      "fieldCornerRadiusDp": 16,
+      "buttonPaddingDp": 18,
+      "buttonMinHeightDp": 70,
+      "buttonCornerRadiusDp": 18,
+      "tableCellPaddingDp": 16,
+      "tableRowMinHeightDp": 56,
+      "tableRowGapDp": 12
+    },
+    "loyalty-center": {
+      "fieldPaddingDp": 16,
+      "fieldMinHeightDp": 56,
+      "fieldCornerRadiusDp": 16,
+      "buttonPaddingDp": 18,
+      "buttonMinHeightDp": 70,
+      "buttonCornerRadiusDp": 18,
+      "tableCellPaddingDp": 16,
+      "tableRowMinHeightDp": 56,
+      "tableRowGapDp": 12
     }
-  }
+  },
+  "scopedRules": [
+    {
+      "section": "discounts",
+      "routes": [
+        "sale-form",
+        "father-sale",
+        "sales",
+        "settings"
+      ],
+      "sourceIdContains": [
+        "discount",
+        "loyalty"
+      ],
+      "sourceClassContains": [
+        "discount",
+        "loyalty"
+      ],
+      "fieldPaddingDp": 16,
+      "fieldMinHeightDp": 56,
+      "buttonPaddingDp": 18,
+      "buttonMinHeightDp": 70,
+      "cornerRadiusDp": 18
+    }
+  ]
 }
