@@ -159,8 +159,13 @@ internal class OriginalPageStructure(
                 if(cs.any { it in listOf("barcode-help","help") }) { textSize=11f;setTextColor(muted) }
                 if(cs.contains("metric-label")) { textSize=11f;setTextColor(muted) }
                 if(cs.contains("photo-preview")) {
-                    minWidth=dp(116)
-                    minHeight=dp(84)
+                    if(activity.resources.configuration.screenWidthDp<=520) {
+                        minWidth=0
+                        minHeight=dp(170)
+                    } else {
+                        minWidth=dp(116)
+                        minHeight=dp(84)
+                    }
                     textSize=10f
                     gravity=Gravity.CENTER
                     setTextColor(muted)
@@ -313,11 +318,25 @@ internal class OriginalPageStructure(
                 }
             }
             "heading","inputRow","photoRow","searchRow" -> LinearLayout(activity).apply {
-                orientation=LinearLayout.HORIZONTAL;layoutDirection=View.LAYOUT_DIRECTION_RTL;gravity=Gravity.CENTER_VERTICAL
+                // Original style.css: .photo-picker becomes a single-column
+                // grid at max-width:520px; wider screens keep 116px + 1fr.
+                val narrowPhoto=kind=="photoRow" && activity.resources.configuration.screenWidthDp<=520
+                orientation=if(narrowPhoto) LinearLayout.VERTICAL else LinearLayout.HORIZONTAL
+                layoutDirection=View.LAYOUT_DIRECTION_RTL
+                gravity=Gravity.CENTER_VERTICAL
                 children.forEachIndexed { index,child ->
                     val content=build(child)
-                    addView(content,LinearLayout.LayoutParams(if(index==0 && kind!="photoRow") 0 else if(index==0 && kind=="photoRow") dp(116) else if(kind=="photoRow") 0 else -2,-2,
-                        if(index==0 && kind!="photoRow" || index>0 && kind=="photoRow") 1f else 0f).apply { if(index<children.lastIndex) marginEnd=dp(if(kind=="photoRow") 12 else 9) })
+                    if(narrowPhoto) {
+                        addView(content,LinearLayout.LayoutParams(-1,-2).apply {
+                            if(index>0) topMargin=dp(12)
+                        })
+                    } else {
+                        addView(content,LinearLayout.LayoutParams(
+                            if(index==0 && kind!="photoRow") 0 else if(index==0 && kind=="photoRow") dp(116) else if(kind=="photoRow") 0 else -2,
+                            -2,
+                            if(index==0 && kind!="photoRow" || index>0 && kind=="photoRow") 1f else 0f
+                        ).apply { if(index<children.lastIndex) marginEnd=dp(if(kind=="photoRow") 12 else 9) })
+                    }
                 }
                 if(kind=="heading") setPadding(0,dp(2),0,dp(14))
                 if(kind=="searchRow") minimumHeight=dp(42)
