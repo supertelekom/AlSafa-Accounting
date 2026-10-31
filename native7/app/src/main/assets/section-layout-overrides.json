@@ -18,8 +18,10 @@
       "fieldCornerRadiusDp": 14,
       "sectionGapDp": 16,
       "buttonPaddingDp": 16,
-      "buttonMinHeightDp": 64,
-      "buttonCornerRadiusDp": 16
+      "buttonMinHeightDp": 70,
+      "buttonCornerRadiusDp": 16,
+      "variantRowGapDp": 16,
+      "variantPaddingDp": 14
     },
     "product-form": {
       "fieldPaddingDp": 16,
@@ -27,8 +29,10 @@
       "fieldCornerRadiusDp": 14,
       "sectionGapDp": 16,
       "buttonPaddingDp": 16,
-      "buttonMinHeightDp": 64,
-      "buttonCornerRadiusDp": 16
+      "buttonMinHeightDp": 70,
+      "buttonCornerRadiusDp": 16,
+      "variantRowGapDp": 16,
+      "variantPaddingDp": 14
     }
   }
 }
