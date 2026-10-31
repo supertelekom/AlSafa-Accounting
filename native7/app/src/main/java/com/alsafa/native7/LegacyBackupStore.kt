@@ -6,6 +6,11 @@ import android.database.sqlite.SQLiteOpenHelper
 import org.json.JSONArray
 import org.json.JSONObject
 import java.security.MessageDigest
+import java.io.File
+import java.io.StringWriter
+import android.util.JsonReader
+import android.util.JsonWriter
+import android.util.JsonToken
 
 /**
  * Local-only legacy backup storage. Raw JSON is retained losslessly so that
@@ -55,6 +60,170 @@ internal class LegacyBackupStore(context: Context) :
         }
         return Inspection(counts, if (wrapped) "alsafa-accounting-backup" else "legacy-raw",
             digest(text), wrapper.optString("exportedAt"))
+    }
+
+
+    /** Two streaming passes: count/validate, then import. No whole-file String or JSONObject. */
+    private fun readJsonValue(reader: JsonReader): String {
+        val out=StringWriter()
+        JsonWriter(out).use { writer ->
+            fun copyValue() {
+                when(reader.peek()) {
+                    JsonToken.BEGIN_OBJECT -> {
+                        reader.beginObject(); writer.beginObject()
+                        while(reader.hasNext()) { writer.name(reader.nextName()); copyValue() }
+                        reader.endObject(); writer.endObject()
+                    }
+                    JsonToken.BEGIN_ARRAY -> {
+                        reader.beginArray(); writer.beginArray()
+                        while(reader.hasNext()) copyValue()
+                        reader.endArray(); writer.endArray()
+                    }
+                    JsonToken.STRING -> writer.value(reader.nextString())
+                    JsonToken.NUMBER -> {
+                        val number=reader.nextString()
+                        writer.jsonValue(number)
+                    }
+                    JsonToken.BOOLEAN -> writer.value(reader.nextBoolean())
+                    JsonToken.NULL -> { reader.nextNull(); writer.nullValue() }
+                    else -> throw IllegalArgumentException("بنية JSON غير صحيحة")
+                }
+            }
+            copyValue()
+        }
+        return out.toString()
+    }
+
+    private fun scanFile(file:File, onSection:(String,JsonReader)->Unit,
+                         onScalar:(String,String)->Unit = { _, _ -> }) {
+        file.inputStream().bufferedReader(Charsets.UTF_8).use { input ->
+            JsonReader(input).use { reader ->
+                reader.isLenient=false
+                reader.beginObject()
+                while(reader.hasNext()) {
+                    val key=reader.nextName()
+                    if(key=="data" && reader.peek()==JsonToken.BEGIN_OBJECT) {
+                        reader.beginObject()
+                        while(reader.hasNext()) onSection(reader.nextName(),reader)
+                        reader.endObject()
+                    } else if(key=="data") {
+                        throw IllegalArgumentException("حقل data في النسخة غير صالح")
+                    } else if(key=="format" || key=="formatVersion" || key=="exportedAt") {
+                        onScalar(key,readJsonValue(reader))
+                    } else {
+                        onSection(key,reader)
+                    }
+                }
+                reader.endObject()
+                check(reader.peek()==JsonToken.END_DOCUMENT) { "يوجد محتوى إضافي بعد نهاية النسخة" }
+            }
+        }
+    }
+
+    fun inspect(file:File):Inspection {
+        val counts=linkedMapOf<String,Int>()
+        var format="legacy-raw"
+        var version=0
+        var exportedAt=""
+        val required=mutableSetOf<String>()
+        scanFile(file,{ key,reader ->
+            required.add(key)
+            if(reader.peek()==JsonToken.BEGIN_ARRAY) {
+                var count=0
+                reader.beginArray()
+                while(reader.hasNext()) { reader.skipValue(); count++ }
+                reader.endArray()
+                counts[key]=count
+            } else reader.skipValue()
+        },{ key,value ->
+            when(key) {
+                "format" -> format=JSONObject("{\"value\":$value}").optString("value")
+                "formatVersion" -> version=value.toIntOrNull() ?: 0
+                "exportedAt" -> exportedAt=JSONObject("{\"value\":$value}").optString("value")
+            }
+        })
+        if(format=="alsafa-accounting-backup" && version !in 1..2)
+            throw IllegalArgumentException("إصدار النسخة غير مدعوم")
+        require(required.containsAll(setOf("settings","sales","products"))) {
+            "الملف لا يحتوي على بيانات الصفا الأساسية"
+        }
+        val digest=MessageDigest.getInstance("SHA-256")
+        file.inputStream().buffered().use { stream ->
+            val buffer=ByteArray(65536)
+            while(true) {
+                val n=stream.read(buffer)
+                if(n<0) break
+                digest.update(buffer,0,n)
+            }
+        }
+        val hash=digest.digest().joinToString("") { "%02x".format(it) }
+        return Inspection(counts,format,hash,exportedAt)
+    }
+
+    /** Atomically stage all records without materializing the complete backup. */
+    fun importInitial(file:File, inspection:Inspection,
+                      onProgress:(String,Int,Int)->Unit={ _,_,_-> }):Inspection {
+        val db=writableDatabase
+        db.beginTransaction()
+        try {
+            check(!hasData()) { "توجد بيانات مستعادة مسبقاً؛ لن نستبدلها أو ندمجها دون فحص" }
+            scanFile(file,{ key,reader ->
+                val total=inspection.counts[key] ?: 0
+                onProgress(key,0,total)
+                if(reader.peek()==JsonToken.BEGIN_ARRAY) {
+                    db.execSQL("INSERT INTO legacy_sections(name,payload,item_count) VALUES(?,?,?)",
+                        arrayOf<Any?>(key,"[",total))
+                    reader.beginArray()
+                    var ordinal=0
+                    val batch=JSONArray()
+                    val fragments=StringBuilder()
+                    fun flush() {
+                        if(batch.length()==0) return
+                        val offset=ordinal-batch.length()
+                        LegacyOperationalSchema.importSection(db,key,batch,offset)
+                        LegacyDomainTables.importSection(db,key,batch,offset)
+                        db.execSQL("UPDATE legacy_sections SET payload=payload || ? WHERE name=?",
+                            arrayOf<Any?>(fragments.toString(),key))
+                        onProgress(key,ordinal,total)
+                        while(batch.length()>0) batch.remove(batch.length()-1)
+                        fragments.setLength(0)
+                    }
+                    while(reader.hasNext()) {
+                        val raw=readJsonValue(reader)
+                        val value=org.json.JSONTokener(raw).nextValue()
+                        val id=(value as? JSONObject)?.optString("id")?.takeIf { it.isNotBlank() }
+                        db.execSQL("INSERT INTO legacy_records(section,ordinal,original_id,payload) VALUES(?,?,?,?)",
+                            arrayOf<Any?>(key,ordinal,id,raw))
+                        if(ordinal>0) fragments.append(',')
+                        fragments.append(raw)
+                        batch.put(value)
+                        ordinal++
+                        if(batch.length()>=20) flush()
+                    }
+                    flush()
+                    reader.endArray()
+                    db.execSQL("UPDATE legacy_sections SET payload=payload || ']' WHERE name=?",
+                        arrayOf<Any?>(key))
+                    check(ordinal==total) { "عدد سجلات $key لا يطابق الفحص" }
+                } else {
+                    val raw=readJsonValue(reader)
+                    db.execSQL("INSERT INTO legacy_sections(name,payload,item_count) VALUES(?,?,?)",
+                        arrayOf<Any?>(key,raw,0))
+                    onProgress(key,0,0)
+                }
+            })
+            db.execSQL("INSERT INTO legacy_metadata(name,payload) VALUES(?,?)",
+                arrayOf<Any?>("backup_sha256",inspection.sha256))
+            db.execSQL("INSERT INTO legacy_metadata(name,payload) VALUES(?,?)",
+                arrayOf<Any?>("backup_exported_at",inspection.exportedAt))
+            LegacyDomainTables.audit(db)
+            val saved=db.rawQuery("SELECT COUNT(*) FROM legacy_records",null).use {
+                it.moveToFirst(); it.getInt(0)
+            }
+            check(saved==inspection.counts.values.sum()) { "لم يتم حفظ جميع السجلات" }
+            db.setTransactionSuccessful()
+        } finally { db.endTransaction() }
+        return inspection
     }
 
     fun hasData(): Boolean = readableDatabase.rawQuery(
