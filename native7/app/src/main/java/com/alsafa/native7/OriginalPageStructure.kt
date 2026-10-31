@@ -561,31 +561,41 @@ internal class OriginalPageStructure(
                             for(i in 0 until childCount) styleListDescendants(getChildAt(i))
                         }
                         if(cs.contains("row-actions")) {
-                            // The final legacy CSS cascade uses RTL, nowrap,
-                            // overflow-x:auto and 6px gap on .row-actions.
-                            // Do not split action buttons into invented rows.
                             val actionViews=(0 until childCount).map { getChildAt(it) }
                             removeAllViews()
                             orientation=LinearLayout.VERTICAL
-                            val strip=LinearLayout(activity).apply {
-                                orientation=LinearLayout.HORIZONTAL
-                                layoutDirection=View.LAYOUT_DIRECTION_RTL
-                                gravity=Gravity.CENTER_VERTICAL
-                                actionViews.forEachIndexed { index,child ->
-                                    addView(child,LinearLayout.LayoutParams(-2,-2).apply {
-                                        if(index>0) marginStart=dp(6)
-                                    })
+                            // Legacy tablet @media(min-width:720px) overrides
+                            // .row-actions with flex-wrap:wrap. The repair row
+                            // also overrides its phone-only horizontal scroll.
+                            val tablet=activity.resources.configuration.screenWidthDp>=720
+                            if(tablet) {
+                                val wrap=SourceFlow(activity,dp(5)).apply {
+                                    layoutDirection=View.LAYOUT_DIRECTION_RTL
+                                    actionViews.forEach { addView(it,ViewGroup.LayoutParams(-2,-2)) }
                                 }
+                                addView(wrap,LinearLayout.LayoutParams(-1,-2))
+                            } else {
+                                // Narrow repair invoice rows use horizontal RTL
+                                // scrolling. Keep all actions in source order.
+                                val strip=LinearLayout(activity).apply {
+                                    orientation=LinearLayout.HORIZONTAL
+                                    layoutDirection=View.LAYOUT_DIRECTION_RTL
+                                    gravity=Gravity.CENTER_VERTICAL
+                                    actionViews.forEachIndexed { index,child ->
+                                        addView(child,LinearLayout.LayoutParams(-2,-2).apply {
+                                            if(index>0) marginStart=dp(6)
+                                        })
+                                    }
+                                }
+                                val scroll=android.widget.HorizontalScrollView(activity).apply {
+                                    isHorizontalScrollBarEnabled=false
+                                    layoutDirection=View.LAYOUT_DIRECTION_RTL
+                                    setPadding(dp(1),dp(3),dp(1),dp(5))
+                                    clipToPadding=false
+                                    addView(strip,android.widget.FrameLayout.LayoutParams(-2,-2))
+                                }
+                                addView(scroll,LinearLayout.LayoutParams(-1,-2))
                             }
-                            val scroll=android.widget.HorizontalScrollView(activity).apply {
-                                isHorizontalScrollBarEnabled=false
-                                isFillViewport=false
-                                layoutDirection=View.LAYOUT_DIRECTION_RTL
-                                setPadding(dp(1),dp(3),dp(1),dp(5))
-                                clipToPadding=false
-                                addView(strip,android.widget.FrameLayout.LayoutParams(-2,-2))
-                            }
-                            addView(scroll,LinearLayout.LayoutParams(-1,-2))
                         }
                         if(cs.contains("transaction")) {
                             // Source .transaction is a horizontal flex row, not
