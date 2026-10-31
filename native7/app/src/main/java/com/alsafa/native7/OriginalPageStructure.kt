@@ -1249,10 +1249,28 @@ internal class OriginalPageStructure(
                         }
                 }
             }
-        } else label(n.optString("text"),13f,if(n.optBoolean("primary")) Color.WHITE else gold,true).apply {
-            gravity=Gravity.CENTER;setPadding(dp(12),dp(10),dp(12),dp(10));minHeight=dp(if(cs.contains("close")) 32 else if(cs.contains("tiny-button")) 25 else if(cs.contains("father-complete")) 64 else 44)
-            background=if(n.optBoolean("primary")) GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(Color.rgb(179,131,50),Color.rgb(139,96,31))).apply { cornerRadius=dp(12).toFloat() }
-                else bg(Color.rgb(247,237,221),12,Color.rgb(223,201,164))
+        } else label(
+            n.optString("text"),13f,
+            when {
+                n.optBoolean("primary") || cs.contains("primary-button") -> Color.WHITE
+                cs.contains("danger-button") -> Color.rgb(184,88,75)
+                else -> Color.rgb(122,81,24)
+            },true
+        ).apply {
+            gravity=Gravity.CENTER
+            // Source .primary-button/.secondary-button/.danger-button:
+            // horizontal padding 15px, height 44px and 12px radius.
+            val sourceButton=cs.any { it in setOf("primary-button","secondary-button","danger-button") }
+            setPadding(dp(if(sourceButton) 15 else 12),dp(10),dp(if(sourceButton) 15 else 12),dp(10))
+            minHeight=dp(if(cs.contains("close")) 32 else if(cs.contains("tiny-button")) 25 else if(cs.contains("father-complete")) 64 else 44)
+            background=when {
+                n.optBoolean("primary") || cs.contains("primary-button") ->
+                    GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(Color.rgb(179,131,50),Color.rgb(139,96,31))).apply {
+                        cornerRadius=dp(12).toFloat()
+                    }
+                cs.contains("danger-button") -> bg(Color.rgb(255,240,237),12,Color.rgb(242,199,192))
+                else -> bg(Color.rgb(247,237,221),12,Color.rgb(223,201,164))
+            }
         }
         if(cs.contains("product-photo-button") || cs.contains("repair-photo-button")) {
             view.minimumWidth=dp(38)
