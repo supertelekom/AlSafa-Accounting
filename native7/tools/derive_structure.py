@@ -128,6 +128,25 @@ def clear_settings(node,page,field=False):
 for key,page in pages.items():
  clear_settings(page,key)
  if key.endswith('-template') and len(page.get('children',[]))==1:pages[key]=page['children'][0]
+# Keep the generated compressed specification aligned with the runtime
+# dashboard/navigation overlay. This never changes source labels or order.
+overlay_path=Path(__file__).resolve().parent.parent/'app/src/main/assets/dashboard-layout-overrides.json'
+if overlay_path.exists():
+ overlay=json.loads(overlay_path.read_text(encoding='utf-8'))
+ for route in overlay.get('routes',[]):
+  page=pages.get(route)
+  if page is None:continue
+  def annotate(node):
+   if not isinstance(node,dict):return
+   names=set(node.get('classes',[]))
+   for rule in overlay.get('targets',[]):
+    if names.intersection(rule.get('classes',[])):
+     node['dashboardPaddingDp']=rule.get('paddingDp',0)
+     node['dashboardCornerDp']=rule.get('cornerRadiusDp',0)
+     node['dashboardMinHeightDp']=rule.get('minHeightDp',0)
+     node['dashboardMarginBottomDp']=rule.get('marginBottomDp',0)
+   for child in node.get('children',[]):annotate(child)
+  annotate(page)
 result={'sourceVersion':'3.9.359','purpose':'Native UI structure only; no accounting operations','pages':pages}
 output_file.parent.mkdir(parents=True,exist_ok=True)
 output_file.write_bytes(gzip.compress(json.dumps(result,ensure_ascii=False,separators=(',',':')).encode(),mtime=0))
