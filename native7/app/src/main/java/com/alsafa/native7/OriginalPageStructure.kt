@@ -569,7 +569,9 @@ internal class OriginalPageStructure(
                             // also overrides its phone-only horizontal scroll.
                             val tablet=activity.resources.configuration.screenWidthDp>=720
                             if(tablet) {
-                                val wrap=SourceFlow(activity,dp(5)).apply {
+                                // The tablet media query changes flex-wrap,
+                                // but does not override the preceding 6px gap.
+                                val wrap=SourceFlow(activity,dp(6)).apply {
                                     layoutDirection=View.LAYOUT_DIRECTION_RTL
                                     actionViews.forEach { addView(it,ViewGroup.LayoutParams(-2,-2)) }
                                 }
