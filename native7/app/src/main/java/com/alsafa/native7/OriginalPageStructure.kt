@@ -1266,23 +1266,20 @@ internal class OriginalPageStructure(
             if(view is TextView) view.gravity=Gravity.CENTER
         }
         if(cs.contains("tiny-button")) {
-            if(cs.contains("delete")) {
-                view.background=GradientDrawable().apply {
-                    setColor(Color.rgb(255,242,239))
-                    cornerRadius=dp(7).toFloat()
-                    setStroke(dp(1),Color.rgb(241,201,193))
-                }
-            }
+            // Legacy .tiny-button.delete overrides the normal background
+            // and border. Previously the default drawable was assigned after
+            // the delete drawable, accidentally erasing the danger styling.
+            val deleting=cs.contains("delete")
             view.minimumHeight=dp(25)
             view.setPadding(dp(7),dp(3),dp(7),dp(3))
             view.background=GradientDrawable().apply {
-                setColor(Color.rgb(250,241,227))
+                setColor(if(deleting) Color.rgb(255,242,239) else Color.rgb(250,241,227))
                 cornerRadius=dp(7).toFloat()
-                setStroke(dp(1),Color.rgb(223,201,164))
+                setStroke(dp(1),if(deleting) Color.rgb(241,201,193) else Color.rgb(223,201,164))
             }
             if(view is TextView) {
                 view.textSize=10f
-                view.setTextColor(if(cs.contains("delete")) Color.rgb(173,54,54) else Color.rgb(122,81,24))
+                view.setTextColor(if(deleting) Color.rgb(184,88,75) else Color.rgb(122,81,24))
             }
         }
         if(cs.contains("close")) {
