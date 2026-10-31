@@ -324,6 +324,72 @@
       "tableCellPaddingDp": 18,
       "tableRowMinHeightDp": 58,
       "tableRowGapDp": 14
+    },
+    "repairs": {
+      "fieldPaddingDp": 18,
+      "fieldMinHeightDp": 58,
+      "fieldCornerRadiusDp": 18,
+      "buttonPaddingDp": 18,
+      "buttonMinHeightDp": 72,
+      "buttonCornerRadiusDp": 18,
+      "tableCellPaddingDp": 18,
+      "tableRowMinHeightDp": 58,
+      "tableRowGapDp": 14
+    },
+    "repair-form": {
+      "fieldPaddingDp": 18,
+      "fieldMinHeightDp": 58,
+      "fieldCornerRadiusDp": 18,
+      "buttonPaddingDp": 18,
+      "buttonMinHeightDp": 72,
+      "buttonCornerRadiusDp": 18,
+      "tableCellPaddingDp": 18,
+      "tableRowMinHeightDp": 58,
+      "tableRowGapDp": 14
+    },
+    "father-repair": {
+      "fieldPaddingDp": 18,
+      "fieldMinHeightDp": 58,
+      "fieldCornerRadiusDp": 18,
+      "buttonPaddingDp": 18,
+      "buttonMinHeightDp": 72,
+      "buttonCornerRadiusDp": 18,
+      "tableCellPaddingDp": 18,
+      "tableRowMinHeightDp": 58,
+      "tableRowGapDp": 14
+    },
+    "father-deliveries": {
+      "fieldPaddingDp": 18,
+      "fieldMinHeightDp": 58,
+      "fieldCornerRadiusDp": 18,
+      "buttonPaddingDp": 18,
+      "buttonMinHeightDp": 72,
+      "buttonCornerRadiusDp": 18,
+      "tableCellPaddingDp": 18,
+      "tableRowMinHeightDp": 58,
+      "tableRowGapDp": 14
+    },
+    "repair-delivery": {
+      "fieldPaddingDp": 18,
+      "fieldMinHeightDp": 58,
+      "fieldCornerRadiusDp": 18,
+      "buttonPaddingDp": 18,
+      "buttonMinHeightDp": 72,
+      "buttonCornerRadiusDp": 18,
+      "tableCellPaddingDp": 18,
+      "tableRowMinHeightDp": 58,
+      "tableRowGapDp": 14
+    },
+    "repair-invoice": {
+      "fieldPaddingDp": 18,
+      "fieldMinHeightDp": 58,
+      "fieldCornerRadiusDp": 18,
+      "buttonPaddingDp": 18,
+      "buttonMinHeightDp": 72,
+      "buttonCornerRadiusDp": 18,
+      "tableCellPaddingDp": 18,
+      "tableRowMinHeightDp": 58,
+      "tableRowGapDp": 14
     }
   },
   "scopedRules": [
@@ -442,6 +508,46 @@
         "used-watch",
         "trade-in",
         "exchange"
+      ],
+      "fieldPaddingDp": 18,
+      "fieldMinHeightDp": 58,
+      "buttonPaddingDp": 18,
+      "buttonMinHeightDp": 72,
+      "cornerRadiusDp": 18
+    },
+    {
+      "section": "repair",
+      "routes": [
+        "repairs",
+        "repair-form",
+        "father-repair",
+        "father-deliveries",
+        "repair-delivery",
+        "repair-invoice"
+      ],
+      "sourceIdContains": [
+        "repair",
+        "maintenance",
+        "service",
+        "delivery",
+        "fault",
+        "technician",
+        "labor"
+      ],
+      "sourceClassContains": [
+        "repair",
+        "maintenance",
+        "service",
+        "delivery",
+        "status",
+        "labor"
+      ],
+      "dataActionContains": [
+        "repair",
+        "maintenance",
+        "deliver",
+        "receive",
+        "ready"
       ],
       "fieldPaddingDp": 18,
       "fieldMinHeightDp": 58,
