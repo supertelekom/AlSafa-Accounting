@@ -265,7 +265,9 @@ internal class OriginalPageStructure(
                 classes(node).any { it in listOf(
                     "daily-close-row","closing-row","currency-balance-row",
                     "cash-balance-row","drawer-row","carryover-row",
-                    "closing-history-row"
+                    "closing-history-row","partner-row","partner-ledger-row",
+                    "partner-summary-row","partner-withdrawal-row",
+                    "partner-profit-row","partner-monthly-row"
                 ) }) {
                 val p=dp(rule.optInt("financialRowPaddingDp",18))
                 current.setPadding(p,p,p,p)
