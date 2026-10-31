@@ -477,6 +477,61 @@ internal class OriginalPageStructure(
         breakStrategy=android.text.Layout.BREAK_STRATEGY_HIGH_QUALITY
         hyphenationFrequency=android.text.Layout.HYPHENATION_FREQUENCY_NONE
     }
+    /**
+     * Batch one: show persisted financial rows rather than source-layout placeholders.
+     * Read-only projection; the original JSON and accounting records are never edited.
+     */
+    private fun appendImportedFinancialRows(parent:LinearLayout,route:String) {
+        val section=when(route) {
+            "suppliers" -> "suppliers"
+            "purchases" -> "purchases"
+            "expenses" -> "expenses"
+            else -> return
+        }
+        val database=LegacyBackupStore(activity).readableDatabase
+        val records=ArrayList<JSONObject>()
+        database.rawQuery("SELECT payload FROM op_$section ORDER BY ordinal",null).use { cursor ->
+            while(cursor.moveToNext()) {
+                val raw=cursor.getString(0)
+                runCatching { JSONObject(raw) }.getOrNull()?.let(records::add)
+            }
+        }
+        if(records.isEmpty()) return
+        val host=LinearLayout(activity).apply {
+            orientation=LinearLayout.VERTICAL
+            layoutDirection=View.LAYOUT_DIRECTION_RTL
+            setPadding(dp(12),dp(12),dp(12),dp(12))
+        }
+        val columns=when(section) {
+            "suppliers" -> listOf("name","phone")
+            "purchases" -> listOf("supplierName","supplierInvoice","date","total","currency","paid")
+            else -> listOf("date","category","amount","currency","paymentMethod")
+        }
+        for(record in records) {
+            val row=LinearLayout(activity).apply {
+                orientation=LinearLayout.VERTICAL
+                layoutDirection=View.LAYOUT_DIRECTION_RTL
+                minimumHeight=dp(58)
+                setPadding(dp(18),dp(10),dp(18),dp(10))
+            }
+            val visible=columns.mapNotNull { key ->
+                val v=record.opt(key)
+                if(v==null || v==JSONObject.NULL || v.toString().isBlank()) null
+                else v.toString()
+            }
+            // Preserve original values, including dates and multi-currency amounts.
+            val fallback=record.optString("id").ifBlank { record.toString() }
+            val text=label(visible.joinToString("  |  ").ifBlank { fallback },14f)
+            text.setTextIsSelectable(true)
+            text.setPadding(0,dp(3),0,dp(3))
+            row.addView(text,LinearLayout.LayoutParams(-1,-2))
+            host.addView(row,LinearLayout.LayoutParams(-1,-2).apply {
+                bottomMargin=dp(14)
+            })
+        }
+        enforceTajawalRtl(host)
+        parent.addView(host,LinearLayout.LayoutParams(-1,-2))
+    }
     fun contains(route:String) = pages.has(route)
     fun show(parent:LinearLayout,route:String) {
         metadata.clear();controls.clear();radioNames.clear();currentRoute=route
@@ -494,6 +549,7 @@ internal class OriginalPageStructure(
         // Reusing a page host must not stack the previous route underneath it.
         parent.removeAllViews()
         parent.addView(view,LinearLayout.LayoutParams(-1,-2))
+        appendImportedFinancialRows(parent,route)
         view.post {
             // A posted callback from an older route must not update controls
             // belonging to a newly displayed route.
