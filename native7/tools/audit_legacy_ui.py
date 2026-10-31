@@ -81,6 +81,46 @@ def route_elements(main_js: str, function: str) -> dict:
     }
 
 
+
+def native_action_inventory(native_source: str) -> dict:
+    """Static evidence of explicitly handled source actions; never assume routing."""
+    direct = list(dict.fromkeys(re.findall(
+        r'action\s*==\s*"([^"]+)"', native_source
+    )))
+    mapped = list(dict.fromkeys(re.findall(
+        r'"([a-z][a-z0-9-]+)"\s*to\s*"', native_source
+    )))
+    return {"direct": direct, "map_literals": mapped,
+            "caveat": "String inventory only: map membership and callbacks need runtime testing."}
+
+
+def compare_route_actions(route_inventory: dict, native_source: str) -> dict:
+    """Flag action names that need investigation, not assert missing behavior."""
+    native = native_action_inventory(native_source)
+    known = set(native["direct"]) | set(native["map_literals"])
+    return {route: {
+        "source_actions": item.get("actions", []),
+        "explicitly_seen_in_renderer": [a for a in item.get("actions", []) if a in known],
+        "requires_handler_review": [a for a in item.get("actions", []) if a not in known],
+    } for route, item in route_inventory.items()}
+
+
+def stylesheet_declarations(css: str, selector: str) -> list[dict]:
+    """Keep every matching rule and its offset for human cascade review."""
+    results = []
+    for match in re.finditer(r"([^{}]+)\{([^{}]*)\}", css, re.S):
+        if selector in match.group(1):
+            declarations = {}
+            for part in match.group(2).split(";"):
+                if ":" in part:
+                    name, value = part.split(":", 1)
+                    declarations[name.strip()] = value.strip()
+            results.append({"offset": match.start(),
+                            "selector": " ".join(match.group(1).split()),
+                            "properties": declarations})
+    return results
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("archive", type=Path, help="original tablet source ZIP")
@@ -101,12 +141,21 @@ def main() -> None:
         "base": css_rules(styles, name),
         "overrides": css_rules(override, name),
     } for name in CSS_CLASSES}
+    # Optional native comparison: locate source relative to this audit script.
+    native_path = Path(__file__).resolve().parents[1] / "app/src/main/java/com/alsafa/native7/OriginalPageStructure.kt"
+    native_source = native_path.read_text(encoding="utf-8") if native_path.exists() else ""
+    action_comparison = compare_route_actions(
+        {label: route_elements(main_js, function) for label, function in ROUTES.items()},
+        native_source,
+    ) if native_source else {}
     report = {
         "archive": args.archive.name,
         "routes": routes,
         "route_elements": {label: route_elements(main_js, function) for label, function in ROUTES.items()},
         "stylesheet_loads": re.findall(r"<link[^>]+href=[\"']([^\"']+\.css[^\"']*)", index),
         "css_classes": classes,
+        "action_comparison": action_comparison,
+        "record_action_cascade": stylesheet_declarations(styles, ".row-actions"),
         "warnings": [
             "CSS occurrences are source evidence, not proof of native rendering parity.",
             "CSS rules within @media must be interpreted with viewport conditions.",
