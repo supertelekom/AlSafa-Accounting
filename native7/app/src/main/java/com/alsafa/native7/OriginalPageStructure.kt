@@ -239,6 +239,13 @@ internal class OriginalPageStructure(
                     current.layoutParams=params
                 }
             }
+            if(rule.has("expenseRowPaddingDp") && node!=null &&
+                classes(node).any { it in listOf("expense-row","expense-card","expense-entry") }) {
+                val p=dp(rule.optInt("expenseRowPaddingDp",18))
+                current.setPadding(p,p,p,p)
+                current.minimumHeight=maxOf(current.minimumHeight,
+                    dp(rule.optInt("expenseRowMinHeightDp",58)))
+            }
             if(rule.has("saleLinePaddingDp") && node!=null) {
                 val css=classes(node)
                 val line=css.any { it in listOf(
