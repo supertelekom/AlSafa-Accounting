@@ -43,6 +43,57 @@ internal class OriginalPageStructure(
             decoded.bufferedReader(Charsets.UTF_8).use { JSONObject(it.readText()).getJSONObject("pages") }
         }
     }
+    private val dashboardStyle by lazy {
+        activity.assets.open("dashboard-layout-overrides.json").bufferedReader(Charsets.UTF_8)
+            .use { JSONObject(it.readText()) }
+    }
+    private fun applyDashboardStyle(node:JSONObject, route:String) {
+        if(route !in listOf("home","dashboard","father-home","advanced-home","simple-home")) return
+        if(activity.resources.configuration.screenWidthDp <
+            dashboardStyle.optInt("tabletMinWidthDp",600)) return
+        val nodeClasses=classes(node)
+        val targets=dashboardStyle.optJSONArray("targets")
+        if(targets!=null) for(i in 0 until targets.length()) {
+            val rule=targets.getJSONObject(i)
+            val selectors=rule.optJSONArray("classes") ?: continue
+            val matched=(0 until selectors.length()).any { nodeClasses.contains(selectors.getString(it)) }
+            if(matched) {
+                node.put("dashboardPaddingDp",rule.optInt("paddingDp",0))
+                node.put("dashboardCornerDp",rule.optInt("cornerRadiusDp",0))
+                node.put("dashboardMinHeightDp",rule.optInt("minHeightDp",0))
+                node.put("dashboardMarginBottomDp",rule.optInt("marginBottomDp",0))
+            }
+        }
+        items(node.optJSONArray("children")).forEach { applyDashboardStyle(it,route) }
+    }
+    private fun enforceTajawalRtl(view:View) {
+        view.layoutDirection=View.LAYOUT_DIRECTION_RTL
+        if(view is TextView) {
+            view.typeface=if(view.typeface?.isBold==true)
+                Typeface.create(font,Typeface.BOLD) else font
+            view.textDirection=View.TEXT_DIRECTION_FIRST_STRONG
+            view.gravity=(view.gravity and Gravity.VERTICAL_GRAVITY_MASK) or Gravity.RIGHT
+            view.includeFontPadding=true
+        }
+        if(view is ViewGroup) for(i in 0 until view.childCount)
+            enforceTajawalRtl(view.getChildAt(i))
+    }
+    private fun applyDashboardViewStyle(view:View) {
+        val node=metadata[view]
+        if(node!=null && activity.resources.configuration.screenWidthDp>=600) {
+            val padding=node.optInt("dashboardPaddingDp",0)
+            val radius=node.optInt("dashboardCornerDp",0)
+            val height=node.optInt("dashboardMinHeightDp",0)
+            if(padding>0) view.setPadding(dp(padding),dp(padding),dp(padding),dp(padding))
+            if(height>0) view.minimumHeight=maxOf(view.minimumHeight,dp(height))
+            if(radius>0) {
+                val background=view.background
+                if(background is GradientDrawable) background.cornerRadius=dp(radius).toFloat()
+            }
+        }
+        if(view is ViewGroup) for(i in 0 until view.childCount)
+            applyDashboardViewStyle(view.getChildAt(i))
+    }
     private val font by lazy { Typeface.createFromAsset(activity.assets, "Tajawal-Medium.ttf") }
     private val ink = Color.rgb(62,52,41)
     private val muted = Color.rgb(138,123,108)
@@ -81,6 +132,7 @@ internal class OriginalPageStructure(
                 css.contains("simple-actions") -> 18
                 else -> margin
             })
+            if(node.optInt("dashboardMarginBottomDp")>0) bottomMargin=dp(node.optInt("dashboardMarginBottomDp"))
             if(css.contains("simple-actions")) topMargin=dp(10)
             if(css.contains("form-section")) topMargin=dp(20)
             if(css.contains("section-card")) topMargin=dp(14)
@@ -130,7 +182,10 @@ internal class OriginalPageStructure(
         // metadata, not part of the immutable source-derived page spec.
         val page=JSONObject(pages.getJSONObject(route).toString())
         markRepairInvoiceActions(page,false)
+        applyDashboardStyle(page,route)
         val view=build(page)
+        applyDashboardViewStyle(view)
+        enforceTajawalRtl(view)
         root=view
         // Reusing a page host must not stack the previous route underneath it.
         parent.removeAllViews()
