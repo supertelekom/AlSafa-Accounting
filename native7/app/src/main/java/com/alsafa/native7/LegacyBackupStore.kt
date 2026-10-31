@@ -198,7 +198,7 @@ internal class LegacyBackupStore(context: Context) :
                         fragments.append(raw)
                         batch.put(value)
                         ordinal++
-                        if(batch.length()>=20) flush()
+                        if(batch.length()>=20 || fragments.length>=1048576) flush()
                     }
                     flush()
                     reader.endArray()
