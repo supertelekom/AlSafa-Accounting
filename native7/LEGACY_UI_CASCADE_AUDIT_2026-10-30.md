@@ -96,3 +96,13 @@ Compared legacy tablet `assets/style.css` rules at `input, select, textarea` (42
 - Code commit: `d72748c7b9f3f54dfa9a2a9f841d0aba5e171290`.
 - Device tests pending: focus state and keyboard, dropdown readability, long Arabic labels, screen captures on Honor Pad X8b, Android Studio build, camera/gallery/zoom and real-time search.
 - No native6, database, financial or user-data changes.
+
+## Source-derived responsive photo picker — 227c1a79 (2026-10-31)
+
+Directly inspected the supplied tablet v3.9.359 `assets/style.css` photo-picker rules. Original `.photo-picker` uses `grid-template-columns: 116px minmax(0,1fr); gap:12px`; `@media(max-width:520px)` switches it to one column and `.photo-preview` to full width/170px height. Native7 previously always used a horizontal `photoRow` and minimum 116x84 preview.
+
+- Updated `OriginalPageStructure.kt` shared `photoRow` to vertical at <=520dp, with 12dp inter-item spacing and full-width children, retaining 116dp/remaining-width horizontal layout above that threshold.
+- Updated shared preview to minimum 170dp high at <=520dp and 116x84dp minimum on wider screens.
+- Code commit `227c1a79990956a361425e2dc403e9692fee36fd`.
+- These are source-verified shared layout corrections, **not** completed nine-route element-by-element parity. Still requires route-specific label/order/handler/modal/animation comparison, Android Studio build, device screenshot tests, and gallery/camera/zoom tests.
+- No Native6, data, or financial-rule changes.
