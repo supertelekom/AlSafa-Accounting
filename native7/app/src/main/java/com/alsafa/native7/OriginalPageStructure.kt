@@ -87,7 +87,8 @@ internal class OriginalPageStructure(
             if(css.contains("product-info")) topMargin=dp(14)
             if(css.contains("stock-warning")) topMargin=dp(10)
             if(css.contains("note-box")) topMargin=dp(12)
-            // Final source cascade overrides .row-actions margin-top:7px with 12px.\n            if(css.contains("row-actions")) topMargin=dp(12)
+            // 12px applies only to .qr-product-card .row-actions; generic rows use 7px.
+            if(css.contains("row-actions")) topMargin=dp(if(node.optBoolean("qrProductActions")) 12 else 7)
             if(css.contains("search-box")) bottomMargin=dp(12)
             if(css.contains("simple-recent")) {
                 topMargin=dp(14)
@@ -142,13 +143,18 @@ internal class OriginalPageStructure(
      * CSS [data-invoice-row="repair"] .row-actions cannot be resolved from
      * a detached Android child while the tree is being constructed.
      */
-    private fun markRepairInvoiceActions(node:JSONObject,inRepairInvoice:Boolean) {
+    private fun markRepairInvoiceActions(
+        node:JSONObject,inRepairInvoice:Boolean,inQrProductCard:Boolean=false
+    ) {
         val repair=inRepairInvoice ||
             node.optJSONObject("data")?.optString("data-invoice-row")=="repair"
-        if(classes(node).contains("row-actions"))
+        val qr=inQrProductCard || classes(node).contains("qr-product-card")
+        if(classes(node).contains("row-actions")) {
             node.put("repairInvoiceActions",repair)
+            node.put("qrProductActions",qr)
+        }
         items(node.optJSONArray("children")).forEach {
-            markRepairInvoiceActions(it,repair)
+            markRepairInvoiceActions(it,repair,qr)
         }
     }
     private fun register(view:View,n:JSONObject):View {
@@ -616,14 +622,22 @@ internal class OriginalPageStructure(
                                 }
                                 addView(scroll,LinearLayout.LayoutParams(-1,-2))
                             } else {
-                                // Ordinary source .row-actions is a wrapping flex
-                                // container even on phones; only repair invoices
-                                // use the horizontally scrolling strip.
-                                val wrap=SourceFlow(activity,dp(5)).apply {
+                                // Base .row-actions has display:flex but no
+                                // flex-wrap override below 720px. Flex defaults
+                                // to nowrap; only repair invoices scroll.
+                                val strip=LinearLayout(activity).apply {
+                                    orientation=LinearLayout.HORIZONTAL
                                     layoutDirection=View.LAYOUT_DIRECTION_RTL
-                                    actionViews.forEach { addView(it,ViewGroup.LayoutParams(-2,-2)) }
+                                    gravity=if(n.optBoolean("qrProductActions"))
+                                        Gravity.CENTER_VERTICAL or Gravity.CENTER_HORIZONTAL
+                                    else Gravity.CENTER_VERTICAL
+                                    actionViews.forEachIndexed { index,child ->
+                                        addView(child,LinearLayout.LayoutParams(-2,-2).apply {
+                                            if(index>0) marginStart=dp(5)
+                                        })
+                                    }
                                 }
-                                addView(wrap,LinearLayout.LayoutParams(-1,-2))
+                                addView(strip,LinearLayout.LayoutParams(-1,-2))
                             }
                         }
                         if(cs.contains("transaction")) {
