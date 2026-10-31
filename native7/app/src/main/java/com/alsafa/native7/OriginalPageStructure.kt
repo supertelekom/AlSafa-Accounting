@@ -94,6 +94,48 @@ internal class OriginalPageStructure(
         if(view is ViewGroup) for(i in 0 until view.childCount)
             applyDashboardViewStyle(view.getChildAt(i))
     }
+    private val sectionLayout by lazy {
+        activity.assets.open("section-layout-overrides.json").bufferedReader(Charsets.UTF_8)
+            .use { JSONObject(it.readText()) }
+    }
+    private fun styleSectionTree(view:View,route:String) {
+        if(activity.resources.configuration.screenWidthDp <
+            sectionLayout.optInt("tabletMinWidthDp",600)) return
+        val rule=sectionLayout.optJSONObject("routes")?.optJSONObject(route) ?: return
+        fun applyTo(current:View) {
+            val node=metadata[current]
+            val kind=node?.optString("kind").orEmpty()
+            if(current is TextView) {
+                current.typeface=if(current.typeface?.isBold==true)
+                    Typeface.create(font,Typeface.BOLD) else font
+                current.includeFontPadding=true
+            }
+            if(current is EditText || current is Spinner) {
+                val p=dp(rule.optInt("fieldPaddingDp",16))
+                current.setPadding(p,p,p,p)
+                current.minimumHeight=maxOf(current.minimumHeight,dp(rule.optInt("fieldMinHeightDp",54)))
+                current.layoutDirection=View.LAYOUT_DIRECTION_RTL
+                if(current is EditText) {
+                    current.textDirection=View.TEXT_DIRECTION_FIRST_STRONG
+                    current.gravity=Gravity.RIGHT or
+                        (if(current.inputType and InputType.TYPE_TEXT_FLAG_MULTI_LINE != 0)
+                            Gravity.TOP else Gravity.CENTER_VERTICAL)
+                }
+                (current.background as? GradientDrawable)?.cornerRadius=
+                    dp(rule.optInt("fieldCornerRadiusDp",14)).toFloat()
+            }
+            if(kind=="button" && current !is EditText) {
+                current.minimumHeight=maxOf(current.minimumHeight,dp(rule.optInt("buttonMinHeightDp",64)))
+                val p=dp(rule.optInt("buttonPaddingDp",16))
+                current.setPadding(p,p,p,p)
+                (current.background as? GradientDrawable)?.cornerRadius=
+                    dp(rule.optInt("buttonCornerRadiusDp",16)).toFloat()
+            }
+            if(current is ViewGroup) for(i in 0 until current.childCount)
+                applyTo(current.getChildAt(i))
+        }
+        applyTo(view)
+    }
     private val font by lazy { Typeface.createFromAsset(activity.assets, "Tajawal-Medium.ttf") }
     private val ink = Color.rgb(62,52,41)
     private val muted = Color.rgb(138,123,108)
@@ -185,6 +227,7 @@ internal class OriginalPageStructure(
         applyDashboardStyle(page,route)
         val view=build(page)
         applyDashboardViewStyle(view)
+        styleSectionTree(view,route)
         enforceTajawalRtl(view)
         root=view
         // Reusing a page host must not stack the previous route underneath it.
