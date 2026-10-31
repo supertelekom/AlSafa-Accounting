@@ -488,6 +488,8 @@ internal class OriginalPageStructure(
             "expenses" -> "expenses"
             "vaults" -> "cashTransactions"
             "payments" -> "payments"
+            "daily-closing" -> "dailyClosings"
+            "daily-closings" -> "dailyClosings"
             else -> return
         }
         val database=LegacyBackupStore(activity).readableDatabase
@@ -509,6 +511,7 @@ internal class OriginalPageStructure(
             "purchases" -> listOf("supplierName","supplierInvoice","date","total","currency","paid")
             "cashTransactions" -> listOf("date","time","vault","type","amount","currency","referenceType","referenceId")
             "payments" -> listOf("date","time","referenceType","referenceId","amount","currency","paymentCurrency","paymentAmount","method")
+            "dailyClosings" -> listOf("date","time","deviceName","drawerCarry","drawerBalance","chamCashSyp","chamCashUsd")
             else -> listOf("date","category","amount","currency","paymentMethod")
         }
         for(record in records) {
