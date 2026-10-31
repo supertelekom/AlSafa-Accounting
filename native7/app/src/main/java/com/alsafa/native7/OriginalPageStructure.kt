@@ -612,7 +612,9 @@ internal class OriginalPageStructure(
                                     layoutDirection=View.LAYOUT_DIRECTION_RTL
                                     actionViews.forEach { addView(it,ViewGroup.LayoutParams(-2,-2)) }
                                 }
-                                addView(wrap,LinearLayout.LayoutParams(-1,-2).apply {
+                                addView(wrap,LinearLayout.LayoutParams(
+                                    if(n.optBoolean("qrProductActions")) -2 else -1,-2
+                                ).apply {
                                     if(n.optBoolean("qrProductActions")) gravity=Gravity.CENTER_HORIZONTAL
                                 })
                             } else if(repairInvoice) {
@@ -652,7 +654,9 @@ internal class OriginalPageStructure(
                                         })
                                     }
                                 }
-                                addView(strip,LinearLayout.LayoutParams(-1,-2).apply {
+                                addView(strip,LinearLayout.LayoutParams(
+                                    if(n.optBoolean("qrProductActions")) -2 else -1,-2
+                                ).apply {
                                     if(n.optBoolean("qrProductActions")) gravity=Gravity.CENTER_HORIZONTAL
                                 })
                             }
