@@ -82,7 +82,7 @@ internal class LegacyBackupStore(context: Context) :
                     JsonToken.STRING -> writer.value(reader.nextString())
                     JsonToken.NUMBER -> {
                         val number=reader.nextString()
-                        writer.jsonValue(number)
+                        writer.value(java.math.BigDecimal(number))
                     }
                     JsonToken.BOOLEAN -> writer.value(reader.nextBoolean())
                     JsonToken.NULL -> { reader.nextNull(); writer.nullValue() }
