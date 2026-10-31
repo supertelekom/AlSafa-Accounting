@@ -446,7 +446,7 @@ internal class OriginalPageStructure(
             if(css.contains("search-box")) bottomMargin=dp(12)
             if(css.contains("simple-recent")) {
                 topMargin=dp(14)
-                bottomMargin=dp(14)
+                bottomMargin=dp(18)
             }
             if(css.contains("form-actions")) topMargin=dp(18)
             if(kind=="reportGrid" || css.contains("report-grid")) {
@@ -494,6 +494,8 @@ internal class OriginalPageStructure(
             "partner-withdrawals" -> "partnerWithdrawals"
             "repairs" -> "repairs"
             "repair-intake" -> "repairs"
+            "sales" -> "sales"
+            "sales-invoices" -> "sales"
             else -> return
         }
         val database=LegacyBackupStore(activity).readableDatabase
@@ -518,6 +520,7 @@ internal class OriginalPageStructure(
             "dailyClosings" -> listOf("date","time","deviceName","drawerCarry","drawerBalance","chamCashSyp","chamCashUsd")
             "partnerWithdrawals" -> listOf("date","time","partnerName","partnerId","amount","currency","vault")
             "repairs" -> listOf("invoiceNo","date","customer","phone","watch","fault","status","price","cost","currency")
+            "sales" -> listOf("invoiceNo","date","time","customer","phone","subtotal","discount","total","paid","currency","paymentStatus")
             else -> listOf("date","category","amount","currency","paymentMethod")
         }
         for(record in records) {
@@ -538,6 +541,22 @@ internal class OriginalPageStructure(
             text.setTextIsSelectable(true)
             text.setPadding(0,dp(3),0,dp(3))
             row.addView(text,LinearLayout.LayoutParams(-1,-2))
+            if(section=="sales") {
+                val items=record.optJSONArray("items")
+                if(items!=null) for(index in 0 until items.length()) {
+                    val item=items.optJSONObject(index) ?: continue
+                    val details=listOf("name","productName","quantity","qty","price","total")
+                        .mapNotNull { key ->
+                            val value=item.opt(key)
+                            if(value==null || value==JSONObject.NULL || value.toString().isBlank()) null
+                            else value.toString()
+                        }
+                    if(details.isNotEmpty()) row.addView(label(details.joinToString("  |  "),13f).apply {
+                        setTextIsSelectable(true)
+                        setPadding(dp(12),dp(5),dp(12),dp(5))
+                    },LinearLayout.LayoutParams(-1,-2))
+                }
+            }
             host.addView(row,LinearLayout.LayoutParams(-1,-2).apply {
                 bottomMargin=dp(14)
             })
