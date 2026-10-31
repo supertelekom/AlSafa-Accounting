@@ -408,6 +408,48 @@
       "repairRowPaddingDp": 18,
       "repairRowGapDp": 14,
       "repairRowMinHeightDp": 58
+    },
+    "maintenance-parts": {
+      "fieldPaddingDp": 18,
+      "fieldMinHeightDp": 58,
+      "fieldCornerRadiusDp": 18,
+      "buttonPaddingDp": 18,
+      "buttonMinHeightDp": 72,
+      "buttonCornerRadiusDp": 18,
+      "tableCellPaddingDp": 18,
+      "tableRowMinHeightDp": 58,
+      "tableRowGapDp": 14,
+      "repairRowPaddingDp": 18,
+      "repairRowGapDp": 14,
+      "repairRowMinHeightDp": 58
+    },
+    "maintenance-part-form": {
+      "fieldPaddingDp": 18,
+      "fieldMinHeightDp": 58,
+      "fieldCornerRadiusDp": 18,
+      "buttonPaddingDp": 18,
+      "buttonMinHeightDp": 72,
+      "buttonCornerRadiusDp": 18,
+      "tableCellPaddingDp": 18,
+      "tableRowMinHeightDp": 58,
+      "tableRowGapDp": 14,
+      "repairRowPaddingDp": 18,
+      "repairRowGapDp": 14,
+      "repairRowMinHeightDp": 58
+    },
+    "quick-repair-button-form": {
+      "fieldPaddingDp": 18,
+      "fieldMinHeightDp": 58,
+      "fieldCornerRadiusDp": 18,
+      "buttonPaddingDp": 18,
+      "buttonMinHeightDp": 72,
+      "buttonCornerRadiusDp": 18,
+      "tableCellPaddingDp": 18,
+      "tableRowMinHeightDp": 58,
+      "tableRowGapDp": 14,
+      "repairRowPaddingDp": 18,
+      "repairRowGapDp": 14,
+      "repairRowMinHeightDp": 58
     }
   },
   "scopedRules": [
@@ -566,6 +608,41 @@
         "deliver",
         "receive",
         "ready"
+      ],
+      "fieldPaddingDp": 18,
+      "fieldMinHeightDp": 58,
+      "buttonPaddingDp": 18,
+      "buttonMinHeightDp": 72,
+      "cornerRadiusDp": 18
+    },
+    {
+      "section": "maintenance-parts",
+      "routes": [
+        "maintenance-parts",
+        "maintenance-part-form",
+        "repair-form",
+        "repairs",
+        "father-repair",
+        "repair-invoice"
+      ],
+      "sourceIdContains": [
+        "maintenance-part",
+        "repair-part",
+        "part-name",
+        "part-cost",
+        "part-quantity"
+      ],
+      "sourceClassContains": [
+        "maintenance-part",
+        "repair-part",
+        "part-row",
+        "parts-table"
+      ],
+      "dataActionContains": [
+        "add-maintenance-part",
+        "add-repair-part",
+        "open-maintenance-parts",
+        "new-maintenance-part"
       ],
       "fieldPaddingDp": 18,
       "fieldMinHeightDp": 58,
