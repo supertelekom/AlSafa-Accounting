@@ -319,6 +319,21 @@ internal class OriginalPageStructure(
                     current.layoutParams=params
                 }
             }
+            if(rule.has("warrantyRowPaddingDp") && node!=null &&
+                classes(node).any { it in listOf(
+                    "warranty-row","warranty-card","warranty-active-row",
+                    "warranty-history-row","guarantee-row"
+                ) }) {
+                val p=dp(rule.optInt("warrantyRowPaddingDp",18))
+                current.setPadding(p,p,p,p)
+                current.minimumHeight=maxOf(current.minimumHeight,
+                    dp(rule.optInt("warrantyRowMinHeightDp",58)))
+                (current.layoutParams as? LinearLayout.LayoutParams)?.let { params ->
+                    params.bottomMargin=maxOf(params.bottomMargin,
+                        dp(rule.optInt("warrantyRowGapDp",14)))
+                    current.layoutParams=params
+                }
+            }
             if(rule.has("saleLinePaddingDp") && node!=null) {
                 val css=classes(node)
                 val line=css.any { it in listOf(
