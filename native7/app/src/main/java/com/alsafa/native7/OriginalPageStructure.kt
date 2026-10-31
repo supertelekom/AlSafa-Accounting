@@ -289,6 +289,21 @@ internal class OriginalPageStructure(
                 current.minimumHeight=maxOf(current.minimumHeight,
                     dp(rule.optInt("reportRowMinHeightDp",58)))
             }
+            if(rule.has("customerRowPaddingDp") && node!=null &&
+                classes(node).any { it in listOf(
+                    "customer-row","customer-card","customer-result",
+                    "search-result","customer-ledger-row","customer-search-row"
+                ) }) {
+                val p=dp(rule.optInt("customerRowPaddingDp",18))
+                current.setPadding(p,p,p,p)
+                current.minimumHeight=maxOf(current.minimumHeight,
+                    dp(rule.optInt("customerRowMinHeightDp",58)))
+                (current.layoutParams as? LinearLayout.LayoutParams)?.let { params ->
+                    params.bottomMargin=maxOf(params.bottomMargin,
+                        dp(rule.optInt("customerRowGapDp",14)))
+                    current.layoutParams=params
+                }
+            }
             if(rule.has("saleLinePaddingDp") && node!=null) {
                 val css=classes(node)
                 val line=css.any { it in listOf(
