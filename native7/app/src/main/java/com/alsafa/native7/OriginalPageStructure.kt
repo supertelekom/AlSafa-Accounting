@@ -363,7 +363,9 @@ internal class OriginalPageStructure(
                 orientation=LinearLayout.HORIZONTAL
                 layoutDirection=View.LAYOUT_DIRECTION_RTL
                 gravity=Gravity.CENTER_VERTICAL
-                setPadding(0,dp(18),0,0)
+                // .form-actions already receives its 18dp top margin from
+                // childParams. Do not add another 18dp internal padding.
+                setPadding(0,if(cs.contains("form-actions")) 0 else dp(18),0,0)
                 children.forEachIndexed { index,child ->
                     addView(build(child),LinearLayout.LayoutParams(0,-2,1f).apply {
                         if(index>0) marginStart=dp(9)
