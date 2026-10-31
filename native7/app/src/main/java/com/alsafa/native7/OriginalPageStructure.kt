@@ -374,7 +374,9 @@ internal class OriginalPageStructure(
             }
             "flow" -> SourceFlow(activity,dp(9)).apply {
                 children.forEach { addView(build(it),ViewGroup.LayoutParams(-2,-2)) }
-                if(kind=="actions") setPadding(0,dp(18),0,dp(9))
+                // Source .form-actions uses an outer margin, not internal
+                // padding. childParams supplies that margin for this class.
+                if(kind=="actions" && !cs.contains("form-actions")) setPadding(0,dp(18),0,dp(9))
             }
             "fold" -> column().apply {
                 val initiallyOpen=n.optBoolean("open") || n.optJSONObject("data")?.optString("open")=="true"
