@@ -141,6 +141,7 @@ internal class OriginalPageStructure(
                     current.typeface=if(current.typeface?.isBold==true)
                         Typeface.create(font,Typeface.BOLD) else font
                     current.includeFontPadding=true
+                    current.textDirection=View.TEXT_DIRECTION_FIRST_STRONG
                 }
                 current.layoutDirection=View.LAYOUT_DIRECTION_RTL
             }
