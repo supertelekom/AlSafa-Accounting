@@ -82,6 +82,53 @@ def route_elements(main_js: str, function: str) -> dict:
 
 
 
+
+def js_function_bodies(source: str) -> dict[str, str]:
+    """Index top-level JS function bodies for a conservative helper call graph."""
+    heads = list(re.finditer(
+        r"(?m)^\\s*(?:async\\s+)?function\\s+([A-Za-z_$][\\w$]*)\\s*\\(",
+        source,
+    ))
+    return {
+        match.group(1): source[match.start():(
+            heads[i + 1].start() if i + 1 < len(heads) else len(source)
+        )]
+        for i, match in enumerate(heads)
+    }
+
+
+def route_helper_inventory(main_js: str, route_functions: dict[str, str]) -> dict:
+    """Conservative transitive inventory of named function calls.
+
+    The graph may include non-rendering functions and does not evaluate JS
+    conditions. Its actions are review candidates, not proven screen controls.
+    """
+    bodies = js_function_bodies(main_js)
+    names = set(bodies)
+    result = {}
+    for route, entry in route_functions.items():
+        visited, pending = set(), [entry]
+        while pending and len(visited) < 250:
+            name = pending.pop()
+            if name in visited or name not in bodies:
+                continue
+            visited.add(name)
+            calls = re.findall(r"(?<![.\\w$])([A-Za-z_$][\\w$]*)\\s*\\(", bodies[name])
+            pending.extend(c for c in calls if c in names and c not in visited)
+        actions = []
+        for name in sorted(visited):
+            actions.extend(re.findall(
+                r'data-action\\s*=\\s*["\\x27]([^"\\x27]+)',
+                bodies[name],
+            ))
+        result[route] = {
+            "functions": sorted(visited),
+            "helper_actions": list(dict.fromkeys(actions)),
+            "caveat": "Call graph is conservative, not a runtime DOM tree.",
+        }
+    return result
+
+
 def native_action_inventory(native_source: str) -> dict:
     """Static evidence of explicitly handled source actions; never assume routing."""
     direct = list(dict.fromkeys(re.findall(
@@ -152,6 +199,7 @@ def main() -> None:
         "archive": args.archive.name,
         "routes": routes,
         "route_elements": {label: route_elements(main_js, function) for label, function in ROUTES.items()},
+        "route_helper_inventory": route_helper_inventory(main_js, ROUTES),
         "stylesheet_loads": re.findall(r"<link[^>]+href=[\"']([^\"']+\.css[^\"']*)", index),
         "css_classes": classes,
         "action_comparison": action_comparison,
@@ -172,6 +220,10 @@ def main() -> None:
         print(f"  {label}: buttons={item.get('literal_buttons', 0)}, "
               f"inputs={item.get('literal_inputs', 0)}, selects={item.get('literal_selects', 0)}, "
               f"actions={len(item['actions'])}, routes={len(item['routes'])}")
+    print("\\nTransitive helper coverage (candidate actions, not runtime controls):")
+    for route, item in report["route_helper_inventory"].items():
+        print(f"  {route}: functions={len(item['functions'])}, "
+              f"candidate actions={len(item['helper_actions'])}")
     print("\nCSS selectors (style.css / styles.css):")
     for name, info in classes.items():
         print(f"  .{name}: {len(info['base'])} / {len(info['overrides'])}")
