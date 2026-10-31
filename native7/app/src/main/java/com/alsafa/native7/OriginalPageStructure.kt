@@ -77,8 +77,11 @@ internal class OriginalPageStructure(
                 css.contains("product-info") -> 8
                 css.contains("stock-warning") -> 0
                 css.contains("modal-head") -> 15
+                css.contains("search-box") -> 12
+                css.contains("simple-actions") -> 18
                 else -> margin
             })
+            if(css.contains("simple-actions")) topMargin=dp(10)
             if(css.contains("form-section")) topMargin=dp(20)
             if(css.contains("section-card")) topMargin=dp(14)
             if(css.contains("product-info")) topMargin=dp(14)
