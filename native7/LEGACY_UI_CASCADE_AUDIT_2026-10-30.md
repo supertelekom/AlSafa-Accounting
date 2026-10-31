@@ -163,3 +163,9 @@ This correction applies wherever these classes appear among the nine routes. **S
 Checked legacy `.form-actions { display:flex; gap:9px; margin-top:18px }` against Native7's two layers: `childParams()` already gives `.form-actions` 18dp **top margin**, while `build(kind="actions")` added another 18dp **top padding**. When both were present, this made 36dp instead of the original 18dp. Commit `64a525e97b29fa516872e5e0c425d88e6e5bf24e` makes the internal top padding conditional: zero for a `.form-actions` node, preserving 18dp only for generic actions without that CSS class. The 9dp horizontal gap and equal-width flex weights are unchanged.
 
 Verification still pending: inspect all nine rendered route structures (including helper-generated DOM), Arabic strings and ordering, modals, transitions, click handlers, build and tablet screenshots. This fix alone does not establish complete parity.
+
+## Modal padding source comparison — 2026-10-31
+
+Legacy `assets/style.css` `.modal` sets `padding:18px 15px calc(22px + env(safe-area-inset-bottom))` and tablet `@media(min-width:720px)` changes modal width, max-height, and border radius only. Native7 `OriginalPageStructure.kt` had changed tablet side padding to 22dp and bottom to 18dp, shifting all modal content. Commit `de798ab4072c179c2a35b6517d37dbb1f3e8a30e` restores 15dp side, 18dp top, 22dp bottom padding for both widths. **Caveat:** native safe-area inset handling and modal host placement are not verified; no Android build/device comparison performed.
+
+**Nine-route coverage:** this is a shared modal geometry fix affecting any route that renders `.modal`, not evidence that all nine routes' dynamic dialogs, labels, actions, transitions, and data have been reproduced.
