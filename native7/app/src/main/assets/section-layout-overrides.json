@@ -561,6 +561,28 @@
       "purchaseLinePaddingDp": 18,
       "purchaseLineGapDp": 16,
       "purchaseLineMinHeightDp": 58
+    },
+    "expenses": {
+      "fieldPaddingDp": 18,
+      "fieldMinHeightDp": 58,
+      "fieldCornerRadiusDp": 18,
+      "buttonPaddingDp": 18,
+      "buttonMinHeightDp": 72,
+      "buttonCornerRadiusDp": 18,
+      "tableCellPaddingDp": 18,
+      "tableRowMinHeightDp": 58,
+      "tableRowGapDp": 14
+    },
+    "expense-form": {
+      "fieldPaddingDp": 18,
+      "fieldMinHeightDp": 58,
+      "fieldCornerRadiusDp": 18,
+      "buttonPaddingDp": 18,
+      "buttonMinHeightDp": 72,
+      "buttonCornerRadiusDp": 18,
+      "tableCellPaddingDp": 18,
+      "tableRowMinHeightDp": 58,
+      "tableRowGapDp": 14
     }
   },
   "scopedRules": [
@@ -818,6 +840,32 @@
         "save-purchase",
         "post-purchase",
         "supplier-payment"
+      ],
+      "fieldPaddingDp": 18,
+      "fieldMinHeightDp": 58,
+      "buttonPaddingDp": 18,
+      "buttonMinHeightDp": 72,
+      "cornerRadiusDp": 18
+    },
+    {
+      "section": "expenses",
+      "routes": [
+        "expenses",
+        "expense-form"
+      ],
+      "sourceIdContains": [
+        "expense",
+        "category",
+        "expense-amount",
+        "expense-note"
+      ],
+      "sourceClassContains": [
+        "expense",
+        "expense-row",
+        "expense-card"
+      ],
+      "dataActionContains": [
+        "expense"
       ],
       "fieldPaddingDp": 18,
       "fieldMinHeightDp": 58,
