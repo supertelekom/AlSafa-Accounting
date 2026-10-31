@@ -1000,7 +1000,10 @@ internal class OriginalPageStructure(
                             setPadding(dp(13),dp(13),dp(13),dp(13))
                         }
                         if(cs.contains("form-card")) {
+                            // Source .form-card: paper, 1px line, 17px radius,
+                            // 0 4px 15px rgba(105,75,35,.04) shadow.
                             background=bg(Color.rgb(255,253,249),17)
+                            elevation=dp(4).toFloat()
                             val inset=if(activity.resources.configuration.screenWidthDp>=720) 22 else 15
                             setPadding(dp(inset),dp(inset),dp(inset),dp(inset))
                         }
