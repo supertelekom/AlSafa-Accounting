@@ -670,6 +670,62 @@
       "financialRowPaddingDp": 18,
       "financialRowMinHeightDp": 58,
       "financialRowGapDp": 14
+    },
+    "partners": {
+      "fieldPaddingDp": 18,
+      "fieldMinHeightDp": 58,
+      "fieldCornerRadiusDp": 18,
+      "buttonPaddingDp": 18,
+      "buttonMinHeightDp": 72,
+      "buttonCornerRadiusDp": 18,
+      "tableCellPaddingDp": 18,
+      "tableRowMinHeightDp": 58,
+      "tableRowGapDp": 14,
+      "financialRowPaddingDp": 18,
+      "financialRowMinHeightDp": 58,
+      "financialRowGapDp": 14
+    },
+    "partner-withdrawal-form": {
+      "fieldPaddingDp": 18,
+      "fieldMinHeightDp": 58,
+      "fieldCornerRadiusDp": 18,
+      "buttonPaddingDp": 18,
+      "buttonMinHeightDp": 72,
+      "buttonCornerRadiusDp": 18,
+      "tableCellPaddingDp": 18,
+      "tableRowMinHeightDp": 58,
+      "tableRowGapDp": 14,
+      "financialRowPaddingDp": 18,
+      "financialRowMinHeightDp": 58,
+      "financialRowGapDp": 14
+    },
+    "partner-report": {
+      "fieldPaddingDp": 18,
+      "fieldMinHeightDp": 58,
+      "fieldCornerRadiusDp": 18,
+      "buttonPaddingDp": 18,
+      "buttonMinHeightDp": 72,
+      "buttonCornerRadiusDp": 18,
+      "tableCellPaddingDp": 18,
+      "tableRowMinHeightDp": 58,
+      "tableRowGapDp": 14,
+      "financialRowPaddingDp": 18,
+      "financialRowMinHeightDp": 58,
+      "financialRowGapDp": 14
+    },
+    "partner-summary": {
+      "fieldPaddingDp": 18,
+      "fieldMinHeightDp": 58,
+      "fieldCornerRadiusDp": 18,
+      "buttonPaddingDp": 18,
+      "buttonMinHeightDp": 72,
+      "buttonCornerRadiusDp": 18,
+      "tableCellPaddingDp": 18,
+      "tableRowMinHeightDp": 58,
+      "tableRowGapDp": 14,
+      "financialRowPaddingDp": 18,
+      "financialRowMinHeightDp": 58,
+      "financialRowGapDp": 14
     }
   },
   "scopedRules": [
@@ -1026,6 +1082,37 @@
         "close-day",
         "closing",
         "carryover"
+      ],
+      "fieldPaddingDp": 18,
+      "fieldMinHeightDp": 58,
+      "buttonPaddingDp": 18,
+      "buttonMinHeightDp": 72,
+      "cornerRadiusDp": 18
+    },
+    {
+      "section": "partners",
+      "routes": [
+        "partners",
+        "partner-withdrawal-form",
+        "partner-report",
+        "partner-summary"
+      ],
+      "sourceIdContains": [
+        "partner",
+        "withdrawal",
+        "profit-share",
+        "monthly-profit"
+      ],
+      "sourceClassContains": [
+        "partner",
+        "withdrawal",
+        "profit-share",
+        "partner-ledger"
+      ],
+      "dataActionContains": [
+        "partner",
+        "withdrawal",
+        "monthly-summary"
       ],
       "fieldPaddingDp": 18,
       "fieldMinHeightDp": 58,
