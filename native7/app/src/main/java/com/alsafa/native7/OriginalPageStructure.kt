@@ -1813,6 +1813,7 @@ internal class OriginalPageStructure(
         val row=build(copy.also { annotateDynamicRow(it,target) })
         if(target is SourceGrid) target.addCell(row,false) else target.addView(row)
         styleSectionTree(row,currentRoute)
+        styleScopedFinancialControls(row,currentRoute)
         enforceTajawalRtl(row)
         conditions()
     }
