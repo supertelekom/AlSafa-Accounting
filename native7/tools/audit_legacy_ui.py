@@ -59,10 +59,10 @@ def route_elements(main_js: str, function: str) -> dict:
     The boundary is the next top-level JS function declaration. This is a
     source-text inventory; runtime branches and templates may add elements.
     """
-    head = re.search(r"(?m)^\\s*(?:async\\s+)?function\\s+" + re.escape(function) + r"\\s*\\(", main_js)
+    head = re.search(r"(?m)^\s*(?:async\s+)?function\s+" + re.escape(function) + r"\s*\(", main_js)
     if head is None:
         return {"present": False, "labels": [], "actions": [], "routes": []}
-    next_head = re.search(r"(?m)^\\s*(?:async\\s+)?function\\s+[A-Za-z_$][\\w$]*\\s*\\(", main_js[head.end():])
+    next_head = re.search(r"(?m)^\s*(?:async\s+)?function\s+[A-Za-z_$][\w$]*\s*\(", main_js[head.end():])
     end = head.end() + next_head.start() if next_head else len(main_js)
     body = main_js[head.start():end]
     # Keep original source order, not alphabetical sorting.
@@ -70,13 +70,13 @@ def route_elements(main_js: str, function: str) -> dict:
         return list(dict.fromkeys(re.findall(pattern, body)))
     return {
         "present": True,
-        "literal_buttons": len(re.findall(r"<button\\b", body, re.I)),
-        "literal_inputs": len(re.findall(r"<input\\b|<textarea\\b", body, re.I)),
-        "literal_selects": len(re.findall(r"<select\\b", body, re.I)),
-        "actions": ordered(r'data-action\\s*=\\s*["\\x27]([^"\\x27]+)'),
-        "routes": ordered(r'data-route\\s*=\\s*["\\x27]([^"\\x27]+)'),
-        "dialog_mentions": ordered(r'\\b(?:showModal|openModal|closeModal|dialog|modal)\\b'),
-        "animation_mentions": ordered(r'\\b(?:animate|transition|requestAnimationFrame|setTimeout)\\b'),
+        "literal_buttons": len(re.findall(r"<button\b", body, re.I)),
+        "literal_inputs": len(re.findall(r"<input\b|<textarea\b", body, re.I)),
+        "literal_selects": len(re.findall(r"<select\b", body, re.I)),
+        "actions": ordered(r'data-action\s*=\s*["\x27]([^"\x27]+)'),
+        "routes": ordered(r'data-route\s*=\s*["\x27]([^"\x27]+)'),
+        "dialog_mentions": ordered(r'\b(?:showModal|openModal|closeModal|dialog|modal)\b'),
+        "animation_mentions": ordered(r'\b(?:animate|transition|requestAnimationFrame|setTimeout)\b'),
         "caveat": "Literal markup only; helpers, dynamic branches and runtime behavior are not evaluated.",
     }
 
@@ -117,6 +117,11 @@ def main() -> None:
     print("Legacy tablet source route inventory:")
     for label, info in routes.items():
         print(f"  {label}: {info['function']} — {'found' if info['present'] else 'MISSING'}")
+    print("\nPer-screen literal elements (nested helpers not counted):")
+    for label, item in report["route_elements"].items():
+        print(f"  {label}: buttons={item.get('literal_buttons', 0)}, "
+              f"inputs={item.get('literal_inputs', 0)}, selects={item.get('literal_selects', 0)}, "
+              f"actions={len(item['actions'])}, routes={len(item['routes'])}")
     print("\nCSS selectors (style.css / styles.css):")
     for name, info in classes.items():
         print(f"  .{name}: {len(info['base'])} / {len(info['overrides'])}")
