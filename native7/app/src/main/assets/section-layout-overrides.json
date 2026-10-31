@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "tabletMinWidthDp": 600,
-  "description": "Presentation-only overlays for original source-derived opening balances and products pages; no field labels or actions are synthesized.",
+  "description": "Source-derived native presentation overrides for opening balances, products, stock and sales. No source labels, records or actions are synthesized.",
   "routes": {
     "opening-balances": {
       "fieldPaddingDp": 16,
@@ -33,6 +33,78 @@
       "buttonCornerRadiusDp": 16,
       "variantRowGapDp": 16,
       "variantPaddingDp": 14
+    },
+    "inventory-movements": {
+      "fieldPaddingDp": 16,
+      "fieldMinHeightDp": 54,
+      "fieldCornerRadiusDp": 14,
+      "sectionGapDp": 16,
+      "buttonPaddingDp": 16,
+      "buttonMinHeightDp": 64,
+      "buttonCornerRadiusDp": 16,
+      "tableCellPaddingDp": 16,
+      "tableRowMinHeightDp": 54,
+      "tableRowGapDp": 12
+    },
+    "stock-alerts": {
+      "fieldPaddingDp": 16,
+      "fieldMinHeightDp": 54,
+      "fieldCornerRadiusDp": 14,
+      "sectionGapDp": 16,
+      "buttonPaddingDp": 16,
+      "buttonMinHeightDp": 64,
+      "buttonCornerRadiusDp": 16,
+      "tableCellPaddingDp": 16,
+      "tableRowMinHeightDp": 54,
+      "tableRowGapDp": 12
+    },
+    "inventory-analytics": {
+      "fieldPaddingDp": 16,
+      "fieldMinHeightDp": 54,
+      "fieldCornerRadiusDp": 14,
+      "sectionGapDp": 16,
+      "buttonPaddingDp": 16,
+      "buttonMinHeightDp": 64,
+      "buttonCornerRadiusDp": 16,
+      "tableCellPaddingDp": 16,
+      "tableRowMinHeightDp": 54,
+      "tableRowGapDp": 12
+    },
+    "stock-adjustment": {
+      "fieldPaddingDp": 16,
+      "fieldMinHeightDp": 54,
+      "fieldCornerRadiusDp": 14,
+      "sectionGapDp": 16,
+      "buttonPaddingDp": 16,
+      "buttonMinHeightDp": 64,
+      "buttonCornerRadiusDp": 16,
+      "tableCellPaddingDp": 16,
+      "tableRowMinHeightDp": 54,
+      "tableRowGapDp": 12
+    },
+    "stock-financing": {
+      "fieldPaddingDp": 16,
+      "fieldMinHeightDp": 54,
+      "fieldCornerRadiusDp": 14,
+      "sectionGapDp": 16,
+      "buttonPaddingDp": 16,
+      "buttonMinHeightDp": 64,
+      "buttonCornerRadiusDp": 16,
+      "tableCellPaddingDp": 16,
+      "tableRowMinHeightDp": 54,
+      "tableRowGapDp": 12
+    },
+    "stock-settlement": {
+      "fieldPaddingDp": 16,
+      "fieldMinHeightDp": 54,
+      "fieldCornerRadiusDp": 14,
+      "sectionGapDp": 16,
+      "buttonPaddingDp": 16,
+      "buttonMinHeightDp": 64,
+      "buttonCornerRadiusDp": 16,
+      "tableCellPaddingDp": 16,
+      "tableRowMinHeightDp": 54,
+      "tableRowGapDp": 12
     }
   }
 }
