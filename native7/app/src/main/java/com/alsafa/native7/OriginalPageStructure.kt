@@ -304,6 +304,21 @@ internal class OriginalPageStructure(
                     current.layoutParams=params
                 }
             }
+            if(rule.has("orderRowPaddingDp") && node!=null &&
+                classes(node).any { it in listOf(
+                    "customer-order-row","customer-order-card",
+                    "order-row","order-status-row","order-tracking-row"
+                ) }) {
+                val p=dp(rule.optInt("orderRowPaddingDp",18))
+                current.setPadding(p,p,p,p)
+                current.minimumHeight=maxOf(current.minimumHeight,
+                    dp(rule.optInt("orderRowMinHeightDp",58)))
+                (current.layoutParams as? LinearLayout.LayoutParams)?.let { params ->
+                    params.bottomMargin=maxOf(params.bottomMargin,
+                        dp(rule.optInt("orderRowGapDp",14)))
+                    current.layoutParams=params
+                }
+            }
             if(rule.has("saleLinePaddingDp") && node!=null) {
                 val css=classes(node)
                 val line=css.any { it in listOf(
