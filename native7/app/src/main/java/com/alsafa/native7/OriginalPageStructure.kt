@@ -1475,7 +1475,7 @@ internal class OriginalPageStructure(
             items(node.optJSONArray("children")).forEach { prepare(it) }
         }
         prepare(copy)
-        val row=build(copy)
+        val row=build(copy.also { markRepairInvoiceActions(it,false) })
         if(host is SourceGrid) host.addCell(row,false) else host.addView(row)
         conditions()
         if(quick) {
@@ -1578,7 +1578,7 @@ internal class OriginalPageStructure(
                 items(node.optJSONArray("children")).forEach { number(it) }
             }
             number(copy)
-            val view=build(copy)
+            val view=build(copy.also { markRepairInvoiceActions(it,false) })
             if(host is SourceGrid) host.addCell(view,false) else host.addView(view)
             conditions()
         }
@@ -1593,7 +1593,7 @@ internal class OriginalPageStructure(
             lineage(candidate).count { it in buttonLineage }
         } ?: return
         val copy=JSONObject(pages.getJSONObject("variant-row-template").toString()).also { uniqueDynamicIds(it) }
-        val row=build(copy)
+        val row=build(copy.also { markRepairInvoiceActions(it,false) })
         if(target is SourceGrid) target.addCell(row,false) else target.addView(row)
         conditions()
     }
