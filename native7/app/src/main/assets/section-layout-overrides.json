@@ -852,6 +852,48 @@
       "orderRowPaddingDp": 18,
       "orderRowMinHeightDp": 58,
       "orderRowGapDp": 14
+    },
+    "warranties": {
+      "fieldPaddingDp": 18,
+      "fieldMinHeightDp": 58,
+      "fieldCornerRadiusDp": 18,
+      "buttonPaddingDp": 18,
+      "buttonMinHeightDp": 72,
+      "buttonCornerRadiusDp": 18,
+      "tableCellPaddingDp": 18,
+      "tableRowMinHeightDp": 58,
+      "tableRowGapDp": 14,
+      "warrantyRowPaddingDp": 18,
+      "warrantyRowMinHeightDp": 58,
+      "warrantyRowGapDp": 14
+    },
+    "warranty-form": {
+      "fieldPaddingDp": 18,
+      "fieldMinHeightDp": 58,
+      "fieldCornerRadiusDp": 18,
+      "buttonPaddingDp": 18,
+      "buttonMinHeightDp": 72,
+      "buttonCornerRadiusDp": 18,
+      "tableCellPaddingDp": 18,
+      "tableRowMinHeightDp": 58,
+      "tableRowGapDp": 14,
+      "warrantyRowPaddingDp": 18,
+      "warrantyRowMinHeightDp": 58,
+      "warrantyRowGapDp": 14
+    },
+    "warranty-details": {
+      "fieldPaddingDp": 18,
+      "fieldMinHeightDp": 58,
+      "fieldCornerRadiusDp": 18,
+      "buttonPaddingDp": 18,
+      "buttonMinHeightDp": 72,
+      "buttonCornerRadiusDp": 18,
+      "tableCellPaddingDp": 18,
+      "tableRowMinHeightDp": 58,
+      "tableRowGapDp": 14,
+      "warrantyRowPaddingDp": 18,
+      "warrantyRowMinHeightDp": 58,
+      "warrantyRowGapDp": 14
     }
   },
   "scopedRules": [
@@ -1333,6 +1375,37 @@
         "customer-order",
         "complete-order",
         "cancel-order"
+      ],
+      "fieldPaddingDp": 18,
+      "fieldMinHeightDp": 58,
+      "buttonPaddingDp": 18,
+      "buttonMinHeightDp": 72,
+      "cornerRadiusDp": 18
+    },
+    {
+      "section": "warranties",
+      "routes": [
+        "warranties",
+        "warranty-form",
+        "warranty-details"
+      ],
+      "sourceIdContains": [
+        "warranty",
+        "guarantee",
+        "invoice-number",
+        "warranty-start",
+        "warranty-period"
+      ],
+      "sourceClassContains": [
+        "warranty",
+        "guarantee",
+        "warranty-row",
+        "warranty-card"
+      ],
+      "dataActionContains": [
+        "warranty",
+        "guarantee",
+        "print-warranty"
       ],
       "fieldPaddingDp": 18,
       "fieldMinHeightDp": 58,
