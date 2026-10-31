@@ -154,6 +154,22 @@ internal class OriginalPageStructure(
                     }
                 }
             }
+            if(rule.has("saleLinePaddingDp") && node!=null) {
+                val css=classes(node)
+                val line=css.any { it in listOf(
+                    "sale-line","sale-item","invoice-item","invoice-line",
+                    "sale-line-row","sale-item-row","sale-row"
+                ) } || node.optJSONObject("data")?.has("data-sale-item")==true
+                if(line) {
+                    val p=dp(rule.optInt("saleLinePaddingDp",16))
+                    current.setPadding(p,p,p,p)
+                    (current.layoutParams as? LinearLayout.LayoutParams)?.let { params ->
+                        params.bottomMargin=maxOf(params.bottomMargin,
+                            dp(rule.optInt("saleLineGapDp",16)))
+                        current.layoutParams=params
+                    }
+                }
+            }
             if(kind=="button" && current !is EditText) {
                 current.minimumHeight=maxOf(current.minimumHeight,dp(rule.optInt("buttonMinHeightDp",64)))
                 val p=dp(rule.optInt("buttonPaddingDp",16))
@@ -1723,6 +1739,10 @@ internal class OriginalPageStructure(
             number(copy)
             val view=build(copy.also { annotateDynamicRow(it,host) })
             if(host is SourceGrid) host.addCell(view,false) else host.addView(view)
+            // Source templates are inserted after the initial page pass.
+            // Apply the same field, button, RTL and font styling immediately.
+            styleSectionTree(view,currentRoute)
+            enforceTajawalRtl(view)
             conditions()
         }
     }
