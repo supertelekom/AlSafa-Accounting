@@ -111,14 +111,17 @@ internal class OriginalPageStructure(
                 if((0 until routes.length()).none { routes.optString(it)==route }) continue
                 val id=node.optString("sourceId").lowercase(java.util.Locale.ROOT)
                 val css=classes(node).joinToString(" ").lowercase(java.util.Locale.ROOT)
+                val action=node.optJSONObject("data")?.optString("data-action")
+                    ?.lowercase(java.util.Locale.ROOT).orEmpty()
                 fun matches(key:String,value:String):Boolean {
                     val tokens=rule.optJSONArray(key) ?: return false
                     return (0 until tokens.length()).any {
                         value.contains(tokens.optString(it).lowercase(java.util.Locale.ROOT))
                     }
                 }
-                if(!matches("sourceIdContains",id) && !matches("sourceClassContains",css))
-                    continue
+                if(!matches("sourceIdContains",id) &&
+                    !matches("sourceClassContains",css) &&
+                    !matches("dataActionContains",action)) continue
                 if(current is EditText || current is Spinner) {
                     val p=dp(rule.optInt("fieldPaddingDp",16))
                     current.setPadding(p,p,p,p)
