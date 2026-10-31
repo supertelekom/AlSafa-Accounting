@@ -505,6 +505,62 @@
       "tableCellPaddingDp": 18,
       "tableRowMinHeightDp": 58,
       "tableRowGapDp": 14
+    },
+    "purchases": {
+      "fieldPaddingDp": 18,
+      "fieldMinHeightDp": 58,
+      "fieldCornerRadiusDp": 18,
+      "buttonPaddingDp": 18,
+      "buttonMinHeightDp": 72,
+      "buttonCornerRadiusDp": 18,
+      "tableCellPaddingDp": 18,
+      "tableRowMinHeightDp": 58,
+      "tableRowGapDp": 14,
+      "purchaseLinePaddingDp": 18,
+      "purchaseLineGapDp": 16,
+      "purchaseLineMinHeightDp": 58
+    },
+    "purchase-form": {
+      "fieldPaddingDp": 18,
+      "fieldMinHeightDp": 58,
+      "fieldCornerRadiusDp": 18,
+      "buttonPaddingDp": 18,
+      "buttonMinHeightDp": 72,
+      "buttonCornerRadiusDp": 18,
+      "tableCellPaddingDp": 18,
+      "tableRowMinHeightDp": 58,
+      "tableRowGapDp": 14,
+      "purchaseLinePaddingDp": 18,
+      "purchaseLineGapDp": 16,
+      "purchaseLineMinHeightDp": 58
+    },
+    "purchase-draft": {
+      "fieldPaddingDp": 18,
+      "fieldMinHeightDp": 58,
+      "fieldCornerRadiusDp": 18,
+      "buttonPaddingDp": 18,
+      "buttonMinHeightDp": 72,
+      "buttonCornerRadiusDp": 18,
+      "tableCellPaddingDp": 18,
+      "tableRowMinHeightDp": 58,
+      "tableRowGapDp": 14,
+      "purchaseLinePaddingDp": 18,
+      "purchaseLineGapDp": 16,
+      "purchaseLineMinHeightDp": 58
+    },
+    "purchase-payments": {
+      "fieldPaddingDp": 18,
+      "fieldMinHeightDp": 58,
+      "fieldCornerRadiusDp": 18,
+      "buttonPaddingDp": 18,
+      "buttonMinHeightDp": 72,
+      "buttonCornerRadiusDp": 18,
+      "tableCellPaddingDp": 18,
+      "tableRowMinHeightDp": 58,
+      "tableRowGapDp": 14,
+      "purchaseLinePaddingDp": 18,
+      "purchaseLineGapDp": 16,
+      "purchaseLineMinHeightDp": 58
     }
   },
   "scopedRules": [
@@ -731,6 +787,37 @@
         "supplier",
         "open-supplier",
         "pay-supplier"
+      ],
+      "fieldPaddingDp": 18,
+      "fieldMinHeightDp": 58,
+      "buttonPaddingDp": 18,
+      "buttonMinHeightDp": 72,
+      "cornerRadiusDp": 18
+    },
+    {
+      "section": "purchases",
+      "routes": [
+        "purchases",
+        "purchase-form",
+        "purchase-draft",
+        "purchase-payments"
+      ],
+      "sourceIdContains": [
+        "purchase",
+        "supplier-payment",
+        "purchase-total"
+      ],
+      "sourceClassContains": [
+        "purchase-line",
+        "purchase-invoice",
+        "purchase-payment",
+        "purchase-draft"
+      ],
+      "dataActionContains": [
+        "purchase",
+        "save-purchase",
+        "post-purchase",
+        "supplier-payment"
       ],
       "fieldPaddingDp": 18,
       "fieldMinHeightDp": 58,
