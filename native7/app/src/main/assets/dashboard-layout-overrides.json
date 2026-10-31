@@ -1,0 +1,47 @@
+{
+  "schemaVersion": 1,
+  "description": "Source-derived dashboard and navigation presentation overrides. Applied to the original-structure.json.gz page tree at runtime without changing labels or route order.",
+  "routes": [
+    "home",
+    "dashboard",
+    "father-home",
+    "advanced-home",
+    "simple-home"
+  ],
+  "fontAsset": "Tajawal-Medium.ttf",
+  "rtl": true,
+  "tabletMinWidthDp": 600,
+  "targets": [
+    {
+      "classes": [
+        "mode-main-grid",
+        "modern-shortcuts-grid",
+        "father-main-actions",
+        "simple-actions",
+        "modern-feature-grid"
+      ],
+      "gapDp": 14,
+      "marginBottomDp": 18
+    },
+    {
+      "classes": [
+        "mode-card",
+        "modern-shortcut",
+        "father-main-card",
+        "modern-feature-card",
+        "simple-action"
+      ],
+      "paddingDp": 16,
+      "cornerRadiusDp": 18,
+      "minHeightDp": 76
+    },
+    {
+      "classes": [
+        "page-heading",
+        "father-head",
+        "simple-home-head"
+      ],
+      "marginBottomDp": 16
+    }
+  ]
+}
