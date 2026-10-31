@@ -228,6 +228,7 @@ internal class LegacyBackupStore(context: Context) :
             check(saved==inspection.counts.values.sum()) { "لم يتم حفظ جميع السجلات" }
             verifySupplierPurchaseExpenseBatch(db, inspection.counts)
             verifyCashFlowBatch(db, inspection.counts)
+            verifyMaintenanceAndSalesBatch(db, inspection.counts)
             verifyImportedAccountingSections(db, inspection.counts)
             db.setTransactionSuccessful()
         } finally { db.endTransaction() }
@@ -268,6 +269,26 @@ internal class LegacyBackupStore(context: Context) :
                 }
                 check(actual == expected) {
                     "فشل تحقق $section في $table: متوقع $expected، فعلي $actual"
+                }
+            }
+        }
+    }
+
+    /** Batch three: runtime JSON counts, never fixed historical totals. */
+    private fun verifyMaintenanceAndSalesBatch(db: SQLiteDatabase, counts: Map<String, Int>) {
+        for (section in listOf("partnerWithdrawals", "repairs", "sales")) {
+            val expected = counts[section]
+                ?: throw IllegalArgumentException("قسم $section غير موجود في النسخة")
+            for (table in listOf("legacy_records", "op_$section", "domain_$section")) {
+                val sql = if (table == "legacy_records")
+                    "SELECT COUNT(*) FROM legacy_records WHERE section=?"
+                else "SELECT COUNT(*) FROM $table"
+                val actual = db.rawQuery(sql,
+                    if (table == "legacy_records") arrayOf(section) else null).use { cursor ->
+                    check(cursor.moveToFirst()); cursor.getInt(0)
+                }
+                check(actual == expected) {
+                    "فشل استيراد $section: المتوقع $expected في $table، الفعلي $actual"
                 }
             }
         }
@@ -357,6 +378,7 @@ internal class LegacyBackupStore(context: Context) :
             check(staged == inspection.counts.values.sum()) { "لم يتم حفظ جميع السجلات" }
             verifySupplierPurchaseExpenseBatch(db, inspection.counts)
             verifyCashFlowBatch(db, inspection.counts)
+            verifyMaintenanceAndSalesBatch(db, inspection.counts)
             verifyImportedAccountingSections(db, inspection.counts)
             db.setTransactionSuccessful()
         } finally {
