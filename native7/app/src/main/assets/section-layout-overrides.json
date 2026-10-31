@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "tabletMinWidthDp": 600,
+  "description": "Presentation-only overlays for original source-derived opening balances and products pages; no field labels or actions are synthesized.",
+  "routes": {
+    "opening-balances": {
+      "fieldPaddingDp": 16,
+      "fieldMinHeightDp": 54,
+      "fieldCornerRadiusDp": 14,
+      "sectionGapDp": 16,
+      "buttonPaddingDp": 16,
+      "buttonMinHeightDp": 64,
+      "buttonCornerRadiusDp": 16
+    },
+    "products": {
+      "fieldPaddingDp": 16,
+      "fieldMinHeightDp": 54,
+      "fieldCornerRadiusDp": 14,
+      "sectionGapDp": 16,
+      "buttonPaddingDp": 16,
+      "buttonMinHeightDp": 64,
+      "buttonCornerRadiusDp": 16
+    },
+    "product-form": {
+      "fieldPaddingDp": 16,
+      "fieldMinHeightDp": 54,
+      "fieldCornerRadiusDp": 14,
+      "sectionGapDp": 16,
+      "buttonPaddingDp": 16,
+      "buttonMinHeightDp": 64,
+      "buttonCornerRadiusDp": 16
+    }
+  }
+}
