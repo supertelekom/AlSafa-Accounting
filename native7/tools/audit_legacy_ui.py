@@ -220,7 +220,7 @@ def main() -> None:
         print(f"  {label}: buttons={item.get('literal_buttons', 0)}, "
               f"inputs={item.get('literal_inputs', 0)}, selects={item.get('literal_selects', 0)}, "
               f"actions={len(item['actions'])}, routes={len(item['routes'])}")
-    print("\\nTransitive helper coverage (candidate actions, not runtime controls):")
+    print("\nTransitive helper coverage (candidate actions, not runtime controls):")
     for route, item in report["route_helper_inventory"].items():
         print(f"  {route}: functions={len(item['functions'])}, "
               f"candidate actions={len(item['helper_actions'])}")
