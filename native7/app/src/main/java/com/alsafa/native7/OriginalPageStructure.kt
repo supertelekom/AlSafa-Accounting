@@ -599,7 +599,9 @@ internal class OriginalPageStructure(
                                     layoutDirection=View.LAYOUT_DIRECTION_RTL
                                     actionViews.forEach { addView(it,ViewGroup.LayoutParams(-2,-2)) }
                                 }
-                                addView(wrap,LinearLayout.LayoutParams(-1,-2))
+                                addView(wrap,LinearLayout.LayoutParams(-1,-2).apply {
+                                    if(n.optBoolean("qrProductActions")) gravity=Gravity.CENTER_HORIZONTAL
+                                })
                             } else if(repairInvoice) {
                                 // Narrow repair invoice rows use horizontal RTL
                                 // scrolling. Keep all actions in source order.
@@ -637,7 +639,9 @@ internal class OriginalPageStructure(
                                         })
                                     }
                                 }
-                                addView(strip,LinearLayout.LayoutParams(-1,-2))
+                                addView(strip,LinearLayout.LayoutParams(-1,-2).apply {
+                                    if(n.optBoolean("qrProductActions")) gravity=Gravity.CENTER_HORIZONTAL
+                                })
                             }
                         }
                         if(cs.contains("transaction")) {
