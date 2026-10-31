@@ -121,3 +121,17 @@ Both are source-verified **shared-component** corrections; they do not demonstra
 The preceding note about `.form-actions` was incomplete: inspection of the actual original `assets/style.css` found both `.form-actions { display:flex; gap:9px; margin-top:18px }` **and** `.form-actions > * { flex:1 }`. The earlier SourceFlow change (`4dab354d`) wrongly used content-width buttons. Code commit `ebcac005753aee0e24eb85ba5c08a8aaa336155e` restores equal flex-weight button widths in a native RTL horizontal LinearLayout, 9dp gaps and 18dp top spacing.
 
 **Important limitation:** source stylesheet has later, overlapping `.form-grid` media rules and `body:not(.father-mode)` overrides. Therefore a single generic grid threshold cannot be certified as matching all modes without a route/mode-aware cascade analysis. Do not mark all nine screens as matched based on shared CSS fixes. The full route-by-route DOM/element/interaction comparison and screenshot/build tests remain pending.
+
+## CSS cascade audit: form grids — 2026-10-31
+
+Read actual supplied legacy tablet `assets/style.css` and compared every `.form-grid` declaration in source order against `OriginalPageStructure.kt` grid column selection:
+
+| Source width/orientation | Effective source columns | Native7 after fix |
+|---|---:|---:|
+| <=380px | 1 | 1 |
+| 381–719px | 2 | 2 |
+| 720–1199px | 2 (later override) | 2 |
+| >=1200px, landscape | 3 (later override) | 3 |
+| >=1200px, portrait | 4 (earlier >=1080 rule remains) | 4 |
+
+Native7 had incorrectly used two columns at >=1200px portrait; corrected in code commit `c798c16730030bdb8153671df9cd81ba46030327`. This is a **shared form-grid rule**; source also contains `body:not(.father-mode) .form-grid` with auto-fit, which can alter effective columns by container width and must be checked with route/mode-specific screenshots. The table alone does not certify exact nine-screen parity. Android Studio build, tablet screenshots, all nine route DOM comparisons, dialogs, interactions and animations remain unverified. No Native6 or accounting changes.
