@@ -49,14 +49,14 @@ internal object LegacyDomainTables {
         db.execSQL("CREATE TABLE IF NOT EXISTS domain_children (section TEXT NOT NULL, parent_ordinal INTEGER NOT NULL, relation TEXT NOT NULL, ordinal INTEGER NOT NULL, original_id TEXT, reference_id TEXT, quantity REAL, amount REAL, raw_json TEXT NOT NULL, PRIMARY KEY(section,parent_ordinal,relation,ordinal))")
         db.execSQL("CREATE TABLE IF NOT EXISTS legacy_reference_audit (source_section TEXT NOT NULL, source_ordinal INTEGER NOT NULL, relation TEXT NOT NULL, target_section TEXT NOT NULL, target_id TEXT NOT NULL, resolved INTEGER NOT NULL, PRIMARY KEY(source_section,source_ordinal,relation,target_section,target_id))")
     }
-    fun importSection(db:SQLiteDatabase,section:String,records:JSONArray) {
+    fun importSection(db:SQLiteDatabase,section:String,records:JSONArray,offset:Int=0) {
         val names=fields[section]?.split(" ") ?: return
         val quoted=names.joinToString(",") { "\"$it\"" }
         val placeholders=List(names.size+2){"?"}.joinToString(",")
         for(i in 0 until records.length()) {
             val row=records.getJSONObject(i)
             val args=ArrayList<Any?>()
-            args.add(i)
+            args.add(i+offset)
             for(field in names) {
                 val value=row.opt(field)
                 args.add(when {
@@ -75,7 +75,7 @@ internal object LegacyDomainTables {
                     val child=children.get(j)
                     val obj=child as? JSONObject
                     db.execSQL("INSERT INTO domain_children(section,parent_ordinal,relation,ordinal,original_id,reference_id,quantity,amount,raw_json) VALUES (?,?,?,?,?,?,?,?,?)",
-                        arrayOf<Any?>(section,i,relation,j,obj?.optString("id"),obj?.optString("productId")
+                        arrayOf<Any?>(section,i+offset,relation,j,obj?.optString("id"),obj?.optString("productId")
                             ?:obj?.optString("partId")?:obj?.optString("itemId"),
                             obj?.optDouble("qty")?.takeUnless { it.isNaN() },
                             obj?.optDouble("amount")?.takeUnless { it.isNaN() },child.toString()))
@@ -83,7 +83,7 @@ internal object LegacyDomainTables {
             }
         }
         db.rawQuery("SELECT COUNT(*) FROM domain_$section",null).use {
-            check(it.moveToFirst() && it.getInt(0)==records.length())
+            check(it.moveToFirst() && it.getInt(0)==offset+records.length())
         }
     }
     fun audit(db:SQLiteDatabase) {
