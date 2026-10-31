@@ -246,6 +246,21 @@ internal class OriginalPageStructure(
                 current.minimumHeight=maxOf(current.minimumHeight,
                     dp(rule.optInt("expenseRowMinHeightDp",58)))
             }
+            if(rule.has("cashRowPaddingDp") && node!=null &&
+                classes(node).any { it in listOf(
+                    "cash-movement-row","cash-row","vault-row",
+                    "transfer-row","exchange-row","movement-row"
+                ) }) {
+                val p=dp(rule.optInt("cashRowPaddingDp",18))
+                current.setPadding(p,p,p,p)
+                current.minimumHeight=maxOf(current.minimumHeight,
+                    dp(rule.optInt("cashRowMinHeightDp",58)))
+                (current.layoutParams as? LinearLayout.LayoutParams)?.let { params ->
+                    params.bottomMargin=maxOf(params.bottomMargin,
+                        dp(rule.optInt("cashRowGapDp",14)))
+                    current.layoutParams=params
+                }
+            }
             if(rule.has("saleLinePaddingDp") && node!=null) {
                 val css=classes(node)
                 val line=css.any { it in listOf(
