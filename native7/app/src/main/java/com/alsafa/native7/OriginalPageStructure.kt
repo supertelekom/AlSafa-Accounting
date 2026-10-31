@@ -227,6 +227,18 @@ internal class OriginalPageStructure(
                 current.minimumHeight=maxOf(current.minimumHeight,
                     dp(rule.optInt("supplierRowMinHeightDp",58)))
             }
+            if(rule.has("purchaseLinePaddingDp") && node!=null &&
+                classes(node).contains("purchase-line")) {
+                val p=dp(rule.optInt("purchaseLinePaddingDp",18))
+                current.setPadding(p,p,p,p)
+                current.minimumHeight=maxOf(current.minimumHeight,
+                    dp(rule.optInt("purchaseLineMinHeightDp",58)))
+                (current.layoutParams as? LinearLayout.LayoutParams)?.let { params ->
+                    params.bottomMargin=maxOf(params.bottomMargin,
+                        dp(rule.optInt("purchaseLineGapDp",16)))
+                    current.layoutParams=params
+                }
+            }
             if(rule.has("saleLinePaddingDp") && node!=null) {
                 val css=classes(node)
                 val line=css.any { it in listOf(
@@ -1744,6 +1756,9 @@ internal class OriginalPageStructure(
         prepare(copy)
         val row=build(copy.also { annotateDynamicRow(it,host) })
         if(host is SourceGrid) host.addCell(row,false) else host.addView(row)
+        styleSectionTree(row,currentRoute)
+        styleScopedFinancialControls(row,currentRoute)
+        enforceTajawalRtl(row)
         conditions()
         if(quick) {
             val name=metadata.entries.firstOrNull { (field,node) ->
