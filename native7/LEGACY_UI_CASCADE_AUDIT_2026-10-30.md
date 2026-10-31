@@ -106,3 +106,12 @@ Directly inspected the supplied tablet v3.9.359 `assets/style.css` photo-picker 
 - Code commit `227c1a79990956a361425e2dc403e9692fee36fd`.
 - These are source-verified shared layout corrections, **not** completed nine-route element-by-element parity. Still requires route-specific label/order/handler/modal/animation comparison, Android Studio build, device screenshot tests, and gallery/camera/zoom tests.
 - No Native6, data, or financial-rule changes.
+
+## Source CSS shared action layout pass — 2026-10-31
+
+Direct comparisons against supplied v3.9.359 `assets/style.css` and Native7 `OriginalPageStructure.kt`:
+
+- `.photo-actions {display:grid;gap:8px}`: shared native vertical photo action column had generic 2dp child margins. Corrected to 8dp between actions, with no extra bottom margins. Code commit `b4b134fe5b208e9fff0f6aa4f69d232ea74ab11a`.
+- `.form-actions {display:flex;gap:9px;margin-top:18px}`: native `actions` used equal-width `SourceGrid`, which changed button sizing. Corrected to RTL `SourceFlow` with source 9dp gap and 18dp top spacing; it wraps only when needed. Code commit `4dab354d4a7e1a793fc22f0007373f2e67f1b2a7`.
+
+Both are source-verified **shared-component** corrections; they do not demonstrate that every button, text, modal, action, and animation in all nine routes has been compared. Pending: route-by-route node inventories and visual screenshot comparisons, build/device verification, camera/gallery, search and action tests. Native6 and accounting remain unchanged.
