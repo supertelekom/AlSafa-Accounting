@@ -217,6 +217,16 @@ internal class OriginalPageStructure(
                         dp(rule.optInt("repairRowMinHeightDp",58)))
                 }
             }
+            if(rule.has("supplierRowPaddingDp") && node!=null &&
+                classes(node).any { it in listOf(
+                    "supplier-row","supplier-card","supplier-ledger-row",
+                    "supplier-account-row","supplier-debt-row","supplier-balance-row"
+                ) }) {
+                val p=dp(rule.optInt("supplierRowPaddingDp",18))
+                current.setPadding(p,p,p,p)
+                current.minimumHeight=maxOf(current.minimumHeight,
+                    dp(rule.optInt("supplierRowMinHeightDp",58)))
+            }
             if(rule.has("saleLinePaddingDp") && node!=null) {
                 val css=classes(node)
                 val line=css.any { it in listOf(
