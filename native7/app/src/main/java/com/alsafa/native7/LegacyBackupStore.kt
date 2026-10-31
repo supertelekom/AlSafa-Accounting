@@ -226,9 +226,32 @@ internal class LegacyBackupStore(context: Context) :
                 it.moveToFirst(); it.getInt(0)
             }
             check(saved==inspection.counts.values.sum()) { "لم يتم حفظ جميع السجلات" }
+            verifyImportedAccountingSections(db, inspection.counts)
             db.setTransactionSuccessful()
         } finally { db.endTransaction() }
         return inspection
+    }
+
+    /** Verify every imported accounting section, not only products, before committing. */
+    private fun verifyImportedAccountingSections(db: SQLiteDatabase, counts: Map<String, Int>) {
+        val required = listOf("products", "sales", "repairs", "suppliers", "purchases",
+            "partnerWithdrawals", "expenses", "cashTransactions", "dailyClosings",
+            "payments", "returns")
+        for (section in required) {
+            val expected = counts[section] ?: 0
+            val staged = db.rawQuery(
+                "SELECT COUNT(*) FROM legacy_records WHERE section=?", arrayOf(section)
+            ).use { cursor -> check(cursor.moveToFirst()); cursor.getInt(0) }
+            val operational = db.rawQuery(
+                "SELECT COUNT(*) FROM op_${section}", null
+            ).use { cursor -> check(cursor.moveToFirst()); cursor.getInt(0) }
+            val domain = db.rawQuery(
+                "SELECT COUNT(*) FROM domain_${section}", null
+            ).use { cursor -> check(cursor.moveToFirst()); cursor.getInt(0) }
+            check(staged == expected && operational == expected && domain == expected) {
+                "فشل التحقق من استعادة $section: متوقع $expected، محفوظ $staged، تشغيلي $operational، مفهرس $domain"
+            }
+        }
     }
 
     fun hasData(): Boolean = readableDatabase.rawQuery(
@@ -291,6 +314,7 @@ internal class LegacyBackupStore(context: Context) :
                 it.getInt(0)
             }
             check(staged == inspection.counts.values.sum()) { "لم يتم حفظ جميع السجلات" }
+            verifyImportedAccountingSections(db, inspection.counts)
             db.setTransactionSuccessful()
         } finally {
             db.endTransaction()
