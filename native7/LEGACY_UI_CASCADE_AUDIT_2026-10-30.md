@@ -135,3 +135,13 @@ Read actual supplied legacy tablet `assets/style.css` and compared every `.form-
 | >=1200px, portrait | 4 (earlier >=1080 rule remains) | 4 |
 
 Native7 had incorrectly used two columns at >=1200px portrait; corrected in code commit `c798c16730030bdb8153671df9cd81ba46030327`. This is a **shared form-grid rule**; source also contains `body:not(.father-mode) .form-grid` with auto-fit, which can alter effective columns by container width and must be checked with route/mode-specific screenshots. The table alone does not certify exact nine-screen parity. Android Studio build, tablet screenshots, all nine route DOM comparisons, dialogs, interactions and animations remain unverified. No Native6 or accounting changes.
+
+## Legacy CSS spacing comparison — 2026-10-31
+
+Inspected the actual supplied tablet `assets/style.css` and compared shared classes against `OriginalPageStructure.childParams`:
+
+- `.search-box` has `margin-bottom:12px`; the generic native column had only a 2dp child margin. Fixed source-class bottom margin to 12dp.
+- `.simple-actions` has `margin:10px 0 18px`; native generic margin was 2dp and had no source-specific top margin. Fixed top to 10dp and bottom to 18dp.
+- Code commit `696aeb3efabb043b9ef5797bd6fa5018c905bcdf`.
+
+These two shared CSS corrections are source-verified, but they do not establish element-by-element equivalence of all nine screens. Source route DOM, dialogs, button handlers, conditional visibility, animations, screenshot parity, Android Studio compilation and Honor Pad X8b tests remain outstanding. No native6 or accounting changes.
