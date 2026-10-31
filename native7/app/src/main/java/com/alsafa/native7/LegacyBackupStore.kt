@@ -65,7 +65,7 @@ internal class LegacyBackupStore(context: Context) :
      * First import is all-or-nothing. Never silently replace an existing
      * dataset; merging stock and financial histories requires separate rules.
      */
-    fun importInitial(text: String): Inspection {
+    fun importInitial(text: String, onProgress: (String, Int, Int) -> Unit = { _, _, _ -> }): Inspection {
         val inspection = inspect(text)
         val wrapper = JSONObject(text.trimStart('\uFEFF'))
         val data = if (wrapper.optString("format") == "alsafa-accounting-backup")
@@ -80,6 +80,7 @@ internal class LegacyBackupStore(context: Context) :
                 val value = data.get(key)
                 val raw = value.toString()
                 val count = if (value is JSONArray) value.length() else 0
+                onProgress(key, 0, count)
                 db.execSQL("INSERT INTO legacy_sections(name,payload,item_count) VALUES(?,?,?)",
                     arrayOf<Any?>(key, raw, count))
                 if (value is JSONArray) {
@@ -90,8 +91,11 @@ internal class LegacyBackupStore(context: Context) :
                         val originalId = (record as? JSONObject)?.optString("id")?.takeIf { it.isNotBlank() }
                         db.execSQL("INSERT INTO legacy_records(section,ordinal,original_id,payload) VALUES(?,?,?,?)",
                             arrayOf<Any?>(key, index, originalId, record.toString()))
+                        if ((index + 1) % 100 == 0 || index + 1 == count)
+                            onProgress(key, index + 1, count)
                     }
                 }
+                if (count == 0) onProgress(key, 0, 0)
             }
             db.execSQL("INSERT INTO legacy_metadata(name,payload) VALUES(?,?)",
                 arrayOf("original_backup", text))
