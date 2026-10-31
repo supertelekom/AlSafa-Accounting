@@ -229,6 +229,7 @@ internal class LegacyBackupStore(context: Context) :
             verifySupplierPurchaseExpenseBatch(db, inspection.counts)
             verifyCashFlowBatch(db, inspection.counts)
             verifyMaintenanceAndSalesBatch(db, inspection.counts)
+            verifyFinalInventoryAndSettingsBatch(db, inspection.counts)
             verifyImportedAccountingSections(db, inspection.counts)
             db.setTransactionSuccessful()
         } finally { db.endTransaction() }
@@ -289,6 +290,27 @@ internal class LegacyBackupStore(context: Context) :
                 }
                 check(actual == expected) {
                     "فشل استيراد $section: المتوقع $expected في $table، الفعلي $actual"
+                }
+            }
+        }
+    }
+
+    /** Final batch: only verify arrays actually present in the uploaded backup. */
+    private fun verifyFinalInventoryAndSettingsBatch(db: SQLiteDatabase, counts: Map<String, Int>) {
+        for (section in listOf("inventoryMovements", "auditLog", "warranties")) {
+            val expected = counts[section] ?: continue
+            val projections = if (section == "warranties")
+                listOf("legacy_records") else listOf("legacy_records", "op_$section")
+            for (table in projections) {
+                val sql = if (table == "legacy_records")
+                    "SELECT COUNT(*) FROM legacy_records WHERE section=?"
+                else "SELECT COUNT(*) FROM $table"
+                val actual = db.rawQuery(sql,
+                    if (table == "legacy_records") arrayOf(section) else null).use { cursor ->
+                    check(cursor.moveToFirst()); cursor.getInt(0)
+                }
+                check(actual == expected) {
+                    "فشل تحقق $section في $table: المتوقع $expected، الفعلي $actual"
                 }
             }
         }
@@ -379,6 +401,7 @@ internal class LegacyBackupStore(context: Context) :
             verifySupplierPurchaseExpenseBatch(db, inspection.counts)
             verifyCashFlowBatch(db, inspection.counts)
             verifyMaintenanceAndSalesBatch(db, inspection.counts)
+            verifyFinalInventoryAndSettingsBatch(db, inspection.counts)
             verifyImportedAccountingSections(db, inspection.counts)
             db.setTransactionSuccessful()
         } finally {
