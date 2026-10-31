@@ -279,6 +279,16 @@ internal class OriginalPageStructure(
                     current.layoutParams=params
                 }
             }
+            if(rule.has("reportRowPaddingDp") && node!=null &&
+                classes(node).any { it in listOf(
+                    "report-row","report-tile","report-summary-row",
+                    "report-period-row","profit-row","report-grid-row"
+                ) }) {
+                val p=dp(rule.optInt("reportRowPaddingDp",18))
+                current.setPadding(p,p,p,p)
+                current.minimumHeight=maxOf(current.minimumHeight,
+                    dp(rule.optInt("reportRowMinHeightDp",58)))
+            }
             if(rule.has("saleLinePaddingDp") && node!=null) {
                 val css=classes(node)
                 val line=css.any { it in listOf(
