@@ -125,7 +125,9 @@ internal class OriginalPageStructure(
     fun contains(route:String) = pages.has(route)
     fun show(parent:LinearLayout,route:String) {
         metadata.clear();controls.clear();radioNames.clear();currentRoute=route
-        val view=build(pages.getJSONObject(route))
+        val page=pages.getJSONObject(route)
+        markRepairInvoiceActions(page,false)
+        val view=build(page)
         root=view
         // Reusing a page host must not stack the previous route underneath it.
         parent.removeAllViews()
@@ -134,6 +136,19 @@ internal class OriginalPageStructure(
             // A posted callback from an older route must not update controls
             // belonging to a newly displayed route.
             if(root===view && currentRoute==route && view.parent!=null) conditions()
+        }
+    }
+    /** Carry the legacy ancestor selector into the native child renderer.
+     * CSS [data-invoice-row="repair"] .row-actions cannot be resolved from
+     * a detached Android child while the tree is being constructed.
+     */
+    private fun markRepairInvoiceActions(node:JSONObject,inRepairInvoice:Boolean) {
+        val repair=inRepairInvoice ||
+            node.optJSONObject("data")?.optString("data-invoice-row")=="repair"
+        if(classes(node).contains("row-actions"))
+            node.put("repairInvoiceActions",repair)
+        items(node.optJSONArray("children")).forEach {
+            markRepairInvoiceActions(it,repair)
         }
     }
     private fun register(view:View,n:JSONObject):View {
@@ -568,17 +583,18 @@ internal class OriginalPageStructure(
                             // .row-actions with flex-wrap:wrap. The repair row
                             // also overrides its phone-only horizontal scroll.
                             val tablet=activity.resources.configuration.screenWidthDp>=720
+                            val repairInvoice=n.optBoolean("repairInvoiceActions")
                             if(tablet) {
                                 // Generic .row-actions uses gap:5px; the
                                 // repair-invoice descendant selector alone
                                 // overrides it to 6px. Do not apply the
                                 // repair-specific value to all nine routes.
-                                val wrap=SourceFlow(activity,dp(5)).apply {
+                                val wrap=SourceFlow(activity,dp(if(repairInvoice) 6 else 5)).apply {
                                     layoutDirection=View.LAYOUT_DIRECTION_RTL
                                     actionViews.forEach { addView(it,ViewGroup.LayoutParams(-2,-2)) }
                                 }
                                 addView(wrap,LinearLayout.LayoutParams(-1,-2))
-                            } else {
+                            } else if(repairInvoice) {
                                 // Narrow repair invoice rows use horizontal RTL
                                 // scrolling. Keep all actions in source order.
                                 val strip=LinearLayout(activity).apply {
@@ -599,6 +615,15 @@ internal class OriginalPageStructure(
                                     addView(strip,android.widget.FrameLayout.LayoutParams(-2,-2))
                                 }
                                 addView(scroll,LinearLayout.LayoutParams(-1,-2))
+                            } else {
+                                // Ordinary source .row-actions is a wrapping flex
+                                // container even on phones; only repair invoices
+                                // use the horizontally scrolling strip.
+                                val wrap=SourceFlow(activity,dp(5)).apply {
+                                    layoutDirection=View.LAYOUT_DIRECTION_RTL
+                                    actionViews.forEach { addView(it,ViewGroup.LayoutParams(-2,-2)) }
+                                }
+                                addView(wrap,LinearLayout.LayoutParams(-1,-2))
                             }
                         }
                         if(cs.contains("transaction")) {
