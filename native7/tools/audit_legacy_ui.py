@@ -52,6 +52,35 @@ def css_rules(text: str, name: str) -> list[dict[str, str | int]]:
     return result
 
 
+
+def route_elements(main_js: str, function: str) -> dict:
+    """Inventory literals within one named renderer, not its invoked helpers.
+
+    The boundary is the next top-level JS function declaration. This is a
+    source-text inventory; runtime branches and templates may add elements.
+    """
+    head = re.search(r"(?m)^\\s*(?:async\\s+)?function\\s+" + re.escape(function) + r"\\s*\\(", main_js)
+    if head is None:
+        return {"present": False, "labels": [], "actions": [], "routes": []}
+    next_head = re.search(r"(?m)^\\s*(?:async\\s+)?function\\s+[A-Za-z_$][\\w$]*\\s*\\(", main_js[head.end():])
+    end = head.end() + next_head.start() if next_head else len(main_js)
+    body = main_js[head.start():end]
+    # Keep original source order, not alphabetical sorting.
+    def ordered(pattern: str) -> list[str]:
+        return list(dict.fromkeys(re.findall(pattern, body)))
+    return {
+        "present": True,
+        "literal_buttons": len(re.findall(r"<button\\b", body, re.I)),
+        "literal_inputs": len(re.findall(r"<input\\b|<textarea\\b", body, re.I)),
+        "literal_selects": len(re.findall(r"<select\\b", body, re.I)),
+        "actions": ordered(r'data-action\\s*=\\s*["\\x27]([^"\\x27]+)'),
+        "routes": ordered(r'data-route\\s*=\\s*["\\x27]([^"\\x27]+)'),
+        "dialog_mentions": ordered(r'\\b(?:showModal|openModal|closeModal|dialog|modal)\\b'),
+        "animation_mentions": ordered(r'\\b(?:animate|transition|requestAnimationFrame|setTimeout)\\b'),
+        "caveat": "Literal markup only; helpers, dynamic branches and runtime behavior are not evaluated.",
+    }
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("archive", type=Path, help="original tablet source ZIP")
@@ -75,6 +104,7 @@ def main() -> None:
     report = {
         "archive": args.archive.name,
         "routes": routes,
+        "route_elements": {label: route_elements(main_js, function) for label, function in ROUTES.items()},
         "stylesheet_loads": re.findall(r"<link[^>]+href=[\"']([^\"']+\.css[^\"']*)", index),
         "css_classes": classes,
         "warnings": [
