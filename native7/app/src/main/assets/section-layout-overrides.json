@@ -824,6 +824,34 @@
       "customerRowPaddingDp": 18,
       "customerRowMinHeightDp": 58,
       "customerRowGapDp": 14
+    },
+    "customer-orders": {
+      "fieldPaddingDp": 18,
+      "fieldMinHeightDp": 58,
+      "fieldCornerRadiusDp": 18,
+      "buttonPaddingDp": 18,
+      "buttonMinHeightDp": 72,
+      "buttonCornerRadiusDp": 18,
+      "tableCellPaddingDp": 18,
+      "tableRowMinHeightDp": 58,
+      "tableRowGapDp": 14,
+      "orderRowPaddingDp": 18,
+      "orderRowMinHeightDp": 58,
+      "orderRowGapDp": 14
+    },
+    "customer-order-form": {
+      "fieldPaddingDp": 18,
+      "fieldMinHeightDp": 58,
+      "fieldCornerRadiusDp": 18,
+      "buttonPaddingDp": 18,
+      "buttonMinHeightDp": 72,
+      "buttonCornerRadiusDp": 18,
+      "tableCellPaddingDp": 18,
+      "tableRowMinHeightDp": 58,
+      "tableRowGapDp": 14,
+      "orderRowPaddingDp": 18,
+      "orderRowMinHeightDp": 58,
+      "orderRowGapDp": 14
     }
   },
   "scopedRules": [
@@ -1276,6 +1304,35 @@
       "dataActionContains": [
         "customer",
         "search"
+      ],
+      "fieldPaddingDp": 18,
+      "fieldMinHeightDp": 58,
+      "buttonPaddingDp": 18,
+      "buttonMinHeightDp": 72,
+      "cornerRadiusDp": 18
+    },
+    {
+      "section": "customer-orders",
+      "routes": [
+        "customer-orders",
+        "customer-order-form"
+      ],
+      "sourceIdContains": [
+        "customer-order",
+        "order-status",
+        "order-customer",
+        "order-item"
+      ],
+      "sourceClassContains": [
+        "customer-order",
+        "order-status",
+        "order-row",
+        "order-card"
+      ],
+      "dataActionContains": [
+        "customer-order",
+        "complete-order",
+        "cancel-order"
       ],
       "fieldPaddingDp": 18,
       "fieldMinHeightDp": 58,
