@@ -141,9 +141,11 @@ internal class OriginalPageStructure(
             if(root===view && currentRoute==route && view.parent!=null) conditions()
         }
     }
-    /** Carry the legacy ancestor selector into the native child renderer.
-     * CSS [data-invoice-row="repair"] .row-actions cannot be resolved from
-     * a detached Android child while the tree is being constructed.
+    /** Carry legacy ancestor selectors into the native child renderer.
+     * CSS [data-invoice-row="repair"] .row-actions and
+     * .qr-product-card .row-actions cannot be resolved from a detached
+     * Android child while the tree is being constructed. Apply the same
+     * annotation to dynamic row templates before constructing their views.
      */
     private fun markRepairInvoiceActions(
         node:JSONObject,inRepairInvoice:Boolean,inQrProductCard:Boolean=false
