@@ -871,13 +871,12 @@ internal class OriginalPageStructure(
                             val widthDp=activity.resources.configuration.screenWidthDp
                             background=GradientDrawable().apply {
                                 setColor(Color.rgb(255,253,249))
-                                if(widthDp>=720) {
-                                    cornerRadius=dp(20).toFloat()
-                                } else {
-                                    // Bottom sheet: only the upper corners are rounded.
-                                    val top=dp(22).toFloat()
-                                    cornerRadii=floatArrayOf(top,top,top,top,0f,0f,0f,0f)
-                                }
+                                // The later base .modal declaration (after the
+                                // >=720px media block) overrides the earlier
+                                // tablet 20px radius. The effective corners are
+                                // 22px top, square bottom at every breakpoint.
+                                val top=dp(22).toFloat()
+                                cornerRadii=floatArrayOf(top,top,top,top,0f,0f,0f,0f)
                             }
                             // Legacy .modal retains 15px side padding and
                             // 22px bottom padding at tablet breakpoints.
