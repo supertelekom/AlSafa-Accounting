@@ -126,7 +126,9 @@ internal class OriginalPageStructure(
     fun contains(route:String) = pages.has(route)
     fun show(parent:LinearLayout,route:String) {
         metadata.clear();controls.clear();radioNames.clear();currentRoute=route
-        val page=pages.getJSONObject(route)
+        // Work on a fresh tree: CSS ancestor annotations are presentation
+        // metadata, not part of the immutable source-derived page spec.
+        val page=JSONObject(pages.getJSONObject(route).toString())
         markRepairInvoiceActions(page,false)
         val view=build(page)
         root=view
