@@ -344,9 +344,12 @@ internal class OriginalPageStructure(
             // The legacy report filter is a CSS grid, not a vertical stack:
             // two flexible fields and one auto-width action on tablets.
             "reportFilter" -> reportFilter(children)
-            "actions" -> SourceGrid(activity,children.size.coerceIn(1,3),dp(9)).apply {
-                setPadding(0,dp(18),0,dp(9))
-                children.forEach { addCell(build(it),false) }
+            "actions" -> SourceFlow(activity,dp(9)).apply {
+                // Original .form-actions is display:flex with gap:9px,
+                // not an equal-width CSS grid. Keep source button widths
+                // and wrap only when the row cannot fit the viewport.
+                setPadding(0,dp(18),0,0)
+                children.forEach { addView(build(it),ViewGroup.LayoutParams(-2,-2)) }
             }
             "flow" -> SourceFlow(activity,dp(9)).apply {
                 children.forEach { addView(build(it),ViewGroup.LayoutParams(-2,-2)) }
