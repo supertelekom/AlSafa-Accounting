@@ -98,6 +98,54 @@ internal class OriginalPageStructure(
         activity.assets.open("section-layout-overrides.json").bufferedReader(Charsets.UTF_8)
             .use { JSONObject(it.readText()) }
     }
+    /** Style only source-identified financial controls, never inferred labels. */
+    private fun styleScopedFinancialControls(view:View,route:String) {
+        if(activity.resources.configuration.screenWidthDp <
+            sectionLayout.optInt("tabletMinWidthDp",600)) return
+        val rules=sectionLayout.optJSONArray("scopedRules") ?: return
+        fun visit(current:View) {
+            val node=metadata[current]
+            if(node!=null) for(i in 0 until rules.length()) {
+                val rule=rules.getJSONObject(i)
+                val routes=rule.optJSONArray("routes") ?: continue
+                if((0 until routes.length()).none { routes.optString(it)==route }) continue
+                val id=node.optString("sourceId").lowercase(java.util.Locale.ROOT)
+                val css=classes(node).joinToString(" ").lowercase(java.util.Locale.ROOT)
+                fun matches(key:String,value:String):Boolean {
+                    val tokens=rule.optJSONArray(key) ?: return false
+                    return (0 until tokens.length()).any {
+                        value.contains(tokens.optString(it).lowercase(java.util.Locale.ROOT))
+                    }
+                }
+                if(!matches("sourceIdContains",id) && !matches("sourceClassContains",css))
+                    continue
+                if(current is EditText || current is Spinner) {
+                    val p=dp(rule.optInt("fieldPaddingDp",16))
+                    current.setPadding(p,p,p,p)
+                    current.minimumHeight=maxOf(current.minimumHeight,
+                        dp(rule.optInt("fieldMinHeightDp",56)))
+                    (current.background as? GradientDrawable)?.cornerRadius=
+                        dp(rule.optInt("cornerRadiusDp",18)).toFloat()
+                } else if(node.optString("kind")=="button") {
+                    val p=dp(rule.optInt("buttonPaddingDp",18))
+                    current.setPadding(p,p,p,p)
+                    current.minimumHeight=maxOf(current.minimumHeight,
+                        dp(rule.optInt("buttonMinHeightDp",70)))
+                    (current.background as? GradientDrawable)?.cornerRadius=
+                        dp(rule.optInt("cornerRadiusDp",18)).toFloat()
+                }
+                if(current is TextView) {
+                    current.typeface=if(current.typeface?.isBold==true)
+                        Typeface.create(font,Typeface.BOLD) else font
+                    current.includeFontPadding=true
+                }
+                current.layoutDirection=View.LAYOUT_DIRECTION_RTL
+            }
+            if(current is ViewGroup) for(i in 0 until current.childCount)
+                visit(current.getChildAt(i))
+        }
+        visit(view)
+    }
     private fun styleSectionTree(view:View,route:String) {
         if(activity.resources.configuration.screenWidthDp <
             sectionLayout.optInt("tabletMinWidthDp",600)) return
@@ -274,6 +322,7 @@ internal class OriginalPageStructure(
         val view=build(page)
         applyDashboardViewStyle(view)
         styleSectionTree(view,route)
+        styleScopedFinancialControls(view,route)
         enforceTajawalRtl(view)
         root=view
         // Reusing a page host must not stack the previous route underneath it.
@@ -1742,6 +1791,7 @@ internal class OriginalPageStructure(
             // Source templates are inserted after the initial page pass.
             // Apply the same field, button, RTL and font styling immediately.
             styleSectionTree(view,currentRoute)
+            styleScopedFinancialControls(view,currentRoute)
             enforceTajawalRtl(view)
             conditions()
         }
