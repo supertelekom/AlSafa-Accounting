@@ -67,6 +67,9 @@ internal class LegacyBackupStore(context: Context) :
     private fun readJsonValue(reader: JsonReader): String {
         val out=StringWriter()
         JsonWriter(out).use { writer ->
+            // Android JsonWriter requires an array/object at document root.
+            // Wrap each streamed value temporarily, including string/number/null.
+            writer.beginArray()
             fun copyValue() {
                 when(reader.peek()) {
                     JsonToken.BEGIN_OBJECT -> {
@@ -90,8 +93,10 @@ internal class LegacyBackupStore(context: Context) :
                 }
             }
             copyValue()
+            writer.endArray()
         }
-        return out.toString()
+        val wrapped=out.toString()
+        return wrapped.substring(1,wrapped.length-1)
     }
 
     private fun scanFile(file:File, onSection:(String,JsonReader)->Unit,
