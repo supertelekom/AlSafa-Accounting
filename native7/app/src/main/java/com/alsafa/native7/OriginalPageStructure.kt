@@ -496,6 +496,9 @@ internal class OriginalPageStructure(
             "repair-intake" -> "repairs"
             "sales" -> "sales"
             "sales-invoices" -> "sales"
+            "inventory" -> "inventoryMovements"
+            "inventory-movements" -> "inventoryMovements"
+            "inventory-adjustments" -> "inventoryMovements"
             else -> return
         }
         val database=LegacyBackupStore(activity).readableDatabase
@@ -521,6 +524,7 @@ internal class OriginalPageStructure(
             "partnerWithdrawals" -> listOf("date","time","partnerName","partnerId","amount","currency","vault")
             "repairs" -> listOf("invoiceNo","date","customer","phone","watch","fault","status","price","cost","currency")
             "sales" -> listOf("invoiceNo","date","time","customer","phone","subtotal","discount","total","paid","currency","paymentStatus")
+            "inventoryMovements" -> listOf("date","time","productId","variantId","type","quantity","delta","reason","referenceId")
             else -> listOf("date","category","amount","currency","paymentMethod")
         }
         for(record in records) {
@@ -558,7 +562,7 @@ internal class OriginalPageStructure(
                 }
             }
             host.addView(row,LinearLayout.LayoutParams(-1,-2).apply {
-                bottomMargin=dp(14)
+                bottomMargin=dp(18)
             })
         }
         enforceTajawalRtl(host)
