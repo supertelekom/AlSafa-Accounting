@@ -942,6 +942,78 @@
       "tableCellPaddingDp": 18,
       "tableRowMinHeightDp": 58,
       "tableRowGapDp": 14
+    },
+    "printing": {
+      "fieldPaddingDp": 18,
+      "fieldMinHeightDp": 58,
+      "fieldCornerRadiusDp": 18,
+      "sectionGapDp": 18,
+      "buttonPaddingDp": 18,
+      "buttonMinHeightDp": 72,
+      "buttonCornerRadiusDp": 18,
+      "tableCellPaddingDp": 18,
+      "tableRowMinHeightDp": 58,
+      "tableRowGapDp": 14
+    },
+    "print-settings": {
+      "fieldPaddingDp": 18,
+      "fieldMinHeightDp": 58,
+      "fieldCornerRadiusDp": 18,
+      "sectionGapDp": 18,
+      "buttonPaddingDp": 18,
+      "buttonMinHeightDp": 72,
+      "buttonCornerRadiusDp": 18,
+      "tableCellPaddingDp": 18,
+      "tableRowMinHeightDp": 58,
+      "tableRowGapDp": 14
+    },
+    "printer-settings": {
+      "fieldPaddingDp": 18,
+      "fieldMinHeightDp": 58,
+      "fieldCornerRadiusDp": 18,
+      "sectionGapDp": 18,
+      "buttonPaddingDp": 18,
+      "buttonMinHeightDp": 72,
+      "buttonCornerRadiusDp": 18,
+      "tableCellPaddingDp": 18,
+      "tableRowMinHeightDp": 58,
+      "tableRowGapDp": 14
+    },
+    "thermal-print": {
+      "fieldPaddingDp": 18,
+      "fieldMinHeightDp": 58,
+      "fieldCornerRadiusDp": 18,
+      "sectionGapDp": 18,
+      "buttonPaddingDp": 18,
+      "buttonMinHeightDp": 72,
+      "buttonCornerRadiusDp": 18,
+      "tableCellPaddingDp": 18,
+      "tableRowMinHeightDp": 58,
+      "tableRowGapDp": 14
+    },
+    "print-preview": {
+      "fieldPaddingDp": 18,
+      "fieldMinHeightDp": 58,
+      "fieldCornerRadiusDp": 18,
+      "sectionGapDp": 18,
+      "buttonPaddingDp": 18,
+      "buttonMinHeightDp": 72,
+      "buttonCornerRadiusDp": 18,
+      "tableCellPaddingDp": 18,
+      "tableRowMinHeightDp": 58,
+      "tableRowGapDp": 14
+    },
+    "printer-list": {
+      "fieldPaddingDp": 18,
+      "fieldMinHeightDp": 58,
+      "fieldCornerRadiusDp": 18,
+      "sectionGapDp": 18,
+      "buttonPaddingDp": 18,
+      "buttonMinHeightDp": 72,
+      "buttonCornerRadiusDp": 18,
+      "tableCellPaddingDp": 18,
+      "tableRowMinHeightDp": 58,
+      "tableRowGapDp": 14
     }
   },
   "scopedRules": [
@@ -1496,6 +1568,48 @@
         "reconcile-stock",
         "stock-take",
         "inventory-adjust"
+      ],
+      "fieldPaddingDp": 18,
+      "fieldMinHeightDp": 58,
+      "buttonPaddingDp": 18,
+      "buttonMinHeightDp": 72,
+      "cornerRadiusDp": 18
+    },
+    {
+      "section": "printing",
+      "routes": [
+        "printing",
+        "print-settings",
+        "printer-settings",
+        "thermal-print",
+        "print-preview",
+        "printer-list"
+      ],
+      "sourceIdContains": [
+        "printer",
+        "print",
+        "paper",
+        "thermal",
+        "header",
+        "footer",
+        "bluetooth",
+        "network"
+      ],
+      "sourceClassContains": [
+        "printer-row",
+        "printer-card",
+        "printer-device",
+        "print-settings",
+        "print-option",
+        "thermal-print",
+        "connected-printer"
+      ],
+      "dataActionContains": [
+        "test-print",
+        "save-print",
+        "select-printer",
+        "print-invoice",
+        "print-repair"
       ],
       "fieldPaddingDp": 18,
       "fieldMinHeightDp": 58,
