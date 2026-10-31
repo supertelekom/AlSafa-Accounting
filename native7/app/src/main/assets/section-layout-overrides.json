@@ -191,16 +191,16 @@
       "saleLineGapDp": 16
     },
     "sale-return": {
-      "fieldPaddingDp": 16,
-      "fieldMinHeightDp": 56,
-      "fieldCornerRadiusDp": 14,
+      "fieldPaddingDp": 18,
+      "fieldMinHeightDp": 58,
+      "fieldCornerRadiusDp": 18,
       "sectionGapDp": 16,
-      "buttonPaddingDp": 16,
+      "buttonPaddingDp": 18,
       "buttonMinHeightDp": 72,
       "buttonCornerRadiusDp": 18,
-      "tableCellPaddingDp": 16,
-      "tableRowMinHeightDp": 56,
-      "tableRowGapDp": 12,
+      "tableCellPaddingDp": 18,
+      "tableRowMinHeightDp": 58,
+      "tableRowGapDp": 14,
       "saleLinePaddingDp": 16,
       "saleLineGapDp": 16
     },
@@ -269,6 +269,28 @@
       "tableCellPaddingDp": 18,
       "tableRowMinHeightDp": 58,
       "tableRowGapDp": 14
+    },
+    "returns": {
+      "fieldPaddingDp": 18,
+      "fieldMinHeightDp": 58,
+      "fieldCornerRadiusDp": 18,
+      "buttonPaddingDp": 18,
+      "buttonMinHeightDp": 72,
+      "buttonCornerRadiusDp": 18,
+      "tableCellPaddingDp": 18,
+      "tableRowMinHeightDp": 58,
+      "tableRowGapDp": 14
+    },
+    "return-form": {
+      "fieldPaddingDp": 18,
+      "fieldMinHeightDp": 58,
+      "fieldCornerRadiusDp": 18,
+      "buttonPaddingDp": 18,
+      "buttonMinHeightDp": 72,
+      "buttonCornerRadiusDp": 18,
+      "tableCellPaddingDp": 18,
+      "tableRowMinHeightDp": 58,
+      "tableRowGapDp": 14
     }
   },
   "scopedRules": [
@@ -328,6 +350,34 @@
         "correct-sale-payment",
         "supplier-direct-payment",
         "pay-purchase"
+      ],
+      "fieldPaddingDp": 18,
+      "fieldMinHeightDp": 58,
+      "buttonPaddingDp": 18,
+      "buttonMinHeightDp": 72,
+      "cornerRadiusDp": 18
+    },
+    {
+      "section": "returns",
+      "routes": [
+        "returns",
+        "return-form",
+        "sale-return",
+        "sales",
+        "sale-form"
+      ],
+      "sourceIdContains": [
+        "return",
+        "refund",
+        "returned"
+      ],
+      "sourceClassContains": [
+        "return",
+        "refund"
+      ],
+      "dataActionContains": [
+        "return",
+        "refund"
       ],
       "fieldPaddingDp": 18,
       "fieldMinHeightDp": 58,
