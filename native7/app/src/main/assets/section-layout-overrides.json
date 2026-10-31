@@ -225,6 +225,50 @@
       "tableCellPaddingDp": 16,
       "tableRowMinHeightDp": 56,
       "tableRowGapDp": 12
+    },
+    "debts": {
+      "fieldPaddingDp": 18,
+      "fieldMinHeightDp": 58,
+      "fieldCornerRadiusDp": 16,
+      "buttonPaddingDp": 18,
+      "buttonMinHeightDp": 72,
+      "buttonCornerRadiusDp": 18,
+      "tableCellPaddingDp": 18,
+      "tableRowMinHeightDp": 58,
+      "tableRowGapDp": 14
+    },
+    "vaults": {
+      "fieldPaddingDp": 18,
+      "fieldMinHeightDp": 58,
+      "fieldCornerRadiusDp": 16,
+      "buttonPaddingDp": 18,
+      "buttonMinHeightDp": 72,
+      "buttonCornerRadiusDp": 18,
+      "tableCellPaddingDp": 18,
+      "tableRowMinHeightDp": 58,
+      "tableRowGapDp": 14
+    },
+    "payment-form": {
+      "fieldPaddingDp": 18,
+      "fieldMinHeightDp": 58,
+      "fieldCornerRadiusDp": 16,
+      "buttonPaddingDp": 18,
+      "buttonMinHeightDp": 72,
+      "buttonCornerRadiusDp": 18,
+      "tableCellPaddingDp": 18,
+      "tableRowMinHeightDp": 58,
+      "tableRowGapDp": 14
+    },
+    "collection-form": {
+      "fieldPaddingDp": 18,
+      "fieldMinHeightDp": 58,
+      "fieldCornerRadiusDp": 16,
+      "buttonPaddingDp": 18,
+      "buttonMinHeightDp": 72,
+      "buttonCornerRadiusDp": 18,
+      "tableCellPaddingDp": 18,
+      "tableRowMinHeightDp": 58,
+      "tableRowGapDp": 14
     }
   },
   "scopedRules": [
@@ -248,6 +292,47 @@
       "fieldMinHeightDp": 56,
       "buttonPaddingDp": 18,
       "buttonMinHeightDp": 70,
+      "cornerRadiusDp": 18
+    },
+    {
+      "section": "collections",
+      "routes": [
+        "sales",
+        "sale-form",
+        "father-sale",
+        "debts",
+        "vaults",
+        "repairs"
+      ],
+      "sourceIdContains": [
+        "paid",
+        "remaining",
+        "payment",
+        "collect",
+        "balance",
+        "receipt",
+        "change",
+        "due"
+      ],
+      "sourceClassContains": [
+        "payment",
+        "paid",
+        "remaining",
+        "balance",
+        "collection",
+        "receipt",
+        "due"
+      ],
+      "dataActionContains": [
+        "collect-online-sale",
+        "correct-sale-payment",
+        "supplier-direct-payment",
+        "pay-purchase"
+      ],
+      "fieldPaddingDp": 18,
+      "fieldMinHeightDp": 58,
+      "buttonPaddingDp": 18,
+      "buttonMinHeightDp": 72,
       "cornerRadiusDp": 18
     }
   ]
