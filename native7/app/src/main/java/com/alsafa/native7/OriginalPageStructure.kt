@@ -499,11 +499,15 @@ internal class OriginalPageStructure(
             "inventory" -> "inventoryMovements"
             "inventory-movements" -> "inventoryMovements"
             "inventory-adjustments" -> "inventoryMovements"
+            "warranties" -> "warranties"
+            "warranty" -> "warranties"
+            "activity-log" -> "auditLog"
+            "audit-log" -> "auditLog"
             else -> return
         }
         val database=LegacyBackupStore(activity).readableDatabase
         val records=ArrayList<JSONObject>()
-        database.rawQuery("SELECT payload FROM op_$section ORDER BY ordinal",null).use { cursor ->
+        database.rawQuery("SELECT payload FROM legacy_records WHERE section=? ORDER BY ordinal",arrayOf(section)).use { cursor ->
             while(cursor.moveToNext()) {
                 val raw=cursor.getString(0)
                 runCatching { JSONObject(raw) }.getOrNull()?.let(records::add)
@@ -525,6 +529,8 @@ internal class OriginalPageStructure(
             "repairs" -> listOf("invoiceNo","date","customer","phone","watch","fault","status","price","cost","currency")
             "sales" -> listOf("invoiceNo","date","time","customer","phone","subtotal","discount","total","paid","currency","paymentStatus")
             "inventoryMovements" -> listOf("date","time","productId","variantId","type","quantity","delta","reason","referenceId")
+            "warranties" -> listOf("invoiceNo","saleId","duration","startDate","endDate","status")
+            "auditLog" -> listOf("date","time","action","type","entity","referenceId")
             else -> listOf("date","category","amount","currency","paymentMethod")
         }
         for(record in records) {
@@ -540,7 +546,7 @@ internal class OriginalPageStructure(
                 else v.toString()
             }
             // Preserve original values, including dates and multi-currency amounts.
-            val fallback=record.optString("id").ifBlank { record.toString() }
+            val fallback=if(section=="auditLog") "سجل نشاط" else record.optString("id").ifBlank { record.toString() }
             val text=label(visible.joinToString("  |  ").ifBlank { fallback },14f)
             text.setTextIsSelectable(true)
             text.setPadding(0,dp(3),0,dp(3))
