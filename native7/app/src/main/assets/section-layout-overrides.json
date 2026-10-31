@@ -768,6 +768,62 @@
       "financialRowPaddingDp": 18,
       "financialRowMinHeightDp": 58,
       "financialRowGapDp": 14
+    },
+    "customers": {
+      "fieldPaddingDp": 18,
+      "fieldMinHeightDp": 58,
+      "fieldCornerRadiusDp": 18,
+      "buttonPaddingDp": 18,
+      "buttonMinHeightDp": 72,
+      "buttonCornerRadiusDp": 18,
+      "tableCellPaddingDp": 18,
+      "tableRowMinHeightDp": 58,
+      "tableRowGapDp": 14,
+      "customerRowPaddingDp": 18,
+      "customerRowMinHeightDp": 58,
+      "customerRowGapDp": 14
+    },
+    "customer-form": {
+      "fieldPaddingDp": 18,
+      "fieldMinHeightDp": 58,
+      "fieldCornerRadiusDp": 18,
+      "buttonPaddingDp": 18,
+      "buttonMinHeightDp": 72,
+      "buttonCornerRadiusDp": 18,
+      "tableCellPaddingDp": 18,
+      "tableRowMinHeightDp": 58,
+      "tableRowGapDp": 14,
+      "customerRowPaddingDp": 18,
+      "customerRowMinHeightDp": 58,
+      "customerRowGapDp": 14
+    },
+    "search": {
+      "fieldPaddingDp": 18,
+      "fieldMinHeightDp": 58,
+      "fieldCornerRadiusDp": 18,
+      "buttonPaddingDp": 18,
+      "buttonMinHeightDp": 72,
+      "buttonCornerRadiusDp": 18,
+      "tableCellPaddingDp": 18,
+      "tableRowMinHeightDp": 58,
+      "tableRowGapDp": 14,
+      "customerRowPaddingDp": 18,
+      "customerRowMinHeightDp": 58,
+      "customerRowGapDp": 14
+    },
+    "customer-details": {
+      "fieldPaddingDp": 18,
+      "fieldMinHeightDp": 58,
+      "fieldCornerRadiusDp": 18,
+      "buttonPaddingDp": 18,
+      "buttonMinHeightDp": 72,
+      "buttonCornerRadiusDp": 18,
+      "tableCellPaddingDp": 18,
+      "tableRowMinHeightDp": 58,
+      "tableRowGapDp": 14,
+      "customerRowPaddingDp": 18,
+      "customerRowMinHeightDp": 58,
+      "customerRowGapDp": 14
     }
   },
   "scopedRules": [
@@ -1190,6 +1246,36 @@
       "dataActionContains": [
         "report",
         "filter-report"
+      ],
+      "fieldPaddingDp": 18,
+      "fieldMinHeightDp": 58,
+      "buttonPaddingDp": 18,
+      "buttonMinHeightDp": 72,
+      "cornerRadiusDp": 18
+    },
+    {
+      "section": "customers",
+      "routes": [
+        "customers",
+        "customer-form",
+        "search",
+        "customer-details"
+      ],
+      "sourceIdContains": [
+        "customer",
+        "phone",
+        "address",
+        "customer-search"
+      ],
+      "sourceClassContains": [
+        "customer",
+        "search-result",
+        "search-box",
+        "customer-row"
+      ],
+      "dataActionContains": [
+        "customer",
+        "search"
       ],
       "fieldPaddingDp": 18,
       "fieldMinHeightDp": 58,
