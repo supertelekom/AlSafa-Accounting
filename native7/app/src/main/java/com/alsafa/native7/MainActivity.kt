@@ -298,7 +298,31 @@ class MainActivity : Activity() {
                             show()
                         }
                         Thread {
-                            val failure=runCatching { legacyBackupStore.importInitial(text) }.exceptionOrNull()
+                            val sectionNames=mapOf(
+                                "products" to "المنتجات",
+                                "sales" to "فواتير المبيع",
+                                "repairs" to "فواتير الصيانة",
+                                "maintenance" to "الصيانة",
+                                "suppliers" to "الموردون",
+                                "purchases" to "فواتير المشتريات",
+                                "expenses" to "المصروفات",
+                                "cashboxes" to "الصناديق",
+                                "vaults" to "الصناديق",
+                                "settings" to "الإعدادات",
+                                "partners" to "الشركاء"
+                            )
+                            val failure=runCatching {
+                                legacyBackupStore.importInitial(text) { section, done, total ->
+                                    runOnUiThread {
+                                        if(progress.isShowing) {
+                                            val label=sectionNames[section] ?: section
+                                            progress.setMessage(
+                                                "جارٍ استعادة $label...\\n$done / $total"
+                                            )
+                                        }
+                                    }
+                                }
+                            }.exceptionOrNull()
                             runOnUiThread {
                                 progress.dismiss()
                                 android.app.AlertDialog.Builder(this)
