@@ -252,6 +252,21 @@ internal class OriginalPageStructure(
                     }
                 }
             }
+            if(node!=null && rule.has("repairRowPaddingDp") &&
+                classes(node).any { it in listOf(
+                    "maintenance-part-row","maintenance-part-card",
+                    "repair-part-row","repair-part-item","parts-table-row"
+                ) }) {
+                val p=dp(rule.optInt("repairRowPaddingDp",18))
+                current.setPadding(p,p,p,p)
+                current.minimumHeight=maxOf(current.minimumHeight,
+                    dp(rule.optInt("repairRowMinHeightDp",58)))
+                (current.layoutParams as? LinearLayout.LayoutParams)?.let { params ->
+                    params.bottomMargin=maxOf(params.bottomMargin,
+                        dp(rule.optInt("repairRowGapDp",14)))
+                    current.layoutParams=params
+                }
+            }
             if(kind=="button" && current !is EditText) {
                 current.minimumHeight=maxOf(current.minimumHeight,dp(rule.optInt("buttonMinHeightDp",64)))
                 val p=dp(rule.optInt("buttonPaddingDp",16))
