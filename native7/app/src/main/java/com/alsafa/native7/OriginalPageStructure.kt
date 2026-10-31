@@ -380,6 +380,13 @@ internal class OriginalPageStructure(
                     val params=childParams(child,kind)
                     // CSS .form-section:first-child removes the default top margin.
                     if(index==0 && classes(child).contains("form-section")) params.topMargin=0
+                    // Source .photo-actions is a vertical CSS grid with 8px gap.
+                    // The generic column spacing was only 2dp, making camera
+                    // and gallery buttons visually crowded in every photo form.
+                    if(cs.contains("photo-actions")) {
+                        params.topMargin=if(index==0) 0 else dp(8)
+                        params.bottomMargin=0
+                    }
                     addView(build(child),params)
                 }
                 // Original .transaction:last-child has no bottom border.
