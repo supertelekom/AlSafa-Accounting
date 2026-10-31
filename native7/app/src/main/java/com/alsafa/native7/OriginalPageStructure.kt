@@ -161,6 +161,15 @@ internal class OriginalPageStructure(
             markRepairInvoiceActions(it,repair,qr)
         }
     }
+    /** Dynamic templates inherit selectors from their actual insertion host. */
+    private fun annotateDynamicRow(node:JSONObject,host:View) {
+        val chain=ancestors(host).mapNotNull { metadata[it] }.toList()
+        val repair=chain.any {
+            it.optJSONObject("data")?.optString("data-invoice-row")=="repair"
+        }
+        val qr=chain.any { classes(it).contains("qr-product-card") }
+        markRepairInvoiceActions(node,repair,qr)
+    }
     private fun register(view:View,n:JSONObject):View {
         metadata[view]=n
         if(n.has("sourceId")) controls[n.getString("sourceId")]=view
@@ -1477,7 +1486,7 @@ internal class OriginalPageStructure(
             items(node.optJSONArray("children")).forEach { prepare(it) }
         }
         prepare(copy)
-        val row=build(copy.also { markRepairInvoiceActions(it,false) })
+        val row=build(copy.also { annotateDynamicRow(it,host) })
         if(host is SourceGrid) host.addCell(row,false) else host.addView(row)
         conditions()
         if(quick) {
@@ -1580,7 +1589,7 @@ internal class OriginalPageStructure(
                 items(node.optJSONArray("children")).forEach { number(it) }
             }
             number(copy)
-            val view=build(copy.also { markRepairInvoiceActions(it,false) })
+            val view=build(copy.also { annotateDynamicRow(it,host) })
             if(host is SourceGrid) host.addCell(view,false) else host.addView(view)
             conditions()
         }
@@ -1595,7 +1604,7 @@ internal class OriginalPageStructure(
             lineage(candidate).count { it in buttonLineage }
         } ?: return
         val copy=JSONObject(pages.getJSONObject("variant-row-template").toString()).also { uniqueDynamicIds(it) }
-        val row=build(copy.also { markRepairInvoiceActions(it,false) })
+        val row=build(copy.also { annotateDynamicRow(it,target) })
         if(target is SourceGrid) target.addCell(row,false) else target.addView(row)
         conditions()
     }
