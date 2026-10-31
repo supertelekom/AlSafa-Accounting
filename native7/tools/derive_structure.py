@@ -138,7 +138,7 @@ if overlay_path.exists():
   if page is None:continue
   def annotate(node):
    if not isinstance(node,dict):return
-   names=set(node.get('classes',[]))
+   names=set(node.get('sourceClasses',[]))
    for rule in overlay.get('targets',[]):
     if names.intersection(rule.get('classes',[])):
      node['dashboardPaddingDp']=rule.get('paddingDp',0)
