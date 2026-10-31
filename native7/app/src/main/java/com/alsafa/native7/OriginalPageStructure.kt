@@ -134,6 +134,26 @@ internal class OriginalPageStructure(
                     }
                 }
             }
+            // Inventory lists and source-derived table rows share the same
+            // tablet cell spacing; do not reorder or replace their values.
+            if(rule.has("tableCellPaddingDp") && node!=null) {
+                val css=classes(node)
+                val tableRow=css.any { it in listOf(
+                    "list-row","transaction","inventory-row","stock-row",
+                    "movement-row","table-row","table-cell","stock-warning"
+                ) } || kind=="table"
+                if(tableRow) {
+                    val p=dp(rule.optInt("tableCellPaddingDp",16))
+                    current.setPadding(p,p,p,p)
+                    current.minimumHeight=maxOf(current.minimumHeight,
+                        dp(rule.optInt("tableRowMinHeightDp",54)))
+                    (current.layoutParams as? LinearLayout.LayoutParams)?.let { params ->
+                        params.bottomMargin=maxOf(params.bottomMargin,
+                            dp(rule.optInt("tableRowGapDp",12)))
+                        current.layoutParams=params
+                    }
+                }
+            }
             if(kind=="button" && current !is EditText) {
                 current.minimumHeight=maxOf(current.minimumHeight,dp(rule.optInt("buttonMinHeightDp",64)))
                 val p=dp(rule.optInt("buttonPaddingDp",16))
