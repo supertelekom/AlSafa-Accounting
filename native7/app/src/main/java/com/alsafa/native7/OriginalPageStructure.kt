@@ -261,6 +261,22 @@ internal class OriginalPageStructure(
                     current.layoutParams=params
                 }
             }
+            if(rule.has("financialRowPaddingDp") && node!=null &&
+                classes(node).any { it in listOf(
+                    "daily-close-row","closing-row","currency-balance-row",
+                    "cash-balance-row","drawer-row","carryover-row",
+                    "closing-history-row"
+                ) }) {
+                val p=dp(rule.optInt("financialRowPaddingDp",18))
+                current.setPadding(p,p,p,p)
+                current.minimumHeight=maxOf(current.minimumHeight,
+                    dp(rule.optInt("financialRowMinHeightDp",58)))
+                (current.layoutParams as? LinearLayout.LayoutParams)?.let { params ->
+                    params.bottomMargin=maxOf(params.bottomMargin,
+                        dp(rule.optInt("financialRowGapDp",14)))
+                    current.layoutParams=params
+                }
+            }
             if(rule.has("saleLinePaddingDp") && node!=null) {
                 val css=classes(node)
                 val line=css.any { it in listOf(
