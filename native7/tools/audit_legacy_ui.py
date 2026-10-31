@@ -91,7 +91,7 @@ def native_action_inventory(native_source: str) -> dict:
         r'"([a-z][a-z0-9-]+)"\s*to\s*"', native_source
     )))
     return {"direct": direct, "map_literals": mapped,
-            "caveat": "String inventory only: map membership and callbacks need runtime testing."}
+            "caveat": "Static dispatch evidence only: a route or handler name does not prove a functional action."}
 
 
 def compare_route_actions(route_inventory: dict, native_source: str) -> dict:
@@ -156,6 +156,7 @@ def main() -> None:
         "css_classes": classes,
         "action_comparison": action_comparison,
         "record_action_cascade": stylesheet_declarations(styles, ".row-actions"),
+        "native_renderer_warning": ("OriginalPageStructure.kt explicitly describes layout previews and inactive submissions; action matches must not be treated as completed functional parity." if native_source and "Submission actions deliberately remain inactive" in native_source else "Renderer submission status requires manual inspection."),
         "warnings": [
             "CSS occurrences are source evidence, not proof of native rendering parity.",
             "CSS rules within @media must be interpreted with viewport conditions.",
