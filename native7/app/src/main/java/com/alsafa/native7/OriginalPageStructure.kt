@@ -296,7 +296,16 @@ internal class OriginalPageStructure(
                 val tablet=activity.resources.configuration.screenWidthDp>=720
                 val wide=activity.resources.configuration.screenWidthDp>=1200 && activity.resources.configuration.orientation==android.content.res.Configuration.ORIENTATION_LANDSCAPE
                 val count=when(kind) {
-                    "formGrid" -> if(wide) 3 else if(tablet) 2 else if(activity.resources.configuration.screenWidthDp>380) 2 else 1
+                    "formGrid" -> when {
+                        // The later 720..1199px rule overrides earlier 3/4-column
+                        // rules. At >=1200px the landscape override is 3,
+                        // while portrait retains the >=1080px 4-column rule.
+                        wide -> 3
+                        activity.resources.configuration.screenWidthDp>=1200 -> 4
+                        tablet -> 2
+                        activity.resources.configuration.screenWidthDp>380 -> 2
+                        else -> 1
+                    }
                     "manageGrid" -> if(tablet) 4 else 2
                     "modernGrid" -> if(tablet) 3 else 2
                     "summaryGrid","reportGrid" -> if(cs.contains("currency-home-values")) 3 else if(cs.contains("home-currency-ledger")) { if(activity.resources.configuration.screenWidthDp>760) 3 else 1 } else if(kind=="reportGrid" && tablet) 3 else 2
