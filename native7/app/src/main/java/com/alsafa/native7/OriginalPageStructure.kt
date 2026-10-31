@@ -418,7 +418,17 @@ internal class OriginalPageStructure(
                 if(lastVisible!=null && metadata[lastVisible]?.let {
                     val c=classes(it)
                     c.contains("transaction") || c.contains("list-row")
-                }==true) lastVisible.background=null
+                }==true) {
+                    // The source removes only the final row divider, not the
+                    // entire background. Clearing background here also erased
+                    // the original record surface, radius and click feedback.
+                    val lastNode=metadata[lastVisible]
+                    if(lastNode!=null && classes(lastNode).contains("list-row")) {
+                        lastVisible.background=GradientDrawable().apply {
+                            setColor(Color.TRANSPARENT)
+                        }
+                    }
+                }
                 when(kind) {
                     "section","form" -> {
                         background=bg()
