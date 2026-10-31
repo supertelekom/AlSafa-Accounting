@@ -882,9 +882,11 @@ internal class OriginalPageStructure(
                                     cornerRadii=floatArrayOf(top,top,top,top,0f,0f,0f,0f)
                                 }
                             }
-                            val horizontal=if(widthDp>=720) 22 else 15
-                            val bottom=if(widthDp>=720) 18 else 22
-                            setPadding(dp(horizontal),dp(18),dp(horizontal),dp(bottom))
+                            // Legacy .modal retains 15px side padding and
+                            // 22px bottom padding at tablet breakpoints.
+                            // The tablet media query changes width/radius,
+                            // not these insets.
+                            setPadding(dp(15),dp(18),dp(15),dp(22))
                             clipToOutline=true
                             // Width constraints must be applied by the modal host:
                             // 660dp default tablet, 820dp mid-tablet,
