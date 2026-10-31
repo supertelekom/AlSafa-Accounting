@@ -115,3 +115,9 @@ Direct comparisons against supplied v3.9.359 `assets/style.css` and Native7 `Ori
 - `.form-actions {display:flex;gap:9px;margin-top:18px}`: native `actions` used equal-width `SourceGrid`, which changed button sizing. Corrected to RTL `SourceFlow` with source 9dp gap and 18dp top spacing; it wraps only when needed. Code commit `4dab354d4a7e1a793fc22f0007373f2e67f1b2a7`.
 
 Both are source-verified **shared-component** corrections; they do not demonstrate that every button, text, modal, action, and animation in all nine routes has been compared. Pending: route-by-route node inventories and visual screenshot comparisons, build/device verification, camera/gallery, search and action tests. Native6 and accounting remain unchanged.
+
+## CSS cascade correction — 2026-10-31
+
+The preceding note about `.form-actions` was incomplete: inspection of the actual original `assets/style.css` found both `.form-actions { display:flex; gap:9px; margin-top:18px }` **and** `.form-actions > * { flex:1 }`. The earlier SourceFlow change (`4dab354d`) wrongly used content-width buttons. Code commit `ebcac005753aee0e24eb85ba5c08a8aaa336155e` restores equal flex-weight button widths in a native RTL horizontal LinearLayout, 9dp gaps and 18dp top spacing.
+
+**Important limitation:** source stylesheet has later, overlapping `.form-grid` media rules and `body:not(.father-mode)` overrides. Therefore a single generic grid threshold cannot be certified as matching all modes without a route/mode-aware cascade analysis. Do not mark all nine screens as matched based on shared CSS fixes. The full route-by-route DOM/element/interaction comparison and screenshot/build tests remain pending.
