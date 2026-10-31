@@ -240,13 +240,16 @@
     "vaults": {
       "fieldPaddingDp": 18,
       "fieldMinHeightDp": 58,
-      "fieldCornerRadiusDp": 16,
+      "fieldCornerRadiusDp": 18,
       "buttonPaddingDp": 18,
       "buttonMinHeightDp": 72,
       "buttonCornerRadiusDp": 18,
       "tableCellPaddingDp": 18,
       "tableRowMinHeightDp": 58,
-      "tableRowGapDp": 14
+      "tableRowGapDp": 14,
+      "cashRowPaddingDp": 18,
+      "cashRowMinHeightDp": 58,
+      "cashRowGapDp": 14
     },
     "payment-form": {
       "fieldPaddingDp": 18,
@@ -583,6 +586,62 @@
       "tableCellPaddingDp": 18,
       "tableRowMinHeightDp": 58,
       "tableRowGapDp": 14
+    },
+    "cash-movement-form": {
+      "fieldPaddingDp": 18,
+      "fieldMinHeightDp": 58,
+      "fieldCornerRadiusDp": 18,
+      "buttonPaddingDp": 18,
+      "buttonMinHeightDp": 72,
+      "buttonCornerRadiusDp": 18,
+      "tableCellPaddingDp": 18,
+      "tableRowMinHeightDp": 58,
+      "tableRowGapDp": 14,
+      "cashRowPaddingDp": 18,
+      "cashRowMinHeightDp": 58,
+      "cashRowGapDp": 14
+    },
+    "cash-movements": {
+      "fieldPaddingDp": 18,
+      "fieldMinHeightDp": 58,
+      "fieldCornerRadiusDp": 18,
+      "buttonPaddingDp": 18,
+      "buttonMinHeightDp": 72,
+      "buttonCornerRadiusDp": 18,
+      "tableCellPaddingDp": 18,
+      "tableRowMinHeightDp": 58,
+      "tableRowGapDp": 14,
+      "cashRowPaddingDp": 18,
+      "cashRowMinHeightDp": 58,
+      "cashRowGapDp": 14
+    },
+    "cash-transfer-form": {
+      "fieldPaddingDp": 18,
+      "fieldMinHeightDp": 58,
+      "fieldCornerRadiusDp": 18,
+      "buttonPaddingDp": 18,
+      "buttonMinHeightDp": 72,
+      "buttonCornerRadiusDp": 18,
+      "tableCellPaddingDp": 18,
+      "tableRowMinHeightDp": 58,
+      "tableRowGapDp": 14,
+      "cashRowPaddingDp": 18,
+      "cashRowMinHeightDp": 58,
+      "cashRowGapDp": 14
+    },
+    "exchange-form": {
+      "fieldPaddingDp": 18,
+      "fieldMinHeightDp": 58,
+      "fieldCornerRadiusDp": 18,
+      "buttonPaddingDp": 18,
+      "buttonMinHeightDp": 72,
+      "buttonCornerRadiusDp": 18,
+      "tableCellPaddingDp": 18,
+      "tableRowMinHeightDp": 58,
+      "tableRowGapDp": 14,
+      "cashRowPaddingDp": 18,
+      "cashRowMinHeightDp": 58,
+      "cashRowGapDp": 14
     }
   },
   "scopedRules": [
@@ -866,6 +925,42 @@
       ],
       "dataActionContains": [
         "expense"
+      ],
+      "fieldPaddingDp": 18,
+      "fieldMinHeightDp": 58,
+      "buttonPaddingDp": 18,
+      "buttonMinHeightDp": 72,
+      "cornerRadiusDp": 18
+    },
+    {
+      "section": "cashboxes",
+      "routes": [
+        "vaults",
+        "cash-movement-form",
+        "cash-movements",
+        "cash-transfer-form",
+        "exchange-form"
+      ],
+      "sourceIdContains": [
+        "cash",
+        "vault",
+        "transfer",
+        "exchange",
+        "rate",
+        "currency"
+      ],
+      "sourceClassContains": [
+        "cash",
+        "vault",
+        "transfer",
+        "exchange",
+        "movement"
+      ],
+      "dataActionContains": [
+        "cash-movement",
+        "transfer",
+        "exchange",
+        "vault"
       ],
       "fieldPaddingDp": 18,
       "fieldMinHeightDp": 58,
