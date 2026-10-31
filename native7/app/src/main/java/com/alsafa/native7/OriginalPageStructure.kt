@@ -87,7 +87,7 @@ internal class OriginalPageStructure(
             if(css.contains("product-info")) topMargin=dp(14)
             if(css.contains("stock-warning")) topMargin=dp(10)
             if(css.contains("note-box")) topMargin=dp(12)
-            if(css.contains("row-actions")) topMargin=dp(7)
+            // Final source cascade overrides .row-actions margin-top:7px with 12px.\n            if(css.contains("row-actions")) topMargin=dp(12)
             if(css.contains("search-box")) bottomMargin=dp(12)
             if(css.contains("simple-recent")) {
                 topMargin=dp(14)
