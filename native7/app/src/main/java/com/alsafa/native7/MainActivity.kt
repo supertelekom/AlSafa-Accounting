@@ -281,62 +281,75 @@ class MainActivity : Activity() {
             photoPreview=null
         }
         if (requestCode == 7107 && resultCode == RESULT_OK && data?.data != null) {
-            val uri = requireNotNull(data.data)
-            try {
-                val text = contentResolver.openInputStream(uri)?.bufferedReader(Charsets.UTF_8)?.use { it.readText() }
-                    ?: throw IllegalArgumentException("تعذر قراءة الملف")
-                val info = legacyBackupStore.inspect(text)
-                val summary = info.counts.entries.joinToString(10.toChar().toString()) { "${it.key}: ${it.value}" }
-                android.app.AlertDialog.Builder(this)
-                    .setTitle("تأكيد استعادة نسخة الصفا")
-                    .setMessage("تم فحص النسخة.\\n${summary}\\n\\nسيتم حفظ جميع الأقسام محلياً. لا يتم حذف بيانات سابقة.")
-                    .setNegativeButton("إلغاء", null)
-                    .setPositiveButton("استعادة") { _, _ ->
-                        val progress=android.app.ProgressDialog(this).apply {
-                            setMessage("جارٍ استعادة بيانات الصفا، يرجى الانتظار...")
-                            setCancelable(false)
-                            show()
-                        }
-                        Thread {
-                            val sectionNames=mapOf(
-                                "products" to "المنتجات",
-                                "sales" to "فواتير المبيع",
-                                "repairs" to "فواتير الصيانة",
-                                "maintenance" to "الصيانة",
-                                "suppliers" to "الموردون",
-                                "purchases" to "فواتير المشتريات",
-                                "expenses" to "المصروفات",
-                                "cashboxes" to "الصناديق",
-                                "vaults" to "الصناديق",
-                                "settings" to "الإعدادات",
-                                "partners" to "الشركاء"
-                            )
-                            val failure=runCatching {
-                                legacyBackupStore.importInitial(text) { section, done, total ->
-                                    runOnUiThread {
-                                        if(progress.isShowing) {
-                                            val label=sectionNames[section] ?: section
-                                            progress.setMessage(
-                                                "جارٍ استعادة $label...\\n$done / $total"
-                                            )
-                                        }
-                                    }
-                                }
-                            }.exceptionOrNull()
-                            runOnUiThread {
-                                progress.dismiss()
-                                android.app.AlertDialog.Builder(this)
-                                    .setTitle(if(failure==null) "تم حفظ النسخة" else "لم تُنفذ الاستعادة")
-                                    .setMessage(failure?.message ?: "حُفظت بيانات النسخة في SQLite. يرجى التحقق من الأقسام قبل اعتمادها.")
-                                    .setPositiveButton("حسناً",null).show()
-                            }
-                        }.start()
-                    }.show()
-            } catch (error: Exception) {
-                android.app.AlertDialog.Builder(this).setTitle("ملف غير صالح")
-                    .setMessage(error.message ?: "تعذر قراءة النسخة")
-                    .setPositiveButton("حسناً", null).show()
+            val uri=requireNotNull(data.data)
+            val loading=android.app.ProgressDialog(this).apply {
+                setMessage("جارٍ فحص ملف النسخة...")
+                setCancelable(false)
+                show()
             }
+            Thread {
+                val file=java.io.File(filesDir,"alsafa_restore_pending.json")
+                val inspection=runCatching {
+                    contentResolver.openInputStream(uri)?.use { source ->
+                        file.outputStream().buffered().use { dest -> source.copyTo(dest,65536) }
+                    } ?: throw IllegalArgumentException("تعذر قراءة الملف")
+                    legacyBackupStore.inspect(file)
+                }
+                runOnUiThread {
+                    loading.dismiss()
+                    if(inspection.isFailure) {
+                        file.delete()
+                        android.app.AlertDialog.Builder(this).setTitle("ملف غير صالح")
+                            .setMessage(inspection.exceptionOrNull()?.message ?: "تعذر قراءة النسخة")
+                            .setPositiveButton("حسناً",null).show()
+                    } else {
+                        val info=inspection.getOrThrow()
+                        val summary=info.counts.entries.joinToString("\\n") { "${it.key}: ${it.value}" }
+                        android.app.AlertDialog.Builder(this)
+                            .setTitle("تأكيد استعادة نسخة الصفا")
+                            .setMessage("تم فحص النسخة.\\n${summary}\\n\\nسيتم حفظ الأقسام محلياً دون استبدال البيانات السابقة.")
+                            .setNegativeButton("إلغاء") { _,_ -> file.delete() }
+                            .setOnCancelListener { file.delete() }
+                            .setPositiveButton("استعادة") { _,_ ->
+                                val progress=android.app.ProgressDialog(this).apply {
+                                    setMessage("جارٍ بدء الاستعادة...")
+                                    setCancelable(false)
+                                    show()
+                                }
+                                Thread {
+                                    val names=mapOf(
+                                        "products" to "المنتجات", "sales" to "فواتير المبيع",
+                                        "repairs" to "فواتير الصيانة", "maintenance" to "الصيانة",
+                                        "suppliers" to "الموردون", "purchases" to "المشتريات",
+                                        "expenses" to "المصروفات", "cashboxes" to "الصناديق",
+                                        "vaults" to "الصناديق", "settings" to "الإعدادات",
+                                        "partners" to "الشركاء"
+                                    )
+                                    val failure=runCatching {
+                                        legacyBackupStore.importInitial(file,info) { section,done,total ->
+                                            runOnUiThread {
+                                                if(progress.isShowing)
+                                                    progress.setMessage(
+                                                        "جارٍ استعادة ${names[section] ?: section}...\\n$done / $total"
+                                                    )
+                                            }
+                                        }
+                                        val retained=java.io.File(filesDir,"alsafa_original_backup.json")
+                                        file.copyTo(retained,overwrite=true)
+                                    }.exceptionOrNull()
+                                    file.delete()
+                                    runOnUiThread {
+                                        progress.dismiss()
+                                        android.app.AlertDialog.Builder(this)
+                                            .setTitle(if(failure==null) "اكتملت الاستعادة" else "لم تُنفذ الاستعادة")
+                                            .setMessage(failure?.message ?: "تم استيراد السجلات إلى SQLite. تحقق من الأقسام قبل الاعتماد.")
+                                            .setPositiveButton("حسناً",null).show()
+                                    }
+                                }.start()
+                            }.show()
+                    }
+                }
+            }.start()
         }
         if(requestCode==702) {
             val pending=pendingCameraUri
