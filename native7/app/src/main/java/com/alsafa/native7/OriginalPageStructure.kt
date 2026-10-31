@@ -206,6 +206,17 @@ internal class OriginalPageStructure(
                     }
                 }
             }
+            // Keep source repair status/phase cards readable on the tablet.
+            if(rule.has("repairRowPaddingDp") && node!=null) {
+                val css=classes(node)
+                if(css.any { it in listOf("repair-card","repair-row",
+                        "repair-status","status-row","repair-stage","repair-invoice-row") }) {
+                    val p=dp(rule.optInt("repairRowPaddingDp",18))
+                    current.setPadding(p,p,p,p)
+                    current.minimumHeight=maxOf(current.minimumHeight,
+                        dp(rule.optInt("repairRowMinHeightDp",58)))
+                }
+            }
             if(rule.has("saleLinePaddingDp") && node!=null) {
                 val css=classes(node)
                 val line=css.any { it in listOf(
