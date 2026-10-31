@@ -183,6 +183,12 @@ def main() -> None:
                   f"not explicitly matched" + (": " + ", ".join(missing) if missing else ""))
         print("  Note: unmatched does not prove broken; helper handlers and MainActivity "
               "need manual inspection.")
+    print("\nNative submission status:", report["native_renderer_warning"])
+    print("Nine-screen action review totals:")
+    total_source = sum(len(x.get("actions", [])) for x in report["route_elements"].values())
+    total_unmatched = sum(len(x["requires_handler_review"]) for x in action_comparison.values())
+    print(f"  literal source actions={total_source}; requiring handler review={total_unmatched}")
+    print("  WARNING: actions inside invoked JS helpers are excluded from these counts.")
     print("\nStylesheets loaded:", ", ".join(report["stylesheet_loads"]) or "(not detected)")
     if args.output:
         args.output.parent.mkdir(parents=True, exist_ok=True)
