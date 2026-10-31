@@ -1,12 +1,13 @@
 {
   "schemaVersion": 1,
-  "description": "Source-derived dashboard and navigation presentation overrides. Applied to the original-structure.json.gz page tree at runtime without changing labels or route order.",
+  "description": "Native7 presentation overlays for source-derived pages. Source labels and element order remain unchanged; tablet rules apply only to listed routes.",
   "routes": [
     "home",
     "dashboard",
     "father-home",
     "advanced-home",
-    "simple-home"
+    "simple-home",
+    "more"
   ],
   "fontAsset": "Tajawal-Medium.ttf",
   "rtl": true,
@@ -31,7 +32,7 @@
         "modern-feature-card",
         "simple-action"
       ],
-      "paddingDp": 16,
+      "paddingDp": 18,
       "cornerRadiusDp": 18,
       "minHeightDp": 76
     },
@@ -43,5 +44,61 @@
       ],
       "marginBottomDp": 16
     }
-  ]
+  ],
+  "routeOverrides": {
+    "dashboard": {
+      "targets": [
+        {
+          "kinds": [
+            "button"
+          ],
+          "classes": [
+            "mode-card",
+            "modern-feature-card",
+            "father-main-card",
+            "simple-action"
+          ],
+          "paddingDp": 18,
+          "cornerRadiusDp": 18,
+          "minHeightDp": 76
+        }
+      ]
+    },
+    "father-home": {
+      "targets": [
+        {
+          "kinds": [
+            "button"
+          ],
+          "classes": [
+            "mode-card",
+            "modern-feature-card",
+            "father-main-card",
+            "simple-action"
+          ],
+          "paddingDp": 18,
+          "cornerRadiusDp": 18,
+          "minHeightDp": 76
+        }
+      ]
+    },
+    "advanced-home": {
+      "targets": [
+        {
+          "kinds": [
+            "button"
+          ],
+          "classes": [
+            "mode-card",
+            "modern-feature-card",
+            "father-main-card",
+            "simple-action"
+          ],
+          "paddingDp": 18,
+          "cornerRadiusDp": 18,
+          "minHeightDp": 76
+        }
+      ]
+    }
+  }
 }
