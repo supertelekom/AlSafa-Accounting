@@ -569,9 +569,11 @@ internal class OriginalPageStructure(
                             // also overrides its phone-only horizontal scroll.
                             val tablet=activity.resources.configuration.screenWidthDp>=720
                             if(tablet) {
-                                // The tablet media query changes flex-wrap,
-                                // but does not override the preceding 6px gap.
-                                val wrap=SourceFlow(activity,dp(6)).apply {
+                                // Generic .row-actions uses gap:5px; the
+                                // repair-invoice descendant selector alone
+                                // overrides it to 6px. Do not apply the
+                                // repair-specific value to all nine routes.
+                                val wrap=SourceFlow(activity,dp(5)).apply {
                                     layoutDirection=View.LAYOUT_DIRECTION_RTL
                                     actionViews.forEach { addView(it,ViewGroup.LayoutParams(-2,-2)) }
                                 }
