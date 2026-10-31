@@ -174,6 +174,14 @@ def main() -> None:
     print("\nCSS selectors (style.css / styles.css):")
     for name, info in classes.items():
         print(f"  .{name}: {len(info['base'])} / {len(info['overrides'])}")
+    if action_comparison:
+        print("\nNine-screen source actions requiring native handler review:")
+        for route, info in action_comparison.items():
+            missing = info["requires_handler_review"]
+            print(f"  {route}: {len(missing)} of {len(info['source_actions'])} actions "
+                  f"not explicitly matched" + (": " + ", ".join(missing) if missing else ""))
+        print("  Note: unmatched does not prove broken; helper handlers and MainActivity "
+              "need manual inspection.")
     print("\nStylesheets loaded:", ", ".join(report["stylesheet_loads"]) or "(not detected)")
     if args.output:
         args.output.parent.mkdir(parents=True, exist_ok=True)
