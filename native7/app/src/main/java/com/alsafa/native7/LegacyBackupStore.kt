@@ -226,10 +226,30 @@ internal class LegacyBackupStore(context: Context) :
                 it.moveToFirst(); it.getInt(0)
             }
             check(saved==inspection.counts.values.sum()) { "لم يتم حفظ جميع السجلات" }
+            verifySupplierPurchaseExpenseBatch(db, inspection.counts)
             verifyImportedAccountingSections(db, inspection.counts)
             db.setTransactionSuccessful()
         } finally { db.endTransaction() }
         return inspection
+    }
+
+    /** Explicit batch-one reconciliation: source, staging and both query projections. */
+    private fun verifySupplierPurchaseExpenseBatch(db: SQLiteDatabase, counts: Map<String, Int>) {
+        for (section in listOf("suppliers", "purchases", "expenses")) {
+            val expected = counts[section]
+                ?: throw IllegalArgumentException("قسم $section غير موجود في النسخة")
+            for (table in listOf("legacy_records", "op_$section", "domain_$section")) {
+                val sql = if (table == "legacy_records")
+                    "SELECT COUNT(*) FROM legacy_records WHERE section=?" else "SELECT COUNT(*) FROM $table"
+                val args = if (table == "legacy_records") arrayOf(section) else null
+                val actual = db.rawQuery(sql, args).use { c ->
+                    check(c.moveToFirst()); c.getInt(0)
+                }
+                check(actual == expected) {
+                    "القسم $section: العدد المتوقع $expected، والعدد في $table هو $actual"
+                }
+            }
+        }
     }
 
     /** Verify every imported accounting section, not only products, before committing. */
@@ -314,6 +334,7 @@ internal class LegacyBackupStore(context: Context) :
                 it.getInt(0)
             }
             check(staged == inspection.counts.values.sum()) { "لم يتم حفظ جميع السجلات" }
+            verifySupplierPurchaseExpenseBatch(db, inspection.counts)
             verifyImportedAccountingSections(db, inspection.counts)
             db.setTransactionSuccessful()
         } finally {
