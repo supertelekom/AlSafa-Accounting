@@ -124,6 +124,16 @@ internal class OriginalPageStructure(
                 (current.background as? GradientDrawable)?.cornerRadius=
                     dp(rule.optInt("fieldCornerRadiusDp",14)).toFloat()
             }
+            if(route=="products" || route=="product-form") {
+                if(node!=null && classes(node).contains("color-variant-row")) {
+                    val pad=dp(rule.optInt("variantPaddingDp",14))
+                    current.setPadding(pad,pad,pad,pad)
+                    (current.layoutParams as? LinearLayout.LayoutParams)?.let { params ->
+                        params.bottomMargin=dp(rule.optInt("variantRowGapDp",16))
+                        current.layoutParams=params
+                    }
+                }
+            }
             if(kind=="button" && current !is EditText) {
                 current.minimumHeight=maxOf(current.minimumHeight,dp(rule.optInt("buttonMinHeightDp",64)))
                 val p=dp(rule.optInt("buttonPaddingDp",16))
@@ -1708,6 +1718,8 @@ internal class OriginalPageStructure(
         val copy=JSONObject(pages.getJSONObject("variant-row-template").toString()).also { uniqueDynamicIds(it) }
         val row=build(copy.also { annotateDynamicRow(it,target) })
         if(target is SourceGrid) target.addCell(row,false) else target.addView(row)
+        styleSectionTree(row,currentRoute)
+        enforceTajawalRtl(row)
         conditions()
     }
     private fun unregisterDetached(view:View) {
