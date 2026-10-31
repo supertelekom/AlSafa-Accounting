@@ -642,6 +642,34 @@
       "cashRowPaddingDp": 18,
       "cashRowMinHeightDp": 58,
       "cashRowGapDp": 14
+    },
+    "daily-close": {
+      "fieldPaddingDp": 18,
+      "fieldMinHeightDp": 58,
+      "fieldCornerRadiusDp": 18,
+      "buttonPaddingDp": 18,
+      "buttonMinHeightDp": 72,
+      "buttonCornerRadiusDp": 18,
+      "tableCellPaddingDp": 18,
+      "tableRowMinHeightDp": 58,
+      "tableRowGapDp": 14,
+      "financialRowPaddingDp": 18,
+      "financialRowMinHeightDp": 58,
+      "financialRowGapDp": 14
+    },
+    "daily-close-history": {
+      "fieldPaddingDp": 18,
+      "fieldMinHeightDp": 58,
+      "fieldCornerRadiusDp": 18,
+      "buttonPaddingDp": 18,
+      "buttonMinHeightDp": 72,
+      "buttonCornerRadiusDp": 18,
+      "tableCellPaddingDp": 18,
+      "tableRowMinHeightDp": 58,
+      "tableRowGapDp": 14,
+      "financialRowPaddingDp": 18,
+      "financialRowMinHeightDp": 58,
+      "financialRowGapDp": 14
     }
   },
   "scopedRules": [
@@ -961,6 +989,43 @@
         "transfer",
         "exchange",
         "vault"
+      ],
+      "fieldPaddingDp": 18,
+      "fieldMinHeightDp": 58,
+      "buttonPaddingDp": 18,
+      "buttonMinHeightDp": 72,
+      "cornerRadiusDp": 18
+    },
+    {
+      "section": "daily-close",
+      "routes": [
+        "daily-close",
+        "daily-close-history"
+      ],
+      "sourceIdContains": [
+        "close",
+        "closing",
+        "carryover",
+        "drawer",
+        "chamcash",
+        "cashbox",
+        "usd",
+        "syp",
+        "try"
+      ],
+      "sourceClassContains": [
+        "daily-close",
+        "closing",
+        "carryover",
+        "drawer",
+        "currency-balance",
+        "close-row"
+      ],
+      "dataActionContains": [
+        "daily-close",
+        "close-day",
+        "closing",
+        "carryover"
       ],
       "fieldPaddingDp": 18,
       "fieldMinHeightDp": 58,
