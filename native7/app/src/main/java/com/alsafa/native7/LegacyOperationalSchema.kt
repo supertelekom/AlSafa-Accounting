@@ -21,10 +21,20 @@ internal object LegacyOperationalSchema {
     fun importSection(db: SQLiteDatabase, section: String, rows: JSONArray, offset: Int = 0) {
         if (section !in sections) return
         for (i in 0 until rows.length()) {
-            val row = rows.optJSONObject(i) ?: throw IllegalArgumentException("Invalid record in $section")
+            val row = rows.optJSONObject(i) ?: throw IllegalArgumentException("Invalid record in $section at ${i + offset}")
+            // Keep original JSON untouched; missing historical fields are nullable indexes.
+            fun indexed(key: String): String? {
+                val value = row.opt(key)
+                return if (value == null || value == JSONObject.NULL) null
+                    else value.toString().trim().takeIf { it.isNotEmpty() }
+            }
+            val reference = indexed("referenceId")
+                ?: if (section == "purchases") indexed("supplierId") else null
+            val date = indexed("date") ?: indexed("createdAt")
+            val invoice = indexed("invoiceNo")
+                ?: if (section == "purchases") indexed("supplierInvoice") else null
             db.execSQL("INSERT INTO op_${section}(ordinal,original_id,reference_id,date_value,invoice_no,payload) VALUES (?,?,?,?,?,?)",
-                arrayOf(i+offset,row.optString("id"),row.optString("referenceId"),
-                    row.optString("date"),row.optString("invoiceNo"),row.toString()))
+                arrayOf(i+offset,indexed("id"),reference,date,invoice,row.toString()))
             val keys = row.keys()
             while(keys.hasNext()) {
                 val key=keys.next()
