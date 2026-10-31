@@ -145,3 +145,9 @@ Inspected the actual supplied tablet `assets/style.css` and compared shared clas
 - Code commit `696aeb3efabb043b9ef5797bd6fa5018c905bcdf`.
 
 These two shared CSS corrections are source-verified, but they do not establish element-by-element equivalence of all nine screens. Source route DOM, dialogs, button handlers, conditional visibility, animations, screenshot parity, Android Studio compilation and Honor Pad X8b tests remain outstanding. No native6 or accounting changes.
+
+## Source cascade: small delete action buttons — 2026-10-31
+
+Compared legacy `assets/style.css` `.tiny-button` and `.tiny-button.delete` against Native7 shared `button(n)` renderer. Found a real Kotlin override-order bug: the delete-specific pink/red drawable was immediately overwritten by the generic sand drawable, so destructive action buttons lost their visual distinction. Corrected to a single drawable selected by `delete` class, using source background `#fff2ef`, border `#f1c9c1`, and danger text `#b8584b`; standard tiny actions retain `#faf1e3` and sand border. Commit `812453acafd56c4b7243395ce11e436fb7a8be45`.
+
+Scope: shared visual component, not proof of full nine-screen element parity. Still need route-by-route comparison of dynamic markup, labels, actions, modals, animations, and actual device screenshots/compilation.
