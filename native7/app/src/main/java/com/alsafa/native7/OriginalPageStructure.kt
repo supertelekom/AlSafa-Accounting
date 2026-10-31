@@ -561,44 +561,31 @@ internal class OriginalPageStructure(
                             for(i in 0 until childCount) styleListDescendants(getChildAt(i))
                         }
                         if(cs.contains("row-actions")) {
-                            // Tablet-specific user requirement: all actions remain
-                            // visible without horizontal scrolling. Group long
-                            // action lists into multiple visible rows.
-                            val tablet=activity.resources.configuration.screenWidthDp>=720
-                            val perRow=if(tablet) {
-                                // Keep every control visible. A smaller tablet
-                                // gets fewer actions per line than landscape.
-                                if(activity.resources.configuration.screenWidthDp>=1200) 5 else 3
-                            } else Int.MAX_VALUE
-                            val gap=dp(5)
-                            if(tablet && childCount>perRow) {
-                                val actionViews=(0 until childCount).map { getChildAt(it) }
-                                removeAllViews()
-                                orientation=LinearLayout.VERTICAL
-                                actionViews.chunked(perRow).forEachIndexed { rowIndex, group ->
-                                    val row=LinearLayout(activity).apply {
-                                        orientation=LinearLayout.HORIZONTAL
-                                        layoutDirection=View.LAYOUT_DIRECTION_RTL
-                                        gravity=Gravity.CENTER_VERTICAL
-                                    }
-                                    group.forEachIndexed { index, child ->
-                                        row.addView(child,LinearLayout.LayoutParams(-2,-2).apply {
-                                            if(index>0) marginStart=gap
-                                        })
-                                    }
-                                    addView(row,LinearLayout.LayoutParams(-1,-2).apply {
-                                        if(rowIndex>0) topMargin=gap
+                            // The final legacy CSS cascade uses RTL, nowrap,
+                            // overflow-x:auto and 6px gap on .row-actions.
+                            // Do not split action buttons into invented rows.
+                            val actionViews=(0 until childCount).map { getChildAt(it) }
+                            removeAllViews()
+                            orientation=LinearLayout.VERTICAL
+                            val strip=LinearLayout(activity).apply {
+                                orientation=LinearLayout.HORIZONTAL
+                                layoutDirection=View.LAYOUT_DIRECTION_RTL
+                                gravity=Gravity.CENTER_VERTICAL
+                                actionViews.forEachIndexed { index,child ->
+                                    addView(child,LinearLayout.LayoutParams(-2,-2).apply {
+                                        if(index>0) marginStart=dp(6)
                                     })
                                 }
-                            } else {
-                                orientation=LinearLayout.HORIZONTAL
-                                gravity=Gravity.CENTER_VERTICAL
-                                for(i in 0 until childCount) {
-                                    getChildAt(i).layoutParams=LinearLayout.LayoutParams(-2,-2).apply {
-                                        if(i>0) marginStart=gap
-                                    }
-                                }
                             }
+                            val scroll=android.widget.HorizontalScrollView(activity).apply {
+                                isHorizontalScrollBarEnabled=false
+                                isFillViewport=false
+                                layoutDirection=View.LAYOUT_DIRECTION_RTL
+                                setPadding(dp(1),dp(3),dp(1),dp(5))
+                                clipToPadding=false
+                                addView(strip,android.widget.FrameLayout.LayoutParams(-2,-2))
+                            }
+                            addView(scroll,LinearLayout.LayoutParams(-1,-2))
                         }
                         if(cs.contains("transaction")) {
                             // Source .transaction is a horizontal flex row, not
