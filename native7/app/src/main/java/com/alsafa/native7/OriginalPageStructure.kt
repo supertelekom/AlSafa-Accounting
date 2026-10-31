@@ -233,6 +233,25 @@ internal class OriginalPageStructure(
                     }
                 }
             }
+            if(rule.has("repairRowPaddingDp") && node!=null) {
+                val css=classes(node)
+                val repairRow=css.any { it in listOf(
+                    "repair-row","repair-item","repair-status-row","repair-stage",
+                    "repair-invoice-row","repair-part-row","repair-line",
+                    "maintenance-row","service-row"
+                ) } || node.optJSONObject("data")?.has("data-invoice-row")==true
+                if(repairRow) {
+                    val p=dp(rule.optInt("repairRowPaddingDp",18))
+                    current.setPadding(p,p,p,p)
+                    current.minimumHeight=maxOf(current.minimumHeight,
+                        dp(rule.optInt("repairRowMinHeightDp",58)))
+                    (current.layoutParams as? LinearLayout.LayoutParams)?.let { params ->
+                        params.bottomMargin=maxOf(params.bottomMargin,
+                            dp(rule.optInt("repairRowGapDp",14)))
+                        current.layoutParams=params
+                    }
+                }
+            }
             if(kind=="button" && current !is EditText) {
                 current.minimumHeight=maxOf(current.minimumHeight,dp(rule.optInt("buttonMinHeightDp",64)))
                 val p=dp(rule.optInt("buttonPaddingDp",16))
