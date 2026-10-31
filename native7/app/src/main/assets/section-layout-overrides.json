@@ -59,28 +59,28 @@
       "tableRowGapDp": 12
     },
     "inventory-analytics": {
-      "fieldPaddingDp": 16,
-      "fieldMinHeightDp": 54,
-      "fieldCornerRadiusDp": 14,
-      "sectionGapDp": 16,
-      "buttonPaddingDp": 16,
-      "buttonMinHeightDp": 64,
-      "buttonCornerRadiusDp": 16,
-      "tableCellPaddingDp": 16,
-      "tableRowMinHeightDp": 54,
-      "tableRowGapDp": 12
+      "fieldPaddingDp": 18,
+      "fieldMinHeightDp": 58,
+      "fieldCornerRadiusDp": 18,
+      "sectionGapDp": 18,
+      "buttonPaddingDp": 18,
+      "buttonMinHeightDp": 72,
+      "buttonCornerRadiusDp": 18,
+      "tableCellPaddingDp": 18,
+      "tableRowMinHeightDp": 58,
+      "tableRowGapDp": 14
     },
     "stock-adjustment": {
-      "fieldPaddingDp": 16,
-      "fieldMinHeightDp": 54,
-      "fieldCornerRadiusDp": 14,
-      "sectionGapDp": 16,
-      "buttonPaddingDp": 16,
-      "buttonMinHeightDp": 64,
-      "buttonCornerRadiusDp": 16,
-      "tableCellPaddingDp": 16,
-      "tableRowMinHeightDp": 54,
-      "tableRowGapDp": 12
+      "fieldPaddingDp": 18,
+      "fieldMinHeightDp": 58,
+      "fieldCornerRadiusDp": 18,
+      "sectionGapDp": 18,
+      "buttonPaddingDp": 18,
+      "buttonMinHeightDp": 72,
+      "buttonCornerRadiusDp": 18,
+      "tableCellPaddingDp": 18,
+      "tableRowMinHeightDp": 58,
+      "tableRowGapDp": 14
     },
     "stock-financing": {
       "fieldPaddingDp": 16,
@@ -95,16 +95,16 @@
       "tableRowGapDp": 12
     },
     "stock-settlement": {
-      "fieldPaddingDp": 16,
-      "fieldMinHeightDp": 54,
-      "fieldCornerRadiusDp": 14,
-      "sectionGapDp": 16,
-      "buttonPaddingDp": 16,
-      "buttonMinHeightDp": 64,
-      "buttonCornerRadiusDp": 16,
-      "tableCellPaddingDp": 16,
-      "tableRowMinHeightDp": 54,
-      "tableRowGapDp": 12
+      "fieldPaddingDp": 18,
+      "fieldMinHeightDp": 58,
+      "fieldCornerRadiusDp": 18,
+      "sectionGapDp": 18,
+      "buttonPaddingDp": 18,
+      "buttonMinHeightDp": 72,
+      "buttonCornerRadiusDp": 18,
+      "tableCellPaddingDp": 18,
+      "tableRowMinHeightDp": 58,
+      "tableRowGapDp": 14
     },
     "sales": {
       "fieldPaddingDp": 16,
@@ -894,6 +894,54 @@
       "warrantyRowPaddingDp": 18,
       "warrantyRowMinHeightDp": 58,
       "warrantyRowGapDp": 14
+    },
+    "inventory-tools": {
+      "fieldPaddingDp": 18,
+      "fieldMinHeightDp": 58,
+      "fieldCornerRadiusDp": 18,
+      "sectionGapDp": 18,
+      "buttonPaddingDp": 18,
+      "buttonMinHeightDp": 72,
+      "buttonCornerRadiusDp": 18,
+      "tableCellPaddingDp": 18,
+      "tableRowMinHeightDp": 58,
+      "tableRowGapDp": 14
+    },
+    "stock-take": {
+      "fieldPaddingDp": 18,
+      "fieldMinHeightDp": 58,
+      "fieldCornerRadiusDp": 18,
+      "sectionGapDp": 18,
+      "buttonPaddingDp": 18,
+      "buttonMinHeightDp": 72,
+      "buttonCornerRadiusDp": 18,
+      "tableCellPaddingDp": 18,
+      "tableRowMinHeightDp": 58,
+      "tableRowGapDp": 14
+    },
+    "stock-take-form": {
+      "fieldPaddingDp": 18,
+      "fieldMinHeightDp": 58,
+      "fieldCornerRadiusDp": 18,
+      "sectionGapDp": 18,
+      "buttonPaddingDp": 18,
+      "buttonMinHeightDp": 72,
+      "buttonCornerRadiusDp": 18,
+      "tableCellPaddingDp": 18,
+      "tableRowMinHeightDp": 58,
+      "tableRowGapDp": 14
+    },
+    "inventory-analysis": {
+      "fieldPaddingDp": 18,
+      "fieldMinHeightDp": 58,
+      "fieldCornerRadiusDp": 18,
+      "sectionGapDp": 18,
+      "buttonPaddingDp": 18,
+      "buttonMinHeightDp": 72,
+      "buttonCornerRadiusDp": 18,
+      "tableCellPaddingDp": 18,
+      "tableRowMinHeightDp": 58,
+      "tableRowGapDp": 14
     }
   },
   "scopedRules": [
@@ -1406,6 +1454,48 @@
         "warranty",
         "guarantee",
         "print-warranty"
+      ],
+      "fieldPaddingDp": 18,
+      "fieldMinHeightDp": 58,
+      "buttonPaddingDp": 18,
+      "buttonMinHeightDp": 72,
+      "cornerRadiusDp": 18
+    },
+    {
+      "section": "inventory-tools",
+      "routes": [
+        "inventory-tools",
+        "stock-take",
+        "stock-take-form",
+        "inventory-analysis",
+        "inventory-analytics",
+        "stock-adjustment",
+        "stock-settlement"
+      ],
+      "sourceIdContains": [
+        "inventory",
+        "stock-take",
+        "stocktake",
+        "counted",
+        "variance",
+        "difference",
+        "reconcile",
+        "adjust"
+      ],
+      "sourceClassContains": [
+        "inventory-tool",
+        "stock-take",
+        "stocktake",
+        "count-row",
+        "variance-row",
+        "inventory-analysis"
+      ],
+      "dataActionContains": [
+        "start-stock",
+        "approve-stock",
+        "reconcile-stock",
+        "stock-take",
+        "inventory-adjust"
       ],
       "fieldPaddingDp": 18,
       "fieldMinHeightDp": 58,
