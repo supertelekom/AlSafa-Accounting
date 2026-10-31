@@ -18,12 +18,12 @@ internal object LegacyOperationalSchema {
         }
         db.execSQL("CREATE TABLE IF NOT EXISTS op_children (section TEXT NOT NULL, parent_ordinal INTEGER NOT NULL, child_key TEXT NOT NULL, child_ordinal INTEGER NOT NULL, payload TEXT NOT NULL, PRIMARY KEY(section,parent_ordinal,child_key,child_ordinal))")
     }
-    fun importSection(db: SQLiteDatabase, section: String, rows: JSONArray) {
+    fun importSection(db: SQLiteDatabase, section: String, rows: JSONArray, offset: Int = 0) {
         if (section !in sections) return
         for (i in 0 until rows.length()) {
             val row = rows.optJSONObject(i) ?: throw IllegalArgumentException("Invalid record in $section")
             db.execSQL("INSERT INTO op_${section}(ordinal,original_id,reference_id,date_value,invoice_no,payload) VALUES (?,?,?,?,?,?)",
-                arrayOf(i,row.optString("id"),row.optString("referenceId"),
+                arrayOf(i+offset,row.optString("id"),row.optString("referenceId"),
                     row.optString("date"),row.optString("invoiceNo"),row.toString()))
             val keys = row.keys()
             while(keys.hasNext()) {
@@ -31,12 +31,12 @@ internal object LegacyOperationalSchema {
                 val children=row.optJSONArray(key) ?: continue
                 for(j in 0 until children.length()) {
                     db.execSQL("INSERT INTO op_children(section,parent_ordinal,child_key,child_ordinal,payload) VALUES (?,?,?,?,?)",
-                        arrayOf(section,i,key,j,children.get(j).toString()))
+                        arrayOf(section,i+offset,key,j,children.get(j).toString()))
                 }
             }
         }
         db.rawQuery("SELECT COUNT(*) FROM op_${section}",null).use {
-            check(it.moveToFirst() && it.getInt(0)==rows.length())
+            check(it.moveToFirst() && it.getInt(0)==offset+rows.length())
         }
     }
 }
