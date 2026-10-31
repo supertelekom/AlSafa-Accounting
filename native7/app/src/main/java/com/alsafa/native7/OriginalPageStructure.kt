@@ -975,7 +975,7 @@ internal class OriginalPageStructure(
                                     }
                                 } else {
                                     LinearLayout.LayoutParams(
-                                        if(i==0) dp(116) else if(i==1) 0 else -2,-2,
+                                        if(i==0) dp(116) else if(i==1) 0 else -2,
                                         if(i==0) dp(84) else -2,
                                         if(i==1) 1f else 0f
                                     ).apply { if(i>0) marginStart=dp(12) }
