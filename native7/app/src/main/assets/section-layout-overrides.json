@@ -334,7 +334,10 @@
       "buttonCornerRadiusDp": 18,
       "tableCellPaddingDp": 18,
       "tableRowMinHeightDp": 58,
-      "tableRowGapDp": 14
+      "tableRowGapDp": 14,
+      "repairRowPaddingDp": 18,
+      "repairRowGapDp": 14,
+      "repairRowMinHeightDp": 58
     },
     "repair-form": {
       "fieldPaddingDp": 18,
@@ -345,7 +348,10 @@
       "buttonCornerRadiusDp": 18,
       "tableCellPaddingDp": 18,
       "tableRowMinHeightDp": 58,
-      "tableRowGapDp": 14
+      "tableRowGapDp": 14,
+      "repairRowPaddingDp": 18,
+      "repairRowGapDp": 14,
+      "repairRowMinHeightDp": 58
     },
     "father-repair": {
       "fieldPaddingDp": 18,
@@ -356,7 +362,10 @@
       "buttonCornerRadiusDp": 18,
       "tableCellPaddingDp": 18,
       "tableRowMinHeightDp": 58,
-      "tableRowGapDp": 14
+      "tableRowGapDp": 14,
+      "repairRowPaddingDp": 18,
+      "repairRowGapDp": 14,
+      "repairRowMinHeightDp": 58
     },
     "father-deliveries": {
       "fieldPaddingDp": 18,
@@ -367,7 +376,10 @@
       "buttonCornerRadiusDp": 18,
       "tableCellPaddingDp": 18,
       "tableRowMinHeightDp": 58,
-      "tableRowGapDp": 14
+      "tableRowGapDp": 14,
+      "repairRowPaddingDp": 18,
+      "repairRowGapDp": 14,
+      "repairRowMinHeightDp": 58
     },
     "repair-delivery": {
       "fieldPaddingDp": 18,
@@ -378,7 +390,10 @@
       "buttonCornerRadiusDp": 18,
       "tableCellPaddingDp": 18,
       "tableRowMinHeightDp": 58,
-      "tableRowGapDp": 14
+      "tableRowGapDp": 14,
+      "repairRowPaddingDp": 18,
+      "repairRowGapDp": 14,
+      "repairRowMinHeightDp": 58
     },
     "repair-invoice": {
       "fieldPaddingDp": 18,
@@ -389,7 +404,10 @@
       "buttonCornerRadiusDp": 18,
       "tableCellPaddingDp": 18,
       "tableRowMinHeightDp": 58,
-      "tableRowGapDp": 14
+      "tableRowGapDp": 14,
+      "repairRowPaddingDp": 18,
+      "repairRowGapDp": 14,
+      "repairRowMinHeightDp": 58
     }
   },
   "scopedRules": [
