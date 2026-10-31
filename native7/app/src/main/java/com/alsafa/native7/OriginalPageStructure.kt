@@ -72,7 +72,7 @@ internal class OriginalPageStructure(
             view.typeface=if(view.typeface?.isBold==true)
                 Typeface.create(font,Typeface.BOLD) else font
             view.textDirection=View.TEXT_DIRECTION_FIRST_STRONG
-            view.gravity=(view.gravity and Gravity.VERTICAL_GRAVITY_MASK) or Gravity.RIGHT
+            // Keep source-defined centered icon/button labels; RTL controls reading order.
             view.includeFontPadding=true
         }
         if(view is ViewGroup) for(i in 0 until view.childCount)
