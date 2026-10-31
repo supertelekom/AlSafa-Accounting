@@ -450,6 +450,61 @@
       "repairRowPaddingDp": 18,
       "repairRowGapDp": 14,
       "repairRowMinHeightDp": 58
+    },
+    "suppliers": {
+      "fieldPaddingDp": 18,
+      "fieldMinHeightDp": 58,
+      "fieldCornerRadiusDp": 18,
+      "buttonPaddingDp": 18,
+      "buttonMinHeightDp": 72,
+      "buttonCornerRadiusDp": 18,
+      "tableCellPaddingDp": 18,
+      "tableRowMinHeightDp": 58,
+      "tableRowGapDp": 14
+    },
+    "supplier-form": {
+      "fieldPaddingDp": 18,
+      "fieldMinHeightDp": 58,
+      "fieldCornerRadiusDp": 18,
+      "buttonPaddingDp": 18,
+      "buttonMinHeightDp": 72,
+      "buttonCornerRadiusDp": 18,
+      "tableCellPaddingDp": 18,
+      "tableRowMinHeightDp": 58,
+      "tableRowGapDp": 14
+    },
+    "supplier-ledger": {
+      "fieldPaddingDp": 18,
+      "fieldMinHeightDp": 58,
+      "fieldCornerRadiusDp": 18,
+      "buttonPaddingDp": 18,
+      "buttonMinHeightDp": 72,
+      "buttonCornerRadiusDp": 18,
+      "tableCellPaddingDp": 18,
+      "tableRowMinHeightDp": 58,
+      "tableRowGapDp": 14
+    },
+    "supplier-account": {
+      "fieldPaddingDp": 18,
+      "fieldMinHeightDp": 58,
+      "fieldCornerRadiusDp": 18,
+      "buttonPaddingDp": 18,
+      "buttonMinHeightDp": 72,
+      "buttonCornerRadiusDp": 18,
+      "tableCellPaddingDp": 18,
+      "tableRowMinHeightDp": 58,
+      "tableRowGapDp": 14
+    },
+    "supplier-debts": {
+      "fieldPaddingDp": 18,
+      "fieldMinHeightDp": 58,
+      "fieldCornerRadiusDp": 18,
+      "buttonPaddingDp": 18,
+      "buttonMinHeightDp": 72,
+      "buttonCornerRadiusDp": 18,
+      "tableCellPaddingDp": 18,
+      "tableRowMinHeightDp": 58,
+      "tableRowGapDp": 14
     }
   },
   "scopedRules": [
@@ -643,6 +698,39 @@
         "add-repair-part",
         "open-maintenance-parts",
         "new-maintenance-part"
+      ],
+      "fieldPaddingDp": 18,
+      "fieldMinHeightDp": 58,
+      "buttonPaddingDp": 18,
+      "buttonMinHeightDp": 72,
+      "cornerRadiusDp": 18
+    },
+    {
+      "section": "suppliers",
+      "routes": [
+        "suppliers",
+        "supplier-form",
+        "supplier-ledger",
+        "supplier-account",
+        "supplier-debts",
+        "debts"
+      ],
+      "sourceIdContains": [
+        "supplier",
+        "old-balance",
+        "opening-debt",
+        "supplier-debt"
+      ],
+      "sourceClassContains": [
+        "supplier",
+        "supplier-ledger",
+        "supplier-account",
+        "supplier-debt"
+      ],
+      "dataActionContains": [
+        "supplier",
+        "open-supplier",
+        "pay-supplier"
       ],
       "fieldPaddingDp": 18,
       "fieldMinHeightDp": 58,
