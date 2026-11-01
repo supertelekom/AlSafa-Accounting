@@ -264,6 +264,7 @@ internal object NativeSalesLedger {
         db.execSQL("CREATE TABLE IF NOT EXISTS native_sale_funding_allocations (id TEXT PRIMARY KEY, sale_id TEXT NOT NULL, product_id TEXT NOT NULL, lot_id TEXT NOT NULL, purchase_id TEXT NOT NULL, source TEXT NOT NULL, partner_id TEXT NOT NULL, partner_name TEXT NOT NULL, share REAL NOT NULL, qty REAL NOT NULL, unit_cost REAL NOT NULL, currency TEXT NOT NULL, created_at INTEGER NOT NULL)")
         db.execSQL("CREATE TABLE IF NOT EXISTS native_sales (id TEXT PRIMARY KEY, created_at INTEGER NOT NULL, currency TEXT NOT NULL, channel TEXT NOT NULL, customer TEXT NOT NULL, phone TEXT NOT NULL, total REAL NOT NULL, cost REAL NOT NULL, status TEXT NOT NULL DEFAULT 'active')")
         db.execSQL("CREATE TABLE IF NOT EXISTS native_sale_invoice_numbers (sale_id TEXT PRIMARY KEY, invoice_no INTEGER NOT NULL UNIQUE)")
+        repairMissingInvoiceNumbers(db)
         db.execSQL("CREATE TABLE IF NOT EXISTS native_sale_lines (id TEXT PRIMARY KEY, sale_id TEXT NOT NULL, product_id TEXT NOT NULL, quantity INTEGER NOT NULL, unit_price REAL NOT NULL, unit_cost REAL NOT NULL)")
         db.execSQL("CREATE TABLE IF NOT EXISTS native_sale_manual_items (line_id TEXT PRIMARY KEY, name TEXT NOT NULL, model TEXT NOT NULL)")
         db.execSQL("CREATE TABLE IF NOT EXISTS native_sale_discounts (sale_id TEXT PRIMARY KEY, subtotal REAL NOT NULL, manual_discount REAL NOT NULL, rule_discount REAL NOT NULL, tax_rate REAL NOT NULL, tax_amount REAL NOT NULL)")
@@ -276,6 +277,29 @@ internal object NativeSalesLedger {
         db.execSQL("CREATE TABLE IF NOT EXISTS native_sale_profit_adjustments (id TEXT PRIMARY KEY, sale_id TEXT NOT NULL, amount REAL NOT NULL, currency TEXT NOT NULL, created_at INTEGER NOT NULL, reason TEXT NOT NULL)")
         db.execSQL("CREATE TABLE IF NOT EXISTS native_sale_collections (id TEXT PRIMARY KEY, sale_id TEXT NOT NULL, amount REAL NOT NULL, currency TEXT NOT NULL, account TEXT NOT NULL, created_at INTEGER NOT NULL, reason TEXT NOT NULL)")
         db.execSQL("CREATE TABLE IF NOT EXISTS native_sale_payment_currency (id TEXT PRIMARY KEY, sale_id TEXT NOT NULL, invoice_amount REAL NOT NULL, invoice_currency TEXT NOT NULL, payment_amount REAL NOT NULL, payment_currency TEXT NOT NULL, account TEXT NOT NULL, exchange_rate REAL NOT NULL, created_at INTEGER NOT NULL)")
+    }
+    /**
+     * Assign a permanent visible invoice number to sales saved by older native builds.
+     * Preserve existing numbers and never expose the internal UUID as an invoice number.
+     */
+    private fun repairMissingInvoiceNumbers(db:SQLiteDatabase) {
+        val missing=mutableListOf<String>()
+        db.rawQuery(
+            "SELECT s.id FROM native_sales s LEFT JOIN native_sale_invoice_numbers n ON n.sale_id=s.id WHERE n.sale_id IS NULL ORDER BY s.created_at ASC,s.id ASC",
+            null
+        ).use { c -> while(c.moveToNext()) missing.add(c.getString(0)) }
+        if(missing.isEmpty()) return
+        val legacyMax=db.rawQuery(
+            "SELECT COALESCE(MAX(CAST(json_extract(payload,'$.invoiceNo') AS INTEGER)),0) FROM legacy_records WHERE section='sales' AND CAST(json_extract(payload,'$.invoiceNo') AS TEXT) GLOB '[0-9]*'",
+            null
+        ).use { c -> if(c.moveToFirst()) c.getLong(0) else 0L }
+        val nativeMax=db.rawQuery("SELECT COALESCE(MAX(invoice_no),0) FROM native_sale_invoice_numbers",null)
+            .use { c -> if(c.moveToFirst()) c.getLong(0) else 0L }
+        var next=maxOf(legacyMax,nativeMax)+1L
+        missing.forEach { saleId ->
+            db.execSQL("INSERT OR IGNORE INTO native_sale_invoice_numbers(sale_id,invoice_no) VALUES (?,?)",
+                arrayOf<Any>(saleId,next++))
+        }
     }
     /** Verifies every native invoice's net stock movements against sold and returned units.
      * A cancelled invoice must have zero net stock effect.
