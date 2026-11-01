@@ -24,6 +24,10 @@ import org.json.JSONObject
 class ProductColorEditorActivity : Activity() {
     private var photoData: String? = null
     private var cameraUri: Uri? = null
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        cameraUri?.let { outState.putString("color_camera_uri", it.toString()) }
+    }
     private var photoPreview: ImageView? = null
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
@@ -60,6 +64,7 @@ class ProductColorEditorActivity : Activity() {
     }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        cameraUri = savedInstanceState?.getString("color_camera_uri")?.let { Uri.parse(it) }
         val source = intent.getStringExtra("source").orEmpty()
         val parent = intent.getStringExtra("parent").orEmpty()
         val variantId = intent.getStringExtra("variant")
