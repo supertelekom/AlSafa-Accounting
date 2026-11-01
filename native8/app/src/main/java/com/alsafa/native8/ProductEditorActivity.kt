@@ -5,6 +5,10 @@ import android.app.AlertDialog
 import android.content.Intent
 import android.util.Base64
 import android.graphics.BitmapFactory
+import android.graphics.Bitmap
+import android.provider.MediaStore
+import android.content.ContentValues
+import android.net.Uri
 import android.widget.ImageView
 import android.os.Bundle
 import android.view.View
@@ -27,25 +31,54 @@ class ProductEditorActivity : Activity() {
     private val photos = mutableMapOf<String, String>()
     private val previews = mutableMapOf<String, ImageView>()
     private val photoKeys = listOf("photo", "photo2", "photo3", "barcodePhoto")
+    private var cameraUri: Uri? = null
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        cameraUri?.let { outState.putString("camera_uri", it.toString()) }
+    }
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode !in 8101..8104 || resultCode != RESULT_OK) return
+        if (requestCode !in 8101..8104 && requestCode !in 8201..8204) return
+        val fromCamera = requestCode >= 8201
+        val uri = if (fromCamera) cameraUri else data?.data
+        if (resultCode != RESULT_OK || uri == null) {
+            if (fromCamera) { cameraUri?.let { contentResolver.delete(it, null, null) }; cameraUri = null }
+            return
+        }
         try {
-            val uri = data?.data ?: return
-            val mime = contentResolver.getType(uri) ?: ""
-            require(mime in listOf("image/jpeg", "image/png", "image/webp")) { "صيغة الصورة غير مدعومة" }
-            val bytes = contentResolver.openInputStream(uri)?.use { it.readBytes() } ?: error("تعذر قراءة الصورة")
-            require(bytes.size <= 3000000) { "الصورة أكبر من 3 ميغابايت" }
-            val bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size) ?: error("صورة غير صالحة")
-            val key = photoKeys[requestCode - 8101]
-            photos[key] = "data:" + mime + ";base64," + Base64.encodeToString(bytes, Base64.NO_WRAP)
+            val bytes = contentResolver.openInputStream(uri)?.use { stream ->
+                val output = java.io.ByteArrayOutputStream()
+                val buffer = ByteArray(8192)
+                while (true) {
+                    val n = stream.read(buffer)
+                    if (n < 0) break
+                    require(output.size() + n <= 12_000_000) { "حجم الصورة كبير جداً" }
+                    output.write(buffer, 0, n)
+                }
+                output.toByteArray()
+            } ?: error("تعذر قراءة الصورة")
+            val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+            BitmapFactory.decodeByteArray(bytes, 0, bytes.size, bounds)
+            require(bounds.outWidth > 0 && bounds.outHeight > 0) { "ملف الصورة غير صالح" }
+            var sample = 1
+            while (bounds.outWidth / sample > 1600 || bounds.outHeight / sample > 1600) sample *= 2
+            val bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size, BitmapFactory.Options().apply { inSampleSize = sample })
+                ?: error("تعذر فتح الصورة")
+            val compressed = java.io.ByteArrayOutputStream()
+            require(bitmap.compress(Bitmap.CompressFormat.JPEG, 82, compressed)) { "تعذر ضغط الصورة" }
+            require(compressed.size() <= 3_000_000) { "الصورة أكبر من الحد المسموح" }
+            val key = photoKeys[(requestCode - if (fromCamera) 8201 else 8101)]
+            photos[key] = "data:image/jpeg;base64," + Base64.encodeToString(compressed.toByteArray(), Base64.NO_WRAP)
             previews[key]?.setImageBitmap(bitmap)
         } catch (e: Exception) {
             AlertDialog.Builder(this).setMessage(e.message ?: "تعذر قراءة الصورة").setPositiveButton("إغلاق", null).show()
+        } finally {
+            if (fromCamera) { cameraUri?.let { contentResolver.delete(it, null, null) }; cameraUri = null }
         }
     }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        cameraUri = savedInstanceState?.getString("camera_uri")?.let { Uri.parse(it) }
         val source = intent.getStringExtra(EXTRA_SOURCE)
         val id = intent.getStringExtra(EXTRA_ID)
         val root = LinearLayout(this).apply {
