@@ -801,9 +801,16 @@ class MainActivity : Activity() {
             try {
                 val products=LegacyProductRepository.list(legacyBackupStore.readableDatabase,query,0,20)
                 products.forEach { product ->
-                    results.addView(text(product.name+" · "+product.barcode+" · المخزون "+product.stock+" · "+product.salePrice+" "+product.currency,13f,gold).apply {
+                    results.addView(text(product.name+"  ·  "+product.raw.optString("model")+"\n"+
+                        "الباركود: "+product.barcode+"    المخزون: "+product.stock+
+                        "    السعر: "+product.salePrice+" "+product.currency,14f,ink).apply {
+                        gravity=Gravity.RIGHT or Gravity.CENTER_VERTICAL
+                        layoutDirection=View.LAYOUT_DIRECTION_RTL
+                        background=panel(Color.WHITE,14,Color.rgb(220,211,198))
+                        minHeight=dp(70)
+                        
                         isClickable=true
-                        setPadding(dp(8),dp(9),dp(8),dp(9))
+                        setPadding(dp(16),dp(12),dp(16),dp(12))
                         setOnClickListener {
                             if(product.stock<=0) {
                                 android.widget.Toast.makeText(this@MainActivity,"المخزون غير كافٍ",android.widget.Toast.LENGTH_SHORT).show()
