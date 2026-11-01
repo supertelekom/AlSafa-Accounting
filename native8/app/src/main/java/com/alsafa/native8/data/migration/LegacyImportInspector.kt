@@ -11,6 +11,9 @@ class LegacyImportInspector(private val database: LegacyStagingDatabase) {
 
     fun inspect(runId: Long): Inspection {
         val db = database.readableDatabase
+        db.rawQuery("SELECT id FROM import_runs WHERE id=?", arrayOf(runId.toString())).use { cursor ->
+            require(cursor.moveToFirst()) { "Unknown import run: $runId" }
+        }
         val counts = mutableListOf<SectionCount>()
         db.rawQuery("SELECT section, COUNT(*) FROM legacy_records WHERE run_id=? GROUP BY section ORDER BY section",
             arrayOf(runId.toString())).use { c ->
@@ -20,7 +23,7 @@ class LegacyImportInspector(private val database: LegacyStagingDatabase) {
         val products = ids(db, runId, "products")
         val parts = ids(db, runId, "maintenanceParts")
         val suppliers = ids(db, runId, "suppliers")
-        for (section in listOf("products", "maintenanceParts", "sales", "repairs", "suppliers", "purchases")) {
+        for (section in listOf("products", "maintenanceParts", "sales", "repairs", "suppliers", "purchases", "payments", "returns", "cashTransactions", "inventoryMovements", "partnerWithdrawals", "supplierLedger")) {
             db.rawQuery("SELECT legacy_id,COUNT(*) FROM legacy_records WHERE run_id=? AND section=? AND legacy_id IS NOT NULL GROUP BY legacy_id HAVING COUNT(*)>1",
                 arrayOf(runId.toString(), section)).use { c ->
                 while (c.moveToNext()) issues += Issue(section, c.getString(0), "Duplicate ID, count=" + c.getInt(1))
@@ -30,6 +33,11 @@ class LegacyImportInspector(private val database: LegacyStagingDatabase) {
             val supplier = row.optString("supplierId")
             if (supplier.isNotEmpty() && supplier !in suppliers)
                 issues += Issue("purchases", id, "Unresolved supplierId=" + supplier)
+        }
+        inspectRows(db, runId, "supplierLedger") { row, id ->
+            val supplier = row.optString("supplierId")
+            if (supplier.isNotEmpty() && supplier !in suppliers)
+                issues += Issue("supplierLedger", id, "Unresolved supplierId=" + supplier)
         }
         inspectRows(db, runId, "sales") { row, id ->
             val items = row.optJSONArray("items")
