@@ -16,6 +16,7 @@ import com.alsafa.native8.data.migration.LegacyStagingDatabase
 class RestoreActivity : Activity() {
     private val requestCode = 801
     private lateinit var result: TextView
+    private lateinit var productsButton: Button
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val layout = LinearLayout(this).apply {
@@ -38,6 +39,13 @@ class RestoreActivity : Activity() {
                 }, requestCode)
             }
         })
+        productsButton = Button(this).apply {
+            text = "عرض المنتجات المستوردة"
+            setOnClickListener {
+                startActivity(Intent(this@RestoreActivity, ProductsActivity::class.java))
+            }
+        }
+        layout.addView(productsButton)
         result = TextView(this).apply {
             text = "هذه مرحلة فحص الاستيراد، ولا تنفذ حركات مالية جديدة."
         }
