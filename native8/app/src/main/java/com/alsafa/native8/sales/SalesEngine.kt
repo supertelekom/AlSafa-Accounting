@@ -143,6 +143,18 @@ class SalesEngine(private val context: Context) {
         } finally { db.endTransaction();operational.close() }
     }
 
+    data class InvoiceLine(val id: String,val title: String,val quantity: String,val returned: String,val price: String)
+    fun lines(saleId: String): List<InvoiceLine> {
+        val operational=OperationalDatabase(context)
+        try {
+            val items=mutableListOf<InvoiceLine>()
+            operational.readableDatabase.rawQuery("SELECT id,title,quantity,returned_qty,unit_price FROM sale_lines WHERE sale_id=?",arrayOf(saleId)).use { c ->
+                while(c.moveToNext()) items.add(InvoiceLine(c.getString(0),c.getString(1),c.getString(2),c.getString(3),c.getString(4)))
+            }
+            return items
+        } finally { operational.close() }
+    }
+
     fun archive(search: String = "", from: Long? = null, to: Long? = null): List<SaleRecord> {
         val db = OperationalDatabase(context)
         try {
