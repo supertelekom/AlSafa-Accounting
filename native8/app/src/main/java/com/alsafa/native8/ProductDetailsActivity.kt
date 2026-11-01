@@ -28,6 +28,7 @@ class ProductDetailsActivity : Activity() {
     private lateinit var content: LinearLayout
     private var currentSource: String? = null
     private var currentId: String? = null
+    private var reloadDetails: (() -> Unit)? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -68,6 +69,16 @@ class ProductDetailsActivity : Activity() {
             details.text = "معرف المنتج غير موجود"
             return
         }
+        reloadDetails = { loadDetails(runId, productId) }
+        loadDetails(runId, productId)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        if (reloadDetails != null) reloadDetails?.invoke()
+    }
+
+    private fun loadDetails(runId: Long, productId: String) {
         Thread {
             val message = try {
                 val db = OperationalDatabase(applicationContext)
@@ -82,7 +93,7 @@ class ProductDetailsActivity : Activity() {
                     else (ProductEditRepository(db).resolved(source, productId) ?: row.fields) to repository.variants(source, row.fields.optString("variantGroupId"))
                 } finally { db.close() }
             } catch (e: Exception) {
-                runOnUiThread { details.text = "تعذر قراءة المنتج: " + (e.message ?: "غير معروف") }
+                runOnUiThread { if (::content.isInitialized) { content.removeAllViews(); addText("تعذر قراءة المنتج: " + (e.message ?: "غير معروف")) } }
                 return@Thread
             }
             runOnUiThread {
