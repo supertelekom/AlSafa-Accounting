@@ -54,11 +54,15 @@ class ProductDetailsActivity : Activity() {
             val message = try {
                 val db = LegacyStagingDatabase(applicationContext)
                 try {
-                    val row = LegacyReadRepository(db).byOriginalId(runId, "products", productId)
+                    val repository = LegacyReadRepository(db)
+                    val row = repository.byOriginalId(runId, "products", productId)
                     if (row == null) null
-                    else row.fields to repo.productVariants(runId, row.fields.optString("variantGroupId"))
+                    else row.fields to repository.productVariants(runId, row.fields.optString("variantGroupId"))
                 } finally { db.close() }
-            } catch (e: Exception) { "تعذر قراءة المنتج: " + (e.message ?: "غير معروف") }
+            } catch (e: Exception) {
+                runOnUiThread { details.text = "تعذر قراءة المنتج: " + (e.message ?: "غير معروف") }
+                return@Thread
+            }
             runOnUiThread {
                 if (isFinishing || isDestroyed) return@runOnUiThread
                 content.removeAllViews()
