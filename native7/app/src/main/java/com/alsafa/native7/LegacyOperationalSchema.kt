@@ -34,14 +34,14 @@ internal object LegacyOperationalSchema {
             val invoice = indexed("invoiceNo")
                 ?: if (section == "purchases") indexed("supplierInvoice") else null
             db.execSQL("INSERT INTO op_${section}(ordinal,original_id,reference_id,date_value,invoice_no,payload) VALUES (?,?,?,?,?,?)",
-                arrayOf(i+offset,indexed("id"),reference,date,invoice,row.toString()))
+                arrayOf<Any?>(i+offset,indexed("id"),reference,date,invoice,row.toString()))
             val keys = row.keys()
             while(keys.hasNext()) {
                 val key=keys.next()
                 val children=row.optJSONArray(key) ?: continue
                 for(j in 0 until children.length()) {
                     db.execSQL("INSERT INTO op_children(section,parent_ordinal,child_key,child_ordinal,payload) VALUES (?,?,?,?,?)",
-                        arrayOf(section,i+offset,key,j,children.get(j).toString()))
+                        arrayOf<Any?>(section,i+offset,key,j,children.get(j).toString()))
                 }
             }
         }
