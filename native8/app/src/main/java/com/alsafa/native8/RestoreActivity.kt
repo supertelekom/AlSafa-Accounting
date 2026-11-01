@@ -11,6 +11,8 @@ import android.widget.TextView
 import com.alsafa.native8.data.migration.LegacyBackupStager
 import com.alsafa.native8.data.migration.LegacyImportInspector
 import com.alsafa.native8.data.migration.LegacyStagingDatabase
+import com.alsafa.native8.data.operational.OperationalDatabase
+import com.alsafa.native8.data.operational.ProductImportPromoter
 
 /** Temporary isolated backup-import verification screen. */
 class RestoreActivity : Activity() {
@@ -85,6 +87,11 @@ class RestoreActivity : Activity() {
                     } catch (auditError: Exception) {
                         null
                     }
+                    val promotion = try {
+                        val operational = OperationalDatabase(applicationContext)
+                        try { ProductImportPromoter(db, operational).promote(run) }
+                        finally { operational.close() }
+                    } catch (_: Exception) { null }
                     buildString {
                         append(if (staged.alreadyImported) "النسخة موجودة مسبقاً في قاعدة الفحص" else "تم حفظ النسخة في قاعدة الفحص")
                         append("\\n")
@@ -99,6 +106,13 @@ class RestoreActivity : Activity() {
                             audit.sections.forEach {
                                 append(it.section).append(": ").append(it.count).append("\\n")
                             }
+                        }
+                        if (promotion == null) {
+                            append("تعذر نقل المنتجات إلى القاعدة التشغيلية؛ بيانات الفحص محفوظة.\\n")
+                        } else {
+                            append("المنتجات المنقولة إلى SQLite: ").append(promotion.count)
+                            append(if (promotion.alreadyImported) " (موجودة مسبقاً)" else " (نقلت الآن)")
+                            append("\\n")
                         }
                         append("افتح المنتجات المستوردة للتحقق من البيانات.")
                     }
