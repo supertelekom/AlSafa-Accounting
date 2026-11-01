@@ -783,7 +783,14 @@ class MainActivity : Activity() {
         val results=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL }
         parent.addView(results)
         val selected=text("لم يتم اختيار ساعة بعد",14f,gold)
+        val removeChoice=android.widget.Button(this).apply {
+            text="إزالة الاختيار"
+            isEnabled=false
+            setTextColor(ink)
+            background=panel(Color.rgb(247,244,238),14,Color.rgb(216,205,190))
+        }
         parent.addView(selected)
+        parent.addView(removeChoice,LinearLayout.LayoutParams(-1,dp(52)))
         var chosen:LegacyProductRepository.Product?=null
         lateinit var price:EditText
         lateinit var currency:Spinner
@@ -802,6 +809,7 @@ class MainActivity : Activity() {
                                 android.widget.Toast.makeText(this@MainActivity,"المخزون غير كافٍ",android.widget.Toast.LENGTH_SHORT).show()
                             } else {
                                 chosen=product
+                                removeChoice.isEnabled=true
                                 selected.text=product.name+" · "+product.raw.optString("color")+" · المتاح "+product.stock
                                 price.setText(product.salePrice.toString())
                                 productCost.text="كلفة القطعة: "+product.cost+" "+product.currency
@@ -815,6 +823,14 @@ class MainActivity : Activity() {
             } catch(e:Exception) {
                 results.addView(text("تعذر البحث: "+(e.message ?: ""),12f))
             }
+        }
+        removeChoice.setOnClickListener {
+            chosen=null
+            selected.text="لم يتم اختيار ساعة بعد"
+            removeChoice.isEnabled=false
+            price.setText("")
+            productCost.text="كلفة القطعة: —"
+            updateResults(search.text.toString())
         }
         productCost=text("كلفة القطعة: —",13f,gold)
         parent.addView(productCost)
