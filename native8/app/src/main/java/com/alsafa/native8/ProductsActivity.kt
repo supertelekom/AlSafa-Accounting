@@ -148,7 +148,7 @@ class ProductsActivity : Activity() {
                 val (runId, page, audit) = result
                 val stagedCount = audit.staged
                 diagnostic = "المصدر: alsafa_native8_operational.db\nالمنتجات التشغيلية: " + page.total + "\nسجلات الاستيراد: " + stagedCount + "\n" + (if (page.total == stagedCount) "العدد متطابق" else "تحذير: العدد مختلف")
-                diagnostic += "\\nاختلافات المحتوى: " + audit.mismatches + "\\n" + audit.examples.joinToString("\\n")
+                diagnostic += "\nاختلافات المحتوى: " + audit.mismatches + "\n" + audit.examples.joinToString("\n")
                 databaseStatus.text = "SQLite: " + page.total + " | " + (if (audit.matches) "تطابق كامل" else "اختلاف: " + audit.mismatches)
                 total = page.total
                 if (offset >= total && offset > 0) offset = 0
