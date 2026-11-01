@@ -1962,9 +1962,7 @@ class MainActivity : Activity() {
                             val balance=(total-collected).coerceAtLeast(0.0)
                             val invoiceNo=db.rawQuery("SELECT invoice_no FROM native_sale_invoice_numbers WHERE sale_id=?",arrayOf(id))
                                 .use { c -> if(c.moveToFirst()) c.getString(0) else null }
-                            entries.addView(text("${invoiceNo?.let { "فاتورة $it — " } ?: ""}$day — $customer — $total $currency — المقبوض: $collected — المتبقي: $balance",15f).apply {
-                                isClickable=true
-                                setOnClickListener {
+                            entries.addView(salesInvoiceCard(invoiceNo ?: id,day,customer,total.toString(),currency,"المقبوض: $collected — المتبقي: $balance") {
                                     val details=StringBuilder()
                                     fun addDetail(label:String,value:String) {
                                         details.append(label).append(": ").append(value).append('\n')
@@ -1990,8 +1988,8 @@ class MainActivity : Activity() {
                                                 .append(" (").append(payments.getString(4)).append(")").append('\n')
                                         }
                                     }
-                                    android.app.AlertDialog.Builder(this@MainActivity).setTitle("تفاصيل الفاتورة")
-                                        .setView(invoiceDetailView(details.toString().trim())).setPositiveButton("إغلاق",null).show()
+                                    showInvoiceActions(invoiceNo ?: id) { android.app.AlertDialog.Builder(this@MainActivity).setTitle("تفاصيل الفاتورة")
+                                        .setView(invoiceDetailView(details.toString().trim())).setPositiveButton("إغلاق",null).show() }
                                 }
                             })
                         }
@@ -2006,10 +2004,8 @@ class MainActivity : Activity() {
                             if(query.isBlank() && day!=chosenDay) continue
                             if(query.isNotBlank() && !listOf(id,customer,phone,day,sale.toString()).any { it.contains(query,true) }) continue
                             shown++
-                            entries.addView(text("$id — $customer — ${sale.optString("total")} ${sale.optString("currency")} — $day",15f).apply {
-                                isClickable=true
-                                setOnClickListener {
-                                    android.app.AlertDialog.Builder(this@MainActivity)
+                            entries.addView(salesInvoiceCard(id,day,customer,sale.optString("total"),sale.optString("currency"),sale.optString("paymentStatus")) {
+                                    showInvoiceActions(id) { android.app.AlertDialog.Builder(this@MainActivity)
                                         .setTitle("تفاصيل الفاتورة $id")
                                         .setView(buildString {
                                             fun field(label:String,key:String) {
@@ -2047,7 +2043,7 @@ class MainActivity : Activity() {
                                                 }
                                             }
                                         }.trim().let { invoiceDetailView(it) })
-                                        .setPositiveButton("إغلاق",null).show()
+                                        .setPositiveButton("إغلاق",null).show() }
                                 }
                             })
                         }
@@ -2066,6 +2062,47 @@ class MainActivity : Activity() {
             search.addTextChangedListener(watcher)
             refresh()
         }
+    }
+    private fun salesInvoiceCard(number:String,day:String,customer:String,total:String,currency:String,status:String,onOpen:()->Unit):android.view.View {
+        val density=resources.displayMetrics.density
+        fun px(value:Int)=(value*density).toInt()
+        val card=LinearLayout(this).apply {
+            orientation=LinearLayout.VERTICAL
+            layoutDirection=android.view.View.LAYOUT_DIRECTION_RTL
+            setPadding(px(16),px(12),px(16),px(12))
+            background=android.graphics.drawable.GradientDrawable().apply {
+                setColor(android.graphics.Color.WHITE)
+                cornerRadius=px(16).toFloat()
+                setStroke(px(1),0xFFD8D1C5.toInt())
+            }
+            isClickable=true
+            setOnClickListener { onOpen() }
+        }
+        listOf("فاتورة #$number","$day  •  ${customer.ifBlank { "عميل نقدي" }}","$total $currency",status).forEachIndexed { index,line ->
+            card.addView(text(line,if(index==0) 18f else 14f).apply {
+                gravity=android.view.Gravity.RIGHT
+                textDirection=android.view.View.TEXT_DIRECTION_FIRST_STRONG
+                setPadding(0,px(3),0,px(3))
+                if(index==0) setTypeface(typeface,android.graphics.Typeface.BOLD)
+            })
+        }
+        return card.apply {
+            layoutParams=LinearLayout.LayoutParams(-1,-2).apply {
+                setMargins(px(8),px(5),px(8),px(7))
+            }
+        }
+    }
+    private fun showInvoiceActions(number:String,showDetails:()->Unit) {
+        val actions=arrayOf("التفاصيل","تعديل","PDF","طباعة","واتساب أعمال","رسالة شكر","إلغاء","مرتجع/استبدال")
+        android.app.AlertDialog.Builder(this)
+            .setTitle("فاتورة #$number")
+            .setItems(actions) { _,which ->
+                if(which==0) showDetails()
+                else android.widget.Toast.makeText(this,
+                    "هذا الإجراء غير مربوط بعد بدورة الفاتورة الأصلية؛ لم تُجرَ أي عملية على البيانات.",
+                    android.widget.Toast.LENGTH_LONG).show()
+            }
+            .setNegativeButton("إغلاق",null).show()
     }
     private fun invoiceDetailView(content:String):android.view.View {
         val scroll=android.widget.ScrollView(this)
