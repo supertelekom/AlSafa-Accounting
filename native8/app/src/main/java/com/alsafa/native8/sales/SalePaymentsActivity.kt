@@ -12,6 +12,7 @@ class SalePaymentsViewModel: ViewModel() {
  var currency by mutableStateOf("USD")
  var saleId by mutableStateOf("")
  var status by mutableStateOf("")
+ var posting by mutableStateOf(false)
 }
 class SalePaymentsActivity: ComponentActivity() {
  override fun onCreate(savedInstanceState: Bundle?) {
@@ -31,9 +32,11 @@ class SalePaymentsActivity: ComponentActivity() {
     } catch(e:Exception) {vm.status=e.message ?: "تعذر القبض"}
    }) {Text("تسجيل دفعة")}
    Text(vm.status)
-   if(vm.saleId.isBlank()) Button(onClick={
+   if(vm.saleId.isBlank()) Button(enabled=!vm.posting,onClick={
+     vm.posting=true
      try { vm.saleId=SalesPostingActions(applicationContext).postDraft(vm.amount,vm.cashbox,vm.currency); vm.status="تم حفظ الفاتورة" }
      catch(e:Exception){ vm.status=e.message ?: "تعذر حفظ الفاتورة" }
+     finally { vm.posting=false }
    }) { Text("حفظ الفاتورة") }
   } }
  }
