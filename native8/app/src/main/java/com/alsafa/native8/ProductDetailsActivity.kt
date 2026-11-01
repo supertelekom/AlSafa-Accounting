@@ -99,20 +99,39 @@ class ProductDetailsActivity : Activity() {
 
     private fun addImage(source: String) {
         if (!source.startsWith("data:image/") || !source.contains(";base64,")) return
-        val image = try { decodeImage(source, 800) } catch (_: Exception) { null } ?: return
-        content.addView(ImageView(this).apply {
-            setImageBitmap(image)
+        val preview = ImageView(this).apply {
             adjustViewBounds = true
-            setOnClickListener {
-                val full = try { decodeImage(source, 1600) } catch (_: Exception) { null }
-                if (full != null) AlertDialog.Builder(this@ProductDetailsActivity)
-                    .setView(ImageView(this@ProductDetailsActivity).apply {
-                        setImageBitmap(full)
-                        adjustViewBounds = true
-                    })
-                    .setPositiveButton("إغلاق", null).show()
+            scaleType = ImageView.ScaleType.FIT_CENTER
+            contentDescription = "صورة المنتج"
+        }
+        content.addView(preview, LinearLayout.LayoutParams(-1, 320))
+        Thread {
+            val bitmap = try { decodeImage(source, 800) } catch (_: Exception) { null }
+            runOnUiThread {
+                if (isFinishing || isDestroyed) return@runOnUiThread
+                if (bitmap == null) {
+                    preview.contentDescription = "تعذر عرض صورة المنتج"
+                    return@runOnUiThread
+                }
+                preview.setImageBitmap(bitmap)
+                preview.setOnClickListener {
+                    Thread {
+                        val full = try { decodeImage(source, 1600) } catch (_: Exception) { null }
+                        runOnUiThread {
+                            if (!isFinishing && !isDestroyed && full != null) {
+                                AlertDialog.Builder(this@ProductDetailsActivity)
+                                    .setView(ImageView(this@ProductDetailsActivity).apply {
+                                        setImageBitmap(full)
+                                        adjustViewBounds = true
+                                    })
+                                    .setPositiveButton("إغلاق", null)
+                                    .show()
+                            }
+                        }
+                    }.start()
+                }
             }
-        }, LinearLayout.LayoutParams(-1, 320))
+        }.start()
     }
 
     private fun decodeImage(source: String, maxDimension: Int): android.graphics.Bitmap? {
