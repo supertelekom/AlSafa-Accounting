@@ -1964,7 +1964,7 @@ class MainActivity : Activity() {
                                 db.rawQuery("SELECT invoice_no FROM native_sale_invoice_numbers WHERE sale_id=?",arrayOf(id))
                                     .use { c -> if(c.moveToFirst()) c.getString(0) else null }
                             }.getOrNull()
-                            entries.addView(salesInvoiceCard(invoiceNo ?: id,day,customer,total.toString(),currency,"المقبوض: $collected — المتبقي: $balance") {
+                            entries.addView(salesInvoiceCard(invoiceNo ?: "غير مرقمة",day,customer,total.toString(),currency,"المقبوض: $collected — المتبقي: $balance") {
                                     val details=StringBuilder()
                                     fun addDetail(label:String,value:String) {
                                         details.append(label).append(": ").append(value).append('\n')
@@ -1990,7 +1990,7 @@ class MainActivity : Activity() {
                                                 .append(" (").append(payments.getString(4)).append(")").append('\n')
                                         }
                                     }
-                                    showInvoiceActions(invoiceNo ?: id, if(balance>0.000001) id else null) { android.app.AlertDialog.Builder(this@MainActivity).setTitle("تفاصيل الفاتورة")
+                                    showInvoiceActions(invoiceNo ?: "غير مرقمة", if(balance>0.000001) id else null) { android.app.AlertDialog.Builder(this@MainActivity).setTitle("تفاصيل الفاتورة")
                                         .setView(invoiceDetailView(details.toString().trim())).setPositiveButton("إغلاق",null).show() }
                             })
                         }
@@ -2111,9 +2111,16 @@ class MainActivity : Activity() {
                     text=action
                     isAllCaps=false
                     textSize=15f
+                    typeface=runCatching { android.graphics.Typeface.createFromAsset(assets,"fonts/Tajawal-Medium.ttf") }.getOrElse { android.graphics.Typeface.DEFAULT }
                     gravity=android.view.Gravity.CENTER
                     minHeight=px(54)
                     layoutDirection=android.view.View.LAYOUT_DIRECTION_RTL
+                    setTextColor(0xFF473C32.toInt())
+                    background=android.graphics.drawable.GradientDrawable().apply {
+                        setColor(0xFFF7F2E9.toInt())
+                        cornerRadius=px(12).toFloat()
+                        setStroke(px(1),0xFFD8C9B4.toInt())
+                    }
                     setOnClickListener {
                         if(action=="التفاصيل") showDetails()
                         else if(action=="تكملة الدفع" && collectSaleId!=null) showCompleteInvoicePayment(collectSaleId)
@@ -3567,6 +3574,40 @@ class MainActivity : Activity() {
         })
         updateSearch()
     }
+    private fun showNativeVaultCollections(parent:LinearLayout) {
+        val section=LinearLayout(this).apply {
+            orientation=LinearLayout.VERTICAL
+            layoutDirection=View.LAYOUT_DIRECTION_RTL
+            setPadding(dp(12),dp(14),dp(12),dp(14))
+            background=panel(paper,14)
+        }
+        section.addView(text("حركات قبض المبيعات الجديدة",18f,gold).apply { gravity=Gravity.RIGHT })
+        try {
+            val db=legacyBackupStore.writableDatabase
+            NativeSalesLedger.create(db)
+            var count=0
+            db.rawQuery("""
+                SELECT v.vault,v.currency,SUM(v.amount)
+                FROM native_sale_vault_movements v
+                GROUP BY v.vault,v.currency ORDER BY v.vault,v.currency
+            """.trimIndent(),null).use { c ->
+                while(c.moveToNext()) {
+                    count++
+                    section.addView(text("${c.getString(0)} — ${c.getString(1)}: ${c.getDouble(2)}",15f).apply {
+                        gravity=Gravity.RIGHT
+                        setPadding(dp(6),dp(8),dp(6),dp(8))
+                    })
+                }
+            }
+            if(count==0) section.addView(text("لا توجد حركات قبض مبيعات جديدة مسجلة.",14f))
+            section.addView(text("هذه حركات المبيعات الجديدة فقط، وليست الرصيد الإجمالي للصندوق أو الأرصدة المستعادة.",12f))
+        } catch(e:Exception) {
+            section.addView(text("تعذر قراءة حركات القبض: ${e.message}",13f))
+        }
+        parent.addView(section,LinearLayout.LayoutParams(-1,-2).apply {
+            topMargin=dp(12);bottomMargin=dp(12)
+        })
+    }
     private fun cashWalletPreview(parent:LinearLayout) {
         parent.addView(text("الحافظة",26f,gold))
         parent.addView(text("النقدي وشام كاش والتحصيلات",14f))
@@ -3703,6 +3744,7 @@ class MainActivity : Activity() {
         }
         else if(sourceStructure && screen.startsWith("structure:")) {
             originalPages.show(body,requireNotNull(sourceRoute))
+            if(sourceRoute=="cashboxes" || sourceRoute=="vaults") showNativeVaultCollections(body)
             if(sourceRoute=="settings") {
                 val restoreAction=text("استعادة نسخة الصفا القديمة",16f,gold).apply {
                     gravity=Gravity.CENTER
