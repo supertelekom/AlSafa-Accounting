@@ -20,7 +20,7 @@ class LegacyBackupStager(private val database: LegacyStagingDatabase) {
     fun stage(input: InputStream): Result {
         // Caller supplies a repeatable source (e.g. copied SAF file). A temporary
         // local copy is required to hash and parse the SAME bytes.
-        val file = kotlin.io.path.createTempFile("alsafa-v8-", ".json").toFile()
+        val file = java.io.File.createTempFile("alsafa-v8-", ".json", database.stagingCacheDir)
         try {
             val digest = MessageDigest.getInstance("SHA-256")
             input.use { source ->
@@ -54,6 +54,9 @@ class LegacyBackupStager(private val database: LegacyStagingDatabase) {
                 var exportedAt: String? = null
                 var appVersion: String? = null
                 var foundData = false
+                var sawSettings = false
+                var sawProducts = false
+                var sawSales = false
                 file.inputStream().buffered().use { stream ->
                     JsonReader(InputStreamReader(stream, Charsets.UTF_8)).use { reader ->
                         reader.beginObject()
@@ -65,14 +68,21 @@ class LegacyBackupStager(private val database: LegacyStagingDatabase) {
                                 "appVersion" -> appVersion = readRaw(reader).trim('"')
                                 "data" -> {
                                     foundData = true
-                                    count += stageData(reader, db, runId)
+                                    val stats = stageData(reader, db, runId)
+                                    count += stats.first
+                                    sawSettings = stats.second.contains("settings")
+                                    sawProducts = stats.second.contains("products")
+                                    sawSales = stats.second.contains("sales")
                                 }
                                 else -> {
                                     // Bare data: section arrays are directly at the root.
                                     if (reader.peek() == JsonToken.BEGIN_ARRAY) {
                                         count += stageArray(reader, db, runId, name)
+                                        if (name == "products") sawProducts = true
+                                        if (name == "sales") sawSales = true
                                     } else {
                                         saveObject(db, runId, "root." + name, readRaw(reader))
+                                        if (name == "settings") sawSettings = true
                                     }
                                 }
                             }
@@ -86,6 +96,7 @@ class LegacyBackupStager(private val database: LegacyStagingDatabase) {
                     "Unsupported backup format: $format"
                 }
                 require(foundData || version == null) { "Missing backup data object" }
+                require(sawSettings && sawProducts && sawSales) { "Missing essential legacy sections: settings/products/sales" }
                 db.execSQL(
                     "UPDATE import_runs SET format_version=?, exported_at=?, app_version=?, record_count=? WHERE id=?",
                     arrayOf(version ?: 2, exportedAt, appVersion, count, runId)
@@ -100,11 +111,13 @@ class LegacyBackupStager(private val database: LegacyStagingDatabase) {
         }
     }
 
-    private fun stageData(reader: JsonReader, db: android.database.sqlite.SQLiteDatabase, runId: Long): Int {
+    private fun stageData(reader: JsonReader, db: android.database.sqlite.SQLiteDatabase, runId: Long): Pair<Int, Set<String>> {
+        val sections = mutableSetOf<String>()
         var count = 0
         reader.beginObject()
         while (reader.hasNext()) {
             val section = reader.nextName()
+            sections.add(section)
             if (reader.peek() == JsonToken.BEGIN_ARRAY) {
                 count += stageArray(reader, db, runId, section)
             } else {
@@ -112,7 +125,7 @@ class LegacyBackupStager(private val database: LegacyStagingDatabase) {
             }
         }
         reader.endObject()
-        return count
+        return count to sections
     }
 
     private fun stageArray(reader: JsonReader, db: android.database.sqlite.SQLiteDatabase, runId: Long, section: String): Int {
@@ -120,7 +133,7 @@ class LegacyBackupStager(private val database: LegacyStagingDatabase) {
         reader.beginArray()
         while (reader.hasNext()) {
             val raw = readRaw(reader)
-            val legacyId = try { org.json.JSONObject(raw).opt("id")?.toString() } catch (_: Exception) { null }
+            val legacyId = try { org.json.JSONObject(raw).optString("id").takeIf { it.isNotEmpty() } } catch (_: Exception) { null }
             val values = ContentValues().apply {
                 put("run_id", runId)
                 put("section", section)
