@@ -4,6 +4,10 @@ import android.app.Activity
 import android.app.AlertDialog
 import android.content.Intent
 import android.util.Base64
+import com.google.mlkit.vision.barcode.BarcodeScanning
+import com.google.mlkit.vision.barcode.common.Barcode
+import com.google.mlkit.vision.barcode.BarcodeScannerOptions
+import com.google.mlkit.vision.common.InputImage
 import android.graphics.BitmapFactory
 import android.graphics.Bitmap
 import android.provider.MediaStore
@@ -32,14 +36,15 @@ class ProductEditorActivity : Activity() {
     private val previews = mutableMapOf<String, ImageView>()
     private val photoKeys = listOf("photo", "photo2", "photo3", "barcodePhoto")
     private var cameraUri: Uri? = null
+    private var barcodeField: EditText? = null
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
         cameraUri?.let { outState.putString("camera_uri", it.toString()) }
     }
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode !in 8101..8104 && requestCode !in 8201..8204) return
-        val fromCamera = requestCode >= 8201
+        if (requestCode !in 8101..8104 && requestCode !in 8201..8204 && requestCode != 8301) return
+        val fromCamera = requestCode in 8201..8204
         val uri = if (fromCamera) cameraUri else data?.data
         if (resultCode != RESULT_OK || uri == null) {
             if (fromCamera) { cameraUri?.let { contentResolver.delete(it, null, null) }; cameraUri = null }
@@ -67,6 +72,19 @@ class ProductEditorActivity : Activity() {
             val compressed = java.io.ByteArrayOutputStream()
             require(bitmap.compress(Bitmap.CompressFormat.JPEG, 82, compressed)) { "تعذر ضغط الصورة" }
             require(compressed.size() <= 3_000_000) { "الصورة أكبر من الحد المسموح" }
+            if (requestCode == 8301) {
+                val scanner = BarcodeScanning.getClient(BarcodeScannerOptions.Builder().setBarcodeFormats(Barcode.FORMAT_CODE_128, Barcode.FORMAT_EAN_13, Barcode.FORMAT_EAN_8, Barcode.FORMAT_UPC_A).build())
+                scanner.process(InputImage.fromBitmap(bitmap, 0))
+                    .addOnSuccessListener { codes ->
+                        val value = codes.firstOrNull()?.rawValue
+                        if (value.isNullOrBlank()) {
+                            AlertDialog.Builder(this).setMessage("لم يتم العثور على باركود واضح").setPositiveButton("إغلاق", null).show()
+                        } else barcodeField?.setText(value)
+                    }
+                    .addOnFailureListener { e -> AlertDialog.Builder(this).setMessage(e.message ?: "تعذر قراءة الباركود").setPositiveButton("إغلاق", null).show() }
+                    .addOnCompleteListener { scanner.close() }
+                return
+            }
             val key = photoKeys[(requestCode - if (fromCamera) 8201 else 8101)]
             photos[key] = "data:image/jpeg;base64," + Base64.encodeToString(compressed.toByteArray(), Base64.NO_WRAP)
             previews[key]?.setImageBitmap(bitmap)
@@ -114,8 +132,25 @@ class ProductEditorActivity : Activity() {
                 edit.hint = "تُعدّل الكمية من حركات المخزون"
             }
             fields[key] = edit
+            if (key == "barcode") barcodeField = edit
             root.addView(edit)
         }
+        root.addView(Button(this).apply {
+            text = "قراءة الباركود باستخدام Google ML Kit من صورة"
+            setOnClickListener { startActivityForResult(Intent(Intent.ACTION_GET_CONTENT).apply { type = "image/*" }, 8301) }
+        })
+        root.addView(Button(this).apply {
+            text = "معاينة باركود CODE 128"
+            setOnClickListener {
+                try {
+                    val bitmap = ProductBarcodeLabel.render(barcodeField?.text?.toString()?.trim().orEmpty())
+                    AlertDialog.Builder(this@ProductEditorActivity).setView(ImageView(this@ProductEditorActivity).apply {
+                        setImageBitmap(bitmap)
+                        adjustViewBounds = true
+                    }).setPositiveButton("إغلاق", null).show()
+                } catch (e: Exception) { AlertDialog.Builder(this@ProductEditorActivity).setMessage(e.message ?: "تعذر إنشاء الباركود").setPositiveButton("إغلاق", null).show() }
+            }
+        })
         photoKeys.forEachIndexed { index, key ->
             root.addView(Button(this).apply {
                 text = listOf("الصورة الرئيسية", "الصورة الثانية", "الصورة الثالثة", "صورة الباركود")[index] + " من الاستديو"
