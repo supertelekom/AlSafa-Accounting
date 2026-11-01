@@ -29,7 +29,7 @@ class MainActivity : Activity() {
             gravity = Gravity.CENTER
         }, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = 24 })
         root.addView(TextView(this).apply {
-            text = "نسخة اختبار الاستيراد | الواجهة 8.0.2"
+            text = "نسخة فحص SQLite | BUILD 8.0.3-DB"
             textSize = 16f
             setTextColor(Color.rgb(60, 70, 85))
             gravity = Gravity.CENTER
