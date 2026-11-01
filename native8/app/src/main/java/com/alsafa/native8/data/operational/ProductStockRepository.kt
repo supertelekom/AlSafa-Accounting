@@ -39,6 +39,23 @@ class ProductStockRepository(private val database: OperationalDatabase) {
         return result
     }
 
+    fun currentStock(source: String, parentId: String, variantId: String? = null): String {
+        val repo = ProductEditRepository(database)
+        val base = when {
+            variantId != null -> ProductVariantRepository(database).get(variantId)
+            source == "local" -> repo.localById(parentId)
+            else -> repo.resolved(source, parentId)
+        } ?: error("المنتج غير موجود")
+        val starting = decimal(base.optString("stock", "0").ifBlank { "0" })
+            ?: error("الكمية الأصلية غير صالحة")
+        if (variantId != null || source == "local") return starting.stripTrailingZeros().toPlainString()
+        val movements = history(source, parentId)
+        val total = movements.fold(starting) { sum, movement ->
+            sum.add(decimal(movement.delta) ?: error("حركة مخزون غير صالحة"))
+        }
+        return total.stripTrailingZeros().toPlainString()
+    }
+
     fun adjust(source: String, parentId: String, variantId: String?, deltaText: String, note: String): String {
         require(deltaText.isNotBlank()) { "أدخل فرق الكمية أولاً" }
         val delta = decimal(deltaText) ?: error("فرق الكمية غير صالح: أدخل رقماً مثل 1 أو -1")
@@ -60,13 +77,17 @@ class ProductStockRepository(private val database: OperationalDatabase) {
             } else {
                 current = productRepo.resolved(source, parentId) ?: error("المنتج المستورد غير موجود")
             }
-            before = decimal(current.optString("stock", "0").ifBlank { "0" }) ?: error("الكمية الحالية غير صالحة")
+            before = if (variantId == null && source != "local") {
+                decimal(currentStock(source, parentId)) ?: error("الكمية الحالية غير صالحة")
+            } else decimal(current.optString("stock", "0").ifBlank { "0" }) ?: error("الكمية الحالية غير صالحة")
             val after = before.add(delta)
             require(after.signum() >= 0) { "الكمية غير كافية" }
-            current.put("stock", after.stripTrailingZeros().toPlainString())
-            if (variantId != null) variantRepo.save(source, parentId, current, variantId)
-            else if (source == "local") productRepo.updateLocal(parentId, current)
-            else error("تسوية المنتج المستورد تتطلب رصيداً تشغيلياً مستقلاً")
+            if (variantId != null || source == "local") {
+                current.put("stock", after.stripTrailingZeros().toPlainString())
+                if (variantId != null) variantRepo.save(source, parentId, current, variantId)
+                else productRepo.updateLocal(parentId, current)
+            }
+            // Imported products keep their original JSON and stock intact; the ledger is the operational balance.
             val id = "stock-" + UUID.randomUUID()
             db.insertOrThrow("product_stock_movements", null, ContentValues().apply {
                 put("movement_id", id)
