@@ -26,6 +26,7 @@ import com.google.mlkit.vision.common.InputImage
 class ProductColorEditorActivity : Activity() {
     private var photoData: String? = null
     private var colorBarcode: EditText? = null
+    private fun statusMessage(message: String) { AlertDialog.Builder(this).setMessage(message).setPositiveButton("إغلاق", null).show() }
     private var cameraUri: Uri? = null
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
@@ -116,6 +117,21 @@ class ProductColorEditorActivity : Activity() {
         root.addView(Button(this).apply {
             text = "قراءة باركود اللون عبر Google ML Kit"
             setOnClickListener { startActivityForResult(Intent(Intent.ACTION_GET_CONTENT).apply { type = "image/*" }, 9103) }
+        })
+        root.addView(Button(this).apply {
+            text = "معاينة ملصق اللون CODE 128"
+            setOnClickListener {
+                try {
+                    val bitmap = ProductBarcodeLabel.renderLabel(
+                        inputs["color"]?.text?.toString().orEmpty(),
+                        inputs["salePrice"]?.text?.toString().orEmpty(),
+                        "", inputs["barcode"]?.text?.toString().orEmpty()
+                    )
+                    AlertDialog.Builder(this@ProductColorEditorActivity)
+                        .setView(ImageView(this@ProductColorEditorActivity).apply { setImageBitmap(bitmap); adjustViewBounds = true })
+                        .setPositiveButton("إغلاق", null).show()
+                } catch (e: Exception) { statusMessage(e.message ?: "تعذر توليد الباركود") }
+            }
         })
         root.addView(Button(this).apply {
             text = "اختيار صورة اللون من الاستديو"
