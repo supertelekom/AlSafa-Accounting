@@ -17,6 +17,7 @@ import com.alsafa.native8.data.operational.OperationalDatabase
 import com.alsafa.native8.data.operational.ProductImportPromoter
 import com.alsafa.native8.data.operational.OperationalProductRepository
 import com.alsafa.native8.data.operational.ProductSnapshotAudit
+import com.alsafa.native8.data.operational.ProductEditRepository
 
 /** Read-only preview. Replace its visual layout with the exact legacy design. */
 class ProductsActivity : Activity() {
@@ -124,7 +125,7 @@ class ProductsActivity : Activity() {
                         val page = repo.page(source, requestedOffset, pageSize)
                         val stagedCount = staging.readableDatabase.rawQuery("SELECT COUNT(*) FROM legacy_records WHERE run_id=? AND section='products'", arrayOf(run.toString())).use { cursor -> cursor.moveToFirst(); cursor.getInt(0) }
                         val audit = ProductSnapshotAudit(staging, operational).inspect(run, source)
-                        Triple(run, page, audit)
+                        Pair(Triple(run, page, audit), ProductEditRepository(operational).localProducts())
                     }
                 } finally {
                     operational.close()
@@ -151,7 +152,8 @@ class ProductsActivity : Activity() {
                     updateNavigation()
                     return@runOnUiThread
                 }
-                val (runId, page, audit) = result
+                val (snapshot, localProducts) = result
+                val (runId, page, audit) = snapshot
                 val stagedCount = audit.staged
                 diagnostic = "المصدر: alsafa_native8_operational.db\nالمنتجات التشغيلية: " + page.total + "\nسجلات الاستيراد: " + stagedCount + "\n" + (if (page.total == stagedCount) "العدد متطابق" else "تحذير: العدد مختلف")
                 diagnostic += "\nاختلافات المحتوى: " + audit.mismatches + "\n" + audit.examples.joinToString("\n")
@@ -159,6 +161,16 @@ class ProductsActivity : Activity() {
                 total = page.total
                 if (offset >= total && offset > 0) offset = 0
                 status.text = "العدد: $total"
+                for (local in localProducts) {
+                    items.addView(Button(this).apply {
+                        text = "منتج محلي: " + local.optString("name")
+                        setOnClickListener {
+                            startActivity(Intent(this@ProductsActivity, ProductEditorActivity::class.java).apply {
+                                putExtra(ProductEditorActivity.EXTRA_ID, local.optString("id"))
+                            })
+                        }
+                    })
+                }
                 for (row in page.rows) {
                     val id = row.id
                     items.addView(Button(this).apply {
@@ -186,6 +198,11 @@ class ProductsActivity : Activity() {
                 updateNavigation()
             }
         }.start()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        if (::items.isInitialized && !busy) load()
     }
 
     private fun updateNavigation() {
