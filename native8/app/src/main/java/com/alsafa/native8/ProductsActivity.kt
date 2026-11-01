@@ -2,10 +2,9 @@ package com.alsafa.native8
 
 import android.app.Activity
 import android.content.Intent
-import android.app.AlertDialog
-import android.widget.EditText
 import android.os.Bundle
 import android.view.Gravity
+import android.view.View
 import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.ScrollView
@@ -13,85 +12,134 @@ import android.widget.TextView
 import com.alsafa.native8.data.migration.LegacyReadRepository
 import com.alsafa.native8.data.migration.LegacyStagingDatabase
 
-/** Temporary products read-only screen; final layout must be ported from v3.9.359. */
+/** Read-only preview. Replace its visual layout with the exact legacy design. */
 class ProductsActivity : Activity() {
-    private lateinit var output: TextView
+    private lateinit var status: TextView
+    private lateinit var items: LinearLayout
+    private lateinit var next: Button
+    private lateinit var previous: Button
     private var offset = 0
     private val pageSize = 30
-    private var currentRunId: Long? = null
+    private var total = 0
+    private var busy = false
+    private var requestSerial = 0
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val layout = LinearLayout(this).apply {
+        val root = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
+            layoutDirection = View.LAYOUT_DIRECTION_RTL
             setPadding(24, 24, 24, 24)
-            layoutDirection = android.view.View.LAYOUT_DIRECTION_RTL
         }
-        layout.addView(TextView(this).apply {
+        root.addView(TextView(this).apply {
             text = "المنتجات"
             textSize = 22f
             gravity = Gravity.CENTER
         })
-        output = TextView(this).apply { text = "جاري قراءة المنتجات..." }
-        layout.addView(ScrollView(this).apply { addView(output) },
+        status = TextView(this).apply { text = "جاري قراءة المنتجات..." }
+        root.addView(status)
+        items = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            layoutDirection = View.LAYOUT_DIRECTION_RTL
+        }
+        root.addView(ScrollView(this).apply { addView(items) },
             LinearLayout.LayoutParams(-1, 0, 1f))
-        layout.addView(Button(this).apply {
-            text = "فتح تفاصيل منتج بالمعرف"
-            setOnClickListener {
-                val field = EditText(this@ProductsActivity).apply { hint = "معرف المنتج الأصلي" }
-                AlertDialog.Builder(this@ProductsActivity)
-                    .setTitle("تفاصيل المنتج")
-                    .setView(field)
-                    .setPositiveButton("فتح") { _, _ ->
-                        val run = currentRunId
-                        val id = field.text.toString().trim()
-                        if (run != null && id.isNotBlank()) {
-                            startActivity(Intent(this@ProductsActivity, ProductDetailsActivity::class.java).apply {
-                                putExtra(ProductDetailsActivity.EXTRA_RUN_ID, run)
-                                putExtra(ProductDetailsActivity.EXTRA_PRODUCT_ID, id)
-                            })
-                        }
-                    }.setNegativeButton("إلغاء", null).show()
-            }
-        })
-        layout.addView(Button(this).apply {
+        next = Button(this).apply {
             text = "التالي"
-            setOnClickListener { offset += pageSize; load() }
-        })
-        layout.addView(Button(this).apply {
+            setOnClickListener {
+                if (!busy && offset + pageSize < total) {
+                    offset += pageSize
+                    load()
+                }
+            }
+        }
+        previous = Button(this).apply {
             text = "السابق"
-            setOnClickListener { offset = (offset - pageSize).coerceAtLeast(0); load() }
-        })
-        setContentView(layout)
+            setOnClickListener {
+                if (!busy && offset > 0) {
+                    offset = (offset - pageSize).coerceAtLeast(0)
+                    load()
+                }
+            }
+        }
+        root.addView(next)
+        root.addView(previous)
+        setContentView(root)
         load()
     }
+
     private fun load() {
+        if (busy) return
+        busy = true
+        val serial = ++requestSerial
+        val requestedOffset = offset
+        next.isEnabled = false
+        previous.isEnabled = false
+        status.text = "جاري قراءة المنتجات..."
         Thread {
-            val message = try {
+            val result = try {
                 val db = LegacyStagingDatabase(applicationContext)
                 try {
                     val repo = LegacyReadRepository(db)
                     val run = repo.latestRunId()
-                    if (run == null) "لم تتم استعادة نسخة احتياطية بعد"
-                    else {
-                        currentRunId = run
-                        val page = repo.page(run, "products", offset, pageSize)
-                        buildString {
-                            append("العدد: ").append(page.total).append("\n\n")
-                            page.rows.forEach { row ->
-                                append(row.fields.optString("name", "—")).append("\n")
-                                append("ID: ").append(row.id ?: "—").append("\n")
-                                if (row.fields.has("salePrice"))
-                                    append("السعر: ").append(row.fields.opt("salePrice")).append("\n")
-                                if (row.fields.has("stock"))
-                                    append("الكمية: ").append(row.fields.opt("stock")).append("\n")
-                                append("────────────\n")
-                            }
-                            if (page.rows.isEmpty()) append("لا توجد منتجات في هذه الصفحة")
-                        }
-                    }
+                    if (run == null) null
+                    else run to repo.page(run, "products", requestedOffset, pageSize)
                 } finally { db.close() }
-            } catch (e: Exception) { "خطأ في قراءة المنتجات: " + (e.message ?: "غير معروف") }
-            runOnUiThread { output.text = message }
+            } catch (e: Exception) {
+                runOnUiThread {
+                    if (serial == requestSerial && !isFinishing && !isDestroyed) {
+                        busy = false
+                        status.text = "خطأ في قراءة المنتجات: " + (e.message ?: "غير معروف")
+                        updateNavigation()
+                    }
+                }
+                return@Thread
+            }
+            runOnUiThread {
+                if (serial != requestSerial || isFinishing || isDestroyed) return@runOnUiThread
+                busy = false
+                items.removeAllViews()
+                if (result == null) {
+                    total = 0
+                    status.text = "لم تتم استعادة نسخة احتياطية بعد"
+                    updateNavigation()
+                    return@runOnUiThread
+                }
+                val (runId, page) = result
+                total = page.total
+                if (offset >= total && offset > 0) offset = 0
+                status.text = "العدد: $total"
+                for (row in page.rows) {
+                    val id = row.id
+                    items.addView(Button(this).apply {
+                        val product = row.fields
+                        text = buildString {
+                            append(product.optString("name", "—"))
+                            if (product.has("stock")) append(" | ").append(product.opt("stock"))
+                            if (product.has("salePrice")) append(" | ").append(product.opt("salePrice"))
+                            if (product.has("currency")) append(" ").append(product.optString("currency"))
+                        }
+                        isEnabled = !id.isNullOrBlank()
+                        setOnClickListener {
+                            if (!id.isNullOrBlank()) {
+                                startActivity(Intent(this@ProductsActivity, ProductDetailsActivity::class.java).apply {
+                                    putExtra(ProductDetailsActivity.EXTRA_RUN_ID, runId)
+                                    putExtra(ProductDetailsActivity.EXTRA_PRODUCT_ID, id)
+                                })
+                            }
+                        }
+                    })
+                }
+                if (page.rows.isEmpty()) {
+                    items.addView(TextView(this).apply { text = "لا توجد منتجات في هذه الصفحة" })
+                }
+                updateNavigation()
+            }
         }.start()
+    }
+
+    private fun updateNavigation() {
+        next.isEnabled = !busy && offset + pageSize < total
+        previous.isEnabled = !busy && offset > 0
     }
 }
