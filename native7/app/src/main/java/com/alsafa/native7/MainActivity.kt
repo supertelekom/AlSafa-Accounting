@@ -1936,7 +1936,7 @@ class MainActivity : Activity() {
             val refresh= {
                 entries.removeAllViews()
                 try {
-                    val db=legacyBackupStore.readableDatabase
+                    val db=legacyBackupStore.writableDatabase
                     NativeSalesLedger.create(db)
                     val query=search.text.toString().trim()
                     val chosenDay=date.text.toString().trim()
@@ -1960,8 +1960,10 @@ class MainActivity : Activity() {
                                 arrayOf(id)
                             ).use { c -> if(c.moveToFirst()) c.getDouble(0) else 0.0 }
                             val balance=(total-collected).coerceAtLeast(0.0)
-                            val invoiceNo=db.rawQuery("SELECT invoice_no FROM native_sale_invoice_numbers WHERE sale_id=?",arrayOf(id))
-                                .use { c -> if(c.moveToFirst()) c.getString(0) else null }
+                            val invoiceNo=runCatching {
+                                db.rawQuery("SELECT invoice_no FROM native_sale_invoice_numbers WHERE sale_id=?",arrayOf(id))
+                                    .use { c -> if(c.moveToFirst()) c.getString(0) else null }
+                            }.getOrNull()
                             entries.addView(salesInvoiceCard(invoiceNo ?: id,day,customer,total.toString(),currency,"المقبوض: $collected — المتبقي: $balance") {
                                     val details=StringBuilder()
                                     fun addDetail(label:String,value:String) {
@@ -2091,16 +2093,45 @@ class MainActivity : Activity() {
         }
     }
     private fun showInvoiceActions(number:String,showDetails:()->Unit) {
-        val actions=arrayOf("التفاصيل","تعديل","PDF","طباعة","واتساب أعمال","رسالة شكر","إلغاء","مرتجع/استبدال")
+        val density=resources.displayMetrics.density
+        fun px(dp:Int)=(dp*density).toInt()
+        val actions=listOf("التفاصيل","تعديل","PDF","طباعة","واتساب أعمال","رسالة شكر","إلغاء","مرتجع/استبدال")
+        val container=LinearLayout(this).apply {
+            orientation=LinearLayout.VERTICAL
+            layoutDirection=android.view.View.LAYOUT_DIRECTION_RTL
+            setPadding(px(16),px(12),px(16),px(12))
+        }
+        actions.chunked(2).forEach { pair ->
+            val row=LinearLayout(this).apply {
+                orientation=LinearLayout.HORIZONTAL
+                layoutDirection=android.view.View.LAYOUT_DIRECTION_RTL
+            }
+            pair.forEach { action ->
+                val button=android.widget.Button(this).apply {
+                    text=action
+                    isAllCaps=false
+                    textSize=15f
+                    gravity=android.view.Gravity.CENTER
+                    minHeight=px(54)
+                    layoutDirection=android.view.View.LAYOUT_DIRECTION_RTL
+                    setOnClickListener {
+                        if(action=="التفاصيل") showDetails()
+                        else android.widget.Toast.makeText(this@MainActivity,
+                            "هذا الإجراء غير مربوط بعد بدورة الفاتورة الأصلية؛ لم تُجرَ أي عملية على البيانات.",
+                            android.widget.Toast.LENGTH_LONG).show()
+                    }
+                }
+                row.addView(button,LinearLayout.LayoutParams(0,px(58),1f).apply {
+                    setMargins(px(4),px(4),px(4),px(4))
+                })
+            }
+            container.addView(row)
+        }
         android.app.AlertDialog.Builder(this)
             .setTitle("فاتورة #$number")
-            .setItems(actions) { _,which ->
-                if(which==0) showDetails()
-                else android.widget.Toast.makeText(this,
-                    "هذا الإجراء غير مربوط بعد بدورة الفاتورة الأصلية؛ لم تُجرَ أي عملية على البيانات.",
-                    android.widget.Toast.LENGTH_LONG).show()
-            }
-            .setNegativeButton("إغلاق",null).show()
+            .setView(container)
+            .setNegativeButton("إغلاق",null)
+            .show()
     }
     private fun invoiceDetailView(content:String):android.view.View {
         val scroll=android.widget.ScrollView(this)
