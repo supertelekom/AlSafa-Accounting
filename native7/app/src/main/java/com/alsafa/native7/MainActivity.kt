@@ -1990,7 +1990,6 @@ class MainActivity : Activity() {
                                     }
                                     showInvoiceActions(invoiceNo ?: id) { android.app.AlertDialog.Builder(this@MainActivity).setTitle("تفاصيل الفاتورة")
                                         .setView(invoiceDetailView(details.toString().trim())).setPositiveButton("إغلاق",null).show() }
-                                }
                             })
                         }
                     }
@@ -2044,7 +2043,6 @@ class MainActivity : Activity() {
                                             }
                                         }.trim().let { invoiceDetailView(it) })
                                         .setPositiveButton("إغلاق",null).show() }
-                                }
                             })
                         }
                     }
