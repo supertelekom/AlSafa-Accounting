@@ -3355,18 +3355,76 @@ class MainActivity : Activity() {
         })
     }
     private fun vaultsPreview(parent:LinearLayout) {
-        parent.addView(text("الخزائن والأرصدة",26f,gold))
+        parent.addView(text("الخزائن والأرصدة",26f,gold).apply { gravity=Gravity.RIGHT })
         parent.addView(text("ملخص البيع والتحصيل مع الأرصدة الفعلية لكل خزنة.",14f))
-        disabledAction(parent,"إقفال اليوم")
-        disabledAction(parent,"＋ حركة مالية")
-        parent.addView(text("حالة إقفال اليوم غير معروفة حتى ربط البيانات.",13f))
-        listOf("درج المحل","الصندوق الخارجي","شام كاش","الحساب البنكي").forEach { name ->
-            parent.addView(text(name,19f,gold))
-            val allowed=if(name=="شام كاش") listOf("USD","SYP") else listOf("USD","SYP","TRY")
-            parent.addView(text(allowed.joinToString("    ") { "$it —" },14f))
+        val accounts=listOf("درج المحل","الصندوق الخارجي","شام كاش","الحساب البنكي")
+        val allowed=mapOf(
+            "درج المحل" to listOf("USD","SYP","TRY"),
+            "الصندوق الخارجي" to listOf("USD","SYP","TRY"),
+            "شام كاش" to listOf("USD","SYP"),
+            "الحساب البنكي" to listOf("USD","SYP","TRY")
+        )
+        val movements=linkedMapOf<Pair<String,String>,Double>()
+        val history=mutableListOf<String>()
+        var error:String?=null
+        try {
+            val db=legacyBackupStore.writableDatabase
+            NativeSalesLedger.create(db)
+            db.rawQuery("SELECT vault,currency,COALESCE(SUM(amount),0) FROM native_sale_vault_movements GROUP BY vault,currency",null).use { c ->
+                while(c.moveToNext()) {
+                    val key=c.getString(0) to c.getString(1)
+                    movements[key]=c.getDouble(2)
+                }
+            }
+            db.rawQuery("SELECT vault,currency,amount,type,created_at FROM native_sale_vault_movements ORDER BY created_at DESC LIMIT 30",null).use { c ->
+                while(c.moveToNext()) {
+                    val date=java.text.SimpleDateFormat("yyyy-MM-dd HH:mm",java.util.Locale.US)
+                        .format(java.util.Date(c.getLong(4)))
+                    history.add("$date · ${c.getString(0)} · ${c.getString(2)} ${c.getString(1)} · ${c.getString(3)}")
+                }
+            }
+        } catch(e:Exception) {
+            error=e.message ?: "تعذر قراءة حركات القبض"
         }
-        parent.addView(text("سجل الحركات",20f,gold))
-        parent.addView(text("لم يتم تحميل سجل الحركات بعد.",14f))
+        if(error!=null) parent.addView(text("تعذر قراءة الحركات: $error",14f))
+        parent.addView(text("الحركات أدناه تخص المبيعات الجديدة فقط؛ لا تمثل الرصيد الفعلي قبل دمج الأرصدة المستعادة.",13f))
+        accounts.forEach { account ->
+            val card=LinearLayout(this).apply {
+                orientation=LinearLayout.VERTICAL
+                layoutDirection=View.LAYOUT_DIRECTION_RTL
+                setPadding(dp(16),dp(12),dp(16),dp(12))
+                background=panel(Color.WHITE,16,Color.rgb(220,211,198))
+            }
+            card.addView(text(account,19f,gold).apply {
+                gravity=Gravity.RIGHT
+                typeface=Typeface.create(typeface,Typeface.BOLD)
+            })
+            val row=LinearLayout(this).apply {
+                orientation=LinearLayout.HORIZONTAL
+                layoutDirection=View.LAYOUT_DIRECTION_RTL
+            }
+            allowed.getValue(account).forEach { currency ->
+                val amount=movements[account to currency]
+                val caption=if(amount==null) "$currency: لا حركات" else "$currency: ${String.format(java.util.Locale.US,"%.2f",amount)}"
+                row.addView(text(caption,14f,ink).apply {
+                    gravity=Gravity.CENTER
+                    setPadding(dp(4),dp(8),dp(4),dp(8))
+                },LinearLayout.LayoutParams(0,-2,1f))
+            }
+            card.addView(row)
+            parent.addView(card,LinearLayout.LayoutParams(-1,-2).apply {
+                topMargin=dp(7);bottomMargin=dp(7)
+            })
+        }
+        parent.addView(text("سجل حركات قبض المبيعات الجديدة",19f,gold).apply { gravity=Gravity.RIGHT })
+        if(history.isEmpty()) parent.addView(text("لا توجد حركات قبض مسجلة بعد.",14f))
+        history.forEach { item ->
+            parent.addView(text(item,14f,ink).apply {
+                gravity=Gravity.RIGHT
+                setPadding(dp(12),dp(10),dp(12),dp(10))
+                background=panel(Color.WHITE,12,Color.rgb(220,211,198))
+            },LinearLayout.LayoutParams(-1,-2).apply { bottomMargin=dp(5) })
+        }
     }
     private fun debtsPreview(parent:LinearLayout) {
         parent.addView(text("الديون والتحصيل",26f,gold))
