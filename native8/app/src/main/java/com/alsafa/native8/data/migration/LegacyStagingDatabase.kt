@@ -11,6 +11,8 @@ import android.database.sqlite.SQLiteOpenHelper
 class LegacyStagingDatabase(context: Context) :
     SQLiteOpenHelper(context, "alsafa_native8_staging.db", null, 1) {
 
+    val stagingCacheDir: java.io.File = context.cacheDir
+
     override fun onCreate(db: SQLiteDatabase) {
         db.execSQL("""CREATE TABLE import_runs (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
