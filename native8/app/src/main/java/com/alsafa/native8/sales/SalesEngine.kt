@@ -81,6 +81,36 @@ class SalesEngine(private val context: Context) {
         } finally { db.endTransaction(); operational.close() }
     }
 
+    fun collect(saleId: String, payment: SalePayment): String {
+        require(payment.amount > BigDecimal.ZERO && payment.cashbox.isNotBlank())
+        val operational = OperationalDatabase(context)
+        val db = operational.writableDatabase
+        db.beginTransaction()
+        try {
+            val balance = db.rawQuery("SELECT balance FROM customer_receivables WHERE sale_id=?",arrayOf(saleId)).use {
+                require(it.moveToFirst()) { "لا توجد ذمة لهذه الفاتورة" }
+                it.getString(0).toBigDecimal()
+            }
+            require(payment.amount <= balance) { "الدفعة أكبر من المتبقي" }
+            val newBalance = balance-payment.amount
+            db.execSQL("UPDATE customer_receivables SET balance=? WHERE sale_id=?",arrayOf(newBalance.toPlainString(),saleId))
+            db.execSQL("UPDATE sales SET paid=CAST(paid AS REAL)+?, status=? WHERE id=?",arrayOf(payment.amount.toPlainString(),if(newBalance==BigDecimal.ZERO)"مدفوع" else "آجل",saleId))
+            val id=UUID.randomUUID().toString()
+            val now=System.currentTimeMillis()
+            db.insertOrThrow("sale_payments",null,ContentValues().apply {
+                put("id",id);put("sale_id",saleId);put("cashbox",payment.cashbox)
+                put("currency",payment.currency);put("amount",payment.amount.toPlainString());put("created_at",now)
+            })
+            db.insertOrThrow("cashbox_movements",null,ContentValues().apply {
+                put("id",UUID.randomUUID().toString());put("cashbox",payment.cashbox)
+                put("currency",payment.currency);put("amount",payment.amount.toPlainString())
+                put("sale_id",saleId);put("created_at",now);put("note","تحصيل آجل")
+            })
+            db.setTransactionSuccessful()
+            return id
+        } finally { db.endTransaction();operational.close() }
+    }
+
     fun archive(search: String = "", from: Long? = null, to: Long? = null): List<SaleRecord> {
         val db = OperationalDatabase(context)
         try {
