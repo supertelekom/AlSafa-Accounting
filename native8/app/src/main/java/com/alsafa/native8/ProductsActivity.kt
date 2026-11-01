@@ -125,7 +125,11 @@ class ProductsActivity : Activity() {
                         val page = repo.page(source, requestedOffset, pageSize)
                         val stagedCount = staging.readableDatabase.rawQuery("SELECT COUNT(*) FROM legacy_records WHERE run_id=? AND section='products'", arrayOf(run.toString())).use { cursor -> cursor.moveToFirst(); cursor.getInt(0) }
                         val audit = ProductSnapshotAudit(staging, operational).inspect(run, source)
-                        Pair(Triple(run, page, audit), ProductEditRepository(operational).localProducts())
+                        val edits = ProductEditRepository(operational)
+                        val resolvedRows = page.rows.map { row ->
+                            row.copy(fields = edits.resolved(source, row.id) ?: row.fields)
+                        }
+                        Pair(Triple(run, page.copy(rows = resolvedRows), audit), edits.localProducts())
                     }
                 } finally {
                     operational.close()
