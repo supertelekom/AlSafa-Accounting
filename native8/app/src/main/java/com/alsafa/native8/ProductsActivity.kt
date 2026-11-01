@@ -65,6 +65,12 @@ class ProductsActivity : Activity() {
                     .show()
             }
         })
+        root.addView(Button(this).apply {
+            text = "إضافة منتج تجريبي"
+            setOnClickListener {
+                startActivity(Intent(this@ProductsActivity, ProductEditorActivity::class.java))
+            }
+        })
         items = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             layoutDirection = View.LAYOUT_DIRECTION_RTL
