@@ -2,6 +2,8 @@ package com.alsafa.native8
 
 import android.graphics.Bitmap
 import android.graphics.Color
+import android.graphics.Canvas
+import android.graphics.Paint
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.MultiFormatWriter
 import com.google.zxing.EncodeHintType
@@ -20,5 +22,21 @@ object ProductBarcodeLabel {
             bitmap.setPixel(x, y, if (matrix.get(x, y)) Color.BLACK else Color.WHITE)
         }
         return bitmap
+    }
+
+    fun renderLabel(name: String, price: String, currency: String, barcode: String): Bitmap {
+        val bars = render(barcode)
+        val label = Bitmap.createBitmap(900, 410, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(label)
+        canvas.drawColor(Color.WHITE)
+        val ink = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.BLACK; textAlign = Paint.Align.CENTER }
+        ink.textSize = 38f
+        canvas.drawText(name.take(42), 450f, 55f, ink)
+        canvas.drawBitmap(bars, 30f, 82f, null)
+        ink.textSize = 32f
+        canvas.drawText(barcode, 450f, 335f, ink)
+        ink.textSize = 34f
+        canvas.drawText(price + " " + currency, 450f, 388f, ink)
+        return label
     }
 }
