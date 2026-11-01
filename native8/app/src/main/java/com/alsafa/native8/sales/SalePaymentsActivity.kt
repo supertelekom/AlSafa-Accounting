@@ -27,7 +27,7 @@ class SalePaymentsActivity: ComponentActivity() {
    Button(onClick={
     try {
      require(vm.saleId.isNotBlank()) { "اختر فاتورة محفوظة" }
-     val id=SalesEngine(applicationContext).collect(vm.saleId,SalePayment(vm.cashbox,vm.currency,vm.amount.toBigDecimal()))
+     val id=SalesPostingActions(applicationContext).collect(vm.saleId,vm.amount,vm.cashbox,vm.currency)
      vm.status="تم تسجيل القبض: "+id
     } catch(e:Exception) {vm.status=e.message ?: "تعذر القبض"}
    }) {Text("تسجيل دفعة")}
