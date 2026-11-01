@@ -20,9 +20,12 @@ import android.widget.TextView
 import com.alsafa.native8.data.operational.OperationalDatabase
 import com.alsafa.native8.data.operational.ProductVariantRepository
 import org.json.JSONObject
+import com.google.mlkit.vision.barcode.BarcodeScanning
+import com.google.mlkit.vision.common.InputImage
 
 class ProductColorEditorActivity : Activity() {
     private var photoData: String? = null
+    private var colorBarcode: EditText? = null
     private var cameraUri: Uri? = null
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
@@ -31,6 +34,18 @@ class ProductColorEditorActivity : Activity() {
     private var photoPreview: ImageView? = null
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == 9103) {
+            if (resultCode == RESULT_OK && data?.data != null) {
+                val scanner = BarcodeScanning.getClient()
+                try {
+                    scanner.process(InputImage.fromFilePath(this, data.data!!))
+                        .addOnSuccessListener { codes -> colorBarcode?.setText(codes.firstOrNull()?.rawValue.orEmpty()) }
+                        .addOnFailureListener { e -> AlertDialog.Builder(this).setMessage(e.message ?: "تعذر قراءة الباركود").setPositiveButton("إغلاق", null).show() }
+                        .addOnCompleteListener { scanner.close() }
+                } catch (e: Exception) { scanner.close() }
+            }
+            return
+        }
         if (requestCode != 9101 && requestCode != 9102) return
         val fromCamera = requestCode == 9102
         val uri = if (fromCamera) cameraUri else data?.data
@@ -94,9 +109,14 @@ class ProductColorEditorActivity : Activity() {
             root.addView(TextView(this).apply { text = title })
             val input = EditText(this).apply { hint = title; setSingleLine(true) }
             if (key == "stock" && variantId != null) input.isEnabled = false
+            if (key == "barcode") colorBarcode = input
             inputs[key] = input
             root.addView(input)
         }
+        root.addView(Button(this).apply {
+            text = "قراءة باركود اللون عبر Google ML Kit"
+            setOnClickListener { startActivityForResult(Intent(Intent.ACTION_GET_CONTENT).apply { type = "image/*" }, 9103) }
+        })
         root.addView(Button(this).apply {
             text = "اختيار صورة اللون من الاستديو"
             setOnClickListener { startActivityForResult(Intent(Intent.ACTION_GET_CONTENT).apply { type = "image/*" }, 9101) }
