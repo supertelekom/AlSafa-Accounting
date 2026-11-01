@@ -1991,7 +1991,7 @@ class MainActivity : Activity() {
                                         }
                                     }
                                     android.app.AlertDialog.Builder(this@MainActivity).setTitle("تفاصيل الفاتورة")
-                                        .setMessage(details.toString().trim()).setPositiveButton("إغلاق",null).show()
+                                        .setView(invoiceDetailView(details.toString().trim())).setPositiveButton("إغلاق",null).show()
                                 }
                             })
                         }
@@ -2011,7 +2011,7 @@ class MainActivity : Activity() {
                                 setOnClickListener {
                                     android.app.AlertDialog.Builder(this@MainActivity)
                                         .setTitle("تفاصيل الفاتورة $id")
-                                        .setMessage(buildString {
+                                        .setView(buildString {
                                             fun field(label:String,key:String) {
                                                 val value=sale.optString(key)
                                                 if(value.isNotBlank()) append(label).append(": ").append(value).append('\n')
@@ -2046,7 +2046,7 @@ class MainActivity : Activity() {
                                                         .append(" — ").append(payment.optString("method").ifBlank { payment.optString("vault") }).append('\n')
                                                 }
                                             }
-                                        }.trim())
+                                        }.trim().let { invoiceDetailView(it) })
                                         .setPositiveButton("إغلاق",null).show()
                                 }
                             })
@@ -2066,6 +2066,26 @@ class MainActivity : Activity() {
             search.addTextChangedListener(watcher)
             refresh()
         }
+    }
+    private fun invoiceDetailView(content:String):android.view.View {
+        val scroll=android.widget.ScrollView(this)
+        val column=LinearLayout(this).apply {
+            orientation=LinearLayout.VERTICAL
+            layoutDirection=android.view.View.LAYOUT_DIRECTION_RTL
+            setPadding(24,20,24,20)
+        }
+        content.lines().forEach { line ->
+            val heading=line.trim().endsWith(":") || line.trim().startsWith("رقم الفاتورة:")
+            val row=text(line.ifBlank { " " },if(heading) 17f else 15f).apply {
+                gravity=android.view.Gravity.RIGHT
+                textDirection=android.view.View.TEXT_DIRECTION_FIRST_STRONG
+                setPadding(8,8,8,8)
+                if(heading) setTypeface(typeface,android.graphics.Typeface.BOLD)
+            }
+            column.addView(row)
+        }
+        scroll.addView(column)
+        return scroll
     }
     private fun expenseFormPreview(parent:LinearLayout) {
         formHeader(parent,"تسجيل مصروف","يسجل المصروف في التقرير ويُخصم فوراً من الحافظة التي تختارها.","القائمة","preview:المصاريف")
