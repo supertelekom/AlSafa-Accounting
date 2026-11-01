@@ -1,0 +1,78 @@
+package com.alsafa.native8
+
+import android.app.Activity
+import android.content.Intent
+import android.os.Bundle
+import android.view.Gravity
+import android.widget.Button
+import android.widget.LinearLayout
+import android.widget.ScrollView
+import android.widget.TextView
+import com.alsafa.native8.data.migration.LegacyBackupStager
+import com.alsafa.native8.data.migration.LegacyImportInspector
+import com.alsafa.native8.data.migration.LegacyStagingDatabase
+
+/** Temporary isolated backup-import verification screen. */
+class RestoreActivity : Activity() {
+    private val requestCode = 801
+    private lateinit var result: TextView
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        val layout = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            layoutDirection = android.view.View.LAYOUT_DIRECTION_RTL
+            setPadding(24, 24, 24, 24)
+        }
+        layout.addView(TextView(this).apply {
+            text = "استعادة البيانات"
+            textSize = 22f
+            gravity = Gravity.CENTER
+        })
+        layout.addView(Button(this).apply {
+            text = "اختيار ملف النسخة الاحتياطية"
+            setOnClickListener {
+                startActivityForResult(Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+                    addCategory(Intent.CATEGORY_OPENABLE)
+                    type = "*/*"
+                    putExtra(Intent.EXTRA_MIME_TYPES, arrayOf("application/json", "text/plain", "application/octet-stream"))
+                }, requestCode)
+            }
+        })
+        result = TextView(this).apply {
+            text = "هذه مرحلة فحص الاستيراد، ولا تنفذ حركات مالية جديدة."
+        }
+        layout.addView(ScrollView(this).apply { addView(result) },
+            LinearLayout.LayoutParams(-1, 0, 1f))
+        setContentView(layout)
+    }
+
+    @Deprecated("Legacy result callback until Activity Result API integration")
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode != this.requestCode || resultCode != RESULT_OK) return
+        val uri = data?.data ?: return
+        result.text = "جاري قراءة الملف..."
+        Thread {
+            val message = try {
+                val db = LegacyStagingDatabase(applicationContext)
+                try {
+                    val staged = contentResolver.openInputStream(uri)?.use {
+                        LegacyBackupStager(db).stage(it)
+                    } ?: error("تعذر فتح الملف")
+                    val run = db.readableDatabase.rawQuery(
+                        "SELECT id FROM import_runs WHERE source_sha256=?",
+                        arrayOf(staged.sourceSha256)
+                    ).use { c -> check(c.moveToFirst()); c.getLong(0) }
+                    val audit = LegacyImportInspector(db).inspect(run)
+                    buildString {
+                        append("تم استقبال الملف للفحص\n")
+                        append("سجلات: ").append(audit.sections.sumOf { it.count }).append("\n")
+                        append("تنبيهات: ").append(audit.issues.size).append("\n")
+                        audit.sections.forEach { append(it.section).append(": ").append(it.count).append("\n") }
+                    }
+                } finally { db.close() }
+            } catch (e: Exception) { "تعذر استيراد الملف: " + (e.message ?: "غير معروف") }
+            runOnUiThread { result.text = message }
+        }.start()
+    }
+}
