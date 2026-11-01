@@ -1,4 +1,4 @@
-plugins { id("com.android.application") }
+plugins { id("com.android.application"); id("org.jetbrains.kotlin.plugin.compose") }
 android {
     namespace = "com.alsafa.native8"
     compileSdk = 37
