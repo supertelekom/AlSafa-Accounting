@@ -2,8 +2,9 @@ package com.alsafa.native8.sales
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import androidx.room.Index
 
-@Entity(tableName="sales")
+@Entity(tableName="sales",indices=[Index(value=["created_at"],name="idx_sales_created")])
 data class RoomSale(@PrimaryKey val id:String,val number:Long,val created_at:Long,
  val customer:String,val phone:String,val total:String,val discount:String,val paid:String,val status:String)
 
