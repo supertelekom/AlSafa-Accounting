@@ -23,26 +23,66 @@ class SalesEngine(private val context: Context) {
         return SaleTotals(gross, discount, net, paid, (net - paid).max(BigDecimal.ZERO), (paid - net).max(BigDecimal.ZERO))
     }
 
-    /** Inventory and sales use separate SQLite databases; never claim cross-database atomicity. */
+    /** All financial and inventory writes share the operational SQLite connection. */
     fun save(draft: SaleDraft): String {
         val totals = calculate(draft)
-        require(draft.payments.map { it.currency }.distinct().size <= 1)
-        val id = UUID.randomUUID().toString()
-        val stock = OperationalDatabase(context)
-        val sales = SalesDatabase(context)
+        require(totals.change == BigDecimal.ZERO) { "صرف الباقي يحتاج تسجيل حركة الصرف أولاً" }
+        val operational = OperationalDatabase(context)
+        val db = operational.writableDatabase
+        val saleId = UUID.randomUUID().toString()
+        db.beginTransaction()
         try {
-            val stockRepo = ProductStockRepository(stock)
-            for (line in draft.lines) {
-                val available = stockRepo.currentStock(line.productSource, line.productId, line.variantId).toBigDecimal()
-                require(available >= line.quantity) { "الكمية غير كافية: ${line.title}" }
+            val stock = ProductStockRepository(operational)
+            val required = draft.lines.groupBy { Triple(it.productSource, it.productId, it.variantId) }
+            for ((key, lines) in required) {
+                val available = stock.currentStock(key.first,key.second,key.third).toBigDecimal()
+                val count = lines.fold(BigDecimal.ZERO) { a,l -> a+l.quantity }
+                require(count <= available) { "الكمية غير كافية: ${lines.first().title}" }
             }
-            // No posting until inventory and accounting can commit in one durable journal.
-            error("الحفظ المالي موقوف حتى ربط دفتر عمليات ذري بين المبيعات والمخزون")
-        } finally { stock.close(); sales.close() }
+            val number = db.rawQuery("SELECT COALESCE(MAX(number),0)+1 FROM sales",null).use { it.moveToFirst(); it.getLong(0) }
+            val now = System.currentTimeMillis()
+            db.insertOrThrow("sales",null,ContentValues().apply {
+                put("id",saleId);put("number",number);put("created_at",now)
+                put("customer",draft.customerName);put("phone",draft.customerPhone)
+                put("total",totals.net.toPlainString());put("discount",totals.discount.toPlainString())
+                put("paid",totals.paid.toPlainString());put("status",if(totals.due>BigDecimal.ZERO)"آجل" else "مدفوع")
+            })
+            draft.lines.forEach { line ->
+                db.insertOrThrow("sale_lines",null,ContentValues().apply {
+                    put("id",UUID.randomUUID().toString());put("sale_id",saleId)
+                    put("source",line.productSource);put("product_id",line.productId)
+                    put("variant_id",line.variantId);put("title",line.title)
+                    put("quantity",line.quantity.toPlainString());put("unit_price",line.unitPrice.toPlainString())
+                    put("unit_cost",line.unitCost.toPlainString());put("discount",line.discount.toPlainString())
+                })
+                stock.adjust(line.productSource,line.productId,line.variantId,line.quantity.negate().toPlainString(),"بيع فاتورة $number")
+            }
+            draft.payments.forEach { payment ->
+                db.insertOrThrow("sale_payments",null,ContentValues().apply {
+                    put("id",UUID.randomUUID().toString());put("sale_id",saleId)
+                    put("cashbox",payment.cashbox);put("currency",payment.currency)
+                    put("amount",payment.amount.toPlainString());put("created_at",now)
+                })
+                db.insertOrThrow("cashbox_movements",null,ContentValues().apply {
+                    put("id",UUID.randomUUID().toString());put("cashbox",payment.cashbox)
+                    put("currency",payment.currency);put("amount",payment.amount.toPlainString())
+                    put("sale_id",saleId);put("created_at",now);put("note","قبض فاتورة $number")
+                })
+            }
+            if(totals.due>BigDecimal.ZERO) {
+                require(draft.customerName.isNotBlank() || draft.customerPhone.isNotBlank()) { "العميل مطلوب للبيع الآجل" }
+                db.insertOrThrow("customer_receivables",null,ContentValues().apply {
+                    put("sale_id",saleId);put("customer",draft.customerName)
+                    put("phone",draft.customerPhone);put("balance",totals.due.toPlainString())
+                })
+            }
+            db.setTransactionSuccessful()
+            return saleId
+        } finally { db.endTransaction(); operational.close() }
     }
 
     fun archive(search: String = "", from: Long? = null, to: Long? = null): List<SaleRecord> {
-        val db = SalesDatabase(context)
+        val db = OperationalDatabase(context)
         try {
             val rows = mutableListOf<SaleRecord>()
             val q = "%${search.trim()}%"
