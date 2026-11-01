@@ -38,9 +38,10 @@ class ProductEditorActivity : Activity() {
     private val photoKeys = listOf("photo", "photo2", "photo3", "barcodePhoto")
     private var cameraUri: Uri? = null
     private var barcodeField: EditText? = null
+    private var reloadColors: (() -> Unit)? = null
     override fun onResume() {
         super.onResume()
-        // Color list is refreshed when returning from its editor.
+        reloadColors?.invoke()
     }
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
@@ -261,6 +262,7 @@ class ProductEditorActivity : Activity() {
                 }
             })
             colorList.tag = "color_list"
+            reloadColors = { refreshColors() }
             refreshColors()
         }
         val status = TextView(this).apply {
