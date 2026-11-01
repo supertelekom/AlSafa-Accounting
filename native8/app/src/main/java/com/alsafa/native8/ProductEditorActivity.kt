@@ -134,7 +134,7 @@ class ProductEditorActivity : Activity() {
                 hint = label
                 setSingleLine(key != "description")
             }
-            if (key == "stock" && id != null && !id.startsWith("local-")) {
+            if (key == "stock" && id != null) {
                 edit.isEnabled = false
                 edit.hint = "تُعدّل الكمية من حركات المخزون"
             }
