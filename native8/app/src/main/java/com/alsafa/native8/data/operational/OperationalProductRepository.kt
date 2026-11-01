@@ -7,7 +7,7 @@ class OperationalProductRepository(private val database: OperationalDatabase) {
     data class Page(val rows: List<Row>, val total: Int, val sourceSha256: String)
 
     fun latestSource(): String? = database.readableDatabase.rawQuery(
-        "SELECT source_sha256 FROM source_imports ORDER BY imported_at DESC LIMIT 1", null
+        "SELECT source_sha256 FROM source_imports ORDER BY source_run_id DESC LIMIT 1", null
     ).use { c -> if (c.moveToFirst()) c.getString(0) else null }
 
     fun sourceForRun(runId: Long): String? = database.readableDatabase.rawQuery(
