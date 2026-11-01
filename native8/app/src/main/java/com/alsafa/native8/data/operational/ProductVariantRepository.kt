@@ -73,9 +73,11 @@ class ProductVariantRepository(private val database: OperationalDatabase) {
         } finally { db.endTransaction() }
     }
 
-    fun delete(source: String, parentId: String, id: String): Boolean =
-        database.writableDatabase.delete(
+    fun delete(source: String, parentId: String, id: String): Boolean {
+        require(!database.readableDatabase.rawQuery("SELECT 1 FROM product_stock_movements WHERE variant_id=? LIMIT 1", arrayOf(id)).use { it.moveToFirst() }) { "لا يمكن حذف لون له حركات مخزون" }
+        return database.writableDatabase.delete(
             "product_variants_local", "variant_id=? AND parent_source=? AND parent_id=?",
             arrayOf(id, source, parentId)
         ) == 1
+    }
 }
