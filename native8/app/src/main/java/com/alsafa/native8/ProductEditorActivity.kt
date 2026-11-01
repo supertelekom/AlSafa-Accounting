@@ -2,6 +2,10 @@ package com.alsafa.native8
 
 import android.app.Activity
 import android.app.AlertDialog
+import android.content.Intent
+import android.util.Base64
+import android.graphics.BitmapFactory
+import android.widget.ImageView
 import android.os.Bundle
 import android.view.View
 import android.widget.Button
@@ -20,6 +24,24 @@ class ProductEditorActivity : Activity() {
         const val EXTRA_ID = "product_id"
     }
 
+    private var photo: String? = null
+    private var preview: ImageView? = null
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode != 8101 || resultCode != RESULT_OK) return
+        try {
+            val uri = data?.data ?: return
+            val mime = contentResolver.getType(uri) ?: ""
+            require(mime in listOf("image/jpeg", "image/png", "image/webp")) { "صيغة الصورة غير مدعومة" }
+            val bytes = contentResolver.openInputStream(uri)?.use { it.readBytes() } ?: error("تعذر قراءة الصورة")
+            require(bytes.size <= 3000000) { "الصورة أكبر من 3 ميغابايت" }
+            val bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size) ?: error("صورة غير صالحة")
+            photo = "data:" + mime + ";base64," + Base64.encodeToString(bytes, Base64.NO_WRAP)
+            preview?.setImageBitmap(bitmap)
+        } catch (e: Exception) {
+            AlertDialog.Builder(this).setMessage(e.message ?: "تعذر قراءة الصورة").setPositiveButton("إغلاق", null).show()
+        }
+    }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val source = intent.getStringExtra(EXTRA_SOURCE)
