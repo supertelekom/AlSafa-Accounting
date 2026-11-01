@@ -11,6 +11,9 @@ import android.widget.ScrollView
 import android.widget.TextView
 import com.alsafa.native8.data.migration.LegacyReadRepository
 import com.alsafa.native8.data.migration.LegacyStagingDatabase
+import com.alsafa.native8.data.operational.OperationalDatabase
+import com.alsafa.native8.data.operational.ProductImportPromoter
+import com.alsafa.native8.data.operational.OperationalProductRepository
 
 /** Read-only preview. Replace its visual layout with the exact legacy design. */
 class ProductsActivity : Activity() {
@@ -78,13 +81,22 @@ class ProductsActivity : Activity() {
         status.text = "جاري قراءة المنتجات..."
         Thread {
             val result = try {
-                val db = LegacyStagingDatabase(applicationContext)
+                val staging = LegacyStagingDatabase(applicationContext)
+                val operational = OperationalDatabase(applicationContext)
                 try {
-                    val repo = LegacyReadRepository(db)
-                    val run = repo.latestRunId()
+                    val legacy = LegacyReadRepository(staging)
+                    val run = legacy.latestRunId()
                     if (run == null) null
-                    else run to repo.page(run, "products", requestedOffset, pageSize)
-                } finally { db.close() }
+                    else {
+                        ProductImportPromoter(staging, operational).promote(run)
+                        val repo = OperationalProductRepository(operational)
+                        val source = repo.latestSource() ?: error("لا توجد منتجات تشغيلية")
+                        run to repo.page(source, requestedOffset, pageSize)
+                    }
+                } finally {
+                    operational.close()
+                    staging.close()
+                }
             } catch (e: Exception) {
                 runOnUiThread {
                     if (serial == requestSerial && !isFinishing && !isDestroyed) {
