@@ -11,8 +11,8 @@ import android.view.View
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
-import com.alsafa.native8.data.migration.LegacyReadRepository
-import com.alsafa.native8.data.migration.LegacyStagingDatabase
+import com.alsafa.native8.data.operational.OperationalDatabase
+import com.alsafa.native8.data.operational.OperationalProductRepository
 import org.json.JSONObject
 
 /** Read-only details of an original product; never edits inventory or prices. */
@@ -52,12 +52,14 @@ class ProductDetailsActivity : Activity() {
         }
         Thread {
             val message = try {
-                val db = LegacyStagingDatabase(applicationContext)
+                val db = OperationalDatabase(applicationContext)
                 try {
-                    val repository = LegacyReadRepository(db)
-                    val row = repository.byOriginalId(runId, "products", productId)
+                    val repository = OperationalProductRepository(db)
+                    val source = repository.sourceForRun(runId)
+                        ?: error("لم يتم نقل هذه النسخة إلى قاعدة المنتجات التشغيلية")
+                    val row = repository.byOriginalId(source, productId)
                     if (row == null) null
-                    else row.fields to repository.productVariants(runId, row.fields.optString("variantGroupId"))
+                    else row.fields to repository.variants(source, row.fields.optString("variantGroupId"))
                 } finally { db.close() }
             } catch (e: Exception) {
                 runOnUiThread { details.text = "تعذر قراءة المنتج: " + (e.message ?: "غير معروف") }
