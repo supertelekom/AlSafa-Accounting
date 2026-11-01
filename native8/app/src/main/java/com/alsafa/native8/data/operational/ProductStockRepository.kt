@@ -6,6 +6,21 @@ import java.util.UUID
 
 /** Inventory-only movement ledger. Never posts sales, profit, funding or cash. */
 class ProductStockRepository(private val database: OperationalDatabase) {
+    private fun decimal(text: String): java.math.BigDecimal? {
+        val normalized = buildString {
+            for (char in text.trim()) append(when (char) {
+                in '٠'..'٩' -> ('0'.code + char.code - '٠'.code).toChar()
+                in '۰'..'۹' -> ('0'.code + char.code - '۰'.code).toChar()
+                '٫', ',' -> '.'
+                '−', '–' -> '-'
+                '＋' -> '+'
+                '٬', ' ', '\u200e', '\u200f' -> continue
+                else -> char
+            })
+        }
+        return normalized.toBigDecimalOrNull()
+    }
+
     data class Movement(val delta: String, val before: String, val after: String, val note: String, val time: Long)
 
     fun history(source: String, parentId: String, variantId: String? = null): List<Movement> {
@@ -22,8 +37,9 @@ class ProductStockRepository(private val database: OperationalDatabase) {
     }
 
     fun adjust(source: String, parentId: String, variantId: String?, deltaText: String, note: String): String {
+        require(deltaText.isNotBlank()) { "أدخل فرق الكمية أولاً" }
+        val delta = decimal(deltaText) ?: error("فرق الكمية غير صالح: أدخل رقماً مثل 1 أو -1")
         require(note.isNotBlank()) { "سبب الحركة مطلوب" }
-        val delta = deltaText.toBigDecimalOrNull() ?: error("الكمية غير صالحة")
         require(delta.signum() != 0) { "الكمية صفر" }
         val db = database.writableDatabase
         db.beginTransaction()
@@ -41,7 +57,7 @@ class ProductStockRepository(private val database: OperationalDatabase) {
             } else {
                 current = productRepo.resolved(source, parentId) ?: error("المنتج المستورد غير موجود")
             }
-            before = current.optString("stock", "0").ifBlank { "0" }.toBigDecimalOrNull() ?: error("الكمية الحالية غير صالحة")
+            before = decimal(current.optString("stock", "0").ifBlank { "0" }) ?: error("الكمية الحالية غير صالحة")
             val after = before.add(delta)
             require(after.signum() >= 0) { "الكمية غير كافية" }
             current.put("stock", after.stripTrailingZeros().toPlainString())
