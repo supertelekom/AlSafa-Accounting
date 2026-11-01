@@ -1,0 +1,35 @@
+package com.alsafa.native8.sales
+
+import androidx.room.Entity
+import androidx.room.PrimaryKey
+
+@Entity(tableName="sales")
+data class RoomSale(@PrimaryKey val id:String,val number:Long,val created_at:Long,
+ val customer:String,val phone:String,val total:String,val discount:String,val paid:String,val status:String)
+
+@Entity(tableName="sale_lines")
+data class RoomSaleLine(@PrimaryKey val id:String,val sale_id:String,val source:String,
+ val product_id:String,val variant_id:String?,val title:String,val quantity:String,
+ val unit_price:String,val unit_cost:String,val discount:String,val returned_qty:String="0")
+
+@Entity(tableName="sale_payments")
+data class RoomSalePayment(@PrimaryKey val id:String,val sale_id:String,val cashbox:String,
+ val currency:String,val amount:String,val created_at:Long)
+
+@Entity(tableName="sale_returns")
+data class RoomSaleReturn(@PrimaryKey val id:String,val sale_id:String,val line_id:String,
+ val quantity:String,val created_at:Long,val reason:String)
+
+@Entity(tableName="customer_receivables")
+data class RoomReceivable(@PrimaryKey val sale_id:String,val customer:String,val phone:String,val balance:String)
+
+@Entity(tableName="cashbox_movements")
+data class RoomCashboxMovement(@PrimaryKey val id:String,val cashbox:String,val currency:String,
+ val amount:String,val sale_id:String,val created_at:Long,val note:String)
+
+@Entity(tableName="legacy_sales_lines")
+data class RoomLegacySaleLine(@PrimaryKey val id:String,val sale_id:String,val ordinal:Int,val original_json:String)
+
+@Entity(tableName="legacy_sales_imports")
+data class RoomLegacySaleImport(@PrimaryKey val source_sha256:String,val imported_at:Long,
+ val invoice_count:Int,val review_count:Int)
