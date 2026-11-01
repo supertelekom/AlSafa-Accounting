@@ -29,13 +29,15 @@ class ProductEditRepository(private val database: OperationalDatabase) {
                 raw
             }
             // Keep original identity, inventory, funding and accounting fields untouched.
-            val allowed = setOf("name", "brand", "model", "description", "barcode", "category")
-            val original = JSONObject(base)
+            val allowed = setOf("name", "brand", "model", "description", "barcode", "category", "salePrice", "cost", "currency")
             val patch = JSONObject()
             for (key in allowed) {
                 if (changed.has(key)) {
                     val value = changed.opt(key)
                     require(value is String) { "Expected text field: $key" }
+                    if (key == "salePrice" || key == "cost") {
+                        require(value.isBlank() || (value.toBigDecimalOrNull()?.signum() ?: -1) >= 0) { "Invalid price or cost" }
+                    }
                     patch.put(key, value)
                 }
             }
