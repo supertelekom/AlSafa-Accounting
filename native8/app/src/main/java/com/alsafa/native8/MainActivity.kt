@@ -2,6 +2,7 @@ package com.alsafa.native8
 
 import android.app.Activity
 import android.content.Intent
+import com.alsafa.native8.sales.SalesArchiveActivity
 import android.graphics.Color
 import android.os.Bundle
 import android.view.Gravity
@@ -61,6 +62,10 @@ class MainActivity : Activity() {
             setTextColor(Color.WHITE)
             setBackgroundTintList(android.content.res.ColorStateList.valueOf(Color.rgb(64, 75, 96)))
             setOnClickListener { startActivity(Intent(this@MainActivity, ProductsActivity::class.java)) }
+        }, LinearLayout.LayoutParams(-1, 76))
+        root.addView(Button(this).apply {
+            text = "فواتير المبيع والقبض"
+            setOnClickListener { startActivity(Intent(this@MainActivity, SalesArchiveActivity::class.java)) }
         }, LinearLayout.LayoutParams(-1, 76))
         setContentView(root)
     }
