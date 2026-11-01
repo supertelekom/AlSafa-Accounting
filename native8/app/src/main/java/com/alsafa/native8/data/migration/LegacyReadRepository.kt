@@ -65,6 +65,29 @@ class LegacyReadRepository(private val database: LegacyStagingDatabase) {
         return rows.firstOrNull()
     }
 
+    /** Resolve sibling colors by the source variantGroupId; retain each variant's own ID. */
+    fun productVariants(runId: Long, variantGroupId: String): List<LegacyRow> {
+        if (variantGroupId.isBlank()) return emptyList()
+        val db = database.readableDatabase
+        requireRun(db, runId)
+        val result = mutableListOf<LegacyRow>()
+        // JSON1 may not be available on all supported Android versions. Stream rows
+        // from SQLite rather than assuming json_extract is installed.
+        db.rawQuery(
+            "SELECT legacy_id, ordinal, json FROM legacy_records WHERE run_id=? AND section='products' ORDER BY ordinal",
+            arrayOf(runId.toString())
+        ).use { cursor ->
+            while (cursor.moveToNext()) {
+                val raw = cursor.getString(2)
+                val obj = JSONObject(raw)
+                if (obj.optString("variantGroupId") == variantGroupId) {
+                    result += LegacyRow(cursor.getString(0), cursor.getInt(1), obj)
+                }
+            }
+        }
+        return result
+    }
+
     fun objectSection(runId: Long, section: String): String? {
         require(section.isNotBlank())
         val db = database.readableDatabase
