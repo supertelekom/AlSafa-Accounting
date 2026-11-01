@@ -29,7 +29,7 @@ class ProductEditRepository(private val database: OperationalDatabase) {
                 raw
             }
             // Keep original identity, inventory, funding and accounting fields untouched.
-            val allowed = setOf("name", "brand", "model", "description", "barcode", "category", "salePrice", "cost", "currency")
+            val allowed = setOf("name", "brand", "model", "description", "barcode", "category", "salePrice", "cost", "currency", "photo")
             val patch = JSONObject()
             for (key in allowed) {
                 if (changed.has(key)) {
