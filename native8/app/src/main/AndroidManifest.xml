@@ -4,6 +4,13 @@
         android:largeScreens="true" android:xlargeScreens="true" android:requiresSmallestWidthDp="600" />
     <application android:label="الصفا Native 8" android:allowBackup="false"
         android:usesCleartextTraffic="false" android:supportsRtl="true">
+        <activity android:name=".sales.SalesArchiveActivity" android:exported="false" />
+        <activity android:name=".sales.FullSaleActivity" android:exported="false" />
+        <activity android:name=".sales.QuickSaleActivity" android:exported="false" />
+        <activity android:name=".sales.SalePaymentsActivity" android:exported="false" />
+        <activity android:name=".sales.SaleDetailsActivity" android:exported="false" />
+        <activity android:name=".sales.SaleReturnsActivity" android:exported="false" />
+        <activity android:name=".sales.SalePrintActivity" android:exported="false" />
         <activity android:name=".ProductStockActivity" android:exported="false" />
         <activity android:name=".ProductColorEditorActivity" android:exported="false" />
         <activity android:name=".ProductEditorActivity" android:exported="false" />
