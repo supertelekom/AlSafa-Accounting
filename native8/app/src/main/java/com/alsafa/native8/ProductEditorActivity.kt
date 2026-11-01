@@ -24,11 +24,12 @@ class ProductEditorActivity : Activity() {
         const val EXTRA_ID = "product_id"
     }
 
-    private var photo: String? = null
-    private var preview: ImageView? = null
+    private val photos = mutableMapOf<String, String>()
+    private val previews = mutableMapOf<String, ImageView>()
+    private val photoKeys = listOf("photo", "photo2", "photo3", "barcodePhoto")
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode != 8101 || resultCode != RESULT_OK) return
+        if (requestCode !in 8101..8104 || resultCode != RESULT_OK) return
         try {
             val uri = data?.data ?: return
             val mime = contentResolver.getType(uri) ?: ""
@@ -36,8 +37,9 @@ class ProductEditorActivity : Activity() {
             val bytes = contentResolver.openInputStream(uri)?.use { it.readBytes() } ?: error("تعذر قراءة الصورة")
             require(bytes.size <= 3000000) { "الصورة أكبر من 3 ميغابايت" }
             val bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size) ?: error("صورة غير صالحة")
-            photo = "data:" + mime + ";base64," + Base64.encodeToString(bytes, Base64.NO_WRAP)
-            preview?.setImageBitmap(bitmap)
+            val key = photoKeys[requestCode - 8101]
+            photos[key] = "data:" + mime + ";base64," + Base64.encodeToString(bytes, Base64.NO_WRAP)
+            previews[key]?.setImageBitmap(bitmap)
         } catch (e: Exception) {
             AlertDialog.Builder(this).setMessage(e.message ?: "تعذر قراءة الصورة").setPositiveButton("إغلاق", null).show()
         }
@@ -81,14 +83,17 @@ class ProductEditorActivity : Activity() {
             fields[key] = edit
             root.addView(edit)
         }
-        root.addView(Button(this).apply {
-            text = "الصورة الرئيسية من الاستديو"
-            setOnClickListener {
-                startActivityForResult(Intent(Intent.ACTION_GET_CONTENT).apply { type = "image/*" }, 8101)
-            }
-        })
-        preview = ImageView(this).apply { adjustViewBounds = true }
-        root.addView(preview, LinearLayout.LayoutParams(-1, 280))
+        photoKeys.forEachIndexed { index, key ->
+            root.addView(Button(this).apply {
+                text = listOf("الصورة الرئيسية", "الصورة الثانية", "الصورة الثالثة", "صورة الباركود")[index] + " من الاستديو"
+                setOnClickListener {
+                    startActivityForResult(Intent(Intent.ACTION_GET_CONTENT).apply { type = "image/*" }, 8101 + index)
+                }
+            })
+            val image = ImageView(this).apply { adjustViewBounds = true }
+            previews[key] = image
+            root.addView(image, LinearLayout.LayoutParams(-1, 240))
+        }
         val status = TextView(this).apply {
             text = "الكمية للمنتج المستورد للعرض فقط حتى ربط حركات المخزون؛ لا تُغيّر الفواتير السابقة."
         }
@@ -103,7 +108,7 @@ class ProductEditorActivity : Activity() {
                 for ((key, field) in fields) {
                     if (field.isEnabled) changed.put(key, field.text.toString().trim())
                 }
-                photo?.let { changed.put("photo", it) }
+                for ((key, value) in photos) changed.put(key, value)
                 Thread {
                     val outcome = try {
                         val db = OperationalDatabase(applicationContext)
@@ -152,11 +157,13 @@ class ProductEditorActivity : Activity() {
                         root.findViewWithTag<Button>("save")?.isEnabled = false
                     } else {
                         for ((key, field) in fields) field.setText(existing.optString(key))
-                        photo = existing.optString("photo").takeIf { it.startsWith("data:image/") }
-                        photo?.let {
+                        for (key in photoKeys) {
+                            val encoded = existing.optString(key)
+                            if (!encoded.startsWith("data:image/")) continue
+                            photos[key] = encoded
                             try {
-                                val bytes = Base64.decode(it.substringAfter(";base64,"), Base64.DEFAULT)
-                                preview?.setImageBitmap(BitmapFactory.decodeByteArray(bytes, 0, bytes.size))
+                                val bytes = Base64.decode(encoded.substringAfter(";base64,"), Base64.DEFAULT)
+                                previews[key]?.setImageBitmap(BitmapFactory.decodeByteArray(bytes, 0, bytes.size))
                             } catch (_: Exception) { }
                         }
                     }
