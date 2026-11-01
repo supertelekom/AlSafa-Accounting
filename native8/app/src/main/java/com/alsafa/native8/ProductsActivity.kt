@@ -16,6 +16,7 @@ import com.alsafa.native8.data.migration.LegacyStagingDatabase
 import com.alsafa.native8.data.operational.OperationalDatabase
 import com.alsafa.native8.data.operational.ProductImportPromoter
 import com.alsafa.native8.data.operational.OperationalProductRepository
+import com.alsafa.native8.data.operational.ProductSnapshotAudit
 
 /** Read-only preview. Replace its visual layout with the exact legacy design. */
 class ProductsActivity : Activity() {
@@ -116,7 +117,8 @@ class ProductsActivity : Activity() {
                         val source = repo.sourceForRun(run) ?: error("لم يتم نقل النسخة المحددة إلى SQLite التشغيلية")
                         val page = repo.page(source, requestedOffset, pageSize)
                         val stagedCount = staging.readableDatabase.rawQuery("SELECT COUNT(*) FROM legacy_records WHERE run_id=? AND section='products'", arrayOf(run.toString())).use { cursor -> cursor.moveToFirst(); cursor.getInt(0) }
-                        Triple(run, page, stagedCount)
+                        val audit = ProductSnapshotAudit(staging, operational).inspect(run, source)
+                        Triple(run, page, audit)
                     }
                 } finally {
                     operational.close()
@@ -143,9 +145,11 @@ class ProductsActivity : Activity() {
                     updateNavigation()
                     return@runOnUiThread
                 }
-                val (runId, page, stagedCount) = result
+                val (runId, page, audit) = result
+                val stagedCount = audit.staged
                 diagnostic = "المصدر: alsafa_native8_operational.db\nالمنتجات التشغيلية: " + page.total + "\nسجلات الاستيراد: " + stagedCount + "\n" + (if (page.total == stagedCount) "العدد متطابق" else "تحذير: العدد مختلف")
-                databaseStatus.text = "SQLite التشغيلية: " + page.total + " | الاستيراد: " + stagedCount
+                diagnostic += "\\nاختلافات المحتوى: " + audit.mismatches + "\\n" + audit.examples.joinToString("\\n")
+                databaseStatus.text = "SQLite: " + page.total + " | " + (if (audit.matches) "تطابق كامل" else "اختلاف: " + audit.mismatches)
                 total = page.total
                 if (offset >= total && offset > 0) offset = 0
                 status.text = "العدد: $total"
