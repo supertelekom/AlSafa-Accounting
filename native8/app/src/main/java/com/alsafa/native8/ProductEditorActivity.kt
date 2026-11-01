@@ -265,15 +265,15 @@ class ProductEditorActivity : Activity() {
             reloadColors = { refreshColors() }
             refreshColors()
         }
-        if (id != null && id.startsWith("local-")) root.addView(Button(this).apply {
+        if (id != null) root.addView(Button(this).apply {
             text = "تسوية كمية المنتج وسجل الحركات"
             setOnClickListener { startActivity(Intent(this@ProductEditorActivity, ProductStockActivity::class.java).apply {
-                putExtra("source", "local")
+                putExtra("source", if (id.startsWith("local-")) "local" else source.orEmpty())
                 putExtra("parent", id)
             }) }
         })
         val status = TextView(this).apply {
-            text = "الكمية للمنتج المستورد للعرض فقط حتى ربط حركات المخزون؛ لا تُغيّر الفواتير السابقة."
+            text = "تسوية المخزون تحفظ حركة مستقلة ولا تغيّر الفواتير أو بيانات الاستيراد الأصلية."
         }
         root.addView(status)
         root.addView(Button(this).apply {
