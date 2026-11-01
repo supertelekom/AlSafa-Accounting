@@ -2,7 +2,6 @@ package com.alsafa.native8.data.operational
 
 import android.content.ContentValues
 import org.json.JSONObject
-import java.math.BigDecimal
 import java.util.UUID
 
 /** Inventory-only movement ledger. Never posts sales, profit, funding or cash. */
@@ -30,7 +29,7 @@ class ProductStockRepository(private val database: OperationalDatabase) {
         db.beginTransaction()
         try {
             val current: JSONObject
-            val before: BigDecimal
+            val before: java.math.BigDecimal
             val variantRepo = ProductVariantRepository(database)
             val productRepo = ProductEditRepository(database)
             if (variantId != null) {
