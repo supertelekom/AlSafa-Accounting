@@ -800,14 +800,19 @@ class MainActivity : Activity() {
             if(query.isBlank()) return
             try {
                 val products=LegacyProductRepository.list(legacyBackupStore.readableDatabase,query,0,20)
-                products.forEach { product ->
-                    results.addView(text(product.name+"  ·  "+product.raw.optString("model")+"\n"+
+                products.forEachIndexed { index,product ->
+                    val row=if(index%2==0) LinearLayout(this).apply {
+                        orientation=LinearLayout.HORIZONTAL
+                        layoutDirection=View.LAYOUT_DIRECTION_RTL
+                        results.addView(this,LinearLayout.LayoutParams(-1,-2))
+                    } else results.getChildAt(results.childCount-1) as LinearLayout
+                    row.addView(text(product.name+"  ·  "+product.raw.optString("model")+"\n"+
                         "الباركود: "+product.barcode+"    المخزون: "+product.stock+
                         "    السعر: "+product.salePrice+" "+product.currency,14f,ink).apply {
                         gravity=Gravity.RIGHT or Gravity.CENTER_VERTICAL
                         layoutDirection=View.LAYOUT_DIRECTION_RTL
                         background=panel(Color.WHITE,14,Color.rgb(220,211,198))
-                        minHeight=dp(70)
+                        minHeight=dp(84)
                         
                         isClickable=true
                         setPadding(dp(16),dp(12),dp(16),dp(12))
@@ -824,6 +829,10 @@ class MainActivity : Activity() {
                                 results.removeAllViews()
                             }
                         }
+                    },LinearLayout.LayoutParams(0,-2,1f).apply {
+                        marginStart=dp(4)
+                        marginEnd=dp(4)
+                        bottomMargin=dp(7)
                     })
                 }
                 if(products.isEmpty()) results.addView(text("لا توجد نتائج مطابقة",12f))
@@ -859,6 +868,10 @@ class MainActivity : Activity() {
         val changeCurrency=select(parent,"عملة الباقي",listOf("USD","TRY","SYP"))
         val changeRate=field(parent,"سعر صرف الباقي (وحدات عملة الباقي لكل وحدة من عملة الفاتورة)","1").apply {
             setText("1")
+            inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
+        }
+        val changeHanded=field(parent,"المبلغ المُعاد للعميل","0").apply {
+            setText("0")
             inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
         }
         val changePreview=text("الباقي للعميل: 0",14f,gold)
@@ -930,8 +943,13 @@ class MainActivity : Activity() {
         compactPair(paymentStatus,payment)
         compactPair(changeAccount,changeCurrency)
         compactPair(customer,phone)
+        compactPair(changeRate,changeHanded)
         parent.addView(Button(this).apply {
             text="✓ إتمام الفاتورة"
+            isAllCaps=false
+            textSize=17f
+            setTextColor(ink)
+            background=panel(Color.rgb(243,227,197),16,Color.rgb(216,195,158))
             setOnClickListener {
                 try {
                     val product=chosen ?: error("اختر المنتج أولاً")
@@ -942,6 +960,12 @@ class MainActivity : Activity() {
                     val amount=price.text.toString().toDoubleOrNull() ?: -1.0
                     val paid=payment.text.toString().toDoubleOrNull() ?: -1.0
                     val total=amount*qty
+                    val expectedChange=(paid-total).coerceAtLeast(0.0)*
+                        (changeRate.text.toString().toDoubleOrNull() ?: 0.0)
+                    val handed=changeHanded.text.toString().toDoubleOrNull() ?: -1.0
+                    require(handed.isFinite() && kotlin.math.abs(handed-expectedChange)<0.011) {
+                        "المبلغ المعاد يجب أن يساوي الباقي المحسوب: $expectedChange"
+                    }
                     require(paid.isFinite() && paid>=0) { "المبلغ المقبوض غير صالح" }
                     require(paymentStatus.selectedItemPosition<2 || paid==0.0) { "لا يمكن قبض مبلغ لفاتورة آجل أو عند الاستلام" }
                     require(paymentStatus.selectedItemPosition!=0 || paid+0.000001>=total) { "حالة مدفوع بالكامل تتطلب قبض قيمة الفاتورة" }
