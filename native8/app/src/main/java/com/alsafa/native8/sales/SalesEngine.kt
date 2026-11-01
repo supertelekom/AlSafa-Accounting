@@ -111,6 +111,37 @@ class SalesEngine(private val context: Context) {
         } finally { db.endTransaction();operational.close() }
     }
 
+    fun returnLine(saleId: String, lineId: String, quantity: BigDecimal, reason: String): String {
+        require(quantity>BigDecimal.ZERO && reason.isNotBlank())
+        val operational=OperationalDatabase(context)
+        val db=operational.writableDatabase
+        db.beginTransaction()
+        try {
+            val row=db.rawQuery("SELECT source,product_id,variant_id,quantity,returned_qty,unit_price,discount FROM sale_lines WHERE id=? AND sale_id=?",arrayOf(lineId,saleId)).use { c ->
+                require(c.moveToFirst()) { "البند غير موجود" }
+                listOf(c.getString(0),c.getString(1),c.getString(2),c.getString(3),c.getString(4),c.getString(5),c.getString(6))
+            }
+            val original=row[3]!!.toBigDecimal()
+            val returned=row[4]!!.toBigDecimal()
+            require(quantity<=original-returned) { "كمية المرتجع تتجاوز المباع" }
+            val amount=(row[5]!!.toBigDecimal()*quantity)-(row[6]!!.toBigDecimal()*quantity/original)
+            require(amount>=BigDecimal.ZERO)
+            val due=db.rawQuery("SELECT balance FROM customer_receivables WHERE sale_id=?",arrayOf(saleId)).use { if(it.moveToFirst()) it.getString(0).toBigDecimal() else BigDecimal.ZERO }
+            // Any cash refund requires explicit cashbox and currency choice; do not silently debit cash.
+            require(amount<=due) { "المرتجع يتطلب رد مبلغ مقبوض؛ اختر الصندوق والعملة أولاً" }
+            ProductStockRepository(operational).adjust(row[0]!!,row[1]!!,row[2],quantity.toPlainString(),"مرتجع فاتورة $saleId: $reason")
+            db.execSQL("UPDATE sale_lines SET returned_qty=? WHERE id=?",arrayOf((returned+quantity).toPlainString(),lineId))
+            db.execSQL("UPDATE customer_receivables SET balance=? WHERE sale_id=?",arrayOf((due-amount).toPlainString(),saleId))
+            val id=UUID.randomUUID().toString()
+            db.insertOrThrow("sale_returns",null,ContentValues().apply {
+                put("id",id);put("sale_id",saleId);put("line_id",lineId)
+                put("quantity",quantity.toPlainString());put("created_at",System.currentTimeMillis());put("reason",reason)
+            })
+            db.setTransactionSuccessful()
+            return id
+        } finally { db.endTransaction();operational.close() }
+    }
+
     fun archive(search: String = "", from: Long? = null, to: Long? = null): List<SaleRecord> {
         val db = OperationalDatabase(context)
         try {
