@@ -8,15 +8,18 @@ import java.util.UUID
 class ProductStockRepository(private val database: OperationalDatabase) {
     private fun decimal(text: String): java.math.BigDecimal? {
         val normalized = buildString {
-            for (char in text.trim()) append(when (char) {
+            for (char in text.trim()) {
+                val mapped = when (char) {
                 in '٠'..'٩' -> ('0'.code + char.code - '٠'.code).toChar()
                 in '۰'..'۹' -> ('0'.code + char.code - '۰'.code).toChar()
                 '٫', ',' -> '.'
                 '−', '–' -> '-'
                 '＋' -> '+'
-                '٬', ' ', '\u200e', '\u200f' -> continue
+                '٬', ' ', '\u200e', '\u200f' -> null
                 else -> char
-            })
+                }
+                if (mapped != null) append(mapped)
+            }
         }
         return normalized.toBigDecimalOrNull()
     }
