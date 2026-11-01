@@ -56,6 +56,7 @@ class ProductEditorActivity : Activity() {
         }
         root.addView(status)
         root.addView(Button(this).apply {
+            tag = "save"
             text = "حفظ"
             setOnClickListener {
                 isEnabled = false
