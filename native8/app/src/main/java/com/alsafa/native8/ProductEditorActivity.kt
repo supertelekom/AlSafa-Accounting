@@ -40,7 +40,10 @@ class ProductEditorActivity : Activity() {
             "model" to "الموديل",
             "description" to "الوصف",
             "barcode" to "الباركود",
-            "category" to "التصنيف"
+            "category" to "التصنيف",
+            "salePrice" to "سعر البيع",
+            "cost" to "التكلفة",
+            "currency" to "العملة"
         )
         for ((key, label) in labels) {
             root.addView(TextView(this).apply { text = label })
