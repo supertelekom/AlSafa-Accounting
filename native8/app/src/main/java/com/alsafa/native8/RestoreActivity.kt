@@ -14,6 +14,7 @@ import com.alsafa.native8.data.migration.LegacyStagingDatabase
 
 /** Temporary isolated backup-import verification screen. */
 class RestoreActivity : Activity() {
+    companion object { const val EXTRA_PICK_ON_OPEN = "pick_backup_on_open" }
     private val requestCode = 801
     private lateinit var result: TextView
     private lateinit var productsButton: Button
@@ -31,13 +32,7 @@ class RestoreActivity : Activity() {
         })
         layout.addView(Button(this).apply {
             text = "اختيار ملف النسخة الاحتياطية"
-            setOnClickListener {
-                startActivityForResult(Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
-                    addCategory(Intent.CATEGORY_OPENABLE)
-                    type = "*/*"
-                    putExtra(Intent.EXTRA_MIME_TYPES, arrayOf("application/json", "text/plain", "application/octet-stream"))
-                }, requestCode)
-            }
+            setOnClickListener { openBackupPicker() }
         })
         productsButton = Button(this).apply {
             text = "عرض المنتجات المستوردة"
@@ -52,6 +47,20 @@ class RestoreActivity : Activity() {
         layout.addView(ScrollView(this).apply { addView(result) },
             LinearLayout.LayoutParams(-1, 0, 1f))
         setContentView(layout)
+        if (savedInstanceState == null && intent.getBooleanExtra(EXTRA_PICK_ON_OPEN, false)) {
+            openBackupPicker()
+        }
+    }
+
+    private fun openBackupPicker() {
+        try {
+            startActivityForResult(Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+                addCategory(Intent.CATEGORY_OPENABLE)
+                type = "*/*"
+            }, requestCode)
+        } catch (e: android.content.ActivityNotFoundException) {
+            result.text = "لا يوجد تطبيق لاختيار الملفات على هذا الجهاز"
+        }
     }
 
     @Deprecated("Legacy result callback until Activity Result API integration")
