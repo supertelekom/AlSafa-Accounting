@@ -93,6 +93,7 @@ class ProductColorEditorActivity : Activity() {
             "barcode" to "الباركود")) {
             root.addView(TextView(this).apply { text = title })
             val input = EditText(this).apply { hint = title; setSingleLine(true) }
+            if (key == "stock" && variantId != null) input.isEnabled = false
             inputs[key] = input
             root.addView(input)
         }
@@ -128,7 +129,7 @@ class ProductColorEditorActivity : Activity() {
             setOnClickListener {
                 isEnabled = false
                 val data = JSONObject()
-                inputs.forEach { (key, field) -> data.put(key, field.text.toString().trim()) }
+                inputs.forEach { (key, field) -> if (field.isEnabled) data.put(key, field.text.toString().trim()) }
                 photoData?.let { data.put("photo", it) }
                 Thread {
                     val error = try {
@@ -164,9 +165,12 @@ class ProductColorEditorActivity : Activity() {
                         .setPositiveButton("حذف") { _, _ ->
                             Thread {
                                 val db = OperationalDatabase(applicationContext)
-                                try { ProductVariantRepository(db).delete(source, parent, variantId) }
+                                val failure = try {
+                                    ProductVariantRepository(db).delete(source, parent, variantId)
+                                    null
+                                } catch (e: Exception) { e.message ?: "تعذر حذف اللون" }
                                 finally { db.close() }
-                                runOnUiThread { finish() }
+                                runOnUiThread { if (failure == null) finish() else status.text = failure }
                             }.start()
                         }.show()
                 }
