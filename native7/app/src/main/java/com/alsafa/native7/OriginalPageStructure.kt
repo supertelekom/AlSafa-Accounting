@@ -533,7 +533,18 @@ internal class OriginalPageStructure(
             "auditLog" -> listOf("date","time","action","type","entity","referenceId")
             else -> listOf("date","category","amount","currency","paymentMethod")
         }
-        for(record in records) {
+        fun monthOf(record:JSONObject):String? {
+            val date=record.optString("date").ifBlank { record.optString("createdAt") }
+            val iso=Regex("""(\\d{4})[-/](\\d{1,2})""").find(date)
+            if(iso!=null) return iso.groupValues[1]+"-"+iso.groupValues[2].padStart(2,'0')
+            val local=Regex("""(\\d{1,2})[-/](\\d{1,2})[-/](\\d{4})""").find(date)
+            return if(local!=null) local.groupValues[3]+"-"+local.groupValues[2].padStart(2,'0') else null
+        }
+        fun renderRows(selectedMonth:String?) {
+            host.removeAllViews()
+            for(record in records) {
+                if(selectedMonth!=null && monthOf(record)!=selectedMonth) continue
+
             val row=LinearLayout(activity).apply {
                 orientation=LinearLayout.VERTICAL
                 layoutDirection=View.LAYOUT_DIRECTION_RTL
@@ -571,7 +582,31 @@ internal class OriginalPageStructure(
                 bottomMargin=dp(18)
             })
         }
-        enforceTajawalRtl(host)
+            }
+            enforceTajawalRtl(host)
+        }
+        if(section=="sales") {
+            val months=records.mapNotNull(::monthOf).distinct().sortedDescending()
+            if(months.isNotEmpty()) {
+                val choices=listOf("جميع الأشهر")+months
+                val picker=Spinner(activity).apply {
+                    layoutDirection=View.LAYOUT_DIRECTION_RTL
+                    minimumHeight=dp(58)
+                    adapter=ArrayAdapter(activity,android.R.layout.simple_spinner_dropdown_item,choices)
+                    onItemSelectedListener=object:AdapterView.OnItemSelectedListener {
+                        override fun onNothingSelected(parent:AdapterView<*>?) {}
+                        override fun onItemSelected(parent:AdapterView<*>?,view:View?,position:Int,id:Long) {
+                            renderRows(if(position==0) null else choices[position])
+                        }
+                    }
+                }
+                parent.addView(picker,LinearLayout.LayoutParams(-1,dp(58)).apply {
+                    bottomMargin=dp(18)
+                })
+                picker.setSelection(1)
+                renderRows(months.first())
+            } else renderRows(null)
+        } else renderRows(null)
         parent.addView(host,LinearLayout.LayoutParams(-1,-2))
     }
     fun contains(route:String) = pages.has(route)
