@@ -41,12 +41,14 @@ class SalesEngine(private val context: Context) {
         } finally { stock.close(); sales.close() }
     }
 
-    fun archive(search: String = ""): List<SaleRecord> {
+    fun archive(search: String = "", from: Long? = null, to: Long? = null): List<SaleRecord> {
         val db = SalesDatabase(context)
         try {
             val rows = mutableListOf<SaleRecord>()
             val q = "%${search.trim()}%"
-            db.readableDatabase.rawQuery("SELECT id,number,created_at,customer,phone,total,paid,status FROM sales WHERE customer LIKE ? OR phone LIKE ? OR CAST(number AS TEXT) LIKE ? ORDER BY created_at DESC LIMIT 100", arrayOf(q,q,q)).use { c ->
+            val first = (from ?: 0L).toString()
+            val last = (to ?: Long.MAX_VALUE).toString()
+            db.readableDatabase.rawQuery("SELECT id,number,created_at,customer,phone,total,paid,status FROM sales WHERE (customer LIKE ? OR phone LIKE ? OR CAST(number AS TEXT) LIKE ?) AND created_at >= ? AND created_at <= ? ORDER BY created_at DESC LIMIT 100", arrayOf(q,q,q,first,last)).use { c ->
                 while (c.moveToNext()) rows.add(SaleRecord(c.getString(0),c.getLong(1),c.getLong(2),c.getString(3),c.getString(4),c.getString(5),c.getString(6),c.getString(7)))
             }
             return rows
