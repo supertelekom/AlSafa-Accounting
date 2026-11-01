@@ -39,7 +39,8 @@ class SalesEngine(private val context: Context) {
                 val count = lines.fold(BigDecimal.ZERO) { a,l -> a+l.quantity }
                 require(count <= available) { "الكمية غير كافية: ${lines.first().title}" }
             }
-            val number = db.rawQuery("SELECT COALESCE(MAX(number),0)+1 FROM sales",null).use { it.moveToFirst(); it.getLong(0) }
+            LegacySalesArchiveSchema.ensure(db)
+            val number = db.rawQuery("SELECT MAX(n) + 1 FROM (SELECT COALESCE(MAX(number),0) AS n FROM sales UNION ALL SELECT COALESCE(MAX(invoice_number),0) AS n FROM legacy_sales_archive)",null).use { it.moveToFirst(); it.getLong(0) }
             val now = System.currentTimeMillis()
             db.insertOrThrow("sales",null,ContentValues().apply {
                 put("id",saleId);put("number",number);put("created_at",now)
