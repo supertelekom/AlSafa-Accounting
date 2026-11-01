@@ -113,7 +113,7 @@ class ProductsActivity : Activity() {
                     else {
                         ProductImportPromoter(staging, operational).promote(run)
                         val repo = OperationalProductRepository(operational)
-                        val source = repo.latestSource() ?: error("لا توجد منتجات تشغيلية")
+                        val source = repo.sourceForRun(run) ?: error("لم يتم نقل النسخة المحددة إلى SQLite التشغيلية")
                         val page = repo.page(source, requestedOffset, pageSize)
                         val stagedCount = staging.readableDatabase.rawQuery("SELECT COUNT(*) FROM legacy_records WHERE run_id=? AND section='products'", arrayOf(run.toString())).use { cursor -> cursor.moveToFirst(); cursor.getInt(0) }
                         Triple(run, page, stagedCount)
