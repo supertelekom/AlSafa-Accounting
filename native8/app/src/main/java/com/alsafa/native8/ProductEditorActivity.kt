@@ -164,7 +164,12 @@ class ProductEditorActivity : Activity() {
             text = "معاينة باركود CODE 128"
             setOnClickListener {
                 try {
-                    val bitmap = ProductBarcodeLabel.render(barcodeField?.text?.toString()?.trim().orEmpty())
+                    val bitmap = ProductBarcodeLabel.renderLabel(
+                        fields["name"]?.text?.toString().orEmpty(),
+                        fields["salePrice"]?.text?.toString().orEmpty(),
+                        fields["currency"]?.text?.toString().orEmpty(),
+                        barcodeField?.text?.toString()?.trim().orEmpty()
+                    )
                     AlertDialog.Builder(this@ProductEditorActivity).setView(ImageView(this@ProductEditorActivity).apply {
                         setImageBitmap(bitmap)
                         adjustViewBounds = true
