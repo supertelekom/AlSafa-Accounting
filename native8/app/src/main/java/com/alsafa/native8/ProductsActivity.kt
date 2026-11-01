@@ -18,6 +18,7 @@ import com.alsafa.native8.data.operational.ProductImportPromoter
 import com.alsafa.native8.data.operational.OperationalProductRepository
 import com.alsafa.native8.data.operational.ProductSnapshotAudit
 import com.alsafa.native8.data.operational.ProductEditRepository
+import com.alsafa.native8.data.operational.ProductStockRepository
 
 /** Read-only preview. Replace its visual layout with the exact legacy design. */
 class ProductsActivity : Activity() {
@@ -126,8 +127,11 @@ class ProductsActivity : Activity() {
                         val stagedCount = staging.readableDatabase.rawQuery("SELECT COUNT(*) FROM legacy_records WHERE run_id=? AND section='products'", arrayOf(run.toString())).use { cursor -> cursor.moveToFirst(); cursor.getInt(0) }
                         val audit = ProductSnapshotAudit(staging, operational).inspect(run, source)
                         val edits = ProductEditRepository(operational)
+                        val stockRepo = ProductStockRepository(operational)
                         val resolvedRows = page.rows.map { row ->
-                            row.copy(fields = edits.resolved(source, row.id) ?: row.fields)
+                            val product = edits.resolved(source, row.id) ?: row.fields
+                            product.put("stock", stockRepo.currentStock(source, row.id))
+                            row.copy(fields = product)
                         }
                         Pair(Triple(run, page.copy(rows = resolvedRows), audit), edits.localProducts())
                     }
