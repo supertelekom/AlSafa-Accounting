@@ -893,6 +893,43 @@ class MainActivity : Activity() {
                 if(code.isNotBlank()) search.setText(code)
             }
         })
+        // Keep the existing inputs and their listeners; only rearrange compact pairs.
+        fun compactPair(first:View,second:View) {
+            val firstIndex=parent.indexOfChild(first)
+            val secondIndex=parent.indexOfChild(second)
+            if(firstIndex<1 || secondIndex<1 || firstIndex>=secondIndex) return
+            val firstLabel=parent.getChildAt(firstIndex-1)
+            val secondLabel=parent.getChildAt(secondIndex-1)
+            val entries=listOf(firstLabel,first,secondLabel,second)
+            if(entries.distinct().size!=4) return
+            entries.forEach { parent.removeView(it) }
+            val row=LinearLayout(this).apply {
+                orientation=LinearLayout.HORIZONTAL
+                layoutDirection=View.LAYOUT_DIRECTION_RTL
+                gravity=Gravity.TOP
+            }
+            fun cell(labelView:View,inputView:View) {
+                val cell=LinearLayout(this).apply {
+                    orientation=LinearLayout.VERTICAL
+                    layoutDirection=View.LAYOUT_DIRECTION_RTL
+                }
+                cell.addView(labelView,LinearLayout.LayoutParams(-1,-2))
+                cell.addView(inputView,LinearLayout.LayoutParams(-1,dp(42)))
+                row.addView(cell,LinearLayout.LayoutParams(0,-2,1f).apply {
+                    marginStart=dp(4);marginEnd=dp(4)
+                })
+            }
+            cell(firstLabel,first)
+            cell(secondLabel,second)
+            parent.addView(row,firstIndex-1,LinearLayout.LayoutParams(-1,-2).apply {
+                bottomMargin=dp(6)
+            })
+        }
+        compactPair(price,quantity)
+        compactPair(currency,account)
+        compactPair(paymentStatus,payment)
+        compactPair(changeAccount,changeCurrency)
+        compactPair(customer,phone)
         parent.addView(Button(this).apply {
             text="✓ إتمام الفاتورة"
             setOnClickListener {
