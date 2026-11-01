@@ -15,6 +15,7 @@ class LegacySalesArchiveImporter(
   val source=staging.readableDatabase.rawQuery("SELECT source_sha256 FROM import_runs WHERE id=?",arrayOf(runId.toString())).use {
    require(it.moveToFirst());it.getString(0)
   }
+  val historicalPayments=LegacyPaymentReconciler(staging).amounts(runId)
   val db=operational.writableDatabase
   db.beginTransaction()
   try {
@@ -31,7 +32,7 @@ class LegacySalesArchiveImporter(
      val id=sale.getString("id")
      val number=sale.getLong("invoiceNo")
      val total=sale.getString("total").toBigDecimal()
-     val paid=sale.getString("paid").toBigDecimal()
+     val paid=sale.getString("paid").toBigDecimal().max(historicalPayments[id] ?: BigDecimal.ZERO)
      require(number>0 && total>=BigDecimal.ZERO && paid>=BigDecimal.ZERO)
      val status=sale.optString("paymentStatus")
      val safe=paid<=total && !status.contains("مسترجع") && !status.contains("مسوّاة") &&
