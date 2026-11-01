@@ -4,6 +4,9 @@ import android.app.Activity
 import android.app.AlertDialog
 import android.os.Bundle
 import android.content.Intent
+import android.content.ContentValues
+import android.net.Uri
+import android.provider.MediaStore
 import android.graphics.BitmapFactory
 import android.graphics.Bitmap
 import android.util.Base64
@@ -20,11 +23,14 @@ import org.json.JSONObject
 
 class ProductColorEditorActivity : Activity() {
     private var photoData: String? = null
+    private var cameraUri: Uri? = null
     private var photoPreview: ImageView? = null
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode != 9101 || resultCode != RESULT_OK) return
-        val uri = data?.data ?: return
+        if (requestCode != 9101 && requestCode != 9102) return
+        val fromCamera = requestCode == 9102
+        val uri = if (fromCamera) cameraUri else data?.data
+        if (resultCode != RESULT_OK || uri == null) return
         try {
             val bytes = contentResolver.openInputStream(uri)?.use { input ->
                 val output = java.io.ByteArrayOutputStream()
@@ -78,6 +84,20 @@ class ProductColorEditorActivity : Activity() {
         root.addView(Button(this).apply {
             text = "اختيار صورة اللون من الاستديو"
             setOnClickListener { startActivityForResult(Intent(Intent.ACTION_GET_CONTENT).apply { type = "image/*" }, 9101) }
+        })
+        root.addView(Button(this).apply {
+            text = "التقاط صورة اللون بالكاميرا"
+            setOnClickListener {
+                val values = ContentValues().apply {
+                    put(MediaStore.Images.Media.DISPLAY_NAME, "alsafa_color_" + System.currentTimeMillis() + ".jpg")
+                    put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg")
+                }
+                cameraUri = contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values)
+                if (cameraUri != null) startActivityForResult(Intent(MediaStore.ACTION_IMAGE_CAPTURE).apply {
+                    putExtra(MediaStore.EXTRA_OUTPUT, cameraUri)
+                    addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION or Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                }, 9102)
+            }
         })
         photoPreview = ImageView(this).apply { adjustViewBounds = true }
         root.addView(photoPreview, LinearLayout.LayoutParams(-1, 220))
