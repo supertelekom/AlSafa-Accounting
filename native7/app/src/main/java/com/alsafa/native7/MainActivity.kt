@@ -2126,7 +2126,10 @@ class MainActivity : Activity() {
                         text="صورة الباركود"
                         setOnClickListener { ProductImageView.show(this@MainActivity,barcodePhoto,"صورة الباركود") }
                     })
-                    val actionScroller=android.widget.HorizontalScrollView(this).apply { isHorizontalScrollBarEnabled=false;layoutDirection=View.LAYOUT_DIRECTION_RTL }
+                    val actionGrid=LinearLayout(this).apply {
+                        orientation=LinearLayout.VERTICAL
+                        layoutDirection=View.LAYOUT_DIRECTION_RTL
+                    }
                     for(i in 0 until actions.childCount) (actions.getChildAt(i) as? Button)?.apply {
                         typeface=legacyTypeface
                         textSize=12f
@@ -2143,8 +2146,23 @@ class MainActivity : Activity() {
                             layoutParams=params
                         }
                     }
-                    actionScroller.addView(actions)
-                    row.addView(actionScroller,LinearLayout.LayoutParams(-1,-2).apply { topMargin=dp(6) })
+                    val buttons=(0 until actions.childCount).map { actions.getChildAt(it) }
+                    actions.removeAllViews()
+                    buttons.chunked(2).forEach { pair ->
+                        val buttonRow=LinearLayout(this).apply {
+                            orientation=LinearLayout.HORIZONTAL
+                            layoutDirection=View.LAYOUT_DIRECTION_RTL
+                        }
+                        pair.forEach { button ->
+                            buttonRow.addView(button,LinearLayout.LayoutParams(0,-2,1f).apply {
+                                marginEnd=dp(6)
+                            })
+                        }
+                        actionGrid.addView(buttonRow,LinearLayout.LayoutParams(-1,-2).apply {
+                            bottomMargin=dp(6)
+                        })
+                    }
+                    row.addView(actionGrid,LinearLayout.LayoutParams(-1,-2).apply { topMargin=dp(6) })
                     if(twoColumns) {
                         cardRow?.addView(row,LinearLayout.LayoutParams(0,-2,1f).apply { marginEnd=dp(6);bottomMargin=dp(8) })
                         if(cardIndex==products.lastIndex) {
@@ -2178,7 +2196,20 @@ class MainActivity : Activity() {
             }
             override fun afterTextChanged(s:android.text.Editable?){}
         })
-        parent.addView(Button(this).apply { text="عرض المزيد";setOnClickListener { load(false) } })
+        parent.addView(Button(this).apply {
+            text="عرض المزيد"
+            typeface=legacyTypeface
+            textSize=15f
+            isAllCaps=false
+            gravity=Gravity.CENTER
+            background=panel(paper,14)
+            minHeight=dp(52)
+            minimumHeight=dp(52)
+            setOnClickListener { load(false) }
+        },LinearLayout.LayoutParams(-1,dp(52)).apply {
+            topMargin=dp(12)
+            bottomMargin=dp(12)
+        })
         load(true)
     }
     private var selectedInventoryProduct:String?=null
