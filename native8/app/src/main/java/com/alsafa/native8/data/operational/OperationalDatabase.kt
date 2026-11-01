@@ -6,7 +6,7 @@ import android.database.sqlite.SQLiteOpenHelper
 
 /** Native 8 operational store. Imported product snapshots are not financial postings. */
 class OperationalDatabase(context: Context) :
-    SQLiteOpenHelper(context, "alsafa_native8_operational.db", null, 2) {
+    SQLiteOpenHelper(context, "alsafa_native8_operational.db", null, 3) {
     override fun onConfigure(db: SQLiteDatabase) {
         super.onConfigure(db)
         db.setForeignKeyConstraintsEnabled(true)
@@ -38,6 +38,7 @@ class OperationalDatabase(context: Context) :
         db.execSQL("CREATE INDEX idx_products_legacy_id ON products(source_sha256, legacy_id)")
         db.execSQL("CREATE INDEX idx_products_group ON products(source_sha256, variant_group_id)")
         createEditTables(db)
+        createVariantTable(db)
     }
 
     private fun createEditTables(db: SQLiteDatabase) {
@@ -58,11 +59,12 @@ class OperationalDatabase(context: Context) :
         )""")
     }
 
+    private fun createVariantTable(db: SQLiteDatabase) {
+        db.execSQL("CREATE TABLE IF NOT EXISTS product_variants_local (variant_id TEXT PRIMARY KEY, parent_source TEXT NOT NULL, parent_id TEXT NOT NULL, color_name TEXT NOT NULL COLLATE NOCASE, variant_json TEXT NOT NULL, created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL, UNIQUE(parent_source, parent_id, color_name))")
+    }
+
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
-        if (oldVersion == 1 && newVersion == 2) {
-            createEditTables(db)
-            return
-        }
-        error("Unsupported operational migration: $oldVersion -> $newVersion")
+        if (oldVersion < 2) createEditTables(db)
+        if (oldVersion < 3) createVariantTable(db)
     }
 }
