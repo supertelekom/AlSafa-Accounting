@@ -265,6 +265,13 @@ class ProductEditorActivity : Activity() {
             reloadColors = { refreshColors() }
             refreshColors()
         }
+        if (id != null && id.startsWith("local-")) root.addView(Button(this).apply {
+            text = "تسوية كمية المنتج وسجل الحركات"
+            setOnClickListener { startActivity(Intent(this@ProductEditorActivity, ProductStockActivity::class.java).apply {
+                putExtra("source", "local")
+                putExtra("parent", id)
+            }) }
+        })
         val status = TextView(this).apply {
             text = "الكمية للمنتج المستورد للعرض فقط حتى ربط حركات المخزون؛ لا تُغيّر الفواتير السابقة."
         }
