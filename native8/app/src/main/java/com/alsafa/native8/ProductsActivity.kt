@@ -182,6 +182,15 @@ class ProductsActivity : Activity() {
                             if (product.has("currency")) append(" ").append(product.optString("currency"))
                         }
                         isEnabled = !id.isNullOrBlank()
+                        setOnLongClickListener {
+                            if (!id.isNullOrBlank()) {
+                                startActivity(Intent(this@ProductsActivity, ProductEditorActivity::class.java).apply {
+                                    putExtra(ProductEditorActivity.EXTRA_SOURCE, page.sourceSha256)
+                                    putExtra(ProductEditorActivity.EXTRA_ID, id)
+                                })
+                            }
+                            true
+                        }
                         setOnClickListener {
                             if (!id.isNullOrBlank()) {
                                 startActivity(Intent(this@ProductsActivity, ProductDetailsActivity::class.java).apply {
