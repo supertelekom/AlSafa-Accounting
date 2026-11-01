@@ -1,0 +1,67 @@
+package com.alsafa.native8.sales
+
+import androidx.room.Dao
+import androidx.room.Insert
+import androidx.room.OnConflictStrategy
+import androidx.room.Query
+
+data class UnifiedSaleRow(
+ val id:String,val number:Long,val created_at:Long,val customer:String,
+ val phone:String,val total:String,val paid:String,val status:String,val historical:Int
+)
+
+@Dao
+interface LegacySaleDao {
+ @Query("""SELECT id,number,created_at,customer,phone,total,paid,status,0 AS historical FROM sales
+ WHERE (customer LIKE '%' || :search || '%' OR phone LIKE '%' || :search || '%'
+ OR CAST(number AS TEXT) LIKE '%' || :search || '%') AND created_at BETWEEN :from AND :to
+ UNION ALL
+ SELECT legacy_id AS id,invoice_number AS number,created_at,customer,phone,total,
+ historical_paid AS paid,status,1 AS historical FROM legacy_sales_archive
+ WHERE (customer LIKE '%' || :search || '%' OR phone LIKE '%' || :search || '%'
+ OR CAST(invoice_number AS TEXT) LIKE '%' || :search || '%') AND created_at BETWEEN :from AND :to
+ ORDER BY created_at DESC LIMIT :limit""")
+ suspend fun unifiedArchive(search:String,from:Long=0,to:Long=Long.MAX_VALUE,limit:Int=100):List<UnifiedSaleRow>
+
+ @Query("SELECT * FROM legacy_sales_archive WHERE legacy_id=:id")
+ suspend fun legacyById(id:String):LegacySaleEntity?
+
+ @Query("SELECT * FROM legacy_sales_lines WHERE sale_id=:id ORDER BY ordinal")
+ suspend fun legacyLines(id:String):List<RoomLegacySaleLine>
+
+ @Query("SELECT COALESCE(MAX(invoice_number),0) FROM legacy_sales_archive")
+ suspend fun maxLegacyInvoiceNumber():Long
+
+ @Insert(onConflict=OnConflictStrategy.ABORT)
+ suspend fun insertLegacy(sale:LegacySaleEntity)
+}
+
+@Dao
+interface LegacyPaymentDao {
+ @Query("SELECT * FROM sale_payments WHERE sale_id=:saleId ORDER BY created_at")
+ suspend fun payments(saleId:String):List<RoomSalePayment>
+
+ @Query("SELECT * FROM cashbox_movements WHERE sale_id=:saleId ORDER BY created_at")
+ suspend fun cashboxMovements(saleId:String):List<RoomCashboxMovement>
+
+ @Insert(onConflict=OnConflictStrategy.ABORT)
+ suspend fun insertPayment(payment:RoomSalePayment)
+
+ @Insert(onConflict=OnConflictStrategy.ABORT)
+ suspend fun insertCashboxMovement(movement:RoomCashboxMovement)
+}
+
+@Dao
+interface LegacyReceivablesDao {
+ @Query("SELECT * FROM customer_receivables WHERE sale_id=:saleId")
+ suspend fun bySaleId(saleId:String):RoomReceivable?
+
+ @Query("SELECT * FROM customer_receivables WHERE balance!='0' AND (customer LIKE '%' || :search || '%' OR phone LIKE '%' || :search || '%')")
+ suspend fun searchOutstanding(search:String):List<RoomReceivable>
+
+ @Query("UPDATE customer_receivables SET balance=:newBalance WHERE sale_id=:saleId AND balance=:expectedBalance")
+ suspend fun compareAndSetBalance(saleId:String,expectedBalance:String,newBalance:String):Int
+
+ @Insert(onConflict=OnConflictStrategy.ABORT)
+ suspend fun insert(receivable:RoomReceivable)
+}
