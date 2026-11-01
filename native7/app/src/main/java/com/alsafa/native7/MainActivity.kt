@@ -1990,7 +1990,7 @@ class MainActivity : Activity() {
                                                 .append(" (").append(payments.getString(4)).append(")").append('\n')
                                         }
                                     }
-                                    showInvoiceActions(invoiceNo ?: id) { android.app.AlertDialog.Builder(this@MainActivity).setTitle("تفاصيل الفاتورة")
+                                    showInvoiceActions(invoiceNo ?: id, if(balance>0.000001) id else null) { android.app.AlertDialog.Builder(this@MainActivity).setTitle("تفاصيل الفاتورة")
                                         .setView(invoiceDetailView(details.toString().trim())).setPositiveButton("إغلاق",null).show() }
                             })
                         }
@@ -2092,10 +2092,10 @@ class MainActivity : Activity() {
             }
         }
     }
-    private fun showInvoiceActions(number:String,showDetails:()->Unit) {
+    private fun showInvoiceActions(number:String,collectSaleId:String?=null,showDetails:()->Unit) {
         val density=resources.displayMetrics.density
         fun px(dp:Int)=(dp*density).toInt()
-        val actions=listOf("التفاصيل","تعديل","PDF","طباعة","واتساب أعمال","رسالة شكر","إلغاء","مرتجع/استبدال")
+        val actions=listOf("التفاصيل","تعديل","PDF","طباعة","واتساب أعمال","رسالة شكر","إلغاء","مرتجع/استبدال") + if(collectSaleId!=null) listOf("تكملة الدفع") else emptyList()
         val container=LinearLayout(this).apply {
             orientation=LinearLayout.VERTICAL
             layoutDirection=android.view.View.LAYOUT_DIRECTION_RTL
@@ -2116,6 +2116,7 @@ class MainActivity : Activity() {
                     layoutDirection=android.view.View.LAYOUT_DIRECTION_RTL
                     setOnClickListener {
                         if(action=="التفاصيل") showDetails()
+                        else if(action=="تكملة الدفع" && collectSaleId!=null) showCompleteInvoicePayment(collectSaleId)
                         else android.widget.Toast.makeText(this@MainActivity,
                             "هذا الإجراء غير مربوط بعد بدورة الفاتورة الأصلية؛ لم تُجرَ أي عملية على البيانات.",
                             android.widget.Toast.LENGTH_LONG).show()
@@ -2132,6 +2133,46 @@ class MainActivity : Activity() {
             .setView(container)
             .setNegativeButton("إغلاق",null)
             .show()
+    }
+    private fun showCompleteInvoicePayment(saleId:String) {
+        try {
+            val db=legacyBackupStore.writableDatabase
+            NativeSalesLedger.create(db)
+            val sale=NativeSalesLedger.find(db,saleId) ?: error("الفاتورة غير موجودة")
+            val due=NativeSalesLedger.remaining(db,saleId)
+            require(sale.status=="active" && due>0.000001) { "لا يوجد مبلغ متبقٍ للقبض" }
+            val panel=LinearLayout(this).apply {
+                orientation=LinearLayout.VERTICAL
+                layoutDirection=android.view.View.LAYOUT_DIRECTION_RTL
+                setPadding(32,20,32,16)
+            }
+            panel.addView(text("المتبقي: $due ${sale.currency}",17f))
+            val amount=android.widget.EditText(this).apply {
+                inputType=android.text.InputType.TYPE_CLASS_NUMBER or android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL
+                setText(due.toString())
+                hint="المبلغ المقبوض"
+            }
+            panel.addView(amount)
+            val accounts=arrayOf("درج المحل","الصندوق الخارجي","شام كاش","البنك")
+            val account=android.widget.Spinner(this)
+            account.adapter=android.widget.ArrayAdapter(this,android.R.layout.simple_spinner_dropdown_item,accounts)
+            panel.addView(account)
+            android.app.AlertDialog.Builder(this).setTitle("تكملة الدفع")
+                .setView(panel).setNegativeButton("إلغاء",null)
+                .setPositiveButton("حفظ القبض"){ _,_ ->
+                    try {
+                        val value=amount.text.toString().toDoubleOrNull() ?: error("المبلغ غير صالح")
+                        require(value>0 && value<=NativeSalesLedger.remaining(db,saleId)+0.000001) { "المبلغ أكبر من المتبقي أو غير صالح" }
+                        NativeSalesLedger.collect(db,saleId,value,accounts[account.selectedItemPosition])
+                        android.widget.Toast.makeText(this,"تم تسجيل القبض في سجل الفاتورة وحركات الخزنة",android.widget.Toast.LENGTH_LONG).show()
+                        render()
+                    } catch(e:Exception) {
+                        android.app.AlertDialog.Builder(this).setMessage(e.message ?: "تعذر تسجيل القبض").setPositiveButton("إغلاق",null).show()
+                    }
+                }.show()
+        } catch(e:Exception) {
+            android.app.AlertDialog.Builder(this).setMessage(e.message ?: "تعذر فتح القبض").setPositiveButton("إغلاق",null).show()
+        }
     }
     private fun invoiceDetailView(content:String):android.view.View {
         val scroll=android.widget.ScrollView(this)
