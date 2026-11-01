@@ -169,7 +169,13 @@ class ProductsActivity : Activity() {
                 status.text = "العدد الإجمالي: $operationalTotal"
                 for (local in localProducts) {
                     items.addView(Button(this).apply {
-                        text = "منتج محلي: " + local.optString("name")
+                        text = buildString {
+                            append("منتج محلي: ").append(local.optString("name"))
+                            append(" | الكمية: ").append(local.optString("stock", "—").ifBlank { "—" })
+                            append(" | سعر البيع: ").append(local.optString("salePrice", "—").ifBlank { "—" })
+                            append(" | رأس المال: ").append(local.optString("cost", "—").ifBlank { "—" })
+                            append(" ").append(local.optString("currency"))
+                        }
                         setOnClickListener {
                             startActivity(Intent(this@ProductsActivity, ProductEditorActivity::class.java).apply {
                                 putExtra(ProductEditorActivity.EXTRA_ID, local.optString("id"))
@@ -186,6 +192,7 @@ class ProductsActivity : Activity() {
                             if (product.has("stock")) append(" | ").append(product.opt("stock"))
                             if (product.has("salePrice")) append(" | ").append(product.opt("salePrice"))
                             if (product.has("currency")) append(" ").append(product.optString("currency"))
+                            append(" | رأس المال: ").append(product.optString("cost", "—").ifBlank { "—" })
                         }
                         isEnabled = !id.isNullOrBlank()
                         setOnLongClickListener {
