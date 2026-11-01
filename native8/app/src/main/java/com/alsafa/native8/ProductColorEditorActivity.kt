@@ -148,6 +148,14 @@ class ProductColorEditorActivity : Activity() {
         root.addView(save)
         if (variantId != null) {
             root.addView(Button(this).apply {
+                text = "تسوية كمية اللون وسجل الحركات"
+                setOnClickListener { startActivity(Intent(this@ProductColorEditorActivity, ProductStockActivity::class.java).apply {
+                    putExtra("source", source)
+                    putExtra("parent", parent)
+                    putExtra("variant", variantId)
+                }) }
+            })
+            root.addView(Button(this).apply {
                 text = "حذف اللون"
                 setOnClickListener {
                     AlertDialog.Builder(this@ProductColorEditorActivity)
