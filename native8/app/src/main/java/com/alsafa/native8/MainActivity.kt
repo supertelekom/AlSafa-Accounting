@@ -7,6 +7,8 @@ import android.view.Gravity
 import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.TextView
+import android.widget.ScrollView
+import com.alsafa.native8.data.migration.LegacyReadRepository
 import com.alsafa.native8.data.migration.LegacyBackupStager
 import com.alsafa.native8.data.migration.LegacyImportInspector
 import com.alsafa.native8.data.migration.LegacyStagingDatabase
@@ -18,6 +20,9 @@ import com.alsafa.native8.data.migration.LegacyStagingDatabase
 class MainActivity : Activity() {
     private lateinit var output: TextView
     private val pickBackup = 801
+    private var productOffset = 0
+    private val productPageSize = 30
+    private lateinit var productsButton: Button
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -41,12 +46,67 @@ class MainActivity : Activity() {
                 }, pickBackup)
             }
         })
+        productsButton = Button(this).apply {
+            text = "عرض المنتجات المستوردة (فحص)"
+            setOnClickListener { loadProducts() }
+        }
+        layout.addView(productsButton)
         output = TextView(this).apply {
             text = "الفحص يحفظ السجلات الأصلية في قاعدة استقبال منفصلة. لا ينفذ أي حركة مالية."
             textSize = 16f
         }
-        layout.addView(output)
+        layout.addView(ScrollView(this).apply { addView(output) },
+            LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f))
+        layout.addView(Button(this).apply {
+            text = "الصفحة التالية"
+            setOnClickListener {
+                productOffset += productPageSize
+                loadProducts()
+            }
+        })
+        layout.addView(Button(this).apply {
+            text = "الصفحة السابقة"
+            setOnClickListener {
+                productOffset = (productOffset - productPageSize).coerceAtLeast(0)
+                loadProducts()
+            }
+        })
         setContentView(layout)
+    }
+
+    private fun loadProducts() {
+        output.text = "جاري قراءة المنتجات..."
+        Thread {
+            val message = try {
+                val db = LegacyStagingDatabase(applicationContext)
+                try {
+                    val repository = LegacyReadRepository(db)
+                    val runId = repository.latestRunId()
+                    if (runId == null) {
+                        "لا توجد نسخة مستوردة. اختر ملف النسخة الاحتياطية أولاً."
+                    } else {
+                        val page = repository.page(runId, "products", productOffset, productPageSize)
+                        buildString {
+                            append("المنتجات المستوردة: ").append(page.total)
+                                .append(" | بدءاً من ").append(productOffset + 1).append("\\n\\n")
+                            page.rows.forEach { row ->
+                                val fields = row.fields
+                                append("المعرف الأصلي: ").append(row.id ?: "غير موجود").append("\\n")
+                                append("الاسم: ").append(fields.optString("name", "—")).append("\\n")
+                                // Only display original values; never compute prices or quantities here.
+                                if (fields.has("price")) append("السعر: ").append(fields.opt("price")).append("\\n")
+                                if (fields.has("quantity")) append("الكمية: ").append(fields.opt("quantity")).append("\\n")
+                                append("────────────\\n")
+                            }
+                            if (page.rows.isEmpty()) append("لا توجد سجلات في هذه الصفحة.")
+                        }
+                    }
+                } finally { db.close() }
+            } catch (e: Exception) {
+                "تعذر قراءة المنتجات: " + (e.message ?: e.javaClass.simpleName)
+            }
+            runOnUiThread { output.text = message }
+        }.start()
     }
 
     @Deprecated("Used for compatibility with minSdk 26; replace with Activity Result API after parity.")
