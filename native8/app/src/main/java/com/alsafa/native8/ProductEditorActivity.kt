@@ -123,6 +123,28 @@ class ProductEditorActivity : Activity() {
                     startActivityForResult(Intent(Intent.ACTION_GET_CONTENT).apply { type = "image/*" }, 8101 + index)
                 }
             })
+            root.addView(Button(this).apply {
+                text = listOf("التقاط الصورة الرئيسية", "التقاط الصورة الثانية", "التقاط الصورة الثالثة", "التقاط صورة الباركود")[index] + " بالكاميرا"
+                setOnClickListener {
+                    try {
+                        val values = ContentValues().apply {
+                            put(MediaStore.Images.Media.DISPLAY_NAME, "alsafa_product_" + System.currentTimeMillis() + ".jpg")
+                            put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg")
+                        }
+                        val uri = contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values)
+                            ?: error("تعذر إنشاء ملف الصورة")
+                        cameraUri = uri
+                        startActivityForResult(Intent(MediaStore.ACTION_IMAGE_CAPTURE).apply {
+                            putExtra(MediaStore.EXTRA_OUTPUT, uri)
+                            addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION or Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                        }, 8201 + index)
+                    } catch (e: Exception) {
+                        cameraUri?.let { contentResolver.delete(it, null, null) }
+                        cameraUri = null
+                        AlertDialog.Builder(this@ProductEditorActivity).setMessage(e.message ?: "تعذر فتح الكاميرا").setPositiveButton("إغلاق", null).show()
+                    }
+                }
+            })
             val image = ImageView(this).apply { adjustViewBounds = true }
             previews[key] = image
             root.addView(image, LinearLayout.LayoutParams(-1, 240))
