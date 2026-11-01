@@ -86,9 +86,18 @@ class ProductEditRepository(private val database: OperationalDatabase) {
         "SELECT product_json FROM local_products WHERE local_id=?", arrayOf(id)
     ).use { c -> if (c.moveToFirst()) JSONObject(c.getString(0)) else null }
 
+    private fun validateLocal(product: JSONObject) {
+        require(product.optString("name").isNotBlank()) { "Product name required" }
+        for (field in listOf("stock", "salePrice", "cost")) {
+            val value = product.optString(field).trim()
+            require(value.isEmpty() || (value.toBigDecimalOrNull()?.signum() ?: -1) >= 0) {
+                "Invalid numeric field: $field"
+            }
+        }
+    }
     fun updateLocal(id: String, product: JSONObject) {
         require(id.startsWith("local-"))
-        require(product.optString("name").isNotBlank())
+        validateLocal(product)
         val updated = JSONObject(product.toString()).put("id", id)
         val rows = database.writableDatabase.update(
             "local_products",
@@ -102,7 +111,7 @@ class ProductEditRepository(private val database: OperationalDatabase) {
     }
 
     fun createLocal(product: JSONObject): String {
-        require(product.optString("name").isNotBlank()) { "Product name required" }
+        validateLocal(product)
         val id = "local-" + UUID.randomUUID().toString()
         val now = System.currentTimeMillis()
         database.writableDatabase.insertOrThrow("local_products", null, ContentValues().apply {
