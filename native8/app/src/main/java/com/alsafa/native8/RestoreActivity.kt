@@ -80,12 +80,27 @@ class RestoreActivity : Activity() {
                         "SELECT id FROM import_runs WHERE source_sha256=?",
                         arrayOf(staged.sourceSha256)
                     ).use { c -> check(c.moveToFirst()); c.getLong(0) }
-                    val audit = LegacyImportInspector(db).inspect(run)
+                    val audit = try {
+                        LegacyImportInspector(db).inspect(run)
+                    } catch (auditError: Exception) {
+                        null
+                    }
                     buildString {
-                        append("تم استقبال الملف للفحص\n")
-                        append("سجلات: ").append(audit.sections.sumOf { it.count }).append("\n")
-                        append("تنبيهات: ").append(audit.issues.size).append("\n")
-                        audit.sections.forEach { append(it.section).append(": ").append(it.count).append("\n") }
+                        append(if (staged.alreadyImported) "النسخة موجودة مسبقاً في قاعدة الفحص" else "تم حفظ النسخة في قاعدة الفحص")
+                        append("\\n")
+                        append("المعرف الداخلي للاستيراد: ").append(run).append("\\n")
+                        append("السجلات الجديدة: ").append(staged.records).append("\\n")
+                        if (audit == null) {
+                            append("تعذر إكمال تدقيق العلاقات، لكن الاستيراد محفوظ.\\n")
+                        } else {
+                            append("إجمالي السجلات المفحوصة: ")
+                                .append(audit.sections.sumOf { it.count }).append("\\n")
+                            append("تنبيهات التدقيق: ").append(audit.issues.size).append("\\n")
+                            audit.sections.forEach {
+                                append(it.section).append(": ").append(it.count).append("\\n")
+                            }
+                        }
+                        append("افتح المنتجات المستوردة للتحقق من البيانات.")
                     }
                 } finally { db.close() }
             } catch (e: Exception) { "تعذر استيراد الملف: " + (e.message ?: "غير معروف") }
