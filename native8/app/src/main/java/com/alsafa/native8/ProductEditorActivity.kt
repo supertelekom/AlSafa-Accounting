@@ -24,6 +24,7 @@ import android.widget.TextView
 import com.alsafa.native8.data.operational.OperationalDatabase
 import com.alsafa.native8.data.operational.ProductVariantRepository
 import com.alsafa.native8.data.operational.ProductEditRepository
+import com.alsafa.native8.data.operational.ProductStockRepository
 import org.json.JSONObject
 
 /** Initial non-financial editor; original stock and funding are deliberately read-only. */
@@ -336,6 +337,15 @@ class ProductEditorActivity : Activity() {
                         root.findViewWithTag<Button>("save")?.isEnabled = false
                     } else {
                         for ((key, field) in fields) field.setText(existing.optString(key))
+                        if (!id.startsWith("local-") && !source.isNullOrBlank()) {
+                            Thread {
+                                val stock = try {
+                                    val db = OperationalDatabase(applicationContext)
+                                    try { ProductStockRepository(db).currentStock(source, id) } finally { db.close() }
+                                } catch (_: Exception) { null }
+                                runOnUiThread { if (!isFinishing && !isDestroyed && stock != null) fields["stock"]?.setText(stock) }
+                            }.start()
+                        }
                         root.findViewWithTag<Button>("save")?.isEnabled = true
                         for (key in photoKeys) {
                             val encoded = existing.optString(key)
