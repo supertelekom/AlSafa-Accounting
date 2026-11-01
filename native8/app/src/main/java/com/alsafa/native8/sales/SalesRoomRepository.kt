@@ -19,7 +19,7 @@ class SalesRoomRepository(context:Context) {
 
  suspend fun debt(id:String):RoomReceivable?=db.legacyReceivablesDao().bySaleId(id)
 
- suspend fun payments(id:String):List<RoomSalePayment>=db.legacyPaymentDao().payments(id)
+ suspend fun payments(id:String):List<RoomSalePayment> =db.legacyPaymentDao().payments(id)
 
  suspend fun collectConfirmedHistorical(id:String,cashbox:String,currency:String,amount:BigDecimal):String =
   db.withTransaction {
