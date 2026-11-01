@@ -1,6 +1,8 @@
 package com.alsafa.native8
 
 import android.app.Activity
+import android.app.AlertDialog
+import android.graphics.Color
 import android.content.Intent
 import android.os.Bundle
 import android.view.Gravity
@@ -20,6 +22,7 @@ class ProductsActivity : Activity() {
     private lateinit var status: TextView
     private lateinit var items: LinearLayout
     private lateinit var databaseStatus: TextView
+    private var diagnostic = "فحص قاعدة البيانات لم يكتمل بعد"
     private lateinit var next: Button
     private lateinit var previous: Button
     private var offset = 0
@@ -42,8 +45,25 @@ class ProductsActivity : Activity() {
         })
         status = TextView(this).apply { text = "جاري قراءة المنتجات..." }
         root.addView(status)
-        databaseStatus = TextView(this).apply { text = "SQLite: جارٍ التحقق..."; textSize = 14f }
+        databaseStatus = TextView(this).apply {
+            text = "فحص SQLite: جارٍ التحقق..."
+            textSize = 20f
+            gravity = Gravity.CENTER
+            setTextColor(Color.WHITE)
+            setBackgroundColor(Color.rgb(20, 82, 105))
+            setPadding(16, 20, 16, 20)
+        }
         root.addView(databaseStatus)
+        root.addView(Button(this).apply {
+            text = "فحص قاعدة البيانات التشغيلية"
+            setOnClickListener {
+                AlertDialog.Builder(this@ProductsActivity)
+                    .setTitle("نتيجة فحص SQLite")
+                    .setMessage(diagnostic)
+                    .setPositiveButton("إغلاق", null)
+                    .show()
+            }
+        })
         items = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             layoutDirection = View.LAYOUT_DIRECTION_RTL
@@ -124,7 +144,8 @@ class ProductsActivity : Activity() {
                     return@runOnUiThread
                 }
                 val (runId, page, stagedCount) = result
-                databaseStatus.text = "مصدر العرض: SQLite التشغيلية | المنتجات: ${page.total} | الاستيراد: ${stagedCount} | " + if (page.total == stagedCount) "العدد متطابق" else "اختلاف في العدد"
+                diagnostic = "المصدر: alsafa_native8_operational.db\nالمنتجات التشغيلية: " + page.total + "\nسجلات الاستيراد: " + stagedCount + "\n" + (if (page.total == stagedCount) "العدد متطابق" else "تحذير: العدد مختلف")
+                databaseStatus.text = "SQLite التشغيلية: " + page.total + " | الاستيراد: " + stagedCount
                 total = page.total
                 if (offset >= total && offset > 0) offset = 0
                 status.text = "العدد: $total"
