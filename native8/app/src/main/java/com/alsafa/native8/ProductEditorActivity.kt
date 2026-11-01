@@ -148,6 +148,13 @@ class ProductEditorActivity : Activity() {
             val image = ImageView(this).apply { adjustViewBounds = true }
             previews[key] = image
             root.addView(image, LinearLayout.LayoutParams(-1, 240))
+            root.addView(Button(this).apply {
+                text = "حذف " + listOf("الصورة الرئيسية", "الصورة الثانية", "الصورة الثالثة", "صورة الباركود")[index]
+                setOnClickListener {
+                    photos[key] = ""
+                    previews[key]?.setImageDrawable(null)
+                }
+            })
         }
         val status = TextView(this).apply {
             text = "الكمية للمنتج المستورد للعرض فقط حتى ربط حركات المخزون؛ لا تُغيّر الفواتير السابقة."
@@ -218,7 +225,11 @@ class ProductEditorActivity : Activity() {
                             photos[key] = encoded
                             try {
                                 val bytes = Base64.decode(encoded.substringAfter(";base64,"), Base64.DEFAULT)
-                                previews[key]?.setImageBitmap(BitmapFactory.decodeByteArray(bytes, 0, bytes.size))
+                                val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+                                BitmapFactory.decodeByteArray(bytes, 0, bytes.size, bounds)
+                                var sample = 1
+                                while (bounds.outWidth / sample > 800 || bounds.outHeight / sample > 800) sample *= 2
+                                previews[key]?.setImageBitmap(BitmapFactory.decodeByteArray(bytes, 0, bytes.size, BitmapFactory.Options().apply { inSampleSize = sample }))
                             } catch (_: Exception) { }
                         }
                     }
