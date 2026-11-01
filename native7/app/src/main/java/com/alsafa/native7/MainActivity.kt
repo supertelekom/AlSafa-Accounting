@@ -1963,11 +1963,32 @@ class MainActivity : Activity() {
                             entries.addView(text("$day — $customer — $total $currency — المقبوض: $collected — المتبقي: $balance",15f).apply {
                                 isClickable=true
                                 setOnClickListener {
-                                    val details=StringBuilder("رقم السجل: $id\\nالتاريخ: $day\\nالإجمالي: $total $currency\\nالمقبوض: $collected $currency\\nالمتبقي: $balance $currency")
-                                    db.rawQuery("SELECT product_id,quantity,unit_price FROM native_sale_lines WHERE sale_id=?",arrayOf(id)).use { lines ->
-                                        while(lines.moveToNext()) details.append("\\n").append(lines.getString(0)).append(" × ").append(lines.getInt(1)).append(" — ").append(lines.getDouble(2)).append(" ").append(currency)
+                                    val details=StringBuilder()
+                                    fun addDetail(label:String,value:String) {
+                                        details.append(label).append(": ").append(value).append('\n')
                                     }
-                                    android.app.AlertDialog.Builder(this@MainActivity).setTitle("تفاصيل الفاتورة").setMessage(details.toString()).setPositiveButton("إغلاق",null).show()
+                                    addDetail("التاريخ",day)
+                                    addDetail("الإجمالي","$total $currency")
+                                    addDetail("المقبوض","$collected $currency")
+                                    addDetail("المتبقي","$balance $currency")
+                                    details.append("\nالأصناف:\n")
+                                    db.rawQuery("SELECT l.product_id,l.quantity,l.unit_price,COALESCE(m.name,'') FROM native_sale_lines l LEFT JOIN native_sale_manual_items m ON m.line_id=l.id WHERE l.sale_id=?",arrayOf(id)).use { lines ->
+                                        while(lines.moveToNext()) {
+                                            val product=lines.getString(3).orEmpty().ifBlank { lines.getString(0) }
+                                            details.append(product).append(" × ").append(lines.getInt(1)).append(" — ").append(lines.getDouble(2)).append(" ").append(currency).append('\n')
+                                        }
+                                    }
+                                    details.append("\nحركات القبض:\n")
+                                    db.rawQuery("SELECT amount,currency,account,created_at,reason FROM native_sale_collections WHERE sale_id=? ORDER BY created_at",arrayOf(id)).use { payments ->
+                                        while(payments.moveToNext()) {
+                                            details.append(payments.getDouble(0)).append(" ").append(payments.getString(1))
+                                                .append(" — ").append(payments.getString(2))
+                                                .append(" — ").append(dayFormat.format(java.util.Date(payments.getLong(3))))
+                                                .append(" (").append(payments.getString(4)).append(")").append('\n')
+                                        }
+                                    }
+                                    android.app.AlertDialog.Builder(this@MainActivity).setTitle("تفاصيل الفاتورة")
+                                        .setMessage(details.toString().trim()).setPositiveButton("إغلاق",null).show()
                                 }
                             })
                         }
@@ -1987,7 +2008,42 @@ class MainActivity : Activity() {
                                 setOnClickListener {
                                     android.app.AlertDialog.Builder(this@MainActivity)
                                         .setTitle("تفاصيل الفاتورة $id")
-                                        .setMessage(sale.toString(2))
+                                        .setMessage(buildString {
+                                            fun field(label:String,key:String) {
+                                                val value=sale.optString(key)
+                                                if(value.isNotBlank()) append(label).append(": ").append(value).append('\n')
+                                            }
+                                            field("رقم الفاتورة","invoiceNo")
+                                            field("التاريخ","date")
+                                            field("الوقت","time")
+                                            field("العميل","customer")
+                                            field("الهاتف","phone")
+                                            field("العملة","currency")
+                                            field("الإجمالي","total")
+                                            field("حالة الدفع","paymentStatus")
+                                            field("طريقة الدفع","paymentMethod")
+                                            field("ملاحظات","notes")
+                                            val items=sale.optJSONArray("items")
+                                            if(items!=null && items.length()>0) {
+                                                append("\nالأصناف:\n")
+                                                for(i in 0 until items.length()) {
+                                                    val item=items.optJSONObject(i) ?: continue
+                                                    append(item.optString("name").ifBlank { item.optString("model") })
+                                                        .append(" × ").append(item.optString("qty"))
+                                                        .append(" — ").append(item.optString("price")).append('\n')
+                                                }
+                                            }
+                                            val payments=sale.optJSONArray("payments")
+                                            if(payments!=null && payments.length()>0) {
+                                                append("\nالدفعات:\n")
+                                                for(i in 0 until payments.length()) {
+                                                    val payment=payments.optJSONObject(i) ?: continue
+                                                    append(payment.optString("amount")).append(" ")
+                                                        .append(payment.optString("currency"))
+                                                        .append(" — ").append(payment.optString("method").ifBlank { payment.optString("vault") }).append('\n')
+                                                }
+                                            }
+                                        }.trim())
                                         .setPositiveButton("إغلاق",null).show()
                                 }
                             })
