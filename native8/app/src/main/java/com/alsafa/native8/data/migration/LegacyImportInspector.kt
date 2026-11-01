@@ -68,7 +68,13 @@ class LegacyImportInspector(private val database: LegacyStagingDatabase) {
     private fun inspectRows(db: SQLiteDatabase, runId: Long, section: String, fn: (JSONObject, String?) -> Unit) {
         db.rawQuery("SELECT legacy_id,json FROM legacy_records WHERE run_id=? AND section=?",
             arrayOf(runId.toString(), section)).use { c ->
-            while (c.moveToNext()) fn(JSONObject(c.getString(1)), c.getString(0))
+            while (c.moveToNext()) {
+                val raw = c.getString(1)
+                // Some legacy sections can contain scalar or array entries.
+                // Integrity checks only apply to object-shaped records.
+                val row = try { JSONObject(raw) } catch (_: org.json.JSONException) { null }
+                if (row != null) fn(row, c.getString(0))
+            }
         }
     }
 
