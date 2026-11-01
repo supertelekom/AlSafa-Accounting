@@ -513,6 +513,40 @@ internal class OriginalPageStructure(
                 runCatching { JSONObject(raw) }.getOrNull()?.let(records::add)
             }
         }
+        if(section=="sales") {
+            // Simplified and full native sales are written to native_sales, not legacy_records.
+            NativeSalesLedger.create(database)
+            database.rawQuery(
+                "SELECT id,created_at,customer,phone,total,currency,status FROM native_sales ORDER BY created_at DESC",
+                null
+            ).use { cursor ->
+                val formatter=java.text.SimpleDateFormat("yyyy-MM-dd",java.util.Locale.US)
+                formatter.timeZone=java.util.TimeZone.getTimeZone("Asia/Damascus")
+                while(cursor.moveToNext()) {
+                    val saleId=cursor.getString(0)
+                    val sale=JSONObject()
+                    sale.put("invoiceNo",saleId)
+                    sale.put("date",formatter.format(java.util.Date(cursor.getLong(1))))
+                    sale.put("customer",cursor.getString(2))
+                    sale.put("phone",cursor.getString(3))
+                    sale.put("total",cursor.getDouble(4))
+                    sale.put("currency",cursor.getString(5))
+                    sale.put("paymentStatus",cursor.getString(6))
+                    val items=JSONArray()
+                    database.rawQuery(
+                        "SELECT product_id,quantity,unit_price FROM native_sale_lines WHERE sale_id=?",
+                        arrayOf(saleId)
+                    ).use { lines ->
+                        while(lines.moveToNext()) {
+                            items.put(JSONObject().put("productName",lines.getString(0))
+                                .put("quantity",lines.getInt(1)).put("price",lines.getDouble(2)))
+                        }
+                    }
+                    sale.put("items",items)
+                    records.add(sale)
+                }
+            }
+        }
         if(records.isEmpty()) return
         val host=LinearLayout(activity).apply {
             orientation=LinearLayout.VERTICAL
@@ -535,9 +569,9 @@ internal class OriginalPageStructure(
         }
         fun monthOf(record:JSONObject):String? {
             val date=record.optString("date").ifBlank { record.optString("createdAt") }
-            val iso=Regex("""(\\d{4})[-/](\\d{1,2})""").find(date)
+            val iso=Regex("""(\d{4})[-/](\d{1,2})""").find(date)
             if(iso!=null) return iso.groupValues[1]+"-"+iso.groupValues[2].padStart(2,'0')
-            val local=Regex("""(\\d{1,2})[-/](\\d{1,2})[-/](\\d{4})""").find(date)
+            val local=Regex("""(\d{1,2})[-/](\d{1,2})[-/](\d{4})""").find(date)
             return if(local!=null) local.groupValues[3]+"-"+local.groupValues[2].padStart(2,'0') else null
         }
         fun renderRows(selectedMonth:String?) {
