@@ -1930,7 +1930,62 @@ class MainActivity : Activity() {
             }
             search.addTextChangedListener(watcher)
             date.addTextChangedListener(watcher)
-        } else parent.addView(text("الأرشيف غير متصل بالبيانات بعد؛ لا يمكن الاستنتاج أن الفواتير غير موجودة.",14f))
+        } else {
+            val entries=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL }
+            parent.addView(entries)
+            val refresh= {
+                entries.removeAllViews()
+                try {
+                    val db=legacyBackupStore.readableDatabase
+                    NativeSalesLedger.create(db)
+                    val query=search.text.toString().trim()
+                    val chosenDay=date.text.toString().trim()
+                    var shown=0
+                    val dayFormat=java.text.SimpleDateFormat("yyyy-MM-dd",java.util.Locale.US).apply {
+                        timeZone=java.util.TimeZone.getTimeZone("Asia/Damascus")
+                    }
+                    db.rawQuery("SELECT id,created_at,customer,phone,total,currency,status FROM native_sales ORDER BY created_at DESC",null).use { cursor ->
+                        while(cursor.moveToNext()) {
+                            val id=cursor.getString(0)
+                            val day=dayFormat.format(java.util.Date(cursor.getLong(1)))
+                            val customer=cursor.getString(2).orEmpty()
+                            val phone=cursor.getString(3).orEmpty()
+                            if(query.isBlank() && day!=chosenDay) continue
+                            if(query.isNotBlank() && !listOf(id,customer,phone,day).any { it.contains(query,true) }) continue
+                            shown++
+                            entries.addView(text("$"+"id — $"+"customer — $"+"{cursor.getDouble(4)} $"+"{cursor.getString(5)} — $"+"day",15f).apply {
+                                isClickable=true
+                                setOnClickListener { invoiceId.setText(id) }
+                            })
+                        }
+                    }
+                    db.rawQuery("SELECT payload FROM legacy_records WHERE section=? ORDER BY ordinal DESC",arrayOf("sales")).use { cursor ->
+                        while(cursor.moveToNext()) {
+                            val sale=runCatching { org.json.JSONObject(cursor.getString(0)) }.getOrNull() ?: continue
+                            val day=sale.optString("date").take(10)
+                            val id=sale.optString("invoiceNo").ifBlank { sale.optString("id") }
+                            val customer=sale.optString("customer")
+                            val phone=sale.optString("phone")
+                            if(query.isBlank() && day!=chosenDay) continue
+                            if(query.isNotBlank() && !listOf(id,customer,phone,day,sale.toString()).any { it.contains(query,true) }) continue
+                            shown++
+                            entries.addView(text("$"+"id — $"+"customer — $"+"{sale.optString("total")} $"+"{sale.optString("currency")} — $"+"day",15f))
+                        }
+                    }
+                    if(shown==0) entries.addView(text("لا توجد فواتير مطابقة لهذا اليوم. اختر تاريخاً آخر أو ابحث في جميع التواريخ.",14f))
+                } catch(e:Exception) {
+                    entries.addView(text("تعذر قراءة الفواتير: "+e.message,14f))
+                }
+            }
+            val watcher=object:android.text.TextWatcher {
+                override fun beforeTextChanged(s:CharSequence?,start:Int,count:Int,after:Int) {}
+                override fun onTextChanged(s:CharSequence?,start:Int,before:Int,count:Int) { refresh() }
+                override fun afterTextChanged(s:android.text.Editable?) {}
+            }
+            date.addTextChangedListener(watcher)
+            search.addTextChangedListener(watcher)
+            refresh()
+        }
     }
     private fun expenseFormPreview(parent:LinearLayout) {
         formHeader(parent,"تسجيل مصروف","يسجل المصروف في التقرير ويُخصم فوراً من الحافظة التي تختارها.","القائمة","preview:المصاريف")
