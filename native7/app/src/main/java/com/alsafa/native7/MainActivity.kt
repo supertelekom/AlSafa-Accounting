@@ -1953,9 +1953,22 @@ class MainActivity : Activity() {
                             if(query.isBlank() && day!=chosenDay) continue
                             if(query.isNotBlank() && !listOf(id,customer,phone,day).any { it.contains(query,true) }) continue
                             shown++
-                            entries.addView(text("$id — $customer — ${cursor.getDouble(4)} ${cursor.getString(5)} — $day",15f).apply {
+                            val total=cursor.getDouble(4)
+                            val currency=cursor.getString(5)
+                            val collected=db.rawQuery(
+                                "SELECT COALESCE(SUM(amount),0) FROM native_sale_collections WHERE sale_id=?",
+                                arrayOf(id)
+                            ).use { c -> if(c.moveToFirst()) c.getDouble(0) else 0.0 }
+                            val balance=(total-collected).coerceAtLeast(0.0)
+                            entries.addView(text("$day — $customer — $total $currency — المقبوض: $collected — المتبقي: $balance",15f).apply {
                                 isClickable=true
-                                setOnClickListener { search.setText(id) }
+                                setOnClickListener {
+                                    val details=StringBuilder("رقم السجل: $id\\nالتاريخ: $day\\nالإجمالي: $total $currency\\nالمقبوض: $collected $currency\\nالمتبقي: $balance $currency")
+                                    db.rawQuery("SELECT product_id,quantity,unit_price FROM native_sale_lines WHERE sale_id=?",arrayOf(id)).use { lines ->
+                                        while(lines.moveToNext()) details.append("\\n").append(lines.getString(0)).append(" × ").append(lines.getInt(1)).append(" — ").append(lines.getDouble(2)).append(" ").append(currency)
+                                    }
+                                    android.app.AlertDialog.Builder(this@MainActivity).setTitle("تفاصيل الفاتورة").setMessage(details.toString()).setPositiveButton("إغلاق",null).show()
+                                }
                             })
                         }
                     }
@@ -1969,7 +1982,15 @@ class MainActivity : Activity() {
                             if(query.isBlank() && day!=chosenDay) continue
                             if(query.isNotBlank() && !listOf(id,customer,phone,day,sale.toString()).any { it.contains(query,true) }) continue
                             shown++
-                            entries.addView(text("$id — $customer — ${sale.optString("total")} ${sale.optString("currency")} — $day",15f))
+                            entries.addView(text("$id — $customer — ${sale.optString("total")} ${sale.optString("currency")} — $day",15f).apply {
+                                isClickable=true
+                                setOnClickListener {
+                                    android.app.AlertDialog.Builder(this@MainActivity)
+                                        .setTitle("تفاصيل الفاتورة $id")
+                                        .setMessage(sale.toString(2))
+                                        .setPositiveButton("إغلاق",null).show()
+                                }
+                            })
                         }
                     }
                     if(shown==0) entries.addView(text("لا توجد فواتير مطابقة لهذا اليوم. اختر تاريخاً آخر أو ابحث في جميع التواريخ.",14f))
