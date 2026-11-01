@@ -42,7 +42,8 @@ class ProductEditorActivity : Activity() {
             "barcode" to "الباركود",
             "category" to "التصنيف",
             "salePrice" to "سعر البيع",
-            "cost" to "التكلفة",
+            "cost" to "رأس المال",
+            "stock" to "الكمية",
             "currency" to "العملة"
         )
         for ((key, label) in labels) {
@@ -51,11 +52,15 @@ class ProductEditorActivity : Activity() {
                 hint = label
                 setSingleLine(key != "description")
             }
+            if (key == "stock" && id != null && !id.startsWith("local-")) {
+                edit.isEnabled = false
+                edit.hint = "تُعدّل الكمية من حركات المخزون"
+            }
             fields[key] = edit
             root.addView(edit)
         }
         val status = TextView(this).apply {
-            text = "تجربة حفظ البيانات النصية فقط؛ المخزون والأسعار والصور لا تتغير هنا."
+            text = "الكمية للمنتج المستورد للعرض فقط حتى ربط حركات المخزون؛ لا تُغيّر الفواتير السابقة."
         }
         root.addView(status)
         root.addView(Button(this).apply {
@@ -65,7 +70,9 @@ class ProductEditorActivity : Activity() {
                 isEnabled = false
                 val button = this
                 val changed = JSONObject()
-                for ((key, field) in fields) changed.put(key, field.text.toString().trim())
+                for ((key, field) in fields) {
+                    if (field.isEnabled) changed.put(key, field.text.toString().trim())
+                }
                 Thread {
                     val outcome = try {
                         val db = OperationalDatabase(applicationContext)
