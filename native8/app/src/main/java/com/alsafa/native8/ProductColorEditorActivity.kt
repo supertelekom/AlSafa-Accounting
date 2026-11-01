@@ -34,7 +34,10 @@ class ProductColorEditorActivity : Activity() {
         if (requestCode != 9101 && requestCode != 9102) return
         val fromCamera = requestCode == 9102
         val uri = if (fromCamera) cameraUri else data?.data
-        if (resultCode != RESULT_OK || uri == null) return
+        if (resultCode != RESULT_OK || uri == null) {
+            if (fromCamera) clearCameraImage()
+            return
+        }
         try {
             val bytes = contentResolver.openInputStream(uri)?.use { input ->
                 val output = java.io.ByteArrayOutputStream()
@@ -60,7 +63,14 @@ class ProductColorEditorActivity : Activity() {
             photoPreview?.setImageBitmap(bitmap)
         } catch (e: Exception) {
             AlertDialog.Builder(this).setMessage(e.message ?: "تعذر تحميل الصورة").setPositiveButton("إغلاق", null).show()
+        } finally {
+            if (fromCamera) clearCameraImage()
         }
+    }
+    private fun clearCameraImage() {
+        val pending = cameraUri
+        cameraUri = null
+        if (pending != null) try { contentResolver.delete(pending, null, null) } catch (_: Exception) { }
     }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
