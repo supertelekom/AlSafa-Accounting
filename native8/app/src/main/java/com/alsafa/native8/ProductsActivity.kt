@@ -19,6 +19,7 @@ import com.alsafa.native8.data.operational.OperationalProductRepository
 class ProductsActivity : Activity() {
     private lateinit var status: TextView
     private lateinit var items: LinearLayout
+    private lateinit var databaseStatus: TextView
     private lateinit var next: Button
     private lateinit var previous: Button
     private var offset = 0
@@ -41,6 +42,8 @@ class ProductsActivity : Activity() {
         })
         status = TextView(this).apply { text = "جاري قراءة المنتجات..." }
         root.addView(status)
+        databaseStatus = TextView(this).apply { text = "SQLite: جارٍ التحقق..."; textSize = 14f }
+        root.addView(databaseStatus)
         items = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             layoutDirection = View.LAYOUT_DIRECTION_RTL
@@ -91,7 +94,9 @@ class ProductsActivity : Activity() {
                         ProductImportPromoter(staging, operational).promote(run)
                         val repo = OperationalProductRepository(operational)
                         val source = repo.latestSource() ?: error("لا توجد منتجات تشغيلية")
-                        run to repo.page(source, requestedOffset, pageSize)
+                        val page = repo.page(source, requestedOffset, pageSize)
+                        val stagedCount = staging.readableDatabase.rawQuery("SELECT COUNT(*) FROM legacy_records WHERE run_id=? AND section='products'", arrayOf(run.toString())).use { cursor -> cursor.moveToFirst(); cursor.getInt(0) }
+                        Triple(run, page, stagedCount)
                     }
                 } finally {
                     operational.close()
@@ -102,6 +107,7 @@ class ProductsActivity : Activity() {
                     if (serial == requestSerial && !isFinishing && !isDestroyed) {
                         busy = false
                         status.text = "خطأ في قراءة المنتجات: " + (e.message ?: "غير معروف")
+                        databaseStatus.text = "تعذر فحص SQLite التشغيلية"
                         updateNavigation()
                     }
                 }
@@ -117,7 +123,8 @@ class ProductsActivity : Activity() {
                     updateNavigation()
                     return@runOnUiThread
                 }
-                val (runId, page) = result
+                val (runId, page, stagedCount) = result
+                databaseStatus.text = "مصدر العرض: SQLite التشغيلية | المنتجات: ${page.total} | الاستيراد: ${stagedCount} | " + if (page.total == stagedCount) "العدد متطابق" else "اختلاف في العدد"
                 total = page.total
                 if (offset >= total && offset > 0) offset = 0
                 status.text = "العدد: $total"
