@@ -32,10 +32,12 @@ class ProductVariantRepository(private val database: OperationalDatabase) {
 
     fun save(source: String, parentId: String, color: JSONObject, existingId: String? = null): String {
         require(source.isNotBlank() && parentId.isNotBlank())
-        val name = color.optString("color").trim()
+        val merged = if (existingId != null) get(existingId) ?: error("اللون غير موجود") else JSONObject()
+        for (key in color.keys()) merged.put(key, color.get(key))
+        val name = merged.optString("color").trim()
         require(name.isNotEmpty()) { "اسم اللون مطلوب" }
         for (key in listOf("stock", "salePrice", "cost")) {
-            val value = color.optString(key).trim()
+            val value = merged.optString(key).trim()
             require(value.isBlank() || (value.toBigDecimalOrNull()?.signum() ?: -1) >= 0) { "قيمة غير صالحة: $key" }
         }
         val db = database.writableDatabase
@@ -48,7 +50,7 @@ class ProductVariantRepository(private val database: OperationalDatabase) {
                     arrayOf(existingId, source, parentId)
                 ).use { it.moveToFirst() }) { "اللون غير موجود لهذا المنتج" }
             }
-            val barcode = color.optString("barcode").trim()
+            val barcode = merged.optString("barcode").trim()
             if (barcode.isNotEmpty()) {
                 val edits = ProductEditRepository(database)
                 edits.checkBarcodeAvailable(barcode, existingId)
@@ -60,7 +62,7 @@ class ProductVariantRepository(private val database: OperationalDatabase) {
                 put("parent_source", source)
                 put("parent_id", parentId)
                 put("color_name", name)
-                put("variant_json", JSONObject(color.toString()).put("id", id).toString())
+                put("variant_json", JSONObject(merged.toString()).put("id", id).toString())
                 put("updated_at", now)
                 if (existingId == null) put("created_at", now)
             }
