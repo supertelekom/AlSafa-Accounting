@@ -1,0 +1,43 @@
+package com.alsafa.native8.sales
+
+import android.content.Context
+import androidx.room.withTransaction
+import java.math.BigDecimal
+import java.util.UUID
+
+/**
+ * Room-backed archive and debt queries. Monetary writes must share a single transaction.
+ * Inventory posting still belongs to the existing operational SalesEngine until full migration.
+ */
+class SalesRoomRepository(context:Context) {
+ private val db=AppDatabase.get(context)
+ suspend fun searchInvoices(query:String,from:Long=0,to:Long=Long.MAX_VALUE):List<UnifiedSaleRow> =
+  db.legacySaleDao().unifiedArchive(query.trim(),from,to)
+
+ suspend fun invoiceLines(id:String):List<RoomLegacySaleLine> =
+  db.legacySaleDao().legacyLines(id)
+
+ suspend fun debt(id:String):RoomReceivable?=db.legacyReceivablesDao().bySaleId(id)
+
+ suspend fun payments(id:String):List<RoomSalePayment>=db.legacyPaymentDao().payments(id)
+
+ suspend fun collectConfirmedHistorical(id:String,cashbox:String,currency:String,amount:BigDecimal):String =
+  db.withTransaction {
+   require(amount>BigDecimal.ZERO && cashbox.isNotBlank())
+   val invoice=requireNotNull(db.legacySaleDao().legacyById(id)) { "الفاتورة التاريخية غير موجودة" }
+   require(invoice.reconciliation=="confirmed") { "الفاتورة تحتاج مطابقة محاسبية" }
+   require(invoice.currency==currency) { "عملة التحصيل مختلفة" }
+   val debt=requireNotNull(db.legacyReceivablesDao().bySaleId(id)) { "لا توجد ذمة" }
+   val balance=debt.balance.toBigDecimal()
+   require(amount<=balance) { "المبلغ أكبر من الرصيد" }
+   check(db.legacyReceivablesDao().compareAndSetBalance(id,debt.balance,
+    (balance-amount).toPlainString())==1) { "تغير الرصيد أثناء التحصيل" }
+   val receipt=UUID.randomUUID().toString()
+   val now=System.currentTimeMillis()
+   db.legacyPaymentDao().insertPayment(RoomSalePayment(receipt,id,cashbox,currency,
+    amount.toPlainString(),now))
+   db.legacyPaymentDao().insertCashboxMovement(RoomCashboxMovement(UUID.randomUUID().toString(),
+    cashbox,currency,amount.toPlainString(),id,now,"تحصيل ذمة فاتورة تاريخية"))
+   receipt
+  }
+}
