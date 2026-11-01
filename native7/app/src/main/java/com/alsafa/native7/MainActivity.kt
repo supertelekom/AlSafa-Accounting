@@ -2036,10 +2036,10 @@ class MainActivity : Activity() {
                 val products=LegacyProductRepository.list(db,search.text.toString(),offset,24)
                 // Keep product cards full-width on the tablet: two half-width cards
                 // squeezed product details and made action buttons hard to use.
-                val twoColumns=false
+                val twoColumns=resources.configuration.screenWidthDp>=600
                 var cardRow:LinearLayout?=null
                 for((cardIndex,p) in products.withIndex()) {
-                    if(twoColumns && cardIndex%2==0) {
+                    if(twoColumns && cardIndex%3==0) {
                         cardRow=LinearLayout(this).apply { orientation=LinearLayout.HORIZONTAL;layoutDirection=View.LAYOUT_DIRECTION_RTL;gravity=Gravity.TOP }
                         list.addView(cardRow,LinearLayout.LayoutParams(-1,-2))
                     }
@@ -2054,11 +2054,11 @@ class MainActivity : Activity() {
                         gravity=Gravity.CENTER_VERTICAL
                         layoutDirection=View.LAYOUT_DIRECTION_RTL
                     }
-                    val photo=ProductImageView.create(this,p.raw.optString("photo"),dp(84),dp(84))
+                    val photo=ProductImageView.create(this,p.raw.optString("photo"),dp(64),dp(64))
                     photo.setOnClickListener {
                         ProductImageView.show(this@MainActivity,p.raw.optString("photo"),p.name)
                     }
-                    header.addView(photo,LinearLayout.LayoutParams(dp(84),dp(84)))
+                    header.addView(photo,LinearLayout.LayoutParams(dp(64),dp(64)))
                     val labels=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL }
                     labels.addView(text(p.name,16f).apply { gravity=Gravity.RIGHT })
                     labels.addView(text(p.raw.optString("brand")+" · "+p.raw.optString("model"),12f).apply { gravity=Gravity.RIGHT })
@@ -2069,18 +2069,6 @@ class MainActivity : Activity() {
                     row.addView(text("المخزون الفعلي: $stock    سعر البيع: ${p.salePrice} ${p.currency}",13f).apply { gravity=Gravity.RIGHT })
                     row.addView(text("كلفة الشراء للقطعة: ${p.cost} ${p.currency}",13f).apply { gravity=Gravity.RIGHT })
                     row.addView(text("الباركود: "+p.barcode.ifBlank { "—" },12f).apply { gravity=Gravity.RIGHT })
-                    val extraPhotos=listOf("photo2","photo3").mapNotNull { key ->
-                        p.raw.optString(key).takeIf { it.isNotBlank() }?.let { key to it }
-                    }
-                    if(extraPhotos.isNotEmpty()) {
-                        val photos=LinearLayout(this).apply { orientation=LinearLayout.HORIZONTAL }
-                        extraPhotos.forEachIndexed { index,pair ->
-                            photos.addView(ProductImageView.create(this,pair.second,dp(76),dp(76)).apply {
-                                setOnClickListener { ProductImageView.show(this@MainActivity,pair.second,p.name) }
-                            },LinearLayout.LayoutParams(dp(76),dp(76)).apply { marginEnd=dp(8) })
-                        }
-                        row.addView(photos)
-                    }
                     if(stock<=LegacyAccountingRules.number(p.raw.opt("minStock")))
                         row.addView(text("تنبيه: المخزون وصل للحد الأدنى",12f,Color.RED))
                     val actions=LinearLayout(this).apply { orientation=LinearLayout.HORIZONTAL;layoutDirection=View.LAYOUT_DIRECTION_RTL;gravity=Gravity.RIGHT }
@@ -2141,18 +2129,29 @@ class MainActivity : Activity() {
                     val actionScroller=android.widget.HorizontalScrollView(this).apply { isHorizontalScrollBarEnabled=false;layoutDirection=View.LAYOUT_DIRECTION_RTL }
                     for(i in 0 until actions.childCount) (actions.getChildAt(i) as? Button)?.apply {
                         typeface=legacyTypeface
-                        textSize=11f
+                        textSize=12f
                         isAllCaps=false
+                        gravity=Gravity.CENTER
+                        background=panel(paper,12)
+                        minHeight=dp(42)
+                        minimumHeight=dp(42)
                         minWidth=0
                         minimumWidth=0
-                        setPadding(dp(7),dp(5),dp(7),dp(5))
+                        setPadding(dp(10),dp(7),dp(10),dp(7))
+                        (layoutParams as? LinearLayout.LayoutParams)?.let { params ->
+                            params.marginEnd=dp(7)
+                            layoutParams=params
+                        }
                     }
                     actionScroller.addView(actions)
                     row.addView(actionScroller,LinearLayout.LayoutParams(-1,-2).apply { topMargin=dp(6) })
                     if(twoColumns) {
                         cardRow?.addView(row,LinearLayout.LayoutParams(0,-2,1f).apply { marginEnd=dp(6);bottomMargin=dp(8) })
-                        if(cardIndex==products.lastIndex && cardIndex%2==0)
-                            cardRow?.addView(View(this),LinearLayout.LayoutParams(0,dp(1),1f))
+                        if(cardIndex==products.lastIndex) {
+                            repeat(2-cardIndex%3) {
+                                cardRow?.addView(View(this),LinearLayout.LayoutParams(0,dp(1),1f))
+                            }
+                        }
                     } else list.addView(row,LinearLayout.LayoutParams(-1,-2).apply { bottomMargin=dp(8) })
                 }
                 if(reset && products.isEmpty()) {
