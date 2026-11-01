@@ -72,6 +72,33 @@ class ProductEditRepository(private val database: OperationalDatabase) {
         return result
     }
 
+    fun localProducts(): List<JSONObject> {
+        val rows = mutableListOf<JSONObject>()
+        database.readableDatabase.rawQuery(
+            "SELECT product_json FROM local_products ORDER BY created_at DESC", null
+        ).use { c -> while (c.moveToNext()) rows.add(JSONObject(c.getString(0))) }
+        return rows
+    }
+
+    fun localById(id: String): JSONObject? = database.readableDatabase.rawQuery(
+        "SELECT product_json FROM local_products WHERE local_id=?", arrayOf(id)
+    ).use { c -> if (c.moveToFirst()) JSONObject(c.getString(0)) else null }
+
+    fun updateLocal(id: String, product: JSONObject) {
+        require(id.startsWith("local-"))
+        require(product.optString("name").isNotBlank())
+        val updated = JSONObject(product.toString()).put("id", id)
+        val rows = database.writableDatabase.update(
+            "local_products",
+            ContentValues().apply {
+                put("product_json", updated.toString())
+                put("updated_at", System.currentTimeMillis())
+            },
+            "local_id=?", arrayOf(id)
+        )
+        check(rows == 1) { "Local product not found" }
+    }
+
     fun createLocal(product: JSONObject): String {
         require(product.optString("name").isNotBlank()) { "Product name required" }
         val id = "local-" + UUID.randomUUID().toString()
