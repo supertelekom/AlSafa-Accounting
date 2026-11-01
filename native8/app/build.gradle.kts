@@ -1,4 +1,4 @@
-plugins { id("com.android.application"); id("org.jetbrains.kotlin.plugin.compose") }
+plugins { id("com.android.application"); id("org.jetbrains.kotlin.plugin.compose"); id("org.jetbrains.kotlin.kapt") }
 android {
     namespace = "com.alsafa.native8"
     compileSdk = 37
@@ -19,6 +19,8 @@ android {
 
 dependencies {
     implementation("androidx.room:room-runtime:2.8.4")
+    implementation("androidx.room:room-ktx:2.8.4")
+    kapt("androidx.room:room-compiler:2.8.4")
     implementation("androidx.activity:activity-compose:1.10.1")
     implementation("androidx.compose.ui:ui:1.8.2")
     implementation("androidx.compose.foundation:foundation:1.8.2")
