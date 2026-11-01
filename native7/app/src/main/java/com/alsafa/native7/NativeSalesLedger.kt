@@ -301,6 +301,29 @@ internal object NativeSalesLedger {
                 arrayOf<Any>(saleId,next++))
         }
     }
+    fun ensureInvoiceNumber(db:SQLiteDatabase,saleId:String):Long {
+        create(db)
+        db.rawQuery("SELECT invoice_no FROM native_sale_invoice_numbers WHERE sale_id=?",arrayOf(saleId)).use { c ->
+            if(c.moveToFirst()) return c.getLong(0)
+        }
+        db.beginTransaction()
+        try {
+            require(db.rawQuery("SELECT 1 FROM native_sales WHERE id=?",arrayOf(saleId)).use { it.moveToFirst() }) { "الفاتورة غير موجودة" }
+            val legacyMax=db.rawQuery(
+                "SELECT COALESCE(MAX(CAST(json_extract(payload,'$.invoiceNo') AS INTEGER)),0) FROM legacy_records WHERE section='sales' AND CAST(json_extract(payload,'$.invoiceNo') AS TEXT) GLOB '[0-9]*'",
+                null
+            ).use { c -> if(c.moveToFirst()) c.getLong(0) else 0L }
+            val nativeMax=db.rawQuery("SELECT COALESCE(MAX(invoice_no),0) FROM native_sale_invoice_numbers",null)
+                .use { c -> if(c.moveToFirst()) c.getLong(0) else 0L }
+            db.execSQL("INSERT OR IGNORE INTO native_sale_invoice_numbers(sale_id,invoice_no) VALUES (?,?)",
+                arrayOf<Any>(saleId,maxOf(legacyMax,nativeMax)+1L))
+            val assigned=db.rawQuery("SELECT invoice_no FROM native_sale_invoice_numbers WHERE sale_id=?",arrayOf(saleId)).use { c ->
+                check(c.moveToFirst()) { "تعذر تخصيص رقم الفاتورة" };c.getLong(0)
+            }
+            db.setTransactionSuccessful()
+            return assigned
+        } finally { db.endTransaction() }
+    }
     /** Verifies every native invoice's net stock movements against sold and returned units.
      * A cancelled invoice must have zero net stock effect.
      */
