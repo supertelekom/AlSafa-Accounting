@@ -1,6 +1,10 @@
 package com.alsafa.native8
 
 import android.app.Activity
+import android.app.AlertDialog
+import android.graphics.BitmapFactory
+import android.util.Base64
+import android.widget.ImageView
 import android.os.Bundle
 import android.view.Gravity
 import android.view.View
@@ -18,6 +22,8 @@ class ProductDetailsActivity : Activity() {
         const val EXTRA_PRODUCT_ID = "legacy_product_id"
     }
 
+    private lateinit var content: LinearLayout
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val root = LinearLayout(this).apply {
@@ -31,8 +37,10 @@ class ProductDetailsActivity : Activity() {
             gravity = Gravity.CENTER
         }
         val details = TextView(this).apply { text = "جاري قراءة المنتج..." ; textSize = 16f }
+        content = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
         root.addView(title)
-        root.addView(ScrollView(this).apply { addView(details) },
+        content.addView(details)
+        root.addView(ScrollView(this).apply { addView(content) },
             LinearLayout.LayoutParams(-1, 0, 1f))
         setContentView(root)
 
@@ -47,12 +55,72 @@ class ProductDetailsActivity : Activity() {
                 val db = LegacyStagingDatabase(applicationContext)
                 try {
                     val row = LegacyReadRepository(db).byOriginalId(runId, "products", productId)
-                    if (row == null) "لم يُعثر على المنتج في النسخة المستوردة"
-                    else describe(row.fields, productId)
+                    if (row == null) null
+                    else row.fields to repo.productVariants(runId, row.fields.optString("variantGroupId"))
                 } finally { db.close() }
             } catch (e: Exception) { "تعذر قراءة المنتج: " + (e.message ?: "غير معروف") }
-            runOnUiThread { details.text = message }
+            runOnUiThread {
+                if (isFinishing || isDestroyed) return@runOnUiThread
+                content.removeAllViews()
+                if (message == null) {
+                    addText("لم يُعثر على المنتج في النسخة المستوردة")
+                } else {
+                    val product = message.first
+                    addText(describe(product, productId))
+                    for (field in listOf("photo", "photo2", "photo3", "barcodePhoto")) {
+                        val source = product.optString(field)
+                        if (source.isNotBlank()) addImage(source)
+                    }
+                    if (message.second.isNotEmpty()) {
+                        addText("الألوان المرتبطة: " + message.second.size)
+                        message.second.forEach { variant ->
+                            val v = variant.fields
+                            addText(v.optString("variantColor", v.optString("name")) +
+                                " | " + v.opt("stock") + " | " + v.opt("salePrice") +
+                                " " + v.optString("currency") + "\\nID: " + variant.id)
+                        }
+                    }
+                }
+            }
         }.start()
+    }
+
+    private fun addText(value: String) {
+        content.addView(TextView(this).apply {
+            text = value
+            textSize = 16f
+            setPadding(4, 12, 4, 12)
+        })
+    }
+
+    private fun addImage(source: String) {
+        if (!source.startsWith("data:image/") || !source.contains(";base64,")) return
+        val image = try { decodeImage(source, 800) } catch (_: Exception) { null } ?: return
+        content.addView(ImageView(this).apply {
+            setImageBitmap(image)
+            adjustViewBounds = true
+            setOnClickListener {
+                val full = try { decodeImage(source, 1600) } catch (_: Exception) { null }
+                if (full != null) AlertDialog.Builder(this@ProductDetailsActivity)
+                    .setView(ImageView(this@ProductDetailsActivity).apply {
+                        setImageBitmap(full)
+                        adjustViewBounds = true
+                    })
+                    .setPositiveButton("إغلاق", null).show()
+            }
+        }, LinearLayout.LayoutParams(-1, 320))
+    }
+
+    private fun decodeImage(source: String, maxDimension: Int): android.graphics.Bitmap? {
+        val bytes = Base64.decode(source.substringAfter(";base64,"), Base64.DEFAULT)
+        val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        BitmapFactory.decodeByteArray(bytes, 0, bytes.size, bounds)
+        if (bounds.outWidth <= 0 || bounds.outHeight <= 0) return null
+        var sample = 1
+        while (bounds.outWidth / sample > maxDimension * 2 ||
+               bounds.outHeight / sample > maxDimension * 2) sample *= 2
+        return BitmapFactory.decodeByteArray(bytes, 0, bytes.size,
+            BitmapFactory.Options().apply { inSampleSize = sample })
     }
 
     private fun describe(p: JSONObject, originalId: String): String = buildString {
