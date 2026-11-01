@@ -263,6 +263,7 @@ internal object NativeSalesLedger {
         db.execSQL("CREATE TABLE IF NOT EXISTS native_funding_lots (id TEXT PRIMARY KEY, product_id TEXT NOT NULL, purchase_id TEXT NOT NULL, source TEXT NOT NULL, partner_id TEXT NOT NULL, partner_name TEXT NOT NULL, share REAL NOT NULL, qty_original REAL NOT NULL, qty_remaining REAL NOT NULL, unit_cost REAL NOT NULL, currency TEXT NOT NULL, created_at INTEGER NOT NULL)")
         db.execSQL("CREATE TABLE IF NOT EXISTS native_sale_funding_allocations (id TEXT PRIMARY KEY, sale_id TEXT NOT NULL, product_id TEXT NOT NULL, lot_id TEXT NOT NULL, purchase_id TEXT NOT NULL, source TEXT NOT NULL, partner_id TEXT NOT NULL, partner_name TEXT NOT NULL, share REAL NOT NULL, qty REAL NOT NULL, unit_cost REAL NOT NULL, currency TEXT NOT NULL, created_at INTEGER NOT NULL)")
         db.execSQL("CREATE TABLE IF NOT EXISTS native_sales (id TEXT PRIMARY KEY, created_at INTEGER NOT NULL, currency TEXT NOT NULL, channel TEXT NOT NULL, customer TEXT NOT NULL, phone TEXT NOT NULL, total REAL NOT NULL, cost REAL NOT NULL, status TEXT NOT NULL DEFAULT 'active')")
+        db.execSQL("CREATE TABLE IF NOT EXISTS native_sale_invoice_numbers (sale_id TEXT PRIMARY KEY, invoice_no INTEGER NOT NULL UNIQUE)")
         db.execSQL("CREATE TABLE IF NOT EXISTS native_sale_lines (id TEXT PRIMARY KEY, sale_id TEXT NOT NULL, product_id TEXT NOT NULL, quantity INTEGER NOT NULL, unit_price REAL NOT NULL, unit_cost REAL NOT NULL)")
         db.execSQL("CREATE TABLE IF NOT EXISTS native_sale_manual_items (line_id TEXT PRIMARY KEY, name TEXT NOT NULL, model TEXT NOT NULL)")
         db.execSQL("CREATE TABLE IF NOT EXISTS native_sale_discounts (sale_id TEXT PRIMARY KEY, subtotal REAL NOT NULL, manual_discount REAL NOT NULL, rule_discount REAL NOT NULL, tax_rate REAL NOT NULL, tax_amount REAL NOT NULL)")
@@ -411,6 +412,16 @@ internal object NativeSalesLedger {
             arrayOf<Any>(id,subtotal,manualDiscount,ruleDiscount,taxRate,tax))
         require(total>0 || initialCollection==0.0) { "لا يمكن قبض مبلغ لفاتورة قيمتها صفر" }
         db.execSQL("INSERT INTO native_sales VALUES (?,?,?,?,?,?,?,?,?)",arrayOf<Any>(id,now,currency,channel,customer,phone,total,cost,"active"))
+        // The invoice number is allocated in the same transaction as the sale.
+        // Never reuse a number, including cancelled invoices.
+        val legacyMax=db.rawQuery(
+            "SELECT COALESCE(MAX(CAST(json_extract(payload,'$.invoiceNo') AS INTEGER)),0) FROM legacy_records WHERE section='sales' AND json_type(payload,'$.invoiceNo') IN ('integer','real','text') AND CAST(json_extract(payload,'$.invoiceNo') AS TEXT) GLOB '[0-9]*'",
+            null
+        ).use { c -> if(c.moveToFirst()) c.getLong(0) else 0L }
+        val nativeMax=db.rawQuery("SELECT COALESCE(MAX(invoice_no),0) FROM native_sale_invoice_numbers",null)
+            .use { c -> if(c.moveToFirst()) c.getLong(0) else 0L }
+        val next=maxOf(legacyMax,nativeMax)+1L
+        db.execSQL("INSERT INTO native_sale_invoice_numbers(sale_id,invoice_no) VALUES (?,?)",arrayOf<Any>(id,next))
         if(rateSnapshot!=null) db.execSQL("INSERT INTO native_sale_rate_snapshots VALUES (?,?,?,?)",
             arrayOf<Any?>(id,rateSnapshot.TRY,rateSnapshot.SYP,rateSnapshot.TRY_SYP))
         if(initialCollection>0) insertCollection(db,id,initialCollection,currency,account,now,"collection")
