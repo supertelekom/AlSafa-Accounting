@@ -185,7 +185,7 @@ class ProductDetailsActivity : Activity() {
         for ((label, field) in listOf(
             "الماركة" to "brand", "الموديل" to "model",
             "الباركود" to "barcode", "الكمية" to "stock",
-            "سعر البيع" to "salePrice", "التكلفة" to "cost",
+            "سعر البيع" to "salePrice", "رأس المال" to "cost",
             "العملة" to "currency", "اللون" to "variantColor",
             "مجموعة الألوان" to "variantGroupId", "الوصف" to "description",
             "الملاحظات" to "notes"
