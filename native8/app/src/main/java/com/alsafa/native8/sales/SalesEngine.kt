@@ -94,7 +94,8 @@ class SalesEngine(private val context: Context) {
             require(payment.amount <= balance) { "الدفعة أكبر من المتبقي" }
             val newBalance = balance-payment.amount
             db.execSQL("UPDATE customer_receivables SET balance=? WHERE sale_id=?",arrayOf(newBalance.toPlainString(),saleId))
-            db.execSQL("UPDATE sales SET paid=CAST(paid AS REAL)+?, status=? WHERE id=?",arrayOf(payment.amount.toPlainString(),if(newBalance==BigDecimal.ZERO)"مدفوع" else "آجل",saleId))
+            val priorPaid=db.rawQuery("SELECT paid FROM sales WHERE id=?",arrayOf(saleId)).use { c -> require(c.moveToFirst()); c.getString(0).toBigDecimal() }
+            db.execSQL("UPDATE sales SET paid=?, status=? WHERE id=?",arrayOf((priorPaid+payment.amount).toPlainString(),if(newBalance==BigDecimal.ZERO)"مدفوع" else "آجل",saleId))
             val id=UUID.randomUUID().toString()
             val now=System.currentTimeMillis()
             db.insertOrThrow("sale_payments",null,ContentValues().apply {
