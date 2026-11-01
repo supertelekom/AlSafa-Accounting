@@ -13,6 +13,7 @@ import com.alsafa.native8.data.migration.LegacyImportInspector
 import com.alsafa.native8.data.migration.LegacyStagingDatabase
 import com.alsafa.native8.data.operational.OperationalDatabase
 import com.alsafa.native8.data.operational.ProductImportPromoter
+import com.alsafa.native8.sales.LegacySalesArchiveImporter
 
 /** Temporary isolated backup-import verification screen. */
 class RestoreActivity : Activity() {
@@ -92,6 +93,11 @@ class RestoreActivity : Activity() {
                         try { ProductImportPromoter(db, operational).promote(run) }
                         finally { operational.close() }
                     } catch (_: Exception) { null }
+                    val historical = try {
+                        val operational = OperationalDatabase(applicationContext)
+                        try { LegacySalesArchiveImporter(db, operational).importRun(run) }
+                        finally { operational.close() }
+                    } catch (e: Exception) { null }
                     buildString {
                         append(if (staged.alreadyImported) "النسخة موجودة مسبقاً في قاعدة الفحص" else "تم حفظ النسخة في قاعدة الفحص")
                         append("\\n")
@@ -114,6 +120,10 @@ class RestoreActivity : Activity() {
                             append(if (promotion.alreadyImported) " (موجودة مسبقاً)" else " (نقلت الآن)")
                             append("\\n")
                         }
+                        if (historical != null) {
+                            append("الفواتير التاريخية: ").append(historical.count).append("\\n")
+                            append("تحتاج مراجعة: ").append(historical.review).append("\\n")
+                        } else append("تعذر نقل أرشيف الفواتير؛ لم تُرحّل أي حركة مالية تاريخية.\\n")
                         append("افتح المنتجات المستوردة للتحقق من البيانات.")
                     }
                 } finally { db.close() }
