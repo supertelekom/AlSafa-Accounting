@@ -129,7 +129,10 @@ class ProductEditRepository(private val database: OperationalDatabase) {
         require(id.startsWith("local-"))
         validateLocal(product)
         ensureBarcodeUnique(product.optString("barcode").trim(), null, id)
-        val updated = JSONObject(product.toString()).put("id", id)
+        val previous = localById(id) ?: error("Local product not found")
+        val updated = JSONObject(previous.toString())
+        for (key in product.keys()) updated.put(key, product.get(key))
+        updated.put("id", id)
         val rows = database.writableDatabase.update(
             "local_products",
             ContentValues().apply {
