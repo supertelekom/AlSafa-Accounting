@@ -2,6 +2,8 @@ package com.alsafa.native8
 
 import android.app.Activity
 import android.os.Bundle
+import android.text.InputType
+import android.view.inputmethod.EditorInfo
 import android.view.View
 import android.widget.Button
 import android.widget.EditText
@@ -24,9 +26,21 @@ class ProductStockActivity : Activity() {
             setPadding(24, 24, 24, 24)
         }
         root.addView(TextView(this).apply { text = "تسوية كمية المنتج"; textSize = 23f })
-        val amount = EditText(this).apply { hint = "فرق الكمية (+ زيادة، - نقصان)"; setSingleLine() }
-        val note = EditText(this).apply { hint = "سبب التسوية"; setSingleLine() }
+        root.addView(TextView(this).apply { text = "فرق الكمية (مثال: 2 أو -2)" })
+        val amount = EditText(this).apply {
+            hint = "أدخل العدد هنا"
+            inputType = InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_SIGNED or InputType.TYPE_NUMBER_FLAG_DECIMAL
+            setSingleLine(true)
+            imeOptions = EditorInfo.IME_ACTION_NEXT
+        }
         root.addView(amount)
+        root.addView(TextView(this).apply { text = "سبب التسوية" })
+        val note = EditText(this).apply {
+            hint = "اكتب سبب الزيادة أو النقصان هنا"
+            inputType = InputType.TYPE_CLASS_TEXT
+            setSingleLine(true)
+            imeOptions = EditorInfo.IME_ACTION_DONE
+        }
         root.addView(note)
         val status = TextView(this)
         root.addView(status)
@@ -49,10 +63,20 @@ class ProductStockActivity : Activity() {
         root.addView(Button(this).apply {
             text = "حفظ التسوية"
             setOnClickListener {
-                isEnabled = false
-                val button = this
                 val quantity = amount.text.toString().trim()
                 val reason = note.text.toString().trim()
+                if (quantity.isBlank()) {
+                    amount.error = "أدخل فرق الكمية"
+                    amount.requestFocus()
+                    return@setOnClickListener
+                }
+                if (reason.isBlank()) {
+                    note.error = "أدخل سبب التسوية"
+                    note.requestFocus()
+                    return@setOnClickListener
+                }
+                isEnabled = false
+                val button = this
                 Thread {
                     val result = try {
                         val db = OperationalDatabase(applicationContext)
