@@ -1960,13 +1960,16 @@ class MainActivity : Activity() {
                                 arrayOf(id)
                             ).use { c -> if(c.moveToFirst()) c.getDouble(0) else 0.0 }
                             val balance=(total-collected).coerceAtLeast(0.0)
-                            entries.addView(text("$day — $customer — $total $currency — المقبوض: $collected — المتبقي: $balance",15f).apply {
+                            val invoiceNo=db.rawQuery("SELECT invoice_no FROM native_sale_invoice_numbers WHERE sale_id=?",arrayOf(id))
+                                .use { c -> if(c.moveToFirst()) c.getString(0) else null }
+                            entries.addView(text("${invoiceNo?.let { "فاتورة $it — " } ?: ""}$day — $customer — $total $currency — المقبوض: $collected — المتبقي: $balance",15f).apply {
                                 isClickable=true
                                 setOnClickListener {
                                     val details=StringBuilder()
                                     fun addDetail(label:String,value:String) {
                                         details.append(label).append(": ").append(value).append('\n')
                                     }
+                                    if(invoiceNo!=null) addDetail("رقم الفاتورة",invoiceNo)
                                     addDetail("التاريخ",day)
                                     addDetail("الإجمالي","$total $currency")
                                     addDetail("المقبوض","$collected $currency")
