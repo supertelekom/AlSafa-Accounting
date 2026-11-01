@@ -152,6 +152,15 @@ class SalesEngine(private val context: Context) {
             operational.readableDatabase.rawQuery("SELECT id,title,quantity,returned_qty,unit_price FROM sale_lines WHERE sale_id=?",arrayOf(saleId)).use { c ->
                 while(c.moveToNext()) items.add(InvoiceLine(c.getString(0),c.getString(1),c.getString(2),c.getString(3),c.getString(4)))
             }
+            if(items.isEmpty()) {
+                LegacySalesArchiveSchema.ensure(operational.writableDatabase)
+                operational.readableDatabase.rawQuery("SELECT id,original_json FROM legacy_sales_lines WHERE sale_id=? ORDER BY ordinal",arrayOf(saleId)).use { c ->
+                    while(c.moveToNext()) {
+                        val item=org.json.JSONObject(c.getString(1))
+                        items.add(InvoiceLine(c.getString(0),item.optString("name"),item.optString("qty","0"),"0",item.optString("price","0")))
+                    }
+                }
+            }
             return items
         } finally { operational.close() }
     }
