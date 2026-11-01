@@ -1961,8 +1961,7 @@ class MainActivity : Activity() {
                             ).use { c -> if(c.moveToFirst()) c.getDouble(0) else 0.0 }
                             val balance=(total-collected).coerceAtLeast(0.0)
                             val invoiceNo=runCatching {
-                                db.rawQuery("SELECT invoice_no FROM native_sale_invoice_numbers WHERE sale_id=?",arrayOf(id))
-                                    .use { c -> if(c.moveToFirst()) c.getString(0) else null }
+                                NativeSalesLedger.ensureInvoiceNumber(db,id).toString()
                             }.getOrNull()
                             entries.addView(salesInvoiceCard(invoiceNo ?: "غير مرقمة",day,customer,total.toString(),currency,"المقبوض: $collected — المتبقي: $balance") {
                                     val details=StringBuilder()
