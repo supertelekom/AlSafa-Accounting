@@ -14,5 +14,6 @@ class SalesPostingActions(context: Context) {
         return id
     }
     fun collect(saleId: String, amount: String, cashbox: String, currency: String): String =
-        engine.collect(saleId, SalePayment(cashbox, currency, amount.toBigDecimal()))
+        if (saleId.startsWith("sale-")) LegacyReceivablesCollector(appContext).collect(saleId,SalePayment(cashbox,currency,amount.toBigDecimal()))
+        else engine.collect(saleId,SalePayment(cashbox,currency,amount.toBigDecimal()))
 }
