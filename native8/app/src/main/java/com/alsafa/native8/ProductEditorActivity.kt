@@ -43,8 +43,8 @@ class ProductEditorActivity : Activity() {
     }
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode !in 8101..8104 && requestCode !in 8201..8204 && requestCode != 8301) return
-        val fromCamera = requestCode in 8201..8204
+        if (requestCode !in 8101..8104 && requestCode !in 8201..8204 && requestCode != 8301 && requestCode != 8302) return
+        val fromCamera = requestCode in 8201..8204 || requestCode == 8302
         val uri = if (fromCamera) cameraUri else data?.data
         if (resultCode != RESULT_OK || uri == null) {
             if (fromCamera) { cameraUri?.let { contentResolver.delete(it, null, null) }; cameraUri = null }
@@ -72,7 +72,7 @@ class ProductEditorActivity : Activity() {
             val compressed = java.io.ByteArrayOutputStream()
             require(bitmap.compress(Bitmap.CompressFormat.JPEG, 82, compressed)) { "تعذر ضغط الصورة" }
             require(compressed.size() <= 3_000_000) { "الصورة أكبر من الحد المسموح" }
-            if (requestCode == 8301) {
+            if (requestCode == 8301 || requestCode == 8302) {
                 val scanner = BarcodeScanning.getClient(BarcodeScannerOptions.Builder().setBarcodeFormats(Barcode.FORMAT_CODE_128, Barcode.FORMAT_EAN_13, Barcode.FORMAT_EAN_8, Barcode.FORMAT_UPC_A).build())
                 scanner.process(InputImage.fromBitmap(bitmap, 0))
                     .addOnSuccessListener { codes ->
@@ -138,6 +138,27 @@ class ProductEditorActivity : Activity() {
         root.addView(Button(this).apply {
             text = "قراءة الباركود باستخدام Google ML Kit من صورة"
             setOnClickListener { startActivityForResult(Intent(Intent.ACTION_GET_CONTENT).apply { type = "image/*" }, 8301) }
+        })
+        root.addView(Button(this).apply {
+            text = "مسح الباركود بالكاميرا عبر Google ML Kit"
+            setOnClickListener {
+                try {
+                    val values = ContentValues().apply {
+                        put(MediaStore.Images.Media.DISPLAY_NAME, "alsafa_scan_" + System.currentTimeMillis() + ".jpg")
+                        put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg")
+                    }
+                    cameraUri = contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values)
+                        ?: error("تعذر إنشاء صورة المسح")
+                    startActivityForResult(Intent(MediaStore.ACTION_IMAGE_CAPTURE).apply {
+                        putExtra(MediaStore.EXTRA_OUTPUT, cameraUri)
+                        addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION or Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                    }, 8302)
+                } catch (e: Exception) {
+                    cameraUri?.let { contentResolver.delete(it, null, null) }
+                    cameraUri = null
+                    AlertDialog.Builder(this@ProductEditorActivity).setMessage(e.message ?: "تعذر فتح الكاميرا").setPositiveButton("إغلاق", null).show()
+                }
+            }
         })
         root.addView(Button(this).apply {
             text = "معاينة باركود CODE 128"
@@ -237,6 +258,7 @@ class ProductEditorActivity : Activity() {
         })
         setContentView(ScrollView(this).apply { addView(root) })
         if (id != null) {
+            root.findViewWithTag<Button>("save")?.isEnabled = false
             Thread {
                 val existing = try {
                     val db = OperationalDatabase(applicationContext)
@@ -254,6 +276,7 @@ class ProductEditorActivity : Activity() {
                         root.findViewWithTag<Button>("save")?.isEnabled = false
                     } else {
                         for ((key, field) in fields) field.setText(existing.optString(key))
+                        root.findViewWithTag<Button>("save")?.isEnabled = true
                         for (key in photoKeys) {
                             val encoded = existing.optString(key)
                             if (!encoded.startsWith("data:image/")) continue
