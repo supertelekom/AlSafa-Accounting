@@ -32,7 +32,7 @@ class SalePaymentsActivity: ComponentActivity() {
    }) {Text("تسجيل دفعة")}
    Text(vm.status)
    if(vm.saleId.isBlank()) Button(onClick={
-     try { vm.saleId=SalesPostingActions(applicationContext).postDraft(); vm.status="تم حفظ الفاتورة" }
+     try { vm.saleId=SalesPostingActions(applicationContext).postDraft(vm.amount,vm.cashbox,vm.currency); vm.status="تم حفظ الفاتورة" }
      catch(e:Exception){ vm.status=e.message ?: "تعذر حفظ الفاتورة" }
    }) { Text("حفظ الفاتورة") }
   } }
