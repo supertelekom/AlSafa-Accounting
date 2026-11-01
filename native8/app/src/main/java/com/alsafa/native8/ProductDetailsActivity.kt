@@ -2,6 +2,9 @@ package com.alsafa.native8
 
 import android.app.Activity
 import android.app.AlertDialog
+import android.content.Intent
+import android.widget.Button
+import com.alsafa.native8.data.operational.ProductEditRepository
 import android.graphics.BitmapFactory
 import android.util.Base64
 import android.widget.ImageView
@@ -23,6 +26,8 @@ class ProductDetailsActivity : Activity() {
     }
 
     private lateinit var content: LinearLayout
+    private var currentSource: String? = null
+    private var currentId: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -39,6 +44,19 @@ class ProductDetailsActivity : Activity() {
         val details = TextView(this).apply { text = "جاري قراءة المنتج..." ; textSize = 16f }
         content = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
         root.addView(title)
+        root.addView(Button(this).apply {
+            text = "تعديل بيانات المنتج"
+            setOnClickListener {
+                val source = currentSource
+                val id = currentId
+                if (source != null && id != null) {
+                    startActivity(Intent(this@ProductDetailsActivity, ProductEditorActivity::class.java).apply {
+                        putExtra(ProductEditorActivity.EXTRA_SOURCE, source)
+                        putExtra(ProductEditorActivity.EXTRA_ID, id)
+                    })
+                }
+            }
+        })
         content.addView(details)
         root.addView(ScrollView(this).apply { addView(content) },
             LinearLayout.LayoutParams(-1, 0, 1f))
@@ -57,9 +75,11 @@ class ProductDetailsActivity : Activity() {
                     val repository = OperationalProductRepository(db)
                     val source = repository.sourceForRun(runId)
                         ?: error("لم يتم نقل هذه النسخة إلى قاعدة المنتجات التشغيلية")
+                    currentSource = source
+                    currentId = productId
                     val row = repository.byOriginalId(source, productId)
                     if (row == null) null
-                    else row.fields to repository.variants(source, row.fields.optString("variantGroupId"))
+                    else (ProductEditRepository(db).resolved(source, productId) ?: row.fields) to repository.variants(source, row.fields.optString("variantGroupId"))
                 } finally { db.close() }
             } catch (e: Exception) {
                 runOnUiThread { details.text = "تعذر قراءة المنتج: " + (e.message ?: "غير معروف") }
