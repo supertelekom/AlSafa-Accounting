@@ -30,7 +30,15 @@ class ProductEditRepository(private val database: OperationalDatabase) {
             }
             // Keep original identity, inventory, funding and accounting fields untouched.
             val allowed = setOf("name", "brand", "model", "description", "barcode", "category", "salePrice", "cost", "currency", "photo", "photo2", "photo3", "barcodePhoto")
-            val patch = JSONObject()
+            val patch = db.rawQuery(
+                "SELECT edited_json, base_sha256 FROM product_edits WHERE source_sha256=? AND legacy_id=?",
+                arrayOf(source, id)
+            ).use { cursor ->
+                if (cursor.moveToFirst()) {
+                    check(cursor.getString(1) == sha256(base)) { "Product source changed; edit needs review" }
+                    JSONObject(cursor.getString(0))
+                } else JSONObject()
+            }
             for (key in allowed) {
                 if (changed.has(key)) {
                     val value = changed.opt(key)
