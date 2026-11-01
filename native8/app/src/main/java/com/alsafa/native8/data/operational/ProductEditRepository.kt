@@ -14,9 +14,19 @@ class ProductEditRepository(private val database: OperationalDatabase) {
         .digest(value.toByteArray(Charsets.UTF_8))
         .joinToString("") { "%02x".format(it.toInt() and 0xff) }
 
-    private fun ensureBarcodeUnique(barcode: String, excludeSource: String?, excludeId: String?) {
+    fun checkBarcodeAvailable(barcode: String, excludeVariantId: String? = null) {
+        ensureBarcodeUnique(barcode, null, null, excludeVariantId)
+    }
+
+    private fun ensureBarcodeUnique(barcode: String, excludeSource: String?, excludeId: String?, excludeVariantId: String? = null) {
         if (barcode.isBlank()) return
         val db = database.readableDatabase
+        db.rawQuery("SELECT variant_id, variant_json FROM product_variants_local", null).use { cursor ->
+            while (cursor.moveToNext()) {
+                if (cursor.getString(0) != excludeVariantId && JSONObject(cursor.getString(1)).optString("barcode") == barcode)
+                    error("الباركود مستخدم للون آخر")
+            }
+        }
         db.rawQuery("SELECT local_id, product_json FROM local_products", null).use { cursor ->
             while (cursor.moveToNext()) {
                 if (cursor.getString(0) != excludeId && JSONObject(cursor.getString(1)).optString("barcode") == barcode)
