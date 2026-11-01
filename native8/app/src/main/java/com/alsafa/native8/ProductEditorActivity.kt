@@ -22,6 +22,7 @@ import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
 import com.alsafa.native8.data.operational.OperationalDatabase
+import com.alsafa.native8.data.operational.ProductVariantRepository
 import com.alsafa.native8.data.operational.ProductEditRepository
 import org.json.JSONObject
 
@@ -37,6 +38,10 @@ class ProductEditorActivity : Activity() {
     private val photoKeys = listOf("photo", "photo2", "photo3", "barcodePhoto")
     private var cameraUri: Uri? = null
     private var barcodeField: EditText? = null
+    override fun onResume() {
+        super.onResume()
+        // Color list is refreshed when returning from its editor.
+    }
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
         cameraUri?.let { outState.putString("camera_uri", it.toString()) }
@@ -216,6 +221,47 @@ class ProductEditorActivity : Activity() {
                     previews[key]?.setImageDrawable(null)
                 }
             })
+        }
+        if (id != null) {
+            root.addView(TextView(this).apply { text = "ألوان المنتج"; textSize = 21f })
+            val colorList = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+            root.addView(colorList)
+            val colorSource = if (id.startsWith("local-")) "local" else source.orEmpty()
+            fun refreshColors() {
+                Thread {
+                    val result = try {
+                        val db = OperationalDatabase(applicationContext)
+                        try { ProductVariantRepository(db).list(colorSource, id) } finally { db.close() }
+                    } catch (_: Exception) { emptyList<JSONObject>() }
+                    runOnUiThread {
+                        if (isFinishing || isDestroyed) return@runOnUiThread
+                        colorList.removeAllViews()
+                        for (color in result) {
+                            colorList.addView(Button(this@ProductEditorActivity).apply {
+                                text = color.optString("color") + " | " + color.optString("stock") + " | " + color.optString("salePrice")
+                                setOnClickListener {
+                                    startActivity(Intent(this@ProductEditorActivity, ProductColorEditorActivity::class.java).apply {
+                                        putExtra("source", colorSource)
+                                        putExtra("parent", id)
+                                        putExtra("variant", color.optString("id"))
+                                    })
+                                }
+                            })
+                        }
+                    }
+                }.start()
+            }
+            root.addView(Button(this).apply {
+                text = "إضافة لون"
+                setOnClickListener {
+                    startActivity(Intent(this@ProductEditorActivity, ProductColorEditorActivity::class.java).apply {
+                        putExtra("source", colorSource)
+                        putExtra("parent", id)
+                    })
+                }
+            })
+            colorList.tag = "color_list"
+            refreshColors()
         }
         val status = TextView(this).apply {
             text = "الكمية للمنتج المستورد للعرض فقط حتى ربط حركات المخزون؛ لا تُغيّر الفواتير السابقة."
