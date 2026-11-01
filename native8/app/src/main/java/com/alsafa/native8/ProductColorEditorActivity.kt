@@ -3,6 +3,11 @@ package com.alsafa.native8
 import android.app.Activity
 import android.app.AlertDialog
 import android.os.Bundle
+import android.content.Intent
+import android.graphics.BitmapFactory
+import android.graphics.Bitmap
+import android.util.Base64
+import android.widget.ImageView
 import android.view.View
 import android.widget.Button
 import android.widget.EditText
@@ -14,6 +19,39 @@ import com.alsafa.native8.data.operational.ProductVariantRepository
 import org.json.JSONObject
 
 class ProductColorEditorActivity : Activity() {
+    private var photoData: String? = null
+    private var photoPreview: ImageView? = null
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode != 9101 || resultCode != RESULT_OK) return
+        val uri = data?.data ?: return
+        try {
+            val bytes = contentResolver.openInputStream(uri)?.use { input ->
+                val output = java.io.ByteArrayOutputStream()
+                val buffer = ByteArray(8192)
+                while (true) {
+                    val count = input.read(buffer)
+                    if (count < 0) break
+                    require(output.size() + count <= 12_000_000) { "الصورة كبيرة جداً" }
+                    output.write(buffer, 0, count)
+                }
+                output.toByteArray()
+            } ?: error("تعذر قراءة الصورة")
+            val options = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+            BitmapFactory.decodeByteArray(bytes, 0, bytes.size, options)
+            require(options.outWidth > 0 && options.outHeight > 0) { "صورة غير صالحة" }
+            var sample = 1
+            while (options.outWidth / sample > 1200 || options.outHeight / sample > 1200) sample *= 2
+            val bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size, BitmapFactory.Options().apply { inSampleSize = sample }) ?: error("تعذر فك الصورة")
+            val compressed = java.io.ByteArrayOutputStream()
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 80, compressed)
+            require(compressed.size() <= 3_000_000) { "الصورة كبيرة جداً" }
+            photoData = "data:image/jpeg;base64," + Base64.encodeToString(compressed.toByteArray(), Base64.NO_WRAP)
+            photoPreview?.setImageBitmap(bitmap)
+        } catch (e: Exception) {
+            AlertDialog.Builder(this).setMessage(e.message ?: "تعذر تحميل الصورة").setPositiveButton("إغلاق", null).show()
+        }
+    }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val source = intent.getStringExtra("source").orEmpty()
@@ -31,12 +69,22 @@ class ProductColorEditorActivity : Activity() {
         val inputs = linkedMapOf<String, EditText>()
         for ((key, title) in listOf("color" to "اسم اللون", "stock" to "الكمية",
             "salePrice" to "سعر البيع", "cost" to "رأس المال",
-            "barcode" to "الباركود", "photo" to "صورة اللون")) {
+            "barcode" to "الباركود")) {
             root.addView(TextView(this).apply { text = title })
             val input = EditText(this).apply { hint = title; setSingleLine(true) }
             inputs[key] = input
             root.addView(input)
         }
+        root.addView(Button(this).apply {
+            text = "اختيار صورة اللون من الاستديو"
+            setOnClickListener { startActivityForResult(Intent(Intent.ACTION_GET_CONTENT).apply { type = "image/*" }, 9101) }
+        })
+        photoPreview = ImageView(this).apply { adjustViewBounds = true }
+        root.addView(photoPreview, LinearLayout.LayoutParams(-1, 220))
+        root.addView(Button(this).apply {
+            text = "حذف صورة اللون"
+            setOnClickListener { photoData = ""; photoPreview?.setImageDrawable(null) }
+        })
         val status = TextView(this)
         root.addView(status)
         val save = Button(this).apply {
@@ -46,6 +94,7 @@ class ProductColorEditorActivity : Activity() {
                 isEnabled = false
                 val data = JSONObject()
                 inputs.forEach { (key, field) -> data.put(key, field.text.toString().trim()) }
+                photoData?.let { data.put("photo", it) }
                 Thread {
                     val error = try {
                         val db = OperationalDatabase(applicationContext)
@@ -87,6 +136,18 @@ class ProductColorEditorActivity : Activity() {
                     if (color == null) status.text = "تعذر تحميل اللون"
                     else {
                         inputs.forEach { (key, field) -> field.setText(color.optString(key)) }
+                        photoData = color.optString("photo")
+                        try {
+                            val encoded = photoData.orEmpty()
+                            if (encoded.startsWith("data:image/")) {
+                                val bytes = Base64.decode(encoded.substringAfter(";base64,"), Base64.DEFAULT)
+                                val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+                                BitmapFactory.decodeByteArray(bytes, 0, bytes.size, bounds)
+                                var sample = 1
+                                while (bounds.outWidth / sample > 600 || bounds.outHeight / sample > 600) sample *= 2
+                                photoPreview?.setImageBitmap(BitmapFactory.decodeByteArray(bytes, 0, bytes.size, BitmapFactory.Options().apply { inSampleSize = sample }))
+                            }
+                        } catch (_: Exception) { }
                         save.isEnabled = true
                     }
                 }
