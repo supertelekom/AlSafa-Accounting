@@ -81,6 +81,14 @@ class ProductEditorActivity : Activity() {
             fields[key] = edit
             root.addView(edit)
         }
+        root.addView(Button(this).apply {
+            text = "الصورة الرئيسية من الاستديو"
+            setOnClickListener {
+                startActivityForResult(Intent(Intent.ACTION_GET_CONTENT).apply { type = "image/*" }, 8101)
+            }
+        })
+        preview = ImageView(this).apply { adjustViewBounds = true }
+        root.addView(preview, LinearLayout.LayoutParams(-1, 280))
         val status = TextView(this).apply {
             text = "الكمية للمنتج المستورد للعرض فقط حتى ربط حركات المخزون؛ لا تُغيّر الفواتير السابقة."
         }
@@ -95,6 +103,7 @@ class ProductEditorActivity : Activity() {
                 for ((key, field) in fields) {
                     if (field.isEnabled) changed.put(key, field.text.toString().trim())
                 }
+                photo?.let { changed.put("photo", it) }
                 Thread {
                     val outcome = try {
                         val db = OperationalDatabase(applicationContext)
@@ -141,7 +150,16 @@ class ProductEditorActivity : Activity() {
                     if (existing == null) {
                         status.text = "تعذر قراءة المنتج؛ لا تحفظ تعديلات قبل التأكد من بياناته."
                         root.findViewWithTag<Button>("save")?.isEnabled = false
-                    } else for ((key, field) in fields) field.setText(existing.optString(key))
+                    } else {
+                        for ((key, field) in fields) field.setText(existing.optString(key))
+                        photo = existing.optString("photo").takeIf { it.startsWith("data:image/") }
+                        photo?.let {
+                            try {
+                                val bytes = Base64.decode(it.substringAfter(";base64,"), Base64.DEFAULT)
+                                preview?.setImageBitmap(BitmapFactory.decodeByteArray(bytes, 0, bytes.size))
+                            } catch (_: Exception) { }
+                        }
+                    }
                 }
             }.start()
         }
