@@ -5,6 +5,7 @@ import android.app.AlertDialog
 import android.content.Intent
 import android.widget.Button
 import com.alsafa.native8.data.operational.ProductEditRepository
+import com.alsafa.native8.data.operational.ProductStockRepository
 import android.graphics.BitmapFactory
 import android.util.Base64
 import android.widget.ImageView
@@ -90,7 +91,11 @@ class ProductDetailsActivity : Activity() {
                     currentId = productId
                     val row = repository.byOriginalId(source, productId)
                     if (row == null) null
-                    else (ProductEditRepository(db).resolved(source, productId) ?: row.fields) to repository.variants(source, row.fields.optString("variantGroupId"))
+                    else {
+                        val product = ProductEditRepository(db).resolved(source, productId) ?: row.fields
+                        product.put("stock", ProductStockRepository(db).currentStock(source, productId))
+                        product to repository.variants(source, row.fields.optString("variantGroupId"))
+                    }
                 } finally { db.close() }
             } catch (e: Exception) {
                 runOnUiThread { if (::content.isInitialized) { content.removeAllViews(); addText("تعذر قراءة المنتج: " + (e.message ?: "غير معروف")) } }
