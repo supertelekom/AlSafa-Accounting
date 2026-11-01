@@ -160,6 +160,10 @@ class LegacyBackupStager(private val database: LegacyStagingDatabase) {
     private fun readRaw(reader: JsonReader): String {
         val output = StringWriter()
         JsonWriter(output).use { writer ->
+            // Legacy backup fields may be standalone strings, numbers, booleans or null.
+            // Android JsonWriter otherwise rejects primitive roots with:
+            // "JSON must start with an array or an object".
+            writer.isLenient = true
             fun copyValue() {
                 when (reader.peek()) {
                     JsonToken.BEGIN_OBJECT -> {
