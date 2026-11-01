@@ -581,7 +581,6 @@ internal class OriginalPageStructure(
             host.addView(row,LinearLayout.LayoutParams(-1,-2).apply {
                 bottomMargin=dp(18)
             })
-        }
             }
             enforceTajawalRtl(host)
         }
