@@ -14,11 +14,33 @@ class ProductEditRepository(private val database: OperationalDatabase) {
         .digest(value.toByteArray(Charsets.UTF_8))
         .joinToString("") { "%02x".format(it.toInt() and 0xff) }
 
+    private fun ensureBarcodeUnique(barcode: String, excludeSource: String?, excludeId: String?) {
+        if (barcode.isBlank()) return
+        val db = database.readableDatabase
+        db.rawQuery("SELECT local_id, product_json FROM local_products", null).use { cursor ->
+            while (cursor.moveToNext()) {
+                if (cursor.getString(0) != excludeId && JSONObject(cursor.getString(1)).optString("barcode") == barcode)
+                    error("الباركود مستخدم لمنتج محلي آخر")
+            }
+        }
+        db.rawQuery("SELECT p.source_sha256, p.legacy_id, p.original_json, e.edited_json FROM products p LEFT JOIN product_edits e ON e.source_sha256=p.source_sha256 AND e.legacy_id=p.legacy_id", null).use { cursor ->
+            while (cursor.moveToNext()) {
+                val source = cursor.getString(0)
+                val id = cursor.getString(1)
+                if (source == excludeSource && id == excludeId) continue
+                val original = JSONObject(cursor.getString(2))
+                val patch = cursor.getString(3)?.let { JSONObject(it) }
+                val current = patch?.optString("barcode", original.optString("barcode")) ?: original.optString("barcode")
+                if (current == barcode) error("الباركود مستخدم لمنتج مستورد آخر")
+            }
+        }
+    }
     fun saveEdit(source: String, id: String, changed: JSONObject) {
         require(source.isNotBlank() && id.isNotBlank())
         val db = database.writableDatabase
         db.beginTransaction()
         try {
+            if (changed.has("barcode")) ensureBarcodeUnique(changed.optString("barcode").trim(), source, id)
             val base = db.rawQuery(
                 "SELECT original_json FROM products WHERE source_sha256=? AND legacy_id=? LIMIT 2",
                 arrayOf(source, id)
@@ -106,6 +128,7 @@ class ProductEditRepository(private val database: OperationalDatabase) {
     fun updateLocal(id: String, product: JSONObject) {
         require(id.startsWith("local-"))
         validateLocal(product)
+        ensureBarcodeUnique(product.optString("barcode").trim(), null, id)
         val updated = JSONObject(product.toString()).put("id", id)
         val rows = database.writableDatabase.update(
             "local_products",
@@ -120,6 +143,7 @@ class ProductEditRepository(private val database: OperationalDatabase) {
 
     fun createLocal(product: JSONObject): String {
         validateLocal(product)
+        ensureBarcodeUnique(product.optString("barcode").trim(), null, null)
         val id = "local-" + UUID.randomUUID().toString()
         val now = System.currentTimeMillis()
         database.writableDatabase.insertOrThrow("local_products", null, ContentValues().apply {
