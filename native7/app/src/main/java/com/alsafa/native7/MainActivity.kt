@@ -1953,7 +1953,7 @@ class MainActivity : Activity() {
                             if(query.isBlank() && day!=chosenDay) continue
                             if(query.isNotBlank() && !listOf(id,customer,phone,day).any { it.contains(query,true) }) continue
                             shown++
-                            entries.addView(text("$"+"id — $"+"customer — $"+"{cursor.getDouble(4)} $"+"{cursor.getString(5)} — $"+"day",15f).apply {
+                            entries.addView(text("$id — $customer — ${cursor.getDouble(4)} ${cursor.getString(5)} — $day",15f).apply {
                                 isClickable=true
                                 setOnClickListener { invoiceId.setText(id) }
                             })
@@ -1969,7 +1969,7 @@ class MainActivity : Activity() {
                             if(query.isBlank() && day!=chosenDay) continue
                             if(query.isNotBlank() && !listOf(id,customer,phone,day,sale.toString()).any { it.contains(query,true) }) continue
                             shown++
-                            entries.addView(text("$"+"id — $"+"customer — $"+"{sale.optString("total")} $"+"{sale.optString("currency")} — $"+"day",15f))
+                            entries.addView(text("$id — $customer — ${sale.optString(\"total\")} ${sale.optString(\"currency\")} — $day",15f))
                         }
                     }
                     if(shown==0) entries.addView(text("لا توجد فواتير مطابقة لهذا اليوم. اختر تاريخاً آخر أو ابحث في جميع التواريخ.",14f))
