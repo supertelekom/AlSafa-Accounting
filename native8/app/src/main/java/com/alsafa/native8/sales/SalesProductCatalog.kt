@@ -26,10 +26,19 @@ class SalesProductCatalog(context: Context) {
     stock.currentStock(source,id,variant),product.optString("salePrice","0"),product.optString("cost","0")))
   }
   val source=dao.latestSource()
-  if(source!=null) for(row in dao.productPage(source,500,0)) {
-   val product=edits.resolved(source,row.legacy_id) ?: continue
-   add(source,row.legacy_id,null,product,product.optString("name"))
-   if(results.size>=30) break
+  if(source!=null) {
+   var offset=0
+   while(results.size<30) {
+    val page=dao.productPage(source,500,offset)
+    if(page.isEmpty()) break
+    for(row in page) {
+     val product=edits.resolved(source,row.legacy_id) ?: continue
+     add(source,row.legacy_id,null,product,product.optString("name"))
+     if(results.size>=30) break
+    }
+    offset+=page.size
+    if(page.size<500) break
+   }
   }
   for(local in dao.localProducts()) {
    val product=JSONObject(local.product_json)
