@@ -187,18 +187,37 @@ class RoomSalesEngine(context: Context) {
         val sale = requireNotNull(posting.sale(saleId)) { "الإلغاء متاح للفواتير الجديدة فقط" }
         require(sale.status != "ملغاة") { "الفاتورة ملغاة مسبقاً" }
         val movements = payments.cashboxMovements(saleId)
-        val currencies = movements.map { it.currency }.distinct()
-        require(currencies.size <= 1) {
-            "إلغاء قبض متعدد العملات يتطلب مراجعة أسعار الصرف المسجلة؛ لم تُسجل في هذه الفاتورة"
+        val receipts = payments.payments(saleId)
+        require(receipts.isNotEmpty() || movements.isEmpty()) { "سجل الدفعات مفقود" }
+        val mixed = receipts.map { it.currency }.distinct().size > 1
+        if (mixed) {
+            require(receipts.all { it.invoice_currency == "USD" && it.fx_rate != null && it.credited_amount != null }) {
+                "توجد دفعات قديمة دون أسعار صرف محفوظة؛ الإلغاء موقوف"
+            }
+            require(movements.none { it.amount.toBigDecimal() < BigDecimal.ZERO }) {
+                "الإلغاء بعد مرتجع مختلط يتطلب ربط الردود بالدفعات الأصلية"
+            }
         }
         val grouped = movements.groupBy { it.cashbox to it.currency }
             .mapValues { (_, entries) -> entries.fold(BigDecimal.ZERO) { a, entry ->
                 a + entry.amount.toBigDecimal()
             } }
         require(grouped.values.all { it >= BigDecimal.ZERO }) { "حركات رد المبالغ غير متسقة" }
-        val outstanding = grouped.values.fold(BigDecimal.ZERO, BigDecimal::add)
-        require(outstanding.compareTo(sale.paid.toBigDecimal()) == 0) {
-            "المقبوض في الفاتورة لا يطابق صافي حركات الصناديق؛ الإلغاء موقوف لحماية البيانات"
+        val outstandingBase = if (mixed) receipts.fold(BigDecimal.ZERO) { a, payment ->
+            a + payment.credited_amount!!.toBigDecimal()
+        } else grouped.values.fold(BigDecimal.ZERO, BigDecimal::add)
+        require(outstandingBase.compareTo(sale.paid.toBigDecimal()) == 0) {
+            "المقبوض لا يطابق سجل الدفعات؛ الإلغاء موقوف لحماية البيانات"
+        }
+        if (mixed) {
+            val recorded = movements.filter { it.amount.toBigDecimal() > BigDecimal.ZERO }
+                .groupBy { it.cashbox to it.currency }.mapValues { (_, entries) ->
+                    entries.fold(BigDecimal.ZERO) { a, entry -> a + entry.amount.toBigDecimal() }
+                }
+            val expected = receipts.groupBy { it.cashbox to it.currency }.mapValues { (_, entries) ->
+                entries.fold(BigDecimal.ZERO) { a, entry -> a + entry.amount.toBigDecimal() }
+            }
+            require(recorded == expected) { "حركات الصناديق لا تطابق سجل القبض" }
         }
         val lines = posting.lines(saleId)
         require(lines.isNotEmpty()) { "الفاتورة بلا بنود" }
