@@ -10,8 +10,9 @@ import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
-import com.alsafa.native8.data.operational.OperationalDatabase
-import com.alsafa.native8.data.operational.ProductStockRepository
+import com.alsafa.native8.sales.AppDatabase
+import kotlinx.coroutines.runBlocking
+import com.alsafa.native8.data.operational.RoomProductStockRepository
 
 /** Explicit manual inventory adjustment; imported base stock remains immutable. */
 class ProductStockActivity : Activity() {
@@ -48,8 +49,7 @@ class ProductStockActivity : Activity() {
         root.addView(history)
         fun refresh() {
             Thread {
-                val db = OperationalDatabase(applicationContext)
-                val rows = try { ProductStockRepository(db).history(source, parent, variant) } finally { db.close() }
+                val rows = runBlocking { RoomProductStockRepository(AppDatabase.get(applicationContext)).history(source, parent, variant) }
                 runOnUiThread {
                     if (isFinishing || isDestroyed) return@runOnUiThread
                     history.removeAllViews()
@@ -79,9 +79,7 @@ class ProductStockActivity : Activity() {
                 val button = this
                 Thread {
                     val result = try {
-                        val db = OperationalDatabase(applicationContext)
-                        try { ProductStockRepository(db).adjust(source, parent, variant, quantity, reason) }
-                        finally { db.close() }
+                        runBlocking { RoomProductStockRepository(AppDatabase.get(applicationContext)).adjust(source, parent, variant, quantity, reason) }
                         null
                     } catch (e: Exception) { e.message ?: "فشل حفظ التسوية" }
                     runOnUiThread {
