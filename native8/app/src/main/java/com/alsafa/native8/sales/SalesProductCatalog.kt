@@ -50,6 +50,6 @@ class SalesProductCatalog(context: Context) {
    add(variant.parent_source,variant.parent_id,variant.variant_id,product,product.optString("color"))
    if(results.size>=30) break
   }
-  results
+  return results
  }
 }
