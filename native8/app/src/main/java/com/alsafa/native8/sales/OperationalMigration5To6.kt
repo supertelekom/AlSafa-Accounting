@@ -105,6 +105,26 @@ object OperationalMigration5To6 : Migration(5, 6) {
                 db.execSQL("ALTER TABLE $temp RENAME TO $table")
             }
         }
+        // Source imports are referenced by products and product_edits. Defer FK
+        // enforcement until the parent table is recreated in this transaction.
+        db.query("PRAGMA table_info(source_imports)").use { info ->
+            var rebuild = false
+            while (info.moveToNext()) {
+                if (info.getString(1) == "source_sha256" && info.getInt(3) == 0) rebuild = true
+            }
+            if (rebuild) {
+                db.query("SELECT COUNT(*) FROM source_imports WHERE source_sha256 IS NULL").use { invalid ->
+                    check(invalid.moveToFirst() && invalid.getLong(0) == 0L) {
+                        "Null import source keys; refusing migration"
+                    }
+                }
+                db.execSQL("PRAGMA defer_foreign_keys = ON")
+                db.execSQL("CREATE TABLE source_imports_room_migration (source_sha256 TEXT NOT NULL PRIMARY KEY, source_run_id INTEGER NOT NULL, imported_at INTEGER NOT NULL, product_count INTEGER NOT NULL)")
+                db.execSQL("INSERT INTO source_imports_room_migration SELECT source_sha256, source_run_id, imported_at, product_count FROM source_imports")
+                db.execSQL("DROP TABLE source_imports")
+                db.execSQL("ALTER TABLE source_imports_room_migration RENAME TO source_imports")
+            }
+        }
         // Existing UNIQUE constraints remain in place. Explicit Room indexes
         // add schema metadata without rebuilding or deleting any ledger rows.
         db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS idx_sales_number_unique ON sales(number)")
