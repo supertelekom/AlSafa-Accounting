@@ -4,8 +4,8 @@ import android.app.Activity
 import android.app.AlertDialog
 import android.content.Intent
 import android.widget.Button
-import com.alsafa.native8.data.operational.ProductEditRepository
-import com.alsafa.native8.data.operational.ProductStockRepository
+import com.alsafa.native8.data.operational.RoomProductEditRepository
+import com.alsafa.native8.data.operational.RoomProductStockRepository
 import android.graphics.BitmapFactory
 import android.util.Base64
 import android.widget.ImageView
@@ -15,12 +15,14 @@ import android.view.View
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
-import com.alsafa.native8.data.operational.OperationalDatabase
-import com.alsafa.native8.data.operational.OperationalProductRepository
+import com.alsafa.native8.sales.AppDatabase
+import kotlinx.coroutines.runBlocking
+import com.alsafa.native8.data.operational.RoomInventoryRepository
 import org.json.JSONObject
 
 /** Read-only details of an original product; never edits inventory or prices. */
 class ProductDetailsActivity : Activity() {
+    private data class VariantDisplay(val id: String, val fields: JSONObject)
     companion object {
         const val EXTRA_RUN_ID = "legacy_run_id"
         const val EXTRA_PRODUCT_ID = "legacy_product_id"
@@ -82,21 +84,25 @@ class ProductDetailsActivity : Activity() {
     private fun loadDetails(runId: Long, productId: String) {
         Thread {
             val message = try {
-                val db = OperationalDatabase(applicationContext)
-                try {
-                    val repository = OperationalProductRepository(db)
-                    val source = repository.sourceForRun(runId)
+                runBlocking {
+                    val db = AppDatabase.get(applicationContext)
+                    val source = db.operationalInventoryWriteDao().sourceForRun(runId)
                         ?: error("لم يتم نقل هذه النسخة إلى قاعدة المنتجات التشغيلية")
                     currentSource = source
                     currentId = productId
-                    val row = repository.byOriginalId(source, productId)
+                    val repository = RoomInventoryRepository(db)
+                    val row = db.operationalInventoryWriteDao().byOriginalId(source, productId).singleOrNull()
                     if (row == null) null
                     else {
-                        val product = ProductEditRepository(db).resolved(source, productId) ?: row.fields
-                        product.put("stock", ProductStockRepository(db).currentStock(source, productId))
-                        product to repository.variants(source, row.fields.optString("variantGroupId"))
+                        val product = RoomProductEditRepository(db).resolved(source, productId)
+                            ?: JSONObject(row.original_json)
+                        product.put("stock", RoomProductStockRepository(db).currentStock(source, productId))
+                        val variants = db.operationalInventoryWriteDao().importedVariants(
+                            source, JSONObject(row.original_json).optString("variantGroupId")
+                        ).map { VariantDisplay(it.legacy_id, JSONObject(it.original_json)) }
+                        product to variants
                     }
-                } finally { db.close() }
+                }
             } catch (e: Exception) {
                 runOnUiThread { if (::content.isInitialized) { content.removeAllViews(); addText("تعذر قراءة المنتج: " + (e.message ?: "غير معروف")) } }
                 return@Thread
