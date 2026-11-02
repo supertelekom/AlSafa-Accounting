@@ -17,8 +17,9 @@ import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
-import com.alsafa.native8.data.operational.OperationalDatabase
-import com.alsafa.native8.data.operational.ProductVariantRepository
+import com.alsafa.native8.sales.AppDatabase
+import kotlinx.coroutines.runBlocking
+import com.alsafa.native8.data.operational.RoomProductVariantRepository
 import org.json.JSONObject
 import com.google.mlkit.vision.barcode.BarcodeScanning
 import com.google.mlkit.vision.common.InputImage
@@ -169,9 +170,7 @@ class ProductColorEditorActivity : Activity() {
                 photoData?.let { data.put("photo", it) }
                 Thread {
                     val error = try {
-                        val db = OperationalDatabase(applicationContext)
-                        try { ProductVariantRepository(db).save(source, parent, data, variantId) }
-                        finally { db.close() }
+                        runBlocking { RoomProductVariantRepository(AppDatabase.get(applicationContext)).save(source, parent, data, variantId) }
                         null
                     } catch (e: Exception) { e.message ?: "تعذر حفظ اللون" }
                     runOnUiThread {
@@ -200,20 +199,17 @@ class ProductColorEditorActivity : Activity() {
                         .setNegativeButton("إلغاء", null)
                         .setPositiveButton("حذف") { _, _ ->
                             Thread {
-                                val db = OperationalDatabase(applicationContext)
                                 val failure = try {
-                                    ProductVariantRepository(db).delete(source, parent, variantId)
+                                    runBlocking { RoomProductVariantRepository(AppDatabase.get(applicationContext)).delete(source, parent, variantId) }
                                     null
                                 } catch (e: Exception) { e.message ?: "تعذر حذف اللون" }
-                                finally { db.close() }
                                 runOnUiThread { if (failure == null) finish() else status.text = failure }
                             }.start()
                         }.show()
                 }
             })
             Thread {
-                val db = OperationalDatabase(applicationContext)
-                val color = try { ProductVariantRepository(db).get(variantId) } finally { db.close() }
+                val color = runBlocking { RoomProductVariantRepository(AppDatabase.get(applicationContext)).get(variantId) }
                 runOnUiThread {
                     if (isFinishing || isDestroyed) return@runOnUiThread
                     if (color == null) status.text = "تعذر تحميل اللون"
