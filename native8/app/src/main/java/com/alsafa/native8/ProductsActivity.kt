@@ -13,15 +13,18 @@ import android.widget.ScrollView
 import android.widget.TextView
 import com.alsafa.native8.data.migration.LegacyReadRepository
 import com.alsafa.native8.data.migration.LegacyStagingDatabase
-import com.alsafa.native8.data.operational.OperationalDatabase
-import com.alsafa.native8.data.operational.ProductImportPromoter
-import com.alsafa.native8.data.operational.OperationalProductRepository
-import com.alsafa.native8.data.operational.ProductSnapshotAudit
-import com.alsafa.native8.data.operational.ProductEditRepository
-import com.alsafa.native8.data.operational.ProductStockRepository
+import com.alsafa.native8.sales.AppDatabase
+import kotlinx.coroutines.runBlocking
+import com.alsafa.native8.data.operational.RoomProductImportPromoter
+import com.alsafa.native8.data.operational.RoomInventoryRepository
+import com.alsafa.native8.data.operational.RoomProductSnapshotAudit
+import com.alsafa.native8.data.operational.RoomProductEditRepository
+import com.alsafa.native8.data.operational.RoomProductStockRepository
 
 /** Read-only preview. Replace its visual layout with the exact legacy design. */
 class ProductsActivity : Activity() {
+    private data class ProductDisplayRow(val id: String, val ordinal: Int, val fields: org.json.JSONObject)
+    private data class ProductDisplayPage(val rows: List<ProductDisplayRow>, val total: Int, val sourceSha256: String)
     private lateinit var status: TextView
     private lateinit var items: LinearLayout
     private lateinit var databaseStatus: TextView
@@ -114,31 +117,29 @@ class ProductsActivity : Activity() {
         Thread {
             val result = try {
                 val staging = LegacyStagingDatabase(applicationContext)
-                val operational = OperationalDatabase(applicationContext)
                 try {
                     val legacy = LegacyReadRepository(staging)
                     val run = legacy.latestRunId()
                     if (run == null) null
-                    else {
-                        ProductImportPromoter(staging, operational).promote(run)
-                        val repo = OperationalProductRepository(operational)
-                        val source = repo.sourceForRun(run) ?: error("لم يتم نقل النسخة المحددة إلى SQLite التشغيلية")
-                        val page = repo.page(source, requestedOffset, pageSize)
-                        val stagedCount = staging.readableDatabase.rawQuery("SELECT COUNT(*) FROM legacy_records WHERE run_id=? AND section='products'", arrayOf(run.toString())).use { cursor -> cursor.moveToFirst(); cursor.getInt(0) }
-                        val audit = ProductSnapshotAudit(staging, operational).inspect(run, source)
-                        val edits = ProductEditRepository(operational)
-                        val stockRepo = ProductStockRepository(operational)
-                        val resolvedRows = page.rows.map { row ->
-                            val product = edits.resolved(source, row.id) ?: row.fields
+                    else runBlocking {
+                        val room = AppDatabase.get(applicationContext)
+                        RoomProductImportPromoter(staging, room).promote(run)
+                        val repo = RoomInventoryRepository(room)
+                        val dao = room.operationalInventoryWriteDao()
+                        val source = dao.sourceForRun(run) ?: error("لم يتم العثور على مصدر المنتجات")
+                        val rows = repo.page(source, requestedOffset, pageSize)
+                        val stockRepo = RoomProductStockRepository(room)
+                        val resolved = rows.map { row ->
+                            val product = row.data
                             product.put("stock", stockRepo.currentStock(source, row.id))
-                            row.copy(fields = product)
+                            ProductDisplayRow(row.id, row.ordinal, product)
                         }
-                        Pair(Triple(run, page.copy(rows = resolvedRows), audit), edits.localProducts())
+                        val page = ProductDisplayPage(resolved, dao.productCount(source), source)
+                        val audit = RoomProductSnapshotAudit(staging, room).inspect(run, source)
+                        val locals = RoomProductEditRepository(room).localProducts()
+                        Pair(Triple(run, page, audit), locals)
                     }
-                } finally {
-                    operational.close()
-                    staging.close()
-                }
+                } finally { staging.close() }                }
             } catch (e: Exception) {
                 runOnUiThread {
                     if (serial == requestSerial && !isFinishing && !isDestroyed) {
