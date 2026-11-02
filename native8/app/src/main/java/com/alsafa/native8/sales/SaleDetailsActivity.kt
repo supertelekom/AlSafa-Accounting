@@ -10,15 +10,36 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-class SaleDetailsViewModel: ViewModel() { var saleId by mutableStateOf(""); var lines by mutableStateOf<List<SalesEngine.InvoiceLine>>(emptyList()) }
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
+class SaleDetailsViewModel: ViewModel() { var saleId by mutableStateOf(""); var lines by mutableStateOf<List<SalesEngine.InvoiceLine>>(emptyList()); var total by mutableStateOf<String?>(null); var paid by mutableStateOf<String?>(null); var due by mutableStateOf<String?>(null) }
 class SaleDetailsActivity: ComponentActivity() {
  override fun onCreate(savedInstanceState: Bundle?) {
   super.onCreate(savedInstanceState)
   val vm=ViewModelProvider(this)[SaleDetailsViewModel::class.java]
   vm.saleId=intent.getStringExtra("sale_id").orEmpty()
   vm.lines=SalesEngine(applicationContext).lines(vm.saleId)
+  lifecycleScope.launch {
+   val db = AppDatabase.get(applicationContext)
+   val sale = db.salesPostingDao().sale(vm.saleId)
+   val debt = db.legacyReceivablesDao().bySaleId(vm.saleId)
+   if (sale != null) {
+    vm.total = sale.total
+    vm.paid = sale.paid
+    vm.due = debt?.balance ?: (sale.total.toBigDecimal() - sale.paid.toBigDecimal()).max(java.math.BigDecimal.ZERO).toPlainString()
+   }
+  }
   setContent { SalesFrame("تفاصيل الفاتورة") {
    Text("الفاتورة: "+vm.saleId)
+   if (vm.total != null) {
+    Card(modifier=Modifier.fillMaxWidth()) {
+     Column(modifier=Modifier.padding(16.dp), verticalArrangement=Arrangement.spacedBy(8.dp)) {
+      Text("الصافي: "+vm.total)
+      Text("المدفوع: "+vm.paid)
+      Text("المتبقي: "+vm.due, style=MaterialTheme.typography.titleLarge)
+     }
+    }
+   }
    vm.lines.forEach { line ->
     Card(modifier=Modifier.fillMaxWidth()) {
      Column(modifier=Modifier.padding(16.dp), verticalArrangement=Arrangement.spacedBy(8.dp)) {
