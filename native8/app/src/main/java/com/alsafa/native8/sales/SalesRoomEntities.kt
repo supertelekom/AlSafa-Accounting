@@ -16,7 +16,8 @@ data class RoomSaleLine(@PrimaryKey val id:String,val sale_id:String,val source:
 
 @Entity(tableName="sale_payments")
 data class RoomSalePayment(@PrimaryKey val id:String,val sale_id:String,val cashbox:String,
- val currency:String,val amount:String,val created_at:Long)
+ val currency:String,val amount:String,val created_at:Long,
+ val invoice_currency:String?=null,val fx_rate:String?=null,val credited_amount:String?=null)
 
 @Entity(tableName="sale_returns")
 data class RoomSaleReturn(@PrimaryKey val id:String,val sale_id:String,val line_id:String,
