@@ -1,6 +1,7 @@
 package com.alsafa.native8.sales
 
 import android.os.Bundle
+import android.content.Intent
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.*
@@ -28,6 +29,9 @@ class CashboxMovementsActivity : ComponentActivity() {
             Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text("حركات الصناديق", style = MaterialTheme.typography.headlineSmall)
+                OutlinedButton(onClick = {
+                    startActivity(Intent(this@CashboxMovementsActivity, LegacyCashboxHistoryActivity::class.java))
+                }) { Text("فحص العمليات التاريخية المستعادة") }
                 SalesPaymentSelectors(selectedCashbox, { selectedCashbox = it },
                     selectedCurrency, { selectedCurrency = it })
                 val filtered = movements.filter {
