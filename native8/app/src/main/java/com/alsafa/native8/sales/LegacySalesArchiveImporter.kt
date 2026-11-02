@@ -30,11 +30,12 @@ class LegacySalesArchiveImporter(
      while(rows.moveToNext()) {
       val raw=rows.getString(0)
       val sale=JSONObject(raw)
-      val id=sale.getString("id")
+      val id=sale.getString("id").trim()
       val number=sale.getLong("invoiceNo")
       val total=sale.getString("total").toBigDecimal()
       val paid=sale.getString("paid").toBigDecimal().max(historicalPayments[id] ?: BigDecimal.ZERO)
-      require(number>0 && total>=BigDecimal.ZERO && paid>=BigDecimal.ZERO)
+      require(id.isNotEmpty() && number>0 && total>=BigDecimal.ZERO && paid>=BigDecimal.ZERO)
+      check(dao.legacyById(id)==null) { "Duplicate legacy invoice ID: $id" }
       val status=sale.optString("paymentStatus")
       val safe=paid<=total && !status.contains("مسترجع") && !status.contains("مسوّاة") &&
        !(status.contains("مدفوع بالكامل") && paid<total)
