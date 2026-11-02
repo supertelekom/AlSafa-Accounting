@@ -8,15 +8,29 @@ import androidx.compose.runtime.*
 import androidx.compose.material3.*
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 class FullSaleViewModel: ViewModel() {
     var search by mutableStateOf("")
     var quantity by mutableStateOf("1")
     var choices by mutableStateOf<List<SaleChoice>>(emptyList())
     var notice by mutableStateOf("")
+    private var searchJob: Job? = null
     fun searchProducts(value: String, catalog: SalesProductCatalog) {
         search = value
-        choices = catalog.find(value)
+        searchJob?.cancel()
+        choices = emptyList()
+        if (value.isBlank()) return
+        searchJob = viewModelScope.launch {
+            delay(250)
+            try { choices = withContext(Dispatchers.IO) { catalog.find(value) } }
+            catch (e: Exception) { if (e is kotlinx.coroutines.CancellationException) throw e; notice = e.message ?: "تعذر البحث" }
+        }
     }
     fun add(choice: SaleChoice) {
         notice = try { SalesDraftSession.add(choice, quantity.toBigDecimal()) }
