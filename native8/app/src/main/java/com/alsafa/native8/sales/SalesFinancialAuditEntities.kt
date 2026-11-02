@@ -30,3 +30,15 @@ data class SaleRefundAllocation(
  val exchange_rate_to_base:String,
  val refunded_at:Long
 )
+
+/** Compensating profit entries; the original collection event remains immutable. */
+@Entity(tableName="sale_profit_reversals", indices=[Index(value=["sale_id"]),Index(value=["payment_id"])])
+data class SaleProfitReversal(
+ @PrimaryKey val id:String,
+ val sale_id:String,
+ val payment_id:String,
+ val refund_movement_id:String,
+ val reversed_base:String,
+ val reversed_profit:String,
+ val reversed_at:Long
+)
