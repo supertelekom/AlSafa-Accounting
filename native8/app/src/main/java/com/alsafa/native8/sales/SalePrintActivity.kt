@@ -17,10 +17,17 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
 import java.math.BigDecimal
+import android.os.Build
+import android.Manifest
+import android.content.pm.PackageManager
+import androidx.activity.result.contract.ActivityResultContracts
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 /** System print / PDF export. Does not post or alter any accounting records. */
 class SalePrintActivity : ComponentActivity() {
     private var printView: WebView? = null
+    private val bluetoothPermission = registerForActivityResult(ActivityResultContracts.RequestPermission()) { }
     override fun onDestroy() {
         printView?.destroy()
         printView = null
@@ -33,6 +40,9 @@ class SalePrintActivity : ComponentActivity() {
         var plain by mutableStateOf("")
         var error by mutableStateOf("")
         var loading by mutableStateOf(true)
+        var devices by mutableStateOf<List<ThermalBluetoothPrinter.PairedPrinter>>(emptyList())
+        var selectedPrinter by mutableStateOf("")
+        var width by mutableStateOf(80)
         lifecycleScope.launch {
             try {
                 val db = AppDatabase.get(applicationContext)
@@ -98,7 +108,40 @@ class SalePrintActivity : ComponentActivity() {
                             error = "واتساب Business غير مثبت أو غير متاح"
                         }
                     }) { Text("مشاركة نص الفاتورة عبر واتساب Business") }
-                    Text("هذه طباعة نظام أندرويد مؤقتة؛ قالب الصفا الأصلي والطباعة الحرارية المباشرة وإرسال PDF ما زالت تحتاج ربطاً.")
+                    HorizontalDivider()
+                    Text("طابعة حرارية مقترنة", style = MaterialTheme.typography.titleMedium)
+                    Button(onClick = {
+                        if (Build.VERSION.SDK_INT >= 31 &&
+                            checkSelfPermission(Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
+                            bluetoothPermission.launch(Manifest.permission.BLUETOOTH_CONNECT)
+                        } else {
+                            try { devices = ThermalBluetoothPrinter(applicationContext).paired() }
+                            catch (e: Exception) { error = e.message ?: "تعذر قراءة الطابعات" }
+                        }
+                    }) { Text("عرض الطابعات المقترنة") }
+                    devices.forEach { printer ->
+                        OutlinedButton(onClick = { selectedPrinter = printer.address }) {
+                            Text((if (selectedPrinter == printer.address) "✓ " else "") + printer.name)
+                        }
+                    }
+                    Row {
+                        listOf(58, 80).forEach { size ->
+                            OutlinedButton(onClick = { width = size }) {
+                                Text((if (width == size) "✓ " else "") + "$size مم")
+                            }
+                        }
+                    }
+                    Button(enabled = selectedPrinter.isNotBlank(), onClick = {
+                        lifecycleScope.launch {
+                            try {
+                                withContext(Dispatchers.IO) {
+                                    ThermalBluetoothPrinter(applicationContext).print(selectedPrinter, plain, width)
+                                }
+                                error = "أُرسلت بيانات الطباعة للطابعة"
+                            } catch (e: Exception) { error = e.message ?: "فشل الاتصال بالطابعة" }
+                        }
+                    }) { Text("طباعة بلوتوث تجريبية") }
+                    Text("الطباعة المباشرة الحالية نصية تجريبية؛ دعم العربية وقالب الصفا الأصلي وإرسال PDF يحتاج اختبار الطابعة وربط القالب.")
                 }
             }
         }
