@@ -139,7 +139,7 @@ class ProductsActivity : Activity() {
                         val locals = RoomProductEditRepository(room).localProducts()
                         Pair(Triple(run, page, audit), locals)
                     }
-                } finally { staging.close() }                }
+                } finally { staging.close() }
             } catch (e: Exception) {
                 runOnUiThread {
                     if (serial == requestSerial && !isFinishing && !isDestroyed) {
