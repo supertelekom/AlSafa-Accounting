@@ -31,6 +31,7 @@ import com.alsafa.native8.data.operational.OperationalInventoryWriteDao
 abstract class AppDatabase:RoomDatabase() {
  abstract fun operationalInventoryReadDao():OperationalInventoryReadDao
  abstract fun operationalInventoryWriteDao():OperationalInventoryWriteDao
+ abstract fun salesPostingDao():SalesPostingDao
  abstract fun legacySaleDao():LegacySaleDao
  abstract fun legacyPaymentDao():LegacyPaymentDao
  abstract fun legacyReceivablesDao():LegacyReceivablesDao
