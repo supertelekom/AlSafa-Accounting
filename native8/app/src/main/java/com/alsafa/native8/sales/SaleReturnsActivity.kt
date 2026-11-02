@@ -20,8 +20,7 @@ else Text("تم تحديد بند الفاتورة")
 SalesInput("الكمية المرتجعة",vm.quantity){vm.quantity=it}
 SalesInput("السبب",vm.reason){vm.reason=it}
 Text("في حال وجود مبلغ مقبوض يُرد من الصندوق التالي:")
-SalesInput("صندوق رد المبلغ",vm.refundCashbox){vm.refundCashbox=it}
-SalesInput("عملة رد المبلغ",vm.refundCurrency){vm.refundCurrency=it}
+SalesPaymentSelectors(vm.refundCashbox,{vm.refundCashbox=it},vm.refundCurrency,{vm.refundCurrency=it})
 Button(enabled=vm.lineId.isNotBlank(),onClick={
  try { val id=SalesEngine(applicationContext).returnLine(vm.saleId,vm.lineId,vm.quantity.toBigDecimal(),vm.reason,vm.refundCashbox,vm.refundCurrency);vm.status="تم تسجيل المرتجع: "+id }
  catch(e:Exception){vm.status=e.message ?: "تعذر المرتجع"}
