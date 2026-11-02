@@ -99,7 +99,7 @@ class LegacyBackupStager(private val database: LegacyStagingDatabase) {
                 require(sawSettings && sawProducts && sawSales) { "Missing essential legacy sections: settings/products/sales" }
                 db.execSQL(
                     "UPDATE import_runs SET format_version=?, exported_at=?, app_version=?, record_count=? WHERE id=?",
-                    arrayOf(version ?: 2, exportedAt, appVersion, count, runId)
+                    arrayOf<Any?>(version ?: 2, exportedAt, appVersion, count, runId)
                 )
                 db.setTransactionSuccessful()
                 return Result(sha, count, false)
