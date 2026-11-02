@@ -3,6 +3,7 @@ package com.alsafa.native8
 import android.app.Activity
 import android.content.Intent
 import com.alsafa.native8.sales.SalesArchiveActivity
+import com.alsafa.native8.sales.CashboxMovementsActivity
 import android.graphics.Color
 import android.os.Bundle
 import android.view.Gravity
@@ -66,6 +67,10 @@ class MainActivity : Activity() {
         root.addView(Button(this).apply {
             text = "فواتير المبيع والقبض"
             setOnClickListener { startActivity(Intent(this@MainActivity, SalesArchiveActivity::class.java)) }
+        }, LinearLayout.LayoutParams(-1, 76))
+        root.addView(Button(this).apply {
+            text = "حركات الصناديق / شام كاش"
+            setOnClickListener { startActivity(Intent(this@MainActivity, CashboxMovementsActivity::class.java)) }
         }, LinearLayout.LayoutParams(-1, 76))
         setContentView(root)
     }
