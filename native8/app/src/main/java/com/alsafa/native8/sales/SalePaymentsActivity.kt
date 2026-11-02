@@ -6,6 +6,7 @@ import androidx.compose.runtime.*
 import androidx.compose.material3.*
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import java.math.BigDecimal
 class SalePaymentsViewModel: ViewModel() {
  var amount by mutableStateOf("")
  var cashbox by mutableStateOf("الدرج")
@@ -20,6 +21,22 @@ class SalePaymentsActivity: ComponentActivity() {
   val vm=ViewModelProvider(this)[SalePaymentsViewModel::class.java]
   vm.saleId=intent.getStringExtra("sale_id").orEmpty()
   setContent { SalesFrame("القبض والدفعات") {
+   if (vm.saleId.isBlank()) {
+    val draft = runCatching { SalesDraftSession.draft() }.getOrNull()
+    if (draft != null && draft.lines.isNotEmpty()) {
+     val total = draft.lines.fold(BigDecimal.ZERO) { sum, line -> sum + line.quantity * line.unitPrice }
+     val discount = draft.discount + draft.lines.fold(BigDecimal.ZERO) { sum, line -> sum + line.discount }
+     val net = total - discount
+     val alreadyPaid = draft.payments.fold(BigDecimal.ZERO) { sum, payment -> sum + payment.amount }
+     val current = vm.amount.toBigDecimalOrNull() ?: BigDecimal.ZERO
+     Text("الإجمالي: " + total.toPlainString())
+     Text("الخصم: " + discount.toPlainString())
+     Text("الصافي: " + net.toPlainString())
+     Text("المدفوع: " + (alreadyPaid + current).toPlainString())
+     Text("المتبقي: " + (net - alreadyPaid - current).max(BigDecimal.ZERO).toPlainString(),
+      style = MaterialTheme.typography.titleLarge)
+    }
+   }
    SalesInput("المبلغ",vm.amount){vm.amount=it}
    SalesInput("الصندوق",vm.cashbox){vm.cashbox=it}
    SalesInput("العملة",vm.currency){vm.currency=it}
