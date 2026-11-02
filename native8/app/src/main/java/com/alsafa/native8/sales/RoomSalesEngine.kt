@@ -16,6 +16,10 @@ class RoomSalesEngine(context: Context) {
     private val stock get() = RoomProductStockRepository(db)
 
     suspend fun save(draft: SaleDraft, totals: SaleTotals): String = db.withTransaction {
+        require(draft.lines.isNotEmpty()) { "لا يمكن حفظ فاتورة دون أصناف" }
+        require(draft.lines.all { it.quantity > BigDecimal.ZERO && it.unitPrice >= BigDecimal.ZERO && it.unitCost >= BigDecimal.ZERO && it.discount >= BigDecimal.ZERO }) { "بيانات الأصناف غير صالحة" }
+        require(draft.payments.all { it.amount > BigDecimal.ZERO && it.cashbox.isNotBlank() && it.currency in setOf("USD", "TRY", "SYP") }) { "بيانات الدفعات غير صالحة" }
+        require(totals.net >= BigDecimal.ZERO && totals.paid >= BigDecimal.ZERO && totals.due >= BigDecimal.ZERO) { "إجمالي الفاتورة غير صالح" }
         require(totals.change.compareTo(BigDecimal.ZERO) == 0) { "صرف الباقي يحتاج تسجيل حركة الصرف أولاً" }
         if (totals.due > BigDecimal.ZERO)
             require(draft.customerName.isNotBlank() || draft.customerPhone.isNotBlank()) { "العميل مطلوب للبيع الآجل" }
