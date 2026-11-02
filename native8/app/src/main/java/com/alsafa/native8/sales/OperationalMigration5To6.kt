@@ -125,6 +125,37 @@ object OperationalMigration5To6 : Migration(5, 6) {
                 db.execSQL("ALTER TABLE source_imports_room_migration RENAME TO source_imports")
             }
         }
+        // Normalize legacy product and inventory single-column TEXT primary keys.
+        // Copy exact rows; fail rather than discard any invalid historical key.
+        val productKeys = listOf(
+            Triple("local_products", "local_id", "local_id TEXT NOT NULL PRIMARY KEY, product_json TEXT NOT NULL, created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL"),
+            Triple("product_variants_local", "variant_id", "variant_id TEXT NOT NULL PRIMARY KEY, parent_source TEXT NOT NULL, parent_id TEXT NOT NULL, color_name TEXT NOT NULL COLLATE NOCASE, variant_json TEXT NOT NULL, created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL, UNIQUE(parent_source, parent_id, color_name)"),
+            Triple("product_stock_movements", "movement_id", "movement_id TEXT NOT NULL PRIMARY KEY, parent_source TEXT NOT NULL, parent_id TEXT NOT NULL, variant_id TEXT, quantity_delta TEXT NOT NULL, quantity_before TEXT NOT NULL, quantity_after TEXT NOT NULL, note TEXT NOT NULL, created_at INTEGER NOT NULL")
+        )
+        for ((table, key, schema) in productKeys) {
+            var rebuild = false
+            val names = mutableListOf<String>()
+            db.query("PRAGMA table_info($table)").use { info ->
+                while (info.moveToNext()) {
+                    val name = info.getString(1)
+                    names.add(name)
+                    if (name == key && info.getInt(3) == 0) rebuild = true
+                }
+            }
+            if (rebuild) {
+                db.query("SELECT COUNT(*) FROM $table WHERE $key IS NULL").use { invalid ->
+                    check(invalid.moveToFirst() && invalid.getLong(0) == 0L) {
+                        "Null primary key in $table; refusing migration"
+                    }
+                }
+                val temp = table + "_room_migration"
+                val fields = names.joinToString(", ")
+                db.execSQL("CREATE TABLE $temp ($schema)")
+                db.execSQL("INSERT INTO $temp ($fields) SELECT $fields FROM $table")
+                db.execSQL("DROP TABLE $table")
+                db.execSQL("ALTER TABLE $temp RENAME TO $table")
+            }
+        }
         // Existing UNIQUE constraints remain in place. Explicit Room indexes
         // add schema metadata without rebuilding or deleting any ledger rows.
         db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS idx_sales_number_unique ON sales(number)")
