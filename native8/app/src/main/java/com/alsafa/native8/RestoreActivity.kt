@@ -89,14 +89,16 @@ class RestoreActivity : Activity() {
                     } catch (auditError: Exception) {
                         null
                     }
+                    var productError: String? = null
                     val promotion = try {
                         runBlocking {
                             RoomProductImportPromoter(db, AppDatabase.get(applicationContext)).promote(run)
                         }
-                    } catch (_: Exception) { null }
+                    } catch (e: Exception) { productError = e.message ?: e.javaClass.simpleName; null }
+                    var archiveError: String? = null
                     val historical = try {
                         LegacySalesArchiveImporter(db, AppDatabase.get(applicationContext)).importRun(run)
-                    } catch (e: Exception) { null }
+                    } catch (e: Exception) { archiveError = e.message ?: e.javaClass.simpleName; null }
                     buildString {
                         append(if (staged.alreadyImported) "النسخة موجودة مسبقاً في قاعدة الفحص" else "تم حفظ النسخة في قاعدة الفحص")
                         append("\\n")
@@ -113,7 +115,7 @@ class RestoreActivity : Activity() {
                             }
                         }
                         if (promotion == null) {
-                            append("تعذر نقل المنتجات إلى القاعدة التشغيلية؛ بيانات الفحص محفوظة.\\n")
+                            append("تعذر نقل المنتجات إلى Room: ").append(productError ?: "خطأ غير معروف").append("\\n")
                         } else {
                             append("المنتجات المنقولة إلى Room: ").append(promotion.count)
                             append(if (promotion.alreadyImported) " (موجودة مسبقاً)" else " (نقلت الآن)")
@@ -122,7 +124,7 @@ class RestoreActivity : Activity() {
                         if (historical != null) {
                             append("الفواتير التاريخية: ").append(historical.count).append("\\n")
                             append("تحتاج مراجعة: ").append(historical.review).append("\\n")
-                        } else append("تعذر نقل أرشيف الفواتير؛ لم تُرحّل أي حركة مالية تاريخية.\\n")
+                        } else append("تعذر نقل أرشيف الفواتير: ").append(archiveError ?: "خطأ غير معروف").append("\\n")
                         append("افتح المنتجات المستوردة للتحقق من البيانات.")
                     }
                 } finally { db.close() }
