@@ -151,8 +151,8 @@ class RoomSalesEngine(context: Context) {
                 "المرتجع يتطلب تحديد صندوق وعملة رد المبلغ"
             }
             val existingCurrencies = payments.payments(saleId).map { it.currency }.distinct()
-            require(existingCurrencies.size == 1 && existingCurrencies.single() == refundCurrency) {
-                "عملة رد المبلغ يجب أن تطابق عملة القبض المسجلة"
+            require(existingCurrencies.size == 1 && existingCurrencies.single() == "USD" && refundCurrency == "USD") {
+                "رد العملات غير الدولار يتطلب تخصيص سعر الصرف والدفعات قبل الترحيل"
             }
             require(sale.paid.toBigDecimal() >= refund) { "المبلغ المسترد يتجاوز المقبوض" }
         }
