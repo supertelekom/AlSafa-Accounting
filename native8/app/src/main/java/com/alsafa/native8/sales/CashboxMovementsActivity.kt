@@ -57,7 +57,7 @@ class CashboxMovementsActivity : ComponentActivity() {
                 val vault = when (selectedCashbox) {
                     "الدرج" -> "drawer"
                     "الصندوق الخارجي" -> "external"
-                    "شام كاش" -> "chamcash"
+                    "شام كاش" -> "shamcash"
                     "البنك" -> "bank"
                     else -> ""
                 }
@@ -65,7 +65,8 @@ class CashboxMovementsActivity : ComponentActivity() {
                 Text("معرفات الصناديق في النسخة القديمة: " +
                     vaultCounts.entries.sortedBy { it.key }.joinToString(" | ") { "${it.key}: ${it.value}" })
                 val legacyRows = historical.movements.filter {
-                    it.vault.equals(vault, ignoreCase = true) &&
+                    (it.vault.equals(vault, ignoreCase = true) ||
+                        (vault == "shamcash" && it.vault.equals("sham", ignoreCase = true))) &&
                         it.currency.equals(selectedCurrency, ignoreCase = true)
                 }
                 val legacyTotal = legacyRows.fold(BigDecimal.ZERO) { sum, item -> sum + item.amount }
