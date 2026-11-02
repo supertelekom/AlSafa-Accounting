@@ -13,10 +13,9 @@ class SalesEngine(private val context: Context) {
         val discount = draft.discount + draft.lines.fold(BigDecimal.ZERO) { a, l -> a + l.discount }
         require(discount >= BigDecimal.ZERO && discount <= gross) { "الخصم غير صالح" }
         val net = gross - discount
-        val currencies = draft.payments.map { it.currency }.distinct()
-        require(currencies.size <= 1) { "القبض بعملات مختلفة يحتاج أسعار صرف معتمدة" }
+        require(draft.payments.all { it.creditedAmount != null && it.invoiceCurrency == "USD" && it.fxRate != null }) { "سعر الصرف والقيمة المحتسبة بالدولار مطلوبان" }
         require(draft.payments.all { it.amount > BigDecimal.ZERO && it.cashbox.isNotBlank() })
-        val paid = draft.payments.fold(BigDecimal.ZERO) { a, p -> a + p.amount }
+        val paid = draft.payments.fold(BigDecimal.ZERO) { a, p -> a + p.creditedAmount!! }
         return SaleTotals(gross, discount, net, paid, (net - paid).max(BigDecimal.ZERO), (paid - net).max(BigDecimal.ZERO))
     }
 
