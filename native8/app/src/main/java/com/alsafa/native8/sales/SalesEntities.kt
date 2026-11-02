@@ -5,7 +5,9 @@ import java.math.BigDecimal
 data class SaleLine(val productSource: String, val productId: String, val variantId: String? = null,
     val title: String, val quantity: BigDecimal, val unitPrice: BigDecimal, val unitCost: BigDecimal,
     val discount: BigDecimal = BigDecimal.ZERO)
-data class SalePayment(val cashbox: String, val currency: String, val amount: BigDecimal)
+data class SalePayment(val cashbox: String, val currency: String, val amount: BigDecimal,
+    val invoiceCurrency: String? = null, val fxRate: BigDecimal? = null,
+    val creditedAmount: BigDecimal? = null)
 data class SaleDraft(val customerName: String, val customerPhone: String, val lines: List<SaleLine>,
     val payments: List<SalePayment>, val discount: BigDecimal = BigDecimal.ZERO)
 data class SaleTotals(val gross: BigDecimal, val discount: BigDecimal, val net: BigDecimal,
