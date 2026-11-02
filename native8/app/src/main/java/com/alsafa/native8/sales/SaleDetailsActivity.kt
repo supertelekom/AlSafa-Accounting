@@ -56,19 +56,19 @@ class SaleDetailsActivity: ComponentActivity() {
     }
    }
    if (vm.status != "ملغاة" && vm.total != null) {
-    Button(enabled = !vm.busy && vm.paid?.toBigDecimalOrNull()?.compareTo(java.math.BigDecimal.ZERO) == 0,
+    Button(enabled = !vm.busy && vm.total != null,
      onClick = {
       vm.busy = true
       lifecycleScope.launch {
        try {
-        RoomSalesEngine(applicationContext).cancelUnpaid(vm.saleId)
+        RoomSalesEngine(applicationContext).cancelWithRefund(vm.saleId)
         vm.status = "ملغاة"
         vm.due = "0"
         vm.lines = RoomSalesEngine(applicationContext).lines(vm.saleId)
        } catch(e: Exception) { vm.status = e.message ?: "تعذر الإلغاء" }
        finally { vm.busy = false }
       }
-     }) { Text("إلغاء الفاتورة غير المقبوضة") }
+     }) { Text("إلغاء الفاتورة وتسوية المقبوض") }
    }
    Button(enabled=vm.status != "ملغاة",onClick={startActivity(Intent(this@SaleDetailsActivity,SalePaymentsActivity::class.java).putExtra("sale_id",vm.saleId))}){Text("تحصيل دفعة")}
    Button(onClick={startActivity(Intent(this@SaleDetailsActivity,SalePrintActivity::class.java).putExtra("sale_id",vm.saleId))}){Text("طباعة / مشاركة")}
