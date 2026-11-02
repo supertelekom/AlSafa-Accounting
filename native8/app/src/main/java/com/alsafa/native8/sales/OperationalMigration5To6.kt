@@ -64,6 +64,47 @@ object OperationalMigration5To6 : Migration(5, 6) {
                 db.execSQL("ALTER TABLE sale_lines_room_migration RENAME TO sale_lines")
             }
         }
+        // Upgrade remaining legacy TEXT PRIMARY KEY columns to explicit NOT NULL.
+        // Each table is copied in the same Room migration transaction.
+        val remaining = listOf(
+            Triple("sale_payments", "id", "id TEXT NOT NULL PRIMARY KEY, sale_id TEXT NOT NULL, cashbox TEXT NOT NULL, currency TEXT NOT NULL, amount TEXT NOT NULL, created_at INTEGER NOT NULL"),
+            Triple("sale_returns", "id", "id TEXT NOT NULL PRIMARY KEY, sale_id TEXT NOT NULL, line_id TEXT NOT NULL, quantity TEXT NOT NULL, created_at INTEGER NOT NULL, reason TEXT NOT NULL"),
+            Triple("cashbox_movements", "id", "id TEXT NOT NULL PRIMARY KEY, cashbox TEXT NOT NULL, currency TEXT NOT NULL, amount TEXT NOT NULL, sale_id TEXT NOT NULL, created_at INTEGER NOT NULL, note TEXT NOT NULL"),
+            Triple("customer_receivables", "sale_id", "sale_id TEXT NOT NULL PRIMARY KEY, customer TEXT NOT NULL, phone TEXT NOT NULL, balance TEXT NOT NULL")
+        )
+        for ((table, key, definition) in remaining) {
+            var rebuild = false
+            val columns = mutableListOf<String>()
+            db.query("PRAGMA table_info($table)").use { info ->
+                while (info.moveToNext()) {
+                    val column = info.getString(1)
+                    columns.add(column)
+                    if (column == key && info.getInt(3) == 0) rebuild = true
+                }
+            }
+            if (rebuild) {
+                db.query("SELECT COUNT(*) FROM $table WHERE $key IS NULL").use { invalid ->
+                    check(invalid.moveToFirst() && invalid.getLong(0) == 0L) {
+                        "Null primary key in $table; refusing migration"
+                    }
+                }
+                val expected = when (table) {
+                    "sale_payments" -> listOf("id", "sale_id", "cashbox", "currency", "amount", "created_at")
+                    "sale_returns" -> listOf("id", "sale_id", "line_id", "quantity", "created_at", "reason")
+                    "cashbox_movements" -> listOf("id", "cashbox", "currency", "amount", "sale_id", "created_at", "note")
+                    else -> listOf("sale_id", "customer", "phone", "balance")
+                }
+                check(columns.toSet() == expected.toSet()) {
+                    "Unexpected columns in $table; refusing migration"
+                }
+                val temp = table + "_room_migration"
+                val fields = expected.joinToString(", ")
+                db.execSQL("CREATE TABLE $temp ($definition)")
+                db.execSQL("INSERT INTO $temp ($fields) SELECT $fields FROM $table")
+                db.execSQL("DROP TABLE $table")
+                db.execSQL("ALTER TABLE $temp RENAME TO $table")
+            }
+        }
         // Existing UNIQUE constraints remain in place. Explicit Room indexes
         // add schema metadata without rebuilding or deleting any ledger rows.
         db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS idx_sales_number_unique ON sales(number)")
