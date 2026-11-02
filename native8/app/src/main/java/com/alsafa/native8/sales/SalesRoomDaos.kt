@@ -47,6 +47,8 @@ interface LegacySaleDao {
 
 @Dao
 interface LegacyPaymentDao {
+ @Query("SELECT * FROM cashbox_movements ORDER BY created_at DESC LIMIT 1000")
+ suspend fun recentCashboxMovements():List<RoomCashboxMovement>
  @Query("SELECT * FROM sale_payments WHERE sale_id=:saleId ORDER BY created_at")
  suspend fun payments(saleId:String):List<RoomSalePayment>
 
