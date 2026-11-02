@@ -12,7 +12,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
-class SaleDetailsViewModel: ViewModel() { var saleId by mutableStateOf(""); var lines by mutableStateOf<List<SalesEngine.InvoiceLine>>(emptyList()); var total by mutableStateOf<String?>(null); var paid by mutableStateOf<String?>(null); var due by mutableStateOf<String?>(null) }
+class SaleDetailsViewModel: ViewModel() { var saleId by mutableStateOf(""); var lines by mutableStateOf<List<SalesEngine.InvoiceLine>>(emptyList()); var total by mutableStateOf<String?>(null); var paid by mutableStateOf<String?>(null); var due by mutableStateOf<String?>(null); var status by mutableStateOf(""); var busy by mutableStateOf(false) }
 class SaleDetailsActivity: ComponentActivity() {
  override fun onCreate(savedInstanceState: Bundle?) {
   super.onCreate(savedInstanceState)
@@ -24,6 +24,7 @@ class SaleDetailsActivity: ComponentActivity() {
    val sale = db.salesPostingDao().sale(vm.saleId)
    val debt = db.legacyReceivablesDao().bySaleId(vm.saleId)
    if (sale != null) {
+    vm.status = sale.status
     vm.total = sale.total
     vm.paid = sale.paid
     vm.due = debt?.balance ?: (sale.total.toBigDecimal() - sale.paid.toBigDecimal()).max(java.math.BigDecimal.ZERO).toPlainString()
@@ -40,6 +41,7 @@ class SaleDetailsActivity: ComponentActivity() {
      }
     }
    }
+   if (vm.status.isNotBlank()) Text("الحالة: "+vm.status)
    vm.lines.forEach { line ->
     Card(modifier=Modifier.fillMaxWidth()) {
      Column(modifier=Modifier.padding(16.dp), verticalArrangement=Arrangement.spacedBy(8.dp)) {
@@ -53,7 +55,22 @@ class SaleDetailsActivity: ComponentActivity() {
      }
     }
    }
-   Button(onClick={startActivity(Intent(this@SaleDetailsActivity,SalePaymentsActivity::class.java).putExtra("sale_id",vm.saleId))}){Text("تحصيل دفعة")}
+   if (vm.status != "ملغاة" && vm.total != null) {
+    Button(enabled = !vm.busy && vm.paid?.toBigDecimalOrNull()?.compareTo(java.math.BigDecimal.ZERO) == 0,
+     onClick = {
+      vm.busy = true
+      lifecycleScope.launch {
+       try {
+        RoomSalesEngine(applicationContext).cancelUnpaid(vm.saleId)
+        vm.status = "ملغاة"
+        vm.due = "0"
+        vm.lines = RoomSalesEngine(applicationContext).lines(vm.saleId)
+       } catch(e: Exception) { vm.status = e.message ?: "تعذر الإلغاء" }
+       finally { vm.busy = false }
+      }
+     }) { Text("إلغاء الفاتورة غير المقبوضة") }
+   }
+   Button(enabled=vm.status != "ملغاة",onClick={startActivity(Intent(this@SaleDetailsActivity,SalePaymentsActivity::class.java).putExtra("sale_id",vm.saleId))}){Text("تحصيل دفعة")}
    Button(onClick={startActivity(Intent(this@SaleDetailsActivity,SalePrintActivity::class.java).putExtra("sale_id",vm.saleId))}){Text("طباعة / مشاركة")}
    Button(onClick={startActivity(Intent(this@SaleDetailsActivity,SaleReturnsActivity::class.java).putExtra("sale_id",vm.saleId))}){Text("مرتجع / إلغاء")}
   } }
