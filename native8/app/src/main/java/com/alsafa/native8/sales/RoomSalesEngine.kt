@@ -15,9 +15,22 @@ class RoomSalesEngine(context: Context) {
     private val debts get() = db.legacyReceivablesDao()
     private val stock get() = RoomProductStockRepository(db)
 
+    private fun validateFx(payment: SalePayment) {
+        val fields = listOf(payment.invoiceCurrency, payment.fxRate, payment.creditedAmount)
+        require(fields.all { it == null } || fields.all { it != null }) {
+            "يجب حفظ عملة الفاتورة وسعر الصرف والقيمة المعتمدة معاً"
+        }
+        if (payment.invoiceCurrency != null) {
+            PaymentExchangeSnapshot(payment.currency, payment.invoiceCurrency,
+                payment.fxRate!!.toPlainString(), payment.amount.toPlainString(),
+                payment.creditedAmount!!.toPlainString()).validate()
+        }
+    }
+
     suspend fun save(draft: SaleDraft, totals: SaleTotals): String = db.withTransaction {
         require(draft.lines.isNotEmpty()) { "لا يمكن حفظ فاتورة دون أصناف" }
         require(draft.lines.all { it.quantity > BigDecimal.ZERO && it.unitPrice >= BigDecimal.ZERO && it.unitCost >= BigDecimal.ZERO && it.discount >= BigDecimal.ZERO }) { "بيانات الأصناف غير صالحة" }
+        draft.payments.forEach(::validateFx)
         require(draft.payments.all { it.amount > BigDecimal.ZERO && it.cashbox.isNotBlank() && it.currency in setOf("USD", "TRY", "SYP") }) { "بيانات الدفعات غير صالحة" }
         require(totals.net >= BigDecimal.ZERO && totals.paid >= BigDecimal.ZERO && totals.due >= BigDecimal.ZERO) { "إجمالي الفاتورة غير صالح" }
         require(totals.change.compareTo(BigDecimal.ZERO) == 0) { "صرف الباقي يحتاج تسجيل حركة الصرف أولاً" }
@@ -44,7 +57,8 @@ class RoomSalesEngine(context: Context) {
         }
         for (payment in draft.payments) {
             payments.insertPayment(RoomSalePayment(UUID.randomUUID().toString(), id, payment.cashbox,
-                payment.currency, payment.amount.toPlainString(), now))
+                payment.currency, payment.amount.toPlainString(), now,
+                payment.invoiceCurrency, payment.fxRate?.toPlainString(), payment.creditedAmount?.toPlainString()))
             payments.insertCashboxMovement(RoomCashboxMovement(UUID.randomUUID().toString(),
                 payment.cashbox, payment.currency, payment.amount.toPlainString(), id, now,
                 "قبض فاتورة $number"))
@@ -55,6 +69,7 @@ class RoomSalesEngine(context: Context) {
     }
 
     suspend fun collect(saleId: String, payment: SalePayment): String = db.withTransaction {
+        validateFx(payment)
         require(payment.amount > BigDecimal.ZERO && payment.cashbox.isNotBlank())
         val debt = requireNotNull(debts.bySaleId(saleId)) { "لا توجد ذمة لهذه الفاتورة" }
         val sale = requireNotNull(posting.sale(saleId)) { "الفاتورة غير موجودة" }
