@@ -3,15 +3,16 @@ package com.alsafa.native8.sales
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import androidx.room.Index
+import androidx.room.ColumnInfo
 
-@Entity(tableName="sales",indices=[Index(value=["created_at"],name="idx_sales_created")])
+@Entity(tableName="sales",indices=[Index(value=["created_at"],name="idx_sales_created"),Index(value=["number"],unique=true,name="idx_sales_number_unique")])
 data class RoomSale(@PrimaryKey val id:String,val number:Long,val created_at:Long,
  val customer:String,val phone:String,val total:String,val discount:String,val paid:String,val status:String)
 
 @Entity(tableName="sale_lines")
 data class RoomSaleLine(@PrimaryKey val id:String,val sale_id:String,val source:String,
  val product_id:String,val variant_id:String?,val title:String,val quantity:String,
- val unit_price:String,val unit_cost:String,val discount:String,val returned_qty:String="0")
+ val unit_price:String,val unit_cost:String,val discount:String,@ColumnInfo(defaultValue="'0'") val returned_qty:String="0")
 
 @Entity(tableName="sale_payments")
 data class RoomSalePayment(@PrimaryKey val id:String,val sale_id:String,val cashbox:String,
