@@ -20,6 +20,12 @@ interface SalesPostingDao {
     @Query("SELECT * FROM sale_lines WHERE sale_id=:saleId ORDER BY rowid")
     suspend fun lines(saleId: String): List<RoomSaleLine>
 
+    @Query("UPDATE sale_lines SET quantity=:quantity, unit_price=:price WHERE id=:lineId AND sale_id=:saleId AND returned_qty='0'")
+    suspend fun correctUnpaidLine(saleId:String,lineId:String,quantity:String,price:String):Int
+
+    @Query("UPDATE sales SET total=:total, discount=:discount WHERE id=:saleId AND paid='0' AND status!='ملغاة'")
+    suspend fun correctUnpaidTotal(saleId:String,total:String,discount:String):Int
+
     @Query("UPDATE sales SET paid=:paid, status=:status WHERE id=:id")
     suspend fun updatePayment(id: String, paid: String, status: String): Int
 
