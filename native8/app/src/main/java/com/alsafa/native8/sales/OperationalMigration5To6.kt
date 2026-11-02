@@ -48,6 +48,22 @@ object OperationalMigration5To6 : Migration(5, 6) {
                 db.execSQL("ALTER TABLE sales_room_migration RENAME TO sales")
             }
         }
+        // Room requires explicit NOT NULL on SQLite TEXT primary keys.
+        db.query("PRAGMA table_info(sale_lines)").use { info ->
+            var rebuild = false
+            while (info.moveToNext()) {
+                if (info.getString(1) == "id" && info.getInt(3) == 0) rebuild = true
+            }
+            if (rebuild) {
+                db.query("SELECT COUNT(*) FROM sale_lines WHERE id IS NULL").use { rows ->
+                    check(rows.moveToFirst() && rows.getLong(0) == 0L) { "Null sale line IDs" }
+                }
+                db.execSQL("CREATE TABLE sale_lines_room_migration (id TEXT NOT NULL PRIMARY KEY, sale_id TEXT NOT NULL, source TEXT NOT NULL, product_id TEXT NOT NULL, variant_id TEXT, title TEXT NOT NULL, quantity TEXT NOT NULL, unit_price TEXT NOT NULL, unit_cost TEXT NOT NULL, discount TEXT NOT NULL, returned_qty TEXT NOT NULL DEFAULT '0')")
+                db.execSQL("INSERT INTO sale_lines_room_migration SELECT id, sale_id, source, product_id, variant_id, title, quantity, unit_price, unit_cost, discount, returned_qty FROM sale_lines")
+                db.execSQL("DROP TABLE sale_lines")
+                db.execSQL("ALTER TABLE sale_lines_room_migration RENAME TO sale_lines")
+            }
+        }
         // Existing UNIQUE constraints remain in place. Explicit Room indexes
         // add schema metadata without rebuilding or deleting any ledger rows.
         db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS idx_sales_number_unique ON sales(number)")
