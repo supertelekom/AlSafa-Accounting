@@ -159,6 +159,58 @@ class RoomSalesEngine(context: Context) {
         saleId
     }
 
+    /**
+     * Cancel a collected invoice by reversing its remaining cash movements in their
+     * original cashboxes and currencies. No exchange-rate inference is performed.
+     * A prior return refund is already a negative movement and is not refunded again.
+     * All stock, debt and cash changes are atomic; a second cancellation is rejected.
+     */
+    suspend fun cancelWithRefund(saleId: String): String = db.withTransaction {
+        val sale = requireNotNull(posting.sale(saleId)) { "الإلغاء متاح للفواتير الجديدة فقط" }
+        require(sale.status != "ملغاة") { "الفاتورة ملغاة مسبقاً" }
+        val movements = payments.cashboxMovements(saleId)
+        val currencies = movements.map { it.currency }.distinct()
+        require(currencies.size <= 1) {
+            "إلغاء قبض متعدد العملات يتطلب مراجعة أسعار الصرف المسجلة؛ لم تُسجل في هذه الفاتورة"
+        }
+        val grouped = movements.groupBy { it.cashbox to it.currency }
+            .mapValues { (_, entries) -> entries.fold(BigDecimal.ZERO) { a, entry ->
+                a + entry.amount.toBigDecimal()
+            } }
+        require(grouped.values.all { it >= BigDecimal.ZERO }) { "حركات رد المبالغ غير متسقة" }
+        val outstanding = grouped.values.fold(BigDecimal.ZERO, BigDecimal::add)
+        require(outstanding.compareTo(sale.paid.toBigDecimal()) == 0) {
+            "المقبوض في الفاتورة لا يطابق صافي حركات الصناديق؛ الإلغاء موقوف لحماية البيانات"
+        }
+        val lines = posting.lines(saleId)
+        require(lines.isNotEmpty()) { "الفاتورة بلا بنود" }
+        val now = System.currentTimeMillis()
+        for (line in lines) {
+            val remaining = line.quantity.toBigDecimal() - line.returned_qty.toBigDecimal()
+            require(remaining >= BigDecimal.ZERO) { "كمية مرتجع غير متسقة" }
+            if (remaining > BigDecimal.ZERO) {
+                stock.adjust(line.source, line.product_id, line.variant_id, remaining.toPlainString(),
+                    "إلغاء المتبقي من فاتورة ${sale.number}")
+                check(posting.updateReturned(line.id, line.quantity) == 1)
+                posting.insertReturn(RoomSaleReturn(UUID.randomUUID().toString(), saleId, line.id,
+                    remaining.toPlainString(), now, "إلغاء الفاتورة"))
+            }
+        }
+        val debt = debts.bySaleId(saleId)
+        if (debt != null) {
+            check(debts.compareAndSetBalance(saleId, debt.balance, "0") == 1)
+        }
+        for ((key, amount) in grouped) {
+            if (amount > BigDecimal.ZERO) {
+                payments.insertCashboxMovement(RoomCashboxMovement(UUID.randomUUID().toString(),
+                    key.first, key.second, amount.negate().toPlainString(), saleId, now,
+                    "رد قبض عند إلغاء فاتورة ${sale.number}"))
+            }
+        }
+        check(posting.updatePayment(saleId, "0", "ملغاة") == 1)
+        saleId
+    }
+
     suspend fun lines(saleId: String): List<SalesEngine.InvoiceLine> {
         val current = posting.lines(saleId)
         if (current.isNotEmpty()) return current.map {
