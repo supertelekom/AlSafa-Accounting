@@ -248,6 +248,14 @@ class RoomSalesEngine(context: Context) {
         saleId
     }
 
+    /** Correct customer metadata without rewriting posted financial history. */
+    suspend fun correctCustomer(saleId: String, customer: String, phone: String): Unit = db.withTransaction {
+        val sale = requireNotNull(posting.sale(saleId)) { "الفاتورة غير موجودة" }
+        require(sale.status != "ملغاة") { "لا يمكن تعديل فاتورة ملغاة" }
+        require(customer.isNotBlank() || phone.isNotBlank()) { "بيانات العميل مطلوبة" }
+        check(posting.updateCustomer(saleId, customer.trim(), phone.trim()) == 1)
+    }
+
     suspend fun lines(saleId: String): List<SalesEngine.InvoiceLine> {
         val current = posting.lines(saleId)
         if (current.isNotEmpty()) return current.map {
