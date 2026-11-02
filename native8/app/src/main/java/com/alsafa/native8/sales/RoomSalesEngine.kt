@@ -58,6 +58,7 @@ class RoomSalesEngine(context: Context) {
         require(payment.amount > BigDecimal.ZERO && payment.cashbox.isNotBlank())
         val debt = requireNotNull(debts.bySaleId(saleId)) { "لا توجد ذمة لهذه الفاتورة" }
         val sale = requireNotNull(posting.sale(saleId)) { "الفاتورة غير موجودة" }
+        require(sale.status != "ملغاة") { "لا يمكن قبض فاتورة ملغاة" }
         val balance = debt.balance.toBigDecimal()
         require(payment.amount <= balance) { "الدفعة أكبر من المتبقي" }
         val remaining = balance - payment.amount
@@ -80,6 +81,7 @@ class RoomSalesEngine(context: Context) {
     ): String = db.withTransaction {
         require(quantity > BigDecimal.ZERO && reason.isNotBlank())
         val sale = requireNotNull(posting.sale(saleId)) { "الفاتورة غير موجودة" }
+        require(sale.status != "ملغاة") { "الفاتورة ملغاة" }
         val line = requireNotNull(posting.line(saleId, lineId)) { "البند غير موجود" }
         val original = line.quantity.toBigDecimal()
         val returned = line.returned_qty.toBigDecimal()
@@ -126,6 +128,35 @@ class RoomSalesEngine(context: Context) {
         posting.insertReturn(RoomSaleReturn(id, saleId, lineId, quantity.toPlainString(),
             System.currentTimeMillis(), reason))
         id
+    }
+
+    /** Cancel only invoices without any collected funds. Paid/mixed invoices require a verified refund workflow. */
+    suspend fun cancelUnpaid(saleId: String): String = db.withTransaction {
+        val sale = requireNotNull(posting.sale(saleId)) { "الإلغاء متاح للفواتير الجديدة فقط" }
+        require(sale.status != "ملغاة") { "الفاتورة ملغاة مسبقاً" }
+        val received = payments.cashboxMovements(saleId).filter { it.amount.toBigDecimal() > BigDecimal.ZERO }
+        require(received.isEmpty() && sale.paid.toBigDecimal().compareTo(BigDecimal.ZERO) == 0) {
+            "الفاتورة المقبوضة تتطلب تسوية رد المبلغ قبل الإلغاء"
+        }
+        val lines = posting.lines(saleId)
+        require(lines.isNotEmpty()) { "الفاتورة بلا بنود" }
+        for (line in lines) {
+            val remaining = line.quantity.toBigDecimal() - line.returned_qty.toBigDecimal()
+            require(remaining >= BigDecimal.ZERO) { "كمية مرتجع غير متسقة" }
+            if (remaining > BigDecimal.ZERO) {
+                stock.adjust(line.source, line.product_id, line.variant_id, remaining.toPlainString(),
+                    "إلغاء المتبقي من فاتورة ${sale.number}")
+                check(posting.updateReturned(line.id, line.quantity) == 1)
+                posting.insertReturn(RoomSaleReturn(UUID.randomUUID().toString(), saleId, line.id,
+                    remaining.toPlainString(), System.currentTimeMillis(), "إلغاء الفاتورة"))
+            }
+        }
+        val debt = debts.bySaleId(saleId)
+        if (debt != null) {
+            check(debts.compareAndSetBalance(saleId, debt.balance, "0") == 1)
+        }
+        check(posting.updatePayment(saleId, "0", "ملغاة") == 1)
+        saleId
     }
 
     suspend fun lines(saleId: String): List<SalesEngine.InvoiceLine> {
