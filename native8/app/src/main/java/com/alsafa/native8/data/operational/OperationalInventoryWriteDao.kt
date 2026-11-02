@@ -12,6 +12,9 @@ import androidx.room.Update
  */
 @Dao
 interface OperationalInventoryWriteDao {
+    @Query("SELECT * FROM source_imports WHERE source_sha256=:source LIMIT 1")
+    suspend fun sourceImport(source: String): SourceImportEntity?
+
     @Query("SELECT source_sha256 FROM source_imports ORDER BY source_run_id DESC LIMIT 1")
     suspend fun latestSource(): String?
 
