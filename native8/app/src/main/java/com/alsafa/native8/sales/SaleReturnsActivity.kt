@@ -7,7 +7,7 @@ import androidx.compose.runtime.*
 import androidx.compose.material3.*
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-class SaleReturnsViewModel: ViewModel() { var saleId by mutableStateOf(""); var quantity by mutableStateOf(""); var reason by mutableStateOf(""); var lineId by mutableStateOf(""); var status by mutableStateOf("") }
+class SaleReturnsViewModel: ViewModel() { var saleId by mutableStateOf(""); var quantity by mutableStateOf(""); var reason by mutableStateOf(""); var lineId by mutableStateOf(""); var status by mutableStateOf(""); var refundCashbox by mutableStateOf("الدرج"); var refundCurrency by mutableStateOf("USD") }
 class SaleReturnsActivity: ComponentActivity() {
  override fun onCreate(savedInstanceState: Bundle?) {
   super.onCreate(savedInstanceState)
@@ -19,8 +19,11 @@ if(vm.lineId.isBlank()) Text("اختر البند من شاشة تفاصيل ا�
 else Text("تم تحديد بند الفاتورة")
 SalesInput("الكمية المرتجعة",vm.quantity){vm.quantity=it}
 SalesInput("السبب",vm.reason){vm.reason=it}
+Text("في حال وجود مبلغ مقبوض يُرد من الصندوق التالي:")
+SalesInput("صندوق رد المبلغ",vm.refundCashbox){vm.refundCashbox=it}
+SalesInput("عملة رد المبلغ",vm.refundCurrency){vm.refundCurrency=it}
 Button(enabled=vm.lineId.isNotBlank(),onClick={
- try { val id=SalesEngine(applicationContext).returnLine(vm.saleId,vm.lineId,vm.quantity.toBigDecimal(),vm.reason);vm.status="تم تسجيل المرتجع: "+id }
+ try { val id=SalesEngine(applicationContext).returnLine(vm.saleId,vm.lineId,vm.quantity.toBigDecimal(),vm.reason,vm.refundCashbox,vm.refundCurrency);vm.status="تم تسجيل المرتجع: "+id }
  catch(e:Exception){vm.status=e.message ?: "تعذر المرتجع"}
 }){Text("تسجيل المرتجع")}
 Text(vm.status) } }
