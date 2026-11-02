@@ -269,12 +269,12 @@ class RoomSalesEngine(context: Context) {
         newUnitPrice:BigDecimal):Unit = db.withTransaction {
         require(newQuantity > BigDecimal.ZERO && newUnitPrice >= BigDecimal.ZERO)
         val sale = requireNotNull(posting.sale(saleId))
-        require(sale.status != "ملغاة" && sale.paid.toBigDecimal() == BigDecimal.ZERO)
+        require(sale.status != "ملغاة" && sale.paid.toBigDecimal().compareTo(BigDecimal.ZERO) == 0)
         require(payments.payments(saleId).isEmpty() && payments.cashboxMovements(saleId).isEmpty()) {
             "تعديل فاتورة مقبوضة يتطلب قيود تسوية مستقلة"
         }
         val lines = posting.lines(saleId)
-        require(lines.isNotEmpty() && lines.all { it.returned_qty.toBigDecimal() == BigDecimal.ZERO }) {
+        require(lines.isNotEmpty() && lines.all { it.returned_qty.toBigDecimal().compareTo(BigDecimal.ZERO) == 0 }) {
             "تعديل فاتورة ذات مرتجع يتطلب قيود تسوية مستقلة"
         }
         val line = requireNotNull(lines.firstOrNull { it.id == lineId })
@@ -297,7 +297,7 @@ class RoomSalesEngine(context: Context) {
             "الذمة لا تطابق الفاتورة"
         }
         check(posting.correctUnpaidLine(saleId,lineId,newQuantity.toPlainString(),newUnitPrice.toPlainString()) == 1)
-        if (delta != BigDecimal.ZERO) {
+        if (delta.compareTo(BigDecimal.ZERO) != 0) {
             stock.adjust(line.source,line.product_id,line.variant_id,delta.negate().toPlainString(),
                 "تصحيح كمية فاتورة ${sale.number}")
         }
