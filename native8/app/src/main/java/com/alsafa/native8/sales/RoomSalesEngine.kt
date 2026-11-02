@@ -25,6 +25,21 @@ class RoomSalesEngine(context: Context) {
             net.toPlainString(),cost.toPlainString(),profit.toPlainString()))
     }
 
+    /** Reverse only fully verified, unreversed payment profits; no FX inference. */
+    private suspend fun reverseAllProfits(saleId:String, refundMovementId:String, at:Long) {
+        val events = audit.profits(saleId)
+        val existing = audit.reversals(saleId)
+        require(existing.isEmpty()) { "توجد تسويات ربح سابقة تحتاج مطابقة" }
+        val receipts = payments.payments(saleId)
+        require(events.size == receipts.size && events.map { it.payment_id }.toSet() ==
+            receipts.map { it.id }.toSet()) { "سجل الربح لا يطابق الدفعات" }
+        for (event in events) {
+            audit.insertReversal(SaleProfitReversal(UUID.randomUUID().toString(),saleId,
+                event.payment_id,refundMovementId,event.credited_base,
+                event.recognized_profit,System.currentTimeMillis()))
+        }
+    }
+
     private fun validateFx(payment: SalePayment) {
         val fields = listOf(payment.invoiceCurrency, payment.fxRate, payment.creditedAmount)
         require(fields.all { it == null } || fields.all { it != null }) {
@@ -250,6 +265,11 @@ class RoomSalesEngine(context: Context) {
         if (debt != null) {
             check(debts.compareAndSetBalance(saleId, debt.balance, "0") == 1)
         }
+        require(movements.none { it.amount.toBigDecimal() < BigDecimal.ZERO }) {
+            "الإلغاء بعد رد سابق يتطلب تخصيص الردود للدفعات الأصلية"
+        }
+        val reversalId = UUID.randomUUID().toString()
+        reverseAllProfits(saleId,reversalId,now)
         for ((key, amount) in grouped) {
             if (amount > BigDecimal.ZERO) {
                 payments.insertCashboxMovement(RoomCashboxMovement(UUID.randomUUID().toString(),
