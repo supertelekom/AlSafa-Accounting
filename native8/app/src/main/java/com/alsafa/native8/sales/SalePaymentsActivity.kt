@@ -37,8 +37,8 @@ class SalePaymentsActivity: ComponentActivity() {
      val total = draft.lines.fold(BigDecimal.ZERO) { sum, line -> sum + line.quantity * line.unitPrice }
      val discount = draft.discount + draft.lines.fold(BigDecimal.ZERO) { sum, line -> sum + line.discount }
      val net = total - discount
-     val alreadyPaid = draft.payments.fold(BigDecimal.ZERO) { sum, payment -> sum + payment.amount }
-     val current = vm.amount.toBigDecimalOrNull() ?: BigDecimal.ZERO
+     val alreadyPaid = draft.payments.fold(BigDecimal.ZERO) { sum, payment -> sum + (payment.creditedAmount ?: BigDecimal.ZERO) }
+     val current = (vm.amount.toBigDecimalOrNull() ?: BigDecimal.ZERO) * ExchangeRateSettings(applicationContext).rate(vm.currency, "USD")
      Text("الإجمالي: " + total.toPlainString())
      Text("الخصم: " + discount.toPlainString())
      Text("الصافي: " + net.toPlainString())
@@ -55,6 +55,9 @@ class SalePaymentsActivity: ComponentActivity() {
      style = MaterialTheme.typography.titleLarge)
    }
    SalesPaymentSelectors(vm.cashbox,{vm.cashbox=it},vm.currency,{vm.currency=it})
+   val exchange = ExchangeRateSettings(applicationContext).rate(vm.currency, "USD")
+   Text("سعر الصرف إلى الدولار: " + exchange.stripTrailingZeros().toPlainString())
+   Text("القيمة المحتسبة بالدولار: " + ((vm.amount.toBigDecimalOrNull() ?: BigDecimal.ZERO) * exchange).setScale(2, java.math.RoundingMode.HALF_UP).toPlainString())
    Text("الفاتورة: "+vm.saleId)
    Button(onClick={
     try {
