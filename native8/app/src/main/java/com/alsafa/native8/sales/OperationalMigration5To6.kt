@@ -25,6 +25,29 @@ object OperationalMigration5To6 : Migration(5, 6) {
                 check(it.moveToFirst()) { "Missing operational table: $table" }
             }
         }
+        // SQLite legacy TEXT PRIMARY KEY does not imply NOT NULL on ordinary rowid tables.
+        // Room requires non-null primary keys. Rebuild only when needed and preserve all rows.
+        db.query("PRAGMA table_info(sales)").use { columns ->
+            val nameIndex = columns.getColumnIndexOrThrow("name")
+            val notNullIndex = columns.getColumnIndexOrThrow("notnull")
+            var rebuild = false
+            while (columns.moveToNext()) {
+                if (columns.getString(nameIndex) == "id" && columns.getInt(notNullIndex) == 0) {
+                    rebuild = true
+                }
+            }
+            if (rebuild) {
+                db.query("SELECT COUNT(*) FROM sales WHERE id IS NULL").use { invalid ->
+                    check(invalid.moveToFirst() && invalid.getLong(0) == 0L) {
+                        "Cannot migrate sales: null invoice IDs found"
+                    }
+                }
+                db.execSQL("CREATE TABLE sales_room_migration (id TEXT NOT NULL PRIMARY KEY, number INTEGER NOT NULL UNIQUE, created_at INTEGER NOT NULL, customer TEXT NOT NULL, phone TEXT NOT NULL, total TEXT NOT NULL, discount TEXT NOT NULL, paid TEXT NOT NULL, status TEXT NOT NULL)")
+                db.execSQL("INSERT INTO sales_room_migration (id, number, created_at, customer, phone, total, discount, paid, status) SELECT id, number, created_at, customer, phone, total, discount, paid, status FROM sales")
+                db.execSQL("DROP TABLE sales")
+                db.execSQL("ALTER TABLE sales_room_migration RENAME TO sales")
+            }
+        }
         // Existing UNIQUE constraints remain in place. Explicit Room indexes
         // add schema metadata without rebuilding or deleting any ledger rows.
         db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS idx_sales_number_unique ON sales(number)")
