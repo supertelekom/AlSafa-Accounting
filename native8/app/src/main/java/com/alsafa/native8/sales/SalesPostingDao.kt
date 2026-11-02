@@ -23,6 +23,9 @@ interface SalesPostingDao {
     @Query("UPDATE sales SET paid=:paid, status=:status WHERE id=:id")
     suspend fun updatePayment(id: String, paid: String, status: String): Int
 
+    @Query("UPDATE sales SET customer=:customer, phone=:phone WHERE id=:id AND status!='ملغاة'")
+    suspend fun updateCustomer(id:String, customer:String, phone:String):Int
+
     @Query("UPDATE sale_lines SET returned_qty=:quantity WHERE id=:id")
     suspend fun updateReturned(id: String, quantity: String): Int
 
