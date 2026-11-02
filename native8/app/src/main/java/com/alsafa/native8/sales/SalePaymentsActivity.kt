@@ -54,8 +54,7 @@ class SalePaymentsActivity: ComponentActivity() {
     Text("المتبقي بعد الدفعة: " + (vm.remaining!!.toBigDecimal() - entered).max(BigDecimal.ZERO).toPlainString(),
      style = MaterialTheme.typography.titleLarge)
    }
-   SalesInput("الصندوق",vm.cashbox){vm.cashbox=it}
-   SalesInput("العملة",vm.currency){vm.currency=it}
+   SalesPaymentSelectors(vm.cashbox,{vm.cashbox=it},vm.currency,{vm.currency=it})
    Text("الفاتورة: "+vm.saleId)
    Button(onClick={
     try {
