@@ -43,7 +43,7 @@ abstract class AppDatabase:RoomDatabase() {
     instance ?: run {
      Room.databaseBuilder(context.applicationContext,AppDatabase::class.java,
       "alsafa_native8_operational.db")
-      .addMigrations(OperationalMigration5To6)
+      .addMigrations(OperationalMigration4To5, OperationalMigration5To6)
       .build().also { instance=it }
     }
    }
