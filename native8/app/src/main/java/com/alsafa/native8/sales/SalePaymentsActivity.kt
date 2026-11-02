@@ -7,6 +7,8 @@ import androidx.compose.material3.*
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import java.math.BigDecimal
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.launch
 class SalePaymentsViewModel: ViewModel() {
  var amount by mutableStateOf("")
  var cashbox by mutableStateOf("الدرج")
@@ -14,12 +16,20 @@ class SalePaymentsViewModel: ViewModel() {
  var saleId by mutableStateOf("")
  var status by mutableStateOf("")
  var posting by mutableStateOf(false)
+ var remaining by mutableStateOf<String?>(null)
+ fun refreshBalance(context: android.content.Context) {
+  if (saleId.isBlank() || saleId.startsWith("sale-")) return
+  viewModelScope.launch {
+   remaining = AppDatabase.get(context).legacyReceivablesDao().bySaleId(saleId)?.balance ?: "0"
+  }
+ }
 }
 class SalePaymentsActivity: ComponentActivity() {
  override fun onCreate(savedInstanceState: Bundle?) {
   super.onCreate(savedInstanceState)
   val vm=ViewModelProvider(this)[SalePaymentsViewModel::class.java]
   vm.saleId=intent.getStringExtra("sale_id").orEmpty()
+  vm.refreshBalance(applicationContext)
   setContent { SalesFrame("القبض والدفعات") {
    if (vm.saleId.isBlank()) {
     val draft = runCatching { SalesDraftSession.draft() }.getOrNull()
@@ -38,6 +48,12 @@ class SalePaymentsActivity: ComponentActivity() {
     }
    }
    SalesInput("المبلغ",vm.amount){vm.amount=it}
+   if (vm.saleId.isNotBlank() && vm.remaining != null) {
+    Text("المتبقي قبل الدفعة: " + vm.remaining)
+    val entered = vm.amount.toBigDecimalOrNull() ?: BigDecimal.ZERO
+    Text("المتبقي بعد الدفعة: " + (vm.remaining!!.toBigDecimal() - entered).max(BigDecimal.ZERO).toPlainString(),
+     style = MaterialTheme.typography.titleLarge)
+   }
    SalesInput("الصندوق",vm.cashbox){vm.cashbox=it}
    SalesInput("العملة",vm.currency){vm.currency=it}
    Text("الفاتورة: "+vm.saleId)
@@ -46,12 +62,13 @@ class SalePaymentsActivity: ComponentActivity() {
      require(vm.saleId.isNotBlank()) { "اختر فاتورة محفوظة" }
      val id=SalesPostingActions(applicationContext).collect(vm.saleId,vm.amount,vm.cashbox,vm.currency)
      vm.status="تم تسجيل القبض: "+id
+     vm.refreshBalance(applicationContext)
     } catch(e:Exception) {vm.status=e.message ?: "تعذر القبض"}
    }) {Text("تسجيل دفعة")}
    Text(vm.status)
    if(vm.saleId.isBlank()) Button(enabled=!vm.posting,onClick={
      vm.posting=true
-     try { vm.saleId=SalesPostingActions(applicationContext).postDraft(vm.amount,vm.cashbox,vm.currency); vm.status="تم حفظ الفاتورة" }
+     try { vm.saleId=SalesPostingActions(applicationContext).postDraft(vm.amount,vm.cashbox,vm.currency); vm.status="تم حفظ الفاتورة"; vm.refreshBalance(applicationContext) }
      catch(e:Exception){ vm.status=e.message ?: "تعذر حفظ الفاتورة" }
      finally { vm.posting=false }
    }) { Text("حفظ الفاتورة") }
