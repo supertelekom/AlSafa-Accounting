@@ -5,6 +5,9 @@ import kotlinx.coroutines.runBlocking
 import com.alsafa.native8.data.migration.LegacyStagingDatabase
 import org.json.JSONObject
 import java.math.BigDecimal
+import java.time.LocalDate
+import java.time.LocalTime
+import java.time.ZoneId
 
 class LegacySalesArchiveImporter(
  private val staging: LegacyStagingDatabase,
@@ -36,16 +39,14 @@ class LegacySalesArchiveImporter(
       val safe=paid<=total && !status.contains("مسترجع") && !status.contains("مسوّاة") &&
        !(status.contains("مدفوع بالكامل") && paid<total)
       val due=if(safe && (status.contains("جزئي") || status.contains("آجل"))) total-paid else BigDecimal.ZERO
-      dao.insertLegacy(LegacySaleEntity(id,source,number,sale.getLong("createdAt"),
+      dao.insertLegacy(LegacySaleEntity(id,source,number,LocalDate.parse(sale.getString("date")).atTime(LocalTime.parse(sale.optString("time", "00:00"))).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli(),
        sale.optString("customer"),sale.optString("phone"),sale.optString("currency","USD"),
        total.toPlainString(),paid.toPlainString(),due.toPlainString(),
        if(safe)"confirmed" else "review",status,raw))
       val items=sale.getJSONArray("items")
       for(i in 0 until items.length())
        dao.insertLegacyLine(RoomLegacySaleLine(id+"#"+i,id,i,items.getJSONObject(i).toString()))
-      if(due>BigDecimal.ZERO)
-       operational.legacyReceivablesDao().insert(RoomReceivable(id,sale.optString("customer"),
-        sale.optString("phone"),due.toPlainString()))
+      // Historical balances remain in the archive snapshot; never repost them to the live ledger.
       count++
       if(!safe) review++
      }
