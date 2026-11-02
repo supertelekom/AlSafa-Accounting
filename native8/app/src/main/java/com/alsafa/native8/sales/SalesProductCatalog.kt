@@ -3,7 +3,7 @@ package com.alsafa.native8.sales
 import android.content.Context
 import com.alsafa.native8.data.operational.RoomProductEditRepository
 import com.alsafa.native8.data.operational.RoomProductStockRepository
-import kotlinx.coroutines.runBlocking
+
 import org.json.JSONObject
 
 data class SaleChoice(val source: String,val productId: String,val variantId: String?,
@@ -12,8 +12,8 @@ data class SaleChoice(val source: String,val productId: String,val variantId: St
 class SalesProductCatalog(context: Context) {
  private val db=AppDatabase.get(context.applicationContext)
 
- fun find(query: String): List<SaleChoice> = runBlocking {
-  if(query.isBlank()) return@runBlocking emptyList()
+ suspend fun find(query: String): List<SaleChoice> {
+  if(query.isBlank()) return emptyList()
   val dao=db.operationalInventoryWriteDao()
   val edits=RoomProductEditRepository(db)
   val stock=RoomProductStockRepository(db)
