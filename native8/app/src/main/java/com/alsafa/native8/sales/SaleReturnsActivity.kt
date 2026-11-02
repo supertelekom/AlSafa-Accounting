@@ -13,11 +13,13 @@ class SaleReturnsActivity: ComponentActivity() {
   super.onCreate(savedInstanceState)
   val vm = ViewModelProvider(this)[SaleReturnsViewModel::class.java]
   vm.saleId=intent.getStringExtra("sale_id").orEmpty()
+  vm.lineId=intent.getStringExtra("line_id").orEmpty()
   setContent { SalesFrame("المرتجع والإلغاء") { Text("الفاتورة: "+vm.saleId)
-SalesInput("معرف بند الفاتورة",vm.lineId){vm.lineId=it}
+if(vm.lineId.isBlank()) Text("اختر البند من شاشة تفاصيل الفاتورة أولاً")
+else Text("تم تحديد بند الفاتورة")
 SalesInput("الكمية المرتجعة",vm.quantity){vm.quantity=it}
 SalesInput("السبب",vm.reason){vm.reason=it}
-Button(onClick={
+Button(enabled=vm.lineId.isNotBlank(),onClick={
  try { val id=SalesEngine(applicationContext).returnLine(vm.saleId,vm.lineId,vm.quantity.toBigDecimal(),vm.reason);vm.status="تم تسجيل المرتجع: "+id }
  catch(e:Exception){vm.status=e.message ?: "تعذر المرتجع"}
 }){Text("تسجيل المرتجع")}
