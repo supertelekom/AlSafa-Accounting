@@ -32,6 +32,15 @@ interface LegacySaleDao {
  @Query("SELECT COALESCE(MAX(invoice_number),0) FROM legacy_sales_archive")
  suspend fun maxLegacyInvoiceNumber():Long
 
+ @Query("SELECT * FROM legacy_sales_imports WHERE source_sha256=:source LIMIT 1")
+ suspend fun importForSource(source:String):RoomLegacySaleImport?
+
+ @Insert(onConflict=OnConflictStrategy.ABORT)
+ suspend fun insertLegacyLine(line:RoomLegacySaleLine)
+
+ @Insert(onConflict=OnConflictStrategy.ABORT)
+ suspend fun insertLegacyImport(value:RoomLegacySaleImport)
+
  @Insert(onConflict=OnConflictStrategy.ABORT)
  suspend fun insertLegacy(sale:LegacySaleEntity)
 }
