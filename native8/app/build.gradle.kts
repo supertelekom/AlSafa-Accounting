@@ -29,3 +29,9 @@ dependencies {
     implementation("com.google.mlkit:barcode-scanning:17.3.0")
     implementation("com.google.zxing:core:3.5.3")
 }
+
+// Work around malformed Kotlin DAO code emitted by Room/KSP on this toolchain.
+// Generate Room implementations as Java; app entities and DAOs remain Kotlin.
+ksp {
+    arg("room.generateKotlin", "false")
+}
