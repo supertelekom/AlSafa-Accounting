@@ -254,6 +254,9 @@ class RoomSalesEngine(context: Context) {
         require(sale.status != "ملغاة") { "لا يمكن تعديل فاتورة ملغاة" }
         require(customer.isNotBlank() || phone.isNotBlank()) { "بيانات العميل مطلوبة" }
         check(posting.updateCustomer(saleId, customer.trim(), phone.trim()) == 1)
+        if (debts.bySaleId(saleId) != null) {
+            check(debts.updateCustomer(saleId, customer.trim(), phone.trim()) == 1)
+        }
     }
 
     suspend fun lines(saleId: String): List<SalesEngine.InvoiceLine> {
