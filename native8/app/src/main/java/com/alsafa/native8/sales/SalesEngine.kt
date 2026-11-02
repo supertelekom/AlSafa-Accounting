@@ -29,8 +29,9 @@ class SalesEngine(private val context: Context) {
         RoomSalesEngine(context).collect(saleId, payment)
     }
 
-    fun returnLine(saleId: String, lineId: String, quantity: BigDecimal, reason: String): String =
-        runBlocking { RoomSalesEngine(context).returnLine(saleId, lineId, quantity, reason) }
+    fun returnLine(saleId: String, lineId: String, quantity: BigDecimal, reason: String,
+        refundCashbox: String = "", refundCurrency: String = ""): String =
+        runBlocking { RoomSalesEngine(context).returnLine(saleId, lineId, quantity, reason, refundCashbox, refundCurrency) }
 
     data class InvoiceLine(val id: String,val title: String,val quantity: String,val returned: String,val price: String)
     fun lines(saleId: String): List<InvoiceLine> = runBlocking {
