@@ -39,6 +39,15 @@ interface OperationalInventoryWriteDao {
     @Query("SELECT * FROM local_products WHERE local_id=:id LIMIT 1")
     suspend fun localProduct(id: String): LocalProductEntity?
 
+    @Query("SELECT * FROM products")
+    suspend fun allImported(): List<ProductEntity>
+
+    @Query("SELECT * FROM product_edits")
+    suspend fun allEdits(): List<ProductEditEntity>
+
+    @Query("SELECT * FROM product_variants_local")
+    suspend fun allVariants(): List<ProductVariantEntity>
+
     @Query("SELECT * FROM product_variants_local WHERE variant_id=:id LIMIT 1")
     suspend fun variant(id: String): ProductVariantEntity?
 
