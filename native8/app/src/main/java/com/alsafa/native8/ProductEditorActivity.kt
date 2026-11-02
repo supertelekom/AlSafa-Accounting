@@ -21,10 +21,11 @@ import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
-import com.alsafa.native8.data.operational.OperationalDatabase
-import com.alsafa.native8.data.operational.ProductVariantRepository
-import com.alsafa.native8.data.operational.ProductEditRepository
-import com.alsafa.native8.data.operational.ProductStockRepository
+import com.alsafa.native8.sales.AppDatabase
+import kotlinx.coroutines.runBlocking
+import com.alsafa.native8.data.operational.RoomProductVariantRepository
+import com.alsafa.native8.data.operational.RoomProductEditRepository
+import com.alsafa.native8.data.operational.RoomProductStockRepository
 import org.json.JSONObject
 
 /** Initial non-financial editor; original stock and funding are deliberately read-only. */
@@ -232,8 +233,7 @@ class ProductEditorActivity : Activity() {
             fun refreshColors() {
                 Thread {
                     val result = try {
-                        val db = OperationalDatabase(applicationContext)
-                        try { ProductVariantRepository(db).list(colorSource, id) } finally { db.close() }
+                        runBlocking { RoomProductVariantRepository(AppDatabase.get(applicationContext)).list(colorSource, id) }
                     } catch (_: Exception) { emptyList<JSONObject>() }
                     runOnUiThread {
                         if (isFinishing || isDestroyed) return@runOnUiThread
@@ -290,9 +290,8 @@ class ProductEditorActivity : Activity() {
                 for ((key, value) in photos) changed.put(key, value)
                 Thread {
                     val outcome = try {
-                        val db = OperationalDatabase(applicationContext)
-                        try {
-                            val repository = ProductEditRepository(db)
+                        val repository = RoomProductEditRepository(AppDatabase.get(applicationContext))
+                        runBlocking {
                             if (id == null) {
                                 repository.createLocal(changed)
                             } else if (id.startsWith("local-")) {
@@ -302,7 +301,7 @@ class ProductEditorActivity : Activity() {
                                 repository.saveEdit(source, id, changed)
                             }
                             null
-                        } finally { db.close() }
+                        }
                     } catch (e: Exception) { e.message ?: "تعذر الحفظ" }
                     runOnUiThread {
                         if (isFinishing || isDestroyed) return@runOnUiThread
@@ -322,13 +321,12 @@ class ProductEditorActivity : Activity() {
             root.findViewWithTag<Button>("save")?.isEnabled = false
             Thread {
                 val existing = try {
-                    val db = OperationalDatabase(applicationContext)
-                    try {
-                        val repo = ProductEditRepository(db)
+                    val repo = RoomProductEditRepository(AppDatabase.get(applicationContext))
+                    runBlocking {
                         if (id.startsWith("local-")) repo.localById(id)
                         else if (!source.isNullOrBlank()) repo.resolved(source, id)
                         else null
-                    } finally { db.close() }
+                    }
                 } catch (_: Exception) { null }
                 runOnUiThread {
                     if (isFinishing || isDestroyed) return@runOnUiThread
@@ -340,8 +338,7 @@ class ProductEditorActivity : Activity() {
                         if (!id.startsWith("local-") && !source.isNullOrBlank()) {
                             Thread {
                                 val stock = try {
-                                    val db = OperationalDatabase(applicationContext)
-                                    try { ProductStockRepository(db).currentStock(source, id) } finally { db.close() }
+                                    runBlocking { RoomProductStockRepository(AppDatabase.get(applicationContext)).currentStock(source, id) }
                                 } catch (_: Exception) { null }
                                 runOnUiThread { if (!isFinishing && !isDestroyed && stock != null) fields["stock"]?.setText(stock) }
                             }.start()
