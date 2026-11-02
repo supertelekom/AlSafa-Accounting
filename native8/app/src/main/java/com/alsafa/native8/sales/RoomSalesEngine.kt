@@ -70,29 +70,59 @@ class RoomSalesEngine(context: Context) {
         id
     }
 
-    suspend fun returnLine(saleId: String, lineId: String, quantity: BigDecimal, reason: String): String =
-        db.withTransaction {
-            require(quantity > BigDecimal.ZERO && reason.isNotBlank())
-            val line = requireNotNull(posting.line(saleId, lineId)) { "البند غير موجود" }
-            val original = line.quantity.toBigDecimal()
-            val returned = line.returned_qty.toBigDecimal()
-            require(quantity <= original - returned) { "كمية المرتجع تتجاوز المباع" }
-            val amount = line.unit_price.toBigDecimal() * quantity -
-                line.discount.toBigDecimal().multiply(quantity).divide(original, MathContext.DECIMAL128)
-            require(amount >= BigDecimal.ZERO)
-            val debt = debts.bySaleId(saleId)
-            val due = debt?.balance?.toBigDecimal() ?: BigDecimal.ZERO
-            require(amount <= due) { "المرتجع يتطلب رد مبلغ مقبوض؛ اختر الصندوق والعملة أولاً" }
-            stock.adjust(line.source, line.product_id, line.variant_id, quantity.toPlainString(),
-                "مرتجع فاتورة $saleId: $reason")
-            check(posting.updateReturned(lineId, (returned + quantity).toPlainString()) == 1)
-            if (debt != null)
-                check(debts.compareAndSetBalance(saleId, debt.balance, (due - amount).toPlainString()) == 1)
-            val id = UUID.randomUUID().toString()
-            posting.insertReturn(RoomSaleReturn(id, saleId, lineId, quantity.toPlainString(),
-                System.currentTimeMillis(), reason))
-            id
+    suspend fun returnLine(
+        saleId: String, lineId: String, quantity: BigDecimal, reason: String,
+        refundCashbox: String = "", refundCurrency: String = ""
+    ): String = db.withTransaction {
+        require(quantity > BigDecimal.ZERO && reason.isNotBlank())
+        val sale = requireNotNull(posting.sale(saleId)) { "الفاتورة غير موجودة" }
+        val line = requireNotNull(posting.line(saleId, lineId)) { "البند غير موجود" }
+        val original = line.quantity.toBigDecimal()
+        val returned = line.returned_qty.toBigDecimal()
+        require(quantity <= original - returned) { "كمية المرتجع تتجاوز المباع" }
+        val allLines = posting.lines(saleId)
+        val gross = allLines.fold(BigDecimal.ZERO) { sum, item ->
+            sum + item.quantity.toBigDecimal() * item.unit_price.toBigDecimal()
         }
+        require(gross > BigDecimal.ZERO) { "تعذر حساب قيمة المرتجع" }
+        // Distribute the invoice's total discount proportionally to the returned gross.
+        val amount = (line.unit_price.toBigDecimal() * quantity)
+            .multiply(sale.total.toBigDecimal())
+            .divide(gross, 2, java.math.RoundingMode.HALF_UP)
+        require(amount >= BigDecimal.ZERO) { "قيمة المرتجع غير صالحة" }
+        val debt = debts.bySaleId(saleId)
+        val due = debt?.balance?.toBigDecimal() ?: BigDecimal.ZERO
+        val reduceDue = amount.min(due)
+        val refund = amount - reduceDue
+        if (refund > BigDecimal.ZERO) {
+            require(refundCashbox.isNotBlank() && refundCurrency.isNotBlank()) {
+                "المرتجع يتطلب تحديد صندوق وعملة رد المبلغ"
+            }
+            val existingCurrencies = payments.payments(saleId).map { it.currency }.distinct()
+            require(existingCurrencies.size == 1 && existingCurrencies.single() == refundCurrency) {
+                "عملة رد المبلغ يجب أن تطابق عملة القبض المسجلة"
+            }
+            require(sale.paid.toBigDecimal() >= refund) { "المبلغ المسترد يتجاوز المقبوض" }
+        }
+        stock.adjust(line.source, line.product_id, line.variant_id, quantity.toPlainString(),
+            "مرتجع فاتورة $saleId: $reason")
+        check(posting.updateReturned(lineId, (returned + quantity).toPlainString()) == 1)
+        if (debt != null && reduceDue > BigDecimal.ZERO) {
+            check(debts.compareAndSetBalance(saleId, debt.balance, (due - reduceDue).toPlainString()) == 1)
+        }
+        if (refund > BigDecimal.ZERO) {
+            check(posting.updatePayment(saleId, (sale.paid.toBigDecimal() - refund).toPlainString(),
+                if (due - reduceDue > BigDecimal.ZERO) "آجل" else "مدفوع") == 1)
+            val now = System.currentTimeMillis()
+            payments.insertCashboxMovement(RoomCashboxMovement(UUID.randomUUID().toString(),
+                refundCashbox, refundCurrency, refund.negate().toPlainString(), saleId, now,
+                "رد مبلغ مرتجع: $reason"))
+        }
+        val id = UUID.randomUUID().toString()
+        posting.insertReturn(RoomSaleReturn(id, saleId, lineId, quantity.toPlainString(),
+            System.currentTimeMillis(), reason))
+        id
+    }
 
     suspend fun lines(saleId: String): List<SalesEngine.InvoiceLine> {
         val current = posting.lines(saleId)
