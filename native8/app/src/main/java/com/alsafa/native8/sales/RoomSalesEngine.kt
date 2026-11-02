@@ -31,6 +31,7 @@ class RoomSalesEngine(context: Context) {
         require(draft.lines.isNotEmpty()) { "لا يمكن حفظ فاتورة دون أصناف" }
         require(draft.lines.all { it.quantity > BigDecimal.ZERO && it.unitPrice >= BigDecimal.ZERO && it.unitCost >= BigDecimal.ZERO && it.discount >= BigDecimal.ZERO }) { "بيانات الأصناف غير صالحة" }
         draft.payments.forEach(::validateFx)
+        require(draft.payments.all { it.invoiceCurrency == "USD" && it.creditedAmount != null }) { "سعر الصرف غير مسجل" }
         require(draft.payments.all { it.amount > BigDecimal.ZERO && it.cashbox.isNotBlank() && it.currency in setOf("USD", "TRY", "SYP") }) { "بيانات الدفعات غير صالحة" }
         require(totals.net >= BigDecimal.ZERO && totals.paid >= BigDecimal.ZERO && totals.due >= BigDecimal.ZERO) { "إجمالي الفاتورة غير صالح" }
         require(totals.change.compareTo(BigDecimal.ZERO) == 0) { "صرف الباقي يحتاج تسجيل حركة الصرف أولاً" }
@@ -70,16 +71,17 @@ class RoomSalesEngine(context: Context) {
 
     suspend fun collect(saleId: String, payment: SalePayment): String = db.withTransaction {
         validateFx(payment)
+        require(payment.invoiceCurrency == "USD" && payment.creditedAmount != null) { "سعر الصرف غير مسجل" }
         require(payment.amount > BigDecimal.ZERO && payment.cashbox.isNotBlank())
         val debt = requireNotNull(debts.bySaleId(saleId)) { "لا توجد ذمة لهذه الفاتورة" }
         val sale = requireNotNull(posting.sale(saleId)) { "الفاتورة غير موجودة" }
         require(sale.status != "ملغاة") { "لا يمكن قبض فاتورة ملغاة" }
         val balance = debt.balance.toBigDecimal()
-        require(payment.amount <= balance) { "الدفعة أكبر من المتبقي" }
-        val remaining = balance - payment.amount
+        require(payment.creditedAmount!! <= balance) { "الدفعة أكبر من المتبقي" }
+        val remaining = balance - payment.creditedAmount!!
         check(debts.compareAndSetBalance(saleId, debt.balance, remaining.toPlainString()) == 1)
         check(posting.updatePayment(saleId,
-            (sale.paid.toBigDecimal() + payment.amount).toPlainString(),
+            (sale.paid.toBigDecimal() + payment.creditedAmount!!).toPlainString(),
             if (remaining.compareTo(BigDecimal.ZERO) == 0) "مدفوع" else "آجل") == 1)
         val id = UUID.randomUUID().toString()
         val now = System.currentTimeMillis()
