@@ -1,0 +1,41 @@
+name: Native 8 APK
+
+on:
+  push:
+    branches: [native6-development]
+    paths:
+      - 'native8/**'
+      - '.github/workflows/native8-apk.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  debug-apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    defaults:
+      run:
+        working-directory: native8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+          cache-dependency-path: native8/**/*.gradle.kts
+      - uses: android-actions/setup-android@v3
+      - name: Install Android SDK
+        run: sdkmanager "platforms;android-37" "build-tools;37.0.0"
+      - name: Build debug APK
+        run: bash ./gradlew :app:assembleDebug --no-daemon --stacktrace
+      - name: Upload APK
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: alsafa-native8-debug
+          path: native8/app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+          retention-days: 7
