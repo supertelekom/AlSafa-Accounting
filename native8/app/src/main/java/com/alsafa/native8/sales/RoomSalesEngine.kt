@@ -14,6 +14,16 @@ class RoomSalesEngine(context: Context) {
     private val payments get() = db.legacyPaymentDao()
     private val debts get() = db.legacyReceivablesDao()
     private val stock get() = RoomProductStockRepository(db)
+    private val audit get() = db.salesFinancialAuditDao()
+    private suspend fun recognize(paymentId:String,saleId:String,at:Long,credit:BigDecimal,net:BigDecimal) {
+        if (credit == BigDecimal.ZERO || net == BigDecimal.ZERO) return
+        val cost = posting.lines(saleId).fold(BigDecimal.ZERO) { a,l ->
+            a + l.quantity.toBigDecimal() * l.unit_cost.toBigDecimal()
+        }
+        val profit = ProportionalProfit.forCollection(net,cost,credit)
+        audit.insertProfit(SaleProfitEvent(paymentId,saleId,at,credit.toPlainString(),
+            net.toPlainString(),cost.toPlainString(),profit.toPlainString()))
+    }
 
     private fun validateFx(payment: SalePayment) {
         val fields = listOf(payment.invoiceCurrency, payment.fxRate, payment.creditedAmount)
@@ -57,12 +67,14 @@ class RoomSalesEngine(context: Context) {
                 line.quantity.negate().toPlainString(), "بيع فاتورة $number")
         }
         for (payment in draft.payments) {
-            payments.insertPayment(RoomSalePayment(UUID.randomUUID().toString(), id, payment.cashbox,
+            val paymentId = UUID.randomUUID().toString()
+            payments.insertPayment(RoomSalePayment(paymentId, id, payment.cashbox,
                 payment.currency, payment.amount.toPlainString(), now,
                 payment.invoiceCurrency, payment.fxRate?.toPlainString(), payment.creditedAmount?.toPlainString()))
             payments.insertCashboxMovement(RoomCashboxMovement(UUID.randomUUID().toString(),
                 payment.cashbox, payment.currency, payment.amount.toPlainString(), id, now,
                 "قبض فاتورة $number"))
+            recognize(paymentId,id,now,payment.creditedAmount!!,totals.net)
         }
         if (totals.due > BigDecimal.ZERO)
             debts.insert(RoomReceivable(id, draft.customerName, draft.customerPhone, totals.due.toPlainString()))
@@ -90,6 +102,7 @@ class RoomSalesEngine(context: Context) {
             payment.invoiceCurrency, payment.fxRate?.toPlainString(), payment.creditedAmount?.toPlainString()))
         payments.insertCashboxMovement(RoomCashboxMovement(UUID.randomUUID().toString(),
             payment.cashbox, payment.currency, payment.amount.toPlainString(), saleId, now, "تحصيل آجل"))
+        recognize(id,saleId,now,payment.creditedAmount!!,sale.total.toBigDecimal())
         id
     }
 
