@@ -11,8 +11,9 @@ import android.widget.TextView
 import com.alsafa.native8.data.migration.LegacyBackupStager
 import com.alsafa.native8.data.migration.LegacyImportInspector
 import com.alsafa.native8.data.migration.LegacyStagingDatabase
-import com.alsafa.native8.data.operational.OperationalDatabase
-import com.alsafa.native8.data.operational.ProductImportPromoter
+import com.alsafa.native8.sales.AppDatabase
+import kotlinx.coroutines.runBlocking
+import com.alsafa.native8.data.operational.RoomProductImportPromoter
 import com.alsafa.native8.sales.LegacySalesArchiveImporter
 
 /** Temporary isolated backup-import verification screen. */
@@ -89,14 +90,12 @@ class RestoreActivity : Activity() {
                         null
                     }
                     val promotion = try {
-                        val operational = OperationalDatabase(applicationContext)
-                        try { ProductImportPromoter(db, operational).promote(run) }
-                        finally { operational.close() }
+                        runBlocking {
+                            RoomProductImportPromoter(db, AppDatabase.get(applicationContext)).promote(run)
+                        }
                     } catch (_: Exception) { null }
                     val historical = try {
-                        val operational = OperationalDatabase(applicationContext)
-                        try { LegacySalesArchiveImporter(db, operational).importRun(run) }
-                        finally { operational.close() }
+                        LegacySalesArchiveImporter(db, AppDatabase.get(applicationContext)).importRun(run)
                     } catch (e: Exception) { null }
                     buildString {
                         append(if (staged.alreadyImported) "النسخة موجودة مسبقاً في قاعدة الفحص" else "تم حفظ النسخة في قاعدة الفحص")
@@ -116,7 +115,7 @@ class RestoreActivity : Activity() {
                         if (promotion == null) {
                             append("تعذر نقل المنتجات إلى القاعدة التشغيلية؛ بيانات الفحص محفوظة.\\n")
                         } else {
-                            append("المنتجات المنقولة إلى SQLite: ").append(promotion.count)
+                            append("المنتجات المنقولة إلى Room: ").append(promotion.count)
                             append(if (promotion.alreadyImported) " (موجودة مسبقاً)" else " (نقلت الآن)")
                             append("\\n")
                         }
