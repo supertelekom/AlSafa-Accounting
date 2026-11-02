@@ -25,7 +25,7 @@ object OperationalMigrationPreflight {
     )
 
     fun capture(db: SQLiteDatabase): Snapshot {
-        require(db.version == 5) { "Expected operational SQLite v5, found ${db.version}" }
+        require(db.version == 5 || db.version == 6) { "Expected operational SQLite v5/v6, found ${db.version}" }
         val names = db.rawQuery(
             "SELECT name FROM sqlite_master WHERE type='table'", null
         ).use { cursor ->
@@ -73,6 +73,7 @@ object OperationalMigrationPreflight {
 
     /** Compare the same database before and after a migration, using verified copies. */
     fun assertPreserved(before: Snapshot, after: Snapshot) {
+        check(before.userVersion == 5 && after.userVersion == 6) { "Expected version transition 5 to 6" }
         check(before.rowCounts == after.rowCounts) { "Operational row counts changed" }
         check(before.maxInvoiceNumber == after.maxInvoiceNumber) { "Invoice numbering changed" }
         check(before.receivableBalances == after.receivableBalances) { "Receivable balances changed" }
