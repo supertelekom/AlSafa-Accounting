@@ -4,23 +4,31 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
-import com.alsafa.native8.data.operational.OperationalDatabase
+import com.alsafa.native8.data.operational.SourceImportEntity
+import com.alsafa.native8.data.operational.ProductEntity
+import com.alsafa.native8.data.operational.ProductEditEntity
+import com.alsafa.native8.data.operational.LocalProductEntity
+import com.alsafa.native8.data.operational.ProductVariantEntity
+import com.alsafa.native8.data.operational.ProductStockMovementEntity
+import com.alsafa.native8.data.operational.OperationalInventoryReadDao
 
-/**
- * Room access layer for sales tables in the EXISTING operational database.
- * Never use destructive migration: this file contains real inventory and money records.
- * OperationalDatabase remains the schema owner until its tables are migrated in full.
+/** Unified Room schema for all 15 operational entities.
+ * WARNING: legacy SQLiteOpenHelper call sites must be removed before release.
+ * Never use destructive migration for financial or inventory data.
  */
 @Database(
  entities=[
   LegacySaleEntity::class,RoomSale::class,RoomSaleLine::class,
   RoomSalePayment::class,RoomSaleReturn::class,RoomReceivable::class,
-  RoomCashboxMovement::class,RoomLegacySaleLine::class,RoomLegacySaleImport::class
+  RoomCashboxMovement::class,RoomLegacySaleLine::class,RoomLegacySaleImport::class,
+  SourceImportEntity::class,ProductEntity::class,ProductEditEntity::class,
+  LocalProductEntity::class,ProductVariantEntity::class,ProductStockMovementEntity::class
  ],
- version=5,
+ version=6,
  exportSchema=false
 )
 abstract class AppDatabase:RoomDatabase() {
+ abstract fun operationalInventoryReadDao():OperationalInventoryReadDao
  abstract fun legacySaleDao():LegacySaleDao
  abstract fun legacyPaymentDao():LegacyPaymentDao
  abstract fun legacyReceivablesDao():LegacyReceivablesDao
@@ -30,12 +38,9 @@ abstract class AppDatabase:RoomDatabase() {
   fun get(context:Context):AppDatabase {
    return instance ?: synchronized(this) {
     instance ?: run {
-     // Create the existing operational tables and legacy archive before Room validation.
-     val helper=OperationalDatabase(context.applicationContext)
-     try { LegacySalesArchiveSchema.ensure(helper.writableDatabase) }
-     finally { helper.close() }
      Room.databaseBuilder(context.applicationContext,AppDatabase::class.java,
       "alsafa_native8_operational.db")
+      .addMigrations(OperationalMigration5To6)
       .build().also { instance=it }
     }
    }
