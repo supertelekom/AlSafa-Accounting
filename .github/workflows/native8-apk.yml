@@ -26,7 +26,11 @@ jobs:
           java-version: '17'
           cache: gradle
           cache-dependency-path: native8/**/*.gradle.kts
-      - uses: android-actions/setup-android@v3
+      # Runner already provides Android SDK command-line tools; avoid obsolete 'tools' package.
+      - name: Verify Android SDK
+        run: |
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --version
       - name: Install Android SDK
         run: sdkmanager "platforms;android-37" "build-tools;37.0.0"
       - name: Build debug APK
