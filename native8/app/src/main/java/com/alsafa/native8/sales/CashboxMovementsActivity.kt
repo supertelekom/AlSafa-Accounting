@@ -61,6 +61,9 @@ class CashboxMovementsActivity : ComponentActivity() {
                     "البنك" -> "bank"
                     else -> ""
                 }
+                val vaultCounts = historical.movements.groupingBy { it.vault }.eachCount()
+                Text("معرفات الصناديق في النسخة القديمة: " +
+                    vaultCounts.entries.sortedBy { it.key }.joinToString(" | ") { "${it.key}: ${it.value}" })
                 val legacyRows = historical.movements.filter {
                     it.vault.equals(vault, ignoreCase = true) &&
                         it.currency.equals(selectedCurrency, ignoreCase = true)
