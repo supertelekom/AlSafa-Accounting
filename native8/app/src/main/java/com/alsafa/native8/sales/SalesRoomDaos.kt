@@ -64,6 +64,8 @@ interface LegacyPaymentDao {
 
 @Dao
 interface LegacyReceivablesDao {
+ @Query("UPDATE customer_receivables SET customer=:customer, phone=:phone WHERE sale_id=:saleId")
+ suspend fun updateCustomer(saleId:String, customer:String, phone:String):Int
  @Query("SELECT * FROM customer_receivables WHERE sale_id=:saleId")
  suspend fun bySaleId(saleId:String):RoomReceivable?
 
