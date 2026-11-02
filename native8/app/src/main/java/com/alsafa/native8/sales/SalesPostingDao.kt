@@ -1,0 +1,37 @@
+package com.alsafa.native8.sales
+
+import androidx.room.Dao
+import androidx.room.Insert
+import androidx.room.OnConflictStrategy
+import androidx.room.Query
+
+/** All financial writes are invoked inside AppDatabase.withTransaction. */
+@Dao
+interface SalesPostingDao {
+    @Query("SELECT COALESCE(MAX(number),0) FROM sales")
+    suspend fun maxNewNumber(): Long
+
+    @Query("SELECT * FROM sales WHERE id=:id LIMIT 1")
+    suspend fun sale(id: String): RoomSale?
+
+    @Query("SELECT * FROM sale_lines WHERE id=:lineId AND sale_id=:saleId LIMIT 1")
+    suspend fun line(saleId: String, lineId: String): RoomSaleLine?
+
+    @Query("SELECT * FROM sale_lines WHERE sale_id=:saleId ORDER BY rowid")
+    suspend fun lines(saleId: String): List<RoomSaleLine>
+
+    @Query("UPDATE sales SET paid=:paid, status=:status WHERE id=:id")
+    suspend fun updatePayment(id: String, paid: String, status: String): Int
+
+    @Query("UPDATE sale_lines SET returned_qty=:quantity WHERE id=:id")
+    suspend fun updateReturned(id: String, quantity: String): Int
+
+    @Insert(onConflict=OnConflictStrategy.ABORT)
+    suspend fun insertSale(value: RoomSale)
+
+    @Insert(onConflict=OnConflictStrategy.ABORT)
+    suspend fun insertLine(value: RoomSaleLine)
+
+    @Insert(onConflict=OnConflictStrategy.ABORT)
+    suspend fun insertReturn(value: RoomSaleReturn)
+}
