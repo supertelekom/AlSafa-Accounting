@@ -72,6 +72,10 @@ class MainActivity : Activity() {
             text = "حركات الصناديق / شام كاش"
             setOnClickListener { startActivity(Intent(this@MainActivity, CashboxMovementsActivity::class.java)) }
         }, LinearLayout.LayoutParams(-1, 76))
+        root.addView(Button(this).apply {
+            text = "أسعار الصرف"
+            setOnClickListener { startActivity(Intent(this@MainActivity, ExchangeRatesActivity::class.java)) }
+        }, LinearLayout.LayoutParams(-1, 76))
         setContentView(root)
     }
 }
