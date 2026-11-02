@@ -11,6 +11,7 @@ import com.alsafa.native8.data.operational.LocalProductEntity
 import com.alsafa.native8.data.operational.ProductVariantEntity
 import com.alsafa.native8.data.operational.ProductStockMovementEntity
 import com.alsafa.native8.data.operational.OperationalInventoryReadDao
+import com.alsafa.native8.data.operational.OperationalInventoryWriteDao
 
 /** Unified Room schema for all 15 operational entities.
  * WARNING: legacy SQLiteOpenHelper call sites must be removed before release.
@@ -29,6 +30,7 @@ import com.alsafa.native8.data.operational.OperationalInventoryReadDao
 )
 abstract class AppDatabase:RoomDatabase() {
  abstract fun operationalInventoryReadDao():OperationalInventoryReadDao
+ abstract fun operationalInventoryWriteDao():OperationalInventoryWriteDao
  abstract fun legacySaleDao():LegacySaleDao
  abstract fun legacyPaymentDao():LegacyPaymentDao
  abstract fun legacyReceivablesDao():LegacyReceivablesDao
