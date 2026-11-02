@@ -84,7 +84,8 @@ class RoomSalesEngine(context: Context) {
         val id = UUID.randomUUID().toString()
         val now = System.currentTimeMillis()
         payments.insertPayment(RoomSalePayment(id, saleId, payment.cashbox, payment.currency,
-            payment.amount.toPlainString(), now))
+            payment.amount.toPlainString(), now,
+            payment.invoiceCurrency, payment.fxRate?.toPlainString(), payment.creditedAmount?.toPlainString()))
         payments.insertCashboxMovement(RoomCashboxMovement(UUID.randomUUID().toString(),
             payment.cashbox, payment.currency, payment.amount.toPlainString(), saleId, now, "تحصيل آجل"))
         id
