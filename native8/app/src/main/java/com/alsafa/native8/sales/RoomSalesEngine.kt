@@ -261,6 +261,50 @@ class RoomSalesEngine(context: Context) {
         saleId
     }
 
+    /**
+     * Narrow, auditable correction: only uncollected invoices without returns.
+     * Financially posted invoices must use compensating entries, not in-place edits.
+     */
+    suspend fun correctUnpaidLine(saleId:String,lineId:String,newQuantity:BigDecimal,
+        newUnitPrice:BigDecimal):Unit = db.withTransaction {
+        require(newQuantity > BigDecimal.ZERO && newUnitPrice >= BigDecimal.ZERO)
+        val sale = requireNotNull(posting.sale(saleId))
+        require(sale.status != "ملغاة" && sale.paid.toBigDecimal() == BigDecimal.ZERO)
+        require(payments.payments(saleId).isEmpty() && payments.cashboxMovements(saleId).isEmpty()) {
+            "تعديل فاتورة مقبوضة يتطلب قيود تسوية مستقلة"
+        }
+        val lines = posting.lines(saleId)
+        require(lines.isNotEmpty() && lines.all { it.returned_qty.toBigDecimal() == BigDecimal.ZERO }) {
+            "تعديل فاتورة ذات مرتجع يتطلب قيود تسوية مستقلة"
+        }
+        val line = requireNotNull(lines.firstOrNull { it.id == lineId })
+        val delta = newQuantity - line.quantity.toBigDecimal()
+        if (delta > BigDecimal.ZERO) {
+            require(stock.currentStock(line.source,line.product_id,line.variant_id).toBigDecimal() >= delta) {
+                "الكمية غير كافية"
+            }
+        }
+        val originalGross = lines.fold(BigDecimal.ZERO) { a,l ->
+            a + l.quantity.toBigDecimal() * l.unit_price.toBigDecimal()
+        }
+        val newGross = originalGross - line.quantity.toBigDecimal() * line.unit_price.toBigDecimal() +
+            newQuantity * newUnitPrice
+        val discount = sale.discount.toBigDecimal()
+        require(newGross >= discount) { "الخصم يتجاوز الإجمالي الجديد" }
+        val newNet = newGross - discount
+        val debt = requireNotNull(debts.bySaleId(saleId)) { "ذمة الفاتورة غير موجودة" }
+        require(debt.balance.toBigDecimal().compareTo(sale.total.toBigDecimal()) == 0) {
+            "الذمة لا تطابق الفاتورة"
+        }
+        check(posting.correctUnpaidLine(saleId,lineId,newQuantity.toPlainString(),newUnitPrice.toPlainString()) == 1)
+        if (delta != BigDecimal.ZERO) {
+            stock.adjust(line.source,line.product_id,line.variant_id,delta.negate().toPlainString(),
+                "تصحيح كمية فاتورة ${sale.number}")
+        }
+        check(posting.correctUnpaidTotal(saleId,newNet.toPlainString(),sale.discount) == 1)
+        check(debts.compareAndSetBalance(saleId,debt.balance,newNet.toPlainString()) == 1)
+    }
+
     /** Correct customer metadata without rewriting posted financial history. */
     suspend fun correctCustomer(saleId: String, customer: String, phone: String): Unit = db.withTransaction {
         val sale = requireNotNull(posting.sale(saleId)) { "الفاتورة غير موجودة" }
