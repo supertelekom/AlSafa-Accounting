@@ -69,21 +69,26 @@ class SupplierDetailsActivity:Activity() {
   Thread {
    try {
     val dao=AppDatabase.get(applicationContext).supplierPurchaseDao()
-    val purchases=runBlocking { dao.purchases(supplierId) }
-    val ledger=runBlocking { dao.historicalLedger(supplierId) }
+    val review=runBlocking { SupplierBalanceReview(dao).inspect(supplierId) }
     val report=buildString {
-     append("المورد: ").append(supplierId).append("\n")
-     append("فواتير الشراء التاريخية: ").append(purchases.size).append("\n\n")
-     purchases.forEach { invoice ->
-      val due=invoice.total_exact.toBigDecimal().subtract(invoice.paid_at_import_exact.toBigDecimal())
-      append(invoice.invoice_number).append(" | ").append(invoice.currency)
-       .append(" | المتبقي وقت الاستيراد: ").append(due.toPlainString()).append("\n")
+     append("المورد: ").append(supplierId).append("\\n")
+     append("فواتير الشراء التاريخية: ").append(review.invoices.size).append("\\n\\n")
+     review.invoices.forEach { invoice ->
+      append(invoice.number).append(" | ").append(invoice.currency)
+       .append(" | الإجمالي: ").append(invoice.total.toPlainString())
+       .append(" | المدفوع: ").append(invoice.paid.toPlainString())
+       .append(" | المتبقي: ").append(invoice.remaining.toPlainString()).append("\\n")
      }
-     append("\nحركات الحساب السابق: ").append(ledger.size).append("\n")
-     ledger.forEach { row ->
-      append(row.kind).append(" | ").append(row.amount_exact).append(" ").append(row.currency).append("\n")
+     append("\\nالحساب السابق (منفصل عن الفواتير):\\n")
+     review.ledger.forEach { ledger ->
+      append(ledger.currency).append(" | دين افتتاحي: ").append(ledger.opening.toPlainString())
+       .append(" | دفعات تاريخية: ").append(ledger.payments.toPlainString()).append("\\n")
      }
-     append("\nالأرصدة التاريخية معروضة بصورة مستقلة، ولم تُجمع تلقائياً.")
+     if(review.warnings.isNotEmpty()) {
+      append("\\nتنبيهات التدقيق:\\n")
+      review.warnings.forEach { append("• ").append(it).append("\\n") }
+     }
+     append("\\nغير معتمد للترحيل المالي حتى مطابقة التداخل مع المصدر الأصلي.")
     }
     runOnUiThread { text.text=report }
    } catch(e:Exception) { runOnUiThread { text.text="تعذر تحميل الكشف: ${e.message}" } }
