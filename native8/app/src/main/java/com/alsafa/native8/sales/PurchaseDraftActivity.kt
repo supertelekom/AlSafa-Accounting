@@ -28,6 +28,7 @@ class PurchaseDraftActivity:Activity() {
   val note=EditText(this).apply { hint="ملاحظات الفاتورة";textSize=15f }
   val status=TextView(this).apply { text="جاري تحميل الموردين...";textSize=15f }
   val save=Button(this).apply { text="حفظ المسودة";isEnabled=false }
+  root.addView(TextView(this).apply { text="اختيار المورد";textSize=14f })
   root.addView(supplier)
   currency.adapter=ArrayAdapter(this,android.R.layout.simple_spinner_dropdown_item,listOf("USD","TRY","SYP"))
   root.addView(currency)
