@@ -10,6 +10,8 @@ import android.widget.ScrollView
 import android.widget.TextView
 import com.alsafa.native8.data.migration.LegacyBackupStager
 import com.alsafa.native8.data.migration.LegacyImportInspector
+import com.alsafa.native8.data.migration.LegacyReadRepository
+import com.alsafa.native8.data.migration.LegacySupplierReconciliation
 import com.alsafa.native8.data.migration.LegacyStagingDatabase
 import com.alsafa.native8.sales.AppDatabase
 import kotlinx.coroutines.runBlocking
@@ -89,6 +91,9 @@ class RestoreActivity : Activity() {
                     } catch (auditError: Exception) {
                         null
                     }
+                    val supplierAudit = try {
+                        LegacySupplierReconciliation(LegacyReadRepository(db)).inspect(run)
+                    } catch (e: Exception) { null }
                     var productError: String? = null
                     val promotion = try {
                         runBlocking {
@@ -114,6 +119,15 @@ class RestoreActivity : Activity() {
                                 append(it.section).append(": ").append(it.count).append("\\n")
                             }
                         }
+                        if (supplierAudit != null) {
+                            append("تدقيق الموردين (قراءة فقط): ").append(supplierAudit.supplierCount).append(" مورد، ")
+                                .append(supplierAudit.purchaseCount).append(" فاتورة شراء، ")
+                                .append(supplierAudit.ledgerCount).append(" حركة دفتر\\n")
+                            append("مجموعات ذات تداخل محتمل: ")
+                                .append(supplierAudit.balances.count { it.possibleOverlap }).append("\\n")
+                            append("تنبيهات الموردين: ").append(supplierAudit.issues.size).append("\\n")
+                            append("أرصدة الموردين التاريخية لم تُرحّل مالياً.\\n")
+                        } else append("تعذر إكمال تدقيق الموردين؛ لا تعتمد الأرصدة القديمة.\\n")
                         if (promotion == null) {
                             append("تعذر نقل المنتجات إلى Room: ").append(productError ?: "خطأ غير معروف").append("\\n")
                         } else {
