@@ -3,7 +3,7 @@ package com.alsafa.native8
 import android.app.Activity
 import android.app.AlertDialog
 import android.graphics.Color
-import android.util.TypedValue
+import android.graphics.drawable.GradientDrawable
 import android.content.Intent
 import android.os.Bundle
 import android.view.Gravity
@@ -38,6 +38,26 @@ class ProductsActivity : Activity() {
     private var busy = false
     private var requestSerial = 0
     private fun dp(value: Int): Int = (value * resources.displayMetrics.density + 0.5f).toInt()
+    private fun productRow(textValue: String): TextView = TextView(this).apply {
+        text = textValue
+        textSize = 15f
+        gravity = Gravity.CENTER_VERTICAL or Gravity.RIGHT
+        layoutDirection = View.LAYOUT_DIRECTION_RTL
+        textDirection = View.TEXT_DIRECTION_FIRST_STRONG_RTL
+        setPadding(dp(14), dp(12), dp(14), dp(12))
+        minHeight = dp(56)
+        maxLines = 3
+        ellipsize = android.text.TextUtils.TruncateAt.END
+        background = GradientDrawable().apply {
+            setColor(Color.rgb(245, 246, 248))
+            cornerRadius = dp(8).toFloat()
+        }
+        isClickable = true
+        isFocusable = true
+    }
+    private fun rowParams() = LinearLayout.LayoutParams(-1, -2).apply {
+        bottomMargin = dp(8)
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -76,14 +96,14 @@ class ProductsActivity : Activity() {
             }
         }, LinearLayout.LayoutParams(-1, dp(48)))
         root.addView(Button(this).apply {
-            text = "إضافة منتج تجريبي"
+            text = "إضافة منتج"
             textSize = 14f
             minHeight = 0
             minimumHeight = 0
             setOnClickListener {
                 startActivity(Intent(this@ProductsActivity, ProductEditorActivity::class.java))
             }
-        }, LinearLayout.LayoutParams(-1, 44))
+        }, LinearLayout.LayoutParams(-1, dp(48)))
         items = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             layoutDirection = View.LAYOUT_DIRECTION_RTL
@@ -121,7 +141,7 @@ class ProductsActivity : Activity() {
             orientation = LinearLayout.HORIZONTAL
             layoutDirection = View.LAYOUT_DIRECTION_RTL
             addView(previous, LinearLayout.LayoutParams(0, dp(48), 1f))
-            addView(next, LinearLayout.LayoutParams(0, 44, 1f))
+            addView(next, LinearLayout.LayoutParams(0, dp(48), 1f))
         }
         root.addView(navigation)
         setContentView(root)
@@ -195,49 +215,35 @@ class ProductsActivity : Activity() {
                 if (offset >= total && offset > 0) offset = 0
                 status.text = "العدد الإجمالي: $operationalTotal"
                 for (local in localProducts) {
-                    items.addView(Button(this).apply {
-                        textSize = 15f
-                        isAllCaps = false
-                        setSingleLine(false)
-                        maxLines = 2
-                        gravity = Gravity.CENTER_VERTICAL or Gravity.RIGHT
-                        setPadding(dp(12), dp(6), dp(12), dp(6))
-                        text = buildString {
-                            append("منتج محلي: ").append(local.optString("name"))
-                            append(" | الكمية: ").append(local.optString("stock", "—").ifBlank { "—" })
-                            append(" | سعر البيع: ").append(local.optString("salePrice", "—").ifBlank { "—" })
-                            append(" | رأس المال: ").append(local.optString("cost", "—").ifBlank { "—" })
-                            append(" ").append(local.optString("currency"))
-                        }
+                    val label = buildString {
+                        append(local.optString("name", "—"))
+                        append("  •  الكمية: ").append(local.optString("stock", "—").ifBlank { "—" })
+                        append("  •  البيع: ").append(local.optString("salePrice", "—").ifBlank { "—" })
+                        append("  •  التكلفة: ").append(local.optString("cost", "—").ifBlank { "—" })
+                        append(" ").append(local.optString("currency"))
+                    }
+                    items.addView(productRow(label).apply {
                         setOnClickListener {
                             startActivity(Intent(this@ProductsActivity, ProductEditorActivity::class.java).apply {
                                 putExtra(ProductEditorActivity.EXTRA_ID, local.optString("id"))
                             })
                         }
-                    }, LinearLayout.LayoutParams(-1, dp(72)).apply {
-                        bottomMargin = dp(6)
-                    })
+                    }, rowParams())
                 }
                 for (row in page.rows) {
                     val id = row.id
-                    items.addView(Button(this).apply {
-                        textSize = 15f
-                        isAllCaps = false
-                        setSingleLine(false)
-                        maxLines = 2
-                        gravity = Gravity.CENTER_VERTICAL or Gravity.RIGHT
-                        setPadding(dp(12), dp(6), dp(12), dp(6))
-                        val product = row.fields
-                        text = buildString {
-                            append(product.optString("name", "—"))
-                            if (product.has("stock")) append(" | ").append(product.opt("stock"))
-                            if (product.has("salePrice")) append(" | ").append(product.opt("salePrice"))
-                            if (product.has("currency")) append(" ").append(product.optString("currency"))
-                            append(" | رأس المال: ").append(product.optString("cost", "—").ifBlank { "—" })
-                        }
-                        isEnabled = !id.isNullOrBlank()
+                    val product = row.fields
+                    val label = buildString {
+                        append(product.optString("name", "—"))
+                        if (product.has("stock")) append("  •  الكمية: ").append(product.opt("stock"))
+                        if (product.has("salePrice")) append("  •  البيع: ").append(product.opt("salePrice"))
+                        if (product.has("currency")) append(" ").append(product.optString("currency"))
+                        append("  •  التكلفة: ").append(product.optString("cost", "—").ifBlank { "—" })
+                    }
+                    items.addView(productRow(label).apply {
+                        isEnabled = id.isNotBlank()
                         setOnLongClickListener {
-                            if (!id.isNullOrBlank()) {
+                            if (id.isNotBlank()) {
                                 startActivity(Intent(this@ProductsActivity, ProductEditorActivity::class.java).apply {
                                     putExtra(ProductEditorActivity.EXTRA_SOURCE, page.sourceSha256)
                                     putExtra(ProductEditorActivity.EXTRA_ID, id)
@@ -246,14 +252,14 @@ class ProductsActivity : Activity() {
                             true
                         }
                         setOnClickListener {
-                            if (!id.isNullOrBlank()) {
+                            if (id.isNotBlank()) {
                                 startActivity(Intent(this@ProductsActivity, ProductDetailsActivity::class.java).apply {
                                     putExtra(ProductDetailsActivity.EXTRA_RUN_ID, runId)
                                     putExtra(ProductDetailsActivity.EXTRA_PRODUCT_ID, id)
                                 })
                             }
                         }
-                    }, LinearLayout.LayoutParams(-1, 48))
+                    }, rowParams())
                 }
                 if (page.rows.isEmpty()) {
                     items.addView(TextView(this).apply { text = "لا توجد منتجات في هذه الصفحة" })
