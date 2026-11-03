@@ -16,6 +16,8 @@ import android.net.Uri
 import android.widget.ImageView
 import android.os.Bundle
 import android.view.View
+import android.view.WindowManager
+import android.view.Gravity
 import android.widget.Button
 import android.widget.EditText
 import android.widget.LinearLayout
@@ -97,6 +99,7 @@ class ProductEditorActivity : Activity() {
             val key = photoKeys[(requestCode - if (fromCamera) 8201 else 8101)]
             photos[key] = "data:image/jpeg;base64," + Base64.encodeToString(compressed.toByteArray(), Base64.NO_WRAP)
             previews[key]?.setImageBitmap(bitmap)
+            previews[key]?.visibility = View.VISIBLE
         } catch (e: Exception) {
             AlertDialog.Builder(this).setMessage(e.message ?: "تعذر قراءة الصورة").setPositiveButton("إغلاق", null).show()
         } finally {
@@ -105,13 +108,14 @@ class ProductEditorActivity : Activity() {
     }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
         cameraUri = savedInstanceState?.getString("camera_uri")?.let { Uri.parse(it) }
         val source = intent.getStringExtra(EXTRA_SOURCE)
         val id = intent.getStringExtra(EXTRA_ID)
         val root = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             layoutDirection = View.LAYOUT_DIRECTION_RTL
-            setPadding(24, 24, 24, 24)
+            setPadding(16, 12, 16, 12)
         }
         root.addView(TextView(this).apply {
             text = if (id == null) "إضافة منتج" else "تعديل بيانات المنتج"
@@ -142,7 +146,7 @@ class ProductEditorActivity : Activity() {
             }
             fields[key] = edit
             if (key == "barcode") barcodeField = edit
-            root.addView(edit)
+            root.addView(edit, LinearLayout.LayoutParams(-1, 54))
         }
         root.addView(Button(this).apply {
             text = "قراءة الباركود باستخدام Google ML Kit من صورة"
@@ -215,14 +219,19 @@ class ProductEditorActivity : Activity() {
                     }
                 }
             })
-            val image = ImageView(this).apply { adjustViewBounds = true }
+            val image = ImageView(this).apply {
+                adjustViewBounds = true
+                visibility = View.GONE
+                maxHeight = 180
+            }
             previews[key] = image
-            root.addView(image, LinearLayout.LayoutParams(-1, 240))
+            root.addView(image, LinearLayout.LayoutParams(-1, -2))
             root.addView(Button(this).apply {
                 text = "حذف " + listOf("الصورة الرئيسية", "الصورة الثانية", "الصورة الثالثة", "صورة الباركود")[index]
                 setOnClickListener {
                     photos[key] = ""
                     previews[key]?.setImageDrawable(null)
+                    previews[key]?.visibility = View.GONE
                 }
             })
         }
@@ -323,10 +332,13 @@ class ProductEditorActivity : Activity() {
         val screen = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             layoutDirection = View.LAYOUT_DIRECTION_RTL
-            addView(ScrollView(this@ProductEditorActivity).apply { addView(root) },
+            addView(ScrollView(this@ProductEditorActivity).apply {
+                isFillViewport = false
+                addView(root)
+            },
                 LinearLayout.LayoutParams(-1, 0, 1f))
-            addView(saveButton, LinearLayout.LayoutParams(-1, 72).apply {
-                setMargins(24, 8, 24, 16)
+            addView(saveButton, LinearLayout.LayoutParams(-1, 64).apply {
+                setMargins(16, 4, 16, 8)
             })
         }
         setContentView(screen)
@@ -368,6 +380,7 @@ class ProductEditorActivity : Activity() {
                                 var sample = 1
                                 while (bounds.outWidth / sample > 800 || bounds.outHeight / sample > 800) sample *= 2
                                 previews[key]?.setImageBitmap(BitmapFactory.decodeByteArray(bytes, 0, bytes.size, BitmapFactory.Options().apply { inSampleSize = sample }))
+                                previews[key]?.visibility = View.VISIBLE
                             } catch (_: Exception) { }
                         }
                     }
