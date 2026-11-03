@@ -3,6 +3,7 @@ package com.alsafa.native8
 import android.app.Activity
 import android.app.AlertDialog
 import android.graphics.Color
+import android.util.TypedValue
 import android.content.Intent
 import android.os.Bundle
 import android.view.Gravity
@@ -39,6 +40,8 @@ class ProductsActivity : Activity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val density = resources.displayMetrics.density
+        fun dp(n: Int) = (n * density + 0.5f).toInt()
         val root = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             layoutDirection = View.LAYOUT_DIRECTION_RTL
@@ -72,7 +75,7 @@ class ProductsActivity : Activity() {
                     .setPositiveButton("إغلاق", null)
                     .show()
             }
-        }, LinearLayout.LayoutParams(-1, 44))
+        }, LinearLayout.LayoutParams(-1, dp(48)))
         root.addView(Button(this).apply {
             text = "إضافة منتج تجريبي"
             textSize = 14f
@@ -118,7 +121,7 @@ class ProductsActivity : Activity() {
         val navigation = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             layoutDirection = View.LAYOUT_DIRECTION_RTL
-            addView(previous, LinearLayout.LayoutParams(0, 44, 1f))
+            addView(previous, LinearLayout.LayoutParams(0, dp(48), 1f))
             addView(next, LinearLayout.LayoutParams(0, 44, 1f))
         }
         root.addView(navigation)
@@ -194,9 +197,12 @@ class ProductsActivity : Activity() {
                 status.text = "العدد الإجمالي: $operationalTotal"
                 for (local in localProducts) {
                     items.addView(Button(this).apply {
-                        textSize = 13f
-                        minHeight = 0
-                        minimumHeight = 0
+                        textSize = 15f
+                        isAllCaps = false
+                        setSingleLine(false)
+                        maxLines = 2
+                        gravity = Gravity.CENTER_VERTICAL or Gravity.RIGHT
+                        setPadding(dp(12), dp(6), dp(12), dp(6))
                         text = buildString {
                             append("منتج محلي: ").append(local.optString("name"))
                             append(" | الكمية: ").append(local.optString("stock", "—").ifBlank { "—" })
@@ -209,11 +215,19 @@ class ProductsActivity : Activity() {
                                 putExtra(ProductEditorActivity.EXTRA_ID, local.optString("id"))
                             })
                         }
-                    }, LinearLayout.LayoutParams(-1, 48))
+                    }, LinearLayout.LayoutParams(-1, dp(72)).apply {
+                        bottomMargin = dp(6)
+                    })
                 }
                 for (row in page.rows) {
                     val id = row.id
                     items.addView(Button(this).apply {
+                        textSize = 15f
+                        isAllCaps = false
+                        setSingleLine(false)
+                        maxLines = 2
+                        gravity = Gravity.CENTER_VERTICAL or Gravity.RIGHT
+                        setPadding(dp(12), dp(6), dp(12), dp(6))
                         val product = row.fields
                         text = buildString {
                             append(product.optString("name", "—"))
