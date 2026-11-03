@@ -18,6 +18,9 @@ import android.os.Bundle
 import android.view.View
 import android.view.WindowManager
 import android.view.Gravity
+import android.graphics.Typeface
+import android.os.Build
+import android.view.WindowInsets
 import android.widget.Button
 import android.widget.EditText
 import android.widget.LinearLayout
@@ -134,11 +137,33 @@ class ProductEditorActivity : Activity() {
             "stock" to "الكمية",
             "currency" to "العملة"
         )
-        for ((key, label) in labels) {
-            root.addView(TextView(this).apply { text = label })
+        val density = resources.displayMetrics.density
+        fun dp(value: Int) = (value * density + 0.5f).toInt()
+        var fieldRow: LinearLayout? = null
+        for ((index, entry) in labels.withIndex()) {
+            val (key, label) = entry
+            if (index % 2 == 0) {
+                fieldRow = LinearLayout(this).apply {
+                    orientation = LinearLayout.HORIZONTAL
+                    layoutDirection = View.LAYOUT_DIRECTION_RTL
+                }
+                root.addView(fieldRow, LinearLayout.LayoutParams(-1, -2))
+            }
+            val cell = LinearLayout(this).apply {
+                orientation = LinearLayout.VERTICAL
+                setPadding(dp(4), dp(2), dp(4), dp(2))
+            }
+            cell.addView(TextView(this).apply {
+                text = label
+                textSize = 13f
+                setTypeface(null, Typeface.BOLD)
+            })
             val edit = EditText(this).apply {
                 hint = label
+                textSize = 15f
                 setSingleLine(key != "description")
+                setPadding(dp(8), 0, dp(8), 0)
+                minHeight = dp(42)
             }
             if (key == "stock" && id != null) {
                 edit.isEnabled = false
@@ -146,13 +171,25 @@ class ProductEditorActivity : Activity() {
             }
             fields[key] = edit
             if (key == "barcode") barcodeField = edit
-            root.addView(edit, LinearLayout.LayoutParams(-1, 54))
+            cell.addView(edit, LinearLayout.LayoutParams(-1, dp(44)))
+            fieldRow!!.addView(cell, LinearLayout.LayoutParams(0, -2, 1f))
+        }
+        val extras = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            visibility = View.GONE
         }
         root.addView(Button(this).apply {
+            text = "الصور والباركود (إظهار / إخفاء)"
+            textSize = 14f
+            setOnClickListener {
+                extras.visibility = if (extras.visibility == View.VISIBLE) View.GONE else View.VISIBLE
+            }
+        }, LinearLayout.LayoutParams(-1, dp(46)))
+        extras.addView(Button(this).apply {
             text = "قراءة الباركود باستخدام Google ML Kit من صورة"
             setOnClickListener { startActivityForResult(Intent(Intent.ACTION_GET_CONTENT).apply { type = "image/*" }, 8301) }
         })
-        root.addView(Button(this).apply {
+        extras.addView(Button(this).apply {
             text = "مسح الباركود بالكاميرا عبر Google ML Kit"
             setOnClickListener {
                 try {
@@ -173,7 +210,7 @@ class ProductEditorActivity : Activity() {
                 }
             }
         })
-        root.addView(Button(this).apply {
+        extras.addView(Button(this).apply {
             text = "معاينة باركود CODE 128"
             setOnClickListener {
                 try {
@@ -191,13 +228,13 @@ class ProductEditorActivity : Activity() {
             }
         })
         photoKeys.forEachIndexed { index, key ->
-            root.addView(Button(this).apply {
+            extras.addView(Button(this).apply {
                 text = listOf("الصورة الرئيسية", "الصورة الثانية", "الصورة الثالثة", "صورة الباركود")[index] + " من الاستديو"
                 setOnClickListener {
                     startActivityForResult(Intent(Intent.ACTION_GET_CONTENT).apply { type = "image/*" }, 8101 + index)
                 }
             })
-            root.addView(Button(this).apply {
+            extras.addView(Button(this).apply {
                 text = listOf("التقاط الصورة الرئيسية", "التقاط الصورة الثانية", "التقاط الصورة الثالثة", "التقاط صورة الباركود")[index] + " بالكاميرا"
                 setOnClickListener {
                     try {
@@ -225,8 +262,8 @@ class ProductEditorActivity : Activity() {
                 maxHeight = 180
             }
             previews[key] = image
-            root.addView(image, LinearLayout.LayoutParams(-1, -2))
-            root.addView(Button(this).apply {
+            extras.addView(image, LinearLayout.LayoutParams(-1, -2))
+            extras.addView(Button(this).apply {
                 text = "حذف " + listOf("الصورة الرئيسية", "الصورة الثانية", "الصورة الثالثة", "صورة الباركود")[index]
                 setOnClickListener {
                     photos[key] = ""
@@ -337,9 +374,18 @@ class ProductEditorActivity : Activity() {
                 addView(root)
             },
                 LinearLayout.LayoutParams(-1, 0, 1f))
-            addView(saveButton, LinearLayout.LayoutParams(-1, 64).apply {
-                setMargins(16, 4, 16, 8)
+            addView(saveButton, LinearLayout.LayoutParams(-1, dp(52)).apply {
+                setMargins(dp(12), dp(2), dp(12), dp(4))
             })
+        }
+        if (Build.VERSION.SDK_INT >= 30) {
+            screen.setOnApplyWindowInsetsListener { view, insets ->
+                val bars = insets.getInsets(WindowInsets.Type.systemBars())
+                view.setPadding(bars.left, 0, bars.right, bars.bottom)
+                insets
+            }
+        } else {
+            screen.fitsSystemWindows = true
         }
         setContentView(screen)
         if (id != null) {
