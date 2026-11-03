@@ -37,11 +37,10 @@ class ProductsActivity : Activity() {
     private var total = 0
     private var busy = false
     private var requestSerial = 0
+    private fun dp(value: Int): Int = (value * resources.displayMetrics.density + 0.5f).toInt()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val density = resources.displayMetrics.density
-        fun dp(n: Int) = (n * density + 0.5f).toInt()
         val root = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             layoutDirection = View.LAYOUT_DIRECTION_RTL
