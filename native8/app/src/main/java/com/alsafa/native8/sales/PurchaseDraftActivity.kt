@@ -17,6 +17,14 @@ class PurchaseDraftActivity:Activity() {
  private data class Pick(val source:String,val id:String,val name:String)
  private val lines=mutableListOf<Pair<Pick,Pair<String,String>>>()
  private var refreshProducts:(()->Unit)?=null
+ private var pendingNewProductName:String?=null
+ override fun onActivityResult(requestCode:Int,resultCode:Int,data:Intent?) {
+  super.onActivityResult(requestCode,resultCode,data)
+  if(requestCode==7401 && resultCode==RESULT_OK) {
+   pendingNewProductName=data?.getStringExtra("created_product_name")
+   refreshProducts?.invoke()
+  }
+ }
  override fun onResume() { super.onResume();refreshProducts?.invoke() }
  override fun onCreate(savedInstanceState:Bundle?) {
   super.onCreate(savedInstanceState)
@@ -41,7 +49,7 @@ class PurchaseDraftActivity:Activity() {
   val lineSummary=TextView(this).apply { text="لا توجد أصناف مضافة";textSize=13f }
   val add=Button(this).apply { text="إضافة الصنف إلى الفاتورة";isEnabled=false;textSize=13f }
   root.addView(add)
-  root.addView(Button(this).apply { text="إنشاء منتج جديد";textSize=13f;setOnClickListener { startActivity(Intent(this@PurchaseDraftActivity,ProductEditorActivity::class.java)) } })
+  root.addView(Button(this).apply { text="إنشاء منتج جديد";textSize=13f;setOnClickListener { startActivityForResult(Intent(this@PurchaseDraftActivity,ProductEditorActivity::class.java),7401) } })
   root.addView(lineSummary)
   val note=EditText(this).apply { hint="ملاحظات الفاتورة";textSize=14f }
   root.addView(note)
@@ -72,7 +80,16 @@ class PurchaseDraftActivity:Activity() {
       products=rows
       visibleProducts=rows.filter { it.name.contains(productSearch.text.toString(),true) }
       product.adapter=ArrayAdapter(this,android.R.layout.simple_spinner_dropdown_item,visibleProducts.map { it.name })
-      add.isEnabled=rows.isNotEmpty()
+      add.isEnabled=visibleProducts.isNotEmpty()
+      pendingNewProductName?.let { created ->
+       productSearch.setText(created)
+       val index=visibleProducts.indexOfFirst { it.name==created && it.source=="local" }
+       if(index>=0) {
+        product.setSelection(index)
+        status.text="تم تحديد المنتج الجديد. أدخل الكمية والتكلفة ثم أضفه."
+       } else status.text="تم إنشاء المنتج؛ ابحث عن اسمه واختره."
+       pendingNewProductName=null
+      }
       if(rows.isEmpty()) status.text="لا توجد منتجات؛ أنشئ منتجاً جديداً أولاً."
      }
     } catch(e:Exception) { runOnUiThread { status.text="تعذر قراءة المنتجات: ${e.message}" } }
