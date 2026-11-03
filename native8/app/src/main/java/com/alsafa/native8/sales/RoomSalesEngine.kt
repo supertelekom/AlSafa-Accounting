@@ -273,28 +273,52 @@ class RoomSalesEngine(private val context: Context) {
         require(receipts.all { it.invoice_currency == "USD" && it.fx_rate != null &&
             it.credited_amount != null }) { "دفعات بلا سعر صرف تاريخي؛ الإلغاء موقوف" }
         val refunds = audit.refunds(saleId)
-        val reversed = audit.reversals(saleId)
-        require(refunds.isEmpty() && reversed.isEmpty() &&
-            movements.none { it.amount.toBigDecimal() < BigDecimal.ZERO }) {
-            "الإلغاء بعد مرتجع يحتاج توزيعاً موثقاً على الدفعات"
+        val reversals = audit.reversals(saleId)
+        val profits = audit.profits(saleId).associateBy { it.payment_id }
+        require(receipts.map { it.id }.toSet() == profits.keys) {
+            "سجل الأرباح غير مكتمل"
         }
-        val grouped = receipts.groupBy { it.cashbox to it.currency }
+        val movementsById = movements.associateBy { it.id }
+        require(movementsById.size == movements.size)
+        require(refunds.map { it.movement_id }.distinct().size == refunds.size)
+        require(refunds.all { entry ->
+            val movement = movementsById[entry.movement_id]
+            movement != null && movement.cashbox == entry.cashbox &&
+                movement.currency == entry.currency &&
+                movement.amount.toBigDecimal().compareTo(entry.refunded_amount.toBigDecimal().negate()) == 0 &&
+                entry.credited_base.toBigDecimal() > BigDecimal.ZERO &&
+                entry.exchange_rate_to_base.toBigDecimal() > BigDecimal.ZERO
+        }) { "سجل الرد لا يطابق حركات الصناديق" }
+        val positive = movements.filter { it.amount.toBigDecimal() > BigDecimal.ZERO }
+            .groupBy { it.cashbox to it.currency }.mapValues { (_, entries) ->
+                entries.fold(BigDecimal.ZERO) { sum, entry -> sum + entry.amount.toBigDecimal() }
+            }
+        val expected = receipts.groupBy { it.cashbox to it.currency }
             .mapValues { (_, entries) -> entries.fold(BigDecimal.ZERO) { sum, entry ->
                 sum + entry.amount.toBigDecimal()
             } }
-        val actualReceipts = movements.groupBy { it.cashbox to it.currency }
-            .mapValues { (_, entries) -> entries.fold(BigDecimal.ZERO) { sum, entry ->
-                sum + entry.amount.toBigDecimal()
-            } }
-        require(grouped.keys == actualReceipts.keys &&
-            grouped.all { (key, value) -> actualReceipts[key]!!.compareTo(value) == 0 }) {
-            "حركات الصناديق لا تطابق دفعات الفاتورة"
+        require(positive.keys == expected.keys &&
+            positive.all { (key, value) -> value.compareTo(expected[key]!!) == 0 } &&
+            movements.filter { it.amount.toBigDecimal() < BigDecimal.ZERO }.size == refunds.size) {
+            "حركات القبض أو الرد غير موثقة بالكامل"
         }
-        val paidBase = receipts.fold(BigDecimal.ZERO) { sum, entry ->
-            sum + entry.credited_amount!!.toBigDecimal()
+        val allocatedByPayment = refunds.groupBy { it.payment_id }
+        val reversedByPayment = reversals.groupBy { it.payment_id }
+        val remaining = receipts.map { payment ->
+            val credited = payment.credited_amount!!.toBigDecimal()
+            val allocated = allocatedByPayment[payment.id].orEmpty().fold(BigDecimal.ZERO) { sum, entry ->
+                sum + entry.credited_base.toBigDecimal()
+            }
+            val reversedBase = reversedByPayment[payment.id].orEmpty().fold(BigDecimal.ZERO) { sum, entry ->
+                sum + entry.reversed_base.toBigDecimal()
+            }
+            require(allocated >= BigDecimal.ZERO && allocated <= credited &&
+                reversedBase.compareTo(allocated) == 0) { "تخصيص الرد وعكس الربح غير متطابقين" }
+            payment to (credited - allocated)
         }
+        val paidBase = remaining.fold(BigDecimal.ZERO) { sum, entry -> sum + entry.second }
         require(paidBase.compareTo(sale.paid.toBigDecimal()) == 0) {
-            "المقبوض بعملة الفاتورة لا يطابق سجل الدفعات"
+            "المتبقي المقبوض لا يطابق سجل التسويات"
         }
         val lines = posting.lines(saleId)
         require(lines.isNotEmpty()) { "الفاتورة بلا بنود" }
@@ -314,17 +338,23 @@ class RoomSalesEngine(private val context: Context) {
         if (debt != null) {
             check(debts.compareAndSetBalance(saleId, debt.balance, "0") == 1)
         }
-        require(movements.none { it.amount.toBigDecimal() < BigDecimal.ZERO }) {
-            "الإلغاء بعد رد سابق يتطلب تخصيص الردود للدفعات الأصلية"
-        }
-        val reversalId = UUID.randomUUID().toString()
-        reverseAllProfits(saleId,reversalId,now)
-        for ((key, amount) in grouped) {
-            if (amount > BigDecimal.ZERO) {
-                payments.insertCashboxMovement(RoomCashboxMovement(UUID.randomUUID().toString(),
-                    key.first, key.second, amount.negate().toPlainString(), saleId, now,
-                    "رد قبض عند إلغاء فاتورة ${sale.number}"))
-            }
+        for ((payment, outstanding) in remaining) {
+            if (outstanding <= BigDecimal.ZERO) continue
+            val fx = payment.fx_rate!!.toBigDecimal()
+            val originalCash = RefundAllocationMath.convertExact(outstanding, fx)
+            val nowMovementId = UUID.randomUUID().toString()
+            payments.insertCashboxMovement(RoomCashboxMovement(nowMovementId,
+                payment.cashbox, payment.currency, originalCash.negate().toPlainString(),
+                saleId, now, "رد المتبقي عند إلغاء فاتورة ${sale.number}"))
+            audit.insertRefund(SaleRefundAllocation(UUID.randomUUID().toString(),saleId,
+                payment.id,nowMovementId,payment.cashbox,payment.currency,
+                originalCash.toPlainString(),outstanding.toPlainString(),fx.toPlainString(),now))
+            val event = requireNotNull(profits[payment.id])
+            val alreadyReversed = reversedByPayment[payment.id].orEmpty()
+                .fold(BigDecimal.ZERO) { sum, entry -> sum + entry.reversed_profit.toBigDecimal() }
+            audit.insertReversal(SaleProfitReversal(UUID.randomUUID().toString(),saleId,
+                payment.id,nowMovementId,outstanding.toPlainString(),
+                (event.recognized_profit.toBigDecimal()-alreadyReversed).toPlainString(),now))
         }
         check(posting.updatePayment(saleId, "0", "ملغاة") == 1)
         saleId
