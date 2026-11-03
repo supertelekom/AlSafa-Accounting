@@ -31,12 +31,12 @@ class RoomSalesEngine(context: Context) {
         val existing = audit.reversals(saleId)
         require(existing.isEmpty()) { "توجد تسويات ربح سابقة تحتاج مطابقة" }
         val receipts = payments.payments(saleId)
-        require(events.size == receipts.size && events.map { it.payment_id }.toSet() ==
-            receipts.map { it.id }.toSet()) { "سجل الربح لا يطابق الدفعات" }
+        require(events.map { it.payment_id }.toSet() ==
+            receipts.filter { it.credited_amount?.toBigDecimalOrNull()?.compareTo(BigDecimal.ZERO) == 1 }.map { it.id }.toSet()) { "سجل الربح لا يطابق الدفعات" }
         for (event in events) {
             audit.insertReversal(SaleProfitReversal(UUID.randomUUID().toString(),saleId,
                 event.payment_id,refundMovementId,event.credited_base,
-                event.recognized_profit,System.currentTimeMillis()))
+                event.recognized_profit,at))
         }
     }
 
@@ -104,7 +104,7 @@ class RoomSalesEngine(context: Context) {
         val sale = requireNotNull(posting.sale(saleId)) { "الفاتورة غير موجودة" }
         require(sale.status != "ملغاة") { "لا يمكن قبض فاتورة ملغاة" }
         val balance = debt.balance.toBigDecimal()
-        require(payment.creditedAmount!! <= balance) { "الدفعة أكبر من المتبقي" }
+        require(balance > BigDecimal.ZERO && payment.creditedAmount!! > BigDecimal.ZERO && payment.creditedAmount!! <= balance) { "الدفعة غير صالحة أو أكبر من المتبقي" }
         val remaining = balance - payment.creditedAmount!!
         check(debts.compareAndSetBalance(saleId, debt.balance, remaining.toPlainString()) == 1)
         check(posting.updatePayment(saleId,
