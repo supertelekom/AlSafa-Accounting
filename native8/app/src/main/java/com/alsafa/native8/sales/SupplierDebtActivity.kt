@@ -53,12 +53,21 @@ class SupplierDebtActivity : Activity() {
         "فاتورة قديمة "+invoice.invoice_number.ifBlank { invoice.legacy_id })
       }
      }
-     recent+historical
+     val opening=dao.historicalLedger(supplierId).groupBy { it.currency }.mapNotNull { (currency,ledger) ->
+      if(ledger.any { it.kind!="opening-debt" && it.kind!="payment" }) null else {
+       val base=ledger.filter { it.kind=="opening-debt" }.fold(BigDecimal.ZERO) { sum,row -> sum+row.amount_exact.toBigDecimal() }
+       val historicalPaid=ledger.filter { it.kind=="payment" }.fold(BigDecimal.ZERO) { sum,row -> sum+row.amount_exact.toBigDecimal() }
+       val key="opening-debt:"+supplierId+":"+currency.uppercase()
+       val newPaid=dao.debtPayments(key).fold(BigDecimal.ZERO) { sum,row -> sum+row.amount_exact.toBigDecimal() }
+       if(base>BigDecimal.ZERO && base>=historicalPaid+newPaid) Due(key,currency,base,historicalPaid+newPaid,true,"الدين الافتتاحي القديم — "+currency) else null
+      }
+     }
+     recent+historical+opening
     }
     runOnUiThread {
      list.removeAllViews()
      val pending=rows.filter { it.remaining>BigDecimal.ZERO }
-     summary.text=if(rows.isEmpty()) "لا توجد فواتير شراء جديدة لهذا المورد" else "الفواتير: ${rows.size} | فواتير عليها دين: ${pending.size}"
+     summary.text=if(rows.isEmpty()) "لا توجد ديون مسجلة لهذا المورد" else "السجلات: ${rows.size} | عليها دين: ${pending.size}"
      rows.forEach { due ->
       val card=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL;setPadding(12,12,12,12) }
       card.addView(TextView(this).apply {
@@ -67,6 +76,7 @@ class SupplierDebtActivity : Activity() {
       })
       card.addView(Button(this).apply {
        text="معاينة الأصناف المشتراة"
+       isEnabled=!due.id.startsWith("opening-debt:")
        setOnClickListener { preview(due) }
       })
       card.addView(Button(this).apply {
@@ -139,7 +149,9 @@ class SupplierDebtActivity : Activity() {
     button.isEnabled=false
     Thread {
      try {
-      val left=runBlocking { if(due.archived) SupplierPaymentService(db).payArchivedInvoice(due.id,value,cashbox) else SupplierPaymentService(db).pay(due.id,value,cashbox) }
+      val left=runBlocking { if(due.id.startsWith("opening-debt:")) SupplierPaymentService(db).payOpeningDebt(supplierId,due.currency,value,cashbox)
+       else if(due.archived) SupplierPaymentService(db).payArchivedInvoice(due.id,value,cashbox)
+       else SupplierPaymentService(db).pay(due.id,value,cashbox) }
       runOnUiThread {
        dialog.dismiss()
        status.text="تم تسديد ${due.label}؛ المتبقي لهذه الفاتورة ${left.toPlainString()} ${due.currency}"
