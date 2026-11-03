@@ -2,17 +2,16 @@ package com.alsafa.native8.sales
 
 import android.content.Context
 import com.alsafa.native8.data.migration.LegacyCashboxHistory
-import java.math.BigDecimal
 import org.json.JSONObject
+import java.math.BigDecimal
 
 /**
- * One read-only cash balance projection for a cashbox/currency.
- * Imported history is never copied into the operational ledger.
- * An opening balance is NOT inferred from transactions.
+ * Historical cash is a read-only projection. Never re-post imported transactions to Room.
+ * A daily closing is a snapshot, not an extra credit to add to earlier movements.
  */
 class UnifiedCashboxBalance(private val context:Context,private val dao:SupplierPurchaseDao) {
  data class Result(val historical:BigDecimal,val operational:BigDecimal,
-                   val total:BigDecimal,val verified:Boolean,val warning:String)
+  val total:BigDecimal,val verified:Boolean,val warning:String)
  companion object {
   fun canonical(raw:String):String?=when(raw.trim().lowercase()) {
    "drawer","الدرج" -> "drawer"
@@ -28,45 +27,56 @@ class UnifiedCashboxBalance(private val context:Context,private val dao:Supplier
    "bank" -> listOf("bank","البنك")
    else -> error("خزنة غير معروفة: "+vault)
   }
- }
- suspend fun calculate(vault:String,currency:String):Result {
-  val normalized=canonical(vault) ?: error("خزنة غير معروفة")
+  private fun jsonObject(value:Any?):JSONObject? {
+   if(value is JSONObject) return value
+   return try { JSONObject(value?.toString() ?: return null) } catch (_:Exception) { null }
+  }
+  suspend fun calculate(vault:String,currency:String):Result {
+  val name=canonical(vault) ?: error("خزنة غير معروفة")
   val unit=currency.uppercase()
-  val history=LegacyCashboxHistory(context).cashMovements()
-  val old=history.movements.filter { canonical(it.vault)==normalized && it.currency.equals(unit,true) }
-  val historyAudit=LegacyCashboxHistory(context)
-  // The last daily closing is an authoritative snapshot for drawer/shamcash.
-  // Apply only subsequent cash movements, never replay the entire prior history.
-  val closings=historyAudit.entries("dailyClosings",10000).mapNotNull { entry ->
-   try { JSONObject(entry.raw) } catch (_:Exception) { null }
+  val source=LegacyCashboxHistory(context)
+  val history=source.cashMovements()
+  val operationalIds=dao.operationalCashMovementIds().toSet()
+  val overlapping=history.movements.filter { it.id in operationalIds }
+  val historicalRows=history.movements.filter {
+   canonical(it.vault)==name && it.currency.equals(unit,true) && it.id !in operationalIds
   }
-  val latest=closings.maxByOrNull { it.optLong("createdAt",0L) }
-  val anchor=when(normalized) {
-   "drawer" -> latest?.optJSONObject("drawerNext")
-   "shamcash" -> latest?.optJSONObject("shamActual")
-   else -> null
+  val entries=source.entries("dailyClosings",10000)
+  val closings=entries.mapNotNull { row ->
+   val obj=jsonObject(row.raw) ?: return@mapNotNull null
+   obj.optLong("createdAt",0L).takeIf { it>0L }?.let { it to obj }
+  }.sortedByDescending { it.first }
+  val field=when(name) {
+   "drawer" -> "drawerNext"
+   "shamcash" -> "shamActual"
+   else -> ""
   }
-  val anchorTime=latest?.optLong("createdAt",0L) ?: 0L
-  val anchorAmount=if(anchor!=null && anchor.has(unit) && !anchor.isNull(unit))
-   anchor.optString(unit).toBigDecimalOrNull() else null
-  val historical=if(anchorAmount!=null) {
-   // Use createdAt from original staged JSON rather than ordinal or sync timestamp.
-   val after=historyAudit.entries("cashTransactions",100000).mapNotNull { entry ->
-    try {
-     val obj=JSONObject(entry.raw)
-     val id=obj.optString("id")
-     if(old.none { it.id==id } || obj.optLong("createdAt",0L)<=anchorTime) null
-     else obj.optString("amount").toBigDecimalOrNull()
-    } catch (_:Exception) { null }
+  val anchor=closings.firstNotNullOfOrNull { (time,obj) ->
+   val values=jsonObject(obj.opt(field))
+   val amount=values?.optString(unit)?.toBigDecimalOrNull()
+   if(amount==null) null else time to amount
+  }
+  val old=if(anchor!=null) {
+   val after=historicalRows.filter { row ->
+    // Imported movement IDs are timestamped independently; use original row's createdAt.
+    val original=source.entries("cashTransactions",100000).firstOrNull { it.sourceId==row.id }
+    val created=original?.let { jsonObject(it.raw)?.optLong("createdAt",0L) } ?: 0L
+    created>anchor.first
    }
-   anchorAmount+after.fold(BigDecimal.ZERO,BigDecimal::add)
-  } else old.fold(BigDecimal.ZERO) { sum,row -> sum+row.amount }
-  val amounts=dao.cashboxAmounts(aliases(normalized),unit)
-  val operational=amounts.fold(BigDecimal.ZERO) { sum,value -> sum+value.toBigDecimal() }
-  // A historical transaction is never inserted into the operational table by this projection.
-  // Historical duplicate ids are excluded by LegacyCashboxHistory.
-  val verified=false // Cross-source duplicate detection and operational cash posting are not yet reconciled.
-  return Result(historical,operational,historical+operational,verified,
-   if(verified) "الرصيد التاريخي من الإغلاق المرحّل أو سجل الحركات، مضافاً إليه الحركات الجديدة؛ راجع أي تداخل بين المصادر" else "توجد بيانات ناقصة أو إغلاقات غير مكتملة؛ الرصيد يحتاج مراجعة")
+   anchor.second+after.fold(BigDecimal.ZERO) { sum,row -> sum+row.amount }
+  } else historicalRows.fold(BigDecimal.ZERO) { sum,row -> sum+row.amount }
+  val operational=dao.cashboxAmounts(aliases(name),unit)
+   .fold(BigDecimal.ZERO) { sum,value -> sum+value.toBigDecimal() }
+  // For external and bank, full historical movement history needs an opening balance.
+  val hasOpening=historicalRows.any { it.type=="opening-balance" }
+  val complete=if(name=="drawer" || name=="shamcash") anchor!=null else hasOpening
+  val verified=complete && history.invalid==0 && history.duplicates==0 && overlapping.isEmpty()
+  val warning=when {
+   overlapping.isNotEmpty() -> "تم استبعاد حركات متطابقة بالمعرف بين الأرشيف والجديد؛ يلزم تدقيق التداخل"
+   history.invalid>0 || history.duplicates>0 -> "الأرشيف يحوي حركات ناقصة أو معرفات مكررة؛ الرصيد غير معتمد"
+   !complete -> "لا يوجد رصيد إغلاق أو افتتاحي مؤكد لهذه الخزنة والعملة"
+   else -> "رصيد محسوب من نقطة الترحيل والحركات؛ يُراجع على الجهاز قبل الاعتماد النهائي"
+  }
+  return Result(old,operational,old+operational,verified,warning)
  }
 }
