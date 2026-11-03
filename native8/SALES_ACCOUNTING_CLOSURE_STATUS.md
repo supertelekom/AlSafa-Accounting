@@ -9,6 +9,11 @@ This document distinguishes committed code from verified accounting closure. Do 
 - Cancellation with prior refunds is blocked until allocations and profit reversal balancing are implemented.
 - Single-payment returns require original cashbox/currency and saved FX, with exact cent reconciliation; other scenarios blocked.
 
+## Latest safety additions
+- Added `RefundAllocationMath` for deterministic per-payment allocation, bounding each payment by its unreversed credited base; it is **not yet wired into the posting workflow**.
+- FX round-trip guard requires exact cent equivalence and refuses silent tolerance; explicit rounding adjustment postings are still needed.
+- The return engine now rejects refunds exceeding verified credited receipts minus prior refund allocations.
+
 ## NOT complete
 - Multi-payment partial return allocations, different-currency refund with explicit refund-time FX, cancellation after prior returns.
 - Proportional profit reversals for debt-only returns, rounding residuals, and partner profit ledger.
@@ -26,4 +31,4 @@ This document distinguishes committed code from verified accounting closure. Do 
 7. Fully paid invoice: no further collection permitted; zero credited amount rejected.
 8. Correct unpaid line: stock delta, invoice total, receivable balance and audit trail consistent.
 
-Status: **NOT ACCOUNTING-CLOSED / NOT DEVICE-TESTED**.
+Status: **NOT ACCOUNTING-CLOSED / NOT DEVICE-TESTED**. The requested complete multi-currency return-and-cancel workflow is NOT implemented or verified. Do not mark this section as ready for production.
