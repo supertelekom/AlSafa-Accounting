@@ -144,8 +144,20 @@ class RoomSalesEngine(context: Context) {
         require(amount >= BigDecimal.ZERO) { "قيمة المرتجع غير صالحة" }
         val debt = debts.bySaleId(saleId)
         val due = debt?.balance?.toBigDecimal() ?: BigDecimal.ZERO
+        val alreadyRefunded = audit.refunds(saleId).fold(BigDecimal.ZERO) { a, entry ->
+            a + entry.credited_base.toBigDecimal()
+        }
+        val receivedBase = payments.payments(saleId).fold(BigDecimal.ZERO) { a, entry ->
+            a + (entry.credited_amount?.toBigDecimalOrNull() ?: BigDecimal.ZERO)
+        }
+        require(alreadyRefunded >= BigDecimal.ZERO && alreadyRefunded <= receivedBase) {
+            "مجموع الردود السابقة غير متسق"
+        }
         val reduceDue = amount.min(due)
         val refund = amount - reduceDue
+        require(refund <= receivedBase - alreadyRefunded) {
+            "المبلغ المرتجع يتجاوز القبض المتاح بعد الردود السابقة"
+        }
         if (refund > BigDecimal.ZERO) {
             require(refundCashbox.isNotBlank() && refundCurrency.isNotBlank()) {
                 "المرتجع يتطلب تحديد صندوق وعملة رد المبلغ"
