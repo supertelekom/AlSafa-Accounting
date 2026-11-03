@@ -50,23 +50,28 @@ class SalePaymentsActivity: ComponentActivity() {
    SalesInput("المبلغ",vm.amount){vm.amount=it}
    if (vm.saleId.isNotBlank() && vm.remaining != null) {
     Text("المتبقي قبل الدفعة: " + vm.remaining)
-    val entered = vm.amount.toBigDecimalOrNull() ?: BigDecimal.ZERO
-    Text("المتبقي بعد الدفعة: " + (vm.remaining!!.toBigDecimal() - entered).max(BigDecimal.ZERO).toPlainString(),
+    val entered = (vm.amount.toBigDecimalOrNull() ?: BigDecimal.ZERO) * ExchangeRateSettings(applicationContext).rate(vm.currency, "USD")
+    Text("المتبقي بعد الدفعة (USD): " + (vm.remaining!!.toBigDecimal() - entered).max(BigDecimal.ZERO).setScale(2, java.math.RoundingMode.HALF_UP).toPlainString(),
      style = MaterialTheme.typography.titleLarge)
    }
    SalesPaymentSelectors(vm.cashbox,{vm.cashbox=it},vm.currency,{vm.currency=it})
    val exchange = ExchangeRateSettings(applicationContext).rate(vm.currency, "USD")
-   Text("سعر الصرف إلى الدولار: " + exchange.stripTrailingZeros().toPlainString())
+   val quoted = ExchangeRateSettings(applicationContext).rate("USD", vm.currency)
+   Text(if(vm.currency == "USD") "1 USD = 1 USD" else "1 USD = " + quoted.stripTrailingZeros().toPlainString() + " " + vm.currency)
+   Text("المبلغ المدخل: " + (vm.amount.ifBlank { "0" }) + " " + vm.currency)
    Text("القيمة المحتسبة بالدولار: " + ((vm.amount.toBigDecimalOrNull() ?: BigDecimal.ZERO) * exchange).setScale(2, java.math.RoundingMode.HALF_UP).toPlainString())
    Text("الفاتورة: "+vm.saleId)
-   Button(onClick={
+   Button(enabled=vm.saleId.isNotBlank() && !vm.posting && (vm.remaining?.toBigDecimalOrNull() ?: BigDecimal.ZERO) > BigDecimal.ZERO,onClick={
     try {
      require(vm.saleId.isNotBlank()) { "اختر فاتورة محفوظة" }
+     vm.posting=true
      val id=SalesPostingActions(applicationContext).collect(vm.saleId,vm.amount,vm.cashbox,vm.currency)
      vm.status="تم تسجيل القبض: "+id
      vm.refreshBalance(applicationContext)
     } catch(e:Exception) {vm.status=e.message ?: "تعذر القبض"}
+    finally { vm.posting=false }
    }) {Text("تسجيل دفعة")}
+   if(vm.saleId.isNotBlank() && vm.remaining?.toBigDecimalOrNull()?.compareTo(BigDecimal.ZERO) == 0) Text("الفاتورة مسددة بالكامل؛ لا توجد دفعة إضافية")
    Text(vm.status)
    if(vm.saleId.isBlank()) Button(enabled=!vm.posting,onClick={
      vm.posting=true
