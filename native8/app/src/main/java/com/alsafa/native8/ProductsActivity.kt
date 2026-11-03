@@ -6,6 +6,8 @@ import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
 import android.content.Intent
 import android.os.Bundle
+import android.os.Build
+import android.view.WindowManager
 import android.view.Gravity
 import android.view.View
 import android.widget.Button
@@ -61,30 +63,54 @@ class ProductsActivity : Activity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // Keep the activity inside the usable display area, including system bars.
+        window.clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN)
+        if (Build.VERSION.SDK_INT >= 30) window.setDecorFitsSystemWindows(true)
         val root = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             layoutDirection = View.LAYOUT_DIRECTION_RTL
-            setPadding(12, 8, 12, 8)
+            setPadding(dp(8), dp(4), dp(8), dp(4))
         }
-        root.addView(TextView(this).apply {
+        val header = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            layoutDirection = View.LAYOUT_DIRECTION_RTL
+            gravity = Gravity.CENTER_VERTICAL
+        }
+        header.addView(TextView(this).apply {
             text = "المنتجات"
-            textSize = 18f
-            gravity = Gravity.CENTER
-        })
-        status = TextView(this).apply { text = "جاري قراءة المنتجات..."; textSize = 14f }
-        root.addView(status)
+            textSize = 17f
+            gravity = Gravity.CENTER_VERTICAL or Gravity.RIGHT
+        }, LinearLayout.LayoutParams(0, dp(42), 1f))
+        status = TextView(this).apply {
+            text = "جاري قراءة المنتجات..."
+            textSize = 12f
+            gravity = Gravity.CENTER_VERTICAL
+            maxLines = 1
+            ellipsize = android.text.TextUtils.TruncateAt.END
+        }
+        header.addView(status, LinearLayout.LayoutParams(0, dp(42), 1f))
+        root.addView(header)
         databaseStatus = TextView(this).apply {
             text = "جارٍ التحقق من قاعدة البيانات..."
-            textSize = 20f
-            gravity = Gravity.CENTER
-            setTextColor(Color.WHITE)
-            setBackgroundColor(Color.rgb(20, 82, 105))
-            setPadding(16, 20, 16, 20)
         }
-        // Keep the SQLite audit status off the customer-facing product list.
-        root.addView(Button(this).apply {
-            text = "فحص القاعدة"
+        val actions = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            layoutDirection = View.LAYOUT_DIRECTION_RTL
+        }
+        actions.addView(Button(this).apply {
+            text = "إضافة منتج"
             textSize = 13f
+            isAllCaps = false
+            minHeight = 0
+            minimumHeight = 0
+            setOnClickListener {
+                startActivity(Intent(this@ProductsActivity, ProductEditorActivity::class.java))
+            }
+        }, LinearLayout.LayoutParams(0, dp(44), 1f))
+        actions.addView(Button(this).apply {
+            text = "فحص القاعدة"
+            textSize = 12f
+            isAllCaps = false
             minHeight = 0
             minimumHeight = 0
             setOnClickListener {
@@ -94,16 +120,8 @@ class ProductsActivity : Activity() {
                     .setPositiveButton("إغلاق", null)
                     .show()
             }
-        }, LinearLayout.LayoutParams(-1, dp(48)))
-        root.addView(Button(this).apply {
-            text = "إضافة منتج"
-            textSize = 14f
-            minHeight = 0
-            minimumHeight = 0
-            setOnClickListener {
-                startActivity(Intent(this@ProductsActivity, ProductEditorActivity::class.java))
-            }
-        }, LinearLayout.LayoutParams(-1, dp(48)))
+        }, LinearLayout.LayoutParams(0, dp(44), 1f))
+        root.addView(actions)
         items = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             layoutDirection = View.LAYOUT_DIRECTION_RTL
@@ -111,6 +129,7 @@ class ProductsActivity : Activity() {
         root.addView(ScrollView(this).apply {
             isFillViewport = false
             addView(items)
+            clipToPadding = false
         },
             LinearLayout.LayoutParams(-1, 0, 1f))
         next = Button(this).apply {
@@ -140,8 +159,8 @@ class ProductsActivity : Activity() {
         val navigation = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             layoutDirection = View.LAYOUT_DIRECTION_RTL
-            addView(previous, LinearLayout.LayoutParams(0, dp(48), 1f))
-            addView(next, LinearLayout.LayoutParams(0, dp(48), 1f))
+            addView(previous, LinearLayout.LayoutParams(0, dp(44), 1f))
+            addView(next, LinearLayout.LayoutParams(0, dp(44), 1f))
         }
         root.addView(navigation)
         setContentView(root)
