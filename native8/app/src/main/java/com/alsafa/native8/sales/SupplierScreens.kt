@@ -18,12 +18,12 @@ class SuppliersActivity : Activity() {
   val root=LinearLayout(this).apply {
    orientation=LinearLayout.VERTICAL
    layoutDirection=View.LAYOUT_DIRECTION_RTL
-   setPadding(24,24,24,24)
+   setPadding(16,16,16,16)
   }
-  root.addView(TextView(this).apply { text="الموردون";textSize=24f })
+  root.addView(TextView(this).apply { text="الموردون";textSize=20f })
   val status=TextView(this).apply { text="جاري تحميل الموردين..." }
-  status.textSize=18f
-  status.setPadding(8,18,8,18)
+  status.textSize=15f
+  status.setPadding(8,8,8,8)
   root.addView(status)
   root.addView(Button(this).apply {
    text="المشتريات"
@@ -44,8 +44,8 @@ class SuppliersActivity : Activity() {
      rows.forEach { supplier ->
       list.addView(Button(this).apply {
        text=supplier.name.ifBlank { supplier.supplier_id }
-       textSize=20f
-       minHeight=68
+       textSize=16f
+       minHeight=48
        isAllCaps=false
        setOnClickListener {
         startActivity(Intent(this@SuppliersActivity,SupplierDetailsActivity::class.java)
@@ -63,7 +63,7 @@ class SupplierDetailsActivity:Activity() {
  override fun onCreate(savedInstanceState:Bundle?) {
   super.onCreate(savedInstanceState)
   val supplierId=intent.getStringExtra("supplier_id").orEmpty()
-  val text=TextView(this).apply { text="جاري تحميل كشف المورد...";textSize=20f;setPadding(28,28,28,28) }
+  val text=TextView(this).apply { text="جاري تحميل كشف المورد...";textSize=16f;setPadding(16,16,16,16) }
   setContentView(ScrollView(this).apply { addView(text) })
   if(supplierId.isBlank()) { text.text="معرف المورد مفقود";return }
   Thread {
