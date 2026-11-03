@@ -3,6 +3,8 @@ package com.alsafa.native8
 import android.app.Activity
 import android.content.Intent
 import com.alsafa.native8.sales.SalesArchiveActivity
+import com.alsafa.native8.sales.SuppliersActivity
+import com.alsafa.native8.sales.PurchasesActivity
 import com.alsafa.native8.sales.CashboxMovementsActivity
 import android.graphics.Color
 import android.os.Bundle
@@ -75,6 +77,14 @@ class MainActivity : Activity() {
         root.addView(Button(this).apply {
             text = "أسعار الصرف"
             setOnClickListener { startActivity(Intent(this@MainActivity, ExchangeRatesActivity::class.java)) }
+        }, LinearLayout.LayoutParams(-1, 76))
+        root.addView(Button(this).apply {
+            text = "الموردون"
+            setOnClickListener { startActivity(Intent(this@MainActivity, SuppliersActivity::class.java)) }
+        }, LinearLayout.LayoutParams(-1, 76))
+        root.addView(Button(this).apply {
+            text = "المشتريات"
+            setOnClickListener { startActivity(Intent(this@MainActivity, PurchasesActivity::class.java)) }
         }, LinearLayout.LayoutParams(-1, 76))
         setContentView(root)
     }
