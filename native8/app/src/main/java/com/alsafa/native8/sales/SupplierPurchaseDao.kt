@@ -21,6 +21,8 @@ interface SupplierPurchaseDao {
  @Insert(onConflict=OnConflictStrategy.ABORT)
  suspend fun insertPayment(row:SupplierPaymentEntity)
  @Insert(onConflict=OnConflictStrategy.ABORT)
+ suspend fun insertCashMovement(row:RoomCashboxMovement)
+ @Insert(onConflict=OnConflictStrategy.ABORT)
  suspend fun insertDraft(row:PurchaseDraftEntity)
  @Insert(onConflict=OnConflictStrategy.ABORT)
  suspend fun insertDraftLines(rows:List<PurchaseDraftLineEntity>)
