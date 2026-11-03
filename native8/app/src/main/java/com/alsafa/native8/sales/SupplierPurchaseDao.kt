@@ -7,6 +7,9 @@ import androidx.room.Query
 
 @Dao
 interface SupplierPurchaseDao {
+ @Query("SELECT * FROM supplier_payments WHERE purchase_archive_key=:reference ORDER BY paid_at")
+ suspend fun debtPayments(reference:String):List<SupplierPaymentEntity>
+
  @Query("SELECT * FROM purchase_archive WHERE archive_key=:archiveKey LIMIT 1")
  suspend fun archivedPurchaseByKey(archiveKey:String):PurchaseArchiveEntity?
 
