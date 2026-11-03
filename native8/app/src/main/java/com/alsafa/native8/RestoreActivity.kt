@@ -17,6 +17,7 @@ import com.alsafa.native8.sales.AppDatabase
 import kotlinx.coroutines.runBlocking
 import com.alsafa.native8.data.operational.RoomProductImportPromoter
 import com.alsafa.native8.sales.LegacySalesArchiveImporter
+import com.alsafa.native8.sales.SupplierArchiveImporter
 
 /** Temporary isolated backup-import verification screen. */
 class RestoreActivity : Activity() {
@@ -104,6 +105,15 @@ class RestoreActivity : Activity() {
                     val historical = try {
                         LegacySalesArchiveImporter(db, AppDatabase.get(applicationContext)).importRun(run)
                     } catch (e: Exception) { archiveError = e.message ?: e.javaClass.simpleName; null }
+                    var supplierImportError: String? = null
+                    val supplierArchive = try {
+                        runBlocking {
+                            SupplierArchiveImporter(db, AppDatabase.get(applicationContext)).importRun(run)
+                        }
+                    } catch (e: Exception) {
+                        supplierImportError = e.message ?: e.javaClass.simpleName
+                        null
+                    }
                     buildString {
                         append(if (staged.alreadyImported) "النسخة موجودة مسبقاً في قاعدة الفحص" else "تم حفظ النسخة في قاعدة الفحص")
                         append("\\n")
@@ -128,6 +138,17 @@ class RestoreActivity : Activity() {
                             append("تنبيهات الموردين: ").append(supplierAudit.issues.size).append("\\n")
                             append("أرصدة الموردين التاريخية لم تُرحّل مالياً.\\n")
                         } else append("تعذر إكمال تدقيق الموردين؛ لا تعتمد الأرصدة القديمة.\\n")
+                        if (supplierArchive != null) {
+                            append("أرشيف الموردين المنقول إلى Room: ")
+                                .append(supplierArchive.suppliers).append(" مورد، ")
+                                .append(supplierArchive.purchases).append(" فاتورة، ")
+                                .append(supplierArchive.ledger).append(" حركة")
+                                .append(if (supplierArchive.alreadyImported) " (موجود مسبقاً)" else " (نقل الآن)")
+                                .append("\\n")
+                        } else {
+                            append("تعذر نقل أرشيف الموردين: ")
+                                .append(supplierImportError ?: "خطأ غير معروف").append("\\n")
+                        }
                         if (promotion == null) {
                             append("تعذر نقل المنتجات إلى Room: ").append(productError ?: "خطأ غير معروف").append("\\n")
                         } else {
