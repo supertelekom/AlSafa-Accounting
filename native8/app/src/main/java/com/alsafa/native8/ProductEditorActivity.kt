@@ -182,13 +182,18 @@ class ProductEditorActivity : Activity() {
             orientation = LinearLayout.VERTICAL
             visibility = View.GONE
         }
-        root.addView(Button(this).apply {
-            text = "الصور والباركود (إظهار / إخفاء)"
+        val extrasToggle = Button(this).apply {
+            text = "الصور والباركود (إظهار)"
             textSize = 14f
             setOnClickListener {
-                extras.visibility = if (extras.visibility == View.VISIBLE) View.GONE else View.VISIBLE
+                val expanded = extras.visibility != View.VISIBLE
+                extras.visibility = if (expanded) View.VISIBLE else View.GONE
+                text = if (expanded) "الصور والباركود (إخفاء)" else "الصور والباركود (إظهار)"
             }
-        }, LinearLayout.LayoutParams(-1, dp(46)))
+        }
+        root.addView(extrasToggle, LinearLayout.LayoutParams(-1, dp(46)))
+        // The expandable content must be attached to the layout, not just populated.
+        root.addView(extras, LinearLayout.LayoutParams(-1, -2))
         extras.addView(Button(this).apply {
             text = "قراءة الباركود باستخدام Google ML Kit من صورة"
             setOnClickListener { startActivityForResult(Intent(Intent.ACTION_GET_CONTENT).apply { type = "image/*" }, 8301) }
