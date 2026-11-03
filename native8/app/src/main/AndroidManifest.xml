@@ -10,6 +10,7 @@
         android:usesCleartextTraffic="false" android:supportsRtl="true">
         <activity android:name=".sales.PurchaseDraftActivity" android:exported="false" />
         <activity android:name=".sales.SuppliersActivity" android:exported="false" />
+        <activity android:name=".sales.SupplierDebtActivity" android:exported="false" />
         <activity android:name=".sales.SupplierDetailsActivity" android:exported="false" />
         <activity android:name=".sales.PurchasesActivity" android:exported="false" />
         <activity android:name=".ExchangeRatesActivity" android:exported="false" />
