@@ -10,7 +10,7 @@ import java.math.BigDecimal
 
 /** Each posted purchase has its own settlement action. Historical debts are not reposted. */
 class SupplierDebtActivity : Activity() {
- private data class Due(val id:String,val currency:String,val total:BigDecimal,val paid:BigDecimal) {
+ private data class Due(val id:String,val currency:String,val total:BigDecimal,val paid:BigDecimal,val archived:Boolean=false,val label:String="") {
   val remaining:BigDecimal get()=total-paid
  }
  private lateinit var list:LinearLayout
@@ -36,11 +36,22 @@ class SupplierDebtActivity : Activity() {
    try {
     val rows=runBlocking {
      val dao=db.supplierPurchaseDao()
-     dao.allDrafts().filter { it.supplier_id==supplierId && it.status=="POSTED" }.map { draft ->
+     val recent=dao.allDrafts().filter { it.supplier_id==supplierId && it.status=="POSTED" }.map { draft ->
       val total=dao.draftLines(draft.draft_id).fold(BigDecimal.ZERO) { s,l -> s+l.quantity_exact.toBigDecimal()*l.unit_cost_exact.toBigDecimal() }
       val paid=dao.newPayments(draft.draft_id).fold(BigDecimal.ZERO) { s,p -> s+p.amount_exact.toBigDecimal() }
-      Due(draft.draft_id,draft.currency,total,paid)
+      Due(draft.draft_id,draft.currency,total,paid,false,"فاتورة جديدة "+draft.draft_id.take(8))
      }
+     val historical=dao.purchases(supplierId).mapNotNull { invoice ->
+      val total=invoice.total_exact.toBigDecimalOrNull()
+      val imported=invoice.paid_at_import_exact.toBigDecimalOrNull()
+      if(total==null || imported==null || total<BigDecimal.ZERO || imported<BigDecimal.ZERO || imported>total) null
+      else {
+       val later=dao.newPayments(invoice.archive_key).fold(BigDecimal.ZERO) { s,p -> s+p.amount_exact.toBigDecimal() }
+       Due(invoice.archive_key,invoice.currency,total,imported+later,true,
+        "فاتورة قديمة "+invoice.invoice_number.ifBlank { invoice.legacy_id })
+      }
+     }
+     recent+historical
     }
     runOnUiThread {
      list.removeAllViews()
@@ -49,7 +60,7 @@ class SupplierDebtActivity : Activity() {
      rows.forEach { due ->
       val card=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL;setPadding(12,12,12,12) }
       card.addView(TextView(this).apply {
-       text="فاتورة شراء ${due.id.take(8)}\nالإجمالي: ${due.total.toPlainString()} ${due.currency} | المدفوع: ${due.paid.toPlainString()} | المتبقي: ${due.remaining.toPlainString()}"
+       text="${due.label}\nالإجمالي: ${due.total.toPlainString()} ${due.currency} | المدفوع: ${due.paid.toPlainString()} | المتبقي: ${due.remaining.toPlainString()}"
        textSize=16f
       })
       card.addView(Button(this).apply {
@@ -65,7 +76,7 @@ class SupplierDebtActivity : Activity() {
  }
  private fun showPayment(due:Due) {
   val content=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL;setPadding(20,12,20,8) }
-  content.addView(TextView(this).apply { text="الفاتورة ${due.id.take(8)} — المتبقي ${due.remaining.toPlainString()} ${due.currency}" })
+  content.addView(TextView(this).apply { text="${due.label} — المتبقي ${due.remaining.toPlainString()} ${due.currency}" })
   val type=Spinner(this).apply { adapter=ArrayAdapter(this@SupplierDebtActivity,android.R.layout.simple_spinner_dropdown_item,listOf("تسديد كامل المتبقي","تسديد جزء من المتبقي")) }
   content.addView(type)
   val amount=EditText(this).apply { hint="مبلغ الدفعة الجزئية";inputType=android.text.InputType.TYPE_CLASS_NUMBER or android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL;visibility=View.GONE }
@@ -86,10 +97,10 @@ class SupplierDebtActivity : Activity() {
     button.isEnabled=false
     Thread {
      try {
-      val left=runBlocking { SupplierPaymentService(db).pay(due.id,value,cashbox) }
+      val left=runBlocking { if(due.archived) SupplierPaymentService(db).payArchivedInvoice(due.id,value,cashbox) else SupplierPaymentService(db).pay(due.id,value,cashbox) }
       runOnUiThread {
        dialog.dismiss()
-       status.text="تم تسديد فاتورة ${due.id.take(8)}؛ المتبقي لهذه الفاتورة ${left.toPlainString()} ${due.currency}"
+       status.text="تم تسديد ${due.label}؛ المتبقي لهذه الفاتورة ${left.toPlainString()} ${due.currency}"
        refresh()
       }
      } catch(e:Exception) { runOnUiThread { status.text="فشل التسديد: ${e.message}";button.isEnabled=true } }
