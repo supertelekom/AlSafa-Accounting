@@ -52,16 +52,16 @@ class ProductsActivity : Activity() {
         status = TextView(this).apply { text = "جاري قراءة المنتجات..." }
         root.addView(status)
         databaseStatus = TextView(this).apply {
-            text = "فحص SQLite: جارٍ التحقق..."
+            text = "جارٍ التحقق من قاعدة البيانات..."
             textSize = 20f
             gravity = Gravity.CENTER
             setTextColor(Color.WHITE)
             setBackgroundColor(Color.rgb(20, 82, 105))
             setPadding(16, 20, 16, 20)
         }
-        root.addView(databaseStatus)
+        // Keep the SQLite audit status off the customer-facing product list.
         root.addView(Button(this).apply {
-            text = "فحص قاعدة البيانات التشغيلية"
+            text = "تفاصيل فحص قاعدة البيانات"
             setOnClickListener {
                 AlertDialog.Builder(this@ProductsActivity)
                     .setTitle("نتيجة فحص SQLite")
