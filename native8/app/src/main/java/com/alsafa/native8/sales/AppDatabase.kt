@@ -25,9 +25,10 @@ import com.alsafa.native8.data.operational.OperationalInventoryWriteDao
   SourceImportEntity::class,ProductEntity::class,ProductEditEntity::class,
   LocalProductEntity::class,ProductVariantEntity::class,ProductStockMovementEntity::class,
   SupplierArchiveEntity::class,PurchaseArchiveEntity::class,
-  SupplierLedgerArchiveEntity::class,SupplierPaymentEntity::class
+  SupplierLedgerArchiveEntity::class,SupplierPaymentEntity::class,
+  PurchaseDraftEntity::class
  ],
- version=10,
+ version=11,
  exportSchema=false
 )
 abstract class AppDatabase:RoomDatabase() {
@@ -47,7 +48,7 @@ abstract class AppDatabase:RoomDatabase() {
     instance ?: run {
      Room.databaseBuilder(context.applicationContext,AppDatabase::class.java,
       "alsafa_native8_operational.db")
-      .addMigrations(OperationalMigration4To5, OperationalMigration5To6, OperationalMigration6To7, OperationalMigration7To8, OperationalMigration8To9, OperationalMigration9To10)
+      .addMigrations(OperationalMigration4To5, OperationalMigration5To6, OperationalMigration6To7, OperationalMigration7To8, OperationalMigration8To9, OperationalMigration9To10, OperationalMigration10To11)
       .build().also { instance=it }
     }
    }
