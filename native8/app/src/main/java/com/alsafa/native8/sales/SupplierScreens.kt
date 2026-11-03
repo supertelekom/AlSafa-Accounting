@@ -133,8 +133,8 @@ class PurchasesActivity:Activity() {
      }
      append("الأرشيف للعرض فقط؛ لم تُرحّل حركة مالية أو مخزنية جديدة.")
     }
-    runOnUiThread { text.text=report }
-   } catch(e:Exception) { runOnUiThread { text.text="تعذر قراءة المشتريات: ${e.message}" } }
+    runOnUiThread { purchaseReportView.text=report }
+   } catch(e:Exception) { runOnUiThread { purchaseReportView.text="تعذر قراءة المشتريات: ${e.message}" } }
   }.start()
  }
 }
