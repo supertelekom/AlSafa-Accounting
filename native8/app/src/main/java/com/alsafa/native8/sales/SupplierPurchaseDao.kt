@@ -7,6 +7,11 @@ import androidx.room.Query
 
 @Dao
 interface SupplierPurchaseDao {
+ @Query("SELECT * FROM purchase_drafts WHERE draft_id=:id LIMIT 1")
+ suspend fun draftById(id:String):PurchaseDraftEntity?
+ @Query("UPDATE purchase_drafts SET status='POSTED' WHERE draft_id=:id AND status='DRAFT'")
+ suspend fun markDraftPosted(id:String):Int
+
  @Insert(onConflict=OnConflictStrategy.ABORT)
  suspend fun insertSupplier(row:SupplierArchiveEntity)
  @Insert(onConflict=OnConflictStrategy.ABORT)
