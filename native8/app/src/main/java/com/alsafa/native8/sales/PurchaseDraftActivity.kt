@@ -51,10 +51,13 @@ class PurchaseDraftActivity:Activity() {
   root.addView(add)
   root.addView(Button(this).apply { text="إنشاء منتج جديد";textSize=13f;setOnClickListener { startActivityForResult(Intent(this@PurchaseDraftActivity,ProductEditorActivity::class.java),7401) } })
   root.addView(lineSummary)
+  val totals=TextView(this).apply { text="إجمالي الفاتورة: 0";textSize=15f }
+  root.addView(totals)
   val note=EditText(this).apply { hint="ملاحظات الفاتورة";textSize=14f }
   root.addView(note)
   val save=Button(this).apply { text="حفظ مسودة الفاتورة";textSize=13f;isEnabled=false }
   root.addView(save)
+  root.addView(Button(this).apply { text="اعتماد الفاتورة (بانتظار اكتمال الترحيل)";textSize=12f;isEnabled=false })
   val status=TextView(this).apply { text="جاري تحميل الموردين والمنتجات...";textSize=13f }
   root.addView(status)
   root.addView(title("المسودة لا تغيّر المخزون أو دين المورد أو الصناديق."))
@@ -104,6 +107,8 @@ class PurchaseDraftActivity:Activity() {
    }
    lines+=selected to (q.stripTrailingZeros().toPlainString() to price.stripTrailingZeros().toPlainString())
    lineSummary.text=lines.mapIndexed { index,item -> "${index+1}. ${item.first.name} | الكمية ${item.second.first} | التكلفة ${item.second.second}" }.joinToString("\n")
+   val sum=lines.fold(BigDecimal.ZERO) { acc,item -> acc+item.second.first.toBigDecimal()*item.second.second.toBigDecimal() }
+   totals.text="إجمالي الفاتورة: "+sum.stripTrailingZeros().toPlainString()+" "+currency.selectedItem.toString()
    qty.text.clear();cost.text.clear()
    status.text="تمت إضافة الصنف إلى المسودة."
   }
