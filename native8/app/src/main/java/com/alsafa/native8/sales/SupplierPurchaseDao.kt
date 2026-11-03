@@ -13,6 +13,9 @@ interface SupplierPurchaseDao {
  @Query("SELECT * FROM purchase_archive WHERE archive_key=:archiveKey LIMIT 1")
  suspend fun archivedPurchaseByKey(archiveKey:String):PurchaseArchiveEntity?
 
+ @Query("SELECT movement_id FROM cashbox_movements")
+ suspend fun operationalCashMovementIds():List<String>
+
  @Query("SELECT amount FROM cashbox_movements WHERE lower(cashbox) IN (:aliases) AND upper(currency)=:currency")
  suspend fun cashboxAmounts(aliases:List<String>,currency:String):List<String>
 
