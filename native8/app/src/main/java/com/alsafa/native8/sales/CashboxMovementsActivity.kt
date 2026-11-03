@@ -46,8 +46,22 @@ class CashboxMovementsActivity : ComponentActivity() {
                 }) { Text("فحص العمليات التاريخية المستعادة") }
                 SalesPaymentSelectors(selectedCashbox, { selectedCashbox = it },
                     selectedCurrency, { selectedCurrency = it })
+                val canonicalCashbox = when (selectedCashbox) {
+                    "الدرج" -> "drawer"
+                    "الصندوق الخارجي" -> "external"
+                    "شام كاش" -> "shamcash"
+                    "البنك" -> "bank"
+                    else -> selectedCashbox
+                }
                 val filtered = movements.filter {
-                    it.cashbox == selectedCashbox && it.currency == selectedCurrency
+                    val normalized = when (it.cashbox.trim().lowercase()) {
+                        "الدرج", "drawer" -> "drawer"
+                        "الصندوق الخارجي", "external" -> "external"
+                        "شام كاش", "shamcash", "sham" -> "shamcash"
+                        "البنك", "bank" -> "bank"
+                        else -> it.cashbox.trim().lowercase()
+                    }
+                    normalized == canonicalCashbox && it.currency.equals(selectedCurrency, ignoreCase = true)
                 }
                 val total = filtered.fold(BigDecimal.ZERO) { sum, movement ->
                     sum + (movement.amount.toBigDecimalOrNull() ?: BigDecimal.ZERO)
