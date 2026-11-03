@@ -88,7 +88,7 @@ class MainActivity : Activity() {
             setOnClickListener { startActivity(Intent(this@MainActivity, PurchasesActivity::class.java)) }
         }, LinearLayout.LayoutParams(-1, 76))
         setContentView(ScrollView(this).apply {
-            fillViewport = true
+            isFillViewport = true
             addView(root)
         })
     }
