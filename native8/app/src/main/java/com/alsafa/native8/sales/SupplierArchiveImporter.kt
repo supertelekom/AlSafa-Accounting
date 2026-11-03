@@ -38,9 +38,13 @@ class SupplierArchiveImporter(
   val ledger=all("supplierLedger")
   val dao=room.supplierPurchaseDao()
   return room.withTransaction {
-   val count=dao.purchaseCount(sha)
-   if(count>0) {
-    require(count==purchases.size) { "Incomplete previous supplier archive import" }
+   val supplierCount=dao.supplierCount(sha)
+   val purchaseCount=dao.purchaseCount(sha)
+   val ledgerCount=dao.ledgerCount(sha)
+   if(supplierCount>0 || purchaseCount>0 || ledgerCount>0) {
+    require(supplierCount==suppliers.size && purchaseCount==purchases.size && ledgerCount==ledger.size) {
+     "Incomplete previous supplier archive import"
+    }
     Result(suppliers.size,purchases.size,ledger.size,true)
    } else {
     val now=System.currentTimeMillis()
