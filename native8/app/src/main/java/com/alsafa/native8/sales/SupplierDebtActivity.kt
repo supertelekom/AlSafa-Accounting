@@ -107,13 +107,22 @@ class SupplierDebtActivity : Activity() {
       val json=JSONObject(old.original_json)
       val keys=listOf("items","lines","products","purchaseItems","invoiceItems","details","rows")
       val array=keys.firstNotNullOfOrNull { key -> json.optJSONArray(key) }
-      if(array==null) "لا توجد قائمة أصناف واضحة في بيانات الفاتورة المستعادة.\nالبيانات الأصلية:\n"+json.toString(2)
+      if(array==null) "لا توجد أصناف مسجلة في هذه الفاتورة القديمة"
       else (0 until array.length()).joinToString("\n\n") { index ->
        val item=array.optJSONObject(index)
-       if(item==null) "${index+1}. "+array.optString(index)
+       if(item==null) "${index+1}. "+array.optString(index).take(120)
        else {
-        val name=listOf("name","productName","product_name","title","itemName").firstNotNullOfOrNull { key -> item.optString(key).takeIf { it.isNotBlank() } } ?: "صنف ${index+1}"
-        "${index+1}. "+name+"\n"+item.toString(2)
+        fun field(vararg keys:String):String=keys.firstNotNullOfOrNull { key ->
+         item.optString(key).takeIf { it.isNotBlank() && it!="null" }
+        }.orEmpty()
+        val name=field("itemName","productName","product_name","name","title")
+        val quantity=field("quantity","qty","count")
+        val price=field("unitCost","unit_cost","cost","price","purchasePrice")
+        val lineTotal=field("total","lineTotal","subtotal")
+        "${index+1}. "+name.ifBlank { "صنف ${index+1}" }+
+         (if(quantity.isNotBlank()) "\nالكمية: "+quantity else "")+
+         (if(price.isNotBlank()) "\nتكلفة الوحدة: "+price else "")+
+         (if(lineTotal.isNotBlank()) "\nالإجمالي: "+lineTotal else "")
        }
       }
      }
