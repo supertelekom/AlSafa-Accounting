@@ -7,6 +7,8 @@ import androidx.compose.runtime.*
 import androidx.compose.material3.*
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
 class SaleReturnsViewModel: ViewModel() { var saleId by mutableStateOf(""); var quantity by mutableStateOf(""); var reason by mutableStateOf(""); var lineId by mutableStateOf(""); var status by mutableStateOf(""); var refundCashbox by mutableStateOf("الدرج"); var refundCurrency by mutableStateOf("USD") }
 class SaleReturnsActivity: ComponentActivity() {
  override fun onCreate(savedInstanceState: Bundle?) {
@@ -14,6 +16,15 @@ class SaleReturnsActivity: ComponentActivity() {
   val vm = ViewModelProvider(this)[SaleReturnsViewModel::class.java]
   vm.saleId=intent.getStringExtra("sale_id").orEmpty()
   vm.lineId=intent.getStringExtra("line_id").orEmpty()
+  lifecycleScope.launch {
+   if (vm.saleId.isNotBlank()) {
+    val originals = AppDatabase.get(applicationContext).legacyPaymentDao().payments(vm.saleId)
+    if (originals.size == 1) {
+     vm.refundCashbox = originals.single().cashbox
+     vm.refundCurrency = originals.single().currency
+    }
+   }
+  }
   setContent { SalesFrame("المرتجع والإلغاء") { Text("الفاتورة: "+vm.saleId)
 if(vm.lineId.isBlank()) Text("اختر البند من شاشة تفاصيل الفاتورة أولاً")
 else Text("تم تحديد بند الفاتورة")
@@ -21,6 +32,7 @@ SalesInput("الكمية المرتجعة",vm.quantity){vm.quantity=it}
 SalesInput("السبب",vm.reason){vm.reason=it}
 Text("في حال وجود مبلغ مقبوض يُرد من الصندوق التالي:")
 SalesPaymentSelectors(vm.refundCashbox,{vm.refundCashbox=it},vm.refundCurrency,{vm.refundCurrency=it})
+Text("عملة الرد: "+vm.refundCurrency+" — يستخدم سعر الصرف المحفوظ عند القبض")
 Button(enabled=vm.lineId.isNotBlank(),onClick={
  try { val id=SalesEngine(applicationContext).returnLine(vm.saleId,vm.lineId,vm.quantity.toBigDecimal(),vm.reason,vm.refundCashbox,vm.refundCurrency);vm.status="تم تسجيل المرتجع: "+id }
  catch(e:Exception){vm.status=e.message ?: "تعذر المرتجع"}
