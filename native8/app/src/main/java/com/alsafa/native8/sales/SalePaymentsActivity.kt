@@ -1,5 +1,6 @@
 package com.alsafa.native8.sales
 import android.os.Bundle
+import android.content.Intent
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.runtime.*
@@ -67,7 +68,10 @@ class SalePaymentsActivity: ComponentActivity() {
      vm.posting=true
      val id=SalesPostingActions(applicationContext).collect(vm.saleId,vm.amount,vm.cashbox,vm.currency)
      vm.status="تم تسجيل القبض: "+id
-     vm.refreshBalance(applicationContext)
+     startActivity(Intent(this@SalePaymentsActivity, SalesArchiveActivity::class.java).apply {
+      addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+     })
+     finish()
     } catch(e:Exception) {vm.status=e.message ?: "تعذر القبض"}
     finally { vm.posting=false }
    }) {Text("تسجيل دفعة")}
@@ -75,7 +79,11 @@ class SalePaymentsActivity: ComponentActivity() {
    Text(vm.status)
    if(vm.saleId.isBlank()) Button(enabled=!vm.posting,onClick={
      vm.posting=true
-     try { vm.saleId=SalesPostingActions(applicationContext).postDraft(vm.amount,vm.cashbox,vm.currency); vm.status="تم حفظ الفاتورة"; vm.refreshBalance(applicationContext) }
+     try { vm.saleId=SalesPostingActions(applicationContext).postDraft(vm.amount,vm.cashbox,vm.currency); vm.status="تم حفظ الفاتورة"
+      startActivity(Intent(this@SalePaymentsActivity, SalesArchiveActivity::class.java).apply {
+       addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+      })
+      finish() }
      catch(e:Exception){ vm.status=e.message ?: "تعذر حفظ الفاتورة" }
      finally { vm.posting=false }
    }) { Text("حفظ الفاتورة") }
