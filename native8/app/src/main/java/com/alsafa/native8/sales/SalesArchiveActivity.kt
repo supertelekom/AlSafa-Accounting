@@ -24,9 +24,15 @@ class SalesArchiveViewModel: ViewModel() {
 }
 
 class SalesArchiveActivity: ComponentActivity() {
+    private lateinit var archiveVm: SalesArchiveViewModel
+    override fun onResume() {
+        super.onResume()
+        if (::archiveVm.isInitialized) archiveVm.search(archiveVm.query, SalesEngine(applicationContext))
+    }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val vm = ViewModelProvider(this)[SalesArchiveViewModel::class.java]
+        archiveVm = vm
         
         val engine = SalesEngine(applicationContext)
         vm.search("", engine)
