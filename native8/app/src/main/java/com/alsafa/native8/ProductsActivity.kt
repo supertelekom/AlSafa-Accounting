@@ -11,6 +11,7 @@ import android.view.WindowManager
 import android.view.Gravity
 import android.view.View
 import android.widget.Button
+import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
@@ -66,10 +67,14 @@ class ProductsActivity : Activity() {
         // Keep the activity inside the usable display area, including system bars.
         window.clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN)
         if (Build.VERSION.SDK_INT >= 30) window.setDecorFitsSystemWindows(true)
-        val root = LinearLayout(this).apply {
+        val root = FrameLayout(this).apply {
+            layoutDirection = View.LAYOUT_DIRECTION_RTL
+            fitsSystemWindows = true
+            setPadding(dp(8), dp(4), dp(8), dp(4))
+        }
+        val toolbar = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             layoutDirection = View.LAYOUT_DIRECTION_RTL
-            setPadding(dp(8), dp(4), dp(8), dp(4))
         }
         val header = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
@@ -89,7 +94,7 @@ class ProductsActivity : Activity() {
             ellipsize = android.text.TextUtils.TruncateAt.END
         }
         header.addView(status, LinearLayout.LayoutParams(0, dp(42), 1f))
-        root.addView(header)
+        toolbar.addView(header)
         databaseStatus = TextView(this).apply {
             text = "جارٍ التحقق من قاعدة البيانات..."
         }
@@ -121,7 +126,8 @@ class ProductsActivity : Activity() {
                     .show()
             }
         }, LinearLayout.LayoutParams(0, dp(44), 1f))
-        root.addView(actions)
+        toolbar.addView(actions)
+        root.addView(toolbar, FrameLayout.LayoutParams(-1, dp(86), Gravity.TOP))
         items = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             layoutDirection = View.LAYOUT_DIRECTION_RTL
@@ -129,9 +135,12 @@ class ProductsActivity : Activity() {
         root.addView(ScrollView(this).apply {
             isFillViewport = false
             addView(items)
-            clipToPadding = false
-        },
-            LinearLayout.LayoutParams(-1, 0, 1f))
+            clipToPadding = true
+            isVerticalScrollBarEnabled = true
+        }, FrameLayout.LayoutParams(-1, -1).apply {
+            topMargin = dp(90)
+            bottomMargin = dp(52)
+        })
         next = Button(this).apply {
             text = "التالي"
             textSize = 14f
@@ -162,7 +171,7 @@ class ProductsActivity : Activity() {
             addView(previous, LinearLayout.LayoutParams(0, dp(44), 1f))
             addView(next, LinearLayout.LayoutParams(0, dp(44), 1f))
         }
-        root.addView(navigation)
+        root.addView(navigation, FrameLayout.LayoutParams(-1, dp(48), Gravity.BOTTOM))
         setContentView(root)
         load()
     }
