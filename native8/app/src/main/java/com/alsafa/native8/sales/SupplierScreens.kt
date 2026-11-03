@@ -76,6 +76,8 @@ class SupplierDetailsActivity:Activity() {
     val dao=AppDatabase.get(applicationContext).supplierPurchaseDao()
     val review=runBlocking { SupplierBalanceReview(dao).inspect(supplierId) }
     val supplierName=runBlocking { dao.allSuppliers() }.firstOrNull { it.supplier_id==supplierId }?.name?.takeIf { it.isNotBlank() } ?: supplierId
+    val posted=runBlocking { dao.allDrafts() }.filter { it.supplier_id==supplierId && it.status=="POSTED" }
+    val postedLines=runBlocking { posted.map { it to dao.draftLines(it.draft_id) } }
     val report=buildString {
      append("المورد: ").append(supplierName).append("\n")
      append("فواتير الشراء التاريخية: ").append(review.invoices.size).append("\n\n")
@@ -84,6 +86,13 @@ class SupplierDetailsActivity:Activity() {
        .append(" | الإجمالي: ").append(invoice.total.toPlainString())
        .append(" | المدفوع: ").append(invoice.paid.toPlainString())
        .append(" | المتبقي: ").append(invoice.remaining.toPlainString()).append("\n")
+     }
+     append("\nفواتير الشراء الجديدة المعتمدة:\n")
+     postedLines.forEach { (draft,items) ->
+      val amount=items.fold(java.math.BigDecimal.ZERO) { sum,line -> sum+line.quantity_exact.toBigDecimal()*line.unit_cost_exact.toBigDecimal() }
+      append(draft.draft_id.take(8)).append(" | ").append(draft.currency)
+       .append(" | الإجمالي: ").append(amount.toPlainString())
+       .append(" | المتبقي: ").append(amount.toPlainString()).append("\n")
      }
      append("\nالحساب السابق (منفصل عن الفواتير):\n")
      review.ledger.forEach { ledger ->
@@ -128,7 +137,7 @@ class PurchasesActivity:Activity() {
      append("المشتريات — الأرشيف المستورد\n")
      append("عدد الفواتير: ").append(rows.size).append("\n")
      append("المسودات المحفوظة: ").append(drafts.size).append("\n")
-     drafts.forEach { append("مسودة: ").append(it.supplier_id).append(" | ").append(it.currency).append(" | ").append(it.note).append("\n") }
+     drafts.forEach { append(if(it.status=="POSTED") "فاتورة معتمدة: " else "مسودة: ").append(it.supplier_id).append(" | ").append(it.currency).append(" | ").append(it.note).append("\n") }
      append("\n")
      if(rows.isEmpty()) append("لا توجد فواتير شراء في Room حالياً. استخدم «استعادة البيانات» من الرئيسية واختر النسخة الاحتياطية، ثم تحقق من نتيجة استيراد أرشيف الموردين.\n\n")
      rows.forEach { row ->
