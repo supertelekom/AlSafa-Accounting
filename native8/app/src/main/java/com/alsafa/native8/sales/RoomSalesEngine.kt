@@ -204,8 +204,8 @@ class RoomSalesEngine(private val context: Context) {
                 require(oldBase + part.baseAmount <= profit.credited_base.toBigDecimal()) {
                     "عكس الربح يتجاوز الدفعة"
                 }
-                val targetProfit = if (oldBase + part.baseAmount ==
-                    profit.credited_base.toBigDecimal()) profit.recognized_profit.toBigDecimal()
+                val targetProfit = if ((oldBase + part.baseAmount).compareTo(
+                    profit.credited_base.toBigDecimal()) == 0) profit.recognized_profit.toBigDecimal()
                 else profit.recognized_profit.toBigDecimal()
                     .multiply(oldBase + part.baseAmount)
                     .divide(profit.credited_base.toBigDecimal(), 2, java.math.RoundingMode.HALF_UP)
@@ -287,7 +287,10 @@ class RoomSalesEngine(private val context: Context) {
                 movement.currency == entry.currency &&
                 movement.amount.toBigDecimal().compareTo(entry.refunded_amount.toBigDecimal().negate()) == 0 &&
                 entry.credited_base.toBigDecimal() > BigDecimal.ZERO &&
-                entry.exchange_rate_to_base.toBigDecimal() > BigDecimal.ZERO
+                entry.exchange_rate_to_base.toBigDecimal() > BigDecimal.ZERO &&
+                entry.refunded_amount.toBigDecimal().multiply(entry.exchange_rate_to_base.toBigDecimal())
+                    .setScale(2, java.math.RoundingMode.HALF_UP)
+                    .compareTo(entry.credited_base.toBigDecimal()) == 0
         }) { "سجل الرد لا يطابق حركات الصناديق" }
         val positive = movements.filter { it.amount.toBigDecimal() > BigDecimal.ZERO }
             .groupBy { it.cashbox to it.currency }.mapValues { (_, entries) ->
