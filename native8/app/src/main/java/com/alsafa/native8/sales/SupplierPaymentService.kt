@@ -6,6 +6,34 @@ import java.util.UUID
 
 /** Collect a subsequent payment for an already posted purchase invoice. */
 class SupplierPaymentService(private val db:AppDatabase) {
+ suspend fun payOpeningDebt(supplierId:String,currency:String,amount:BigDecimal,cashbox:String):BigDecimal = db.withTransaction {
+  require(amount>BigDecimal.ZERO) { "أدخل مبلغاً موجباً" }
+  require(cashbox in setOf("drawer","external","shamcash","bank")) { "خزنة غير معروفة" }
+  val dao=db.supplierPurchaseDao()
+  val ledger=dao.historicalLedger(supplierId).filter { it.currency.equals(currency,true) }
+  require(ledger.all { it.kind=="opening-debt" || it.kind=="payment" }) { "حركات تاريخية غير معروفة؛ يجب مطابقتها أولاً" }
+  val opening=ledger.filter { it.kind=="opening-debt" }.fold(BigDecimal.ZERO) { sum,row -> sum+row.amount_exact.toBigDecimal() }
+  val historicalPaid=ledger.filter { it.kind=="payment" }.fold(BigDecimal.ZERO) { sum,row -> sum+row.amount_exact.toBigDecimal() }
+  val reference="opening-debt:"+supplierId+":"+currency.uppercase()
+  val newPaid=dao.debtPayments(reference).fold(BigDecimal.ZERO) { sum,row -> sum+row.amount_exact.toBigDecimal() }
+  val remaining=opening-historicalPaid-newPaid
+  require(opening>BigDecimal.ZERO && remaining>BigDecimal.ZERO && amount<=remaining) { "الدين القديم غير متاح أو المبلغ أكبر من المتبقي" }
+  val aliases=when(cashbox) {
+   "drawer" -> listOf("drawer","الدرج")
+   "external" -> listOf("external","الصندوق الخارجي")
+   "shamcash" -> listOf("shamcash","sham","شام كاش")
+   else -> listOf("bank","البنك")
+  }
+  val available=dao.cashboxAmounts(aliases,currency.uppercase()).fold(BigDecimal.ZERO) { sum,value -> sum+value.toBigDecimal() }
+  require(available>=amount) { "رصيد الخزنة المسجل غير كافٍ؛ الأرصدة الافتتاحية لم تُطابق بعد" }
+  val movementId="opening-debt-cash-"+UUID.randomUUID()
+  val now=System.currentTimeMillis()
+  dao.insertCashMovement(RoomCashboxMovement(movementId,cashbox,currency,amount.negate().toPlainString(),
+   reference,now,"تسديد الدين القديم للمورد"))
+  dao.insertPayment(SupplierPaymentEntity("opening-debt-pay-"+UUID.randomUUID(),reference,
+   supplierId,currency,amount.toPlainString(),cashbox,now,movementId))
+  remaining-amount
+ }
  suspend fun payArchivedInvoice(archiveKey:String,amount:BigDecimal,cashbox:String):BigDecimal = db.withTransaction {
   require(amount>BigDecimal.ZERO) { "أدخل مبلغاً موجباً" }
   require(cashbox in setOf("drawer","external","shamcash","bank")) { "خزنة غير معروفة" }
