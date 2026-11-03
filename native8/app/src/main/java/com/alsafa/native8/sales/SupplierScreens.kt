@@ -78,6 +78,7 @@ class SupplierDetailsActivity:Activity() {
     val supplierName=runBlocking { dao.allSuppliers() }.firstOrNull { it.supplier_id==supplierId }?.name?.takeIf { it.isNotBlank() } ?: supplierId
     val posted=runBlocking { dao.allDrafts() }.filter { it.supplier_id==supplierId && it.status=="POSTED" }
     val postedLines=runBlocking { posted.map { it to dao.draftLines(it.draft_id) } }
+    val purchasePayments=runBlocking { posted.associate { it.draft_id to dao.newPayments(it.draft_id) } }
     val report=buildString {
      append("المورد: ").append(supplierName).append("\n")
      append("فواتير الشراء التاريخية: ").append(review.invoices.size).append("\n\n")
@@ -90,9 +91,10 @@ class SupplierDetailsActivity:Activity() {
      append("\nفواتير الشراء الجديدة المعتمدة:\n")
      postedLines.forEach { (draft,items) ->
       val amount=items.fold(java.math.BigDecimal.ZERO) { sum,line -> sum+line.quantity_exact.toBigDecimal()*line.unit_cost_exact.toBigDecimal() }
+      val paid=purchasePayments[draft.draft_id].orEmpty().fold(java.math.BigDecimal.ZERO) { sum,p -> sum+p.amount_exact.toBigDecimal() }
       append(draft.draft_id.take(8)).append(" | ").append(draft.currency)
        .append(" | الإجمالي: ").append(amount.toPlainString())
-       .append(" | المتبقي: ").append(amount.toPlainString()).append("\n")
+       .append(" | المدفوع: ").append(paid.toPlainString()).append(" | المتبقي: ").append((amount-paid).toPlainString()).append("\n")
      }
      append("\nالحساب السابق (منفصل عن الفواتير):\n")
      review.ledger.forEach { ledger ->
