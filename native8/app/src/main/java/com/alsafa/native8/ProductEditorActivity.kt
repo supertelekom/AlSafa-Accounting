@@ -39,6 +39,7 @@ class ProductEditorActivity : Activity() {
     private val previews = mutableMapOf<String, ImageView>()
     private val photoKeys = listOf("photo", "photo2", "photo3", "barcodePhoto")
     private var cameraUri: Uri? = null
+    private var saving = false
     private var barcodeField: EditText? = null
     private var reloadColors: (() -> Unit)? = null
     override fun onResume() {
@@ -277,10 +278,12 @@ class ProductEditorActivity : Activity() {
             text = "تسوية المخزون تحفظ حركة مستقلة ولا تغيّر الفواتير أو بيانات الاستيراد الأصلية."
         }
         root.addView(status)
-        root.addView(Button(this).apply {
+        val saveButton = Button(this).apply {
             tag = "save"
             text = "حفظ"
             setOnClickListener {
+                if (saving) return@setOnClickListener
+                saving = true
                 isEnabled = false
                 val button = this
                 val changed = JSONObject()
@@ -305,20 +308,30 @@ class ProductEditorActivity : Activity() {
                     } catch (e: Exception) { e.message ?: "تعذر الحفظ" }
                     runOnUiThread {
                         if (isFinishing || isDestroyed) return@runOnUiThread
-                        button.isEnabled = true
                         if (outcome == null) {
-                            AlertDialog.Builder(this@ProductEditorActivity)
-                                .setMessage("تم حفظ بيانات المنتج في SQLite التشغيلية")
-                                .setPositiveButton("إغلاق") { _, _ -> finish() }
-                                .show()
-                        } else status.text = "فشل الحفظ: " + outcome
+                            setResult(RESULT_OK)
+                            finish()
+                        } else {
+                            saving = false
+                            button.isEnabled = true
+                            status.text = "فشل الحفظ: " + outcome
+                        }
                     }
                 }.start()
             }
-        })
-        setContentView(ScrollView(this).apply { addView(root) })
+        }
+        val screen = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            layoutDirection = View.LAYOUT_DIRECTION_RTL
+            addView(ScrollView(this@ProductEditorActivity).apply { addView(root) },
+                LinearLayout.LayoutParams(-1, 0, 1f))
+            addView(saveButton, LinearLayout.LayoutParams(-1, 72).apply {
+                setMargins(24, 8, 24, 16)
+            })
+        }
+        setContentView(screen)
         if (id != null) {
-            root.findViewWithTag<Button>("save")?.isEnabled = false
+            saveButton?.isEnabled = false
             Thread {
                 val existing = try {
                     val repo = RoomProductEditRepository(AppDatabase.get(applicationContext))
