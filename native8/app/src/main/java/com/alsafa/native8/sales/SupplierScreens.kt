@@ -9,7 +9,7 @@ import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
 import kotlinx.coroutines.runBlocking
-import java.math.BigDecimal
+import android.view.Gravity
 
 /** Supplier archive browser: no historical ledger postings. */
 class SuppliersActivity : Activity() {
@@ -22,6 +22,8 @@ class SuppliersActivity : Activity() {
   }
   root.addView(TextView(this).apply { text="الموردون";textSize=24f })
   val status=TextView(this).apply { text="جاري تحميل الموردين..." }
+  status.textSize=18f
+  status.setPadding(8,18,8,18)
   root.addView(status)
   root.addView(Button(this).apply {
    text="المشتريات"
@@ -38,10 +40,12 @@ class SuppliersActivity : Activity() {
      db.supplierPurchaseDao().allSuppliers()
     }
     runOnUiThread {
-     status.text="عدد الموردين المستوردين: ${rows.size}"
+     status.text=if(rows.isEmpty()) "لا يوجد موردون في قاعدة Room حالياً. افتح «استعادة البيانات» من الرئيسية واختر النسخة الاحتياطية، ثم تحقق من سطر «أرشيف الموردين المنقول إلى Room». لن تظهر بيانات الموردين قبل نجاح النقل." else "عدد الموردين المستوردين: ${rows.size}"
      rows.forEach { supplier ->
       list.addView(Button(this).apply {
        text=supplier.name.ifBlank { supplier.supplier_id }
+       textSize=20f
+       minHeight=68
        isAllCaps=false
        setOnClickListener {
         startActivity(Intent(this@SuppliersActivity,SupplierDetailsActivity::class.java)
@@ -59,7 +63,7 @@ class SupplierDetailsActivity:Activity() {
  override fun onCreate(savedInstanceState:Bundle?) {
   super.onCreate(savedInstanceState)
   val supplierId=intent.getStringExtra("supplier_id").orEmpty()
-  val text=TextView(this).apply { text="جاري تحميل كشف المورد...";textSize=18f;setPadding(24,24,24,24) }
+  val text=TextView(this).apply { text="جاري تحميل كشف المورد...";textSize=20f;setPadding(28,28,28,28) }
   setContentView(ScrollView(this).apply { addView(text) })
   if(supplierId.isBlank()) { text.text="معرف المورد مفقود";return }
   Thread {
@@ -98,6 +102,7 @@ class PurchasesActivity:Activity() {
     val report=buildString {
      append("المشتريات — الأرشيف المستورد\n")
      append("عدد الفواتير: ").append(rows.size).append("\n\n")
+     if(rows.isEmpty()) append("لا توجد فواتير شراء في Room حالياً. استخدم «استعادة البيانات» من الرئيسية واختر النسخة الاحتياطية، ثم تحقق من نتيجة استيراد أرشيف الموردين.\n\n")
      rows.forEach { row ->
       val due=row.total_exact.toBigDecimal().subtract(row.paid_at_import_exact.toBigDecimal())
       append(row.invoice_number).append(" | ").append(row.supplier_id)
