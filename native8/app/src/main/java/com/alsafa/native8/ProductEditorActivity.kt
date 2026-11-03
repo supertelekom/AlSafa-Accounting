@@ -111,7 +111,9 @@ class ProductEditorActivity : Activity() {
     }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
+        window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE or WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN)
+        window.clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN)
+        if (Build.VERSION.SDK_INT >= 30) window.setDecorFitsSystemWindows(true)
         cameraUri = savedInstanceState?.getString("camera_uri")?.let { Uri.parse(it) }
         val source = intent.getStringExtra(EXTRA_SOURCE)
         val id = intent.getStringExtra(EXTRA_ID)
@@ -119,6 +121,8 @@ class ProductEditorActivity : Activity() {
             orientation = LinearLayout.VERTICAL
             layoutDirection = View.LAYOUT_DIRECTION_RTL
             setPadding(16, 12, 16, 12)
+            isFocusableInTouchMode = true
+            descendantFocusability = android.view.ViewGroup.FOCUS_BEFORE_DESCENDANTS
         }
         root.addView(TextView(this).apply {
             text = if (id == null) "إضافة منتج" else "تعديل بيانات المنتج"
@@ -366,28 +370,22 @@ class ProductEditorActivity : Activity() {
                 }.start()
             }
         }
+        val formScroll = ScrollView(this).apply {
+            isFillViewport = false
+            addView(root)
+        }
         val screen = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             layoutDirection = View.LAYOUT_DIRECTION_RTL
-            addView(ScrollView(this@ProductEditorActivity).apply {
-                isFillViewport = false
-                addView(root)
-            },
-                LinearLayout.LayoutParams(-1, 0, 1f))
+            addView(formScroll, LinearLayout.LayoutParams(-1, 0, 1f))
             addView(saveButton, LinearLayout.LayoutParams(-1, dp(52)).apply {
                 setMargins(dp(12), dp(2), dp(12), dp(4))
             })
         }
-        if (Build.VERSION.SDK_INT >= 30) {
-            screen.setOnApplyWindowInsetsListener { view, insets ->
-                val bars = insets.getInsets(WindowInsets.Type.systemBars())
-                view.setPadding(bars.left, 0, bars.right, bars.bottom)
-                insets
-            }
-        } else {
-            screen.fitsSystemWindows = true
-        }
+        screen.fitsSystemWindows = true
         setContentView(screen)
+        root.requestFocus()
+        formScroll.post { formScroll.scrollTo(0, 0) }
         if (id != null) {
             saveButton.isEnabled = false
             Thread {
