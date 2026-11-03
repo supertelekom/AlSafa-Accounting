@@ -23,6 +23,14 @@ class CashboxMovementsActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         var movements by mutableStateOf<List<RoomCashboxMovement>>(emptyList())
+        var purchaseLabels by mutableStateOf<Map<String,String>>(emptyMap())
+        suspend fun refreshPurchaseLabels() {
+            val dao=AppDatabase.get(applicationContext).supplierPurchaseDao()
+            val suppliers=dao.allSuppliers().associate { it.supplier_id to it.name }
+            purchaseLabels=dao.allDrafts().filter { it.status=="POSTED" }.associate {
+                it.draft_id to ("شراء من "+(suppliers[it.supplier_id] ?: it.supplier_id)+" — "+it.currency)
+            }
+        }
         var historical by mutableStateOf(LegacyCashboxHistory.CashHistory(emptyList(), 0, 0))
         var historyError by mutableStateOf("")
         suspend fun refreshHistory() {
@@ -36,6 +44,7 @@ class CashboxMovementsActivity : ComponentActivity() {
         lifecycleScope.launch {
             movements = AppDatabase.get(applicationContext).legacyPaymentDao().recentCashboxMovements()
             refreshHistory()
+            refreshPurchaseLabels()
         }
         setContent {
             Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
@@ -94,14 +103,15 @@ class CashboxMovementsActivity : ComponentActivity() {
                     lifecycleScope.launch {
                         movements = AppDatabase.get(applicationContext).legacyPaymentDao().recentCashboxMovements()
                         refreshHistory()
+                        refreshPurchaseLabels()
                     }
                 }) { Text("تحديث") }
                 filtered.forEach { movement ->
                     Card(Modifier.fillMaxWidth()) {
                         Column(Modifier.padding(12.dp)) {
                             Text("${movement.amount} ${movement.currency}")
-                            Text(movement.note)
-                            Text("الفاتورة: ${movement.sale_id}")
+                            Text(purchaseLabels[movement.sale_id] ?: movement.note)
+                            if (!purchaseLabels.containsKey(movement.sale_id)) Text("المرجع: ${movement.sale_id.take(8)}")
                         }
                     }
                 }
