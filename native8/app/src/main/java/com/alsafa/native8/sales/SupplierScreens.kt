@@ -75,25 +75,26 @@ class SupplierDetailsActivity:Activity() {
    try {
     val dao=AppDatabase.get(applicationContext).supplierPurchaseDao()
     val review=runBlocking { SupplierBalanceReview(dao).inspect(supplierId) }
+    val supplierName=runBlocking { dao.allSuppliers() }.firstOrNull { it.supplier_id==supplierId }?.name?.takeIf { it.isNotBlank() } ?: supplierId
     val report=buildString {
-     append("المورد: ").append(supplierId).append("\\n")
-     append("فواتير الشراء التاريخية: ").append(review.invoices.size).append("\\n\\n")
+     append("المورد: ").append(supplierName).append("\n")
+     append("فواتير الشراء التاريخية: ").append(review.invoices.size).append("\n\n")
      review.invoices.forEach { invoice ->
       append(invoice.number).append(" | ").append(invoice.currency)
        .append(" | الإجمالي: ").append(invoice.total.toPlainString())
        .append(" | المدفوع: ").append(invoice.paid.toPlainString())
-       .append(" | المتبقي: ").append(invoice.remaining.toPlainString()).append("\\n")
+       .append(" | المتبقي: ").append(invoice.remaining.toPlainString()).append("\n")
      }
-     append("\\nالحساب السابق (منفصل عن الفواتير):\\n")
+     append("\nالحساب السابق (منفصل عن الفواتير):\n")
      review.ledger.forEach { ledger ->
       append(ledger.currency).append(" | دين افتتاحي: ").append(ledger.opening.toPlainString())
-       .append(" | دفعات تاريخية: ").append(ledger.payments.toPlainString()).append("\\n")
+       .append(" | دفعات تاريخية: ").append(ledger.payments.toPlainString()).append("\n")
      }
      if(review.warnings.isNotEmpty()) {
-      append("\\nتنبيهات التدقيق:\\n")
-      review.warnings.forEach { append("• ").append(it).append("\\n") }
+      append("\nتنبيهات التدقيق:\n")
+      review.warnings.forEach { append("• ").append(it).append("\n") }
      }
-     append("\\nغير معتمد للترحيل المالي حتى مطابقة التداخل مع المصدر الأصلي.")
+     append("\nغير معتمد للترحيل المالي حتى مطابقة التداخل مع المصدر الأصلي.")
     }
     runOnUiThread { text.text=report }
    } catch(e:Exception) { runOnUiThread { text.text="تعذر تحميل الكشف: ${e.message}" } }
