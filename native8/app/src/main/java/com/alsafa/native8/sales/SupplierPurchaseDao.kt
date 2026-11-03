@@ -17,6 +17,10 @@ interface SupplierPurchaseDao {
  suspend fun insertPayment(row:SupplierPaymentEntity)
  @Insert(onConflict=OnConflictStrategy.ABORT)
  suspend fun insertDraft(row:PurchaseDraftEntity)
+ @Insert(onConflict=OnConflictStrategy.ABORT)
+ suspend fun insertDraftLines(rows:List<PurchaseDraftLineEntity>)
+ @Query("SELECT * FROM purchase_draft_lines WHERE draft_id=:draftId ORDER BY line_id")
+ suspend fun draftLines(draftId:String):List<PurchaseDraftLineEntity>
  @Query("SELECT * FROM purchase_drafts ORDER BY created_at DESC")
  suspend fun allDrafts():List<PurchaseDraftEntity>
  @Query("SELECT * FROM supplier_archive ORDER BY name")
