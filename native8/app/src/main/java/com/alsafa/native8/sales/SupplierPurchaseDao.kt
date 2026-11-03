@@ -23,6 +23,10 @@ interface SupplierPurchaseDao {
  suspend fun historicalLedger(supplierId:String):List<SupplierLedgerArchiveEntity>
  @Query("SELECT * FROM supplier_payments WHERE purchase_archive_key=:purchaseKey ORDER BY paid_at")
  suspend fun newPayments(purchaseKey:String):List<SupplierPaymentEntity>
+ @Query("SELECT COUNT(*) FROM supplier_archive WHERE source_sha256=:source")
+ suspend fun supplierCount(source:String):Int
+ @Query("SELECT COUNT(*) FROM supplier_ledger_archive WHERE source_sha256=:source")
+ suspend fun ledgerCount(source:String):Int
  @Query("SELECT COUNT(*) FROM purchase_archive WHERE source_sha256=:source")
  suspend fun purchaseCount(source:String):Int
 }
