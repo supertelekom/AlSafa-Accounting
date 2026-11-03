@@ -25,11 +25,14 @@ class PurchaseDraftActivity:Activity() {
   root.addView(title("إنشاء فاتورة شراء — مسودة"))
   root.addView(title("اختيار المورد"))
   val supplier=Spinner(this)
+  root.addView(TextView(this).apply { text="اختر المورد من القائمة";textSize=14f })
   root.addView(supplier)
   root.addView(title("عملة الفاتورة"))
   val currency=Spinner(this).apply { adapter=ArrayAdapter(this@PurchaseDraftActivity,android.R.layout.simple_spinner_dropdown_item,listOf("USD","TRY","SYP")) }
   root.addView(currency)
   root.addView(title("اختر منتجاً لإضافته إلى الفاتورة"))
+  val productSearch=EditText(this).apply { hint="بحث عن منتج";textSize=14f }
+  root.addView(productSearch)
   val product=Spinner(this)
   root.addView(product)
   val qty=EditText(this).apply { hint="الكمية";inputType=android.text.InputType.TYPE_CLASS_NUMBER or android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL;textSize=14f }
@@ -49,6 +52,7 @@ class PurchaseDraftActivity:Activity() {
   root.addView(title("المسودة لا تغيّر المخزون أو دين المورد أو الصناديق."))
   setContentView(ScrollView(this).apply { addView(root) })
   var products=emptyList<Pick>()
+  var visibleProducts=emptyList<Pick>()
   val db=AppDatabase.get(applicationContext)
   val inventory=RoomInventoryRepository(db)
   refreshProducts={
@@ -66,7 +70,8 @@ class PurchaseDraftActivity:Activity() {
      }
      runOnUiThread {
       products=rows
-      product.adapter=ArrayAdapter(this,android.R.layout.simple_spinner_dropdown_item,rows.map { it.name })
+      visibleProducts=rows.filter { it.name.contains(productSearch.text.toString(),true) }
+      product.adapter=ArrayAdapter(this,android.R.layout.simple_spinner_dropdown_item,visibleProducts.map { it.name })
       add.isEnabled=rows.isNotEmpty()
       if(rows.isEmpty()) status.text="لا توجد منتجات؛ أنشئ منتجاً جديداً أولاً."
      }
@@ -74,7 +79,7 @@ class PurchaseDraftActivity:Activity() {
    }.start()
   }
   add.setOnClickListener {
-   val selected=products.getOrNull(product.selectedItemPosition) ?: return@setOnClickListener
+   val selected=visibleProducts.getOrNull(product.selectedItemPosition) ?: return@setOnClickListener
    val q=qty.text.toString().toBigDecimalOrNull()
    val price=cost.text.toString().toBigDecimalOrNull()
    if(q==null || price==null || q<=BigDecimal.ZERO || price<BigDecimal.ZERO) {
