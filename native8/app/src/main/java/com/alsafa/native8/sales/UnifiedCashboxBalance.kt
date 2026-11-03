@@ -56,11 +56,14 @@ class UnifiedCashboxBalance(private val context:Context,private val dao:Supplier
    val amount=values?.optString(unit)?.toBigDecimalOrNull()
    if(amount==null) null else time to amount
   }
+  val createdAtById=source.entries("cashTransactions",100000).mapNotNull { entry ->
+   val obj=jsonObject(entry.raw) ?: return@mapNotNull null
+   obj.optString("id").takeIf { it.isNotBlank() }?.let { it to obj.optLong("createdAt",0L) }
+  }.toMap()
   val old=if(anchor!=null) {
    val after=historicalRows.filter { row ->
     // Imported movement IDs are timestamped independently; use original row's createdAt.
-    val original=source.entries("cashTransactions",100000).firstOrNull { it.sourceId==row.id }
-    val created=original?.let { jsonObject(it.raw)?.optLong("createdAt",0L) } ?: 0L
+    val created=createdAtById[row.id] ?: 0L
     created>anchor.first
    }
    anchor.second+after.fold(BigDecimal.ZERO) { sum,row -> sum+row.amount }
