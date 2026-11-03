@@ -57,7 +57,10 @@ class PurchaseDraftActivity:Activity() {
   root.addView(note)
   val save=Button(this).apply { text="حفظ مسودة الفاتورة";textSize=13f;isEnabled=false }
   root.addView(save)
-  root.addView(Button(this).apply { text="اعتماد الفاتورة (بانتظار اكتمال الترحيل)";textSize=12f;isEnabled=false })
+  var requestPost=false
+  val post=Button(this).apply { text="اعتماد فاتورة شراء آجلة (تجريبي)";textSize=12f;isEnabled=false }
+  root.addView(post)
+  post.setOnClickListener { requestPost=true;save.performClick() }
   val status=TextView(this).apply { text="جاري تحميل الموردين والمنتجات...";textSize=13f }
   root.addView(status)
   root.addView(title("المسودة لا تغيّر المخزون أو دين المورد أو الصناديق."))
@@ -118,19 +121,27 @@ class PurchaseDraftActivity:Activity() {
     runOnUiThread {
      supplier.adapter=ArrayAdapter(this,android.R.layout.simple_spinner_dropdown_item,suppliers.map { it.name.ifBlank { it.supplier_id } })
      save.isEnabled=suppliers.isNotEmpty()
+     post.isEnabled=suppliers.isNotEmpty()
      if(suppliers.isEmpty()) status.text="لا يوجد موردون مستوردون."
      save.setOnClickListener {
       val selected=suppliers.getOrNull(supplier.selectedItemPosition) ?: return@setOnClickListener
       if(lines.isEmpty()) { status.text="أضف صنفاً واحداً على الأقل قبل الحفظ.";return@setOnClickListener }
+      val posting=requestPost
+      requestPost=false
       save.isEnabled=false
+      post.isEnabled=false
       val id=UUID.randomUUID().toString()
       val draft=PurchaseDraftEntity(id,selected.supplier_id,currency.selectedItem.toString(),note.text.toString(),System.currentTimeMillis())
       val items=lines.map { (pick,amount) -> PurchaseDraftLineEntity(UUID.randomUUID().toString(),id,pick.source,pick.id,pick.name,amount.first,amount.second) }
       Thread {
        try {
-        runBlocking { db.withTransaction { db.supplierPurchaseDao().insertDraft(draft);db.supplierPurchaseDao().insertDraftLines(items) } }
-        runOnUiThread { status.text="حُفظت المسودة مع ${items.size} أصناف.";finish() }
-       } catch(e:Exception) { runOnUiThread { status.text="فشل الحفظ: ${e.message}";save.isEnabled=true } }
+        runBlocking { db.withTransaction {
+         db.supplierPurchaseDao().insertDraft(draft)
+         db.supplierPurchaseDao().insertDraftLines(items)
+         if(posting) PurchasePostingService(db).postCredit(id)
+        } }
+        runOnUiThread { status.text=if(posting) "تم اعتماد الفاتورة الآجلة وزيادة المخزون." else "حُفظت المسودة مع ${items.size} أصناف.";finish() }
+       } catch(e:Exception) { runOnUiThread { status.text="فشل الحفظ أو الاعتماد: ${e.message}";save.isEnabled=true;post.isEnabled=true } }
       }.start()
      }
     }
