@@ -7,6 +7,9 @@ import androidx.room.Query
 
 @Dao
 interface SupplierPurchaseDao {
+ @Query("SELECT amount FROM cashbox_movements WHERE lower(cashbox) IN (:aliases) AND upper(currency)=:currency")
+ suspend fun cashboxAmounts(aliases:List<String>,currency:String):List<String>
+
  @Query("SELECT * FROM purchase_drafts WHERE draft_id=:id LIMIT 1")
  suspend fun draftById(id:String):PurchaseDraftEntity?
  @Query("UPDATE purchase_drafts SET status='POSTED' WHERE draft_id=:id AND status='DRAFT'")
