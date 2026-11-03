@@ -103,14 +103,15 @@ class PurchasesActivity:Activity() {
  }
  override fun onCreate(savedInstanceState:Bundle?) {
   super.onCreate(savedInstanceState)
-  val purchaseReportView=TextView(this).apply { text="جاري تحميل المشتريات...";textSize=18f;setPadding(24,24,24,24) }
+  val purchaseReportView=TextView(this).apply { text="جاري تحميل المشتريات...";textSize=15f;setPadding(8,8,8,8) }
   val root=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL;layoutDirection=View.LAYOUT_DIRECTION_RTL;setPadding(12,12,12,12) }
   root.addView(Button(this).apply {
-   text="إنشاء فاتورة شراء"
+   text="إنشاء فاتورة شراء";textSize=15f;minHeight=44;minimumHeight=44
    setOnClickListener { startActivity(Intent(this@PurchasesActivity,PurchaseDraftActivity::class.java)) }
   })
-  root.addView(purchaseReportView)
-  setContentView(ScrollView(this).apply { addView(root) })
+  val scroll=ScrollView(this).apply { fillViewport=true;addView(purchaseReportView) }
+  root.addView(scroll,LinearLayout.LayoutParams(-1,0,1f))
+  setContentView(root)
   Thread {
    try {
     val dao=AppDatabase.get(applicationContext).supplierPurchaseDao()
