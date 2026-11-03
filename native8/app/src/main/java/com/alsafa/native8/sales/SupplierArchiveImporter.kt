@@ -65,7 +65,7 @@ class SupplierArchiveImporter(
      dao.insertLedger(SupplierLedgerArchiveEntity("$sha:$id",sha,id,
       obj.optString("supplierId"),obj.optString("currency"),obj.optString("kind"),
       obj.optString("amount"),obj.optString("referenceId")
-       .ifBlank { obj.optString("invoiceId") }.ifBlank { null },
+       .ifBlank { obj.optString("invoiceId") }.takeIf { it.isNotBlank() },
       obj.toString(),now))
     }
     Result(suppliers.size,purchases.size,ledger.size,false)
