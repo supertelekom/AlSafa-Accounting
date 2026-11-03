@@ -42,14 +42,14 @@ class ProductsActivity : Activity() {
         val root = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             layoutDirection = View.LAYOUT_DIRECTION_RTL
-            setPadding(24, 24, 24, 24)
+            setPadding(12, 8, 12, 8)
         }
         root.addView(TextView(this).apply {
             text = "المنتجات"
-            textSize = 22f
+            textSize = 18f
             gravity = Gravity.CENTER
         })
-        status = TextView(this).apply { text = "جاري قراءة المنتجات..." }
+        status = TextView(this).apply { text = "جاري قراءة المنتجات..."; textSize = 14f }
         root.addView(status)
         databaseStatus = TextView(this).apply {
             text = "جارٍ التحقق من قاعدة البيانات..."
@@ -61,7 +61,10 @@ class ProductsActivity : Activity() {
         }
         // Keep the SQLite audit status off the customer-facing product list.
         root.addView(Button(this).apply {
-            text = "تفاصيل فحص قاعدة البيانات"
+            text = "فحص القاعدة"
+            textSize = 13f
+            minHeight = 0
+            minimumHeight = 0
             setOnClickListener {
                 AlertDialog.Builder(this@ProductsActivity)
                     .setTitle("نتيجة فحص SQLite")
@@ -69,21 +72,30 @@ class ProductsActivity : Activity() {
                     .setPositiveButton("إغلاق", null)
                     .show()
             }
-        })
+        }, LinearLayout.LayoutParams(-1, 44))
         root.addView(Button(this).apply {
             text = "إضافة منتج تجريبي"
+            textSize = 14f
+            minHeight = 0
+            minimumHeight = 0
             setOnClickListener {
                 startActivity(Intent(this@ProductsActivity, ProductEditorActivity::class.java))
             }
-        })
+        }, LinearLayout.LayoutParams(-1, 44))
         items = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             layoutDirection = View.LAYOUT_DIRECTION_RTL
         }
-        root.addView(ScrollView(this).apply { addView(items) },
+        root.addView(ScrollView(this).apply {
+            isFillViewport = false
+            addView(items)
+        },
             LinearLayout.LayoutParams(-1, 0, 1f))
         next = Button(this).apply {
             text = "التالي"
+            textSize = 14f
+            minHeight = 0
+            minimumHeight = 0
             setOnClickListener {
                 if (!busy && offset + pageSize < total) {
                     offset += pageSize
@@ -93,6 +105,9 @@ class ProductsActivity : Activity() {
         }
         previous = Button(this).apply {
             text = "السابق"
+            textSize = 14f
+            minHeight = 0
+            minimumHeight = 0
             setOnClickListener {
                 if (!busy && offset > 0) {
                     offset = (offset - pageSize).coerceAtLeast(0)
@@ -100,8 +115,13 @@ class ProductsActivity : Activity() {
                 }
             }
         }
-        root.addView(next)
-        root.addView(previous)
+        val navigation = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            layoutDirection = View.LAYOUT_DIRECTION_RTL
+            addView(previous, LinearLayout.LayoutParams(0, 44, 1f))
+            addView(next, LinearLayout.LayoutParams(0, 44, 1f))
+        }
+        root.addView(navigation)
         setContentView(root)
         load()
     }
@@ -174,6 +194,9 @@ class ProductsActivity : Activity() {
                 status.text = "العدد الإجمالي: $operationalTotal"
                 for (local in localProducts) {
                     items.addView(Button(this).apply {
+                        textSize = 13f
+                        minHeight = 0
+                        minimumHeight = 0
                         text = buildString {
                             append("منتج محلي: ").append(local.optString("name"))
                             append(" | الكمية: ").append(local.optString("stock", "—").ifBlank { "—" })
@@ -186,7 +209,7 @@ class ProductsActivity : Activity() {
                                 putExtra(ProductEditorActivity.EXTRA_ID, local.optString("id"))
                             })
                         }
-                    })
+                    }, LinearLayout.LayoutParams(-1, 48))
                 }
                 for (row in page.rows) {
                     val id = row.id
@@ -217,7 +240,7 @@ class ProductsActivity : Activity() {
                                 })
                             }
                         }
-                    })
+                    }, LinearLayout.LayoutParams(-1, 48))
                 }
                 if (page.rows.isEmpty()) {
                     items.addView(TextView(this).apply { text = "لا توجد منتجات في هذه الصفحة" })
