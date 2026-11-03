@@ -27,6 +27,7 @@ class UnifiedCashboxBalance(private val context:Context,private val dao:Supplier
    "bank" -> listOf("bank","البنك")
    else -> error("خزنة غير معروفة: "+vault)
   }
+ }
   private fun jsonObject(value:Any?):JSONObject? {
    if(value is JSONObject) return value
    return try { JSONObject(value?.toString() ?: return null) } catch (_:Exception) { null }
