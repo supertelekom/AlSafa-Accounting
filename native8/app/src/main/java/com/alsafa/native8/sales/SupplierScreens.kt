@@ -9,6 +9,7 @@ import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
 import kotlinx.coroutines.runBlocking
+import android.graphics.Color
 import android.view.Gravity
 
 /** Supplier archive browser: no historical ledger postings. */
@@ -18,15 +19,16 @@ class SuppliersActivity : Activity() {
   val root=LinearLayout(this).apply {
    orientation=LinearLayout.VERTICAL
    layoutDirection=View.LAYOUT_DIRECTION_RTL
-   setPadding(16,16,16,16)
+   setPadding(8,8,8,8)
+   fitsSystemWindows=true
   }
-  root.addView(TextView(this).apply { text="الموردون";textSize=20f })
+  root.addView(TextView(this).apply { text="الموردون";textSize=16f;setTextColor(Color.BLACK) })
   val status=TextView(this).apply { text="جاري تحميل الموردين..." }
-  status.textSize=15f
+  status.textSize=13f
   status.setPadding(8,8,8,8)
   root.addView(status)
   root.addView(Button(this).apply {
-   text="المشتريات"
+   text="المشتريات / إنشاء فاتورة شراء";textSize=13f;minHeight=40;minimumHeight=40
    setOnClickListener { startActivity(Intent(this@SuppliersActivity,PurchasesActivity::class.java)) }
   })
   val list=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL }
@@ -44,8 +46,8 @@ class SuppliersActivity : Activity() {
      rows.forEach { supplier ->
       list.addView(Button(this).apply {
        text=supplier.name.ifBlank { supplier.supplier_id }
-       textSize=16f
-       minHeight=48
+       textSize=13f
+       minHeight=38
        isAllCaps=false
        setOnClickListener {
         startActivity(Intent(this@SuppliersActivity,SupplierDetailsActivity::class.java)
@@ -63,8 +65,11 @@ class SupplierDetailsActivity:Activity() {
  override fun onCreate(savedInstanceState:Bundle?) {
   super.onCreate(savedInstanceState)
   val supplierId=intent.getStringExtra("supplier_id").orEmpty()
-  val text=TextView(this).apply { text="جاري تحميل كشف المورد...";textSize=16f;setPadding(16,16,16,16) }
-  setContentView(ScrollView(this).apply { addView(text) })
+  val root=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL;layoutDirection=View.LAYOUT_DIRECTION_RTL;setPadding(8,8,8,8);fitsSystemWindows=true }
+  root.addView(TextView(this).apply { text="كشف حساب المورد";textSize=17f;setTextColor(Color.BLACK) })
+  val text=TextView(this).apply { this.text="جاري تحميل كشف المورد...";textSize=15f;setTextColor(Color.BLACK);setPadding(8,8,8,8) }
+  root.addView(ScrollView(this).apply { addView(text) },LinearLayout.LayoutParams(-1,0,1f))
+  setContentView(root)
   if(supplierId.isBlank()) { text.text="معرف المورد مفقود";return }
   Thread {
    try {
@@ -103,10 +108,10 @@ class PurchasesActivity:Activity() {
  }
  override fun onCreate(savedInstanceState:Bundle?) {
   super.onCreate(savedInstanceState)
-  val purchaseReportView=TextView(this).apply { text="جاري تحميل المشتريات...";textSize=14f;setPadding(8,8,8,8) }
-  val root=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL;layoutDirection=View.LAYOUT_DIRECTION_RTL;setPadding(12,12,12,12) }
+  val purchaseReportView=TextView(this).apply { text="جاري تحميل المشتريات...";textSize=13f;setTextColor(Color.BLACK);setPadding(8,8,8,8) }
+  val root=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL;layoutDirection=View.LAYOUT_DIRECTION_RTL;setPadding(8,8,8,8);fitsSystemWindows=true }
   root.addView(Button(this).apply {
-   text="إنشاء فاتورة شراء";textSize=14f;minHeight=44;minimumHeight=44
+   text="إنشاء فاتورة شراء";textSize=13f;minHeight=40;minimumHeight=40
    setOnClickListener { startActivity(Intent(this@PurchasesActivity,PurchaseDraftActivity::class.java)) }
   })
   val scroll=ScrollView(this).apply { isFillViewport=true;addView(purchaseReportView) }
