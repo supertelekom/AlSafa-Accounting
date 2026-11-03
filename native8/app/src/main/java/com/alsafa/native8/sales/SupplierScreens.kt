@@ -100,13 +100,24 @@ class PurchasesActivity:Activity() {
  override fun onCreate(savedInstanceState:Bundle?) {
   super.onCreate(savedInstanceState)
   val text=TextView(this).apply { text="جاري تحميل المشتريات...";textSize=18f;setPadding(24,24,24,24) }
-  setContentView(ScrollView(this).apply { addView(text) })
+  val root=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL;layoutDirection=View.LAYOUT_DIRECTION_RTL;setPadding(12,12,12,12) }
+  root.addView(Button(this).apply {
+   text="إنشاء فاتورة شراء"
+   setOnClickListener { startActivity(Intent(this@PurchasesActivity,PurchaseDraftActivity::class.java)) }
+  })
+  root.addView(text)
+  setContentView(ScrollView(this).apply { addView(root) })
   Thread {
    try {
-    val rows=runBlocking { AppDatabase.get(applicationContext).supplierPurchaseDao().allPurchases() }
+    val dao=AppDatabase.get(applicationContext).supplierPurchaseDao()
+    val rows=runBlocking { dao.allPurchases() }
+    val drafts=runBlocking { dao.allDrafts() }
     val report=buildString {
      append("المشتريات — الأرشيف المستورد\n")
-     append("عدد الفواتير: ").append(rows.size).append("\n\n")
+     append("عدد الفواتير: ").append(rows.size).append("\n")
+     append("المسودات المحفوظة: ").append(drafts.size).append("\n")
+     drafts.forEach { append("مسودة: ").append(it.supplier_id).append(" | ").append(it.currency).append(" | ").append(it.note).append("\n") }
+     append("\n")
      if(rows.isEmpty()) append("لا توجد فواتير شراء في Room حالياً. استخدم «استعادة البيانات» من الرئيسية واختر النسخة الاحتياطية، ثم تحقق من نتيجة استيراد أرشيف الموردين.\n\n")
      rows.forEach { row ->
       val due=row.total_exact.toBigDecimal().subtract(row.paid_at_import_exact.toBigDecimal())
