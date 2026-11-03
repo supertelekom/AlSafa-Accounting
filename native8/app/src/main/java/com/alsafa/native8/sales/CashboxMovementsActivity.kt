@@ -33,6 +33,14 @@ class CashboxMovementsActivity : ComponentActivity() {
         }
         var historical by mutableStateOf(LegacyCashboxHistory.CashHistory(emptyList(), 0, 0))
         var historyError by mutableStateOf("")
+        var unified by mutableStateOf<UnifiedCashboxBalance.Result?>(null)
+        suspend fun refreshUnified(vault:String,currency:String) {
+            try {
+                unified=withContext(Dispatchers.IO) {
+                    UnifiedCashboxBalance(applicationContext,AppDatabase.get(applicationContext).supplierPurchaseDao()).calculate(vault,currency)
+                }
+            } catch(e:Exception) { historyError="تعذر حساب الصندوق: "+(e.message ?: "") }
+        }
         suspend fun refreshHistory() {
             try {
                 historical = withContext(Dispatchers.IO) { LegacyCashboxHistory(applicationContext).cashMovements() }
@@ -45,6 +53,7 @@ class CashboxMovementsActivity : ComponentActivity() {
             movements = AppDatabase.get(applicationContext).legacyPaymentDao().recentCashboxMovements()
             refreshHistory()
             refreshPurchaseLabels()
+            refreshUnified(selectedCashbox,selectedCurrency)
         }
         setContent {
             Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
@@ -96,6 +105,13 @@ class CashboxMovementsActivity : ComponentActivity() {
                 Text("صافي الحركات التاريخية: ${legacyTotal.toPlainString()} ${selectedCurrency}")
                 Text("مجموع الحركات القديمة والجديدة: ${(total + legacyTotal).toPlainString()} ${selectedCurrency}",
                     style = MaterialTheme.typography.titleLarge)
+                LaunchedEffect(selectedCashbox,selectedCurrency) {
+                    refreshUnified(selectedCashbox,selectedCurrency)
+                }
+                unified?.let { balance ->
+                    Text("الحساب الموحد: تاريخي ${balance.historical.toPlainString()} + جديد ${balance.operational.toPlainString()} = ${balance.total.toPlainString()} ${selectedCurrency}")
+                    Text(balance.warning)
+                }
                 Text("هذه مجاميع حركات، وليست رصيد الصندوق النهائي؛ الأرصدة الافتتاحية والإغلاقات قيد المطابقة.")
                 Text("سجلات تاريخية مقروءة: ${historical.movements.size} — غير صالحة: ${historical.invalid} — معرفات مكررة: ${historical.duplicates}")
                 if (historyError.isNotEmpty()) Text(historyError)
@@ -104,6 +120,7 @@ class CashboxMovementsActivity : ComponentActivity() {
                         movements = AppDatabase.get(applicationContext).legacyPaymentDao().recentCashboxMovements()
                         refreshHistory()
                         refreshPurchaseLabels()
+                        refreshUnified(selectedCashbox,selectedCurrency)
                     }
                 }) { Text("تحديث") }
                 filtered.forEach { movement ->
