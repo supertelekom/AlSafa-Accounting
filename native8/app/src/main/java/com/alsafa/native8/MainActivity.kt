@@ -12,6 +12,7 @@ import android.view.Gravity
 import android.view.View
 import android.widget.Button
 import android.widget.LinearLayout
+import android.widget.ScrollView
 import android.widget.TextView
 
 /** Temporary, high-contrast test launcher. Each module remains a separate Activity. */
@@ -86,6 +87,9 @@ class MainActivity : Activity() {
             text = "المشتريات"
             setOnClickListener { startActivity(Intent(this@MainActivity, PurchasesActivity::class.java)) }
         }, LinearLayout.LayoutParams(-1, 76))
-        setContentView(root)
+        setContentView(ScrollView(this).apply {
+            fillViewport = true
+            addView(root)
+        })
     }
 }
