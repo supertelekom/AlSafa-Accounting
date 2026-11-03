@@ -364,7 +364,7 @@ class ProductEditorActivity : Activity() {
                     runOnUiThread {
                         if (isFinishing || isDestroyed) return@runOnUiThread
                         if (outcome == null) {
-                            setResult(RESULT_OK)
+                            setResult(RESULT_OK, Intent().putExtra("created_product_name", fields["name"]?.text?.toString()?.trim().orEmpty()))
                             finish()
                         } else {
                             saving = false
