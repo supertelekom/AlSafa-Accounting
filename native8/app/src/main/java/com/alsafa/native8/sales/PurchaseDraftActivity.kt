@@ -2,76 +2,113 @@ package com.alsafa.native8.sales
 
 import android.app.Activity
 import android.content.Intent
-import com.alsafa.native8.ProductsActivity
-import com.alsafa.native8.ProductEditorActivity
 import android.os.Bundle
 import android.view.View
-import android.widget.ArrayAdapter
-import android.widget.Button
-import android.widget.EditText
-import android.widget.LinearLayout
-import android.widget.ScrollView
-import android.widget.Spinner
-import android.widget.TextView
+import android.widget.*
+import androidx.room.withTransaction
+import com.alsafa.native8.ProductEditorActivity
+import com.alsafa.native8.data.operational.RoomInventoryRepository
 import kotlinx.coroutines.runBlocking
+import java.math.BigDecimal
 import java.util.UUID
 
-/** Creates a persistent draft only. Posting is deliberately unavailable. */
+/** Purchase drafts are non-posting: never modify stock, cashboxes or supplier balances here. */
 class PurchaseDraftActivity:Activity() {
+ private data class Pick(val source:String,val id:String,val name:String)
+ private val lines=mutableListOf<Pair<Pick,Pair<String,String>>>()
+ private var refreshProducts:(()->Unit)?=null
+ override fun onResume() { super.onResume();refreshProducts?.invoke() }
  override fun onCreate(savedInstanceState:Bundle?) {
   super.onCreate(savedInstanceState)
-  val root=LinearLayout(this).apply {
-   orientation=LinearLayout.VERTICAL
-   layoutDirection=View.LAYOUT_DIRECTION_RTL
-   setPadding(8,8,8,8)
-  }
-  root.addView(TextView(this).apply { text="إنشاء فاتورة شراء — مسودة";textSize=16f })
+  val root=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL;layoutDirection=View.LAYOUT_DIRECTION_RTL;setPadding(8,8,8,8) }
+  fun title(value:String)=TextView(this).apply { text=value;textSize=14f }
+  root.addView(title("إنشاء فاتورة شراء — مسودة"))
+  root.addView(title("اختيار المورد"))
   val supplier=Spinner(this)
-  val currency=Spinner(this)
-  val note=EditText(this).apply { hint="ملاحظات الفاتورة";textSize=15f }
-  val status=TextView(this).apply { text="جاري تحميل الموردين...";textSize=15f }
-  val save=Button(this).apply { text="حفظ المسودة";isEnabled=false }
-  root.addView(TextView(this).apply { text="اختيار المورد";textSize=14f })
   root.addView(supplier)
-  currency.adapter=ArrayAdapter(this,android.R.layout.simple_spinner_dropdown_item,listOf("USD","TRY","SYP"))
+  root.addView(title("عملة الفاتورة"))
+  val currency=Spinner(this).apply { adapter=ArrayAdapter(this@PurchaseDraftActivity,android.R.layout.simple_spinner_dropdown_item,listOf("USD","TRY","SYP")) }
   root.addView(currency)
-  root.addView(Button(this).apply { text="عرض المنتجات الموجودة";textSize=13f;setOnClickListener { startActivity(Intent(this@PurchaseDraftActivity,ProductsActivity::class.java)) } })
+  root.addView(title("اختر منتجاً لإضافته إلى الفاتورة"))
+  val product=Spinner(this)
+  root.addView(product)
+  val qty=EditText(this).apply { hint="الكمية";inputType=android.text.InputType.TYPE_CLASS_NUMBER or android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL;textSize=14f }
+  val cost=EditText(this).apply { hint="تكلفة الوحدة";inputType=android.text.InputType.TYPE_CLASS_NUMBER or android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL;textSize=14f }
+  root.addView(qty);root.addView(cost)
+  val lineSummary=TextView(this).apply { text="لا توجد أصناف مضافة";textSize=13f }
+  val add=Button(this).apply { text="إضافة الصنف إلى الفاتورة";isEnabled=false;textSize=13f }
+  root.addView(add)
   root.addView(Button(this).apply { text="إنشاء منتج جديد";textSize=13f;setOnClickListener { startActivity(Intent(this@PurchaseDraftActivity,ProductEditorActivity::class.java)) } })
-  root.addView(TextView(this).apply { text="تنبيه: اختيار المنتج وإضافته إلى بنود الفاتورة لم يكتمل بعد.";textSize=12f })
+  root.addView(lineSummary)
+  val note=EditText(this).apply { hint="ملاحظات الفاتورة";textSize=14f }
   root.addView(note)
+  val save=Button(this).apply { text="حفظ مسودة الفاتورة";textSize=13f;isEnabled=false }
   root.addView(save)
+  val status=TextView(this).apply { text="جاري تحميل الموردين والمنتجات...";textSize=13f }
   root.addView(status)
-  root.addView(TextView(this).apply {
-   text="هذه مسودة فقط؛ لا تغير المخزون أو الصناديق أو دين المورد."
-   textSize=14f
-  })
+  root.addView(title("المسودة لا تغيّر المخزون أو دين المورد أو الصناديق."))
   setContentView(ScrollView(this).apply { addView(root) })
+  var products=emptyList<Pick>()
+  val db=AppDatabase.get(applicationContext)
+  val inventory=RoomInventoryRepository(db)
+  refreshProducts={
+   Thread {
+    try {
+     val rows=runBlocking {
+      val source=inventory.latestSource()
+      val imported=if(source==null) emptyList() else db.operationalInventoryWriteDao().productPage(source,500,0).map {
+       Pick(source,it.legacy_id,org.json.JSONObject(it.original_json).optString("name").ifBlank { it.legacy_id })
+      }
+      val local=db.operationalInventoryWriteDao().localProducts().map {
+       Pick("local",it.local_id,org.json.JSONObject(it.product_json).optString("name").ifBlank { it.local_id })
+      }
+      imported+local
+     }
+     runOnUiThread {
+      products=rows
+      product.adapter=ArrayAdapter(this,android.R.layout.simple_spinner_dropdown_item,rows.map { it.name })
+      add.isEnabled=rows.isNotEmpty()
+      if(rows.isEmpty()) status.text="لا توجد منتجات؛ أنشئ منتجاً جديداً أولاً."
+     }
+    } catch(e:Exception) { runOnUiThread { status.text="تعذر قراءة المنتجات: ${e.message}" } }
+   }.start()
+  }
+  add.setOnClickListener {
+   val selected=products.getOrNull(product.selectedItemPosition) ?: return@setOnClickListener
+   val q=qty.text.toString().toBigDecimalOrNull()
+   val price=cost.text.toString().toBigDecimalOrNull()
+   if(q==null || price==null || q<=BigDecimal.ZERO || price<BigDecimal.ZERO) {
+    status.text="أدخل كمية موجبة وتكلفة صحيحة.";return@setOnClickListener
+   }
+   lines+=selected to (q.stripTrailingZeros().toPlainString() to price.stripTrailingZeros().toPlainString())
+   lineSummary.text=lines.mapIndexed { index,item -> "${index+1}. ${item.first.name} | الكمية ${item.second.first} | التكلفة ${item.second.second}" }.joinToString("\n")
+   qty.text.clear();cost.text.clear()
+   status.text="تمت إضافة الصنف إلى المسودة."
+  }
   Thread {
    try {
-    val dao=AppDatabase.get(applicationContext).supplierPurchaseDao()
-    val suppliers=runBlocking { dao.allSuppliers() }
+    val suppliers=runBlocking { db.supplierPurchaseDao().allSuppliers() }
     runOnUiThread {
-     if(suppliers.isEmpty()) { status.text="لا يوجد موردون؛ استعد بيانات الموردين أولاً.";return@runOnUiThread }
-     supplier.adapter=ArrayAdapter(this,android.R.layout.simple_spinner_dropdown_item,
-      suppliers.map { it.name.ifBlank { it.supplier_id } })
-     save.isEnabled=true
-     status.text="اختر المورد والعملة ثم احفظ المسودة."
+     supplier.adapter=ArrayAdapter(this,android.R.layout.simple_spinner_dropdown_item,suppliers.map { it.name.ifBlank { it.supplier_id } })
+     save.isEnabled=suppliers.isNotEmpty()
+     if(suppliers.isEmpty()) status.text="لا يوجد موردون مستوردون."
      save.setOnClickListener {
+      val selected=suppliers.getOrNull(supplier.selectedItemPosition) ?: return@setOnClickListener
+      if(lines.isEmpty()) { status.text="أضف صنفاً واحداً على الأقل قبل الحفظ.";return@setOnClickListener }
       save.isEnabled=false
-      val selected=suppliers[supplier.selectedItemPosition]
-      val row=PurchaseDraftEntity(UUID.randomUUID().toString(),selected.supplier_id,
-       currency.selectedItem.toString(),note.text.toString(),System.currentTimeMillis())
+      val id=UUID.randomUUID().toString()
+      val draft=PurchaseDraftEntity(id,selected.supplier_id,currency.selectedItem.toString(),note.text.toString(),System.currentTimeMillis())
+      val items=lines.map { (pick,amount) -> PurchaseDraftLineEntity(UUID.randomUUID().toString(),id,pick.source,pick.id,pick.name,amount.first,amount.second) }
       Thread {
        try {
-        runBlocking { dao.insertDraft(row) }
-        runOnUiThread { status.text="تم حفظ المسودة: ${row.draft_id}";finish() }
-       } catch(e:Exception) {
-        runOnUiThread { status.text="تعذر حفظ المسودة: ${e.message}";save.isEnabled=true }
-       }
+        runBlocking { db.withTransaction { db.supplierPurchaseDao().insertDraft(draft);db.supplierPurchaseDao().insertDraftLines(items) } }
+        runOnUiThread { status.text="حُفظت المسودة مع ${items.size} أصناف.";finish() }
+       } catch(e:Exception) { runOnUiThread { status.text="فشل الحفظ: ${e.message}";save.isEnabled=true } }
       }.start()
      }
     }
-   } catch(e:Exception) { runOnUiThread { status.text="تعذر تحميل الموردين: ${e.message}" } }
+   } catch(e:Exception) { runOnUiThread { status.text="تعذر قراءة الموردين: ${e.message}" } }
   }.start()
+  refreshProducts?.invoke()
  }
 }
