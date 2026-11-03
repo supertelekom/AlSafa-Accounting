@@ -109,7 +109,7 @@ class PurchasesActivity:Activity() {
    text="إنشاء فاتورة شراء";textSize=15f;minHeight=44;minimumHeight=44
    setOnClickListener { startActivity(Intent(this@PurchasesActivity,PurchaseDraftActivity::class.java)) }
   })
-  val scroll=ScrollView(this).apply { fillViewport=true;addView(purchaseReportView) }
+  val scroll=ScrollView(this).apply { isFillViewport=true;addView(purchaseReportView) }
   root.addView(scroll,LinearLayout.LayoutParams(-1,0,1f))
   setContentView(root)
   Thread {
