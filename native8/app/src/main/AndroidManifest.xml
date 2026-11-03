@@ -8,6 +8,9 @@
         android:largeScreens="true" android:xlargeScreens="true" android:requiresSmallestWidthDp="600" />
     <application android:label="الصفا Native 8" android:allowBackup="false"
         android:usesCleartextTraffic="false" android:supportsRtl="true">
+        <activity android:name=".sales.SuppliersActivity" android:exported="false" />
+        <activity android:name=".sales.SupplierDetailsActivity" android:exported="false" />
+        <activity android:name=".sales.PurchasesActivity" android:exported="false" />
         <activity android:name=".ExchangeRatesActivity" android:exported="false" />
         <activity android:name=".sales.LegacyCashboxHistoryActivity" android:exported="false" />
         <activity android:name=".sales.CashboxMovementsActivity" android:exported="false" />
