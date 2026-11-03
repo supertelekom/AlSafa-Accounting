@@ -69,11 +69,11 @@ class SupplierDetailsActivity:Activity() {
   root.addView(TextView(this).apply { text="كشف حساب المورد";textSize=17f;setTextColor(Color.BLACK) })
   val text=TextView(this).apply { this.text="جاري تحميل كشف المورد...";textSize=15f;setTextColor(Color.BLACK);setPadding(8,8,8,8) }
   root.addView(ScrollView(this).apply { addView(text) },LinearLayout.LayoutParams(-1,0,1f))
-  setContentView(root)
   root.addView(Button(this).apply {
-   text="ديون المورد / تسديد كامل أو جزئي"
+   this.text="ديون المورد / تسديد كامل أو جزئي"
    setOnClickListener { startActivity(Intent(this@SupplierDetailsActivity,SupplierDebtActivity::class.java).putExtra("supplier_id",supplierId)) }
   })
+  setContentView(root)
   if(supplierId.isBlank()) { text.text="معرف المورد مفقود";return }
   Thread {
    try {
