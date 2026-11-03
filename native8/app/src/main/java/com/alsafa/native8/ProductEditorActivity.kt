@@ -331,7 +331,7 @@ class ProductEditorActivity : Activity() {
         }
         setContentView(screen)
         if (id != null) {
-            saveButton?.isEnabled = false
+            saveButton.isEnabled = false
             Thread {
                 val existing = try {
                     val repo = RoomProductEditRepository(AppDatabase.get(applicationContext))
@@ -345,7 +345,7 @@ class ProductEditorActivity : Activity() {
                     if (isFinishing || isDestroyed) return@runOnUiThread
                     if (existing == null) {
                         status.text = "تعذر قراءة المنتج؛ لا تحفظ تعديلات قبل التأكد من بياناته."
-                        root.findViewWithTag<Button>("save")?.isEnabled = false
+                        saveButton.isEnabled = false
                     } else {
                         for ((key, field) in fields) field.setText(existing.optString(key))
                         if (!id.startsWith("local-") && !source.isNullOrBlank()) {
@@ -356,7 +356,7 @@ class ProductEditorActivity : Activity() {
                                 runOnUiThread { if (!isFinishing && !isDestroyed && stock != null) fields["stock"]?.setText(stock) }
                             }.start()
                         }
-                        root.findViewWithTag<Button>("save")?.isEnabled = true
+                        saveButton.isEnabled = true
                         for (key in photoKeys) {
                             val encoded = existing.optString(key)
                             if (!encoded.startsWith("data:image/")) continue
