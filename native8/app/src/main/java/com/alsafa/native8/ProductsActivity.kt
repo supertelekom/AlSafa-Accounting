@@ -203,7 +203,7 @@ class ProductsActivity : Activity() {
                         }
                         ProductDisplayPage(resolved, dao.productCount(source), source)
                     }
-                    Pair(page, locals)
+                    Triple(source?.let { room.operationalInventoryWriteDao().sourceImport(it)?.source_run_id } ?: -1L, page, locals)
                 }
             } catch (e: Exception) {
                 runOnUiThread {
@@ -220,8 +220,7 @@ class ProductsActivity : Activity() {
                 if (serial != requestSerial || isFinishing || isDestroyed) return@runOnUiThread
                 busy = false
                 items.removeAllViews()
-                val (page, localProducts) = result
-                val runId = 0L
+                val (runId, page, localProducts) = result
                 val stagedCount = page.total
                 val localCount = localProducts.size
                 val operationalTotal = page.total + localCount
