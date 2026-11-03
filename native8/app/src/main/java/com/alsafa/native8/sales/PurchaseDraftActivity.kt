@@ -114,6 +114,15 @@ class PurchaseDraftActivity:Activity() {
     }
    } catch(e:Exception) { runOnUiThread { status.text="تعذر قراءة الموردين: ${e.message}" } }
   }.start()
+  productSearch.addTextChangedListener(object:android.text.TextWatcher {
+   override fun beforeTextChanged(s:CharSequence?,start:Int,count:Int,after:Int){}
+   override fun onTextChanged(s:CharSequence?,start:Int,before:Int,count:Int){
+    visibleProducts=products.filter { it.name.contains(s?.toString().orEmpty(),ignoreCase=true) }
+    product.adapter=ArrayAdapter(this@PurchaseDraftActivity,android.R.layout.simple_spinner_dropdown_item,visibleProducts.map { it.name })
+    add.isEnabled=visibleProducts.isNotEmpty()
+   }
+   override fun afterTextChanged(s:android.text.Editable?){}
+  })
   refreshProducts?.invoke()
  }
 }
