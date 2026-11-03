@@ -103,10 +103,10 @@ class PurchasesActivity:Activity() {
  }
  override fun onCreate(savedInstanceState:Bundle?) {
   super.onCreate(savedInstanceState)
-  val purchaseReportView=TextView(this).apply { text="جاري تحميل المشتريات...";textSize=15f;setPadding(8,8,8,8) }
+  val purchaseReportView=TextView(this).apply { text="جاري تحميل المشتريات...";textSize=14f;setPadding(8,8,8,8) }
   val root=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL;layoutDirection=View.LAYOUT_DIRECTION_RTL;setPadding(12,12,12,12) }
   root.addView(Button(this).apply {
-   text="إنشاء فاتورة شراء";textSize=15f;minHeight=44;minimumHeight=44
+   text="إنشاء فاتورة شراء";textSize=14f;minHeight=44;minimumHeight=44
    setOnClickListener { startActivity(Intent(this@PurchasesActivity,PurchaseDraftActivity::class.java)) }
   })
   val scroll=ScrollView(this).apply { isFillViewport=true;addView(purchaseReportView) }
@@ -116,6 +116,7 @@ class PurchasesActivity:Activity() {
    try {
     val dao=AppDatabase.get(applicationContext).supplierPurchaseDao()
     val rows=runBlocking { dao.allPurchases() }
+    val supplierNames=runBlocking { dao.allSuppliers() }.associate { it.supplier_id to it.name }
     val drafts=runBlocking { dao.allDrafts() }
     val report=buildString {
      append("المشتريات — الأرشيف المستورد\n")
@@ -125,8 +126,9 @@ class PurchasesActivity:Activity() {
      append("\n")
      if(rows.isEmpty()) append("لا توجد فواتير شراء في Room حالياً. استخدم «استعادة البيانات» من الرئيسية واختر النسخة الاحتياطية، ثم تحقق من نتيجة استيراد أرشيف الموردين.\n\n")
      rows.forEach { row ->
+      val supplierName=supplierNames[row.supplier_id]?.takeIf { it.isNotBlank() } ?: row.supplier_id
       val due=row.total_exact.toBigDecimal().subtract(row.paid_at_import_exact.toBigDecimal())
-      append(row.invoice_number).append(" | ").append(row.supplier_id)
+      append(row.invoice_number.ifBlank { "فاتورة شراء" }).append(" | ").append(supplierName)
        .append(" | ").append(row.invoice_date).append("\n")
        .append("الإجمالي: ").append(row.total_exact).append(" ").append(row.currency)
        .append(" | المدفوع: ").append(row.paid_at_import_exact)
