@@ -15,6 +15,10 @@ interface SupplierPurchaseDao {
  suspend fun insertLedger(row:SupplierLedgerArchiveEntity)
  @Insert(onConflict=OnConflictStrategy.ABORT)
  suspend fun insertPayment(row:SupplierPaymentEntity)
+ @Query("SELECT * FROM supplier_archive ORDER BY name")
+ suspend fun allSuppliers():List<SupplierArchiveEntity>
+ @Query("SELECT * FROM purchase_archive ORDER BY invoice_date DESC")
+ suspend fun allPurchases():List<PurchaseArchiveEntity>
  @Query("SELECT * FROM supplier_archive WHERE source_sha256=:source ORDER BY name")
  suspend fun suppliers(source:String):List<SupplierArchiveEntity>
  @Query("SELECT * FROM purchase_archive WHERE supplier_id=:supplierId ORDER BY invoice_date DESC")
