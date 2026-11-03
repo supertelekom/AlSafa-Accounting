@@ -6,8 +6,8 @@ This document distinguishes committed code from verified accounting closure. Do 
 - Version 9 non-destructive migrations, payment FX snapshots, per-payment profit events, refund allocations, profit reversal events.
 - Transactional new sales, collections, single-payment returns, cancellations and narrowly restricted unpaid-line corrections.
 - Cancellation checks physical cash amounts per cashbox/currency against receipts, separately checks credited USD totals against invoice paid.
-- Cancellation with prior refunds is blocked until allocations and profit reversal balancing are implemented.
-- Single-payment returns require original cashbox/currency and saved FX, with exact cent reconciliation; other scenarios blocked.
+- Cancellation with prior refunds now attempts verified per-payment remaining refunds and profit reversal balancing within Room transactions; requires execution tests before acceptance.
+- Returns now allocate across saved payment credits, record refund-time FX per allocation, and reverse attributed profits within the Room transaction; any unresolvable cent round-trip fails the transaction.
 
 ## Latest safety additions
 - Added `RefundAllocationMath` for deterministic per-payment allocation, bounding each payment by its unreversed credited base; it is **not yet wired into the posting workflow**.
@@ -15,11 +15,11 @@ This document distinguishes committed code from verified accounting closure. Do 
 - The return engine now rejects refunds exceeding verified credited receipts minus prior refund allocations.
 
 ## NOT complete
-- Multi-payment partial return allocations, different-currency refund with explicit refund-time FX, cancellation after prior returns.
-- Proportional profit reversals for debt-only returns, rounding residuals, and partner profit ledger.
+- Multi-payment refund and cancellation paths are implemented in code but **not yet verified** by Android Room integration tests; refund-time rate comes from locally editable settings, not a live market feed.
+- Rounding residual journal entries, profit reconciliation for debt-only returns, partner profit ledger, and historical FX compatibility remain open.
 - Consistent invoice-base-currency model beyond USD; historical invoices with missing FX.
 - Fully auditable item addition/deletion and paid-invoice correction.
-- UI, instrumentation tests, Room migration tests, tablet build, and financial reconciliation.
+- UI integration for refund-rate confirmation, instrumentation tests, Room migration tests, tablet build, and financial reconciliation.
 
 ## Mandatory acceptance tests
 1. 100 USD invoice: collect 25 USD + 1000 TRY + 2800 SYP; verify paid 65 USD, due 35 USD, cash movements 25 USD/1000 TRY/2800 SYP, payment profit entries dated at collection.
@@ -31,4 +31,4 @@ This document distinguishes committed code from verified accounting closure. Do 
 7. Fully paid invoice: no further collection permitted; zero credited amount rejected.
 8. Correct unpaid line: stock delta, invoice total, receivable balance and audit trail consistent.
 
-Status: **NOT ACCOUNTING-CLOSED / NOT DEVICE-TESTED**. The requested complete multi-currency return-and-cancel workflow is NOT implemented or verified. Do not mark this section as ready for production.
+Status: **IMPLEMENTED PATHS ARE UNVERIFIED / NOT ACCOUNTING-CLOSED / NOT DEVICE-TESTED**. Pure JUnit allocation tests were added but not executed here. Room transaction rollback and migration require real test runs. Do not mark this section as ready for production.
