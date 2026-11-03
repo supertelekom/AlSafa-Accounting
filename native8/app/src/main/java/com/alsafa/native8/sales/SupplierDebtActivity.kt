@@ -7,6 +7,8 @@ import android.view.View
 import android.widget.*
 import kotlinx.coroutines.runBlocking
 import java.math.BigDecimal
+import org.json.JSONObject
+import org.json.JSONArray
 
 /** Each posted purchase has its own settlement action. Historical debts are not reposted. */
 class SupplierDebtActivity : Activity() {
@@ -64,6 +66,10 @@ class SupplierDebtActivity : Activity() {
        textSize=16f
       })
       card.addView(Button(this).apply {
+       text="معاينة الأصناف المشتراة"
+       setOnClickListener { preview(due) }
+      })
+      card.addView(Button(this).apply {
        text=if(due.remaining>BigDecimal.ZERO) "تسديد هذه الفاتورة" else "مسددة بالكامل"
        isEnabled=due.remaining>BigDecimal.ZERO
        setOnClickListener { showPayment(due) }
@@ -72,6 +78,42 @@ class SupplierDebtActivity : Activity() {
      }
     }
    } catch(e:Exception) { runOnUiThread { status.text="تعذر قراءة الفواتير: ${e.message}" } }
+  }.start()
+ }
+ private fun preview(due:Due) {
+  Thread {
+   try {
+    val details=runBlocking {
+     val dao=db.supplierPurchaseDao()
+     if(!due.archived) {
+      val items=dao.draftLines(due.id)
+      if(items.isEmpty()) "لا توجد أصناف محفوظة لهذه الفاتورة"
+      else items.mapIndexed { index,item ->
+       val sum=item.quantity_exact.toBigDecimal()*item.unit_cost_exact.toBigDecimal()
+       "${index+1}. ${item.product_name}\nالكمية: ${item.quantity_exact} | تكلفة الوحدة: ${item.unit_cost_exact} | الإجمالي: ${sum.toPlainString()} ${due.currency}"
+      }.joinToString("\n\n")
+     } else {
+      val old=dao.archivedPurchaseByKey(due.id) ?: error("الفاتورة غير موجودة")
+      val json=JSONObject(old.original_json)
+      val keys=listOf("items","lines","products","purchaseItems","invoiceItems","details","rows")
+      val array=keys.firstNotNullOfOrNull { key -> json.optJSONArray(key) }
+      if(array==null) "لا توجد قائمة أصناف واضحة في بيانات الفاتورة المستعادة.\nالبيانات الأصلية:\n"+json.toString(2)
+      else (0 until array.length()).joinToString("\n\n") { index ->
+       val item=array.optJSONObject(index)
+       if(item==null) "${index+1}. "+array.optString(index)
+       else {
+        val name=listOf("name","productName","product_name","title","itemName").firstNotNullOfOrNull { key -> item.optString(key).takeIf { it.isNotBlank() } } ?: "صنف ${index+1}"
+        "${index+1}. "+name+"\n"+item.toString(2)
+       }
+      }
+     }
+    }
+    runOnUiThread {
+     AlertDialog.Builder(this).setTitle(due.label).setMessage(
+      details+"\n\nالإجمالي: ${due.total.toPlainString()} ${due.currency}\nالمدفوع: ${due.paid.toPlainString()}\nالمتبقي: ${due.remaining.toPlainString()}"
+     ).setPositiveButton("إغلاق",null).show()
+    }
+   } catch(e:Exception) { runOnUiThread { status.text="تعذر معاينة الفاتورة: ${e.message}" } }
   }.start()
  }
  private fun showPayment(due:Due) {
