@@ -65,7 +65,7 @@ class UnifiedCashboxBalance(private val context:Context,private val dao:Supplier
   val operational=amounts.fold(BigDecimal.ZERO) { sum,value -> sum+value.toBigDecimal() }
   // A historical transaction is never inserted into the operational table by this projection.
   // Historical duplicate ids are excluded by LegacyCashboxHistory.
-  val verified=history.invalid==0 && history.duplicates==0 && (normalized!="drawer" && normalized!="shamcash" || anchorAmount!=null)
+  val verified=false // Cross-source duplicate detection and operational cash posting are not yet reconciled.
   return Result(historical,operational,historical+operational,verified,
    if(verified) "الرصيد التاريخي من الإغلاق المرحّل أو سجل الحركات، مضافاً إليه الحركات الجديدة؛ راجع أي تداخل بين المصادر" else "توجد بيانات ناقصة أو إغلاقات غير مكتملة؛ الرصيد يحتاج مراجعة")
  }
