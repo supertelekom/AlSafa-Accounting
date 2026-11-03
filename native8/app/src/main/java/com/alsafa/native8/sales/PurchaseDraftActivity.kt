@@ -57,8 +57,22 @@ class PurchaseDraftActivity:Activity() {
   root.addView(note)
   val save=Button(this).apply { text="حفظ مسودة الفاتورة";textSize=13f;isEnabled=false }
   root.addView(save)
+  root.addView(title("طريقة الدفع"))
+  val paymentType=Spinner(this).apply { adapter=ArrayAdapter(this@PurchaseDraftActivity,android.R.layout.simple_spinner_dropdown_item,listOf("آجل","نقدي","دفعة جزئية")) }
+  root.addView(paymentType)
+  val paid=EditText(this).apply { hint="المبلغ المدفوع";inputType=android.text.InputType.TYPE_CLASS_NUMBER or android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL;visibility=View.GONE }
+  root.addView(paid)
+  val vault=Spinner(this).apply { adapter=ArrayAdapter(this@PurchaseDraftActivity,android.R.layout.simple_spinner_dropdown_item,listOf("drawer","external","ChamCash","bank"));visibility=View.GONE }
+  root.addView(vault)
+  paymentType.onItemSelectedListener=object:android.widget.AdapterView.OnItemSelectedListener {
+   override fun onNothingSelected(parent:android.widget.AdapterView<*>?){}
+   override fun onItemSelected(parent:android.widget.AdapterView<*>?,view:View?,position:Int,id:Long){
+    paid.visibility=if(position==2) View.VISIBLE else View.GONE
+    vault.visibility=if(position==0) View.GONE else View.VISIBLE
+   }
+  }
   var requestPost=false
-  val post=Button(this).apply { text="اعتماد فاتورة شراء آجلة (تجريبي)";textSize=12f;isEnabled=false }
+  val post=Button(this).apply { text="اعتماد فاتورة الشراء (تجريبي)";textSize=12f;isEnabled=false }
   root.addView(post)
   post.setOnClickListener { requestPost=true;save.performClick() }
   val status=TextView(this).apply { text="جاري تحميل الموردين والمنتجات...";textSize=13f }
@@ -127,6 +141,16 @@ class PurchaseDraftActivity:Activity() {
       val selected=suppliers.getOrNull(supplier.selectedItemPosition) ?: return@setOnClickListener
       if(lines.isEmpty()) { status.text="أضف صنفاً واحداً على الأقل قبل الحفظ.";return@setOnClickListener }
       val posting=requestPost
+      val totalAmount=lines.fold(BigDecimal.ZERO) { sum,item -> sum+item.second.first.toBigDecimal()*item.second.second.toBigDecimal() }
+      val paymentAmount=when(paymentType.selectedItemPosition) {
+       0 -> "0"
+       1 -> totalAmount.toPlainString()
+       else -> paid.text.toString()
+      }
+      val selectedVault=if(paymentType.selectedItemPosition==0) null else vault.selectedItem.toString()
+      if(posting && (paymentAmount.toBigDecimalOrNull()==null || paymentAmount.toBigDecimal()<BigDecimal.ZERO || paymentAmount.toBigDecimal()>totalAmount)) {
+       status.text="المبلغ المدفوع غير صالح";return@setOnClickListener
+      }
       requestPost=false
       save.isEnabled=false
       post.isEnabled=false
@@ -138,9 +162,9 @@ class PurchaseDraftActivity:Activity() {
         runBlocking { db.withTransaction {
          db.supplierPurchaseDao().insertDraft(draft)
          db.supplierPurchaseDao().insertDraftLines(items)
-         if(posting) PurchasePostingService(db).postCredit(id)
+         if(posting) PurchasePostingService(db).post(id,paymentAmount,selectedVault)
         } }
-        runOnUiThread { status.text=if(posting) "تم اعتماد الفاتورة الآجلة وزيادة المخزون." else "حُفظت المسودة مع ${items.size} أصناف.";finish() }
+        runOnUiThread { status.text=if(posting) "تم اعتماد الفاتورة وتحديث المخزون والدفع." else "حُفظت المسودة مع ${items.size} أصناف.";finish() }
        } catch(e:Exception) { runOnUiThread { status.text="فشل الحفظ أو الاعتماد: ${e.message}";save.isEnabled=true;post.isEnabled=true } }
       }.start()
      }
