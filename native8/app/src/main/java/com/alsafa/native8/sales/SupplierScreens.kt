@@ -97,6 +97,10 @@ class SupplierDetailsActivity:Activity() {
 }
 
 class PurchasesActivity:Activity() {
+ override fun onRestart() {
+  super.onRestart()
+  recreate() // Refresh saved drafts after returning from the draft editor.
+ }
  override fun onCreate(savedInstanceState:Bundle?) {
   super.onCreate(savedInstanceState)
   val text=TextView(this).apply { text="جاري تحميل المشتريات...";textSize=18f;setPadding(24,24,24,24) }
