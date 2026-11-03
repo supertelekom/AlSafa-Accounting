@@ -1,6 +1,9 @@
 package com.alsafa.native8.sales
 
 import android.app.Activity
+import android.content.Intent
+import com.alsafa.native8.ProductsActivity
+import com.alsafa.native8.ProductEditorActivity
 import android.os.Bundle
 import android.view.View
 import android.widget.ArrayAdapter
@@ -20,9 +23,9 @@ class PurchaseDraftActivity:Activity() {
   val root=LinearLayout(this).apply {
    orientation=LinearLayout.VERTICAL
    layoutDirection=View.LAYOUT_DIRECTION_RTL
-   setPadding(16,16,16,16)
+   setPadding(8,8,8,8)
   }
-  root.addView(TextView(this).apply { text="إنشاء فاتورة شراء — مسودة";textSize=19f })
+  root.addView(TextView(this).apply { text="إنشاء فاتورة شراء — مسودة";textSize=16f })
   val supplier=Spinner(this)
   val currency=Spinner(this)
   val note=EditText(this).apply { hint="ملاحظات الفاتورة";textSize=15f }
@@ -32,6 +35,9 @@ class PurchaseDraftActivity:Activity() {
   root.addView(supplier)
   currency.adapter=ArrayAdapter(this,android.R.layout.simple_spinner_dropdown_item,listOf("USD","TRY","SYP"))
   root.addView(currency)
+  root.addView(Button(this).apply { text="عرض المنتجات الموجودة";textSize=13f;setOnClickListener { startActivity(Intent(this@PurchaseDraftActivity,ProductsActivity::class.java)) } })
+  root.addView(Button(this).apply { text="إنشاء منتج جديد";textSize=13f;setOnClickListener { startActivity(Intent(this@PurchaseDraftActivity,ProductEditorActivity::class.java)) } })
+  root.addView(TextView(this).apply { text="تنبيه: اختيار المنتج وإضافته إلى بنود الفاتورة لم يكتمل بعد.";textSize=12f })
   root.addView(note)
   root.addView(save)
   root.addView(status)
