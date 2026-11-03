@@ -150,9 +150,16 @@ class RoomSalesEngine(context: Context) {
             require(refundCashbox.isNotBlank() && refundCurrency.isNotBlank()) {
                 "المرتجع يتطلب تحديد صندوق وعملة رد المبلغ"
             }
-            val existingCurrencies = payments.payments(saleId).map { it.currency }.distinct()
-            require(existingCurrencies.size == 1 && existingCurrencies.single() == "USD" && refundCurrency == "USD") {
-                "رد العملات غير الدولار يتطلب تخصيص سعر الصرف والدفعات قبل الترحيل"
+            val originals = payments.payments(saleId)
+            require(originals.size == 1) { "المرتجع متعدد الدفعات يحتاج توزيعاً موثقاً" }
+            val originalPayment = originals.single()
+            require(originalPayment.currency == refundCurrency && originalPayment.cashbox == refundCashbox) {
+                "يجب رد المبلغ إلى صندوق وعملة القبض الأصليين"
+            }
+            require(originalPayment.invoice_currency == "USD" && originalPayment.fx_rate != null &&
+                originalPayment.credited_amount != null) { "سعر الصرف التاريخي غير محفوظ" }
+            require(audit.refunds(saleId).isEmpty() && audit.reversals(saleId).isEmpty()) {
+                "مرتجعات متكررة تحتاج توزيعاً دقيقاً على الدفعات"
             }
             require(sale.paid.toBigDecimal() >= refund) { "المبلغ المسترد يتجاوز المقبوض" }
         }
@@ -166,9 +173,25 @@ class RoomSalesEngine(context: Context) {
             check(posting.updatePayment(saleId, (sale.paid.toBigDecimal() - refund).toPlainString(),
                 if (due - reduceDue > BigDecimal.ZERO) "آجل" else "مدفوع") == 1)
             val now = System.currentTimeMillis()
-            payments.insertCashboxMovement(RoomCashboxMovement(UUID.randomUUID().toString(),
-                refundCashbox, refundCurrency, refund.negate().toPlainString(), saleId, now,
+            val originalPayment = payments.payments(saleId).single()
+            val fx = originalPayment.fx_rate!!.toBigDecimal()
+            val originalAmount = refund.divide(fx, 2, java.math.RoundingMode.HALF_UP)
+            require(originalAmount > BigDecimal.ZERO) { "مبلغ الرد أصغر من دقة العملة" }
+            val credited = originalAmount.multiply(fx).setScale(2, java.math.RoundingMode.HALF_UP)
+            require(credited.compareTo(refund) == 0) { "فرق تقريب سعر الصرف؛ أوقف الترحيل" }
+            val movementId = UUID.randomUUID().toString()
+            payments.insertCashboxMovement(RoomCashboxMovement(movementId,
+                refundCashbox, refundCurrency, originalAmount.negate().toPlainString(), saleId, now,
                 "رد مبلغ مرتجع: $reason"))
+            audit.insertRefund(SaleRefundAllocation(UUID.randomUUID().toString(),saleId,
+                originalPayment.id,movementId,refundCashbox,refundCurrency,
+                originalAmount.toPlainString(),refund.toPlainString(),fx.toPlainString(),now))
+            val profit = audit.profits(saleId).singleOrNull { it.payment_id == originalPayment.id }
+                ?: error("سجل ربح الدفعة مفقود")
+            val reversal = profit.recognized_profit.toBigDecimal().multiply(refund)
+                .divide(profit.credited_base.toBigDecimal(), 2, java.math.RoundingMode.HALF_UP)
+            audit.insertReversal(SaleProfitReversal(UUID.randomUUID().toString(),saleId,
+                originalPayment.id,movementId,refund.toPlainString(),reversal.toPlainString(),now))
         }
         val id = UUID.randomUUID().toString()
         posting.insertReturn(RoomSaleReturn(id, saleId, lineId, quantity.toPlainString(),
