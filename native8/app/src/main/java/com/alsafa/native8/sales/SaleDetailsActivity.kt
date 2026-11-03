@@ -12,7 +12,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
-class SaleDetailsViewModel: ViewModel() { var saleId by mutableStateOf(""); var lines by mutableStateOf<List<SalesEngine.InvoiceLine>>(emptyList()); var total by mutableStateOf<String?>(null); var paid by mutableStateOf<String?>(null); var due by mutableStateOf<String?>(null); var status by mutableStateOf(""); var busy by mutableStateOf(false) }
+import java.math.BigDecimal
+import java.math.RoundingMode
+class SaleDetailsViewModel: ViewModel() { var saleId by mutableStateOf(""); var lines by mutableStateOf<List<SalesEngine.InvoiceLine>>(emptyList()); var total by mutableStateOf<String?>(null); var paid by mutableStateOf<String?>(null); var due by mutableStateOf<String?>(null); var status by mutableStateOf(""); var busy by mutableStateOf(false); var recognizedProfit by mutableStateOf<String?>(null); var reversedProfit by mutableStateOf<String?>(null); var netProfit by mutableStateOf<String?>(null) }
 class SaleDetailsActivity: ComponentActivity() {
  override fun onCreate(savedInstanceState: Bundle?) {
   super.onCreate(savedInstanceState)
@@ -24,6 +26,12 @@ class SaleDetailsActivity: ComponentActivity() {
    val sale = db.salesPostingDao().sale(vm.saleId)
    val debt = db.legacyReceivablesDao().bySaleId(vm.saleId)
    if (sale != null) {
+    val audit = db.salesFinancialAuditDao()
+    val earned = audit.profits(vm.saleId).fold(BigDecimal.ZERO) { total, event -> total + event.recognized_profit.toBigDecimal() }
+    val reversed = audit.reversals(vm.saleId).fold(BigDecimal.ZERO) { total, event -> total + event.reversed_profit.toBigDecimal() }
+    vm.recognizedProfit = earned.setScale(2, RoundingMode.HALF_UP).toPlainString()
+    vm.reversedProfit = reversed.setScale(2, RoundingMode.HALF_UP).toPlainString()
+    vm.netProfit = (earned - reversed).setScale(2, RoundingMode.HALF_UP).toPlainString()
     vm.status = sale.status
     vm.total = sale.total
     vm.paid = sale.paid
@@ -38,6 +46,11 @@ class SaleDetailsActivity: ComponentActivity() {
       Text("الصافي: "+vm.total)
       Text("المدفوع: "+vm.paid)
       Text("المتبقي: "+vm.due, style=MaterialTheme.typography.titleLarge)
+      if (vm.netProfit != null) {
+       Text("الربح المحقق من القبض: "+vm.recognizedProfit+" USD")
+       Text("الأرباح المعكوسة للمرتجعات والإلغاء: "+vm.reversedProfit+" USD")
+       Text("صافي الربح المحقق: "+vm.netProfit+" USD", style=MaterialTheme.typography.titleLarge)
+      }
      }
     }
    }
@@ -64,6 +77,12 @@ class SaleDetailsActivity: ComponentActivity() {
         RoomSalesEngine(applicationContext).cancelWithRefund(vm.saleId)
         vm.status = "ملغاة"
         vm.due = "0"
+        val audit = AppDatabase.get(applicationContext).salesFinancialAuditDao()
+        val earned = audit.profits(vm.saleId).fold(BigDecimal.ZERO) { total, event -> total + event.recognized_profit.toBigDecimal() }
+        val reversed = audit.reversals(vm.saleId).fold(BigDecimal.ZERO) { total, event -> total + event.reversed_profit.toBigDecimal() }
+        vm.recognizedProfit = earned.setScale(2, RoundingMode.HALF_UP).toPlainString()
+        vm.reversedProfit = reversed.setScale(2, RoundingMode.HALF_UP).toPlainString()
+        vm.netProfit = (earned - reversed).setScale(2, RoundingMode.HALF_UP).toPlainString()
         vm.lines = RoomSalesEngine(applicationContext).lines(vm.saleId)
        } catch(e: Exception) { vm.status = e.message ?: "تعذر الإلغاء" }
        finally { vm.busy = false }
