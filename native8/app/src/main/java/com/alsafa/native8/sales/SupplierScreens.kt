@@ -87,14 +87,23 @@ class SupplierDetailsActivity:Activity() {
     val posted=runBlocking { dao.allDrafts() }.filter { it.supplier_id==supplierId && it.status=="POSTED" }
     val postedLines=runBlocking { posted.map { it to dao.draftLines(it.draft_id) } }
     val purchasePayments=runBlocking { posted.associate { it.draft_id to dao.newPayments(it.draft_id) } }
+    val archived=runBlocking { dao.purchases(supplierId) }
+    val archivedPayments=runBlocking { archived.associate { it.archive_key to dao.newPayments(it.archive_key) } }
+    val openingPayments=runBlocking { review.ledger.associate { ledger ->
+     ledger.currency to dao.debtPayments("opening-debt:"+supplierId+":"+ledger.currency.uppercase())
+    } }
     val report=buildString {
      append("المورد: ").append(supplierName).append("\n")
      append("فواتير الشراء التاريخية: ").append(review.invoices.size).append("\n\n")
-     review.invoices.forEach { invoice ->
+     review.invoices.forEachIndexed { index,invoice ->
+      val old=archived.getOrNull(index)
+      val additional=archivedPayments[old?.archive_key].orEmpty().fold(java.math.BigDecimal.ZERO) { sum,p -> sum+p.amount_exact.toBigDecimal() }
+      val paid=invoice.paid+additional
+      val remaining=invoice.total-paid
       append(invoice.number).append(" | ").append(invoice.currency)
        .append(" | الإجمالي: ").append(invoice.total.toPlainString())
-       .append(" | المدفوع: ").append(invoice.paid.toPlainString())
-       .append(" | المتبقي: ").append(invoice.remaining.toPlainString()).append("\n")
+       .append(" | المدفوع: ").append(paid.toPlainString())
+       .append(" | المتبقي: ").append(remaining.toPlainString()).append("\n")
      }
      append("\nفواتير الشراء الجديدة المعتمدة:\n")
      postedLines.forEach { (draft,items) ->
@@ -106,8 +115,12 @@ class SupplierDetailsActivity:Activity() {
      }
      append("\nالحساب السابق (منفصل عن الفواتير):\n")
      review.ledger.forEach { ledger ->
+      val newPaid=openingPayments[ledger.currency].orEmpty().fold(java.math.BigDecimal.ZERO) { sum,p -> sum+p.amount_exact.toBigDecimal() }
+      val remaining=ledger.opening-ledger.payments-newPaid
       append(ledger.currency).append(" | دين افتتاحي: ").append(ledger.opening.toPlainString())
-       .append(" | دفعات تاريخية: ").append(ledger.payments.toPlainString()).append("\n")
+       .append(" | دفعات تاريخية: ").append(ledger.payments.toPlainString())
+       .append(" | دفعات جديدة: ").append(newPaid.toPlainString())
+       .append(" | المتبقي: ").append(remaining.toPlainString()).append("\n")
      }
      if(review.warnings.isNotEmpty()) {
       append("\nتنبيهات التدقيق:\n")
