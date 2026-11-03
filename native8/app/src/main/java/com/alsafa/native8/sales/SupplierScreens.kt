@@ -62,6 +62,10 @@ class SuppliersActivity : Activity() {
 }
 
 class SupplierDetailsActivity:Activity() {
+ override fun onRestart() {
+  super.onRestart()
+  recreate() // Reload supplier balances after returning from debt settlement.
+ }
  override fun onCreate(savedInstanceState:Bundle?) {
   super.onCreate(savedInstanceState)
   val supplierId=intent.getStringExtra("supplier_id").orEmpty()
