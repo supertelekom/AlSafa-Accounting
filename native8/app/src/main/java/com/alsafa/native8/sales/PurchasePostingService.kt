@@ -42,7 +42,7 @@ class PurchasePostingService(private val db:AppDatabase) {
     draftId,System.currentTimeMillis(),"دفعة شراء: "+draftId
    ))
    dao.insertPayment(SupplierPaymentEntity(
-    "purchase-pay-"+UUID.randomUUID(),null,draft.supplier_id,draft.currency,
+    "purchase-pay-"+UUID.randomUUID(),draftId,draft.supplier_id,draft.currency,
     totals.paid.toPlainString(),cashbox,System.currentTimeMillis(),movementId
    ))
   }
