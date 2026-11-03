@@ -23,6 +23,22 @@ class PurchasePostingService(private val db:AppDatabase) {
   for(line in lines) {
    require(inventory.resolved(line.product_source,line.product_id)!=null) { "منتج غير موجود: "+line.product_name }
   }
+  if(totals.paid>BigDecimal.ZERO) {
+   val aliases=when(cashbox?.lowercase()) {
+    "drawer" -> listOf("drawer","الدرج")
+    "external" -> listOf("external","الصندوق الخارجي")
+    "shamcash" -> listOf("shamcash","sham","شام كاش")
+    "bank" -> listOf("bank","البنك")
+    else -> error("خزنة غير معروفة")
+   }
+   val amounts=dao.cashboxAmounts(aliases,draft.currency.uppercase())
+   val available=amounts.fold(BigDecimal.ZERO) { sum,value -> sum+value.toBigDecimal() }
+   require(available>=totals.paid) {
+    "رصيد الخزنة المتاح من الحركات المسجلة "+available.toPlainString()+" "+draft.currency+
+    " أقل من المدفوع "+totals.paid.toPlainString()+
+    "؛ الأرصدة الافتتاحية غير مدمجة بعد، لا يمكن اعتماد الدفع النقدي بأمان"
+   }
+  }
   check(dao.markDraftPosted(draftId)==1) { "الفاتورة معتمدة مسبقاً" }
   val edits=RoomProductEditRepository(db)
   for(line in lines) {
