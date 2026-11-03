@@ -183,20 +183,17 @@ class ProductsActivity : Activity() {
         val requestedOffset = offset
         next.isEnabled = false
         previous.isEnabled = false
-        status.text = "جاري قراءة المنتجات..."
+        status.text = "تحميل المنتجات..."
         Thread {
             val result = try {
-                val staging = LegacyStagingDatabase(applicationContext)
-                try {
-                    val legacy = LegacyReadRepository(staging)
-                    val run = legacy.latestRunId()
-                    if (run == null) null
-                    else runBlocking {
-                        val room = AppDatabase.get(applicationContext)
-                        RoomProductImportPromoter(staging, room).promote(run)
-                        val repo = RoomInventoryRepository(room)
+                runBlocking {
+                    val room = AppDatabase.get(applicationContext)
+                    val repo = RoomInventoryRepository(room)
+                    val source = repo.latestSource()
+                    val locals = RoomProductEditRepository(room).localProducts()
+                    val page = if (source == null) ProductDisplayPage(emptyList(), 0, "")
+                    else {
                         val dao = room.operationalInventoryWriteDao()
-                        val source = dao.sourceForRun(run) ?: error("لم يتم العثور على مصدر المنتجات")
                         val rows = repo.page(source, requestedOffset, pageSize)
                         val stockRepo = RoomProductStockRepository(room)
                         val resolved = rows.map { row ->
@@ -204,12 +201,10 @@ class ProductsActivity : Activity() {
                             product.put("stock", stockRepo.currentStock(source, row.id))
                             ProductDisplayRow(row.id, row.ordinal, product)
                         }
-                        val page = ProductDisplayPage(resolved, dao.productCount(source), source)
-                        val audit = RoomProductSnapshotAudit(staging, room).inspect(run, source)
-                        val locals = RoomProductEditRepository(room).localProducts()
-                        Pair(Triple(run, page, audit), locals)
+                        ProductDisplayPage(resolved, dao.productCount(source), source)
                     }
-                } finally { staging.close() }
+                    Pair(page, locals)
+                }
             } catch (e: Exception) {
                 runOnUiThread {
                     if (serial == requestSerial && !isFinishing && !isDestroyed) {
@@ -225,20 +220,13 @@ class ProductsActivity : Activity() {
                 if (serial != requestSerial || isFinishing || isDestroyed) return@runOnUiThread
                 busy = false
                 items.removeAllViews()
-                if (result == null) {
-                    total = 0
-                    status.text = "لم تتم استعادة نسخة احتياطية بعد"
-                    updateNavigation()
-                    return@runOnUiThread
-                }
-                val (snapshot, localProducts) = result
-                val (runId, page, audit) = snapshot
-                val stagedCount = audit.staged
+                val (page, localProducts) = result
+                val runId = 0L
+                val stagedCount = page.total
                 val localCount = localProducts.size
                 val operationalTotal = page.total + localCount
-                diagnostic = "المصدر: alsafa_native8_operational.db\nالمنتجات التشغيلية: " + page.total + "\nسجلات الاستيراد: " + stagedCount + "\n" + (if (page.total == stagedCount) "العدد متطابق" else "تحذير: العدد مختلف")
-                diagnostic += "\nاختلافات المحتوى: " + audit.mismatches + "\n" + audit.examples.joinToString("\n")
-                databaseStatus.text = "SQLite: " + operationalTotal + " | المستورد: " + page.total + " | " + (if (audit.matches) "تطابق كامل" else "اختلاف: " + audit.mismatches)
+                diagnostic = "قاعدة Room التشغيلية: alsafa_native8_operational.db\\nالمنتجات المستوردة: " + page.total + "\\nالمنتجات المحلية: " + localCount + "\\nلا يُنفّذ فحص التطابق الشامل عند فتح القائمة."
+                databaseStatus.text = "المنتجات: " + operationalTotal
                 total = page.total
                 if (offset >= total && offset > 0) offset = 0
                 status.text = "العدد الإجمالي: $operationalTotal"
@@ -290,7 +278,7 @@ class ProductsActivity : Activity() {
                     }, rowParams())
                 }
                 if (page.rows.isEmpty()) {
-                    items.addView(TextView(this).apply { text = "لا توجد منتجات في هذه الصفحة" })
+                    if (localProducts.isEmpty()) items.addView(TextView(this).apply { text = "لا توجد منتجات في هذه الصفحة" })
                 }
                 updateNavigation()
             }
