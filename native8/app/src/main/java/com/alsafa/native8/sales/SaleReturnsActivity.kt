@@ -34,7 +34,12 @@ Text("في حال وجود مبلغ مقبوض يُرد من الصندوق ال
 SalesPaymentSelectors(vm.refundCashbox,{vm.refundCashbox=it},vm.refundCurrency,{vm.refundCurrency=it})
 Text("عملة الرد: "+vm.refundCurrency+" — يستخدم سعر الصرف المحفوظ عند القبض")
 Button(enabled=vm.lineId.isNotBlank(),onClick={
- try { val id=SalesEngine(applicationContext).returnLine(vm.saleId,vm.lineId,vm.quantity.toBigDecimal(),vm.reason,vm.refundCashbox,vm.refundCurrency);vm.status="تم تسجيل المرتجع: "+id }
+ try { val id=SalesEngine(applicationContext).returnLine(vm.saleId,vm.lineId,vm.quantity.toBigDecimal(),vm.reason,vm.refundCashbox,vm.refundCurrency);vm.status="تم تسجيل المرتجع: "+id
+  startActivity(Intent(this@SaleReturnsActivity, SaleDetailsActivity::class.java).apply {
+   putExtra("sale_id",vm.saleId)
+   addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+  })
+  finish() }
  catch(e:Exception){vm.status=e.message ?: "تعذر المرتجع"}
 }){Text("تسجيل المرتجع")}
 Text(vm.status) } }
