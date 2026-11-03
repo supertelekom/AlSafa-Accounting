@@ -62,7 +62,7 @@ class PurchaseDraftActivity:Activity() {
   root.addView(paymentType)
   val paid=EditText(this).apply { hint="المبلغ المدفوع";inputType=android.text.InputType.TYPE_CLASS_NUMBER or android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL;visibility=View.GONE }
   root.addView(paid)
-  val vault=Spinner(this).apply { adapter=ArrayAdapter(this@PurchaseDraftActivity,android.R.layout.simple_spinner_dropdown_item,listOf("drawer","external","ChamCash","bank"));visibility=View.GONE }
+  val vault=Spinner(this).apply { adapter=ArrayAdapter(this@PurchaseDraftActivity,android.R.layout.simple_spinner_dropdown_item,listOf("الدرج","الصندوق الخارجي","شام كاش","البنك"));visibility=View.GONE }
   root.addView(vault)
   paymentType.onItemSelectedListener=object:android.widget.AdapterView.OnItemSelectedListener {
    override fun onNothingSelected(parent:android.widget.AdapterView<*>?){}
@@ -147,7 +147,12 @@ class PurchaseDraftActivity:Activity() {
        1 -> totalAmount.toPlainString()
        else -> paid.text.toString()
       }
-      val selectedVault=if(paymentType.selectedItemPosition==0) null else vault.selectedItem.toString()
+      val selectedVault=if(paymentType.selectedItemPosition==0) null else when(vault.selectedItemPosition) {
+       0 -> "drawer"
+       1 -> "external"
+       2 -> "shamcash"
+       else -> "bank"
+      }
       if(posting && (paymentAmount.toBigDecimalOrNull()==null || paymentAmount.toBigDecimal()<BigDecimal.ZERO || paymentAmount.toBigDecimal()>totalAmount)) {
        status.text="المبلغ المدفوع غير صالح";return@setOnClickListener
       }
