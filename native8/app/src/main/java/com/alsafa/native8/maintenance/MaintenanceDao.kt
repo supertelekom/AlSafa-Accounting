@@ -15,6 +15,12 @@ interface MaintenanceDao {
  suspend fun parts():List<MaintenancePartEntity>
  @Query("SELECT COUNT(*) FROM maintenance_repairs WHERE source_sha256=:source")
  suspend fun repairCount(source:String):Int
+ @Query("SELECT COALESCE(MAX(invoice_number),0) FROM maintenance_repairs")
+ suspend fun maxRepairInvoice():Long
+ @Insert(onConflict=OnConflictStrategy.ABORT)
+ suspend fun insertNewRepair(value:MaintenanceRepairEntity)
+ @Query("UPDATE maintenance_repairs SET status=:status, original_json=:raw WHERE id=:id")
+ suspend fun updateRepairStatus(id:String,status:String,raw:String):Int
  @Insert(onConflict=OnConflictStrategy.IGNORE)
  suspend fun insertRepairs(values:List<MaintenanceRepairEntity>):List<Long>
  @Insert(onConflict=OnConflictStrategy.IGNORE)
