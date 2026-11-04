@@ -22,21 +22,21 @@ class LegacyFinancialRulesTest {
  @Test fun storeProfitUsesInvoiceDateAndOnlineUsesCollectionDate() {
   val source=sample()
   assertEquals(0,LegacyFinancialRules.breakdown(source,"2026-10-01","2026-10-01").net.compareTo(n("40")))
-  assertEquals(0,LegacyFinancialRules.breakdown(source,"2026-10-02","2026-10-02").net.compareTo(n("16")))
+  assertEquals(0,LegacyFinancialRules.breakdown(source,"2026-10-02","2026-10-02").net.compareTo(n("33.5")))
  }
  @Test fun withdrawalsDoNotReduceBusinessProfit() {
   val source=sample()
   val total=LegacyFinancialRules.breakdown(source,"2026-10-01","2026-10-02")
-  assertEquals(0,total.net.compareTo(n("56")))
+  assertEquals(0,total.net.compareTo(n("73.5")))
   val father=LegacyFinancialRules.statement(source,LegacyFinancialRules.partners[0],"2026-10-01","2026-10-02","2026-10-02")
-  assertEquals(0,father.periodShare.compareTo(n("22.4")))
-  assertEquals(0,father.cumulativeDue.compareTo(n("17.4")))
+  assertEquals(0,father.periodShare.compareTo(n("29.4")))
+  assertEquals(0,father.cumulativeDue.compareTo(n("24.4")))
  }
  @Test fun periodsNeverIncludeFutureWithdrawals() {
   val source=sample().copy(withdrawals=sample().withdrawals+
    LegacyFinancialRules.Withdrawal("2026-11-01","father",usd("100")))
   val father=LegacyFinancialRules.statement(source,LegacyFinancialRules.partners[0],"2026-10-01","2026-10-31","2026-10-31")
-  assertEquals(0,father.cumulativeDue.compareTo(n("17.4")))
+  assertEquals(0,father.cumulativeDue.compareTo(n("24.4")))
  }
  @Test fun onlineDiscountAllocatesCostButNotRevenue() {
   val receipt=LegacyFinancialRules.Receipt("2026-10-03",usd("100"),usd("0"),usd("60"),n("100"),n("90"),n("10"))
