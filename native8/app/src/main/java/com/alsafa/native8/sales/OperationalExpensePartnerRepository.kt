@@ -19,7 +19,7 @@ class OperationalExpensePartnerRepository(private val db:AppDatabase) {
   val normalized=UnifiedCashboxBalance.canonical(value) ?: error("خزنة غير معروفة")
   return normalized
  }
- private fun movementId(id:String)= "financial-"+id
+ private fun movementId(id:String,kind:String)= "financial-"+kind+"-"+id
  private fun validateId(id:String) {
   require(id.isNotBlank() && id.length<=150 && id.all { it.isLetterOrDigit() || it=='-' || it=='_' }) {
    "معرف العملية غير صالح"
@@ -52,7 +52,7 @@ class OperationalExpensePartnerRepository(private val db:AppDatabase) {
    require(row.cash_movement_id==null) { "مصروف دون خزنة لا ينشئ حركة نقدية" }
    dao.insertExpense(row)
   } else {
-   require(row.cash_movement_id==movementId(row.id)) { "مرجع حركة الخزنة غير مطابق" }
+   require(row.cash_movement_id==movementId(row.id,"expense")) { "مرجع حركة الخزنة غير مطابق" }
    val balance=UnifiedCashboxBalance(AppDatabase.cashContext(),db.supplierPurchaseDao()).calculate(box,unit)
    require(balance.verified && balance.total>=value) { "رصيد الخزنة غير معتمد أو غير كافٍ" }
    dao.insertExpense(row)
@@ -73,7 +73,7 @@ class OperationalExpensePartnerRepository(private val db:AppDatabase) {
   val unit=currency(row.currency)
   val box=vault(row.vault,unit)
   val value=amount(row.amount);rate(row.usd_per_unit)
-  require(row.cash_movement_id==movementId(row.id)) { "مرجع حركة الخزنة غير مطابق" }
+  require(row.cash_movement_id==movementId(row.id,"withdrawal")) { "مرجع حركة الخزنة غير مطابق" }
   require(row.created_at>0)
   val balance=UnifiedCashboxBalance(AppDatabase.cashContext(),db.supplierPurchaseDao()).calculate(box,unit)
   require(balance.verified && balance.total>=value) { "رصيد الخزنة غير معتمد أو غير كافٍ" }
