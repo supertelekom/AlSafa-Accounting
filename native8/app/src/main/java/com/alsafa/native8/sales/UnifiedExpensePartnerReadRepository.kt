@@ -44,7 +44,9 @@ class UnifiedExpensePartnerReadRepository(
  suspend fun load(from:String,to:String):Snapshot {
   require(from<=to)
   val run=legacy.latestRunId()
-  val legacyExpenses=if(run==null) emptyList() else rows(run,"expenses").map { row ->
+  val importedExpenseRows=if(run==null) emptyList() else rows(run,"expenses")
+  val importedWithdrawalRows=if(run==null) emptyList() else rows(run,"partnerWithdrawals")
+  val legacyExpenses=importedExpenseRows.map { row ->
    val obj=row.fields
    val unit=obj.optString("currency","USD").uppercase()
    val date=obj.optString("date")
@@ -52,7 +54,7 @@ class UnifiedExpensePartnerReadRepository(
    LegacyFinancialRules.Expense(date,LegacyFinancialRules.Money(
     decimal(obj.get("amount").toString()),exchangeSnapshot(obj,unit)))
   }.filter { LegacyFinancialRules.inRange(it.date,from,to) }
-  val legacyWithdrawals=if(run==null) emptyList() else rows(run,"partnerWithdrawals").map { row ->
+  val legacyWithdrawals=importedWithdrawalRows.map { row ->
    val obj=row.fields
    val unit=obj.optString("currency","USD").uppercase()
    val date=obj.optString("date")
@@ -61,10 +63,16 @@ class UnifiedExpensePartnerReadRepository(
     LegacyFinancialRules.Money(decimal(obj.get("amount").toString()),
      exchangeSnapshot(obj,unit)))
   }.filter { LegacyFinancialRules.inRange(it.date,from,to) }
-  val newExpenses=dao.expenses(from,to).map {
+  val operationalExpenseRows=dao.expenses(from,to)
+  val operationalWithdrawalRows=dao.withdrawals(from,to)
+  val expenseIds=importedExpenseRows.mapNotNull { it.id }.toSet()
+  val withdrawalIds=importedWithdrawalRows.mapNotNull { it.id }.toSet()
+  check(operationalExpenseRows.none { it.id in expenseIds }) { "Expense ID overlaps imported history" }
+  check(operationalWithdrawalRows.none { it.id in withdrawalIds }) { "Withdrawal ID overlaps imported history" }
+  val newExpenses=operationalExpenseRows.map {
    LegacyFinancialRules.Expense(it.date,money(it.amount,it.usd_per_unit))
   }
-  val newWithdrawals=dao.withdrawals(from,to).map {
+  val newWithdrawals=operationalWithdrawalRows.map {
    LegacyFinancialRules.Withdrawal(it.date,it.partner_id,money(it.amount,it.usd_per_unit))
   }
   return Snapshot(LegacyFinancialRules.Source(
