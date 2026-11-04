@@ -122,7 +122,7 @@ class MaintenanceActivity:ComponentActivity() {
       if(deliveryDialog && repair.source_sha256=="native8") {
        AlertDialog(onDismissRequest={if(!statusSaving) deliveryDialog=false},
         title={Text("تسليم الساعة وتحصيل المبلغ")},
-        text={Column(verticalArrangement=Arrangement.spacedBy(10.dp)) {
+        text={Column(Modifier.heightIn(max=520.dp).verticalScroll(rememberScrollState()),verticalArrangement=Arrangement.spacedBy(10.dp)) {
          Text("أجرة العمل وقيمة القطع تُجمعان عند التسليم. تحقق من المبلغ قبل التأكيد.")
          OutlinedTextField(value=collection,onValueChange={collection=it},label={Text("المبلغ المقبوض الآن")},singleLine=true)
          Text("الدفعة الأولى — عملة الفاتورة: "+repair.currency)
