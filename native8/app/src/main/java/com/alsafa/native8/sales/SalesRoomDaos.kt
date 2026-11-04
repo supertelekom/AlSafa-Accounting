@@ -23,6 +23,9 @@ interface LegacySaleDao {
  ORDER BY created_at DESC LIMIT :limit""")
  suspend fun unifiedArchive(search:String,from:Long=0,to:Long=Long.MAX_VALUE,limit:Int=100):List<UnifiedSaleRow>
 
+ @Query("SELECT * FROM legacy_sales_archive WHERE source_sha256=:source ORDER BY invoice_number")
+ suspend fun legacyBySource(source:String):List<LegacySaleEntity>
+
  @Query("SELECT * FROM legacy_sales_archive WHERE legacy_id=:id")
  suspend fun legacyById(id:String):LegacySaleEntity?
 
