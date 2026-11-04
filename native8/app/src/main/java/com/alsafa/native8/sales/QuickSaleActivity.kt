@@ -43,6 +43,19 @@ class QuickSaleActivity: ComponentActivity() {
         val vm=ViewModelProvider(this)[QuickSaleViewModel::class.java]
         val catalog=SalesProductCatalog(applicationContext)
         setContent { SalesFrame("فاتورة مبسطة") {
+            Text("نوع البيع *")
+            Row {
+                RadioButton(
+                    selected=SalesDraftSession.channel==SalesChannelClassification.STORE,
+                    onClick={SalesDraftSession.channel=SalesChannelClassification.STORE}
+                )
+                Text("بيع من المحل")
+                RadioButton(
+                    selected=SalesDraftSession.channel==SalesChannelClassification.ONLINE,
+                    onClick={SalesDraftSession.channel=SalesChannelClassification.ONLINE}
+                )
+                Text("بيع أونلاين")
+            }
             SalesProductPicker(applicationContext,vm.choices,vm.query,
                 {vm.search(it,catalog)},vm.quantity,{vm.quantity=it},{vm.add(it)})
             Text(vm.notice)
