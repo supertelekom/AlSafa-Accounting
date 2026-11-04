@@ -20,7 +20,7 @@ import java.math.BigDecimal
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.KeyboardType
 
-/** Read-only operational ledger viewer. Does not include imported opening balances. */
+/** Unified historical and operational cashbox view with atomic transfers. */
 class CashboxMovementsActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -144,26 +144,28 @@ class CashboxMovementsActivity : ComponentActivity() {
                     "البنك" -> "bank"
                     else -> ""
                 }
-                val vaultCounts = historical.movements.groupingBy { it.vault }.eachCount()
-                Text("معرفات الصناديق في النسخة القديمة: " +
+                val vaultCounts = historical.movements.groupingBy { UnifiedCashboxBalance.displayName(it.vault) }.eachCount()
+                Text("الصناديق في النسخة القديمة: " +
                     vaultCounts.entries.sortedBy { it.key }.joinToString(" | ") { "${it.key}: ${it.value}" })
                 val legacyRows = historical.movements.filter {
-                    (it.vault.equals(vault, ignoreCase = true) ||
-                        (vault == "shamcash" && it.vault.equals("sham", ignoreCase = true))) &&
+                    UnifiedCashboxBalance.canonical(it.vault)==vault &&
                         it.currency.equals(selectedCurrency, ignoreCase = true)
                 }
                 val legacyTotal = legacyRows.fold(BigDecimal.ZERO) { sum, item -> sum + item.amount }
                 Text("صافي الحركات التاريخية: ${legacyTotal.toPlainString()} ${selectedCurrency}")
-                Text("مجموع الحركات القديمة والجديدة: ${(total + legacyTotal).toPlainString()} ${selectedCurrency}",
-                    style = MaterialTheme.typography.titleLarge)
+
                 LaunchedEffect(selectedCashbox,selectedCurrency) {
                     refreshUnified(selectedCashbox,selectedCurrency)
                 }
                 unified?.let { balance ->
-                    Text("الحساب الموحد: تاريخي ${balance.historical.toPlainString()} + جديد ${balance.operational.toPlainString()} = ${balance.total.toPlainString()} ${selectedCurrency}")
+                    Text("الرصيد الموحد — "+UnifiedCashboxBalance.displayName(selectedCashbox)+": "+
+                        balance.total.toPlainString()+" "+selectedCurrency,
+                        style = MaterialTheme.typography.headlineSmall)
+                    Text("رصيد مستعاد: "+balance.historical.toPlainString()+
+                        " | حركات جديدة: "+balance.operational.toPlainString())
                     Text(balance.warning)
                 }
-                Text("هذه مجاميع حركات، وليست رصيد الصندوق النهائي؛ الأرصدة الافتتاحية والإغلاقات قيد المطابقة.")
+                Text("يُستخدم الرصيد الموحد في العمليات التي اجتازت فحوص المطابقة الآلية؛ التدقيق المحاسبي النهائي مؤجل.")
                 Text("سجلات تاريخية مقروءة: ${historical.movements.size} — غير صالحة: ${historical.invalid} — معرفات مكررة: ${historical.duplicates}")
                 if (historyError.isNotEmpty()) Text(historyError)
                 Button(onClick = {
