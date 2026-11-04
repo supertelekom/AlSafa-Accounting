@@ -55,9 +55,7 @@ class MaintenanceActivity:ComponentActivity() {
   var selectedCashbox by mutableStateOf("drawer")
   var secondAmount by mutableStateOf("")
   var secondCurrency by mutableStateOf("TRY")
-  var secondCredit by mutableStateOf("")
   var secondCashbox by mutableStateOf("drawer")
-  var firstCredit by mutableStateOf("")
   var error by mutableStateOf("")
   var loading by mutableStateOf(false)
   var generation=0
@@ -117,7 +115,7 @@ class MaintenanceActivity:ComponentActivity() {
        Button(onClick={startActivityForResult(Intent(this@MaintenanceActivity,MaintenanceEditActivity::class.java).putExtra("repair_id",repair.id),703)}) { Text("تعديل الفاتورة") }
       }
       if(repair.source_sha256=="native8" && repair.status=="جاهز للاستلام") {
-       Button(onClick={collection="";firstCredit="";secondAmount="";secondCredit="";selectedCashbox="drawer";secondCashbox="drawer";deliveryDialog=true}) { Text("تم التسليم — تحصيل المبلغ") }
+       Button(onClick={collection="";secondAmount="";selectedCashbox="drawer";secondCashbox="drawer";deliveryDialog=true}) { Text("تم التسليم — تحصيل المبلغ") }
       }
       if(deliveryDialog && repair.source_sha256=="native8") {
        AlertDialog(onDismissRequest={if(!statusSaving) deliveryDialog=false},
@@ -136,8 +134,7 @@ class MaintenanceActivity:ComponentActivity() {
          }
          OutlinedTextField(value=secondAmount,onValueChange={secondAmount=it},
           label={Text("المبلغ الفعلي المقبوض بالعملة الثانية")},singleLine=true)
-         OutlinedTextField(value=secondCredit,onValueChange={secondCredit=it},
-          label={Text("ما يعادله بعملة الفاتورة "+repair.currency)},singleLine=true)
+         Text("يُحسب المعادل تلقائياً وفق أسعار الصرف المحفوظة في التطبيق")
          Text("صندوق الدفعة الثانية")
          listOf("drawer" to "الدرج","external" to "الخارجي","ChamCash" to "شام كاش","bank" to "البنك").forEach { (key,label) ->
           Row { RadioButton(selected=secondCashbox==key,onClick={secondCashbox=key});Text(label) }
@@ -151,7 +148,7 @@ class MaintenanceActivity:ComponentActivity() {
            withContext(Dispatchers.IO) { run {
               val lines=mutableListOf<MaintenanceDeliveryRepository.PaymentLine>()
               if(collection.isNotBlank() && collection.toBigDecimalOrNull()?.signum()==1) lines.add(MaintenanceDeliveryRepository.PaymentLine(collection,repair.currency,selectedCashbox,collection))
-              if(secondAmount.isNotBlank()) lines.add(MaintenanceDeliveryRepository.PaymentLine(secondAmount,secondCurrency,secondCashbox,secondCredit))
+              if(secondAmount.isNotBlank()) lines.add(MaintenanceDeliveryRepository.PaymentLine(secondAmount,secondCurrency,secondCashbox,""))
               MaintenanceDeliveryRepository(AppDatabase.get(applicationContext)).deliver(repair.id,lines)
              } }
            deliveryDialog=false
