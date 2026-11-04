@@ -11,6 +11,12 @@ interface SalesPostingDao {
     @Query("SELECT COALESCE(MAX(number),0) FROM sales")
     suspend fun maxNewNumber(): Long
 
+    @Query("UPDATE sales SET channel=:channel WHERE id=:id AND channel IS NULL AND status!='ملغاة'")
+    suspend fun classifyUnverified(id:String,channel:String):Int
+
+    @Query("SELECT COUNT(*) FROM sales WHERE channel IS NULL AND status!='ملغاة'")
+    suspend fun unverifiedChannelCount():Int
+
     @Query("SELECT * FROM sales WHERE id=:id LIMIT 1")
     suspend fun sale(id: String): RoomSale?
 
