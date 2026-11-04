@@ -22,6 +22,8 @@ import org.json.JSONObject
 
 /** Historical maintenance records remain immutable; this screen presents the original fields. */
 class MaintenanceActivity:ComponentActivity() {
+ private var reload: (() -> Unit)?=null
+ override fun onResume() { super.onResume();reload?.invoke() }
  override fun onCreate(savedInstanceState:Bundle?) {
   super.onCreate(savedInstanceState)
   var query by mutableStateOf("")
@@ -44,6 +46,7 @@ class MaintenanceActivity:ComponentActivity() {
     } finally { if(request==generation) loading=false }
    }
   }
+  reload=::refresh
   refresh()
   // Refresh after returning from the intake form.
   setContent {
