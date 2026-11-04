@@ -27,3 +27,10 @@ Branch: native6-development. Changes restricted to native8/.
 - **Critical integration gap:** RoomSalesEngine.recognize currently posts sale_profit_events for all payments on collection date. Do not sum those events together with SalesChannelProfit store profits or the same sale may be counted twice.
 - RoomSale currently lacks a verified source-mapped channel field. Before wiring the projector to production, map the channel from the original v3.9.359 sale records and add a non-destructive Room migration for new invoices. Existing records with unknown channel must block financial approval, not default to STORE.
 - Verify online discount allocation against main.js before calling these pure-model tests source parity. No actual Gradle/JUnit/Room run has occurred.
+
+## Legacy online channel recovered from original source (2026-11-05)
+- Inspected v3.9.359 assets/main.js: invoice creation stores saleType='online' or 'store' (~7933/7938); onlineSaleReceiptEvents uses (sale.saleType||'store')==='online' (~2763); original archive view shows online badge and collection button (~3429).
+- Historical archive already preserves original_json, so added LegacySaleChannel parser and LegacySaleChannelAuditRepository source-scoped census without a schema change or rewriting historical invoices.
+- Original main.js fallback for missing saleType is STORE. Unrecognized nonempty values fail closed.
+- Existing Room sales channel column (v17) applies to NEW Room invoices, not legacy_sales_archive; do not copy legacy IDs into Room sales or repost old cash.
+- Outstanding: wire source-backed channel into new invoice creation UI and receipt profit postings, reconcile imported payments and repair events, verify FX and original discount semantics; run Android/Room tests on a local build. LegacySaleChannelTest uses org.json and may require Android/Robolectric test support on local JVM.
