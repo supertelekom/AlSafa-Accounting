@@ -35,6 +35,7 @@ class OperationalExpensePartnerRepository(private val db:AppDatabase) {
    require(existing==row) { "معرف المصروف مستخدم لعملية مختلفة" }
    return@withTransaction existing
   }
+  require(dao.withdrawal(row.id)==null) { "معرف المصروف مستخدم لسحب شريك" }
   val unit=currency(row.currency)
   val value=amount(row.amount)
   rate(row.usd_per_unit)
@@ -69,6 +70,7 @@ class OperationalExpensePartnerRepository(private val db:AppDatabase) {
    require(existing==row) { "معرف السحب مستخدم لعملية مختلفة" }
    return@withTransaction existing
   }
+  require(dao.expense(row.id)==null) { "معرف السحب مستخدم لمصروف" }
   require(row.partner_id in setOf("father","me","brother")) { "شريك غير معتمد" }
   val unit=currency(row.currency)
   val box=vault(row.vault,unit)
