@@ -4,6 +4,10 @@ package com.alsafa.native8.sales
 object SalesChannelClassification {
  const val STORE="store"
  const val ONLINE="online"
+ fun hasUnverified(count:Int):Boolean {
+  require(count>=0)
+  return count>0
+ }
  fun requireVerified(raw:String?):SalesChannelProfit.Channel=when(raw) {
   STORE -> SalesChannelProfit.Channel.STORE
   ONLINE -> SalesChannelProfit.Channel.ONLINE
