@@ -149,8 +149,8 @@ class MaintenanceActivity:ComponentActivity() {
           statusSaving=true
           try {
            withContext(Dispatchers.IO) { run {
-              val first=MaintenanceDeliveryRepository.PaymentLine(collection,repair.currency,selectedCashbox,collection)
-              val lines=mutableListOf(first)
+              val lines=mutableListOf<MaintenanceDeliveryRepository.PaymentLine>()
+              if(collection.isNotBlank() && collection.toBigDecimalOrNull()?.signum()==1) lines.add(MaintenanceDeliveryRepository.PaymentLine(collection,repair.currency,selectedCashbox,collection))
               if(secondAmount.isNotBlank()) lines.add(MaintenanceDeliveryRepository.PaymentLine(secondAmount,secondCurrency,secondCashbox,secondCredit))
               MaintenanceDeliveryRepository(AppDatabase.get(applicationContext)).deliver(repair.id,lines)
              } }
