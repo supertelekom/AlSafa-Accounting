@@ -9,15 +9,17 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
 import com.alsafa.native8.sales.AppDatabase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.json.JSONArray
 import org.json.JSONObject
 
-/** First operational maintenance screen: historical records and their original details. */
+/** Historical maintenance records remain immutable; this screen presents the original fields. */
 class MaintenanceActivity:ComponentActivity() {
  override fun onCreate(savedInstanceState:Bundle?) {
   super.onCreate(savedInstanceState)
@@ -25,53 +27,139 @@ class MaintenanceActivity:ComponentActivity() {
   var records by mutableStateOf<List<MaintenanceRepairEntity>>(emptyList())
   var selected by mutableStateOf<MaintenanceRepairEntity?>(null)
   var error by mutableStateOf("")
+  var loading by mutableStateOf(false)
+  var generation=0
   fun refresh() {
+   val request=++generation
    lifecycleScope.launch {
+    loading=true
     try {
-     records=withContext(Dispatchers.IO) {
+     val result=withContext(Dispatchers.IO) {
       AppDatabase.get(applicationContext).maintenanceDao().search(query)
      }
-     error=""
-    } catch(e:Exception) { error=e.message ?: "تعذر قراءة سجلات الصيانة" }
+     if(request==generation) { records=result;error="" }
+    } catch(e:Exception) {
+     if(request==generation) error=e.message ?: "تعذر قراءة سجلات الصيانة"
+    } finally { if(request==generation) loading=false }
    }
   }
   refresh()
   setContent {
-   Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
-    verticalArrangement=Arrangement.spacedBy(12.dp)) {
-    Text("الصيانة",style=MaterialTheme.typography.headlineSmall)
-    OutlinedTextField(value=query,onValueChange={query=it;refresh()},
-     label={Text("بحث بالعميل أو الهاتف أو رقم الصيانة أو الساعة")},
-     modifier=Modifier.fillMaxWidth(),singleLine=true)
-    if(error.isNotBlank()) Text(error)
-    selected?.let { repair ->
-     OutlinedButton(onClick={selected=null}) { Text("العودة إلى الصيانة") }
-     Text("تفاصيل الصيانة",style=MaterialTheme.typography.titleLarge)
-     val raw=remember(repair.id) { runCatching { JSONObject(repair.original_json) }.getOrNull() }
-     if(raw!=null) {
-      val keys=raw.keys()
-      while(keys.hasNext()) {
-       val key=keys.next()
-       val value=raw.opt(key)
-       if(value!=null && value!=JSONObject.NULL && key!="watchPhoto" && key!="photos")
-        Text(key+": "+value.toString().take(500))
-      }
-     } else Text("تعذر قراءة بيانات الصيانة الأصلية")
-    } ?: run {
-     Text("السجلات: "+records.size)
-     records.forEach { repair ->
-      Card(onClick={selected=repair},modifier=Modifier.fillMaxWidth()) {
-       Column(Modifier.padding(12.dp)) {
-        Text("#"+repair.invoice_number+" — "+repair.customer,
-         style=MaterialTheme.typography.titleMedium)
-        Text(repair.watch+" — "+repair.status)
-        Text(repair.date+" — "+repair.phone)
+   androidx.compose.runtime.CompositionLocalProvider(
+    androidx.compose.ui.platform.LocalLayoutDirection provides androidx.compose.ui.unit.LayoutDirection.Rtl
+   ) {
+    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
+     verticalArrangement=Arrangement.spacedBy(12.dp)) {
+     Text("الصيانة",style=MaterialTheme.typography.headlineSmall)
+     if(selected==null) {
+      OutlinedTextField(value=query,onValueChange={query=it;refresh()},
+       label={Text("بحث بالعميل أو الهاتف أو رقم الصيانة أو الساعة")},
+       modifier=Modifier.fillMaxWidth(),singleLine=true)
+     }
+     if(error.isNotBlank()) Text(error,color=MaterialTheme.colorScheme.error)
+     if(loading) LinearProgressIndicator(modifier=Modifier.fillMaxWidth())
+     val repair=selected
+     if(repair!=null) {
+      OutlinedButton(onClick={selected=null}) { Text("العودة إلى الصيانة") }
+      MaintenanceDetail(repair)
+     } else {
+      Text("السجلات المعروضة: "+records.size,style=MaterialTheme.typography.titleMedium)
+      records.forEach { entry ->
+       Card(onClick={selected=entry},modifier=Modifier.fillMaxWidth()) {
+        Column(Modifier.padding(16.dp),verticalArrangement=Arrangement.spacedBy(6.dp)) {
+         Text("صيانة رقم "+entry.invoice_number,style=MaterialTheme.typography.titleMedium)
+         Text(entry.customer.ifBlank { entry.watch.ifBlank { "صيانة سريعة" } },
+          maxLines=2,overflow=TextOverflow.Ellipsis)
+         Text(entry.watch+" — "+entry.status,maxLines=2,overflow=TextOverflow.Ellipsis)
+         Text(entry.date+(if(entry.phone.isNotBlank()) " — "+entry.phone else ""))
+        }
        }
       }
+      if(records.isEmpty() && !loading && error.isBlank()) Text("لا توجد سجلات صيانة مطابقة.")
      }
-     if(records.isEmpty() && error.isBlank()) Text("لا توجد سجلات صيانة مستوردة.")
     }
    }
   }
  }
+}
+
+@Composable
+private fun MaintenanceDetail(repair:MaintenanceRepairEntity) {
+ val obj=remember(repair.id,repair.original_json) {
+  runCatching { JSONObject(repair.original_json) }.getOrNull()
+ }
+ Text("تفاصيل الصيانة رقم "+repair.invoice_number,style=MaterialTheme.typography.headlineSmall)
+ if(obj==null) { Text("تعذر قراءة تفاصيل الصيانة الأصلية");return }
+ @Composable fun field(label:String,vararg keys:String) {
+  val value=keys.firstNotNullOfOrNull { key ->
+   obj.opt(key)?.takeUnless { it==JSONObject.NULL || it is JSONObject || it is JSONArray }
+    ?.toString()?.takeIf { it.isNotBlank() }
+  }
+  if(value!=null) {
+   Column(Modifier.fillMaxWidth(),verticalArrangement=Arrangement.spacedBy(3.dp)) {
+    Text(label,style=MaterialTheme.typography.labelLarge,color=MaterialTheme.colorScheme.onSurfaceVariant)
+    Text(value,style=MaterialTheme.typography.bodyLarge)
+   }
+  }
+ }
+ @Composable fun section(title:String,content:@Composable ColumnScope.()->Unit) {
+  Card(Modifier.fillMaxWidth()) {
+   Column(Modifier.padding(16.dp),verticalArrangement=Arrangement.spacedBy(10.dp)) {
+    Text(title,style=MaterialTheme.typography.titleMedium)
+    content()
+   }
+  }
+ }
+ section("بيانات الاستلام") {
+  field("رقم الصيانة","invoiceNo")
+  field("التاريخ","date")
+  field("الوقت","time")
+  field("العميل","customer")
+  field("الهاتف","phone")
+  field("الساعة","watch")
+  field("الموديل","model")
+  field("العطل","problem")
+  field("التشخيص","diagnosis")
+  field("العمل المنجز","workDone")
+  field("الحالة","status")
+ }
+ section("التكلفة والقبض") {
+  field("العملة","currency")
+  field("السعر","price")
+  field("أجرة العمل","laborPrice")
+  field("قيمة القطع","partsTotal")
+  field("تكلفة القطع","partsCost")
+  field("التكلفة الإجمالية","cost")
+  field("تكلفة إضافية","manualCost")
+  field("الضريبة","tax")
+  field("المقبوض","received")
+  field("حالة الدفع","paymentStatus")
+  field("طريقة الدفع","paymentMethod")
+ }
+ val parts=obj.optJSONArray("usedParts")
+ if(parts!=null && parts.length()>0) {
+  section("قطع الصيانة المستخدمة") {
+   for(i in 0 until parts.length()) {
+    val part=parts.optJSONObject(i)
+    if(part!=null) {
+     val name=part.optString("name").ifBlank { "قطعة "+(i+1) }
+     Text(name,style=MaterialTheme.typography.bodyLarge)
+     listOf("qty" to "الكمية","quantity" to "الكمية",
+      "price" to "السعر","cost" to "التكلفة").forEach { (key,label) ->
+      if(part.has(key)) Text(label+": "+part.optString(key))
+     }
+     if(i<parts.length()-1) HorizontalDivider()
+    } else Text(parts.optString(i))
+   }
+  }
+ }
+ section("التسليم والملاحظات") {
+  field("تاريخ التسليم","deliveredDate")
+  field("وقت التسليم","deliveredTime")
+  field("ملاحظات","notes")
+ }
+ val photoCount=listOf("photos","watchPhotos","images").sumOf { key ->
+  obj.optJSONArray(key)?.length() ?: 0
+ }
+ if(photoCount>0) Text("صور الصيانة المحفوظة: "+photoCount+" — عرض الصور قيد الربط")
 }
