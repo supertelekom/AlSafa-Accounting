@@ -42,7 +42,8 @@ class MaintenanceDeliveryRepository(private val db:AppDatabase, context:Context)
   val prepared=payments.map { payment ->
    val currency=if(legacySingleCurrency) repair.currency else payment.currency
    require(currency in setOf("USD","TRY","SYP")) { "عملة غير مدعومة" }
-   require(UnifiedCashboxBalance.canonical(payment.cashbox)!=null) { "الصندوق غير معروف" }
+   val normalizedCashbox=UnifiedCashboxBalance.canonical(payment.cashbox) ?: error("الصندوق غير معروف")
+   require(normalizedCashbox!="shamcash" || currency in setOf("USD","SYP")) { "شام كاش لا يدعم العملة المختارة" }
    val actual=amount(payment.amount)
    val rate=exchangeRates.rate(currency,repair.currency)
    val suggested=actual.multiply(rate).setScale(2,RoundingMode.HALF_UP)
