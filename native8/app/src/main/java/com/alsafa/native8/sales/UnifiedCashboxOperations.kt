@@ -58,4 +58,28 @@ class UnifiedCashboxOperations(private val db:AppDatabase) {
     currency.uppercase(),amount.toPlainString(),reference,System.currentTimeMillis(),note))
    id
   }
+ /**
+  * Currency exchange records actual outgoing and incoming denominations, not an
+  * inferred conversion. Both entries share a reference and commit atomically.
+  */
+ suspend fun exchange(vault:String,fromCurrency:String,toCurrency:String,
+  outgoing:BigDecimal,incoming:BigDecimal,note:String=""):String=db.withTransaction {
+  val normalized=UnifiedCashboxBalance.canonical(vault) ?: error("خزنة غير معروفة")
+  val from=fromCurrency.uppercase()
+  val to=toCurrency.uppercase()
+  validateCurrency(normalized,from)
+  validateCurrency(normalized,to)
+  require(from!=to) { "اختر عملتين مختلفتين" }
+  require(outgoing>BigDecimal.ZERO && incoming>BigDecimal.ZERO) { "مبالغ الصرف يجب أن تكون موجبة" }
+  require(spendable(normalized,from)>=outgoing) { "رصيد العملة المصروفة غير كافٍ" }
+  val reference="cash-exchange-"+UUID.randomUUID()
+  val now=System.currentTimeMillis()
+  val dao=db.supplierPurchaseDao()
+  dao.insertCashMovement(RoomCashboxMovement(reference+"-out",normalized,from,
+   outgoing.negate().toPlainString(),reference,now,"صرف عملة إلى "+to+" — "+note))
+  dao.insertCashMovement(RoomCashboxMovement(reference+"-in",normalized,to,
+   incoming.toPlainString(),reference,now,"صرف عملة من "+from+" — "+note))
+  reference
+ }
+
 }
