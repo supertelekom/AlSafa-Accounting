@@ -1,6 +1,7 @@
 package com.alsafa.native8.maintenance
 
 import android.os.Bundle
+import android.content.Intent
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.*
@@ -44,6 +45,7 @@ class MaintenanceActivity:ComponentActivity() {
    }
   }
   refresh()
+  // Refresh after returning from the intake form.
   setContent {
    androidx.compose.runtime.CompositionLocalProvider(
     androidx.compose.ui.platform.LocalLayoutDirection provides androidx.compose.ui.unit.LayoutDirection.Rtl
@@ -52,6 +54,7 @@ class MaintenanceActivity:ComponentActivity() {
      verticalArrangement=Arrangement.spacedBy(12.dp)) {
      Text("الصيانة",style=MaterialTheme.typography.headlineSmall)
      if(selected==null) {
+      Button(onClick={startActivity(Intent(this@MaintenanceActivity,MaintenanceIntakeActivity::class.java))}) { Text("استلام صيانة") }
       OutlinedTextField(value=query,onValueChange={query=it;refresh()},
        label={Text("بحث بالعميل أو الهاتف أو رقم الصيانة أو الساعة")},
        modifier=Modifier.fillMaxWidth(),singleLine=true)
