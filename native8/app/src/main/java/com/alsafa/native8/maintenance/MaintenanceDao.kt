@@ -27,6 +27,8 @@ interface MaintenanceDao {
  suspend fun updatePartFields(id:String,name:String,category:String,barcode:String,stock:String,currency:String,cost:String,salePrice:String,raw:String,expected:String):Int
  suspend fun updateNewPart(part:MaintenancePartEntity,expected:String):Int =
   updatePartFields(part.id,part.name,part.category,part.barcode,part.stock,part.currency,part.cost,part.sale_price,part.original_json,expected)
+ @Query("UPDATE maintenance_parts SET name=:name,category=:category,barcode=:barcode,stock=:stock,currency=:currency,cost=:cost,sale_price=:salePrice,original_json=:raw WHERE id=:id AND original_json=:expected")
+ suspend fun updateImportedPartFields(id:String,name:String,category:String,barcode:String,stock:String,currency:String,cost:String,salePrice:String,raw:String,expected:String):Int
  @Query("DELETE FROM maintenance_parts WHERE id=:id AND source_sha256='native8'")
  suspend fun deleteNewPart(id:String):Int
  @Query("SELECT * FROM maintenance_parts ORDER BY name")
