@@ -34,3 +34,10 @@ Branch: native6-development. Changes restricted to native8/.
 - Original main.js fallback for missing saleType is STORE. Unrecognized nonempty values fail closed.
 - Existing Room sales channel column (v17) applies to NEW Room invoices, not legacy_sales_archive; do not copy legacy IDs into Room sales or repost old cash.
 - Outstanding: wire source-backed channel into new invoice creation UI and receipt profit postings, reconcile imported payments and repair events, verify FX and original discount semantics; run Android/Room tests on a local build. LegacySaleChannelTest uses org.json and may require Android/Robolectric test support on local JVM.
+
+## Native8 new invoice channel propagation batch
+- SaleDraft now carries channel, default 'store'; SalesDraftSession retains selected channel and resets after successful save.
+- FullSaleActivity restores original source labels 'نوع البيع *', 'بيع من المحل', 'بيع أونلاين'; QuickSaleActivity also exposes explicit choice so a shared draft cannot silently inherit a prior channel.
+- RoomSalesEngine.save verifies the channel and stores it on RoomSale inside the same transaction as invoice, stock, payments and receivables.
+- SaleDraftChannelTest covers default and copy-with-payment preservation.
+- **Not yet complete**: RoomSalesEngine currently only writes receipt profit events for ONLINE; STORE invoice-date profit posting has not been implemented, so unified reporting remains incomplete. Existing unclassified Room invoices remain NULL; do not automatically classify without original source. No Gradle or device tests run.
