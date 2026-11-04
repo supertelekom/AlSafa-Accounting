@@ -3,6 +3,8 @@ package com.alsafa.native8.maintenance
 import androidx.room.withTransaction
 import com.alsafa.native8.sales.AppDatabase
 import com.alsafa.native8.sales.RoomCashboxMovement
+import com.alsafa.native8.sales.ExchangeRateSettings
+import java.math.RoundingMode
 import org.json.JSONObject
 import org.json.JSONArray
 import java.math.BigDecimal
@@ -39,9 +41,10 @@ class MaintenanceDeliveryRepository(private val db:AppDatabase) {
    require(currency in setOf("USD","TRY","SYP")) { "عملة غير مدعومة" }
    require(payment.cashbox in setOf("drawer","external","ChamCash","bank")) { "الصندوق غير معروف" }
    val actual=amount(payment.amount)
-   val credit=amount(payment.invoiceCredit)
+   val rate=ExchangeRateSettings(AppDatabase.cashContext()).rate(currency,repair.currency)
+   val credit=actual.multiply(rate).setScale(2,RoundingMode.HALF_UP)
    require(actual>BigDecimal.ZERO && credit>BigDecimal.ZERO) { "الدفعات يجب أن تكون موجبة" }
-   if(currency==repair.currency) require(actual.compareTo(credit)==0) { "قيمة القبض والخصم غير متطابقة" }
+
    Triple(payment,actual,credit)
   }
   val received=prepared.fold(BigDecimal.ZERO) { sum,line -> sum+line.third }
@@ -77,7 +80,8 @@ class MaintenanceDeliveryRepository(private val db:AppDatabase) {
   raw.put("paymentLines",JSONArray().apply {
    prepared.forEach { (payment,actual,credit) ->
     put(JSONObject().put("currency",if(legacySingleCurrency) repair.currency else payment.currency)
-     .put("amount",fmt(actual)).put("invoiceCredit",fmt(credit)).put("cashbox",payment.cashbox))
+     .put("amount",fmt(actual)).put("invoiceCredit",fmt(credit)).put("cashbox",payment.cashbox)
+     .put("fxRate",fmt(credit.divide(actual,12,RoundingMode.HALF_UP))))
    }
   })
   check(dao.finalizeDelivery(id,"تم التسليم",fmt(total),fmt(received),day,raw.toString(),repair.original_json)==1) { "تغيرت الصيانة أثناء التسليم" }
