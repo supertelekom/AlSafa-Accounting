@@ -7,6 +7,8 @@ import androidx.room.Query
 
 @Dao
 interface MaintenanceDao {
+ @Query("SELECT * FROM maintenance_repairs WHERE delivered_date>=:from AND delivered_date<=:to ORDER BY delivered_date,created_at,id")
+ suspend fun deliveredInPeriod(from:String,to:String):List<MaintenanceRepairEntity>
  @Query("SELECT * FROM maintenance_repairs WHERE customer LIKE '%' || :query || '%' OR phone LIKE '%' || :query || '%' OR CAST(invoice_number AS TEXT) LIKE '%' || :query || '%' OR watch LIKE '%' || :query || '%' ORDER BY created_at DESC LIMIT :limit")
  suspend fun search(query:String,limit:Int=250):List<MaintenanceRepairEntity>
  @Query("SELECT * FROM maintenance_repairs WHERE id=:id LIMIT 1")
