@@ -66,7 +66,8 @@ class MaintenanceIntakeActivity:Activity() {
       val id="repair-"+now+"-"+UUID.randomUUID().toString().take(6)
       runBlocking {
        db.withTransaction {
-        val number=db.maintenanceDao().maxRepairInvoice()+1
+        val number=maxOf(db.maintenanceDao().maxRepairInvoice(),
+         db.salesPostingDao().maxNewNumber(),db.legacySaleDao().maxLegacyInvoiceNumber())+1
         val raw=JSONObject().apply {
          put("id",id);put("invoiceNo",number);put("date",date);put("time",time)
          put("status","بانتظار التسليم")
