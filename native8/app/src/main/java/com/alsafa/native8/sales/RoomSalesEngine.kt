@@ -17,6 +17,10 @@ class RoomSalesEngine(private val context: Context) {
     private val audit get() = db.salesFinancialAuditDao()
     private suspend fun recognize(paymentId:String,saleId:String,at:Long,credit:BigDecimal,net:BigDecimal) {
         if (credit == BigDecimal.ZERO || net == BigDecimal.ZERO) return
+        val invoice=requireNotNull(posting.sale(saleId)) { "الفاتورة غير موجودة" }
+        // STORE profit belongs to invoice date, never to a receipt.
+        // UNKNOWN is deliberately not recognized until source classification.
+        if (invoice.channel != SalesChannelClassification.ONLINE) return
         val cost = posting.lines(saleId).fold(BigDecimal.ZERO) { a,l ->
             a + l.quantity.toBigDecimal() * l.unit_cost.toBigDecimal()
         }
