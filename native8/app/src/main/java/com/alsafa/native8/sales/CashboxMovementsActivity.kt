@@ -1,7 +1,6 @@
 package com.alsafa.native8.sales
 
 import android.os.Bundle
-import android.content.Intent
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.*
@@ -17,6 +16,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import com.alsafa.native8.data.migration.LegacyCashboxHistory
 import java.math.BigDecimal
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.KeyboardType
 
@@ -66,9 +68,6 @@ class CashboxMovementsActivity : ComponentActivity() {
             Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text("حركات الصناديق", style = MaterialTheme.typography.headlineSmall)
-                OutlinedButton(onClick = {
-                    startActivity(Intent(this@CashboxMovementsActivity, LegacyCashboxHistoryActivity::class.java))
-                }) { Text("فحص العمليات التاريخية المستعادة") }
                 SalesPaymentSelectors(selectedCashbox, { selectedCashbox = it },
                     selectedCurrency, { selectedCurrency = it })
                 Text("تحويل بين الخزن", style = MaterialTheme.typography.titleMedium)
@@ -132,28 +131,11 @@ class CashboxMovementsActivity : ComponentActivity() {
                     }
                     normalized == canonicalCashbox && it.currency.equals(selectedCurrency, ignoreCase = true)
                 }
-                val total = filtered.fold(BigDecimal.ZERO) { sum, movement ->
-                    sum + (movement.amount.toBigDecimalOrNull() ?: BigDecimal.ZERO)
-                }
-                Text("صافي الحركات المسجلة: ${total.toPlainString()} ${selectedCurrency}",
-                    style = MaterialTheme.typography.titleLarge)
-                val vault = when (selectedCashbox) {
-                    "الدرج" -> "drawer"
-                    "الصندوق الخارجي" -> "external"
-                    "شام كاش" -> "shamcash"
-                    "البنك" -> "bank"
-                    else -> ""
-                }
-                val vaultCounts = historical.movements.groupingBy { UnifiedCashboxBalance.displayName(it.vault) }.eachCount()
-                Text("الصناديق في النسخة القديمة: " +
-                    vaultCounts.entries.sortedBy { it.key }.joinToString(" | ") { "${it.key}: ${it.value}" })
+                val vault = canonicalCashbox
                 val legacyRows = historical.movements.filter {
                     UnifiedCashboxBalance.canonical(it.vault)==vault &&
                         it.currency.equals(selectedCurrency, ignoreCase = true)
                 }
-                val legacyTotal = legacyRows.fold(BigDecimal.ZERO) { sum, item -> sum + item.amount }
-                Text("صافي الحركات التاريخية: ${legacyTotal.toPlainString()} ${selectedCurrency}")
-
                 LaunchedEffect(selectedCashbox,selectedCurrency) {
                     refreshUnified(selectedCashbox,selectedCurrency)
                 }
@@ -161,12 +143,8 @@ class CashboxMovementsActivity : ComponentActivity() {
                     Text("الرصيد الموحد — "+UnifiedCashboxBalance.displayName(selectedCashbox)+": "+
                         balance.total.toPlainString()+" "+selectedCurrency,
                         style = MaterialTheme.typography.headlineSmall)
-                    Text("رصيد مستعاد: "+balance.historical.toPlainString()+
-                        " | حركات جديدة: "+balance.operational.toPlainString())
                     Text(balance.warning)
                 }
-                Text("يُستخدم الرصيد الموحد في العمليات التي اجتازت فحوص المطابقة الآلية؛ التدقيق المحاسبي النهائي مؤجل.")
-                Text("سجلات تاريخية مقروءة: ${historical.movements.size} — غير صالحة: ${historical.invalid} — معرفات مكررة: ${historical.duplicates}")
                 if (historyError.isNotEmpty()) Text(historyError)
                 Button(onClick = {
                     lifecycleScope.launch {
@@ -176,27 +154,36 @@ class CashboxMovementsActivity : ComponentActivity() {
                         refreshUnified(selectedCashbox,selectedCurrency)
                     }
                 }) { Text("تحديث") }
-                filtered.forEach { movement ->
+                Text("حركات "+selectedCashbox, style=MaterialTheme.typography.titleMedium)
+                val formatter=DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
+                    .withZone(ZoneId.systemDefault())
+                // One chronological view; historical records stay read-only and are not reposted.
+                val combined=buildList {
+                    filtered.forEach { movement ->
+                        add(Triple(movement.created_at,
+                            movement.amount+" "+movement.currency,
+                            (purchaseLabels[movement.sale_id] ?: movement.note)+
+                                " — "+formatter.format(Instant.ofEpochMilli(movement.created_at))))
+                    }
+                    legacyRows.forEach { item ->
+                        val parsed=runCatching {
+                            java.time.LocalDate.parse(item.date.take(10))
+                                .atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
+                        }.getOrDefault(0L)
+                        add(Triple(parsed,item.amount.toPlainString()+" "+item.currency,
+                            item.type+" — "+item.date+
+                                (if(item.referenceId.isNotBlank()) " — "+item.referenceId else "")))
+                    }
+                }.sortedByDescending { it.first }
+                combined.forEach { (_,amount,description) ->
                     Card(Modifier.fillMaxWidth()) {
                         Column(Modifier.padding(12.dp)) {
-                            Text("${movement.amount} ${movement.currency}")
-                            Text(purchaseLabels[movement.sale_id] ?: movement.note)
-                            if (!purchaseLabels.containsKey(movement.sale_id)) Text("المرجع: ${movement.sale_id.take(8)}")
+                            Text(amount,style=MaterialTheme.typography.titleMedium)
+                            Text(description)
                         }
                     }
                 }
-                if (filtered.isEmpty()) Text("لا توجد حركات جديدة لهذا الصندوق والعملة ضمن آخر 1000 حركة.")
-                Text("الحركات التاريخية", style = MaterialTheme.typography.titleMedium)
-                legacyRows.asReversed().take(150).forEach { item ->
-                    Card(Modifier.fillMaxWidth()) {
-                        Column(Modifier.padding(12.dp)) {
-                            Text("${item.amount.toPlainString()} ${item.currency} — ${item.type}")
-                            Text("${item.date} — ${item.id}")
-                            if (item.referenceId.isNotBlank()) Text("المرجع: ${item.referenceType} / ${item.referenceId}")
-                        }
-                    }
-                }
-                if (legacyRows.isEmpty()) Text("لا توجد حركات تاريخية لهذا الصندوق والعملة.")
+                if(combined.isEmpty()) Text("لا توجد حركات لهذا الصندوق والعملة.")
             }
         }
     }
