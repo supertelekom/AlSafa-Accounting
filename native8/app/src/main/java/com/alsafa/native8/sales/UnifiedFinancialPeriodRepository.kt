@@ -28,7 +28,7 @@ class UnifiedFinancialPeriodRepository(
     partner.id to net.multiply(BigDecimal(partner.share)).divide(BigDecimal(100))
    }
   }
- )
+ }
  suspend fun read(from:String,to:String):Result {
   val first=LocalDate.parse(from)
   val last=LocalDate.parse(to)
