@@ -90,8 +90,8 @@ class MaintenanceIntakeActivity:Activity() {
       }
      }
      runOnUiThread {
-      if(result.isSuccess) { Toast.makeText(this,"تم حفظ طلب الصيانة",Toast.LENGTH_LONG).show();finish() }
-      else { isEnabled=true;Toast.makeText(this,result.exceptionOrNull()?.message ?: "تعذر الحفظ",Toast.LENGTH_LONG).show() }
+      if(result.isSuccess) { Toast.makeText(this@MaintenanceIntakeActivity,"تم حفظ طلب الصيانة",Toast.LENGTH_LONG).show();finish() }
+      else { isEnabled=true;Toast.makeText(this@MaintenanceIntakeActivity,result.exceptionOrNull()?.message ?: "تعذر الحفظ",Toast.LENGTH_LONG).show() }
      }
     }.start()
    }
@@ -103,9 +103,9 @@ class MaintenanceIntakeActivity:Activity() {
   if(requestCode==701 && resultCode==RESULT_OK) {
    val uri=data?.data ?: return
    try { contentResolver.takePersistableUriPermission(uri,Intent.FLAG_GRANT_READ_URI_PERMISSION) }
-   catch(_:SecurityException) { Toast.makeText(this,"تعذر الاحتفاظ بإذن الصورة",Toast.LENGTH_LONG).show();return }
+   catch(_:SecurityException) { Toast.makeText(this@MaintenanceIntakeActivity,"تعذر الاحتفاظ بإذن الصورة",Toast.LENGTH_LONG).show();return }
    photoUri=uri.toString()
-   Toast.makeText(this,"تم اختيار صورة الساعة",Toast.LENGTH_SHORT).show()
+   Toast.makeText(this@MaintenanceIntakeActivity,"تم اختيار صورة الساعة",Toast.LENGTH_SHORT).show()
   }
  }
 }
