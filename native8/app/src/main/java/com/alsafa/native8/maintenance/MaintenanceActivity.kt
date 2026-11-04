@@ -89,6 +89,7 @@ class MaintenanceActivity:ComponentActivity() {
      verticalArrangement=Arrangement.spacedBy(12.dp)) {
      Text("الصيانة",style=MaterialTheme.typography.headlineSmall)
      if(selected==null) {
+      OutlinedButton(onClick={startActivity(Intent(this@MaintenanceActivity,MaintenancePartsActivity::class.java))}) { Text("قطع الصيانة") }
       Button(onClick={
        startActivityForResult(Intent(this@MaintenanceActivity,MaintenanceIntakeActivity::class.java),702)
       }) { Text("استلام صيانة") }
