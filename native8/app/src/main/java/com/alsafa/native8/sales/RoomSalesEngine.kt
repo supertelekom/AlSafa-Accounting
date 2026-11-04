@@ -20,7 +20,7 @@ class RoomSalesEngine(private val context: Context) {
         val invoice=requireNotNull(posting.sale(saleId)) { "الفاتورة غير موجودة" }
         // STORE profit belongs to invoice date, never to a receipt.
         // UNKNOWN is deliberately not recognized until source classification.
-        if (invoice.channel != SalesChannelClassification.ONLINE) return
+        if (!SalesChannelClassification.recognizeAtCollection(invoice.channel)) return
         val cost = posting.lines(saleId).fold(BigDecimal.ZERO) { a,l ->
             a + l.quantity.toBigDecimal() * l.unit_cost.toBigDecimal()
         }
