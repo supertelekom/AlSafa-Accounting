@@ -67,9 +67,16 @@ class MaintenanceEditActivity:Activity() {
      val partId=row.optString("partId")
      if(partId.isNotBlank()) existing.add(MaintenancePartsRepository.SelectedPart(partId,row.optString("qty","1"),row.optString("price","0")))
     }
+    val partNames=mutableMapOf<String,String>()
+    for(i in 0 until currentParts.length()) {
+     val row=currentParts.optJSONObject(i) ?: continue
+     val partId=row.optString("partId")
+     val name=row.optString("name")
+     if(partId.isNotBlank() && name.isNotBlank()) partNames[partId]=name
+    }
     fun showParts(lines:List<MaintenancePartsRepository.SelectedPart>) {
      partsSummary.text=if(lines.isEmpty()) "القطع المختارة: لا توجد قطع" else
-      "القطع المختارة: "+lines.joinToString("، ") { "${it.partId} × ${it.qty}" }
+      "القطع المختارة: "+lines.joinToString("، ") { "${partNames[it.partId] ?: "قطعة صيانة"} × ${it.qty}" }
     }
     showParts(existing)
     partsButton.setOnClickListener {
@@ -78,6 +85,8 @@ class MaintenanceEditActivity:Activity() {
       runOnUiThread {
        val parts=result.getOrNull().orEmpty()
        if(parts.isEmpty()) { Toast.makeText(this,"مستودع قطع الصيانة فارغ",Toast.LENGTH_LONG).show();return@runOnUiThread }
+       parts.forEach { partNames[it.id]=it.name }
+       showParts(pendingParts ?: existing)
        val labels=parts.map { "${it.category} / ${it.name} — ${it.stock} متاح" }.toTypedArray()
        android.app.AlertDialog.Builder(this).setTitle("القطع المقترحة / المراد تركيبها")
         .setItems(labels) { _,index ->
