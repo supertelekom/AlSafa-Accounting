@@ -28,6 +28,8 @@ class UnifiedFinancialPeriodRepository(
     partner.id to net.multiply(BigDecimal(partner.share)).divide(BigDecimal(100))
    }
   }
+  fun approvedPartnerBalances():Map<String,BigDecimal> =
+   approvedPartnerShares().mapValues { (id,share) -> share-(withdrawals[id] ?: BigDecimal.ZERO) }
  }
  suspend fun read(from:String,to:String):Result {
   val first=LocalDate.parse(from)
