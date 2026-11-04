@@ -68,5 +68,46 @@ class MaintenancePartsRepository(private val db: AppDatabase) {
   old.put("usedParts",used);old.put("partsTotal",canonical(total));old.put("partsCost",canonical(costTotal))
   check(dao.updateParts(repairId,repair.original_json,old.toString())==1) { "تغيرت الفاتورة؛ أعد تحميلها" }
  }
+
+ /** Delivery-time stock application. Repeated calls are idempotent. */
+ suspend fun applyAtDelivery(repairId:String) = db.withTransaction {
+  val repair=dao.repair(repairId) ?: error("فاتورة الصيانة غير موجودة")
+  require(repair.source_sha256=="native8") { "لا يمكن تعديل فاتورة تاريخية" }
+  val raw=JSONObject(repair.original_json)
+  if(raw.optBoolean("partsStockApplied",false)) return@withTransaction
+  val lines=raw.optJSONArray("usedParts") ?: JSONArray()
+  val adjustments=mutableListOf<Triple<MaintenancePartEntity,BigDecimal,BigDecimal>>()
+  for(i in 0 until lines.length()) {
+   val item=lines.getJSONObject(i)
+   val part=dao.part(item.getString("partId")) ?: error("قطعة الصيانة غير موجودة")
+   val qty=integer(item.getString("qty"))
+   require(qty>BigDecimal.ZERO) { "كمية غير صحيحة" }
+   val before=integer(part.stock)
+   require(before>=qty) { "المخزون غير كافٍ: ${part.name}" }
+   adjustments.add(Triple(part,before,before.subtract(qty)))
+  }
+  for((part,before,after) in adjustments) {
+   check(dao.changePartStock(part.id,canonical(before),canonical(after))==1) { "تغير مخزون القطعة: ${part.name}" }
+  }
+  raw.put("partsStockApplied",true)
+  check(dao.updateParts(repairId,repair.original_json,raw.toString())==1) { "تغيرت الفاتورة أثناء الخصم" }
+ }
+ /** Reverse an applied deduction once, in the same Room transaction. */
+ suspend fun restoreOnReversal(repairId:String) = db.withTransaction {
+  val repair=dao.repair(repairId) ?: error("فاتورة الصيانة غير موجودة")
+  require(repair.source_sha256=="native8") { "لا يمكن تعديل فاتورة تاريخية" }
+  val raw=JSONObject(repair.original_json)
+  if(!raw.optBoolean("partsStockApplied",false)) return@withTransaction
+  val lines=raw.optJSONArray("usedParts") ?: JSONArray()
+  for(i in 0 until lines.length()) {
+   val item=lines.getJSONObject(i)
+   val part=dao.part(item.getString("partId")) ?: error("قطعة الصيانة غير موجودة")
+   val before=integer(part.stock)
+   val after=before.add(integer(item.getString("qty")))
+   check(dao.changePartStock(part.id,canonical(before),canonical(after))==1) { "تغير مخزون القطعة" }
+  }
+  raw.put("partsStockApplied",false)
+  check(dao.updateParts(repairId,repair.original_json,raw.toString())==1) { "تغيرت الفاتورة أثناء الاسترجاع" }
+ }
  data class SelectedPart(val partId:String,val qty:String,val price:String)
 }
