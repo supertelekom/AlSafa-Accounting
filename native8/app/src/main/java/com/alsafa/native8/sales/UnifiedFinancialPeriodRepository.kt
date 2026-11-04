@@ -2,12 +2,13 @@ package com.alsafa.native8.sales
 
 import java.math.BigDecimal
 import java.time.LocalDate
-import java.time.ZoneOffset
+import java.time.ZoneId
 
 /** Partial read-only operational projection; not a complete profit statement. */
 class UnifiedFinancialPeriodRepository(
  private val sales:SalesFinancialAuditDao,
- private val expenses:UnifiedExpensePartnerReadRepository
+ private val expenses:UnifiedExpensePartnerReadRepository,
+ private val businessZone:ZoneId
 ) {
  data class Result(
   val saleProfit:BigDecimal,
@@ -21,8 +22,9 @@ class UnifiedFinancialPeriodRepository(
   val first=LocalDate.parse(from)
   val last=LocalDate.parse(to)
   require(!last.isBefore(first))
-  val start=first.atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()
-  val end=last.plusDays(1).atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()
+  val window=FinancialPeriodGuard.window(from,to,businessZone)
+  val start=window.startInclusive
+  val end=window.endExclusive
   fun decimal(s:String)=s.toBigDecimal()
   val profits=sales.profitEventsInPeriod(start,end)
    .fold(BigDecimal.ZERO) { acc,row -> acc+decimal(row.recognized_profit) }
