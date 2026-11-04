@@ -18,6 +18,7 @@ import kotlinx.coroutines.runBlocking
 import com.alsafa.native8.data.operational.RoomProductImportPromoter
 import com.alsafa.native8.sales.LegacySalesArchiveImporter
 import com.alsafa.native8.sales.SupplierArchiveImporter
+import com.alsafa.native8.maintenance.MaintenanceLegacyImporter
 
 /** Temporary isolated backup-import verification screen. */
 class RestoreActivity : Activity() {
@@ -114,6 +115,10 @@ class RestoreActivity : Activity() {
                         supplierImportError = e.message ?: e.javaClass.simpleName
                         null
                     }
+                    var maintenanceError:String?=null
+                    val maintenance=try {
+                        runBlocking { MaintenanceLegacyImporter(db,AppDatabase.get(applicationContext)).importRun(run) }
+                    } catch(e:Exception) { maintenanceError=e.message ?: e.javaClass.simpleName; null }
                     buildString {
                         append(if (staged.alreadyImported) "النسخة موجودة مسبقاً في قاعدة الفحص" else "تم حفظ النسخة في قاعدة الفحص")
                         append("\\n")
@@ -160,6 +165,8 @@ class RestoreActivity : Activity() {
                             append("الفواتير التاريخية: ").append(historical.count).append("\\n")
                             append("تحتاج مراجعة: ").append(historical.review).append("\\n")
                         } else append("تعذر نقل أرشيف الفواتير: ").append(archiveError ?: "خطأ غير معروف").append("\\n")
+                        if(maintenance!=null) append("الصيانة المستوردة: ").append(maintenance.repairs).append(" سجل جديد، قطع الصيانة: ").append(maintenance.parts).append(" سجل جديد\\n")
+                        else append("تعذر استيراد الصيانة: ").append(maintenanceError ?: "خطأ غير معروف").append("\\n")
                         append("افتح المنتجات المستوردة للتحقق من البيانات.")
                     }
                 } finally { db.close() }
