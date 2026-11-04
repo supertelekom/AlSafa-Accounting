@@ -63,7 +63,7 @@ class MaintenanceDeliveryRepository(private val db:AppDatabase) {
   raw.put("paymentMethod",cashbox)
   check(dao.finalizeDelivery(id,"تم التسليم",fmt(total),fmt(received),day,raw.toString(),repair.original_json)==1) { "تغيرت الصيانة أثناء التسليم" }
   if(received>BigDecimal.ZERO) {
-   db.salesPostingDao().insertCashboxMovement(RoomCashboxMovement(
+   db.legacyPaymentDao().insertCashboxMovement(RoomCashboxMovement(
     "repair-payment-"+UUID.randomUUID(),cashbox,repair.currency,fmt(received),id,now,"تحصيل تسليم صيانة رقم ${repair.invoice_number}"
    ))
   }
