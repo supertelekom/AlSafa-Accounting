@@ -73,7 +73,7 @@ object LegacyFinancialRules {
   val net:BigDecimal get()=store+online+repair+returns-expenses
  }
  data class Partner(val id:String,val share:Int)
- val partners=listOf(Partner("father",40),Partner("abdulkarim",35),Partner("yazan",25))
+ val partners=listOf(Partner("father",40),Partner("me",35),Partner("brother",25))
  init { check(partners.sumOf {it.share}==100) }
  fun inRange(date:String,from:String,to:String):Boolean =
   (from.isBlank() || date>=from) && (to.isBlank() || date<=to)
