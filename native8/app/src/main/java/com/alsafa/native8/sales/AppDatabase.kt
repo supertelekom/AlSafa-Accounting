@@ -43,7 +43,10 @@ abstract class AppDatabase:RoomDatabase() {
 
  companion object {
   @Volatile private var instance:AppDatabase?=null
+  @Volatile private var applicationContext:Context?=null
+  fun cashContext():Context=applicationContext ?: error("قاعدة البيانات لم تهيأ بعد")
   fun get(context:Context):AppDatabase {
+   applicationContext=context.applicationContext
    return instance ?: synchronized(this) {
     instance ?: run {
      Room.databaseBuilder(context.applicationContext,AppDatabase::class.java,
