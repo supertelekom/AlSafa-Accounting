@@ -17,7 +17,6 @@ class OperationalExpensePartnerRepository(private val db:AppDatabase) {
   value.uppercase().also { require(it in setOf("USD","TRY","SYP")) { "عملة غير مدعومة" } }
  private fun vault(value:String,unit:String):String {
   val normalized=UnifiedCashboxBalance.canonical(value) ?: error("خزنة غير معروفة")
-  require(normalized!="shamcash" || unit!="TRY") { "شام كاش لا يدعم الليرة التركية" }
   return normalized
  }
  private fun movementId(id:String)= "financial-"+id
