@@ -46,6 +46,9 @@ class MaintenanceActivity:ComponentActivity() {
   var selected by mutableStateOf<MaintenanceRepairEntity?>(null)
   var statusChoice by mutableStateOf("قيد الصيانة")
   var workDone by mutableStateOf("")
+  var diagnosis by mutableStateOf("")
+  var notes by mutableStateOf("")
+  var statusSaving by mutableStateOf(false)
   var error by mutableStateOf("")
   var loading by mutableStateOf(false)
   var generation=0
@@ -104,24 +107,35 @@ class MaintenanceActivity:ComponentActivity() {
           Text(option)
          }
         }
+        OutlinedTextField(value=diagnosis,onValueChange={diagnosis=it},
+         label={Text("التشخيص")},modifier=Modifier.fillMaxWidth())
         OutlinedTextField(value=workDone,onValueChange={workDone=it},
          label={Text("العمل المنجز")},modifier=Modifier.fillMaxWidth())
-        Button(onClick={
+        OutlinedTextField(value=notes,onValueChange={notes=it},
+         label={Text("ملاحظات")},modifier=Modifier.fillMaxWidth())
+        Button(enabled=!statusSaving,onClick={
          lifecycleScope.launch {
+          statusSaving=true
           try {
            val updated=withContext(Dispatchers.IO) {
             val db=AppDatabase.get(applicationContext)
             val latest=db.maintenanceDao().repair(repair.id) ?: error("سجل الصيانة غير موجود")
+            require(latest.source_sha256=="native8" && latest.status!="تم التسليم") { "السجل غير قابل للتعديل" }
+            require(statusChoice in listOf("قيد الصيانة","بانتظار القطعة","جاهز للاستلام")) { "حالة غير مدعومة" }
+            if(statusChoice=="جاهز للاستلام") require(workDone.isNotBlank()) { "سجل العمل المنجز قبل اعتماد الجاهزية" }
             val raw=JSONObject(latest.original_json)
             raw.put("status",statusChoice)
             raw.put("workDone",workDone)
+            raw.put("diagnosis",diagnosis)
+            raw.put("notes",notes)
             raw.put("statusUpdatedAt",System.currentTimeMillis())
-            db.maintenanceDao().updateRepairStatus(repair.id,statusChoice,raw.toString())
+            check(db.maintenanceDao().updateRepairStatus(repair.id,statusChoice,raw.toString())==1)
             db.maintenanceDao().repair(repair.id)
            }
            selected=updated
            refresh()
           } catch(e:Exception) { error=e.message ?: "تعذر تحديث الحالة" }
+          finally { statusSaving=false }
          }
         }) { Text("حفظ تحديث الحالة") }
        }
@@ -130,7 +144,14 @@ class MaintenanceActivity:ComponentActivity() {
       Text("السجلات المعروضة: "+records.size,style=MaterialTheme.typography.titleMedium)
       LazyColumn(modifier=Modifier.weight(1f),verticalArrangement=Arrangement.spacedBy(10.dp)) {
        items(records,key={it.id}) { entry ->
-       Card(onClick={selected=entry},modifier=Modifier.fillMaxWidth()) {
+       Card(onClick={
+        selected=entry
+        statusChoice=entry.status
+        val raw=runCatching { JSONObject(entry.original_json) }.getOrNull()
+        workDone=raw?.optString("workDone").orEmpty()
+        diagnosis=raw?.optString("diagnosis").orEmpty()
+        notes=raw?.optString("notes").orEmpty()
+       },modifier=Modifier.fillMaxWidth()) {
         Column(Modifier.padding(16.dp),verticalArrangement=Arrangement.spacedBy(6.dp)) {
          Text("صيانة رقم "+entry.invoice_number,style=MaterialTheme.typography.titleMedium)
          Text(entry.customer.ifBlank { entry.watch.ifBlank { "صيانة سريعة" } },
