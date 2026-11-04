@@ -57,6 +57,7 @@ class RoomSalesEngine(private val context: Context) {
     }
 
     suspend fun save(draft: SaleDraft, totals: SaleTotals): String = db.withTransaction {
+        SalesChannelClassification.requireVerified(draft.channel)
         require(draft.lines.isNotEmpty()) { "لا يمكن حفظ فاتورة دون أصناف" }
         require(draft.lines.all { it.quantity > BigDecimal.ZERO && it.unitPrice >= BigDecimal.ZERO && it.unitCost >= BigDecimal.ZERO && it.discount >= BigDecimal.ZERO }) { "بيانات الأصناف غير صالحة" }
         draft.payments.forEach(::validateFx)
@@ -77,7 +78,7 @@ class RoomSalesEngine(private val context: Context) {
         val now = System.currentTimeMillis()
         posting.insertSale(RoomSale(id, number, now, draft.customerName, draft.customerPhone,
             totals.net.toPlainString(), totals.discount.toPlainString(), totals.paid.toPlainString(),
-            if (totals.due > BigDecimal.ZERO) "آجل" else "مدفوع"))
+            if (totals.due > BigDecimal.ZERO) "آجل" else "مدفوع",draft.channel))
         for (line in draft.lines) {
             posting.insertLine(RoomSaleLine(UUID.randomUUID().toString(), id, line.productSource,
                 line.productId, line.variantId, line.title, line.quantity.toPlainString(),
