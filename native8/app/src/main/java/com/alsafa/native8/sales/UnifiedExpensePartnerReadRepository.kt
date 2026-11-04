@@ -35,19 +35,11 @@ class UnifiedExpensePartnerReadRepository(
   // Do not infer historical rates from today's settings.
   val snapshot=raw.optJSONObject("rateSnapshot")
    ?: error("Missing historical rateSnapshot for $currency")
-  val usd=snapshot.optString("usdToSyp").toBigDecimalOrNull()
-  val tryToSyp=snapshot.optString("tryToSyp").toBigDecimalOrNull()
-  val direct=snapshot.optString("usdPerUnit").toBigDecimalOrNull()
-  if(direct!=null && direct>BigDecimal.ZERO) return direct
-  require(usd!=null && usd>BigDecimal.ZERO) { "Missing USD rate" }
-  return when(currency) {
-   "SYP" -> BigDecimal.ONE.divide(usd,java.math.MathContext.DECIMAL128)
-   "TRY" -> {
-    require(tryToSyp!=null && tryToSyp>BigDecimal.ZERO) { "Missing TRY rate" }
-    tryToSyp.divide(usd,java.math.MathContext.DECIMAL128)
-   }
-   else -> error("Unsupported currency $currency")
-  }
+  // main.js currentSnapshot stores units-per-USD under currency keys.
+  val unitsPerUsd=snapshot.optString(currency).toBigDecimalOrNull()
+   ?: error("Missing historical $currency rate")
+  require(unitsPerUsd>BigDecimal.ZERO) { "Invalid historical $currency rate" }
+  return BigDecimal.ONE.divide(unitsPerUsd,java.math.MathContext.DECIMAL128)
  }
  suspend fun load(from:String,to:String):Snapshot {
   require(from<=to)
