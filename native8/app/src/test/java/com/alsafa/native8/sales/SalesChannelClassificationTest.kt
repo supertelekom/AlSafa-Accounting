@@ -8,6 +8,12 @@ class SalesChannelClassificationTest {
   assertEquals(SalesChannelProfit.Channel.STORE,SalesChannelClassification.requireVerified("store"))
   assertEquals(SalesChannelProfit.Channel.ONLINE,SalesChannelClassification.requireVerified("online"))
  }
+ @Test fun unverifiedCountIsExplicit() {
+  assertEquals(false,SalesChannelClassification.hasUnverified(0))
+  assertEquals(true,SalesChannelClassification.hasUnverified(2))
+ }
+ @Test(expected=IllegalArgumentException::class)
+ fun negativeUnverifiedCountIsRejected() { SalesChannelClassification.hasUnverified(-1) }
  @Test(expected=IllegalStateException::class)
  fun nullChannelIsNotStore() { SalesChannelClassification.requireVerified(null) }
  @Test(expected=IllegalStateException::class)
