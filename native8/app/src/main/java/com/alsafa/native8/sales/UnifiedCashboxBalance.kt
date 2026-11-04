@@ -74,6 +74,7 @@ class UnifiedCashboxBalance(private val context:Context,private val dao:Supplier
   // For external and bank, full historical movement history needs an opening balance.
   val hasOpening=historicalRows.any { it.type=="opening-balance" }
   val complete=if(name=="drawer" || name=="shamcash") anchor!=null else hasOpening
+  // Automated checks are not a substitute for a final physical cash audit.
   val verified=complete && history.invalid==0 && history.duplicates==0 && overlapping.isEmpty()
   val warning=when {
    overlapping.isNotEmpty() -> "تم استبعاد حركات متطابقة بالمعرف بين الأرشيف والجديد؛ يلزم تدقيق التداخل"
