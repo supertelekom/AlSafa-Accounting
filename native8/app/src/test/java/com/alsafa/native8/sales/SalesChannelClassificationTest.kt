@@ -8,6 +8,12 @@ class SalesChannelClassificationTest {
   assertEquals(SalesChannelProfit.Channel.STORE,SalesChannelClassification.requireVerified("store"))
   assertEquals(SalesChannelProfit.Channel.ONLINE,SalesChannelClassification.requireVerified("online"))
  }
+ @Test fun onlyVerifiedOnlineReceiptsRecognizeProfit() {
+  assertEquals(true,SalesChannelClassification.recognizeAtCollection("online"))
+  assertEquals(false,SalesChannelClassification.recognizeAtCollection("store"))
+  assertEquals(false,SalesChannelClassification.recognizeAtCollection(null))
+  assertEquals(false,SalesChannelClassification.recognizeAtCollection("unknown"))
+ }
  @Test fun unverifiedCountIsExplicit() {
   assertEquals(false,SalesChannelClassification.hasUnverified(0))
   assertEquals(true,SalesChannelClassification.hasUnverified(2))
