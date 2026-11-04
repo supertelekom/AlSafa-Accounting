@@ -34,6 +34,8 @@ class DailyClosingService(private val db:AppDatabase) {
    .calculate(vault,currency).total
   val priorValue=if(vault=="drawer") value(prior.drawer_next_json,currency)
    else value(prior.sham_actual_json,currency)
+  // This service must not silently omit restored movements after the last native close.
+  // A historical closing cannot be used as a native anchor until its chronology is reconciled.
   val movementSum=db.supplierPurchaseDao().cashMovementsBetween(prior.created_at,now)
    .filter { UnifiedCashboxBalance.canonical(it.cashbox)==vault && it.currency.equals(currency,true) }
    .fold(BigDecimal.ZERO) { sum,row -> sum+row.amount.toBigDecimal() }
