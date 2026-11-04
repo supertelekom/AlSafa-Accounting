@@ -13,9 +13,12 @@ import java.util.UUID
 
 /** Delivery, part stock, and actual collection are committed together. */
 class MaintenanceDeliveryRepository(private val db:AppDatabase) {
+ data class PaymentLine(val amount:String,val currency:String,val cashbox:String,val invoiceCredit:String)
  private fun amount(s:String)=s.toBigDecimalOrNull() ?: error("قيمة مالية غير صحيحة")
  private fun fmt(n:BigDecimal)=n.stripTrailingZeros().toPlainString()
- suspend fun deliver(id:String,collection:String,cashbox:String):Unit=db.withTransaction {
+ suspend fun deliver(id:String,collection:String,cashbox:String):Unit =
+  deliver(id,listOf(PaymentLine(collection,"USD",cashbox,collection)),true)
+ suspend fun deliver(id:String,payments:List<PaymentLine>,legacySingleCurrency:Boolean=false):Unit=db.withTransaction {
   val dao=db.maintenanceDao()
   val repair=dao.repair(id) ?: error("فاتورة الصيانة غير موجودة")
   require(repair.source_sha256=="native8" && repair.status!="تم التسليم") { "تم تسليم الصيانة مسبقاً أو السجل تاريخي" }
@@ -30,9 +33,19 @@ class MaintenanceDeliveryRepository(private val db:AppDatabase) {
   }
   val total=labor+partsTotal
   require(total>=BigDecimal.ZERO) { "الإجمالي غير صحيح" }
-  val received=amount(collection)
-  require(received>=BigDecimal.ZERO && received<=total) { "المقبوض يجب أن يكون بين صفر والإجمالي" }
-  require(cashbox in setOf("drawer","external","ChamCash","bank")) { "الصندوق غير معروف" }
+  require(payments.isNotEmpty()) { "أدخل دفعات التحصيل" }
+  val prepared=payments.map { payment ->
+   val currency=if(legacySingleCurrency) repair.currency else payment.currency
+   require(currency in setOf("USD","TRY","SYP")) { "عملة غير مدعومة" }
+   require(payment.cashbox in setOf("drawer","external","ChamCash","bank")) { "الصندوق غير معروف" }
+   val actual=amount(payment.amount)
+   val credit=amount(payment.invoiceCredit)
+   require(actual>BigDecimal.ZERO && credit>BigDecimal.ZERO) { "الدفعات يجب أن تكون موجبة" }
+   if(currency==repair.currency) require(actual.compareTo(credit)==0) { "قيمة القبض والخصم غير متطابقة" }
+   Triple(payment,actual,credit)
+  }
+  val received=prepared.fold(BigDecimal.ZERO) { sum,line -> sum+line.third }
+  require(received.compareTo(total)==0) { "تسليم الساعة يتطلب قبض كامل المبلغ المتبقي أولاً" }
   // Validate all part quantities before any mutation.
   val updates=mutableListOf<Triple<MaintenancePartEntity,String,String>>()
   val seen=mutableSetOf<String>()
@@ -60,11 +73,19 @@ class MaintenanceDeliveryRepository(private val db:AppDatabase) {
   raw.put("partsStockAppliedAt",now)
   raw.put("received",fmt(received))
   raw.put("paymentStatus",if(received==total) "مدفوع بالكامل" else if(received>BigDecimal.ZERO) "دفعة جزئية" else "غير مدفوع")
-  raw.put("paymentMethod",cashbox)
+  raw.put("paymentMethod",if(prepared.size==1) prepared.first().first.cashbox else "قبض مختلط")
+  raw.put("paymentLines",JSONArray().apply {
+   prepared.forEach { (payment,actual,credit) ->
+    put(JSONObject().put("currency",if(legacySingleCurrency) repair.currency else payment.currency)
+     .put("amount",fmt(actual)).put("invoiceCredit",fmt(credit)).put("cashbox",payment.cashbox))
+   }
+  })
   check(dao.finalizeDelivery(id,"تم التسليم",fmt(total),fmt(received),day,raw.toString(),repair.original_json)==1) { "تغيرت الصيانة أثناء التسليم" }
-  if(received>BigDecimal.ZERO) {
+  prepared.forEach { (payment,actual,credit) ->
    db.legacyPaymentDao().insertCashboxMovement(RoomCashboxMovement(
-    "repair-payment-"+UUID.randomUUID(),cashbox,repair.currency,fmt(received),id,now,"تحصيل تسليم صيانة رقم ${repair.invoice_number}"
+    "repair-payment-"+UUID.randomUUID(),payment.cashbox,
+    if(legacySingleCurrency) repair.currency else payment.currency,
+    fmt(actual),id,now,"تحصيل تسليم صيانة رقم "+repair.invoice_number+" — محسوب "+fmt(credit)+" "+repair.currency
    ))
   }
  }
