@@ -9,7 +9,8 @@ data class SalePayment(val cashbox: String, val currency: String, val amount: Bi
     val invoiceCurrency: String? = null, val fxRate: BigDecimal? = null,
     val creditedAmount: BigDecimal? = null)
 data class SaleDraft(val customerName: String, val customerPhone: String, val lines: List<SaleLine>,
-    val payments: List<SalePayment>, val discount: BigDecimal = BigDecimal.ZERO)
+    val payments: List<SalePayment>, val discount: BigDecimal = BigDecimal.ZERO,
+    val channel: String = SalesChannelClassification.STORE)
 data class SaleTotals(val gross: BigDecimal, val discount: BigDecimal, val net: BigDecimal,
     val paid: BigDecimal, val due: BigDecimal, val change: BigDecimal)
 data class SaleRecord(val id: String, val number: Long, val date: Long, val customer: String,
