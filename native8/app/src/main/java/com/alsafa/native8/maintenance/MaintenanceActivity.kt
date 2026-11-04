@@ -10,6 +10,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.ui.viewinterop.AndroidView
 import android.widget.ImageView
 import android.net.Uri
+import android.widget.Toast
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
@@ -68,6 +69,13 @@ class MaintenanceActivity:ComponentActivity() {
   }
   selectedRefresh={ id ->
    selected=withContext(Dispatchers.IO) { AppDatabase.get(applicationContext).maintenanceDao().repair(id) }
+   selected?.let { current ->
+    statusChoice=current.status
+    val raw=runCatching { JSONObject(current.original_json) }.getOrNull()
+    workDone=raw?.optString("workDone").orEmpty()
+    diagnosis=raw?.optString("diagnosis").orEmpty()
+    notes=raw?.optString("notes").orEmpty()
+   }
    refresh()
   }
   reload=::refresh
@@ -119,6 +127,7 @@ class MaintenanceActivity:ComponentActivity() {
         Button(enabled=!statusSaving,onClick={
          lifecycleScope.launch {
           statusSaving=true
+          error=""
           try {
            val updated=withContext(Dispatchers.IO) {
             val db=AppDatabase.get(applicationContext)
@@ -137,7 +146,11 @@ class MaintenanceActivity:ComponentActivity() {
            }
            selected=updated
            refresh()
-          } catch(e:Exception) { error=e.message ?: "تعذر تحديث الحالة" }
+           Toast.makeText(this@MaintenanceActivity,"تم حفظ حالة الصيانة بنجاح",Toast.LENGTH_LONG).show()
+          } catch(e:Exception) {
+           error=e.message ?: "تعذر تحديث الحالة"
+           Toast.makeText(this@MaintenanceActivity,error,Toast.LENGTH_LONG).show()
+          }
           finally { statusSaving=false }
          }
         }) { Text("حفظ تحديث الحالة") }
