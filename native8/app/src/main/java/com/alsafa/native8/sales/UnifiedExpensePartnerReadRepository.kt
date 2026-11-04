@@ -41,7 +41,7 @@ class UnifiedExpensePartnerReadRepository(
   val run=legacy.latestRunId()
   val importedExpenseRows=if(run==null) emptyList() else rows(run,"expenses")
   val importedWithdrawalRows=if(run==null) emptyList() else rows(run,"partnerWithdrawals")
-  val legacyExpenses=importedExpenseRows.map { row ->
+  val legacyExpenses=importedExpenseRows.filter { LegacyFinancialRules.inRange(it.fields.optString("date"),from,to) }.map { row ->
    val obj=row.fields
    val unit=obj.optString("currency","USD").uppercase()
    val date=obj.optString("date")
@@ -49,7 +49,7 @@ class UnifiedExpensePartnerReadRepository(
    LegacyFinancialRules.Expense(date,LegacyFinancialRules.Money(
     decimal(obj.get("amount").toString()),exchangeSnapshot(obj,unit)))
   }.filter { LegacyFinancialRules.inRange(it.date,from,to) }
-  val legacyWithdrawals=importedWithdrawalRows.map { row ->
+  val legacyWithdrawals=importedWithdrawalRows.filter { LegacyFinancialRules.inRange(it.fields.optString("date"),from,to) }.map { row ->
    val obj=row.fields
    val unit=obj.optString("currency","USD").uppercase()
    val date=obj.optString("date")
