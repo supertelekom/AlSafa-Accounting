@@ -41,6 +41,14 @@ class OperationalExpensePartnerRepository(private val db:AppDatabase) {
   val value=amount(row.amount);rate(row.usd_per_unit)
   require(row.cash_movement_id==movementId(row.id)) { "مرجع حركة الخزنة غير مطابق" }
   require(row.category.isNotBlank() && row.payment_method.isNotBlank())
+  val method=row.payment_method
+  val expected=when {
+   method.contains("شام") -> "shamcash"
+   method.contains("بنك") -> "bank"
+   method.contains("نقد") -> "drawer"
+   else -> null
+  }
+  require(expected==box) { "طريقة الدفع لا تطابق الخزنة" }
   require(row.created_at>0)
   val balance=UnifiedCashboxBalance(AppDatabase.cashContext(),db.supplierPurchaseDao()).calculate(box,unit)
   require(balance.verified && balance.total>=value) { "رصيد الخزنة غير معتمد أو غير كافٍ" }
