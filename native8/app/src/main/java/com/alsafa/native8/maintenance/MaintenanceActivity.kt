@@ -179,11 +179,13 @@ private fun MaintenanceDetail(repair:MaintenanceRepairEntity) {
   field("وقت التسليم","deliveredTime")
   field("ملاحظات","notes")
  }
- val imageUri=obj.optString("watchPhoto").takeIf { it.startsWith("content://") || it.startsWith("file://") }
- if(imageUri!=null) {
+ val imageValue=obj.optString("watchPhoto")
+ if(imageValue.isNotBlank()) {
   section("صورة الساعة") {
-   AndroidView(factory={ context -> ImageView(context).apply { adjustViewBounds=true;scaleType=ImageView.ScaleType.FIT_CENTER } },
-    update={ view -> runCatching { view.setImageURI(Uri.parse(imageUri)) } },
+   AndroidView(factory={ context -> ImageView(context).apply {
+    adjustViewBounds=true
+    scaleType=ImageView.ScaleType.FIT_CENTER
+   } },update={ view -> MaintenancePhoto.display(view,imageValue) },
     modifier=Modifier.fillMaxWidth().heightIn(max=350.dp))
   }
  }
