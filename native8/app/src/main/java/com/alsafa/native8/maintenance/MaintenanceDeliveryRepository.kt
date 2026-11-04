@@ -44,13 +44,14 @@ class MaintenanceDeliveryRepository(private val db:AppDatabase, context:Context)
    require(payment.cashbox in setOf("drawer","external","ChamCash","bank")) { "الصندوق غير معروف" }
    val actual=amount(payment.amount)
    val rate=exchangeRates.rate(currency,repair.currency)
-   val credit=actual.multiply(rate).setScale(2,RoundingMode.HALF_UP)
-   require(actual>BigDecimal.ZERO && credit>BigDecimal.ZERO) { "الدفعات يجب أن تكون موجبة" }
+   val suggested=actual.multiply(rate).setScale(2,RoundingMode.HALF_UP)
+   val credit=total
+   require(actual>BigDecimal.ZERO && credit>BigDecimal.ZERO) { "المبلغ المقبوض يجب أن يكون موجباً" }
 
    Triple(payment,actual,credit)
   }
   val received=prepared.fold(BigDecimal.ZERO) { sum,line -> sum+line.third }
-  require(received.compareTo(total)==0) { "المبلغ المقبوض لا يساوي المستحق بعد التحويل بسعر الصرف المحفوظ" }
+  require(received.compareTo(total)==0) { "تعذر تسوية قيمة الفاتورة" }
   // Validate all part quantities before any mutation.
   val updates=mutableListOf<Triple<MaintenancePartEntity,String,String>>()
   val seen=mutableSetOf<String>()
@@ -77,13 +78,16 @@ class MaintenanceDeliveryRepository(private val db:AppDatabase, context:Context)
   raw.put("partsStockApplied",true)
   raw.put("partsStockAppliedAt",now)
   raw.put("received",fmt(received))
+  raw.put("deliveryPaymentCurrency",if(legacySingleCurrency) repair.currency else prepared.first().first.currency)
+  raw.put("deliveryPaymentAmount",fmt(prepared.first().second))
   raw.put("paymentStatus",if(received==total) "مدفوع بالكامل" else if(received>BigDecimal.ZERO) "دفعة جزئية" else "غير مدفوع")
   raw.put("paymentMethod",if(prepared.size==1) prepared.first().first.cashbox else "قبض مختلط")
   raw.put("paymentLines",JSONArray().apply {
    prepared.forEach { (payment,actual,credit) ->
     put(JSONObject().put("currency",if(legacySingleCurrency) repair.currency else payment.currency)
      .put("amount",fmt(actual)).put("invoiceCredit",fmt(credit)).put("cashbox",payment.cashbox)
-     .put("fxRate",fmt(credit.divide(actual,12,RoundingMode.HALF_UP))))
+     .put("fxRate",fmt(exchangeRates.rate(if(legacySingleCurrency) repair.currency else payment.currency,repair.currency)))
+     .put("suggestedInvoiceEquivalent",fmt(actual.multiply(exchangeRates.rate(if(legacySingleCurrency) repair.currency else payment.currency,repair.currency)).setScale(2,RoundingMode.HALF_UP))))
    }
   })
   check(dao.finalizeDelivery(id,"تم التسليم",fmt(total),fmt(received),day,raw.toString(),repair.original_json)==1) { "تغيرت الصيانة أثناء التسليم" }
