@@ -103,7 +103,7 @@ class CashboxMovementsActivity : ComponentActivity() {
                                         UnifiedCashboxOperations(AppDatabase.get(applicationContext))
                                             .transfer(source,destination,currency,amount,transferNote)
                                     }
-                                    transferStatus="تم التحويل — المرجع: "+result.reference
+                                    transferStatus="تم التحويل بنجاح"
                                     transferAmount=""
                                     movements=AppDatabase.get(applicationContext).legacyPaymentDao().recentCashboxMovements()
                                     refreshUnified(selectedCashbox,selectedCurrency)
@@ -114,21 +114,9 @@ class CashboxMovementsActivity : ComponentActivity() {
                         }
                     }) { Text(if(transferBusy) "جاري التحويل..." else "تنفيذ التحويل") }
                 if(transferStatus.isNotEmpty()) Text(transferStatus)
-                val canonicalCashbox = when (selectedCashbox) {
-                    "الدرج" -> "drawer"
-                    "الصندوق الخارجي" -> "external"
-                    "شام كاش" -> "shamcash"
-                    "البنك" -> "bank"
-                    else -> selectedCashbox
-                }
+                val canonicalCashbox = UnifiedCashboxBalance.canonical(selectedCashbox) ?: selectedCashbox
                 val filtered = movements.filter {
-                    val normalized = when (it.cashbox.trim().lowercase()) {
-                        "الدرج", "drawer" -> "drawer"
-                        "الصندوق الخارجي", "external" -> "external"
-                        "شام كاش", "shamcash", "sham" -> "shamcash"
-                        "البنك", "bank" -> "bank"
-                        else -> it.cashbox.trim().lowercase()
-                    }
+                    val normalized = UnifiedCashboxBalance.canonical(it.cashbox)
                     normalized == canonicalCashbox && it.currency.equals(selectedCurrency, ignoreCase = true)
                 }
                 val vault = canonicalCashbox
@@ -162,7 +150,7 @@ class CashboxMovementsActivity : ComponentActivity() {
                     filtered.forEach { movement ->
                         add(Triple(movement.created_at,
                             movement.amount+" "+movement.currency,
-                            (purchaseLabels[movement.sale_id] ?: movement.note)+
+                            CashboxMovementLabels.operational(purchaseLabels[movement.sale_id] ?: movement.note,movement.sale_id)+
                                 " — "+formatter.format(Instant.ofEpochMilli(movement.created_at))))
                     }
                     legacyRows.forEach { item ->
@@ -171,8 +159,7 @@ class CashboxMovementsActivity : ComponentActivity() {
                                 .atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
                         }.getOrDefault(0L)
                         add(Triple(parsed,item.amount.toPlainString()+" "+item.currency,
-                            item.type+" — "+item.date+
-                                (if(item.referenceId.isNotBlank()) " — "+item.referenceId else "")))
+                            CashboxMovementLabels.type(item.type)+" — "+item.date)))
                     }
                 }.sortedByDescending { it.first }
                 combined.forEach { (_,amount,description) ->
