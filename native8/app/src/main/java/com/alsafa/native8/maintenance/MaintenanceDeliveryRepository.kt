@@ -5,6 +5,7 @@ import android.content.Context
 import com.alsafa.native8.sales.AppDatabase
 import com.alsafa.native8.sales.RoomCashboxMovement
 import com.alsafa.native8.sales.ExchangeRateSettings
+import com.alsafa.native8.sales.UnifiedCashboxBalance
 import java.math.RoundingMode
 import org.json.JSONObject
 import org.json.JSONArray
@@ -41,7 +42,7 @@ class MaintenanceDeliveryRepository(private val db:AppDatabase, context:Context)
   val prepared=payments.map { payment ->
    val currency=if(legacySingleCurrency) repair.currency else payment.currency
    require(currency in setOf("USD","TRY","SYP")) { "عملة غير مدعومة" }
-   require(payment.cashbox in setOf("drawer","external","ChamCash","bank")) { "الصندوق غير معروف" }
+   require(UnifiedCashboxBalance.canonical(payment.cashbox)!=null) { "الصندوق غير معروف" }
    val actual=amount(payment.amount)
    val rate=exchangeRates.rate(currency,repair.currency)
    val suggested=actual.multiply(rate).setScale(2,RoundingMode.HALF_UP)
@@ -93,7 +94,7 @@ class MaintenanceDeliveryRepository(private val db:AppDatabase, context:Context)
   check(dao.finalizeDelivery(id,"تم التسليم",fmt(total),fmt(received),day,raw.toString(),repair.original_json)==1) { "تغيرت الصيانة أثناء التسليم" }
   prepared.forEach { (payment,actual,credit) ->
    db.legacyPaymentDao().insertCashboxMovement(RoomCashboxMovement(
-    "repair-payment-"+UUID.randomUUID(),payment.cashbox,
+    "repair-payment-"+UUID.randomUUID(),UnifiedCashboxBalance.canonical(payment.cashbox)!!,
     if(legacySingleCurrency) repair.currency else payment.currency,
     fmt(actual),id,now,"تحصيل تسليم صيانة رقم "+repair.invoice_number+" — محسوب "+fmt(credit)+" "+repair.currency
    ))
