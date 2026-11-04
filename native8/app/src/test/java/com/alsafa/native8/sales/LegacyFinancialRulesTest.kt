@@ -47,4 +47,13 @@ class LegacyFinancialRulesTest {
   val empty=LegacyFinancialRules.Source(emptyList(),emptyList(),emptyList(),emptyList(),listOf(expense),emptyList())
   assertEquals(0,LegacyFinancialRules.breakdown(empty,"2026-10-03","2026-10-03").net.compareTo(n("-2")))
  }
+ @Test fun salesReturnRespectsRecognizedRatio() {
+  val event=LegacyFinancialRules.SaleReturn("2026-10-04",n("40"),n("20"),n("5"),n("0.5"),n("1"))
+  assertEquals(0,event.impactUsd().compareTo(n("-12.5")))
+ }
+ @Test fun repairReturnRemovesTaxAndUsesSeparateCostRatios() {
+  val event=LegacyFinancialRules.RepairReturn("2026-10-04",n("110"),n("22"),
+   n("30"),n("10"),n("10"),n("0.5"),n("1"),n("1"))
+  assertEquals(0,event.impactUsd().compareTo(n("-75")))
+ }
 }
