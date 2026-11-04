@@ -30,7 +30,7 @@ object LegacyRepairReceiptProfit {
    val ratio=if(invoiceTotal>zero)
     amount.divide(invoiceTotal,mc).min(one) else zero
    val costRatio=amount.divide(invoiceTotal.max(one),mc).min(one)
-   val net=invoiceTotal-invoiceTax
+   val net=(invoiceTotal-invoiceTax).max(zero)
    return (net.multiply(ratio,mc)-invoiceCost.multiply(costRatio,mc))
     .multiply(usdPerCurrencyUnit,mc)
   }
