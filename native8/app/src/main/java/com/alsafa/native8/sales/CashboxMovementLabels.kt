@@ -10,11 +10,11 @@ object CashboxMovementLabels {
   else -> value
  }
  fun type(value:String):String=when(value.trim().lowercase()) {
-  "transfer","cash-transfer" -> "تحويل بين الخزائن"
+  "transfer","cash-transfer","vault-transfer" -> "تحويل بين الخزائن"
   "transfer-in" -> "تحويل وارد"
   "transfer-out" -> "تحويل صادر"
-  "expense" -> "مصروف"
-  "partner-withdrawal" -> "سحب شريك"
+  "expense","operating-expense" -> "مصروف"
+  "partner-withdrawal","partner_withdrawal" -> "سحب شريك"
   "opening-balance" -> "رصيد افتتاحي"
   "sale","sale-payment","sales-payment" -> "تحصيل مبيع"
   "repair","maintenance","repair-payment" -> "تحصيل صيانة"
