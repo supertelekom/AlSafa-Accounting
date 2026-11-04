@@ -50,6 +50,9 @@ class MaintenanceActivity:ComponentActivity() {
   var diagnosis by mutableStateOf("")
   var notes by mutableStateOf("")
   var statusSaving by mutableStateOf(false)
+  var deliveryDialog by mutableStateOf(false)
+  var collection by mutableStateOf("")
+  var selectedCashbox by mutableStateOf("drawer")
   var error by mutableStateOf("")
   var loading by mutableStateOf(false)
   var generation=0
@@ -107,6 +110,34 @@ class MaintenanceActivity:ComponentActivity() {
       }
       if(repair.source_sha256=="native8" && repair.status!="تم التسليم") {
        Button(onClick={startActivityForResult(Intent(this@MaintenanceActivity,MaintenanceEditActivity::class.java).putExtra("repair_id",repair.id),703)}) { Text("تعديل الفاتورة") }
+      }
+      if(repair.source_sha256=="native8" && repair.status=="جاهز للاستلام") {
+       Button(onClick={collection="";selectedCashbox="drawer";deliveryDialog=true}) { Text("تم التسليم — تحصيل المبلغ") }
+      }
+      if(deliveryDialog && repair.source_sha256=="native8") {
+       AlertDialog(onDismissRequest={if(!statusSaving) deliveryDialog=false},
+        title={Text("تسليم الساعة وتحصيل المبلغ")},
+        text={Column(verticalArrangement=Arrangement.spacedBy(10.dp)) {
+         Text("أجرة العمل وقيمة القطع تُجمعان عند التسليم. تحقق من المبلغ قبل التأكيد.")
+         OutlinedTextField(value=collection,onValueChange={collection=it},label={Text("المبلغ المقبوض الآن")},singleLine=true)
+         Text("الصندوق المستلم")
+         listOf("drawer" to "الدرج","external" to "الصندوق الخارجي","ChamCash" to "شام كاش","bank" to "البنك").forEach { (key,label) ->
+          Row { RadioButton(selected=selectedCashbox==key,onClick={selectedCashbox=key});Text(label) }
+         }
+        }},
+        confirmButton={Button(enabled=!statusSaving,onClick={
+         lifecycleScope.launch {
+          statusSaving=true
+          try {
+           withContext(Dispatchers.IO) { MaintenanceDeliveryRepository(AppDatabase.get(applicationContext)).deliver(repair.id,collection,selectedCashbox) }
+           deliveryDialog=false
+           selectedRefresh?.invoke(repair.id)
+           Toast.makeText(this@MaintenanceActivity,"تم تسليم الصيانة وتسجيل التحصيل",Toast.LENGTH_LONG).show()
+          } catch(e:Exception) { error=e.message ?: "تعذر التسليم" }
+          finally { statusSaving=false }
+         }
+        }) { Text("تأكيد التسليم والقبض") }},
+        dismissButton={TextButton(onClick={deliveryDialog=false}) { Text("إلغاء") }})
       }
       Column(Modifier.weight(1f).verticalScroll(rememberScrollState()),
        verticalArrangement=Arrangement.spacedBy(12.dp)) {
@@ -230,11 +261,11 @@ private fun MaintenanceDetail(repair:MaintenanceRepairEntity) {
  }
  section("التكلفة والقبض") {
   field("العملة","currency")
-  field("السعر","price")
+  field("إجمالي الفاتورة المسجل","price")
   field("أجرة العمل","laborPrice")
   field("قيمة القطع","partsTotal")
   field("تكلفة القطع","partsCost")
-  field("التكلفة الإجمالية","cost")
+  field("التكلفة الإجمالية المسجلة","cost")
   field("تكلفة إضافية","manualCost")
   field("الضريبة","tax")
   field("المقبوض","received")
