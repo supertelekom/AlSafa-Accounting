@@ -45,6 +45,7 @@ class OperationalExpensePartnerRepository(private val db:AppDatabase) {
   val expected=when {
    row.payment_method.contains("شام") -> "shamcash"
    row.payment_method.contains("بنك") -> "bank"
+   row.payment_method.contains("خارجي") -> "external"
    row.payment_method.contains("نقد") -> "drawer"
    else -> null
   }
