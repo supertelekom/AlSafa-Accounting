@@ -35,13 +35,12 @@ object RoomFinancialIntegrityAudit {
             while (cursor.moveToNext()) total++
             total
         }
-        // Ledger references are polymorphic: maintenance, transfers and purchases are not sales orphans.
         return Result(
             orphanLines = count("SELECT COUNT(*) FROM sale_lines l LEFT JOIN sales s ON s.id=l.sale_id WHERE s.id IS NULL"),
             orphanPayments = count("SELECT COUNT(*) FROM sale_payments p LEFT JOIN sales s ON s.id=p.sale_id WHERE s.id IS NULL"),
             orphanReturns = count("SELECT COUNT(*) FROM sale_returns r LEFT JOIN sales s ON s.id=r.sale_id WHERE s.id IS NULL"),
             orphanReturnLines = count("SELECT COUNT(*) FROM sale_returns r LEFT JOIN sale_lines l ON l.id=r.line_id AND l.sale_id=r.sale_id WHERE l.id IS NULL"),
-            orphanCashboxMovements = count("SELECT COUNT(*) FROM cashbox_movements c LEFT JOIN sales s ON s.id=c.sale_id WHERE c.sale_id LIKE 'sale-%' AND s.id IS NULL"),
+            orphanCashboxMovements = count("SELECT COUNT(*) FROM cashbox_movements c LEFT JOIN sales s ON s.id=c.sale_id WHERE s.id IS NULL"),
             orphanReceivables = count("SELECT COUNT(*) FROM customer_receivables d LEFT JOIN sales s ON s.id=d.sale_id WHERE s.id IS NULL"),
             duplicateInvoiceNumbers = count("SELECT COUNT(*) FROM (SELECT number FROM sales GROUP BY number HAVING COUNT(*)>1)"),
             legacyNewNumberCollisions = count("SELECT COUNT(*) FROM sales s INNER JOIN legacy_sales_archive a ON a.invoice_number=s.number"),
