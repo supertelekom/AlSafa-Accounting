@@ -42,6 +42,13 @@ class OperationalExpensePartnerRepository(private val db:AppDatabase) {
   require(row.category.isNotBlank() && row.payment_method.isNotBlank())
   require(row.created_at>0)
   val box=row.vault?.let { vault(it,unit) }
+  val expected=when {
+   row.payment_method.contains("شام") -> "shamcash"
+   row.payment_method.contains("بنك") -> "bank"
+   row.payment_method.contains("نقد") -> "drawer"
+   else -> null
+  }
+  require(expected==box) { "طريقة الدفع لا تطابق الخزنة" }
   if(box==null) {
    require(row.cash_movement_id==null) { "مصروف دون خزنة لا ينشئ حركة نقدية" }
    dao.insertExpense(row)
