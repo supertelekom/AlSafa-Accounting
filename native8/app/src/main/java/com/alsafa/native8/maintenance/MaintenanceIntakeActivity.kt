@@ -94,8 +94,10 @@ class MaintenanceIntakeActivity:Activity() {
          watch.text.toString().trim(),model.text.toString().trim(),
          problem.text.toString().trim(),"USD","0","0","",now,raw.toString()
         ))
+        number
        }
       }
+      savedNumber
      }
      runOnUiThread {
       if(result.isSuccess) {
