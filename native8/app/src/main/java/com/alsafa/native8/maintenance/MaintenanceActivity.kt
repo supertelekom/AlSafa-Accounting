@@ -42,7 +42,6 @@ class MaintenanceActivity:ComponentActivity() {
   var error by mutableStateOf("")
   var loading by mutableStateOf(false)
   var generation=0
-  var newestInvoice by mutableStateOf<Long?>(null)
   fun refresh() {
    val request=++generation
    lifecycleScope.launch {
