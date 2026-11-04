@@ -5,6 +5,15 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
@@ -49,10 +58,11 @@ class MaintenancePartsActivity:ComponentActivity() {
      notes=raw?.optString("notes").orEmpty()
     }
     LaunchedEffect(search) { reload() }
-    Column(Modifier.fillMaxSize().padding(16.dp),verticalArrangement=Arrangement.spacedBy(10.dp)) {
+    Column(Modifier.fillMaxSize().safeDrawingPadding().imePadding().padding(horizontal=12.dp, vertical=8.dp),verticalArrangement=Arrangement.spacedBy(8.dp)) {
      Text("قطع الصيانة",style=MaterialTheme.typography.headlineSmall)
      if(error.isNotBlank()) Text(error,color=MaterialTheme.colorScheme.error)
      if(form) {
+      Column(Modifier.weight(1f).verticalScroll(rememberScrollState()),verticalArrangement=Arrangement.spacedBy(8.dp)) {
       OutlinedTextField(name,{name=it},label={Text("اسم القطعة *")},modifier=Modifier.fillMaxWidth())
       val categories=listOf("بطاريات","أحزمة","زجاج","أقفال","قطع حركة","أخرى")
       Text("النوع")
@@ -73,7 +83,8 @@ class MaintenancePartsActivity:ComponentActivity() {
       }
       OutlinedTextField(currency,{currency=it},label={Text("عملة القطعة")},modifier=Modifier.fillMaxWidth())
       OutlinedTextField(notes,{notes=it},label={Text("ملاحظات")},modifier=Modifier.fillMaxWidth())
-      Row(horizontalArrangement=Arrangement.spacedBy(8.dp)) {
+      }
+      Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(8.dp)) {
        Button(enabled=!busy,onClick={
         busy=true;error=""
         lifecycleScope.launch {
@@ -86,15 +97,17 @@ class MaintenancePartsActivity:ComponentActivity() {
        OutlinedButton(onClick={form=false}) { Text("إلغاء") }
       }
      } else {
-      Button(onClick={open(null)}) { Text("＋ إضافة قطعة") }
-      OutlinedTextField(search,{search=it},label={Text("ابحث باسم قطعة الصيانة أو الباركود...")},modifier=Modifier.fillMaxWidth())
-      Text("${rows.size} قطعة محفوظة")
-      LazyColumn(verticalArrangement=Arrangement.spacedBy(8.dp)) {
+      Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.SpaceBetween) {
+       Text("${rows.size} قطعة محفوظة",style=MaterialTheme.typography.bodyMedium)
+       Button(onClick={open(null)}) { Text("＋ إضافة قطعة") }
+      }
+      OutlinedTextField(search,{search=it},singleLine=true,label={Text("ابحث باسم قطعة الصيانة أو الباركود...")},modifier=Modifier.fillMaxWidth())
+      LazyColumn(modifier=Modifier.weight(1f).fillMaxWidth(),contentPadding=PaddingValues(bottom=20.dp),verticalArrangement=Arrangement.spacedBy(8.dp)) {
        items(rows,key={it.id}) { part ->
         val low=runCatching { part.stock.toBigDecimal() <= JSONObject(part.original_json).optString("minStock","2").toBigDecimal() }.getOrDefault(false)
         Card(Modifier.fillMaxWidth()) {
          Column(Modifier.padding(12.dp),verticalArrangement=Arrangement.spacedBy(6.dp)) {
-          Text(part.name,style=MaterialTheme.typography.titleMedium)
+          Text(part.name,style=MaterialTheme.typography.titleMedium,maxLines=2,overflow=TextOverflow.Ellipsis)
           Text("${part.category} — المتاح: ${part.stock} — الباركود: ${part.barcode.ifBlank { "—" }}")
           Text("سعر البيع: ${part.sale_price} ${part.currency} — الكلفة: ${part.cost} ${part.currency}")
           if(low) Text("تنبيه: مخزون القطعة وصل للحد الأدنى",color=MaterialTheme.colorScheme.error)
