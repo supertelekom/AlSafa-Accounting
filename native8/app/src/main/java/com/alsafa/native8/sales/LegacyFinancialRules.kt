@@ -17,11 +17,12 @@ object LegacyFinancialRules {
  }
  data class Sale(val date:String,val online:Boolean,val total:Money,val tax:Money,val cost:Money)
  data class Receipt(val date:String,val total:Money,val tax:Money,val cost:Money,
-  val invoiceTotal:BigDecimal,val amount:BigDecimal) {
-  init { require(invoiceTotal>zero && amount>=zero) }
+  val invoiceTotal:BigDecimal,val amount:BigDecimal, val discount:BigDecimal=BigDecimal.ZERO) {
+  init { require(invoiceTotal>zero && amount>=zero && discount>=zero && amount+discount<=invoiceTotal) }
   fun profit():BigDecimal {
-   val ratio=amount.divide(invoiceTotal,math).min(BigDecimal.ONE)
-   return total.usd().subtract(tax.usd(),math).multiply(ratio,math).subtract(cost.usd(),math)
+   val revenueRatio=amount.divide(invoiceTotal,math)
+   val costRatio=(amount+discount).divide(invoiceTotal,math)
+   return (total.usd()-tax.usd()).multiply(revenueRatio,math)-cost.usd().multiply(costRatio,math)
   }
  }
  data class Adjustment(val date:String,val profitImpactUsd:BigDecimal)
