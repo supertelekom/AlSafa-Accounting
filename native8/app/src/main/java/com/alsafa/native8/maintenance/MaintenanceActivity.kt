@@ -20,6 +20,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
 import com.alsafa.native8.sales.AppDatabase
+import com.alsafa.native8.sales.ExchangeRateSettings
+import java.math.RoundingMode
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -125,6 +127,10 @@ class MaintenanceActivity:ComponentActivity() {
        }
        val labor=raw.optString("laborPrice",raw.optString("price","0")).toBigDecimalOrNull() ?: java.math.BigDecimal.ZERO
        val due=labor+partsTotal
+       fun suggestedAmount(currency:String):String = runCatching {
+        due.multiply(ExchangeRateSettings(applicationContext).rate(repair.currency,currency))
+         .setScale(2,RoundingMode.HALF_UP).stripTrailingZeros().toPlainString()
+       }.getOrElse { "" }
        AlertDialog(
         onDismissRequest={if(!statusSaving) deliveryDialog=false},
         title={Text("تسليم الساعة وتحصيل المبلغ")},
@@ -158,11 +164,11 @@ class MaintenanceActivity:ComponentActivity() {
            }
            DropdownMenu(expanded=currencyExpanded,onDismissRequest={currencyExpanded=false}) {
             currencies.forEach { (key,label) ->
-             DropdownMenuItem(text={Text(label)},onClick={collectionCurrency=key;currencyExpanded=false})
+             DropdownMenuItem(text={Text(label)},onClick={collectionCurrency=key;collection=suggestedAmount(key);currencyExpanded=false})
             }
            }
           }
-          Text("يُحسب المعادل تلقائياً بسعر الصرف المحفوظ في التطبيق",
+          Text("المبلغ المقترح بسعر الصرف: "+suggestedAmount(collectionCurrency)+" "+collectionCurrency+" — يمكنك تعديله كما اتفقت مع العميل",
            style=MaterialTheme.typography.bodySmall)
          }
         },
