@@ -1,6 +1,6 @@
 package com.alsafa.native8.sales
 
-import android.app.Activity
+import androidx.activity.ComponentActivity
 import android.app.AlertDialog
 import android.os.Bundle
 import android.text.InputType
@@ -18,7 +18,7 @@ import java.math.BigDecimal
 import java.time.LocalDate
 
 /** Manual closing with counted amounts; no automatic guessed cash counts. */
-class DailyClosingActivity:Activity() {
+class DailyClosingActivity:ComponentActivity() {
  override fun onCreate(savedInstanceState:Bundle?) {
   super.onCreate(savedInstanceState)
   val layout=LinearLayout(this).apply {
