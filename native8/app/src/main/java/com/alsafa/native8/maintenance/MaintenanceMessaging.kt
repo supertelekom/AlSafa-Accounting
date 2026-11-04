@@ -9,6 +9,11 @@ import org.json.JSONObject
 /** Shares a customer-facing maintenance update through WhatsApp Business only. */
 object MaintenanceMessaging {
  fun share(context:Context,repair:MaintenanceRepairEntity) {
+  val digits=repair.phone.filter { it.isDigit() }
+  if(digits.isBlank()) {
+   Toast.makeText(context,"لا يوجد رقم هاتف للعميل في سجل الصيانة",Toast.LENGTH_LONG).show()
+   return
+  }
   val raw=JSONObject(repair.original_json)
   val text=buildString {
    append("الصفا للساعات\n")
@@ -25,6 +30,7 @@ object MaintenanceMessaging {
    setPackage("com.whatsapp.w4b")
    type=if(uri==null) "text/plain" else "image/*"
    putExtra(Intent.EXTRA_TEXT,text)
+   putExtra("jid",digits+"@s.whatsapp.net")
    if(uri!=null) {
     putExtra(Intent.EXTRA_STREAM,uri)
     clipData=android.content.ClipData.newUri(context.contentResolver,"صورة الصيانة",uri)
