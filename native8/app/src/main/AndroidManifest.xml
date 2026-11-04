@@ -19,6 +19,7 @@
         <activity android:name=".sales.PurchasesActivity" android:exported="false" />
         <activity android:name=".ExchangeRatesActivity" android:exported="false" />
         <activity android:name=".sales.LegacyCashboxHistoryActivity" android:exported="false" />
+        <activity android:name=".sales.DailyClosingActivity" android:exported="false" />
         <activity android:name=".sales.CashboxMovementsActivity" android:exported="false" />
         <activity android:name=".sales.SalesArchiveActivity" android:exported="false" />
         <activity android:name=".sales.FullSaleActivity" android:exported="false" />
