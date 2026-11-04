@@ -53,6 +53,11 @@ class MaintenanceActivity:ComponentActivity() {
   var deliveryDialog by mutableStateOf(false)
   var collection by mutableStateOf("")
   var selectedCashbox by mutableStateOf("drawer")
+  var secondAmount by mutableStateOf("")
+  var secondCurrency by mutableStateOf("TRY")
+  var secondCredit by mutableStateOf("")
+  var secondCashbox by mutableStateOf("drawer")
+  var firstCredit by mutableStateOf("")
   var error by mutableStateOf("")
   var loading by mutableStateOf(false)
   var generation=0
@@ -112,7 +117,7 @@ class MaintenanceActivity:ComponentActivity() {
        Button(onClick={startActivityForResult(Intent(this@MaintenanceActivity,MaintenanceEditActivity::class.java).putExtra("repair_id",repair.id),703)}) { Text("تعديل الفاتورة") }
       }
       if(repair.source_sha256=="native8" && repair.status=="جاهز للاستلام") {
-       Button(onClick={collection="";selectedCashbox="drawer";deliveryDialog=true}) { Text("تم التسليم — تحصيل المبلغ") }
+       Button(onClick={collection="";firstCredit="";secondAmount="";secondCredit="";selectedCashbox="drawer";secondCashbox="drawer";deliveryDialog=true}) { Text("تم التسليم — تحصيل المبلغ") }
       }
       if(deliveryDialog && repair.source_sha256=="native8") {
        AlertDialog(onDismissRequest={if(!statusSaving) deliveryDialog=false},
@@ -120,16 +125,35 @@ class MaintenanceActivity:ComponentActivity() {
         text={Column(verticalArrangement=Arrangement.spacedBy(10.dp)) {
          Text("أجرة العمل وقيمة القطع تُجمعان عند التسليم. تحقق من المبلغ قبل التأكيد.")
          OutlinedTextField(value=collection,onValueChange={collection=it},label={Text("المبلغ المقبوض الآن")},singleLine=true)
+         Text("الدفعة الأولى — عملة الفاتورة: "+repair.currency)
+         Text("المبلغ المحتسب من الدفعة الأولى بعملة الفاتورة هو المبلغ نفسه")
          Text("الصندوق المستلم")
          listOf("drawer" to "الدرج","external" to "الصندوق الخارجي","ChamCash" to "شام كاش","bank" to "البنك").forEach { (key,label) ->
           Row { RadioButton(selected=selectedCashbox==key,onClick={selectedCashbox=key});Text(label) }
+         Text("دفعة ثانية بعملة أخرى (اختياري)")
+         listOf("USD","TRY","SYP").forEach { currency ->
+          Row { RadioButton(selected=secondCurrency==currency,onClick={secondCurrency=currency});Text(currency) }
+         }
+         OutlinedTextField(value=secondAmount,onValueChange={secondAmount=it},
+          label={Text("المبلغ الفعلي المقبوض بالعملة الثانية")},singleLine=true)
+         OutlinedTextField(value=secondCredit,onValueChange={secondCredit=it},
+          label={Text("ما يعادله بعملة الفاتورة "+repair.currency)},singleLine=true)
+         Text("صندوق الدفعة الثانية")
+         listOf("drawer" to "الدرج","external" to "الخارجي","ChamCash" to "شام كاش","bank" to "البنك").forEach { (key,label) ->
+          Row { RadioButton(selected=secondCashbox==key,onClick={secondCashbox=key});Text(label) }
+         }
          }
         }},
         confirmButton={Button(enabled=!statusSaving,onClick={
          lifecycleScope.launch {
           statusSaving=true
           try {
-           withContext(Dispatchers.IO) { MaintenanceDeliveryRepository(AppDatabase.get(applicationContext)).deliver(repair.id,collection,selectedCashbox) }
+           withContext(Dispatchers.IO) { run {
+              val first=MaintenanceDeliveryRepository.PaymentLine(collection,repair.currency,selectedCashbox,collection)
+              val lines=mutableListOf(first)
+              if(secondAmount.isNotBlank()) lines.add(MaintenanceDeliveryRepository.PaymentLine(secondAmount,secondCurrency,secondCashbox,secondCredit))
+              MaintenanceDeliveryRepository(AppDatabase.get(applicationContext)).deliver(repair.id,lines)
+             } }
            deliveryDialog=false
            selectedRefresh?.invoke(repair.id)
            Toast.makeText(this@MaintenanceActivity,"تم تسليم الصيانة وتسجيل التحصيل",Toast.LENGTH_LONG).show()
