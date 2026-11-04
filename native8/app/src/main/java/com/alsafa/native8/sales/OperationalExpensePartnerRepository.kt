@@ -27,6 +27,7 @@ class OperationalExpensePartnerRepository(private val db:AppDatabase) {
  }
  private fun validateDate(date:String) {
   require(Regex("\\d{4}-\\d{2}-\\d{2}").matches(date)) { "التاريخ يجب أن يكون YYYY-MM-DD" }
+  java.time.LocalDate.parse(date)
  }
  suspend fun saveExpense(row:OperationalExpenseEntity):OperationalExpenseEntity=db.withTransaction {
   validateId(row.id);validateDate(row.date)
