@@ -29,7 +29,7 @@ class SaleDetailsActivity: ComponentActivity() {
      val legacy=db.legacySaleDao().legacyById(vm.saleId)
      if (legacy == null) { vm.error="الفاتورة غير موجودة"; return@launch }
      vm.historical=true
-     vm.legacyRaw=legacy.raw_json
+     vm.legacyRaw=legacy.original_json
      vm.total=legacy.total
      vm.paid=legacy.historical_paid
      vm.due=legacy.due
