@@ -11,6 +11,8 @@ import com.alsafa.native8.sales.AppDatabase
 import androidx.room.withTransaction
 import kotlinx.coroutines.runBlocking
 import org.json.JSONObject
+import org.json.JSONArray
+import java.math.BigDecimal
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -39,6 +41,58 @@ class MaintenanceIntakeActivity:Activity() {
   val problem=field("العطل *")
   val diagnosis=field("التشخيص")
   val notes=field("ملاحظات")
+  val selectedParts=mutableListOf<MaintenancePartsRepository.SelectedPart>()
+  val partSummary=TextView(this).apply { text="قطع الصيانة: لا توجد قطع مضافة";textSize=17f }
+  root.addView(TextView(this).apply { text="قطع الصيانة";textSize=20f })
+  root.addView(Button(this).apply {
+   text="إضافة قطع من المستودع"
+   setOnClickListener {
+    Thread {
+     val result=runCatching { runBlocking { MaintenancePartsRepository(AppDatabase.get(applicationContext)).list() } }
+     runOnUiThread {
+      val parts=result.getOrNull().orEmpty()
+      if(parts.isEmpty()) { Toast.makeText(this@MaintenanceIntakeActivity,"لا توجد قطع في المستودع",Toast.LENGTH_LONG).show();return@runOnUiThread }
+      val choices=parts.map { "${it.name} — متاح: ${it.stock} — ${it.sale_price} ${it.currency}" }.toTypedArray()
+      android.app.AlertDialog.Builder(this@MaintenanceIntakeActivity).setTitle("اختيار قطعة صيانة")
+       .setItems(choices) { _,index ->
+        val part=parts[index]
+        val form=LinearLayout(this@MaintenanceIntakeActivity).apply {
+         orientation=LinearLayout.VERTICAL;setPadding(32,12,32,12)
+        }
+        val quantity=EditText(this@MaintenanceIntakeActivity).apply {
+         hint="الكمية";setText("1");inputType=android.text.InputType.TYPE_CLASS_NUMBER
+        }
+        val price=EditText(this@MaintenanceIntakeActivity).apply {
+         hint="سعر القطعة";setText(part.sale_price)
+         inputType=android.text.InputType.TYPE_CLASS_NUMBER or android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL
+        }
+        form.addView(quantity);form.addView(price)
+        android.app.AlertDialog.Builder(this@MaintenanceIntakeActivity)
+         .setTitle(part.name).setView(form).setNegativeButton("إلغاء",null)
+         .setPositiveButton("إضافة") { _,_ ->
+          val qty=quantity.text.toString().toBigDecimalOrNull()
+          val available=part.stock.toBigDecimalOrNull()
+          val sale=price.text.toString().toBigDecimalOrNull()
+          if(qty==null||available==null||sale==null||qty<=BigDecimal.ZERO||qty>available||sale<BigDecimal.ZERO||qty.stripTrailingZeros().scale()>0) {
+           Toast.makeText(this@MaintenanceIntakeActivity,"تحقق من الكمية والسعر والمخزون",Toast.LENGTH_LONG).show()
+          } else {
+           selectedParts.removeAll { it.partId==part.id }
+           selectedParts.add(MaintenancePartsRepository.SelectedPart(part.id,qty.toPlainString(),sale.toPlainString()))
+           partSummary.text="قطع الصيانة: ${selectedParts.size} — "+selectedParts.joinToString("، ") { line ->
+            val p=parts.firstOrNull { it.id==line.partId }; "${p?.name ?: line.partId} × ${line.qty}"
+           }
+          }
+         }.show()
+       }.show()
+     }
+    }.start()
+   }
+  })
+  root.addView(partSummary)
+  root.addView(Button(this).apply {
+   text="مسح القطع المختارة"
+   setOnClickListener { selectedParts.clear();partSummary.text="قطع الصيانة: لا توجد قطع مضافة" }
+  })
   val photoLabel=TextView(this).apply { text="صورة الساعة: لم تُحدد" }
   root.addView(Button(this).apply {
    text="اختيار صورة الساعة"
@@ -64,6 +118,14 @@ class MaintenanceIntakeActivity:Activity() {
      Toast.makeText(this@MaintenanceIntakeActivity,"أكمل الحقول المطلوبة",Toast.LENGTH_LONG).show()
      return@setOnClickListener
     }
+    val customerValue=customer.text.toString().trim()
+    val phoneValue=phone.text.toString().trim()
+    val watchValue=watch.text.toString().trim()
+    val modelValue=model.text.toString().trim()
+    val problemValue=problem.text.toString().trim()
+    val diagnosisValue=diagnosis.text.toString().trim()
+    val notesValue=notes.text.toString().trim()
+    val requestedParts=selectedParts.toList()
     isEnabled=false
     Thread {
      val result=runCatching {
@@ -94,6 +156,20 @@ class MaintenanceIntakeActivity:Activity() {
          watch.text.toString().trim(),model.text.toString().trim(),
          problem.text.toString().trim(),"USD","0","0","",now,raw.toString()
         ))
+        if(requestedParts.isNotEmpty()) {
+         // Same Room transaction as intake; no stock deduction until delivery.
+         val used=JSONArray();var total=BigDecimal.ZERO;var costs=BigDecimal.ZERO
+         for(line in requestedParts) {
+          val part=db.maintenanceDao().part(line.partId) ?: error("قطعة الصيانة غير موجودة")
+          val qty=line.qty.toBigDecimal();val sale=line.price.toBigDecimal()
+          require(qty>BigDecimal.ZERO && qty<=part.stock.toBigDecimal() && qty.stripTrailingZeros().scale()<=0) { "الكمية غير متوفرة: ${part.name}" }
+          used.put(JSONObject().put("partId",part.id).put("name",part.name).put("qty",line.qty).put("price",line.price).put("cost",part.cost).put("currency",part.currency))
+          total=total.add(qty.multiply(sale));costs=costs.add(qty.multiply(part.cost.toBigDecimal()))
+         }
+         val current=db.maintenanceDao().repair(id) ?: error("لم تحفظ الفاتورة")
+         val changed=JSONObject(current.original_json).apply { put("usedParts",used);put("partsTotal",total.toPlainString());put("partsCost",costs.toPlainString()) }
+         check(db.maintenanceDao().updateParts(id,current.original_json,changed.toString())==1)
+        }
         number
        }
       }
