@@ -43,6 +43,19 @@ class FullSaleActivity: ComponentActivity() {
         val vm = ViewModelProvider(this)[FullSaleViewModel::class.java]
         val catalog = SalesProductCatalog(applicationContext)
         setContent { SalesFrame("فاتورة مبيع") {
+            Text("نوع البيع *")
+            Row {
+                RadioButton(
+                    selected=SalesDraftSession.channel==SalesChannelClassification.STORE,
+                    onClick={SalesDraftSession.channel=SalesChannelClassification.STORE}
+                )
+                Text("بيع من المحل")
+                RadioButton(
+                    selected=SalesDraftSession.channel==SalesChannelClassification.ONLINE,
+                    onClick={SalesDraftSession.channel=SalesChannelClassification.ONLINE}
+                )
+                Text("بيع أونلاين")
+            }
             SalesInput("اسم العميل", SalesDraftSession.customer) { SalesDraftSession.customer=it }
             SalesInput("رقم الهاتف", SalesDraftSession.phone) { SalesDraftSession.phone=it }
             SalesProductPicker(applicationContext,vm.choices,vm.search,
