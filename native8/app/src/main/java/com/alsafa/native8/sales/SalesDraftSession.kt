@@ -10,6 +10,7 @@ object SalesDraftSession {
     var customer by mutableStateOf("")
     var phone by mutableStateOf("")
     var discount by mutableStateOf("0")
+    var channel by mutableStateOf(SalesChannelClassification.STORE)
     var currency by mutableStateOf("USD")
     var cashbox by mutableStateOf("الدرج")
     var amount by mutableStateOf("")
@@ -29,10 +30,10 @@ object SalesDraftSession {
     }
 
     fun draft(): SaleDraft = SaleDraft(customer.trim(), phone.trim(), lines.toList(),
-        payments.toList(), discount.ifBlank { "0" }.toBigDecimal())
+        payments.toList(), discount.ifBlank { "0" }.toBigDecimal(),channel)
 
     fun clear() {
-        customer = ""; phone = ""; discount = "0"; amount = ""
+        customer = ""; phone = ""; discount = "0"; amount = ""; channel = SalesChannelClassification.STORE
         lines.clear(); payments.clear(); message = ""
     }
 }
