@@ -25,6 +25,41 @@ object LegacyFinancialRules {
    return (total.usd()-tax.usd()).multiply(revenueRatio,math)-cost.usd().multiply(costRatio,math)
   }
  }
+
+ /** Original main.js grossProfitUsdForRange return branches.
+  * All monetary inputs are invoice-currency values; fx is USD per unit at return time.
+  */
+ data class SaleReturn(
+  val date:String,val netCredit:BigDecimal,val returnedCost:BigDecimal,
+  val replacementCost:BigDecimal,val recognizedRatio:BigDecimal?,
+  val usdPerUnit:BigDecimal
+ ) {
+  fun impactUsd():BigDecimal {
+   require(usdPerUnit>zero)
+   val ratio=(recognizedRatio ?: BigDecimal.ONE).coerceIn(zero,BigDecimal.ONE)
+   return (returnedCost-replacementCost-netCredit).multiply(ratio,math).multiply(usdPerUnit,math)
+  }
+ }
+ data class RepairReturn(
+  val date:String,val refundAmount:BigDecimal,val extraCollected:BigDecimal,
+  val returnedCost:BigDecimal,val replacementCost:BigDecimal,
+  val taxRatePercent:BigDecimal,val beforeRecognition:BigDecimal?,
+  val afterRecognition:BigDecimal?,val usdPerUnit:BigDecimal
+ ) {
+  fun impactUsd():BigDecimal {
+   require(usdPerUnit>zero && taxRatePercent>=zero)
+   val divisor=BigDecimal.ONE+taxRatePercent.divide(BigDecimal(100),math)
+   val before=(beforeRecognition ?: BigDecimal.ONE).coerceIn(zero,BigDecimal.ONE)
+   val after=(afterRecognition ?: before).coerceIn(zero,BigDecimal.ONE)
+   val value=extraCollected.divide(divisor,math)-refundAmount.divide(divisor,math)+
+    returnedCost.multiply(before,math)-replacementCost.multiply(after,math)
+   return value.multiply(usdPerUnit,math)
+  }
+ }
+ fun returnAdjustments(sales:List<SaleReturn>,repairs:List<RepairReturn>):List<Adjustment> =
+  sales.map { Adjustment(it.date,it.impactUsd()) }+
+   repairs.map { Adjustment(it.date,it.impactUsd()) }
+
  data class Adjustment(val date:String,val profitImpactUsd:BigDecimal)
  data class Expense(val date:String,val money:Money)
  data class Withdrawal(val date:String,val partnerId:String,val money:Money)
