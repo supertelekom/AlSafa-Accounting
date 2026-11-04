@@ -4,6 +4,7 @@ package com.alsafa.native8.sales
 object SalesChannelClassification {
  const val STORE="store"
  const val ONLINE="online"
+ fun recognizeAtCollection(channel:String?):Boolean = channel==ONLINE
  fun hasUnverified(count:Int):Boolean {
   require(count>=0)
   return count>0
