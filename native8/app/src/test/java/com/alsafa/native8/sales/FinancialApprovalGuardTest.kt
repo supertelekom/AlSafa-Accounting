@@ -21,4 +21,22 @@ class FinancialApprovalGuardTest {
   assertEquals(BigDecimal("35"),shares["me"])
   assertEquals(BigDecimal("25"),shares["brother"])
  }
+ @Test(expected=IllegalStateException::class)
+ fun incompletePartnerBalancesCannotBePublished() {
+  UnifiedFinancialPeriodRepository.Result(
+   BigDecimal("90"),BigDecimal.ZERO,BigDecimal.ZERO,
+   mapOf("father" to BigDecimal("10")),BigDecimal("90")
+  ).approvedPartnerBalances()
+ }
+ @Test fun approvedBalancesSubtractWithdrawalsOnly() {
+  val result=UnifiedFinancialPeriodRepository.Result(
+   BigDecimal("100"),BigDecimal.ZERO,BigDecimal.ZERO,
+   mapOf("father" to BigDecimal("7"),"me" to BigDecimal("5")),
+   BigDecimal("100"),true)
+  val balances=result.approvedPartnerBalances()
+  assertEquals(0,balances.getValue("father").compareTo(BigDecimal("33")))
+  assertEquals(0,balances.getValue("me").compareTo(BigDecimal("30")))
+  assertEquals(0,balances.getValue("brother").compareTo(BigDecimal("25")))
+ }
+
 }
