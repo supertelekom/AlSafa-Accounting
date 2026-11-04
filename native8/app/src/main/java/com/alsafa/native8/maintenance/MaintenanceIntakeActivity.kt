@@ -3,7 +3,8 @@ package com.alsafa.native8.maintenance
 import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
-import android.provider.MediaStore
+import android.net.Uri
+import android.content.ActivityNotFoundException
 import android.widget.*
 import android.view.View
 import com.alsafa.native8.sales.AppDatabase
@@ -18,6 +19,7 @@ import java.util.UUID
 /** New intake, saved to the same Room database; no payment or stock movement on intake. */
 class MaintenanceIntakeActivity:Activity() {
  private var photoUri:String=""
+ private lateinit var photoPreview:ImageView
  override fun onCreate(savedInstanceState:Bundle?) {
   super.onCreate(savedInstanceState)
   val root=LinearLayout(this).apply {
@@ -49,6 +51,12 @@ class MaintenanceIntakeActivity:Activity() {
    }
   })
   root.addView(photoLabel)
+  photoPreview=ImageView(this).apply {
+   adjustViewBounds=true
+   maxHeight=500
+   visibility=View.GONE
+  }
+  root.addView(photoPreview,LinearLayout.LayoutParams(-1,-2))
   root.addView(Button(this).apply {
    text="حفظ طلب الصيانة"
    setOnClickListener {
@@ -64,7 +72,7 @@ class MaintenanceIntakeActivity:Activity() {
       val date=SimpleDateFormat("yyyy-MM-dd",Locale.US).format(Date(now))
       val time=SimpleDateFormat("HH:mm",Locale.US).format(Date(now))
       val id="repair-"+now+"-"+UUID.randomUUID().toString().take(6)
-      runBlocking {
+      val savedNumber=runBlocking {
        db.withTransaction {
         val number=maxOf(db.maintenanceDao().maxRepairInvoice(),
          db.salesPostingDao().maxNewNumber(),db.legacySaleDao().maxLegacyInvoiceNumber())+1
@@ -90,13 +98,41 @@ class MaintenanceIntakeActivity:Activity() {
       }
      }
      runOnUiThread {
-      if(result.isSuccess) { Toast.makeText(this@MaintenanceIntakeActivity,"تم حفظ طلب الصيانة",Toast.LENGTH_LONG).show();finish() }
+      if(result.isSuccess) {
+       Toast.makeText(this@MaintenanceIntakeActivity,"تم حفظ طلب الصيانة",Toast.LENGTH_SHORT).show()
+       val number=result.getOrThrow()
+       setResult(RESULT_OK,Intent().putExtra("maintenance_invoice_number",number))
+       if(photoUri.isNotBlank() && phone.text.isNotBlank()) {
+        shareWithWhatsAppBusiness(phone.text.toString(),number)
+       }
+       finish()
+      }
       else { isEnabled=true;Toast.makeText(this@MaintenanceIntakeActivity,result.exceptionOrNull()?.message ?: "تعذر الحفظ",Toast.LENGTH_LONG).show() }
      }
     }.start()
    }
   })
   setContentView(ScrollView(this).apply { addView(root) })
+ }
+ private fun shareWithWhatsAppBusiness(phone:String,number:Long) {
+  val digits=phone.filter { it.isDigit() }
+  if(digits.isBlank()) return
+  val image=Uri.parse(photoUri)
+  val send=Intent(Intent.ACTION_SEND).apply {
+   type="image/*"
+   setPackage("com.whatsapp.w4b")
+   putExtra(Intent.EXTRA_STREAM,image)
+   putExtra(Intent.EXTRA_TEXT,"الصفا للساعات - تم استلام ساعتكم للصيانة، رقم الصيانة: "+number)
+   putExtra("jid",digits+"@s.whatsapp.net")
+   addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+   clipData=android.content.ClipData.newUri(contentResolver,"صورة الصيانة",image)
+  }
+  try { startActivity(send) }
+  catch(_:ActivityNotFoundException) {
+   Toast.makeText(this,"تعذر فتح واتساب Business؛ يمكنك مشاركة الصورة من تفاصيل الصيانة",Toast.LENGTH_LONG).show()
+  } catch(e:SecurityException) {
+   Toast.makeText(this,"تعذر منح واتساب صلاحية الصورة",Toast.LENGTH_LONG).show()
+  }
  }
  override fun onActivityResult(requestCode:Int,resultCode:Int,data:Intent?) {
   super.onActivityResult(requestCode,resultCode,data)
@@ -105,6 +141,8 @@ class MaintenanceIntakeActivity:Activity() {
    try { contentResolver.takePersistableUriPermission(uri,Intent.FLAG_GRANT_READ_URI_PERMISSION) }
    catch(_:SecurityException) { Toast.makeText(this@MaintenanceIntakeActivity,"تعذر الاحتفاظ بإذن الصورة",Toast.LENGTH_LONG).show();return }
    photoUri=uri.toString()
+   photoPreview.setImageURI(uri)
+   photoPreview.visibility=View.VISIBLE
    Toast.makeText(this@MaintenanceIntakeActivity,"تم اختيار صورة الساعة",Toast.LENGTH_SHORT).show()
   }
  }
