@@ -21,7 +21,7 @@ class MaintenancePartsRepository(private val db: AppDatabase) {
   require(clean.isNotBlank()) { "اسم القطعة مطلوب" }
   val qty=integer(stock); val min=integer(minStock);val buy=nonnegative(cost);val sell=nonnegative(salePrice)
   val old=id?.let { dao.part(it) }
-  if(id!=null) require(old!=null && old.source_sha256=="native8") { "لا يمكن تعديل قطعة تاريخية" }
+  if(id!=null) require(old!=null) { "القطعة غير موجودة" }
   val normalizedBarcode=barcode.trim()
   require(dao.partNameConflict(clean,id ?: "")==0) { "اسم قطعة الصيانة مسجل مسبقاً" }
   if(normalizedBarcode.isNotBlank()) {
@@ -35,8 +35,12 @@ class MaintenancePartsRepository(private val db: AppDatabase) {
   json.put("minStock",canonical(min));json.put("currency",currency)
   json.put("cost",canonical(buy));json.put("salePrice",canonical(sell))
   json.put("notes",notes);json.put("createdAt",old?.created_at ?: System.currentTimeMillis())
-  val entity=MaintenancePartEntity(partId,"native8",clean,category,normalizedBarcode,canonical(qty),currency,canonical(buy),canonical(sell),old?.created_at ?: System.currentTimeMillis(),json.toString())
-  if(old==null) dao.insertNewPart(entity) else check(dao.updateNewPart(entity,old.original_json)==1) { "تغيرت القطعة أثناء التعديل، أعد تحميلها" }
+  val entity=MaintenancePartEntity(partId,old?.source_sha256 ?: "native8",clean,category,normalizedBarcode,canonical(qty),currency,canonical(buy),canonical(sell),old?.created_at ?: System.currentTimeMillis(),json.toString())
+  if(old==null) dao.insertNewPart(entity) else {
+   val changed=if(old.source_sha256=="native8") dao.updateNewPart(entity,old.original_json)
+    else dao.updateImportedPartFields(entity.id,entity.name,entity.category,entity.barcode,entity.stock,entity.currency,entity.cost,entity.sale_price,entity.original_json,old.original_json)
+   check(changed==1) { "تغيرت القطعة أثناء التعديل، أعد تحميلها" }
+  }
   partId
  }
  suspend fun delete(id:String) = db.withTransaction {
