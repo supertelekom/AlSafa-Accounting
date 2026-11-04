@@ -62,4 +62,14 @@ class OperationalFinancialRoomTest {
   }
   assertTrue("cash movement reference must be unique",rejected)
  }
+ @Test fun nonCashExpenseDoesNotCreateCashboxMovement()=runBlocking {
+  val expense=OperationalExpenseEntity("expense-noncash","2026-11-05","10:00",
+   "تشغيل","", "USD","12","آجل",null,"1",5L,null)
+  val repository=OperationalExpensePartnerRepository(db)
+  assertEquals(expense,repository.saveExpense(expense))
+  assertEquals(expense,repository.saveExpense(expense))
+  assertEquals(1,db.operationalExpensePartnerDao()
+   .expenses("2026-11-05","2026-11-05").size)
+ }
+
 }
