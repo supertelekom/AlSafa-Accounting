@@ -5,6 +5,11 @@ import android.content.Intent
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.ui.viewinterop.AndroidView
+import android.widget.ImageView
+import android.net.Uri
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
@@ -24,6 +29,11 @@ import org.json.JSONObject
 class MaintenanceActivity:ComponentActivity() {
  private var reload: (() -> Unit)?=null
  override fun onResume() { super.onResume();reload?.invoke() }
+ @Deprecated("Result API integration pending")
+ override fun onActivityResult(requestCode:Int,resultCode:Int,data:Intent?) {
+  super.onActivityResult(requestCode,resultCode,data)
+  if(requestCode==702 && resultCode==RESULT_OK) reload?.invoke()
+ }
  override fun onCreate(savedInstanceState:Bundle?) {
   super.onCreate(savedInstanceState)
   var query by mutableStateOf("")
@@ -32,6 +42,7 @@ class MaintenanceActivity:ComponentActivity() {
   var error by mutableStateOf("")
   var loading by mutableStateOf(false)
   var generation=0
+  var newestInvoice by mutableStateOf<Long?>(null)
   fun refresh() {
    val request=++generation
    lifecycleScope.launch {
@@ -53,11 +64,13 @@ class MaintenanceActivity:ComponentActivity() {
    androidx.compose.runtime.CompositionLocalProvider(
     androidx.compose.ui.platform.LocalLayoutDirection provides androidx.compose.ui.unit.LayoutDirection.Rtl
    ) {
-    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
+    Column(Modifier.fillMaxSize().padding(16.dp),
      verticalArrangement=Arrangement.spacedBy(12.dp)) {
      Text("الصيانة",style=MaterialTheme.typography.headlineSmall)
      if(selected==null) {
-      Button(onClick={startActivity(Intent(this@MaintenanceActivity,MaintenanceIntakeActivity::class.java))}) { Text("استلام صيانة") }
+      Button(onClick={
+       startActivityForResult(Intent(this@MaintenanceActivity,MaintenanceIntakeActivity::class.java),702)
+      }) { Text("استلام صيانة") }
       OutlinedTextField(value=query,onValueChange={query=it;refresh()},
        label={Text("بحث بالعميل أو الهاتف أو رقم الصيانة أو الساعة")},
        modifier=Modifier.fillMaxWidth(),singleLine=true)
@@ -67,10 +80,11 @@ class MaintenanceActivity:ComponentActivity() {
      val repair=selected
      if(repair!=null) {
       OutlinedButton(onClick={selected=null}) { Text("العودة إلى الصيانة") }
-      MaintenanceDetail(repair)
+      Column(Modifier.weight(1f).verticalScroll(rememberScrollState())) { MaintenanceDetail(repair) }
      } else {
       Text("السجلات المعروضة: "+records.size,style=MaterialTheme.typography.titleMedium)
-      records.forEach { entry ->
+      LazyColumn(modifier=Modifier.weight(1f),verticalArrangement=Arrangement.spacedBy(10.dp)) {
+       items(records,key={it.id}) { entry ->
        Card(onClick={selected=entry},modifier=Modifier.fillMaxWidth()) {
         Column(Modifier.padding(16.dp),verticalArrangement=Arrangement.spacedBy(6.dp)) {
          Text("صيانة رقم "+entry.invoice_number,style=MaterialTheme.typography.titleMedium)
@@ -80,6 +94,7 @@ class MaintenanceActivity:ComponentActivity() {
          Text(entry.date+(if(entry.phone.isNotBlank()) " — "+entry.phone else ""))
         }
        }
+      }
       }
       if(records.isEmpty() && !loading && error.isBlank()) Text("لا توجد سجلات صيانة مطابقة.")
      }
@@ -164,6 +179,14 @@ private fun MaintenanceDetail(repair:MaintenanceRepairEntity) {
   field("تاريخ التسليم","deliveredDate")
   field("وقت التسليم","deliveredTime")
   field("ملاحظات","notes")
+ }
+ val imageUri=obj.optString("watchPhoto").takeIf { it.startsWith("content://") || it.startsWith("file://") }
+ if(imageUri!=null) {
+  section("صورة الساعة") {
+   AndroidView(factory={ context -> ImageView(context).apply { adjustViewBounds=true;scaleType=ImageView.ScaleType.FIT_CENTER } },
+    update={ view -> runCatching { view.setImageURI(Uri.parse(imageUri)) } },
+    modifier=Modifier.fillMaxWidth().heightIn(max=350.dp))
+  }
  }
  val photoCount=listOf("photos","watchPhotos","images").sumOf { key ->
   obj.optJSONArray(key)?.length() ?: 0
