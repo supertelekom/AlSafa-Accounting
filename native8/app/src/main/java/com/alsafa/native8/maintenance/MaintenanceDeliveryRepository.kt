@@ -1,6 +1,7 @@
 package com.alsafa.native8.maintenance
 
 import androidx.room.withTransaction
+import android.content.Context
 import com.alsafa.native8.sales.AppDatabase
 import com.alsafa.native8.sales.RoomCashboxMovement
 import com.alsafa.native8.sales.ExchangeRateSettings
@@ -14,7 +15,8 @@ import java.util.Locale
 import java.util.UUID
 
 /** Delivery, part stock, and actual collection are committed together. */
-class MaintenanceDeliveryRepository(private val db:AppDatabase) {
+class MaintenanceDeliveryRepository(private val db:AppDatabase, context:Context) {
+ private val exchangeRates=ExchangeRateSettings(context.applicationContext)
  data class PaymentLine(val amount:String,val currency:String,val cashbox:String,val invoiceCredit:String)
  private fun amount(s:String)=s.toBigDecimalOrNull() ?: error("قيمة مالية غير صحيحة")
  private fun fmt(n:BigDecimal)=n.stripTrailingZeros().toPlainString()
@@ -35,20 +37,20 @@ class MaintenanceDeliveryRepository(private val db:AppDatabase) {
   }
   val total=labor+partsTotal
   require(total>=BigDecimal.ZERO) { "الإجمالي غير صحيح" }
-  require(payments.isNotEmpty()) { "أدخل دفعات التحصيل" }
+  require(payments.size==1) { "اختر مبلغاً وصندوقاً وعملة واحدة" }
   val prepared=payments.map { payment ->
    val currency=if(legacySingleCurrency) repair.currency else payment.currency
    require(currency in setOf("USD","TRY","SYP")) { "عملة غير مدعومة" }
    require(payment.cashbox in setOf("drawer","external","ChamCash","bank")) { "الصندوق غير معروف" }
    val actual=amount(payment.amount)
-   val rate=ExchangeRateSettings(AppDatabase.cashContext()).rate(currency,repair.currency)
+   val rate=exchangeRates.rate(currency,repair.currency)
    val credit=actual.multiply(rate).setScale(2,RoundingMode.HALF_UP)
    require(actual>BigDecimal.ZERO && credit>BigDecimal.ZERO) { "الدفعات يجب أن تكون موجبة" }
 
    Triple(payment,actual,credit)
   }
   val received=prepared.fold(BigDecimal.ZERO) { sum,line -> sum+line.third }
-  require(received.compareTo(total)==0) { "تسليم الساعة يتطلب قبض كامل المبلغ المتبقي أولاً" }
+  require(received.compareTo(total)==0) { "المبلغ المقبوض لا يساوي المستحق بعد التحويل بسعر الصرف المحفوظ" }
   // Validate all part quantities before any mutation.
   val updates=mutableListOf<Triple<MaintenancePartEntity,String,String>>()
   val seen=mutableSetOf<String>()
