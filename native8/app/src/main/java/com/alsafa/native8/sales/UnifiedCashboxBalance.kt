@@ -16,7 +16,7 @@ class UnifiedCashboxBalance(private val context:Context,private val dao:Supplier
   fun canonical(raw:String):String?=when(raw.trim().lowercase()) {
    "drawer","الدرج" -> "drawer"
    "external","الصندوق الخارجي" -> "external"
-   "shamcash","sham","شام كاش" -> "shamcash"
+   "shamcash","sham","chamcash","شام كاش" -> "shamcash"
    "bank","البنك" -> "bank"
    else -> null
   }
@@ -30,7 +30,7 @@ class UnifiedCashboxBalance(private val context:Context,private val dao:Supplier
   fun aliases(vault:String):List<String> = when(canonical(vault)) {
    "drawer" -> listOf("drawer","الدرج")
    "external" -> listOf("external","الصندوق الخارجي")
-   "shamcash" -> listOf("shamcash","sham","شام كاش")
+   "shamcash" -> listOf("shamcash","sham","chamcash","شام كاش")
    "bank" -> listOf("bank","البنك")
    else -> error("خزنة غير معروفة: "+vault)
   }
