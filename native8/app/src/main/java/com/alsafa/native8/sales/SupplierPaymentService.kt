@@ -19,8 +19,8 @@ class SupplierPaymentService(private val db:AppDatabase) {
   val remaining=opening-historicalPaid-newPaid
   require(opening>BigDecimal.ZERO && remaining>BigDecimal.ZERO && amount<=remaining) { "الدين القديم غير متاح أو المبلغ أكبر من المتبقي" }
   val balance=UnifiedCashboxBalance(AppDatabase.cashContext(),dao).calculate(cashbox,currency)
-  require(balance.verified) { "رصيد الصندوق التاريخي غير مطابق: "+balance.warning }
-  require(balance.total>=amount) { "الرصيد الموحد غير كافٍ: "+balance.total.toPlainString() }
+  val available=dao.cashboxAmounts(UnifiedCashboxBalance.aliases(cashbox),currency.uppercase()).fold(BigDecimal.ZERO) { sum,value -> sum+value.toBigDecimal() }
+  require(available>=amount) { "رصيد الحركات الجديدة غير كافٍ؛ الرصيد التاريخي يحتاج مطابقة: "+balance.warning }
   val movementId="opening-debt-cash-"+UUID.randomUUID()
   val now=System.currentTimeMillis()
   dao.insertCashMovement(RoomCashboxMovement(movementId,cashbox,currency,amount.negate().toPlainString(),
@@ -41,8 +41,8 @@ class SupplierPaymentService(private val db:AppDatabase) {
   val remaining=total-importedPaid-subsequent
   require(remaining>BigDecimal.ZERO && amount<=remaining) { "المبلغ أكبر من المتبقي على الفاتورة القديمة" }
   val balance=UnifiedCashboxBalance(AppDatabase.cashContext(),dao).calculate(cashbox,invoice.currency)
-  require(balance.verified) { "رصيد الصندوق التاريخي غير مطابق: "+balance.warning }
-  require(balance.total>=amount) { "الرصيد الموحد غير كافٍ: "+balance.total.toPlainString() }
+  val available=dao.cashboxAmounts(UnifiedCashboxBalance.aliases(cashbox),invoice.currency.uppercase()).fold(BigDecimal.ZERO) { sum,value -> sum+value.toBigDecimal() }
+  require(available>=amount) { "رصيد الحركات الجديدة غير كافٍ؛ الرصيد التاريخي يحتاج مطابقة: "+balance.warning }
   val movementId="purchase-archive-cash-"+UUID.randomUUID()
   val now=System.currentTimeMillis()
   dao.insertCashMovement(RoomCashboxMovement(movementId,cashbox,invoice.currency,
@@ -66,8 +66,8 @@ class SupplierPaymentService(private val db:AppDatabase) {
   val remaining=total-paid
   require(amount<=remaining) { "المبلغ أكبر من المتبقي على الفاتورة" }
   val balance=UnifiedCashboxBalance(AppDatabase.cashContext(),dao).calculate(cashbox,draft.currency)
-  require(balance.verified) { "رصيد الصندوق التاريخي غير مطابق: "+balance.warning }
-  require(balance.total>=amount) { "الرصيد الموحد غير كافٍ: "+balance.total.toPlainString() }
+  val available=dao.cashboxAmounts(UnifiedCashboxBalance.aliases(cashbox),draft.currency.uppercase()).fold(BigDecimal.ZERO) { sum,value -> sum+value.toBigDecimal() }
+  require(available>=amount) { "رصيد الحركات الجديدة غير كافٍ؛ الرصيد التاريخي يحتاج مطابقة: "+balance.warning }
   val movementId="purchase-cash-"+UUID.randomUUID()
   val now=System.currentTimeMillis()
   dao.insertCashMovement(RoomCashboxMovement(movementId,cashbox,draft.currency,
