@@ -18,7 +18,7 @@ import kotlinx.coroutines.withContext
 
 /**
  * Diagnostic read-only view of the imported legacy source.
- * Raw source data is intentionally NOT summed into operational cash balances.
+ * Original source records are kept unchanged; unified balances project them without reposting.
  */
 class LegacyCashboxHistoryActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -36,7 +36,7 @@ class LegacyCashboxHistoryActivity : ComponentActivity() {
             Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Text("العمليات التاريخية المستعادة — فحص", style = MaterialTheme.typography.titleLarge)
-                Text("عرض المصدر الأصلي فقط. لم تُضف هذه العمليات إلى أرصدة الصناديق الجديدة.")
+                Text("عرض المصدر الأصلي للعمليات المستعادة. تدخل الحركات المؤهلة في حساب الرصيد الموحد دون إعادة ترحيلها.")
                 if (error.isNotEmpty()) Text(error)
                 if (sections.isEmpty()) Text("لا توجد أقسام مستعادة في قاعدة الفحص، أو لم يكتمل تحميلها.")
                 sections.forEach { section ->
