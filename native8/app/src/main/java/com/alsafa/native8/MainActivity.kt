@@ -3,6 +3,7 @@ package com.alsafa.native8
 import android.app.Activity
 import android.content.Intent
 import com.alsafa.native8.sales.SalesArchiveActivity
+import com.alsafa.native8.maintenance.MaintenancePartsActivity
 import com.alsafa.native8.maintenance.MaintenanceActivity
 import com.alsafa.native8.sales.SuppliersActivity
 import com.alsafa.native8.sales.PurchasesActivity
@@ -87,6 +88,10 @@ class MainActivity : Activity() {
         root.addView(Button(this).apply {
             text = "الصيانة"
             setOnClickListener { startActivity(Intent(this@MainActivity, MaintenanceActivity::class.java)) }
+        }, LinearLayout.LayoutParams(-1, 76))
+        root.addView(Button(this).apply {
+            text = "قطع الصيانة"
+            setOnClickListener { startActivity(Intent(this@MainActivity, MaintenancePartsActivity::class.java)) }
         }, LinearLayout.LayoutParams(-1, 76))
         root.addView(Button(this).apply {
             text = "المشتريات"
