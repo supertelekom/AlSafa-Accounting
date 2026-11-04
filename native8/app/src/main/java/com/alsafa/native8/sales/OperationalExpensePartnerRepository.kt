@@ -37,24 +37,23 @@ class OperationalExpensePartnerRepository(private val db:AppDatabase) {
    return@withTransaction existing
   }
   val unit=currency(row.currency)
-  val box=vault(row.vault,unit)
-  val value=amount(row.amount);rate(row.usd_per_unit)
-  require(row.cash_movement_id==movementId(row.id)) { "مرجع حركة الخزنة غير مطابق" }
+  val value=amount(row.amount)
+  rate(row.usd_per_unit)
   require(row.category.isNotBlank() && row.payment_method.isNotBlank())
-  val method=row.payment_method
-  val expected=when {
-   method.contains("شام") -> "shamcash"
-   method.contains("بنك") -> "bank"
-   method.contains("نقد") -> "drawer"
-   else -> null
-  }
-  require(expected==box) { "طريقة الدفع لا تطابق الخزنة" }
   require(row.created_at>0)
-  val balance=UnifiedCashboxBalance(AppDatabase.cashContext(),db.supplierPurchaseDao()).calculate(box,unit)
-  require(balance.verified && balance.total>=value) { "رصيد الخزنة غير معتمد أو غير كافٍ" }
-  dao.insertExpense(row)
-  db.supplierPurchaseDao().insertCashMovement(RoomCashboxMovement(row.cash_movement_id,box,unit,
-   value.negate().toPlainString(),row.id,row.created_at,"مصروف: "+row.category+" — "+row.notes))
+  val box=row.vault?.let { vault(it,unit) }
+  if(box==null) {
+   require(row.cash_movement_id==null) { "مصروف دون خزنة لا ينشئ حركة نقدية" }
+   dao.insertExpense(row)
+  } else {
+   require(row.cash_movement_id==movementId(row.id)) { "مرجع حركة الخزنة غير مطابق" }
+   val balance=UnifiedCashboxBalance(AppDatabase.cashContext(),db.supplierPurchaseDao()).calculate(box,unit)
+   require(balance.verified && balance.total>=value) { "رصيد الخزنة غير معتمد أو غير كافٍ" }
+   dao.insertExpense(row)
+   db.supplierPurchaseDao().insertCashMovement(RoomCashboxMovement(
+    row.cash_movement_id,box,unit,value.negate().toPlainString(),
+    row.id,row.created_at,"مصروف: "+row.category+" — "+row.notes))
+  }
   row
  }
  suspend fun saveWithdrawal(row:OperationalPartnerWithdrawalEntity):OperationalPartnerWithdrawalEntity=db.withTransaction {
