@@ -19,6 +19,8 @@ interface MaintenanceDao {
  suspend fun maxRepairInvoice():Long
  @Insert(onConflict=OnConflictStrategy.ABORT)
  suspend fun insertNewRepair(value:MaintenanceRepairEntity)
+ @Query("UPDATE maintenance_repairs SET customer=:customer, phone=:phone, watch=:watch, model=:model, problem=:problem, status=:status, original_json=:raw WHERE id=:id AND source_sha256='native8'")
+ suspend fun editNewRepair(id:String,customer:String,phone:String,watch:String,model:String,problem:String,status:String,raw:String):Int
  @Query("UPDATE maintenance_repairs SET status=:status, original_json=:raw WHERE id=:id")
  suspend fun updateRepairStatus(id:String,status:String,raw:String):Int
  @Insert(onConflict=OnConflictStrategy.IGNORE)
