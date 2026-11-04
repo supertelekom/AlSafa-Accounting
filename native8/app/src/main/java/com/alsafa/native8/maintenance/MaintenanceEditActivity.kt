@@ -127,11 +127,7 @@ class MaintenanceEditActivity:Activity() {
           .forEachIndexed { index,key -> raw.put(key,values[index]) }
          check(db.maintenanceDao().editNewRepair(id,values[0],values[1],values[2],
           values[3],values[4],latest.status,raw.toString())==1)
-        }
-        if(requestedParts!=null) {
-         MaintenancePartsRepository(db).saveDraft(id,requestedParts)
-        }
-        db.withTransaction {
+         if(requestedParts!=null) MaintenancePartsRepository(db).saveDraft(id,requestedParts)
         }
        }
       }
