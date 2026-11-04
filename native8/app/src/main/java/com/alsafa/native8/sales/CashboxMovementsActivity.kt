@@ -52,6 +52,11 @@ class CashboxMovementsActivity : ComponentActivity() {
                 historyError = ""
             } catch (e: Exception) { historyError = e.message ?: "تعذر قراءة التاريخ" }
         }
+        var exchangeTo by mutableStateOf("USD")
+        var exchangeOutgoing by mutableStateOf("")
+        var exchangeIncoming by mutableStateOf("")
+        var exchangeStatus by mutableStateOf("")
+        var exchangeBusy by mutableStateOf(false)
         var transferDestination by mutableStateOf("الصندوق الخارجي")
         var transferAmount by mutableStateOf("")
         var transferNote by mutableStateOf("")
@@ -116,6 +121,51 @@ class CashboxMovementsActivity : ComponentActivity() {
                         }
                     }) { Text(if(transferBusy) "جاري التحويل..." else "تنفيذ التحويل") }
                 if(transferStatus.isNotEmpty()) Text(transferStatus)
+                Text("صرف عملة",style=MaterialTheme.typography.titleMedium)
+                Text("من "+selectedCurrency+" في "+selectedCashbox+" إلى:")
+                Row(horizontalArrangement=Arrangement.spacedBy(8.dp)) {
+                    listOf("USD","TRY","SYP").filter {
+                        it!=selectedCurrency && (selectedCashbox!="شام كاش" || it!="TRY")
+                    }.forEach { unit ->
+                        FilterChip(selected=exchangeTo==unit,onClick={exchangeTo=unit},label={Text(unit)})
+                    }
+                }
+                OutlinedTextField(value=exchangeOutgoing,onValueChange={exchangeOutgoing=it},
+                    label={Text("المبلغ الخارج — "+selectedCurrency)},singleLine=true,
+                    keyboardOptions=KeyboardOptions(keyboardType=KeyboardType.Decimal))
+                OutlinedTextField(value=exchangeIncoming,onValueChange={exchangeIncoming=it},
+                    label={Text("المبلغ الداخل — "+exchangeTo)},singleLine=true,
+                    keyboardOptions=KeyboardOptions(keyboardType=KeyboardType.Decimal))
+                Button(enabled=!exchangeBusy && exchangeTo!=selectedCurrency &&
+                    exchangeOutgoing.toBigDecimalOrNull()?.let {it>BigDecimal.ZERO}==true &&
+                    exchangeIncoming.toBigDecimalOrNull()?.let {it>BigDecimal.ZERO}==true,
+                    onClick={
+                        val from=selectedCurrency
+                        val to=exchangeTo
+                        val vault=selectedCashbox
+                        val outgoing=exchangeOutgoing.toBigDecimalOrNull()
+                        val incoming=exchangeIncoming.toBigDecimalOrNull()
+                        if(outgoing!=null && incoming!=null) {
+                            exchangeBusy=true
+                            lifecycleScope.launch {
+                                try {
+                                    withContext(Dispatchers.IO) {
+                                        UnifiedCashboxOperations(AppDatabase.get(applicationContext))
+                                            .exchange(vault,from,to,outgoing,incoming)
+                                    }
+                                    exchangeStatus="تم صرف العملة بنجاح"
+                                    exchangeOutgoing=""
+                                    exchangeIncoming=""
+                                    movements=AppDatabase.get(applicationContext).legacyPaymentDao().recentCashboxMovements()
+                                    refreshUnified(selectedCashbox,selectedCurrency)
+                                } catch(e:Exception) {
+                                    exchangeStatus="لم ينفذ الصرف: "+(e.message ?: "خطأ غير معروف")
+                                } finally {exchangeBusy=false}
+                            }
+                        }
+                    }) {Text("تنفيذ صرف العملة")}
+                if(exchangeStatus.isNotEmpty()) Text(exchangeStatus)
+
                 val canonicalCashbox = UnifiedCashboxBalance.canonical(selectedCashbox) ?: selectedCashbox
                 val filtered = movements.filter {
                     val normalized = UnifiedCashboxBalance.canonical(it.cashbox)
