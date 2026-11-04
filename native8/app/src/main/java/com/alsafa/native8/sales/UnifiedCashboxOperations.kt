@@ -11,6 +11,11 @@ import java.util.UUID
 class UnifiedCashboxOperations(private val db:AppDatabase) {
  data class TransferResult(val reference:String,val sourceBalance:BigDecimal,val destinationBalance:BigDecimal)
 
+ private fun validateCurrency(vault:String,currency:String) {
+  require(currency in setOf("USD","TRY","SYP")) { "عملة غير مدعومة" }
+  require(vault!="shamcash" || currency in setOf("USD","SYP")) { "شام كاش لا يدعم هذه العملة في السورس الأصلي" }
+ }
+
  private suspend fun spendable(vault:String,currency:String):BigDecimal {
   val balance=UnifiedCashboxBalance(AppDatabase.cashContext(),db.supplierPurchaseDao())
    .calculate(vault,currency)
@@ -23,7 +28,8 @@ class UnifiedCashboxOperations(private val db:AppDatabase) {
    val source=UnifiedCashboxBalance.canonical(from) ?: error("خزنة المصدر غير معروفة")
    val destination=UnifiedCashboxBalance.canonical(to) ?: error("خزنة الوجهة غير معروفة")
    require(source!=destination) { "لا يمكن التحويل إلى الخزنة نفسها" }
-   require(currency.uppercase() in setOf("USD","TRY","SYP")) { "عملة غير مدعومة" }
+   validateCurrency(source,currency.uppercase())
+   validateCurrency(destination,currency.uppercase())
    require(amount>BigDecimal.ZERO) { "المبلغ يجب أن يكون موجباً" }
    val available=spendable(source,currency)
    require(available>=amount) { "رصيد المصدر غير كافٍ" }
@@ -41,7 +47,7 @@ class UnifiedCashboxOperations(private val db:AppDatabase) {
  suspend fun record(vault:String,currency:String,amount:BigDecimal,reference:String,note:String):String =
   db.withTransaction {
    val normalized=UnifiedCashboxBalance.canonical(vault) ?: error("خزنة غير معروفة")
-   require(currency.uppercase() in setOf("USD","TRY","SYP")) { "عملة غير مدعومة" }
+   validateCurrency(normalized,currency.uppercase())
    require(amount!=BigDecimal.ZERO) { "المبلغ لا يمكن أن يكون صفراً" }
    require(reference.isNotBlank()) { "مرجع الحركة مطلوب" }
    if(amount<BigDecimal.ZERO) require(spendable(normalized,currency)>=amount.negate()) {
