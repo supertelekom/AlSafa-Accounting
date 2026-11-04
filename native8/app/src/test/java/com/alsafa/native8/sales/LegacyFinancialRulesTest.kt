@@ -38,4 +38,13 @@ class LegacyFinancialRulesTest {
   val father=LegacyFinancialRules.statement(source,LegacyFinancialRules.partners[0],"2026-10-01","2026-10-31","2026-10-31")
   assertEquals(0,father.cumulativeDue.compareTo(n("17.4")))
  }
+ @Test fun onlineDiscountAllocatesCostButNotRevenue() {
+  val receipt=LegacyFinancialRules.Receipt("2026-10-03",usd("100"),usd("0"),usd("60"),n("100"),n("90"),n("10"))
+  assertEquals(0,receipt.profit().compareTo(n("30")))
+ }
+ @Test fun historicalFxSnapshotIsUsed() {
+  val expense=LegacyFinancialRules.Expense("2026-10-03",LegacyFinancialRules.Money(n("100"),n("0.02")))
+  val empty=LegacyFinancialRules.Source(emptyList(),emptyList(),emptyList(),emptyList(),listOf(expense),emptyList())
+  assertEquals(0,LegacyFinancialRules.breakdown(empty,"2026-10-03","2026-10-03").net.compareTo(n("-2")))
+ }
 }
