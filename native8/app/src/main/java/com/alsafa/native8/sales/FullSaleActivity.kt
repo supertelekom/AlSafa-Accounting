@@ -5,6 +5,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.runtime.*
+import androidx.compose.foundation.layout.Row
 import androidx.compose.material3.*
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
