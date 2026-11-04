@@ -12,7 +12,7 @@ class LegacyFinancialRulesTest {
   return rules.Source(
    sales=listOf(rules.Sale("2026-10-01",false,usd("100"),usd("0"),usd("60")),
     rules.Sale("2026-10-01",true,usd("100"),usd("0"),usd("60"))),
-   onlineReceipts=listOf(rules.Receipt("2026-10-02",usd("100"),usd("0"),usd("30"),n("100"),n("50"))),
+   onlineReceipts=listOf(rules.Receipt("2026-10-02",usd("100"),usd("0"),usd("35"),n("100"),n("50"))),
    repairReceipts=listOf(rules.Receipt("2026-10-02",usd("20"),usd("0"),usd("5"),n("20"),n("20"))),
    returns=listOf(rules.Adjustment("2026-10-02",n("-4"))),
    expenses=listOf(rules.Expense("2026-10-02",usd("10"))),
