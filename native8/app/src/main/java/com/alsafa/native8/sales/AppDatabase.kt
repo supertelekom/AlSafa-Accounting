@@ -30,15 +30,16 @@ import com.alsafa.native8.data.operational.OperationalInventoryWriteDao
   SupplierArchiveEntity::class,PurchaseArchiveEntity::class,
   SupplierLedgerArchiveEntity::class,SupplierPaymentEntity::class,
   PurchaseDraftEntity::class,PurchaseDraftLineEntity::class,
-  MaintenanceRepairEntity::class,MaintenancePartEntity::class
+  MaintenanceRepairEntity::class,MaintenancePartEntity::class,DailyClosingEntity::class
  ],
- version=13,
+ version=14,
  exportSchema=false
 )
 abstract class AppDatabase:RoomDatabase() {
  abstract fun operationalInventoryReadDao():OperationalInventoryReadDao
  abstract fun operationalInventoryWriteDao():OperationalInventoryWriteDao
  abstract fun maintenanceDao():MaintenanceDao
+ abstract fun dailyClosingDao():DailyClosingDao
  abstract fun supplierPurchaseDao():SupplierPurchaseDao
  abstract fun salesPostingDao():SalesPostingDao
  abstract fun salesFinancialAuditDao():SalesFinancialAuditDao
@@ -56,7 +57,7 @@ abstract class AppDatabase:RoomDatabase() {
     instance ?: run {
      Room.databaseBuilder(context.applicationContext,AppDatabase::class.java,
       "alsafa_native8_operational.db")
-      .addMigrations(OperationalMigration4To5, OperationalMigration5To6, OperationalMigration6To7, OperationalMigration7To8, OperationalMigration8To9, OperationalMigration9To10, OperationalMigration10To11,OperationalMigration11To12,OperationalMigration12To13)
+      .addMigrations(OperationalMigration4To5, OperationalMigration5To6, OperationalMigration6To7, OperationalMigration7To8, OperationalMigration8To9, OperationalMigration9To10, OperationalMigration10To11,OperationalMigration11To12,OperationalMigration12To13,OperationalMigration13To14)
       .build().also { instance=it }
     }
    }
