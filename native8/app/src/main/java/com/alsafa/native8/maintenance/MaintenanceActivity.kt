@@ -28,11 +28,16 @@ import org.json.JSONObject
 /** Historical maintenance records remain immutable; this screen presents the original fields. */
 class MaintenanceActivity:ComponentActivity() {
  private var reload: (() -> Unit)?=null
+ private var selectedRefresh: (suspend (String)->Unit)?=null
  override fun onResume() { super.onResume();reload?.invoke() }
  @Deprecated("Result API integration pending")
  override fun onActivityResult(requestCode:Int,resultCode:Int,data:Intent?) {
   super.onActivityResult(requestCode,resultCode,data)
   if(requestCode==702 && resultCode==RESULT_OK) reload?.invoke()
+  if(requestCode==703 && resultCode==RESULT_OK) {
+   val id=data?.getStringExtra("repair_id")
+   if(id!=null) lifecycleScope.launch { selectedRefresh?.invoke(id) }
+  }
  }
  override fun onCreate(savedInstanceState:Bundle?) {
   super.onCreate(savedInstanceState)
@@ -58,6 +63,10 @@ class MaintenanceActivity:ComponentActivity() {
     } finally { if(request==generation) loading=false }
    }
   }
+  selectedRefresh={ id ->
+   selected=withContext(Dispatchers.IO) { AppDatabase.get(applicationContext).maintenanceDao().repair(id) }
+   refresh()
+  }
   reload=::refresh
   refresh()
   // Refresh after returning from the intake form.
@@ -81,6 +90,9 @@ class MaintenanceActivity:ComponentActivity() {
      val repair=selected
      if(repair!=null) {
       OutlinedButton(onClick={selected=null}) { Text("العودة إلى الصيانة") }
+      if(repair.source_sha256=="native8" && repair.status!="تم التسليم") {
+       Button(onClick={startActivityForResult(Intent(this@MaintenanceActivity,MaintenanceEditActivity::class.java).putExtra("repair_id",repair.id),703)}) { Text("تعديل الفاتورة") }
+      }
       Column(Modifier.weight(1f).verticalScroll(rememberScrollState()),
        verticalArrangement=Arrangement.spacedBy(12.dp)) {
        MaintenanceDetail(repair)
