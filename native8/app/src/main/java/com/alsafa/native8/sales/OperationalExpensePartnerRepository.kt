@@ -64,7 +64,7 @@ class OperationalExpensePartnerRepository(private val db:AppDatabase) {
    require(existing==row) { "معرف السحب مستخدم لعملية مختلفة" }
    return@withTransaction existing
   }
-  require(row.partner_id in setOf("father","abdulkarim","yazan")) { "شريك غير معتمد" }
+  require(row.partner_id in setOf("father","me","brother")) { "شريك غير معتمد" }
   val unit=currency(row.currency)
   val box=vault(row.vault,unit)
   val value=amount(row.amount);rate(row.usd_per_unit)
