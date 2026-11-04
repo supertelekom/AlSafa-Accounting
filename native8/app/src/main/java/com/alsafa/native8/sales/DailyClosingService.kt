@@ -1,6 +1,7 @@
 package com.alsafa.native8.sales
 
 import androidx.room.withTransaction
+import com.alsafa.native8.data.migration.LegacyCashboxHistory
 import org.json.JSONObject
 import java.math.BigDecimal
 import java.time.LocalDate
@@ -50,6 +51,9 @@ class DailyClosingService(private val db:AppDatabase) {
  suspend fun close(counts:Counts):DailyClosingEntity=db.withTransaction {
   val date=today()
   require(db.dailyClosingDao().byDate(date)==null) { "تم إغلاق هذا اليوم مسبقاً" }
+  val historicalClose=LegacyCashboxHistory(AppDatabase.cashContext()).entries("dailyClosings",100000)
+   .any { row -> runCatching { JSONObject(row.raw).optString("date")==date }.getOrDefault(false) }
+  require(!historicalClose) { "يوجد إغلاق تاريخي لهذا اليوم؛ لا يمكن تكراره" }
   val now=System.currentTimeMillis()
   val prior=db.dailyClosingDao().previous(date)
   val drawerExpected=currencies.associateWith { expected("drawer",it,prior,now) }
