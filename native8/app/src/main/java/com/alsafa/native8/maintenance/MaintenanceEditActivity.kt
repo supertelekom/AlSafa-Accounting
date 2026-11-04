@@ -9,6 +9,8 @@ import androidx.room.withTransaction
 import com.alsafa.native8.sales.AppDatabase
 import kotlinx.coroutines.runBlocking
 import org.json.JSONObject
+import org.json.JSONArray
+import java.math.BigDecimal
 
 /** Edits intake details only. Imported historical records remain unchanged. */
 class MaintenanceEditActivity:Activity() {
@@ -33,6 +35,10 @@ class MaintenanceEditActivity:Activity() {
   val diagnosis=field("التشخيص")
   val workDone=field("العمل المنجز")
   val notes=field("ملاحظات")
+  val partsButton=Button(this).apply { text="تحديث العطل واختيار قطع الصيانة" }
+  root.addView(partsButton)
+  val partsSummary=TextView(this).apply { text="القطع المختارة: لا توجد قطع" }
+  root.addView(partsSummary)
   val save=Button(this).apply { text="حفظ التعديلات";isEnabled=false }
   root.addView(save)
   setContentView(ScrollView(this).apply { addView(root) })
@@ -53,6 +59,51 @@ class MaintenanceEditActivity:Activity() {
     diagnosis.setText(json.optString("diagnosis"))
     workDone.setText(json.optString("workDone"))
     notes.setText(json.optString("notes"))
+    var pendingParts:MutableList<MaintenancePartsRepository.SelectedPart>?=null
+    val currentParts=json.optJSONArray("usedParts") ?: JSONArray()
+    val existing=mutableListOf<MaintenancePartsRepository.SelectedPart>()
+    for(i in 0 until currentParts.length()) {
+     val row=currentParts.optJSONObject(i) ?: continue
+     val partId=row.optString("partId")
+     if(partId.isNotBlank()) existing.add(MaintenancePartsRepository.SelectedPart(partId,row.optString("qty","1"),row.optString("price","0")))
+    }
+    fun showParts(lines:List<MaintenancePartsRepository.SelectedPart>) {
+     partsSummary.text=if(lines.isEmpty()) "القطع المختارة: لا توجد قطع" else
+      "القطع المختارة: "+lines.joinToString("، ") { "${it.partId} × ${it.qty}" }
+    }
+    showParts(existing)
+    partsButton.setOnClickListener {
+     Thread {
+      val result=runCatching { runBlocking { MaintenancePartsRepository(AppDatabase.get(applicationContext)).list() } }
+      runOnUiThread {
+       val parts=result.getOrNull().orEmpty()
+       if(parts.isEmpty()) { Toast.makeText(this,"مستودع قطع الصيانة فارغ",Toast.LENGTH_LONG).show();return@runOnUiThread }
+       val labels=parts.map { "${it.category} / ${it.name} — ${it.stock} متاح" }.toTypedArray()
+       android.app.AlertDialog.Builder(this).setTitle("القطع المقترحة / المراد تركيبها")
+        .setItems(labels) { _,index ->
+         val part=parts[index]
+         val fields=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL;setPadding(24,8,24,8) }
+         val qty=EditText(this).apply { hint="الكمية";setText("1");inputType=android.text.InputType.TYPE_CLASS_NUMBER }
+         val price=EditText(this).apply { hint="سعر العميل";setText(part.sale_price);inputType=android.text.InputType.TYPE_CLASS_NUMBER or android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL }
+         fields.addView(qty);fields.addView(price)
+         android.app.AlertDialog.Builder(this).setTitle(part.name).setView(fields).setNegativeButton("إلغاء",null)
+          .setPositiveButton("إضافة القطعة للصيانة") { _,_ ->
+           val q=qty.text.toString().toBigDecimalOrNull()
+           val s=price.text.toString().toBigDecimalOrNull()
+           val available=part.stock.toBigDecimalOrNull()
+           if(q==null||s==null||available==null||q<=BigDecimal.ZERO||q>available||q.stripTrailingZeros().scale()>0||s<BigDecimal.ZERO) {
+            Toast.makeText(this,"الكمية أو السعر غير صحيح",Toast.LENGTH_LONG).show()
+           } else {
+            val chosen=pendingParts ?: existing.toMutableList()
+            chosen.removeAll { it.partId==part.id }
+            chosen.add(MaintenancePartsRepository.SelectedPart(part.id,q.toPlainString(),s.toPlainString()))
+            pendingParts=chosen;showParts(chosen)
+           }
+          }.show()
+        }.setNeutralButton("مسح القطع") { _,_ -> pendingParts=mutableListOf();showParts(emptyList()) }.show()
+      }
+     }.start()
+    }
     status.text="تعديل الصيانة رقم "+repair.invoice_number
     save.isEnabled=true
     save.setOnClickListener {
@@ -61,6 +112,7 @@ class MaintenanceEditActivity:Activity() {
       return@setOnClickListener
      }
      save.isEnabled=false
+     val requestedParts=pendingParts?.toList()
      val values=listOf(customer,phone,watch,model,problem,diagnosis,workDone,notes)
       .map { it.text.toString().trim() }
      Thread {
@@ -75,6 +127,11 @@ class MaintenanceEditActivity:Activity() {
           .forEachIndexed { index,key -> raw.put(key,values[index]) }
          check(db.maintenanceDao().editNewRepair(id,values[0],values[1],values[2],
           values[3],values[4],latest.status,raw.toString())==1)
+        }
+        if(requestedParts!=null) {
+         MaintenancePartsRepository(db).saveDraft(id,requestedParts)
+        }
+        db.withTransaction {
         }
        }
       }
