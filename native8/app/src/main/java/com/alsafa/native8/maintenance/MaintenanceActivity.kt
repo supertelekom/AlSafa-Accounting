@@ -93,6 +93,9 @@ class MaintenanceActivity:ComponentActivity() {
      val repair=selected
      if(repair!=null) {
       OutlinedButton(onClick={selected=null}) { Text("العودة إلى الصيانة") }
+      Button(onClick={MaintenanceMessaging.share(this@MaintenanceActivity,repair)}) {
+       Text("إرسال تفاصيل الصيانة عبر واتساب أعمال")
+      }
       if(repair.source_sha256=="native8" && repair.status!="تم التسليم") {
        Button(onClick={startActivityForResult(Intent(this@MaintenanceActivity,MaintenanceEditActivity::class.java).putExtra("repair_id",repair.id),703)}) { Text("تعديل الفاتورة") }
       }
