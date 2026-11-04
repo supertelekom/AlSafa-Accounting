@@ -10,8 +10,8 @@ data class OperationalExpenseEntity(
  @PrimaryKey val id:String,
  val date:String,val time:String,val category:String,val notes:String,
  val currency:String,val amount:String,val payment_method:String,
- val vault:String,val usd_per_unit:String,val created_at:Long,
- val cash_movement_id:String
+ val vault:String?,val usd_per_unit:String,val created_at:Long,
+ val cash_movement_id:String?
 )
 @Entity(tableName="operational_partner_withdrawals",indices=[Index(value=["cash_movement_id"],unique=true)])
 data class OperationalPartnerWithdrawalEntity(
