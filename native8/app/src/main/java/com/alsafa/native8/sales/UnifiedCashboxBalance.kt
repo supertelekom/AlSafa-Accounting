@@ -54,16 +54,27 @@ class UnifiedCashboxBalance(private val context:Context,private val dao:Supplier
    val obj=jsonObject(row.raw) ?: return@mapNotNull null
    obj.optLong("createdAt",0L).takeIf { it>0L }?.let { it to obj }
   }.sortedByDescending { it.first }
+  // A native closing is the latest immutable snapshot for drawer / Sham Cash.
+  // It must supersede older imported snapshots, without reposting its balance.
+  val nativeClosing=if(name=="drawer" || name=="shamcash")
+   AppDatabase.get(context).dailyClosingDao().recent().firstOrNull() else null
   val field=when(name) {
    "drawer" -> "drawerNext"
    "shamcash" -> "shamActual"
    else -> ""
   }
-  val anchor=closings.firstNotNullOfOrNull { (time,obj) ->
+  val legacyAnchor=closings.firstNotNullOfOrNull { (time,obj) ->
    val values=jsonObject(obj.opt(field))
    val amount=values?.optString(unit)?.toBigDecimalOrNull()
    if(amount==null) null else time to amount
   }
+  val nativeAmount=nativeClosing?.let { closing ->
+   runCatching { JSONObject(if(name=="drawer") closing.drawer_next_json else closing.sham_actual_json)
+    .optString(unit).toBigDecimalOrNull() }.getOrNull()
+  }
+  val anchor=if(nativeClosing!=null && nativeAmount!=null &&
+   (legacyAnchor==null || nativeClosing.created_at>=legacyAnchor.first))
+   nativeClosing.created_at to nativeAmount else legacyAnchor
   val createdAtById=source.entries("cashTransactions",100000).mapNotNull { entry ->
    val obj=jsonObject(entry.raw) ?: return@mapNotNull null
    obj.optString("id").takeIf { it.isNotBlank() }?.let { it to obj.optLong("createdAt",0L) }
@@ -76,7 +87,10 @@ class UnifiedCashboxBalance(private val context:Context,private val dao:Supplier
    }
    anchor.second+after.fold(BigDecimal.ZERO) { sum,row -> sum+row.amount }
   } else historicalRows.fold(BigDecimal.ZERO) { sum,row -> sum+row.amount }
-  val operational=dao.cashboxAmounts(aliases(name),unit)
+  val operational=if(anchor!=null) dao.cashMovementsBetween(anchor.first,Long.MAX_VALUE)
+   .filter { canonical(it.cashbox)==name && it.currency.equals(unit,true) }
+   .fold(BigDecimal.ZERO) { sum,row -> sum+row.amount.toBigDecimal() }
+   else dao.cashboxAmounts(aliases(name),unit)
    .fold(BigDecimal.ZERO) { sum,value -> sum+value.toBigDecimal() }
   // For external and bank, full historical movement history needs an opening balance.
   val hasOpening=historicalRows.any { it.type=="opening-balance" }
