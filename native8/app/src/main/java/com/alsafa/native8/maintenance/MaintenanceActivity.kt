@@ -117,6 +117,7 @@ private fun MaintenanceDetail(repair:MaintenanceRepairEntity) {
   field("العميل","customer")
   field("الهاتف","phone")
   field("الساعة","watch")
+  field("خدمة الصيانة السريعة","quickServiceName")
   field("الموديل","model")
   field("العطل","problem")
   field("التشخيص","diagnosis")
