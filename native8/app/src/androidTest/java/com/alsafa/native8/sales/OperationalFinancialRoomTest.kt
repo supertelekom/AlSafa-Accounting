@@ -72,4 +72,19 @@ class OperationalFinancialRoomTest {
    .expenses("2026-11-05","2026-11-05").size)
  }
 
+ @Test fun expenseAndWithdrawalCannotShareFinancialId()=runBlocking {
+  val dao=db.operationalExpensePartnerDao()
+  dao.insertWithdrawal(OperationalPartnerWithdrawalEntity(
+   "shared","2026-11-05","10:00","father","USD","2",
+   "drawer","1","",10L,"financial-shared"))
+  val expense=OperationalExpenseEntity(
+   "shared","2026-11-05","10:00","تشغيل","","USD","2",
+   "آجل",null,"1",11L,null)
+  var rejected=false
+  try { OperationalExpensePartnerRepository(db).saveExpense(expense) }
+  catch (_:IllegalArgumentException) { rejected=true }
+  assertTrue(rejected)
+  assertNull(dao.expense("shared"))
+ }
+
 }
