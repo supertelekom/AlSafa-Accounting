@@ -259,7 +259,21 @@ private fun MaintenanceDetail(repair:MaintenanceRepairEntity) {
   field("العمل المنجز","workDone")
   field("الحالة","status")
  }
+ val linesForTotals=obj.optJSONArray("usedParts") ?: JSONArray()
+ val calculatedParts=(0 until linesForTotals.length()).sumOf { i ->
+  val part=linesForTotals.optJSONObject(i)
+  (part?.optString("qty")?.toDoubleOrNull() ?: 0.0)*(part?.optString("price")?.toDoubleOrNull() ?: 0.0)
+ }
+ val calculatedCost=(0 until linesForTotals.length()).sumOf { i ->
+  val part=linesForTotals.optJSONObject(i)
+  (part?.optString("qty")?.toDoubleOrNull() ?: 0.0)*(part?.optString("cost")?.toDoubleOrNull() ?: 0.0)
+ }
+ val labor=(if(obj.has("laborPrice")) obj.optString("laborPrice") else obj.optString("price","0")).toDoubleOrNull() ?: 0.0
  section("التكلفة والقبض") {
+  Text("الإجمالي المحسوب (أجرة العمل + القطع): "+(labor+calculatedParts)+" "+repair.currency,
+   style=MaterialTheme.typography.titleMedium)
+  Text("تكلفة القطع المحسوبة: "+calculatedCost+" "+repair.currency)
+
   field("العملة","currency")
   field("إجمالي الفاتورة المسجل","price")
   field("أجرة العمل","laborPrice")
