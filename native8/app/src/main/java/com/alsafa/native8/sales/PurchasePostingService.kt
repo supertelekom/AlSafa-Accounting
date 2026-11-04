@@ -33,10 +33,13 @@ class PurchasePostingService(private val db:AppDatabase) {
    }
    val amounts=dao.cashboxAmounts(aliases,draft.currency.uppercase())
    val available=amounts.fold(BigDecimal.ZERO) { sum,value -> sum+value.toBigDecimal() }
-   require(available>=totals.paid) {
-    "رصيد الخزنة المتاح من الحركات المسجلة "+available.toPlainString()+" "+draft.currency+
+   val unified=UnifiedCashboxBalance(AppDatabase.cashContext(),dao)
+    .calculate(cashbox ?: error("خزنة غير معروفة"),draft.currency)
+   val spendable=if(unified.verified) unified.total else available
+   require(spendable>=totals.paid) {
+    "رصيد الخزنة المتاح "+spendable.toPlainString()+" "+draft.currency+
     " أقل من المدفوع "+totals.paid.toPlainString()+
-    "؛ الأرصدة الافتتاحية غير مدمجة بعد، لا يمكن اعتماد الدفع النقدي بأمان"
+    "؛ "+unified.warning
    }
   }
   check(dao.markDraftPosted(draftId)==1) { "الفاتورة معتمدة مسبقاً" }
