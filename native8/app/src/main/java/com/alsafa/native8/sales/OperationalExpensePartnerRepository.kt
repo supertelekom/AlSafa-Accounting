@@ -58,7 +58,7 @@ class OperationalExpensePartnerRepository(private val db:AppDatabase) {
    require(balance.verified && balance.total>=value) { "رصيد الخزنة غير معتمد أو غير كافٍ" }
    dao.insertExpense(row)
    db.supplierPurchaseDao().insertCashMovement(RoomCashboxMovement(
-    row.cash_movement_id,box,unit,value.negate().toPlainString(),
+    row.cash_movement_id ?: error("مرجع حركة مفقود"),box,unit,value.negate().toPlainString(),
     row.id,row.created_at,"مصروف: "+row.category+" — "+row.notes))
   }
   row
