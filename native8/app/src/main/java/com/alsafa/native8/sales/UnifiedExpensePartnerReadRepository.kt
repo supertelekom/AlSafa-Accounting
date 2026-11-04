@@ -32,14 +32,9 @@ class UnifiedExpensePartnerReadRepository(
  }
  private fun exchangeSnapshot(raw:org.json.JSONObject,currency:String):BigDecimal {
   if(currency=="USD") return BigDecimal.ONE
-  // Do not infer historical rates from today's settings.
   val snapshot=raw.optJSONObject("rateSnapshot")
    ?: error("Missing historical rateSnapshot for $currency")
-  // main.js currentSnapshot stores units-per-USD under currency keys.
-  val unitsPerUsd=snapshot.optString(currency).toBigDecimalOrNull()
-   ?: error("Missing historical $currency rate")
-  require(unitsPerUsd>BigDecimal.ZERO) { "Invalid historical $currency rate" }
-  return BigDecimal.ONE.divide(unitsPerUsd,java.math.MathContext.DECIMAL128)
+  return LegacyFinancialExchange.usdPerUnit(currency,snapshot.optString(currency))
  }
  suspend fun load(from:String,to:String):Snapshot {
   require(from<=to)
