@@ -17,6 +17,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import com.alsafa.native8.data.migration.LegacyCashboxHistory
 import java.math.BigDecimal
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.KeyboardType
 
 /** Read-only operational ledger viewer. Does not include imported opening balances. */
 class CashboxMovementsActivity : ComponentActivity() {
@@ -47,6 +49,11 @@ class CashboxMovementsActivity : ComponentActivity() {
                 historyError = ""
             } catch (e: Exception) { historyError = e.message ?: "تعذر قراءة التاريخ" }
         }
+        var transferDestination by mutableStateOf("الصندوق الخارجي")
+        var transferAmount by mutableStateOf("")
+        var transferNote by mutableStateOf("")
+        var transferBusy by mutableStateOf(false)
+        var transferStatus by mutableStateOf("")
         var selectedCashbox by mutableStateOf("شام كاش")
         var selectedCurrency by mutableStateOf("USD")
         lifecycleScope.launch {
@@ -64,6 +71,50 @@ class CashboxMovementsActivity : ComponentActivity() {
                 }) { Text("فحص العمليات التاريخية المستعادة") }
                 SalesPaymentSelectors(selectedCashbox, { selectedCashbox = it },
                     selectedCurrency, { selectedCurrency = it })
+                Text("تحويل بين الخزن", style = MaterialTheme.typography.titleMedium)
+                Text("من: "+selectedCashbox+" — العملة: "+selectedCurrency)
+                Text("إلى")
+                val destinations=listOf("الدرج","الصندوق الخارجي","شام كاش","البنك")
+                destinations.chunked(2).forEach { pair ->
+                    Row(horizontalArrangement=Arrangement.spacedBy(8.dp)) {
+                        pair.forEach { name ->
+                            FilterChip(selected=transferDestination==name,
+                                onClick={transferDestination=name},label={Text(name)})
+                        }
+                    }
+                }
+                OutlinedTextField(value=transferAmount,onValueChange={transferAmount=it},
+                    label={Text("المبلغ")},singleLine=true,
+                    keyboardOptions=KeyboardOptions(keyboardType=KeyboardType.Decimal))
+                OutlinedTextField(value=transferNote,onValueChange={transferNote=it},
+                    label={Text("البيان")},singleLine=true)
+                Button(enabled=!transferBusy && transferAmount.toBigDecimalOrNull()?.let { it>BigDecimal.ZERO }==true &&
+                    selectedCashbox!=transferDestination,
+                    onClick={
+                        val source=selectedCashbox
+                        val destination=transferDestination
+                        val currency=selectedCurrency
+                        val amount=transferAmount.toBigDecimalOrNull()
+                        if(amount!=null) {
+                            transferBusy=true
+                            transferStatus="جاري تسجيل التحويل..."
+                            lifecycleScope.launch {
+                                try {
+                                    val result=withContext(Dispatchers.IO) {
+                                        UnifiedCashboxOperations(AppDatabase.get(applicationContext))
+                                            .transfer(source,destination,currency,amount,transferNote)
+                                    }
+                                    transferStatus="تم التحويل — المرجع: "+result.reference
+                                    transferAmount=""
+                                    movements=AppDatabase.get(applicationContext).legacyPaymentDao().recentCashboxMovements()
+                                    refreshUnified(selectedCashbox,selectedCurrency)
+                                } catch(e:Exception) {
+                                    transferStatus="لم ينفذ التحويل: "+(e.message ?: "خطأ غير معروف")
+                                } finally { transferBusy=false }
+                            }
+                        }
+                    }) { Text(if(transferBusy) "جاري التحويل..." else "تنفيذ التحويل") }
+                if(transferStatus.isNotEmpty()) Text(transferStatus)
                 val canonicalCashbox = when (selectedCashbox) {
                     "الدرج" -> "drawer"
                     "الصندوق الخارجي" -> "external"
