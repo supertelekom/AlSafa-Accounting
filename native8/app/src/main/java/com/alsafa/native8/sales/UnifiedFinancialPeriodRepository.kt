@@ -17,6 +17,17 @@ class UnifiedFinancialPeriodRepository(
   val withdrawals:Map<String,BigDecimal>,
   val partialNet:BigDecimal,
   val complete:Boolean=false
+ ) {
+  fun approvedNet():BigDecimal {
+   check(complete) { "Incomplete financial sources: do not publish profit" }
+   return partialNet
+  }
+  fun approvedPartnerShares():Map<String,BigDecimal> {
+   val net=approvedNet()
+   return LegacyFinancialRules.partners.associate { partner ->
+    partner.id to net.multiply(BigDecimal(partner.share)).divide(BigDecimal(100))
+   }
+  }
  )
  suspend fun read(from:String,to:String):Result {
   val first=LocalDate.parse(from)
