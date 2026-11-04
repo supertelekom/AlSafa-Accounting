@@ -20,6 +20,13 @@ class UnifiedCashboxBalance(private val context:Context,private val dao:Supplier
    "bank","البنك" -> "bank"
    else -> null
   }
+  fun displayName(vault:String):String=when(canonical(vault)) {
+   "drawer" -> "الدرج"
+   "shamcash" -> "شام كاش"
+   "external" -> "الصندوق الخارجي"
+   "bank" -> "البنك"
+   else -> vault
+  }
   fun aliases(vault:String):List<String> = when(canonical(vault)) {
    "drawer" -> listOf("drawer","الدرج")
    "external" -> listOf("external","الصندوق الخارجي")
