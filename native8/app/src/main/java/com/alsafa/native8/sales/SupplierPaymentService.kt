@@ -20,7 +20,12 @@ class SupplierPaymentService(private val db:AppDatabase) {
   require(opening>BigDecimal.ZERO && remaining>BigDecimal.ZERO && amount<=remaining) { "الدين القديم غير متاح أو المبلغ أكبر من المتبقي" }
   val balance=UnifiedCashboxBalance(AppDatabase.cashContext(),dao).calculate(cashbox,currency)
   val available=dao.cashboxAmounts(UnifiedCashboxBalance.aliases(cashbox),currency.uppercase()).fold(BigDecimal.ZERO) { sum,value -> sum+value.toBigDecimal() }
-  require(available>=amount) { "رصيد الحركات الجديدة غير كافٍ؛ الرصيد التاريخي يحتاج مطابقة: "+balance.warning }
+  // Use historical funds when the automated source checks pass; otherwise
+  // preserve the existing operational-only safety limit.
+  val spendable=if(balance.verified) balance.total else available
+  require(spendable>=amount) {
+   "الرصيد المتاح "+spendable.toPlainString()+" غير كافٍ؛ "+balance.warning
+  }
   val movementId="opening-debt-cash-"+UUID.randomUUID()
   val now=System.currentTimeMillis()
   dao.insertCashMovement(RoomCashboxMovement(movementId,cashbox,currency,amount.negate().toPlainString(),
@@ -42,7 +47,12 @@ class SupplierPaymentService(private val db:AppDatabase) {
   require(remaining>BigDecimal.ZERO && amount<=remaining) { "المبلغ أكبر من المتبقي على الفاتورة القديمة" }
   val balance=UnifiedCashboxBalance(AppDatabase.cashContext(),dao).calculate(cashbox,invoice.currency)
   val available=dao.cashboxAmounts(UnifiedCashboxBalance.aliases(cashbox),invoice.currency.uppercase()).fold(BigDecimal.ZERO) { sum,value -> sum+value.toBigDecimal() }
-  require(available>=amount) { "رصيد الحركات الجديدة غير كافٍ؛ الرصيد التاريخي يحتاج مطابقة: "+balance.warning }
+  // Use historical funds when the automated source checks pass; otherwise
+  // preserve the existing operational-only safety limit.
+  val spendable=if(balance.verified) balance.total else available
+  require(spendable>=amount) {
+   "الرصيد المتاح "+spendable.toPlainString()+" غير كافٍ؛ "+balance.warning
+  }
   val movementId="purchase-archive-cash-"+UUID.randomUUID()
   val now=System.currentTimeMillis()
   dao.insertCashMovement(RoomCashboxMovement(movementId,cashbox,invoice.currency,
@@ -67,7 +77,12 @@ class SupplierPaymentService(private val db:AppDatabase) {
   require(amount<=remaining) { "المبلغ أكبر من المتبقي على الفاتورة" }
   val balance=UnifiedCashboxBalance(AppDatabase.cashContext(),dao).calculate(cashbox,draft.currency)
   val available=dao.cashboxAmounts(UnifiedCashboxBalance.aliases(cashbox),draft.currency.uppercase()).fold(BigDecimal.ZERO) { sum,value -> sum+value.toBigDecimal() }
-  require(available>=amount) { "رصيد الحركات الجديدة غير كافٍ؛ الرصيد التاريخي يحتاج مطابقة: "+balance.warning }
+  // Use historical funds when the automated source checks pass; otherwise
+  // preserve the existing operational-only safety limit.
+  val spendable=if(balance.verified) balance.total else available
+  require(spendable>=amount) {
+   "الرصيد المتاح "+spendable.toPlainString()+" غير كافٍ؛ "+balance.warning
+  }
   val movementId="purchase-cash-"+UUID.randomUUID()
   val now=System.currentTimeMillis()
   dao.insertCashMovement(RoomCashboxMovement(movementId,cashbox,draft.currency,
