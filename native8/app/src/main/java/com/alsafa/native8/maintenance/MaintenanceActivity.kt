@@ -39,6 +39,8 @@ class MaintenanceActivity:ComponentActivity() {
   var query by mutableStateOf("")
   var records by mutableStateOf<List<MaintenanceRepairEntity>>(emptyList())
   var selected by mutableStateOf<MaintenanceRepairEntity?>(null)
+  var statusChoice by mutableStateOf("قيد الصيانة")
+  var workDone by mutableStateOf("")
   var error by mutableStateOf("")
   var loading by mutableStateOf(false)
   var generation=0
@@ -79,7 +81,39 @@ class MaintenanceActivity:ComponentActivity() {
      val repair=selected
      if(repair!=null) {
       OutlinedButton(onClick={selected=null}) { Text("العودة إلى الصيانة") }
-      Column(Modifier.weight(1f).verticalScroll(rememberScrollState())) { MaintenanceDetail(repair) }
+      Column(Modifier.weight(1f).verticalScroll(rememberScrollState()),
+       verticalArrangement=Arrangement.spacedBy(12.dp)) {
+       MaintenanceDetail(repair)
+       if(repair.source_sha256=="native8" && repair.status!="تم التسليم") {
+        Text("تحديث حالة الصيانة",style=MaterialTheme.typography.titleMedium)
+        listOf("قيد الصيانة","بانتظار القطعة","جاهز للاستلام").forEach { option ->
+         Row {
+          RadioButton(selected=statusChoice==option,onClick={statusChoice=option})
+          Text(option)
+         }
+        }
+        OutlinedTextField(value=workDone,onValueChange={workDone=it},
+         label={Text("العمل المنجز")},modifier=Modifier.fillMaxWidth())
+        Button(onClick={
+         lifecycleScope.launch {
+          try {
+           val updated=withContext(Dispatchers.IO) {
+            val db=AppDatabase.get(applicationContext)
+            val latest=db.maintenanceDao().repair(repair.id) ?: error("سجل الصيانة غير موجود")
+            val raw=JSONObject(latest.original_json)
+            raw.put("status",statusChoice)
+            raw.put("workDone",workDone)
+            raw.put("statusUpdatedAt",System.currentTimeMillis())
+            db.maintenanceDao().updateRepairStatus(repair.id,statusChoice,raw.toString())
+            db.maintenanceDao().repair(repair.id)
+           }
+           selected=updated
+           refresh()
+          } catch(e:Exception) { error=e.message ?: "تعذر تحديث الحالة" }
+         }
+        }) { Text("حفظ تحديث الحالة") }
+       }
+      }
      } else {
       Text("السجلات المعروضة: "+records.size,style=MaterialTheme.typography.titleMedium)
       LazyColumn(modifier=Modifier.weight(1f),verticalArrangement=Arrangement.spacedBy(10.dp)) {
