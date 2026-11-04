@@ -20,3 +20,10 @@ Branch: native6-development. Changes restricted to native8/.
 - Partner withdrawals reduce dues, not net profit.
 - Unknown historical FX is not guessed.
 - Do not connect UI to partialNet or mark an audit complete because a repair was delivered.
+
+## Sales channel separation batch
+- Added SalesChannelProfit pure projector with explicit STORE/ONLINE invoice channel, store profit on invoice date and online profit on dated collections.
+- Added SalesChannelProfitTest for dates, partial receipts, duplicate receipt IDs, and over-collection.
+- **Critical integration gap:** RoomSalesEngine.recognize currently posts sale_profit_events for all payments on collection date. Do not sum those events together with SalesChannelProfit store profits or the same sale may be counted twice.
+- RoomSale currently lacks a verified source-mapped channel field. Before wiring the projector to production, map the channel from the original v3.9.359 sale records and add a non-destructive Room migration for new invoices. Existing records with unknown channel must block financial approval, not default to STORE.
+- Verify online discount allocation against main.js before calling these pure-model tests source parity. No actual Gradle/JUnit/Room run has occurred.
