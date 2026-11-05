@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.Intent
 import com.alsafa.native8.sales.SalesArchiveActivity
 import com.alsafa.native8.sales.FinancialReviewActivity
+import com.alsafa.native8.sales.FinancialEntryActivity
 import com.alsafa.native8.maintenance.MaintenancePartsActivity
 import com.alsafa.native8.maintenance.MaintenanceActivity
 import com.alsafa.native8.sales.SuppliersActivity
@@ -98,6 +99,14 @@ class MainActivity : Activity() {
             text = "الأرباح — مراجعة الحسابات"
             setOnClickListener { startActivity(Intent(this@MainActivity, FinancialReviewActivity::class.java)) }
         }, LinearLayout.LayoutParams(-1, 76))
+        root.addView(Button(this).apply {
+            text = "المصاريف"
+            setOnClickListener { startActivity(Intent(this@MainActivity, FinancialEntryActivity::class.java).putExtra("expense",true)) }
+        }, LinearLayout.LayoutParams(-1,76))
+        root.addView(Button(this).apply {
+            text = "الشركاء والسحوبات"
+            setOnClickListener { startActivity(Intent(this@MainActivity, FinancialEntryActivity::class.java).putExtra("expense",false)) }
+        }, LinearLayout.LayoutParams(-1,76))
         root.addView(Button(this).apply {
             text = "المشتريات"
             setOnClickListener { startActivity(Intent(this@MainActivity, PurchasesActivity::class.java)) }
