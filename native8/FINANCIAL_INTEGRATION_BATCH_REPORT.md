@@ -41,3 +41,10 @@ Branch: native6-development. Changes restricted to native8/.
 - RoomSalesEngine.save verifies the channel and stores it on RoomSale inside the same transaction as invoice, stock, payments and receivables.
 - SaleDraftChannelTest covers default and copy-with-payment preservation.
 - **Not yet complete**: RoomSalesEngine currently only writes receipt profit events for ONLINE; STORE invoice-date profit posting has not been implemented, so unified reporting remains incomplete. Existing unclassified Room invoices remain NULL; do not automatically classify without original source. No Gradle or device tests run.
+
+## Store invoice-date profit posting batch (2026-11-05)
+- Added StoreSaleProfitDao and registered in AppDatabase v18; store profit has unique sale_id primary key.
+- RoomSalesEngine.save inserts store invoice profit once, in the same Room transaction as invoice, stock, cash and debt. Online still posts collection-date events only.
+- UnifiedFinancialPeriodRepository now includes store profits in partialNet and refuses to read when StoreSaleProfitDao was not supplied; complete remains false and approvedNet remains blocked.
+- **SAFETY BLOCK / NOT COMPLETE**: STORE returns, cancellation and unpaid corrections are currently rejected until a proper source-aligned store profit reversal and adjustment journal is implemented. This is deliberately safer than silently overstating profit. ONLINE return/cancel logic remains unchanged.
+- **IMPORTANT**: legacy sale archives, repair receipt events and full source-aligned tax/discount/FX reconciliation have not yet been integrated into the unified period; existing historical sales and older Room invoices must be audited before approval. No Gradle, Room migration or device tests were run.
