@@ -13,9 +13,9 @@ class MaintenanceFinancialCoverage(private val dao:MaintenanceDao) {
   val delivered:Int,
   val imported:Int,
   val newRepairs:Int,
-  val verifiedCostAndReceipt:Int,
+  val costAndReceiptEvidenceCount:Int,
   val unresolvedIds:List<String>,
-  val verifiedGrossProfitUsd:BigDecimal
+  val candidateMarginBeforeOtherCostsUsd:BigDecimal
  )
  suspend fun inspect():Result {
   val rows=dao.allDelivered()
