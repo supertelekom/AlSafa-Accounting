@@ -14,11 +14,11 @@ class UnifiedFinancialPeriodRepository(
  data class Result(
   val saleProfit:BigDecimal,
   val saleReversals:BigDecimal,
-  val storeSaleProfit:BigDecimal=BigDecimal.ZERO,
   val operatingExpenses:BigDecimal,
   val withdrawals:Map<String,BigDecimal>,
   val partialNet:BigDecimal,
-  val complete:Boolean=false
+  val complete:Boolean=false,
+  val storeSaleProfit:BigDecimal=BigDecimal.ZERO
  ) {
   fun approvedNet():BigDecimal {
    check(complete) { "Incomplete financial sources: do not publish profit" }
