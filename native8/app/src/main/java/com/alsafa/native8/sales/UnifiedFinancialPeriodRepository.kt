@@ -9,7 +9,8 @@ class UnifiedFinancialPeriodRepository(
  private val sales:SalesFinancialAuditDao,
  private val expenses:UnifiedExpensePartnerReadRepository,
  private val businessZone:ZoneId,
- private val store:StoreSaleProfitDao?=null
+ private val store:StoreSaleProfitDao?=null,
+ private val historical:LegacyHistoricalProfitProjection?=null
 ) {
  data class Result(
   val saleProfit:BigDecimal,
@@ -18,7 +19,10 @@ class UnifiedFinancialPeriodRepository(
   val withdrawals:Map<String,BigDecimal>,
   val partialNet:BigDecimal,
   val complete:Boolean=false,
-  val storeSaleProfit:BigDecimal=BigDecimal.ZERO
+  val storeSaleProfit:BigDecimal=BigDecimal.ZERO,
+  val historicalOnlineProfit:BigDecimal=BigDecimal.ZERO,
+  val historicalStoreProfit:BigDecimal=BigDecimal.ZERO,
+  val unresolvedHistorical:List<String> = emptyList()
  ) {
   fun approvedNet():BigDecimal {
    check(complete) { "Incomplete financial sources: do not publish profit" }
@@ -55,6 +59,12 @@ class UnifiedFinancialPeriodRepository(
    partner.id to history.withdrawals.filter { it.partnerId==partner.id }
     .fold(BigDecimal.ZERO) { acc,row -> acc+row.money.usd() }
   }
-  return Result(profits,reversals,storeSaleProfit=storeProfit,operatingExpenses=expense,withdrawals=withdrawals,partialNet=profits+storeProfit+storeAdjustments-reversals-expense)
+  val old=historical?.read(from,to)
+  // Do not sum staged historical profits into operational totals until source overlap is reconciled.
+  return Result(profits,reversals,storeSaleProfit=storeProfit,operatingExpenses=expense,
+   historicalOnlineProfit=old?.onlineProfitUsd ?: BigDecimal.ZERO,
+   historicalStoreProfit=old?.storeProfitUsd ?: BigDecimal.ZERO,
+   unresolvedHistorical=old?.unresolved ?: listOf("Historical projection not connected"),
+   withdrawals=withdrawals,partialNet=profits+storeProfit+storeAdjustments-reversals-expense)
  }
 }
