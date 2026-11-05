@@ -7,6 +7,11 @@ import androidx.room.Query
 
 @Dao
 interface SalesFinancialAuditDao {
+ @Query("SELECT e.* FROM sale_profit_events e INNER JOIN sales s ON s.id=e.sale_id WHERE s.channel='online' AND e.collected_at>=:fromMillis AND e.collected_at<:untilExclusive ORDER BY e.collected_at,e.payment_id")
+ suspend fun verifiedOnlineProfitsInPeriod(fromMillis:Long,untilExclusive:Long):List<SaleProfitEvent>
+ @Query("SELECT r.* FROM sale_profit_reversals r INNER JOIN sales s ON s.id=r.sale_id WHERE s.channel='online' AND r.reversed_at>=:fromMillis AND r.reversed_at<:untilExclusive ORDER BY r.reversed_at,r.id")
+ suspend fun verifiedOnlineReversalsInPeriod(fromMillis:Long,untilExclusive:Long):List<SaleProfitReversal>
+
  @Query("SELECT COUNT(*) FROM sale_profit_events e LEFT JOIN sales s ON s.id=e.sale_id WHERE s.id IS NULL OR s.channel IS NULL OR s.channel!='online'")
  suspend fun nonOnlineProfitEventCount():Int
 
