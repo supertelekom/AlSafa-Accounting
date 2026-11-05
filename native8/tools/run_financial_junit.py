@@ -11,7 +11,7 @@ import tempfile
 
 root = Path(__file__).resolve().parents[1]
 deps = Path(sys.argv[1]).resolve()
-classpath = os.pathsep.join(str(p) for p in deps.glob('*.jar'))
+classpath = os.pathsep.join(str(p) for p in sorted(deps.glob('*.jar')) if p.name != 'android-all.jar')
 main = root / 'app/src/main/java/com/alsafa/native8/sales'
 test = root / 'app/src/test/java/com/alsafa/native8/sales'
 names = ['LegacyHistoricalSalesProfitReader', 'LegacySaleEntity', 'LegacySaleChannel',
@@ -19,12 +19,18 @@ names = ['LegacyHistoricalSalesProfitReader', 'LegacySaleEntity', 'LegacySaleCha
          'LegacyFinancialRules', 'CumulativePartnerProfit', 'VerifiedFinancialConsolidation',
          'VerifiedFinancialEventAdapters', 'LegacyMaintenanceProfitReader', 'LegacyExpenseWithdrawalReader', 'NativeMaintenanceProfitReader', 'PartnerFinancialStatement']
 tests = [n + 'Test' for n in names if (test / (n + 'Test.kt')).exists()]
-tests += ['LegacyFinancialSourceParityTest', 'OriginalFinancialStatementParityTest', 'MaintenanceReturnRulesTest']
+tests += ['LegacyFinancialSourceParityTest', 'OriginalFinancialStatementParityTest', 'MaintenanceReturnRulesTest', 'UnifiedFinancialIntegrationTest']
+integration = ['HistoricalFinancialSource', 'LegacyHistoricalProfitProjection', 'UnifiedExpensePartnerReadRepository',
+               'UnifiedFinancialPeriodRepository', 'NativeMaintenanceProfitRepository', 'FinancialPeriodGuard',
+               'SalesFinancialAuditDao', 'SalesFinancialAuditEntities', 'SalesRoomDaos', 'SalesRoomEntities',
+               'StoreSaleProfitDao', 'StoreSaleProfitEvent', 'StoreProfitAdjustment',
+               'OperationalExpensePartnerDao', 'OperationalExpensePartnerEntities']
 with tempfile.TemporaryDirectory(prefix='alsafa-financial-junit-') as output:
     subprocess.run(['java', '-cp', classpath, 'org.jetbrains.kotlin.cli.jvm.K2JVMCompiler',
                     '-no-stdlib', '-no-reflect', '-classpath', classpath, '-d', output]
                    + [str(main / (n + '.kt')) for n in names]
-                   + [str(main.parent / 'maintenance/MaintenanceReturnRules.kt')]
+                   + [str(main / (n + '.kt')) for n in integration]
+                   + [str(main.parent / ('maintenance/' + n + '.kt')) for n in ['MaintenanceReturnRules', 'MaintenanceDao', 'MaintenanceEntities']]
                    + [str(test / (n + '.kt')) for n in tests], check=True)
     subprocess.run(['java', '-cp', os.pathsep.join([classpath, output, str(root / 'app/src/test/resources')]),
                     'org.junit.runner.JUnitCore']

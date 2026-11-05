@@ -10,14 +10,26 @@ import org.json.JSONObject
  * stock, vault or profit movements. It is NOT a final normalized ledger.
  * Consumers must not invent missing fields or recompute financial balances.
  */
-class LegacyReadRepository(private val database: LegacyStagingDatabase) {
+class LegacyReadRepository(private val database: LegacyStagingDatabase): com.alsafa.native8.sales.HistoricalFinancialSource {
     data class LegacyRow(val id: String?, val ordinal: Int, val fields: JSONObject)
     data class Page(val section: String, val rows: List<LegacyRow>, val total: Int)
 
-    fun latestRunId(): Long? =
+    override fun latestRunId(): Long? =
         database.readableDatabase.rawQuery(
             "SELECT id FROM import_runs ORDER BY id DESC LIMIT 1", null
         ).use { c -> if (c.moveToFirst()) c.getLong(0) else null }
+
+    override fun financialRows(run:Long,section:String):List<JSONObject> {
+        val result=mutableListOf<JSONObject>()
+        var offset=0
+        while(true) {
+            val current=page(run,section,offset,500)
+            result.addAll(current.rows.map { it.fields })
+            offset+=current.rows.size
+            if(offset>=current.total) return result
+            check(current.rows.isNotEmpty()) { "Incomplete legacy section $section" }
+        }
+    }
 
     fun page(runId: Long, section: String, offset: Int = 0, limit: Int = 100): Page {
         require(section.isNotBlank())

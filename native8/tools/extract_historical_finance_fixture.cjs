@@ -41,7 +41,7 @@ const expected=vm.runInContext(`(()=>{
 function pick(row,keys){return Object.fromEntries(keys.filter(k=>Object.hasOwn(row,k)).map(k=>[k,row[k]]));}
 const common=['id','date','time','currency','rateSnapshot'];
 const fixture={sourceSha256:require('crypto').createHash('sha256').update(source).digest('hex'),
- repairs:data.repairs.map(r=>({...pick(r,[...common,'price','laborPrice','taxRate','tax','cost','received']),
+ repairs:data.repairs.map(r=>({...pick(r,[...common,'price','laborPrice','taxRate','tax','cost','received','quickServiceName','isSimplifiedQuick']),
  usedParts:(r.usedParts||[]).map(p=>pick(p,['qty','price','cost']))})),
  payments:data.payments.filter(p=>p.referenceType==='repair').map(p=>pick(p,[...common,'referenceType','referenceId','amount','paymentType'])),
  returns:data.returns.filter(p=>p.referenceType==='repair').map(p=>pick(p,[...common,'referenceType','referenceId','refundAmount','extraCollected','returnedCost','replacementCost','costRecognitionBefore','costRecognitionAfter'])),

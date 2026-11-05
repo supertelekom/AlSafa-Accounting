@@ -467,3 +467,84 @@ The commit containing this section records this batch; its parent is the baselin
 - Modified: `app/src/main/java/com/alsafa/native8/sales/NativeMaintenanceProfitRepository.kt`
 - Modified: `app/src/main/java/com/alsafa/native8/sales/UnifiedFinancialPeriodRepository.kt`
 - Modified: `tools/run_financial_junit.py`
+
+
+## 2026-11-06 — Final financial-source union and zero-cost problem maintenance
+
+Baseline fetched and verified: `8385e7086e4c0354cbf01272c4219b25d8f579c8`.
+Scope: financial union only, inside `native8/`; no PDF/printing work or layout redesign.
+
+### Original-source finding
+- `assets/main.js` registers `manual-problem` / `صيانة مشكلة` with manual price and
+  no linked part. `saveFatherRepair` starts cost at zero; a linked part or explicit
+  legacy service cost may supply a cost. The stored repair has explicit `cost`,
+  `manualCost`, `partsCost`, `usedParts`, receipt, currency and rate snapshot.
+- Original backup contains **98 repairs named صيانة مشكلة**, all with explicit
+  zero cost and no parts; **125 repairs overall** have explicit zero cost.
+- Existing financial readers already accept explicit zero cost correctly. No cost
+  was invented, no existing cost erased, and no classification by free-text note
+  was added. A missing cost remains different from an explicit zero.
+- The source-derived finance fixture now retains the original quick-service label
+  and simplified flag, enabling a regression check of those exact 98 records.
+
+### Connected production changes
+- Original sale and repair invoices, payments, returns, expenses and withdrawals
+  feed the same production aggregate. Shared paginated source reading now lives
+  in the existing `LegacyReadRepository`, implementing `HistoricalFinancialSource`.
+  Both financial readers consume it directly; no alternative accounting engine.
+- The aggregate retains import-run identity and rejects mixed restores between
+  expense/invoice reads or between period/cumulative calculations. Partner due
+  cannot be published from mismatched snapshots.
+- Existing partner-profit result text now shows archived/new store sales, archived/new
+  online sales, archived/new maintenance, return/settlement effect, operating expenses,
+  period net and cumulative net, followed by each partner's earned share, withdrawals
+  and remaining cumulative due. All amounts use the same aggregate as the final net.
+- Withdrawals remain outside operating net; shares remain father 40%, Abdul-Karim 35%,
+  Yazan 25%; external partners are not added. Historical expenses are subtracted once.
+- No cash/stock posting during reads, no invoice re-creation, no source-value rewriting,
+  no migration/schema change and no changes outside `native8/`.
+
+### Executed checks
+- **76 standalone JVM/JUnit tests passed**. Seven new integration tests execute the
+  actual `UnifiedFinancialPeriodRepository`, historical projection, native maintenance
+  repository, expense/withdrawal reader and partner statement. Only source/DAO inputs
+  are in-memory fixtures; this is not Android Room execution.
+- Original archived total through 2026-10-26 matches **3297.83336318795237672 USD**;
+  original cumulative partner due matches the previously documented source oracle.
+  These are backup figures, not a claim about current tablet balances.
+- A clearly synthetic new-data set is merged with original history: store/online sales,
+  zero-cost maintenance, sales/maintenance returns, expense and partner withdrawals.
+  Period net, cumulative net, partner due and displayed component sum agree. Repeated
+  reads are identical and the test DAO rejects unexpected mutation/access methods.
+- All 98 original problem-maintenance records retain zero recognized cost; their
+  receipt profit equals receipt revenue. Changing notes/work text changes no result.
+  Removing the cost field triggers unresolved evidence rather than assuming zero.
+- Separate checks cover return-date recognition, overlapping expense IDs, uncovered
+  invoices, missing native cost, and two restore-snapshot race scenarios.
+- An initial assertion compared BigDecimal scale rather than numeric equality;
+  corrected the test comparison. Final run has no failures.
+- Actual partner screen, staging source adapter and financial repositories typechecked
+  against Android API classes and Room annotations. AppDatabase/transaction facades
+  were compile boundaries only. Existing deprecated inset API warnings remain.
+- `git diff --check` passed.
+
+### Remaining acceptance
+- Device experience, full Gradle/APK build, Room instrumentation/migrations, restore
+  and current-tablet numerical acceptance are intentionally deferred per user request.
+- Existing native records with absent/unreliable cost or FX remain quarantined. The
+  original backup fixture has no unresolved financial evidence in the passing union.
+- Receipt PDF/thermal/WhatsApp work from the earlier remaining list is outside this
+  financial-only batch. No claim that the entire app or live financial data is validated.
+
+### Files in this batch
+- Added: `app/src/main/java/com/alsafa/native8/sales/HistoricalFinancialSource.kt`
+- Added: `app/src/test/java/com/alsafa/native8/sales/UnifiedFinancialIntegrationTest.kt`
+- Modified: `FINANCIAL_INTEGRATION_BATCH_REPORT.md`
+- Modified: `app/src/main/java/com/alsafa/native8/data/migration/LegacyReadRepository.kt`
+- Modified: `app/src/main/java/com/alsafa/native8/sales/LegacyHistoricalProfitProjection.kt`
+- Modified: `app/src/main/java/com/alsafa/native8/sales/PartnerProfitsActivity.kt`
+- Modified: `app/src/main/java/com/alsafa/native8/sales/UnifiedExpensePartnerReadRepository.kt`
+- Modified: `app/src/main/java/com/alsafa/native8/sales/UnifiedFinancialPeriodRepository.kt`
+- Modified: `app/src/test/resources/historical-finance-v359.json`
+- Modified: `tools/extract_historical_finance_fixture.cjs`
+- Modified: `tools/run_financial_junit.py`

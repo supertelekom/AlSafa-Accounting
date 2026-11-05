@@ -19,6 +19,8 @@
       "tax": 0,
       "cost": 15,
       "received": 80,
+      "quickServiceName": "بطارية ماكسل 377",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -45,6 +47,8 @@
       "tax": 0,
       "cost": 0,
       "received": 10,
+      "quickServiceName": "صيانة مشكلة",
+      "isSimplifiedQuick": true,
       "usedParts": []
     },
     {
@@ -65,6 +69,8 @@
       "tax": 0,
       "cost": 0,
       "received": 150,
+      "quickServiceName": "صيانة مشكلة",
+      "isSimplifiedQuick": true,
       "usedParts": []
     },
     {
@@ -85,6 +91,8 @@
       "tax": 0,
       "cost": 0,
       "received": 6,
+      "quickServiceName": "حزام جلد",
+      "isSimplifiedQuick": true,
       "usedParts": []
     },
     {
@@ -105,6 +113,8 @@
       "tax": 0,
       "cost": 0,
       "received": 20,
+      "quickServiceName": "صيانة مشكلة",
+      "isSimplifiedQuick": true,
       "usedParts": []
     },
     {
@@ -125,6 +135,8 @@
       "tax": 0,
       "cost": 9.940000000000001,
       "received": 100,
+      "quickServiceName": "حبسة كستك",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -151,6 +163,8 @@
       "tax": 0,
       "cost": 0,
       "received": 30,
+      "quickServiceName": "صيانة مشكلة",
+      "isSimplifiedQuick": true,
       "usedParts": []
     },
     {
@@ -171,6 +185,8 @@
       "tax": 0,
       "cost": 0,
       "received": 300,
+      "quickServiceName": "حزام جلد",
+      "isSimplifiedQuick": true,
       "usedParts": []
     },
     {
@@ -191,6 +207,8 @@
       "tax": 0,
       "cost": 0,
       "received": 100,
+      "quickServiceName": "صيانة مشكلة",
+      "isSimplifiedQuick": true,
       "usedParts": []
     },
     {
@@ -211,6 +229,8 @@
       "tax": 0,
       "cost": 41.4,
       "received": 400,
+      "quickServiceName": "بطارية ماكسل 377",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -237,6 +257,8 @@
       "tax": 0,
       "cost": 4.970000000000001,
       "received": 50,
+      "quickServiceName": "بطارية صيني 2016",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -263,6 +285,8 @@
       "tax": 0,
       "cost": 14.91,
       "received": 100,
+      "quickServiceName": "بطارية ماكسل 377",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -289,6 +313,8 @@
       "tax": 0,
       "cost": 0.25,
       "received": 2.4,
+      "quickServiceName": "بطارية نوراتا 1620",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -335,6 +361,8 @@
       "tax": 0,
       "cost": 4.970000000000001,
       "received": 50,
+      "quickServiceName": "بطارية صيني 377",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -361,6 +389,8 @@
       "tax": 0,
       "cost": 14.91,
       "received": 50,
+      "quickServiceName": "بطارية ماكسل 377",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -387,6 +417,8 @@
       "tax": 0,
       "cost": 4.970000000000001,
       "received": 70,
+      "quickServiceName": "بطارية صيني 2032",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -413,6 +445,8 @@
       "tax": 0,
       "cost": 0.25,
       "received": 1.6,
+      "quickServiceName": "بطارية ماكسل 2016",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -439,6 +473,8 @@
       "tax": 0,
       "cost": 41.4,
       "received": 300,
+      "quickServiceName": "بطارية ماكسل 377",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -465,6 +501,8 @@
       "tax": 0,
       "cost": 9.940000000000001,
       "received": 100,
+      "quickServiceName": "حبسة كستك",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -491,6 +529,8 @@
       "tax": 0,
       "cost": 0,
       "received": 50,
+      "quickServiceName": "صيانة مشكلة",
+      "isSimplifiedQuick": true,
       "usedParts": []
     },
     {
@@ -511,6 +551,8 @@
       "tax": 0,
       "cost": 0,
       "received": 50,
+      "quickServiceName": "صيانة مشكلة",
+      "isSimplifiedQuick": true,
       "usedParts": []
     },
     {
@@ -531,6 +573,8 @@
       "tax": 0,
       "cost": 9.940000000000001,
       "received": 80,
+      "quickServiceName": "ماكينة عادية",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -557,6 +601,8 @@
       "tax": 0,
       "cost": 12.425,
       "received": 90,
+      "quickServiceName": "بطارية ماكسل 2016",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -583,6 +629,8 @@
       "tax": 0,
       "cost": 12.425,
       "received": 90,
+      "quickServiceName": "بطارية ماكسل 2016",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -609,6 +657,8 @@
       "tax": 0,
       "cost": 12.425,
       "received": 70,
+      "quickServiceName": "بطارية نوراتا 2032",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -635,6 +685,8 @@
       "tax": 0,
       "cost": 37.275000000000006,
       "received": 150,
+      "quickServiceName": "ظرف كاسيو",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -661,6 +713,8 @@
       "tax": 0,
       "cost": 4.970000000000001,
       "received": 350,
+      "quickServiceName": "بلور مدور أصلي",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -687,6 +741,8 @@
       "tax": 0,
       "cost": 0,
       "received": 10,
+      "quickServiceName": "صيانة مشكلة",
+      "isSimplifiedQuick": true,
       "usedParts": []
     },
     {
@@ -707,6 +763,8 @@
       "tax": 0,
       "cost": 14.91,
       "received": 100,
+      "quickServiceName": "بطارية ماكسل 377",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -733,6 +791,8 @@
       "tax": 0,
       "cost": 9.940000000000001,
       "received": 140,
+      "quickServiceName": "ماكينة عادية",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -759,6 +819,8 @@
       "tax": 0,
       "cost": 0,
       "received": 10,
+      "quickServiceName": "صيانة مشكلة",
+      "isSimplifiedQuick": true,
       "usedParts": []
     },
     {
@@ -779,6 +841,8 @@
       "tax": 0,
       "cost": 0,
       "received": 10,
+      "quickServiceName": "صيانة مشكلة",
+      "isSimplifiedQuick": true,
       "usedParts": []
     },
     {
@@ -799,6 +863,8 @@
       "tax": 0,
       "cost": 0,
       "received": 40,
+      "quickServiceName": "صيانة مشكلة",
+      "isSimplifiedQuick": true,
       "usedParts": []
     },
     {
@@ -819,6 +885,8 @@
       "tax": 0,
       "cost": 0,
       "received": 50,
+      "quickServiceName": "صيانة مشكلة",
+      "isSimplifiedQuick": true,
       "usedParts": []
     },
     {
@@ -839,6 +907,8 @@
       "tax": 0,
       "cost": 0.3,
       "received": 2,
+      "quickServiceName": "بطارية ماكسل 377",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -865,6 +935,8 @@
       "tax": 0,
       "cost": 0.3,
       "received": 2,
+      "quickServiceName": "بطارية ماكسل 377",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -891,6 +963,8 @@
       "tax": 0,
       "cost": 55.2,
       "received": 450,
+      "quickServiceName": "بطارية سيكيزن 371",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -917,6 +991,8 @@
       "tax": 0,
       "cost": 55.2,
       "received": 450,
+      "quickServiceName": "بطارية سيكيزن 371",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -969,6 +1045,8 @@
       "tax": 0,
       "cost": 0,
       "received": 50,
+      "quickServiceName": "صيانة مشكلة",
+      "isSimplifiedQuick": true,
       "usedParts": []
     },
     {
@@ -989,6 +1067,8 @@
       "tax": 0,
       "cost": 0,
       "received": 5,
+      "quickServiceName": "حزام جلد",
+      "isSimplifiedQuick": true,
       "usedParts": []
     },
     {
@@ -1009,6 +1089,8 @@
       "tax": 0,
       "cost": 34.5,
       "received": 360,
+      "quickServiceName": "بطارية ماكسل 2032",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -1035,6 +1117,8 @@
       "tax": 0,
       "cost": 0,
       "received": 510,
+      "quickServiceName": "صيانة مشكلة",
+      "isSimplifiedQuick": true,
       "usedParts": []
     },
     {
@@ -1055,6 +1139,8 @@
       "tax": 0,
       "cost": 34.5,
       "received": 450,
+      "quickServiceName": "بطاريات ماكسل 2025",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -1081,6 +1167,8 @@
       "tax": 0,
       "cost": 4.970000000000001,
       "received": 14,
+      "quickServiceName": "بطارية صيني جي 13",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -1107,6 +1195,8 @@
       "tax": 0,
       "cost": 0,
       "received": 20,
+      "quickServiceName": "صيانة مشكلة",
+      "isSimplifiedQuick": true,
       "usedParts": []
     },
     {
@@ -1127,6 +1217,8 @@
       "tax": 0,
       "cost": 24.85,
       "received": 100,
+      "quickServiceName": "ماكينة حيط",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -1153,6 +1245,8 @@
       "tax": 0,
       "cost": 0,
       "received": 30,
+      "quickServiceName": "صيانة مشكلة",
+      "isSimplifiedQuick": true,
       "usedParts": []
     },
     {
@@ -1173,6 +1267,8 @@
       "tax": 0,
       "cost": 14.91,
       "received": 120,
+      "quickServiceName": "بطارية ماكسل 377",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -1199,6 +1295,8 @@
       "tax": 0,
       "cost": 0,
       "received": 10,
+      "quickServiceName": "صيانة مشكلة",
+      "isSimplifiedQuick": true,
       "usedParts": []
     },
     {
@@ -1219,6 +1317,8 @@
       "tax": 0,
       "cost": 14.91,
       "received": 80,
+      "quickServiceName": "بطارية ماكسل 377",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -1245,6 +1345,8 @@
       "tax": 0,
       "cost": 12.425,
       "received": 150,
+      "quickServiceName": "بطاريات ماكسل 2025",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -1271,6 +1373,8 @@
       "tax": 0,
       "cost": 0.3,
       "received": 6,
+      "quickServiceName": "بلور قص",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -1297,6 +1401,8 @@
       "tax": 0,
       "cost": 0,
       "received": 500,
+      "quickServiceName": "حزام جلد",
+      "isSimplifiedQuick": true,
       "usedParts": []
     },
     {
@@ -1317,6 +1423,8 @@
       "tax": 0,
       "cost": 41.4,
       "received": 210,
+      "quickServiceName": "بطارية ماكسل 377",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -1343,6 +1451,8 @@
       "tax": 0,
       "cost": 4.970000000000001,
       "received": 70,
+      "quickServiceName": "بطارية صيني جي 10",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -1369,6 +1479,8 @@
       "tax": 0,
       "cost": 0,
       "received": 0.4,
+      "quickServiceName": "صيانة مشكلة",
+      "isSimplifiedQuick": true,
       "usedParts": []
     },
     {
@@ -1389,6 +1501,8 @@
       "tax": 0,
       "cost": 0,
       "received": 100,
+      "quickServiceName": "صيانة مشكلة",
+      "isSimplifiedQuick": true,
       "usedParts": []
     },
     {
@@ -1440,6 +1554,8 @@
       "tax": 0,
       "cost": 0,
       "received": 10,
+      "quickServiceName": "صيانة مشكلة",
+      "isSimplifiedQuick": true,
       "usedParts": []
     },
     {
@@ -1460,6 +1576,8 @@
       "tax": 0,
       "cost": 19.880000000000003,
       "received": 300,
+      "quickServiceName": "ماكينة يومي شهري",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -1486,6 +1604,8 @@
       "tax": 0,
       "cost": 0,
       "received": 20,
+      "quickServiceName": "صيانة مشكلة",
+      "isSimplifiedQuick": true,
       "usedParts": []
     },
     {
@@ -1506,6 +1626,8 @@
       "tax": 0,
       "cost": 0.4,
       "received": 3,
+      "quickServiceName": "بطارية سيكيزن 321",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -1552,6 +1674,8 @@
       "tax": 0,
       "cost": 0,
       "received": 70,
+      "quickServiceName": "صيانة مشكلة",
+      "isSimplifiedQuick": true,
       "usedParts": []
     },
     {
@@ -1572,6 +1696,8 @@
       "tax": 0,
       "cost": 0,
       "received": 30,
+      "quickServiceName": "صيانة مشكلة",
+      "isSimplifiedQuick": true,
       "usedParts": []
     },
     {
@@ -1592,6 +1718,8 @@
       "tax": 0,
       "cost": 4.970000000000001,
       "received": 50,
+      "quickServiceName": "بطارية صيني 377",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -1618,6 +1746,8 @@
       "tax": 0,
       "cost": 0,
       "received": 20,
+      "quickServiceName": "صيانة مشكلة",
+      "isSimplifiedQuick": true,
       "usedParts": []
     },
     {
@@ -1638,6 +1768,8 @@
       "tax": 0,
       "cost": 41.4,
       "received": 348,
+      "quickServiceName": "بطارية ماكسل 377",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -1664,6 +1796,8 @@
       "tax": 0,
       "cost": 12.425,
       "received": 50,
+      "quickServiceName": "بطارية نوراتا 2025",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -1690,6 +1824,8 @@
       "tax": 0,
       "cost": 0,
       "received": 10,
+      "quickServiceName": "صيانة مشكلة",
+      "isSimplifiedQuick": true,
       "usedParts": []
     },
     {
@@ -1730,6 +1866,8 @@
       "tax": 0,
       "cost": 0,
       "received": 120,
+      "quickServiceName": "صيانة مشكلة",
+      "isSimplifiedQuick": true,
       "usedParts": []
     },
     {
@@ -1770,6 +1908,8 @@
       "tax": 0,
       "cost": 0,
       "received": 20,
+      "quickServiceName": "صيانة مشكلة",
+      "isSimplifiedQuick": true,
       "usedParts": []
     },
     {
@@ -1790,6 +1930,8 @@
       "tax": 0,
       "cost": 0,
       "received": 100,
+      "quickServiceName": "صيانة مشكلة",
+      "isSimplifiedQuick": true,
       "usedParts": []
     },
     {
@@ -1810,6 +1952,8 @@
       "tax": 0,
       "cost": 0,
       "received": 10,
+      "quickServiceName": "صيانة مشكلة",
+      "isSimplifiedQuick": true,
       "usedParts": []
     },
     {
@@ -1830,6 +1974,8 @@
       "tax": 0,
       "cost": 19.880000000000003,
       "received": 120,
+      "quickServiceName": "بطارية سيكيزن 364",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -1856,6 +2002,8 @@
       "tax": 0,
       "cost": 9.940000000000001,
       "received": 100,
+      "quickServiceName": "حبسة كستك",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -1882,6 +2030,8 @@
       "tax": 0,
       "cost": 4.970000000000001,
       "received": 50,
+      "quickServiceName": "بطارية صيني 377",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -1908,6 +2058,8 @@
       "tax": 0,
       "cost": 4.970000000000001,
       "received": 150,
+      "quickServiceName": "بلور مدور أصلي",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -1934,6 +2086,8 @@
       "tax": 0,
       "cost": 9.940000000000001,
       "received": 100,
+      "quickServiceName": "قفل كبس قلاب",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -1960,6 +2114,8 @@
       "tax": 0,
       "cost": 4.970000000000001,
       "received": 140,
+      "quickServiceName": "بلور مدور أصلي",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -2006,6 +2162,8 @@
       "tax": 0,
       "cost": 0,
       "received": 50,
+      "quickServiceName": "صيانة مشكلة",
+      "isSimplifiedQuick": true,
       "usedParts": []
     },
     {
@@ -2026,6 +2184,8 @@
       "tax": 0,
       "cost": 0,
       "received": 100,
+      "quickServiceName": "صيانة مشكلة",
+      "isSimplifiedQuick": true,
       "usedParts": []
     },
     {
@@ -2046,6 +2206,8 @@
       "tax": 0,
       "cost": 4.970000000000001,
       "received": 70,
+      "quickServiceName": "بلور مدور أصلي",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -2072,6 +2234,8 @@
       "tax": 0,
       "cost": 0,
       "received": 40,
+      "quickServiceName": "صيانة مشكلة",
+      "isSimplifiedQuick": true,
       "usedParts": []
     },
     {
@@ -2092,6 +2256,8 @@
       "tax": 0,
       "cost": 0,
       "received": 150,
+      "quickServiceName": "صيانة مشكلة",
+      "isSimplifiedQuick": true,
       "usedParts": []
     },
     {
@@ -2112,6 +2278,8 @@
       "tax": 0,
       "cost": 12.425,
       "received": 60,
+      "quickServiceName": "بطارية ماكسل 2016",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -2138,6 +2306,8 @@
       "tax": 0,
       "cost": 151.8,
       "received": 360,
+      "quickServiceName": "بطارية سماعة جي 13",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -2164,6 +2334,8 @@
       "tax": 0,
       "cost": 151.8,
       "received": 360,
+      "quickServiceName": "بطارية سماعة جي 13",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -2190,6 +2362,8 @@
       "tax": 0,
       "cost": 12.425,
       "received": 110,
+      "quickServiceName": "بطاريات ماكسل 2025",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -2216,6 +2390,8 @@
       "tax": 0,
       "cost": 0,
       "received": 600,
+      "quickServiceName": "صيانة مشكلة",
+      "isSimplifiedQuick": true,
       "usedParts": []
     },
     {
@@ -2236,6 +2412,8 @@
       "tax": 0,
       "cost": 0,
       "received": 200,
+      "quickServiceName": "حزام جلد",
+      "isSimplifiedQuick": true,
       "usedParts": []
     },
     {
@@ -2256,6 +2434,8 @@
       "tax": 0,
       "cost": 4.970000000000001,
       "received": 100,
+      "quickServiceName": "بلور مدور أصلي",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -2282,6 +2462,8 @@
       "tax": 0,
       "cost": 12.425,
       "received": 100,
+      "quickServiceName": "بطارية سماعة 312",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -2308,6 +2490,8 @@
       "tax": 0,
       "cost": 0,
       "received": 10,
+      "quickServiceName": "صيانة مشكلة",
+      "isSimplifiedQuick": true,
       "usedParts": []
     },
     {
@@ -2328,6 +2512,8 @@
       "tax": 0,
       "cost": 12.425,
       "received": 70,
+      "quickServiceName": "بطارية نوراتا 2032",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -2354,6 +2540,8 @@
       "tax": 0,
       "cost": 0.25,
       "received": 2,
+      "quickServiceName": "بطارية ماكسل 2016",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -2380,6 +2568,8 @@
       "tax": 0,
       "cost": 0.25,
       "received": 2,
+      "quickServiceName": "بطارية ماكسل 2016",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -2406,6 +2596,8 @@
       "tax": 0,
       "cost": 9.940000000000001,
       "received": 100,
+      "quickServiceName": "حبسة كستك",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -2432,6 +2624,8 @@
       "tax": 0,
       "cost": 14.91,
       "received": 100,
+      "quickServiceName": "بطارية سيكيزن 377",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -2458,6 +2652,8 @@
       "tax": 0,
       "cost": 0.25,
       "received": 2,
+      "quickServiceName": "بطاريات ماكسل 2025",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -2484,6 +2680,8 @@
       "tax": 0,
       "cost": 27.6,
       "received": 870,
+      "quickServiceName": "ماكينة عادية",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -2510,6 +2708,8 @@
       "tax": 0,
       "cost": 14.91,
       "received": 100,
+      "quickServiceName": "بطارية ماكسل 377",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -2536,6 +2736,8 @@
       "tax": 0,
       "cost": 0,
       "received": 20,
+      "quickServiceName": "صيانة مشكلة",
+      "isSimplifiedQuick": true,
       "usedParts": []
     },
     {
@@ -2556,6 +2758,8 @@
       "tax": 0,
       "cost": 19.880000000000003,
       "received": 200,
+      "quickServiceName": "بطارية سيكيزن 371",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -2582,6 +2786,8 @@
       "tax": 0,
       "cost": 4.970000000000001,
       "received": 60,
+      "quickServiceName": "بطارية صيني 2016",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -2608,6 +2814,8 @@
       "tax": 0,
       "cost": 0.2,
       "received": 0,
+      "quickServiceName": "حبسة كستك",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -2634,6 +2842,8 @@
       "tax": 0,
       "cost": 0,
       "received": 10,
+      "quickServiceName": "صيانة مشكلة",
+      "isSimplifiedQuick": true,
       "usedParts": []
     },
     {
@@ -2654,6 +2864,8 @@
       "tax": 0,
       "cost": 0,
       "received": 10,
+      "quickServiceName": "صيانة مشكلة",
+      "isSimplifiedQuick": true,
       "usedParts": []
     },
     {
@@ -2674,6 +2886,8 @@
       "tax": 0,
       "cost": 41.4,
       "received": 300,
+      "quickServiceName": "بطارية ماكسل 377",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -2700,6 +2914,8 @@
       "tax": 0,
       "cost": 34.5,
       "received": 300,
+      "quickServiceName": "بطاريات ماكسل 2025",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -2726,6 +2942,8 @@
       "tax": 0,
       "cost": 34.5,
       "received": 450,
+      "quickServiceName": "بطاريات ماكسل 2025",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -2752,6 +2970,8 @@
       "tax": 0,
       "cost": 0,
       "received": 20,
+      "quickServiceName": "صيانة مشكلة",
+      "isSimplifiedQuick": true,
       "usedParts": []
     },
     {
@@ -2772,6 +2992,8 @@
       "tax": 0,
       "cost": 4.970000000000001,
       "received": 50,
+      "quickServiceName": "بطارية صيني 1220",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -2824,6 +3046,8 @@
       "tax": 0,
       "cost": 0,
       "received": 50,
+      "quickServiceName": "صيانة مشكلة",
+      "isSimplifiedQuick": true,
       "usedParts": []
     },
     {
@@ -2844,6 +3068,8 @@
       "tax": 0,
       "cost": 0,
       "received": 30,
+      "quickServiceName": "صيانة مشكلة",
+      "isSimplifiedQuick": true,
       "usedParts": []
     },
     {
@@ -2864,6 +3090,8 @@
       "tax": 0,
       "cost": 0,
       "received": 1,
+      "quickServiceName": "صيانة مشكلة",
+      "isSimplifiedQuick": true,
       "usedParts": []
     },
     {
@@ -2884,6 +3112,8 @@
       "tax": 0,
       "cost": 14.91,
       "received": 0,
+      "quickServiceName": "بلور قص",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -2910,6 +3140,8 @@
       "tax": 0,
       "cost": 7.455,
       "received": 80,
+      "quickServiceName": "بطارية صيني 371",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -2936,6 +3168,8 @@
       "tax": 0,
       "cost": 103.5,
       "received": 600,
+      "quickServiceName": "ماكينة كاسيو",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -2982,6 +3216,8 @@
       "tax": 0,
       "cost": 0.3,
       "received": 2,
+      "quickServiceName": "بطارية ماكسل 377",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -3008,6 +3244,8 @@
       "tax": 0,
       "cost": 0.3,
       "received": 2,
+      "quickServiceName": "بطارية ماكسل 377",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -3034,6 +3272,8 @@
       "tax": 0,
       "cost": 14.91,
       "received": 100,
+      "quickServiceName": "بطارية ماكسل 377",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -3080,6 +3320,8 @@
       "tax": 0,
       "cost": 0,
       "received": 20,
+      "quickServiceName": "صيانة مشكلة",
+      "isSimplifiedQuick": true,
       "usedParts": []
     },
     {
@@ -3100,6 +3342,8 @@
       "tax": 0,
       "cost": 4.970000000000001,
       "received": 30,
+      "quickServiceName": "بطارية صيني 377",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -3126,6 +3370,8 @@
       "tax": 0,
       "cost": 0,
       "received": 10,
+      "quickServiceName": "صيانة مشكلة",
+      "isSimplifiedQuick": true,
       "usedParts": []
     },
     {
@@ -3146,6 +3392,8 @@
       "tax": 0,
       "cost": 27.6,
       "received": 300,
+      "quickServiceName": "حبسة كستك",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -3172,6 +3420,8 @@
       "tax": 0,
       "cost": 414,
       "received": 1800,
+      "quickServiceName": "كستك جلد قفل سويسري",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -3198,6 +3448,8 @@
       "tax": 0,
       "cost": 12.425,
       "received": 70,
+      "quickServiceName": "بطارية نوراتا 2032",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -3224,6 +3476,8 @@
       "tax": 0,
       "cost": 14.91,
       "received": 100,
+      "quickServiceName": "بطارية ماكسل 377",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -3250,6 +3504,8 @@
       "tax": 0,
       "cost": 0,
       "received": 90,
+      "quickServiceName": "صيانة مشكلة",
+      "isSimplifiedQuick": true,
       "usedParts": []
     },
     {
@@ -3270,6 +3526,8 @@
       "tax": 0,
       "cost": 12.425,
       "received": 120,
+      "quickServiceName": "بطارية نوراتا 1216",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -3296,6 +3554,8 @@
       "tax": 0,
       "cost": 27.6,
       "received": 600,
+      "quickServiceName": "حزام بلاستك",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -3322,6 +3582,8 @@
       "tax": 0,
       "cost": 0,
       "received": 30,
+      "quickServiceName": "صيانة مشكلة",
+      "isSimplifiedQuick": true,
       "usedParts": []
     },
     {
@@ -3342,6 +3604,8 @@
       "tax": 0,
       "cost": 14.91,
       "received": 100,
+      "quickServiceName": "بطارية ماكسل 377",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -3368,6 +3632,8 @@
       "tax": 0,
       "cost": 12.425,
       "received": 80,
+      "quickServiceName": "بطارية نوراتا 1620",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -3394,6 +3660,8 @@
       "tax": 0,
       "cost": 12.425,
       "received": 100,
+      "quickServiceName": "بطاريات ماكسل 2025",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -3420,6 +3688,8 @@
       "tax": 0,
       "cost": 4.970000000000001,
       "received": 20,
+      "quickServiceName": "بطارية صيني جي 10",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -3446,6 +3716,8 @@
       "tax": 0,
       "cost": 4.970000000000001,
       "received": 20,
+      "quickServiceName": "بطارية صيني جي 10",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -3472,6 +3744,8 @@
       "tax": 0,
       "cost": 3,
       "received": 10,
+      "quickServiceName": "كستك الفجر",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -3498,6 +3772,8 @@
       "tax": 0,
       "cost": 14.91,
       "received": 100,
+      "quickServiceName": "بطارية سيكيزن 377",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -3524,6 +3800,8 @@
       "tax": 0,
       "cost": 14.91,
       "received": 100,
+      "quickServiceName": "بطارية ماكسل 377",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -3550,6 +3828,8 @@
       "tax": 0,
       "cost": 0,
       "received": 100,
+      "quickServiceName": "صيانة مشكلة",
+      "isSimplifiedQuick": true,
       "usedParts": []
     },
     {
@@ -3570,6 +3850,8 @@
       "tax": 0,
       "cost": 0,
       "received": 30,
+      "quickServiceName": "قفل ساعة جلد",
+      "isSimplifiedQuick": true,
       "usedParts": []
     },
     {
@@ -3590,6 +3872,8 @@
       "tax": 0,
       "cost": 0,
       "received": 50.001000000000005,
+      "quickServiceName": "صيانة مشكلة",
+      "isSimplifiedQuick": true,
       "usedParts": []
     },
     {
@@ -3610,6 +3894,8 @@
       "tax": 0,
       "cost": 0,
       "received": 150,
+      "quickServiceName": "صيانة مشكلة",
+      "isSimplifiedQuick": true,
       "usedParts": []
     },
     {
@@ -3630,6 +3916,8 @@
       "tax": 0,
       "cost": 7.455,
       "received": 50,
+      "quickServiceName": "بطارية صيني 371",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -3656,6 +3944,8 @@
       "tax": 0,
       "cost": 0,
       "received": 10,
+      "quickServiceName": "صيانة مشكلة",
+      "isSimplifiedQuick": true,
       "usedParts": []
     },
     {
@@ -3676,6 +3966,8 @@
       "tax": 0,
       "cost": 41.4,
       "received": 200.001,
+      "quickServiceName": "بطارية ماكسل 377",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -3702,6 +3994,8 @@
       "tax": 0,
       "cost": 9.940000000000001,
       "received": 100,
+      "quickServiceName": "حزام بلاستك",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -3728,6 +4022,8 @@
       "tax": 0,
       "cost": 14.91,
       "received": 100,
+      "quickServiceName": "بطارية ماكسل 377",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -3754,6 +4050,8 @@
       "tax": 0,
       "cost": 0,
       "received": 20,
+      "quickServiceName": "صيانة مشكلة",
+      "isSimplifiedQuick": true,
       "usedParts": []
     },
     {
@@ -3774,6 +4072,8 @@
       "tax": 0,
       "cost": 19.880000000000003,
       "received": 150,
+      "quickServiceName": "بطارية سيكيزن 371",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -3800,6 +4100,8 @@
       "tax": 0,
       "cost": 9.940000000000001,
       "received": 100,
+      "quickServiceName": "حبسة كستك",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -3826,6 +4128,8 @@
       "tax": 0,
       "cost": 0,
       "received": 2.9979879275653922,
+      "quickServiceName": "صيانة مشكلة",
+      "isSimplifiedQuick": true,
       "usedParts": []
     },
     {
@@ -3846,6 +4150,8 @@
       "tax": 0,
       "cost": 4.970000000000001,
       "received": 50,
+      "quickServiceName": "بطارية صيني 377",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -3892,6 +4198,8 @@
       "tax": 0,
       "cost": 55.2,
       "received": 300,
+      "quickServiceName": "بطارية سيكيزن 364",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -3918,6 +4226,8 @@
       "tax": 0,
       "cost": 27.6,
       "received": 300,
+      "quickServiceName": "حبسة كستك",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -3944,6 +4254,8 @@
       "tax": 0,
       "cost": 4.970000000000001,
       "received": 20,
+      "quickServiceName": "بطارية صيني 377",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -3990,6 +4302,8 @@
       "tax": 0,
       "cost": 12.425,
       "received": 120,
+      "quickServiceName": "بطاريات ماكسل 2025",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -4016,6 +4330,8 @@
       "tax": 0,
       "cost": 12.425,
       "received": 120,
+      "quickServiceName": "بطارية ماكسل 2032",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -4042,6 +4358,8 @@
       "tax": 0,
       "cost": 0.4,
       "received": 3.0181086519114686,
+      "quickServiceName": "بطارية سيكيزن 364",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -4068,6 +4386,8 @@
       "tax": 0,
       "cost": 0,
       "received": 25.002,
+      "quickServiceName": "صيانة مشكلة",
+      "isSimplifiedQuick": true,
       "usedParts": []
     },
     {
@@ -4088,6 +4408,8 @@
       "tax": 0,
       "cost": 41.4,
       "received": 450,
+      "quickServiceName": "بطارية سيكيزن 377",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -4114,6 +4436,8 @@
       "tax": 0,
       "cost": 12.30476375,
       "received": 60,
+      "quickServiceName": "بطارية ماكسل 2016",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -4140,6 +4464,8 @@
       "tax": 0,
       "cost": 0,
       "received": 50,
+      "quickServiceName": "صيانة مشكلة",
+      "isSimplifiedQuick": true,
       "usedParts": []
     },
     {
@@ -4160,6 +4486,8 @@
       "tax": 0,
       "cost": 0,
       "received": 10,
+      "quickServiceName": "صيانة مشكلة",
+      "isSimplifiedQuick": true,
       "usedParts": []
     },
     {
@@ -4180,6 +4508,8 @@
       "tax": 0,
       "cost": 12.30476375,
       "received": 90,
+      "quickServiceName": "بطارية نوراتا 1220",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -4206,6 +4536,8 @@
       "tax": 0,
       "cost": 0.25,
       "received": 2.4509741605286375,
+      "quickServiceName": "بطارية ماكسل 2032",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -4232,6 +4564,8 @@
       "tax": 0,
       "cost": 0.25,
       "received": 2.4509741605286375,
+      "quickServiceName": "بطارية ماكسل 2032",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -4258,6 +4592,8 @@
       "tax": 0,
       "cost": 0,
       "received": 250,
+      "quickServiceName": "حزام جلد",
+      "isSimplifiedQuick": true,
       "usedParts": []
     },
     {
@@ -4278,6 +4614,8 @@
       "tax": 0,
       "cost": 0,
       "received": 20,
+      "quickServiceName": "صيانة مشكلة",
+      "isSimplifiedQuick": true,
       "usedParts": []
     },
     {
@@ -4298,6 +4636,8 @@
       "tax": 0,
       "cost": 0,
       "received": 30,
+      "quickServiceName": "صيانة مشكلة",
+      "isSimplifiedQuick": true,
       "usedParts": []
     },
     {
@@ -4318,6 +4658,8 @@
       "tax": 0,
       "cost": 0,
       "received": 40,
+      "quickServiceName": "صيانة مشكلة",
+      "isSimplifiedQuick": true,
       "usedParts": []
     },
     {
@@ -4358,6 +4700,8 @@
       "tax": 0,
       "cost": 0,
       "received": 19.995147464517665,
+      "quickServiceName": "صيانة مشكلة",
+      "isSimplifiedQuick": true,
       "usedParts": []
     },
     {
@@ -4378,6 +4722,8 @@
       "tax": 0,
       "cost": 0,
       "received": 10,
+      "quickServiceName": "صيانة مشكلة",
+      "isSimplifiedQuick": true,
       "usedParts": []
     },
     {
@@ -4398,6 +4744,8 @@
       "tax": 0,
       "cost": 12.28414275,
       "received": 100,
+      "quickServiceName": "بطارية ماكسل 2032",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -4424,6 +4772,8 @@
       "tax": 0,
       "cost": 0,
       "received": 20,
+      "quickServiceName": "صيانة مشكلة",
+      "isSimplifiedQuick": true,
       "usedParts": []
     },
     {
@@ -4444,6 +4794,8 @@
       "tax": 0,
       "cost": 0,
       "received": 20,
+      "quickServiceName": "صيانة مشكلة",
+      "isSimplifiedQuick": true,
       "usedParts": []
     },
     {
@@ -4464,6 +4816,8 @@
       "tax": 0,
       "cost": 0,
       "received": 49.998623691303166,
+      "quickServiceName": "صيانة مشكلة",
+      "isSimplifiedQuick": true,
       "usedParts": []
     },
     {
@@ -4484,6 +4838,8 @@
       "tax": 0,
       "cost": 14.52,
       "received": 0,
+      "quickServiceName": "حبسة كستك",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -4515,6 +4871,8 @@
       "tax": 0,
       "cost": 14.52,
       "received": 70,
+      "quickServiceName": "بطارية ماكسل 377",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -4541,6 +4899,8 @@
       "tax": 0,
       "cost": 40.5,
       "received": 300,
+      "quickServiceName": "بطارية سيكيزن 377",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -4567,6 +4927,8 @@
       "tax": 0,
       "cost": 14.52,
       "received": 80,
+      "quickServiceName": "بطارية ماكسل 377",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -4593,6 +4955,8 @@
       "tax": 0,
       "cost": 19.36,
       "received": 150,
+      "quickServiceName": "بطارية سيكيزن 321",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -4619,6 +4983,8 @@
       "tax": 0,
       "cost": 14.52,
       "received": 100,
+      "quickServiceName": "بطارية ماكسل 377",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -4665,6 +5031,8 @@
       "tax": 0,
       "cost": 4.84,
       "received": 0,
+      "quickServiceName": "بلور مدور أصلي",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -4722,6 +5090,8 @@
       "tax": 0,
       "cost": 0,
       "received": 30,
+      "quickServiceName": "صيانة مشكلة",
+      "isSimplifiedQuick": true,
       "usedParts": []
     },
     {
@@ -4778,6 +5148,8 @@
       "tax": 0,
       "cost": 12.20605625,
       "received": 100,
+      "quickServiceName": "بطارية نوراتا 2025",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -4804,6 +5176,8 @@
       "tax": 0,
       "cost": 13.5,
       "received": 150,
+      "quickServiceName": "بطارية صيني 377",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -4830,6 +5204,8 @@
       "tax": 0,
       "cost": 0,
       "received": 60,
+      "quickServiceName": "صيانة مشكلة",
+      "isSimplifiedQuick": true,
       "usedParts": []
     },
     {
@@ -4850,6 +5226,8 @@
       "tax": 0,
       "cost": 0,
       "received": 10,
+      "quickServiceName": "صيانة مشكلة",
+      "isSimplifiedQuick": true,
       "usedParts": []
     },
     {
@@ -4870,6 +5248,8 @@
       "tax": 0,
       "cost": 0,
       "received": 10,
+      "quickServiceName": "صيانة مشكلة",
+      "isSimplifiedQuick": true,
       "usedParts": []
     },
     {
@@ -4890,6 +5270,8 @@
       "tax": 0,
       "cost": 0,
       "received": 15,
+      "quickServiceName": "صيانة مشكلة",
+      "isSimplifiedQuick": true,
       "usedParts": []
     },
     {
@@ -4910,6 +5292,8 @@
       "tax": 0,
       "cost": 0.25,
       "received": 2.479338842975207,
+      "quickServiceName": "بطارية ماكسل 2032",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -4936,6 +5320,8 @@
       "tax": 0,
       "cost": 0.25,
       "received": 2.479338842975207,
+      "quickServiceName": "بطارية ماكسل 2032",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -4962,6 +5348,8 @@
       "tax": 0,
       "cost": 67.5,
       "received": 300,
+      "quickServiceName": "ماكينة حيط",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -4988,6 +5376,8 @@
       "tax": 0,
       "cost": 0,
       "received": 10,
+      "quickServiceName": "صيانة مشكلة",
+      "isSimplifiedQuick": true,
       "usedParts": []
     },
     {
@@ -5008,6 +5398,8 @@
       "tax": 0,
       "cost": 4.84,
       "received": 30,
+      "quickServiceName": "بطارية صيني 377",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -5034,6 +5426,8 @@
       "tax": 0,
       "cost": 0,
       "received": 90,
+      "quickServiceName": "صيانة مشكلة",
+      "isSimplifiedQuick": true,
       "usedParts": []
     },
     {
@@ -5054,6 +5448,8 @@
       "tax": 0,
       "cost": 12.20788975,
       "received": 120,
+      "quickServiceName": "بطاريات ماكسل 2025",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -5080,6 +5476,8 @@
       "tax": 0,
       "cost": 30.45334875,
       "received": 299.3475469419275,
+      "quickServiceName": "بطارية ماكسل 2032",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -5106,6 +5504,8 @@
       "tax": 0,
       "cost": 0,
       "received": 20,
+      "quickServiceName": "صيانة مشكلة",
+      "isSimplifiedQuick": true,
       "usedParts": []
     },
     {
@@ -5126,6 +5526,8 @@
       "tax": 0,
       "cost": 0,
       "received": 30,
+      "quickServiceName": "صيانة مشكلة",
+      "isSimplifiedQuick": true,
       "usedParts": []
     },
     {
@@ -5177,6 +5579,8 @@
       "tax": 0,
       "cost": 4.84,
       "received": 20,
+      "quickServiceName": "بطارية صيني 377",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -5275,6 +5679,8 @@
       "tax": 0,
       "cost": 0,
       "received": 0.4545454545454546,
+      "quickServiceName": "صيانة مشكلة",
+      "isSimplifiedQuick": true,
       "usedParts": []
     },
     {
@@ -5315,6 +5721,8 @@
       "tax": 0,
       "cost": 0,
       "received": 99.999,
+      "quickServiceName": "صيانة مشكلة",
+      "isSimplifiedQuick": true,
       "usedParts": []
     },
     {
@@ -5335,6 +5743,8 @@
       "tax": 0,
       "cost": 13.5,
       "received": 560.001,
+      "quickServiceName": "بلور مدور أصلي",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -5361,6 +5771,8 @@
       "tax": 0,
       "cost": 33.75,
       "received": 300,
+      "quickServiceName": "بطارية ماكسل 2016",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -5387,6 +5799,8 @@
       "tax": 0,
       "cost": 120,
       "received": 450,
+      "quickServiceName": "بطارية سيكيزن 379",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -5413,6 +5827,8 @@
       "tax": 0,
       "cost": 0,
       "received": 100,
+      "quickServiceName": "صيانة مشكلة",
+      "isSimplifiedQuick": true,
       "usedParts": []
     },
     {
@@ -5433,6 +5849,8 @@
       "tax": 0,
       "cost": 4.84,
       "received": 30,
+      "quickServiceName": "بطارية صيني 377",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -5459,6 +5877,8 @@
       "tax": 0,
       "cost": 40.5,
       "received": 300,
+      "quickServiceName": "بطارية سيكيزن 377",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -5485,6 +5905,8 @@
       "tax": 0,
       "cost": 9.68,
       "received": 200,
+      "quickServiceName": "ماكينة عادية",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -5511,6 +5933,8 @@
       "tax": 0,
       "cost": 0,
       "received": 60,
+      "quickServiceName": "صيانة مشكلة",
+      "isSimplifiedQuick": true,
       "usedParts": []
     },
     {
@@ -5531,6 +5955,8 @@
       "tax": 0,
       "cost": 135,
       "received": 750,
+      "quickServiceName": "قفل سويسري",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -5557,6 +5983,8 @@
       "tax": 0,
       "cost": 14.52,
       "received": 80,
+      "quickServiceName": "بطارية ماكسل 377",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -5583,6 +6011,8 @@
       "tax": 0,
       "cost": 0,
       "received": 85,
+      "quickServiceName": "صيانة مشكلة",
+      "isSimplifiedQuick": true,
       "usedParts": []
     },
     {
@@ -5629,6 +6059,8 @@
       "tax": 0,
       "cost": 0,
       "received": 20,
+      "quickServiceName": "صيانة مشكلة",
+      "isSimplifiedQuick": true,
       "usedParts": []
     },
     {
@@ -5649,6 +6081,8 @@
       "tax": 0,
       "cost": 0,
       "received": 20,
+      "quickServiceName": "صيانة مشكلة",
+      "isSimplifiedQuick": true,
       "usedParts": []
     },
     {
@@ -5669,6 +6103,8 @@
       "tax": 0,
       "cost": 54,
       "received": 300,
+      "quickServiceName": "بطارية سيكيزن 371",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -5695,6 +6131,8 @@
       "tax": 0,
       "cost": 0,
       "received": 20,
+      "quickServiceName": "صيانة مشكلة",
+      "isSimplifiedQuick": true,
       "usedParts": []
     },
     {
@@ -5715,6 +6153,8 @@
       "tax": 0,
       "cost": 9.68,
       "received": 70,
+      "quickServiceName": "حزام بلاستك",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -5761,6 +6201,8 @@
       "tax": 0,
       "cost": 4.84,
       "received": 10,
+      "quickServiceName": "بطارية صيني 377",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -5787,6 +6229,8 @@
       "tax": 0,
       "cost": 0,
       "received": 20,
+      "quickServiceName": "صيانة مشكلة",
+      "isSimplifiedQuick": true,
       "usedParts": []
     },
     {
@@ -5807,6 +6251,8 @@
       "tax": 0,
       "cost": 33.75,
       "received": 335.1,
+      "quickServiceName": "بطاريات ماكسل 2025",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -5833,6 +6279,8 @@
       "tax": 0,
       "cost": 0,
       "received": 50.001000000000005,
+      "quickServiceName": "صيانة مشكلة",
+      "isSimplifiedQuick": true,
       "usedParts": []
     },
     {
@@ -5853,6 +6301,8 @@
       "tax": 0,
       "cost": 9.68,
       "received": 100,
+      "quickServiceName": "حزام بلاستك",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -5879,6 +6329,8 @@
       "tax": 0,
       "cost": 0,
       "received": 80,
+      "quickServiceName": "قفل ساعة جلد",
+      "isSimplifiedQuick": true,
       "usedParts": []
     },
     {
@@ -5919,6 +6371,8 @@
       "tax": 0,
       "cost": 4.84,
       "received": 50,
+      "quickServiceName": "بطارية صيني 377",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -5997,6 +6451,8 @@
       "tax": 0,
       "cost": 13.5,
       "received": 200.001,
+      "quickServiceName": "بلور مدور أصلي",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -6023,6 +6479,8 @@
       "tax": 0,
       "cost": 0,
       "received": 10,
+      "quickServiceName": "صيانة مشكلة",
+      "isSimplifiedQuick": true,
       "usedParts": []
     },
     {
@@ -6043,6 +6501,8 @@
       "tax": 0,
       "cost": 14.52,
       "received": 100,
+      "quickServiceName": "بطارية سيكيزن 377",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -6069,6 +6529,8 @@
       "tax": 0,
       "cost": 0,
       "received": 300,
+      "quickServiceName": "صيانة مشكلة",
+      "isSimplifiedQuick": true,
       "usedParts": []
     },
     {
@@ -6089,6 +6551,8 @@
       "tax": 0,
       "cost": 4.84,
       "received": 30,
+      "quickServiceName": "بطارية صيني 377",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -6135,6 +6599,8 @@
       "tax": 0,
       "cost": 0,
       "received": 300,
+      "quickServiceName": "صيانة مشكلة",
+      "isSimplifiedQuick": true,
       "usedParts": []
     },
     {
@@ -6155,6 +6621,8 @@
       "tax": 0,
       "cost": 0,
       "received": 1,
+      "quickServiceName": "صيانة مشكلة",
+      "isSimplifiedQuick": true,
       "usedParts": []
     },
     {
@@ -6175,6 +6643,8 @@
       "tax": 0,
       "cost": 13.5,
       "received": 49.5,
+      "quickServiceName": "بطارية صيني جي 10",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -6201,6 +6671,8 @@
       "tax": 0,
       "cost": 13.5,
       "received": 49.5,
+      "quickServiceName": "بطارية صيني جي 10",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -6227,6 +6699,8 @@
       "tax": 0,
       "cost": 0,
       "received": 50,
+      "quickServiceName": "صيانة مشكلة",
+      "isSimplifiedQuick": true,
       "usedParts": []
     },
     {
@@ -6247,6 +6721,8 @@
       "tax": 0,
       "cost": 0,
       "received": 10,
+      "quickServiceName": "صيانة مشكلة",
+      "isSimplifiedQuick": true,
       "usedParts": []
     },
     {
@@ -6267,6 +6743,8 @@
       "tax": 0,
       "cost": 9.68,
       "received": 100,
+      "quickServiceName": "حزام بلاستك",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -6293,6 +6771,8 @@
       "tax": 0,
       "cost": 14.52,
       "received": 80,
+      "quickServiceName": "بطارية ماكسل 377",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -6319,6 +6799,8 @@
       "tax": 0,
       "cost": 13.5,
       "received": 240,
+      "quickServiceName": "بطارية صيني 2025",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -6345,6 +6827,8 @@
       "tax": 0,
       "cost": 0,
       "received": 20,
+      "quickServiceName": "صيانة مشكلة",
+      "isSimplifiedQuick": true,
       "usedParts": []
     },
     {
@@ -6365,6 +6849,8 @@
       "tax": 0,
       "cost": 9.68,
       "received": 100,
+      "quickServiceName": "حزام بلاستك",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -6422,6 +6908,8 @@
       "tax": 0,
       "cost": 40.5,
       "received": 450,
+      "quickServiceName": "بطارية سيكيزن 377",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -6448,6 +6936,8 @@
       "tax": 0,
       "cost": 33.75,
       "received": 450,
+      "quickServiceName": "بطاريات ماكسل 2025",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -6494,6 +6984,8 @@
       "tax": 0,
       "cost": 4.84,
       "received": 30,
+      "quickServiceName": "بطارية صيني 377",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -6520,6 +7012,8 @@
       "tax": 0,
       "cost": 14.52,
       "received": 100,
+      "quickServiceName": "بطارية سيكيزن 377",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -6546,6 +7040,8 @@
       "tax": 0,
       "cost": 0.2,
       "received": 2.0041322314049586,
+      "quickServiceName": "حزام بلاستك",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -6572,6 +7068,8 @@
       "tax": 0,
       "cost": 9.68,
       "received": 100,
+      "quickServiceName": "حبسة كستك",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -6598,6 +7096,8 @@
       "tax": 0,
       "cost": 9.68,
       "received": 50,
+      "quickServiceName": "حبسة كستك",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -6624,6 +7124,8 @@
       "tax": 0,
       "cost": 0,
       "received": 30,
+      "quickServiceName": "صيانة مشكلة",
+      "isSimplifiedQuick": true,
       "usedParts": []
     },
     {
@@ -6644,6 +7146,8 @@
       "tax": 0,
       "cost": 14.52,
       "received": 100,
+      "quickServiceName": "بطارية ماكسل 377",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -6670,6 +7174,8 @@
       "tax": 0,
       "cost": 0,
       "received": 20,
+      "quickServiceName": "صيانة مشكلة",
+      "isSimplifiedQuick": true,
       "usedParts": []
     },
     {
@@ -6690,6 +7196,8 @@
       "tax": 0,
       "cost": 14.52,
       "received": 70,
+      "quickServiceName": "بطارية ماكسل 377",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -6716,6 +7224,8 @@
       "tax": 0,
       "cost": 33.75,
       "received": 360,
+      "quickServiceName": "بطارية ماكسل 2032",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -6742,6 +7252,8 @@
       "tax": 0,
       "cost": 1.1,
       "received": 2.458677685950413,
+      "quickServiceName": "بطارية سماعة 675",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -6768,6 +7280,8 @@
       "tax": 0,
       "cost": 0.25,
       "received": 2.0041322314049586,
+      "quickServiceName": "بطارية نوراتا 1220",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -6794,6 +7308,8 @@
       "tax": 0,
       "cost": 0.4,
       "received": 2.0041322314049586,
+      "quickServiceName": "بطارية سيكيزن 371",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -6820,6 +7336,8 @@
       "tax": 0,
       "cost": 9.68,
       "received": 100,
+      "quickServiceName": "حبسة كستك",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -6846,6 +7364,8 @@
       "tax": 0,
       "cost": 0,
       "received": 20,
+      "quickServiceName": "صيانة مشكلة",
+      "isSimplifiedQuick": true,
       "usedParts": []
     },
     {
@@ -6886,6 +7406,8 @@
       "tax": 0,
       "cost": 0,
       "received": 200,
+      "quickServiceName": "صيانة مشكلة",
+      "isSimplifiedQuick": true,
       "usedParts": []
     },
     {
@@ -6906,6 +7428,8 @@
       "tax": 0,
       "cost": 9.68,
       "received": 100,
+      "quickServiceName": "حبسة كستك",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -6932,6 +7456,8 @@
       "tax": 0,
       "cost": 4.84,
       "received": 50,
+      "quickServiceName": "بطارية صيني 377",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -6958,6 +7484,8 @@
       "tax": 0,
       "cost": 0,
       "received": 50,
+      "quickServiceName": "صيانة مشكلة",
+      "isSimplifiedQuick": true,
       "usedParts": []
     },
     {
@@ -6978,6 +7506,8 @@
       "tax": 0,
       "cost": 0,
       "received": 300,
+      "quickServiceName": "حزام جلد",
+      "isSimplifiedQuick": true,
       "usedParts": []
     },
     {
@@ -6998,6 +7528,8 @@
       "tax": 0,
       "cost": 0,
       "received": 100,
+      "quickServiceName": "صيانة مشكلة",
+      "isSimplifiedQuick": true,
       "usedParts": []
     },
     {
@@ -7018,6 +7550,8 @@
       "tax": 0,
       "cost": 12.1,
       "received": 120,
+      "quickServiceName": "بطارية ماكسل 2016",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -7044,6 +7578,8 @@
       "tax": 0,
       "cost": 43.56,
       "received": 200,
+      "quickServiceName": "لحام",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -7070,6 +7606,8 @@
       "tax": 0,
       "cost": 0,
       "received": 200,
+      "quickServiceName": "صيانة مشكلة",
+      "isSimplifiedQuick": true,
       "usedParts": []
     },
     {
@@ -7090,6 +7628,8 @@
       "tax": 0,
       "cost": 0,
       "received": 200,
+      "quickServiceName": "صيانة مشكلة",
+      "isSimplifiedQuick": true,
       "usedParts": []
     },
     {
@@ -7110,6 +7650,8 @@
       "tax": 0,
       "cost": 0,
       "received": 20,
+      "quickServiceName": "صيانة مشكلة",
+      "isSimplifiedQuick": true,
       "usedParts": []
     },
     {
@@ -7130,6 +7672,8 @@
       "tax": 0,
       "cost": 14.7409713,
       "received": 250,
+      "quickServiceName": "بلور قص",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -7156,6 +7700,8 @@
       "tax": 0,
       "cost": 4.933927700000001,
       "received": 50,
+      "quickServiceName": "بطارية صيني 377",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -7182,6 +7728,8 @@
       "tax": 0,
       "cost": 14.91,
       "received": 100,
+      "quickServiceName": "بطارية ماكسل 377",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -7208,6 +7756,8 @@
       "tax": 0,
       "cost": 14.91,
       "received": 100,
+      "quickServiceName": "بطارية ماكسل 377",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -7234,6 +7784,8 @@
       "tax": 0,
       "cost": 12.425,
       "received": 120,
+      "quickServiceName": "بطارية ماكسل 2032",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -7260,6 +7812,8 @@
       "tax": 0,
       "cost": 12.425,
       "received": 120,
+      "quickServiceName": "بطارية ماكسل 2032",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,
@@ -7286,6 +7840,8 @@
       "tax": 0,
       "cost": 149.10000000000002,
       "received": 490,
+      "quickServiceName": "قطع مشكلة",
+      "isSimplifiedQuick": true,
       "usedParts": [
         {
           "qty": 1,

@@ -1,6 +1,5 @@
 package com.alsafa.native8.sales
 
-import com.alsafa.native8.data.migration.LegacyReadRepository
 import org.json.JSONObject
 import java.math.BigDecimal
 
@@ -9,7 +8,7 @@ import java.math.BigDecimal
  * Sales use the same event reader as the Room archive review.
  * Repairs, expenses and withdrawals share the source-tested read-only adapters.
  */
-class LegacyHistoricalProfitProjection(private val legacy:LegacyReadRepository) {
+class LegacyHistoricalProfitProjection(private val legacy:HistoricalFinancialSource) {
  data class Result(
   val storeProfitUsd:BigDecimal,val repairProfitUsd:BigDecimal,
   val onlineProfitUsd:BigDecimal=BigDecimal.ZERO,
@@ -18,36 +17,25 @@ class LegacyHistoricalProfitProjection(private val legacy:LegacyReadRepository) 
   val unresolved:List<String>,val onlineVerified:Boolean=false,
   val salesUnresolved:List<String> = emptyList(),val salesReturnImpactUsd:BigDecimal=BigDecimal.ZERO,
   val saleIds:Set<String> = emptySet(),val storeCapitalUsd:BigDecimal=BigDecimal.ZERO,
-  val repairIds:Set<String> = emptySet(),val repairUnresolved:List<String> = emptyList()
+  val repairIds:Set<String> = emptySet(),val repairUnresolved:List<String> = emptyList(),
+  val importRunId:Long?=null
  ) {
   val partialNetUsd get()=storeProfitUsd+onlineProfitUsd+repairProfitUsd+returnImpactUsd-expensesUsd
   val complete get()=onlineVerified && unresolved.isEmpty()
- }
- private fun pages(run:Long,section:String):List<LegacyReadRepository.LegacyRow> {
-  val result=mutableListOf<LegacyReadRepository.LegacyRow>()
-  var offset=0
-  while(true) {
-   val page=legacy.page(run,section,offset,500)
-   result.addAll(page.rows)
-   offset+=page.rows.size
-   if(offset>=page.total) return result
-   check(page.rows.isNotEmpty()) { "Missing source rows: $section" }
-  }
-  return result
  }
  fun read(from:String,to:String):Result {
   require(from<=to)
   val run=legacy.latestRunId() ?: return Result(storeProfitUsd=BigDecimal.ZERO,repairProfitUsd=BigDecimal.ZERO,
    returnImpactUsd=BigDecimal.ZERO,expensesUsd=BigDecimal.ZERO,withdrawalsUsd=emptyMap(),unresolved=listOf("No imported source"),salesUnresolved=listOf("No imported source"))
-  val salesRows=pages(run,"sales").map { it.fields }
-  val payments=pages(run,"payments").map { it.fields }
-  val cash=pages(run,"cashTransactions").map { it.fields }
-  val returns=pages(run,"returns").map { it.fields }
-  val repairs=pages(run,"repairs").map { it.fields }
+  val salesRows=legacy.financialRows(run,"sales")
+  val payments=legacy.financialRows(run,"payments")
+  val cash=legacy.financialRows(run,"cashTransactions")
+  val returns=legacy.financialRows(run,"returns")
+  val repairs=legacy.financialRows(run,"repairs")
   val saleAudit=LegacyHistoricalSalesProfitReader.extractOriginal(salesRows,payments,cash,returns)
   val repairAudit=LegacyMaintenanceProfitReader.extract(repairs,payments,returns)
-  val expenseAudit=LegacyExpenseWithdrawalReader.extract(pages(run,"expenses").map { it.fields },false)
-  val withdrawalAudit=LegacyExpenseWithdrawalReader.extract(pages(run,"partnerWithdrawals").map { it.fields },true)
+  val expenseAudit=LegacyExpenseWithdrawalReader.extract(legacy.financialRows(run,"expenses"),false)
+  val withdrawalAudit=LegacyExpenseWithdrawalReader.extract(legacy.financialRows(run,"partnerWithdrawals"),true)
   val first=java.time.LocalDate.parse(from);val last=java.time.LocalDate.parse(to)
   val saleSummary=FinancialSourceReconciliation.summarize(saleAudit.events,first,last)
   val repairSummary=FinancialSourceReconciliation.summarize(repairAudit.events,first,last)
@@ -64,6 +52,6 @@ class LegacyHistoricalProfitProjection(private val legacy:LegacyReadRepository) 
    salesReturnImpactUsd=saleSummary.returns,saleIds=salesRows.map { it.optString("id") }.toSet(),
    storeCapitalUsd=saleAudit.events.filter { it.stream==FinancialSourceReconciliation.Stream.LEGACY_STORE &&
     inPeriod(it.recognizedOn.toString()) }.fold(BigDecimal.ZERO) { sum,event -> sum+event.costUsd },
-   repairIds=repairs.map { it.optString("id") }.toSet(),repairUnresolved=repairAudit.unresolved)
+   repairIds=repairs.map { it.optString("id") }.toSet(),repairUnresolved=repairAudit.unresolved,importRunId=run)
  }
 }

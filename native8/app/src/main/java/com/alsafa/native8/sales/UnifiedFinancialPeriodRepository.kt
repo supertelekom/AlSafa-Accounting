@@ -27,7 +27,11 @@ class UnifiedFinancialPeriodRepository(
   val historicalSaleReturnImpact:BigDecimal=BigDecimal.ZERO,
   val historicalSalesIncluded:Boolean=false,
   val maintenanceProfit:BigDecimal=BigDecimal.ZERO,
-  val maintenanceReturnImpact:BigDecimal=BigDecimal.ZERO
+  val maintenanceReturnImpact:BigDecimal=BigDecimal.ZERO,
+  val historicalMaintenanceProfit:BigDecimal=BigDecimal.ZERO,
+  val nativeMaintenanceProfit:BigDecimal=BigDecimal.ZERO,
+  val storeReturnImpact:BigDecimal=BigDecimal.ZERO,
+  val importRunId:Long?=null
  ) {
   fun approvedNet():BigDecimal {
    check(complete) { "Incomplete financial sources: do not publish profit" }
@@ -42,9 +46,12 @@ class UnifiedFinancialPeriodRepository(
 
  }
  data class Statement(val from:String,val to:String,val period:Result,val cumulative:Result) {
-  val unresolved get()=(period.unresolvedHistorical+cumulative.unresolvedHistorical).distinct()
-  fun partners():List<PartnerFinancialStatement.Row> = PartnerFinancialStatement.calculate(
-   period.approvedNet(),cumulative.approvedNet(),period.withdrawals,cumulative.withdrawals)
+  val unresolved get()=(period.unresolvedHistorical+cumulative.unresolvedHistorical+
+   if(period.importRunId!=cumulative.importRunId) listOf("تغيرت النسخة المستعادة بين حساب الفترة والتراكمي؛ أعد عرض التقرير") else emptyList()).distinct()
+  fun partners():List<PartnerFinancialStatement.Row> {
+   check(unresolved.isEmpty()) { unresolved.joinToString("\n") }
+   return PartnerFinancialStatement.calculate(period.approvedNet(),cumulative.approvedNet(),period.withdrawals,cumulative.withdrawals)
+  }
  }
  suspend fun statement(from:String,to:String):Statement {
   val period=read(from,to)
@@ -87,6 +94,7 @@ class UnifiedFinancialPeriodRepository(
   val repairReturns=(if(includeRepairs) old!!.returnImpactUsd-old.salesReturnImpactUsd else BigDecimal.ZERO)+
    (nativeRepairSummary?.returns ?: BigDecimal.ZERO)
   val issues=(old?.unresolved.orEmpty()+expenseAudit.unresolved+nativeRepairs?.audit?.unresolved.orEmpty()+
+   (if(old!=null && old.importRunId!=expenseAudit.importRunId) listOf("تغيرت النسخة المستعادة بين قراءة الفواتير والمصاريف؛ أعد عرض التقرير") else emptyList())+
    overlap.map { "Historical/operational sale overlap: $it" }+
    repairOverlap.map { "Historical/operational repair overlap: $it" }+
    sales.uncoveredSales(end).map { "Sale without verified profit coverage: $it" }+
@@ -101,6 +109,9 @@ class UnifiedFinancialPeriodRepository(
    historicalSaleReturnImpact=old?.salesReturnImpactUsd ?: BigDecimal.ZERO,
    historicalSalesIncluded=includeSales,complete=issues.isEmpty(),
    maintenanceProfit=repairProfit,maintenanceReturnImpact=repairReturns,
+   historicalMaintenanceProfit=if(includeRepairs) old!!.repairProfitUsd else BigDecimal.ZERO,
+   nativeMaintenanceProfit=nativeRepairSummary?.repair ?: BigDecimal.ZERO,
+   storeReturnImpact=storeAdjustments,importRunId=old?.importRunId,
    withdrawals=withdrawals,partialNet=profits+storeProfit+storeAdjustments-reversals-expense+historicalSales+repairProfit+repairReturns)
  }
 }

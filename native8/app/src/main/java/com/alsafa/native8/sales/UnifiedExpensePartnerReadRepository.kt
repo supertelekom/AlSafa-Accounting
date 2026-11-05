@@ -1,28 +1,19 @@
 package com.alsafa.native8.sales
 
-import com.alsafa.native8.data.migration.LegacyReadRepository
 import java.math.BigDecimal
 import java.time.LocalDate
 
 /** Read-only union. Expenses are deducted once; withdrawals affect partner balances only. */
-class UnifiedExpensePartnerReadRepository(private val legacy:LegacyReadRepository,private val dao:OperationalExpensePartnerDao) {
+class UnifiedExpensePartnerReadRepository(private val legacy:HistoricalFinancialSource,private val dao:OperationalExpensePartnerDao) {
  data class Snapshot(val source:LegacyFinancialRules.Source,
   val legacyExpenses:Int,val operationalExpenses:Int,val legacyWithdrawals:Int,val operationalWithdrawals:Int,
   val unresolved:List<String> = emptyList(),
-  val historicalEvidence:List<LegacyExpenseWithdrawalReader.Entry> = emptyList())
- private fun rows(run:Long,section:String):List<LegacyReadRepository.LegacyRow> {
-  val result=mutableListOf<LegacyReadRepository.LegacyRow>();var offset=0
-  while(true) {
-   val page=legacy.page(run,section,offset,500);result.addAll(page.rows);offset+=page.rows.size
-   if(offset>=page.total) return result
-   check(page.rows.isNotEmpty()) { "Incomplete legacy section $section" }
-  }
- }
+  val historicalEvidence:List<LegacyExpenseWithdrawalReader.Entry> = emptyList(),val importRunId:Long?=null)
  suspend fun load(from:String,to:String,allowIncomplete:Boolean=false):Snapshot {
   require(!LocalDate.parse(to).isBefore(LocalDate.parse(from)))
   val run=legacy.latestRunId()
-  val expenseRows=if(run==null) emptyList() else rows(run,"expenses").map { it.fields }
-  val withdrawalRows=if(run==null) emptyList() else rows(run,"partnerWithdrawals").map { it.fields }
+  val expenseRows=if(run==null) emptyList() else legacy.financialRows(run,"expenses")
+  val withdrawalRows=if(run==null) emptyList() else legacy.financialRows(run,"partnerWithdrawals")
   val oldExpenses=LegacyExpenseWithdrawalReader.extract(expenseRows,false)
   val oldWithdrawals=LegacyExpenseWithdrawalReader.extract(withdrawalRows,true)
   val issues=(oldExpenses.unresolved+oldWithdrawals.unresolved).toMutableList()
@@ -58,6 +49,6 @@ class UnifiedExpensePartnerReadRepository(private val legacy:LegacyReadRepositor
   check(legacy.latestRunId()==run) { "Historical source changed during read" }
   if(!allowIncomplete) check(issues.isEmpty()) { issues.joinToString("\n") }
   return Snapshot(LegacyFinancialRules.Source(emptyList(),emptyList(),emptyList(),emptyList(),expenses,withdrawals),
-   oldExpenseEntries.size,newExpenses,oldWithdrawalEntries.size,newWithdrawals,issues.distinct(),oldExpenseEntries+oldWithdrawalEntries)
+   oldExpenseEntries.size,newExpenses,oldWithdrawalEntries.size,newWithdrawals,issues.distinct(),oldExpenseEntries+oldWithdrawalEntries,run)
  }
 }

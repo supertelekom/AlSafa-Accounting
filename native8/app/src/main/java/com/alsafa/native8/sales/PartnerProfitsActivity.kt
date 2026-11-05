@@ -83,7 +83,16 @@ class PartnerProfitsActivity:Activity() {
        statement.unresolved.joinToString("\n")
      } else {
       val names=mapOf("father" to "الأب","me" to "عبد الكريم","brother" to "يزن")
+      val period=statement.period
       result.text="الفترة: $first — $last\n"+
+       "أرباح مبيعات المحل الأرشيفية: ${money(period.historicalStoreProfit)}\n"+
+       "أرباح مبيعات المحل الجديدة: ${money(period.storeSaleProfit)}\n"+
+       "أرباح الأونلاين الأرشيفية: ${money(period.historicalOnlineProfit)}\n"+
+       "أرباح الأونلاين الجديدة: ${money(period.saleProfit)}\n"+
+       "أرباح الصيانة الأرشيفية: ${money(period.historicalMaintenanceProfit)}\n"+
+       "أرباح الصيانة الجديدة: ${money(period.nativeMaintenanceProfit)}\n"+
+       "أثر المرتجعات والتسويات: ${money(period.historicalSaleReturnImpact+period.maintenanceReturnImpact+period.storeReturnImpact-period.saleReversals)}\n"+
+       "المصاريف التشغيلية القديمة والجديدة: ${money(period.operatingExpenses)}\n"+
        "صافي ربح الفترة: ${money(statement.period.approvedNet())}\n"+
        "صافي الربح التراكمي حتى $last: ${money(statement.cumulative.approvedNet())}\n\n"+
        statement.partners().joinToString("\n\n") { row ->
