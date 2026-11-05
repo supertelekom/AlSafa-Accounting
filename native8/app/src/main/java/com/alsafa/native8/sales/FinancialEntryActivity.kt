@@ -61,10 +61,40 @@ open class FinancialEntryActivity:Activity() {
   val showHistory=Button(this).apply { text=if(expenseMode) "عرض المصاريف" else "عرض سحوبات الشركاء" }
   content.addView(showHistory,LinearLayout.LayoutParams(-1,-2))
   content.addView(history,LinearLayout.LayoutParams(-1,-2))
-  setContentView(ScrollView(this).apply {
+  // Fit the actual app window on the Honor tablet, including system bars.
+  // The whole form scrolls vertically; no controls are placed outside it.
+  val density=resources.displayMetrics.density
+  val inset=(12*density+0.5f).toInt()
+  content.setPadding(inset,inset,inset,inset)
+  val scroll=ScrollView(this).apply {
    isFillViewport=true
+   isHorizontalScrollBarEnabled=false
+   isVerticalScrollBarEnabled=true
+   clipToPadding=false
    addView(content,android.widget.FrameLayout.LayoutParams(-1,-2))
-  })
+   setOnApplyWindowInsetsListener { view,insets ->
+    val top:Int
+    val bottom:Int
+    if(android.os.Build.VERSION.SDK_INT>=30) {
+     val bars=insets.getInsets(android.view.WindowInsets.Type.systemBars())
+     top=bars.top
+     bottom=bars.bottom
+    } else {
+     top=insets.systemWindowInsetTop
+     bottom=insets.systemWindowInsetBottom
+    }
+    view.setPadding(0,top,0,bottom)
+    insets
+   }
+  }
+  window.clearFlags(android.view.WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS)
+  window.setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN or
+   android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
+  setContentView(scroll)
+  scroll.requestApplyInsets()
+  content.isFocusableInTouchMode=true
+  content.requestFocus()
+  scroll.post { scroll.scrollTo(0,0) }
   showHistory.setOnClickListener {
    showHistory.isEnabled=false
    scope.launch {
