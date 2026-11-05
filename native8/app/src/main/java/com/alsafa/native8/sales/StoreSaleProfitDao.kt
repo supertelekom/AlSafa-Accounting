@@ -7,6 +7,13 @@ import androidx.room.Query
 
 @Dao
 interface StoreSaleProfitDao {
+ @Insert(onConflict=OnConflictStrategy.ABORT)
+ suspend fun insertAdjustment(event:StoreProfitAdjustment)
+ @Query("SELECT * FROM store_profit_adjustments WHERE sale_id=:saleId ORDER BY created_at,id")
+ suspend fun adjustments(saleId:String):List<StoreProfitAdjustment>
+ @Query("SELECT * FROM store_profit_adjustments WHERE created_at>=:fromMillis AND created_at<:untilExclusive ORDER BY created_at,id")
+ suspend fun adjustmentsInPeriod(fromMillis:Long,untilExclusive:Long):List<StoreProfitAdjustment>
+
  @Insert(onConflict = OnConflictStrategy.ABORT)
  suspend fun insert(event: StoreSaleProfitEvent)
  @Query("SELECT * FROM store_sale_profit_events WHERE sale_id=:saleId LIMIT 1")
