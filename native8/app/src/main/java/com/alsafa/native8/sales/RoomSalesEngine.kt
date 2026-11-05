@@ -140,6 +140,7 @@ class RoomSalesEngine(private val context: Context) {
         refundCashbox: String = "", refundCurrency: String = ""
     ): String = db.withTransaction {
         require(quantity > BigDecimal.ZERO && reason.isNotBlank())
+        require(posting.sale(saleId)?.channel != SalesChannelClassification.STORE) { "مرتجع المحل موقوف حتى ربط قيد عكس الربح المستقل" }
         val sale = requireNotNull(posting.sale(saleId)) { "الفاتورة غير موجودة" }
         require(sale.status != "ملغاة") { "الفاتورة ملغاة" }
         val line = requireNotNull(posting.line(saleId, lineId)) { "البند غير موجود" }
@@ -246,6 +247,7 @@ class RoomSalesEngine(private val context: Context) {
     suspend fun cancelUnpaid(saleId: String): String = db.withTransaction {
         val sale = requireNotNull(posting.sale(saleId)) { "الإلغاء متاح للفواتير الجديدة فقط" }
         require(sale.status != "ملغاة") { "الفاتورة ملغاة مسبقاً" }
+        require(sale.channel != SalesChannelClassification.STORE) { "إلغاء المحل موقوف حتى ربط عكس الربح" }
         val received = payments.cashboxMovements(saleId).filter { it.amount.toBigDecimal() > BigDecimal.ZERO }
         require(received.isEmpty() && sale.paid.toBigDecimal().compareTo(BigDecimal.ZERO) == 0) {
             "الفاتورة المقبوضة تتطلب تسوية رد المبلغ قبل الإلغاء"
@@ -280,6 +282,7 @@ class RoomSalesEngine(private val context: Context) {
     suspend fun cancelWithRefund(saleId: String): String = db.withTransaction {
         val sale = requireNotNull(posting.sale(saleId)) { "الإلغاء متاح للفواتير الجديدة فقط" }
         require(sale.status != "ملغاة") { "الفاتورة ملغاة مسبقاً" }
+        require(sale.channel != SalesChannelClassification.STORE) { "إلغاء المحل موقوف حتى ربط عكس الربح" }
         val movements = payments.cashboxMovements(saleId)
         val receipts = payments.payments(saleId)
         require(receipts.isNotEmpty() || movements.isEmpty()) { "سجل الدفعات مفقود" }
@@ -384,6 +387,7 @@ class RoomSalesEngine(private val context: Context) {
     suspend fun correctUnpaidLine(saleId:String,lineId:String,newQuantity:BigDecimal,
         newUnitPrice:BigDecimal):Unit = db.withTransaction {
         require(newQuantity > BigDecimal.ZERO && newUnitPrice >= BigDecimal.ZERO)
+        require(posting.sale(saleId)?.channel != SalesChannelClassification.STORE) { "تصحيح فاتورة المحل يحتاج قيد تعديل الربح" }
         val sale = requireNotNull(posting.sale(saleId))
         require(sale.status != "ملغاة" && sale.paid.toBigDecimal().compareTo(BigDecimal.ZERO) == 0)
         require(payments.payments(saleId).isEmpty() && payments.cashboxMovements(saleId).isEmpty()) {
