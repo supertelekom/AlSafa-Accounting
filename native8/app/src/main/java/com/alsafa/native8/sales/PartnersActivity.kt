@@ -162,7 +162,10 @@ class PartnersActivity:Activity() {
     status.text="اختر الشريك"
     return@setOnClickListener
    }
-   val description="هل توافق على سحب " + entered.toPlainString() + " " + unit + " للشريك " + subject + " من " + selectedVault + "؟"
+   val memo=notes.text.toString().trim()
+   val description="هل توافق على سحب " + entered.toPlainString() + " " + unit +
+    " للشريك " + subject + " من " + selectedVault +
+    (if(memo.isBlank()) "" else "\nملاحظات: " + memo) + "؟"
    android.app.AlertDialog.Builder(this)
     .setTitle("تأكيد سحب الشريك")
     .setMessage(description)
