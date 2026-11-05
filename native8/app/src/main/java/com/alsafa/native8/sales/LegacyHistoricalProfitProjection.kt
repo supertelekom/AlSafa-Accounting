@@ -173,8 +173,15 @@ class LegacyHistoricalProfitProjection(private val legacy:LegacyReadRepository) 
    receiptEvents+=Triple(x.optString("date"),event,amount)
   }
   for((_,record,amount) in receiptEvents) checked("repair-receipt:${record.optString("id")}") {
+   // main.js repairPartsInvoiceTotal uses usedParts qty * price, not partsTotal.
+   val usedParts=record.optJSONArray("usedParts")
+   val parts=if(usedParts==null) BigDecimal.ZERO else
+    (0 until usedParts.length()).fold(BigDecimal.ZERO) { sum,index ->
+     val item=usedParts.getJSONObject(index)
+     sum+n(item,"qty")*n(item,"price")
+    }
    val total=if(record.isNull("laborPrice")) n(record,"price") else {
-    val base=n(record,"laborPrice")+n(record,"partsTotal")
+    val base=n(record,"laborPrice").max(BigDecimal.ZERO)+parts
     base*(BigDecimal.ONE+n(record,"taxRate").max(BigDecimal.ZERO).divide(BigDecimal(100),mc))
    }
    require(total>BigDecimal.ZERO) { "Repair invoice total missing" }
