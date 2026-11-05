@@ -47,12 +47,13 @@ class UnifiedFinancialPeriodRepository(
    .fold(BigDecimal.ZERO) { acc,row -> acc+decimal(row.reversed_profit) }
   val storeDao=requireNotNull(store) { "مستودع أرباح المحل غير موصول؛ لا يمكن عرض إجمالي جزئي مضلل" }
   val storeProfit=storeDao.inPeriod(start,end).fold(BigDecimal.ZERO) { acc,row -> acc+decimal(row.profit_usd) }
+  val storeAdjustments=storeDao.adjustmentsInPeriod(start,end).fold(BigDecimal.ZERO) { acc,row -> acc+decimal(row.profit_delta_usd) }
   val history=expenses.load(from,to).source
   val expense=history.expenses.fold(BigDecimal.ZERO) { acc,row -> acc+row.money.usd() }
   val withdrawals=LegacyFinancialRules.partners.associate { partner ->
    partner.id to history.withdrawals.filter { it.partnerId==partner.id }
     .fold(BigDecimal.ZERO) { acc,row -> acc+row.money.usd() }
   }
-  return Result(profits,reversals,storeSaleProfit=storeProfit,operatingExpenses=expense,withdrawals=withdrawals,partialNet=profits+storeProfit-reversals-expense)
+  return Result(profits,reversals,storeSaleProfit=storeProfit,operatingExpenses=expense,withdrawals=withdrawals,partialNet=profits+storeProfit+storeAdjustments-reversals-expense)
  }
 }
