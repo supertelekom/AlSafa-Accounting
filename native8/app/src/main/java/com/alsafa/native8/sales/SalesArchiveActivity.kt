@@ -42,7 +42,7 @@ class SalesArchiveActivity: ComponentActivity() {
             SalesInput("إلى تاريخ YYYY-MM-DD", vm.toDate) { vm.toDate=it; vm.search(vm.query,engine) }
             Button(onClick={ startActivity(Intent(this@SalesArchiveActivity, FullSaleActivity::class.java)) }) { Text("فاتورة مبيع") }
             Button(onClick={ startActivity(Intent(this@SalesArchiveActivity, QuickSaleActivity::class.java)) }) { Text("فاتورة مبسطة") }
-            vm.results.forEach { sale -> TextButton(onClick={ startActivity(Intent(this@SalesArchiveActivity, SaleDetailsActivity::class.java).putExtra("sale_id", sale.id)) }) { Text("#${sale.number} | ${sale.customer} | ${sale.total}") } }
+            vm.results.forEach { sale -> TextButton(onClick={ startActivity(Intent(this@SalesArchiveActivity, SaleDetailsActivity::class.java).putExtra("sale_id", sale.id)) }) { Text("#${sale.number} | ${when(sale.channel) { "online" -> "بيع أونلاين"; "store" -> "بيع محل"; else -> "نوع البيع غير محدد" }} | ${sale.customer} | ${sale.total}") } }
         } }
     }
 }
