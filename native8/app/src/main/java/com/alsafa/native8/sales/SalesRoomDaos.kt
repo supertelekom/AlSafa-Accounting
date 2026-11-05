@@ -12,6 +12,8 @@ data class UnifiedSaleRow(
 
 @Dao
 interface LegacySaleDao {
+ @Query("SELECT * FROM sale_returns ORDER BY created_at DESC")
+ suspend fun allOperationalReturns():List<RoomSaleReturn>
  @Query("SELECT * FROM legacy_sales_archive WHERE created_at>=:fromMillis AND created_at<:untilExclusive ORDER BY created_at,invoice_number")
  suspend fun historicalInPeriod(fromMillis:Long,untilExclusive:Long):List<LegacySaleEntity>
 
