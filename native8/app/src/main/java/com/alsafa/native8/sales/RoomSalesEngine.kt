@@ -140,7 +140,6 @@ class RoomSalesEngine(private val context: Context) {
         refundCashbox: String = "", refundCurrency: String = ""
     ): String = db.withTransaction {
         require(quantity > BigDecimal.ZERO && reason.isNotBlank())
-        require(posting.sale(saleId)?.channel != SalesChannelClassification.STORE) { "مرتجع المحل موقوف حتى ربط قيد عكس الربح المستقل" }
         val sale = requireNotNull(posting.sale(saleId)) { "الفاتورة غير موجودة" }
         require(sale.status != "ملغاة") { "الفاتورة ملغاة" }
         val line = requireNotNull(posting.line(saleId, lineId)) { "البند غير موجود" }
@@ -184,6 +183,12 @@ class RoomSalesEngine(private val context: Context) {
             require(sale.paid.toBigDecimal() >= refund) { "الرد يتجاوز المقبوض المتبقي" }
             require(sale.paid.toBigDecimal() >= refund) { "المبلغ المسترد يتجاوز المقبوض" }
         }
+        if(sale.channel==SalesChannelClassification.STORE) {
+            val costRestored=line.unit_cost.toBigDecimal().multiply(quantity)
+            db.storeSaleProfitDao().insertAdjustment(StoreProfitAdjustment(
+                UUID.randomUUID().toString(),saleId,System.currentTimeMillis(),
+                (costRestored-amount).toPlainString(),"مرتجع: "+reason))
+        }
         stock.adjust(line.source, line.product_id, line.variant_id, quantity.toPlainString(),
             "مرتجع فاتورة $saleId: $reason")
         check(posting.updateReturned(lineId, (returned + quantity).toPlainString()) == 1)
@@ -209,22 +214,25 @@ class RoomSalesEngine(private val context: Context) {
             for (part in allocations) {
                 val payment = originals.first { it.id == part.paymentId }
                 val cash = RefundAllocationMath.convertExact(part.baseAmount, fx)
-                val profit = requireNotNull(profits[payment.id]) { "سجل ربح الدفعة مفقود" }
-                val oldBase = reversals[payment.id].orEmpty().fold(BigDecimal.ZERO) { a, e ->
-                    a + e.reversed_base.toBigDecimal()
+                val profit = if(sale.channel==SalesChannelClassification.STORE) null else requireNotNull(profits[payment.id]) { "سجل ربح الدفعة مفقود" }
+                val reverseProfit=if(profit==null) BigDecimal.ZERO else run {
+                    val oldBase = reversals[payment.id].orEmpty().fold(BigDecimal.ZERO) { a, e ->
+                        a + e.reversed_base.toBigDecimal()
+                    }
+                    val oldProfit = reversals[payment.id].orEmpty().fold(BigDecimal.ZERO) { a, e ->
+                        a + e.reversed_profit.toBigDecimal()
+                    }
+                    require(oldBase + part.baseAmount <= profit.credited_base.toBigDecimal()) {
+                        "عكس الربح يتجاوز الدفعة"
+                    }
+                    val targetProfit = if ((oldBase + part.baseAmount).compareTo(
+                        profit.credited_base.toBigDecimal()) == 0) profit.recognized_profit.toBigDecimal()
+                    else profit.recognized_profit.toBigDecimal()
+                        .multiply(oldBase + part.baseAmount)
+                        .divide(profit.credited_base.toBigDecimal(), 2, java.math.RoundingMode.HALF_UP)
+                    val reverseProfit = targetProfit - oldProfit
+                    reverseProfit
                 }
-                val oldProfit = reversals[payment.id].orEmpty().fold(BigDecimal.ZERO) { a, e ->
-                    a + e.reversed_profit.toBigDecimal()
-                }
-                require(oldBase + part.baseAmount <= profit.credited_base.toBigDecimal()) {
-                    "عكس الربح يتجاوز الدفعة"
-                }
-                val targetProfit = if ((oldBase + part.baseAmount).compareTo(
-                    profit.credited_base.toBigDecimal()) == 0) profit.recognized_profit.toBigDecimal()
-                else profit.recognized_profit.toBigDecimal()
-                    .multiply(oldBase + part.baseAmount)
-                    .divide(profit.credited_base.toBigDecimal(), 2, java.math.RoundingMode.HALF_UP)
-                val reverseProfit = targetProfit - oldProfit
                 val movementId = UUID.randomUUID().toString()
                 payments.insertCashboxMovement(RoomCashboxMovement(movementId,
                     refundCashbox, refundCurrency, cash.negate().toPlainString(), saleId, now,
@@ -232,7 +240,7 @@ class RoomSalesEngine(private val context: Context) {
                 audit.insertRefund(SaleRefundAllocation(UUID.randomUUID().toString(), saleId,
                     payment.id, movementId, refundCashbox, refundCurrency,
                     cash.toPlainString(), part.baseAmount.toPlainString(), fx.toPlainString(), now))
-                audit.insertReversal(SaleProfitReversal(UUID.randomUUID().toString(), saleId,
+                if(profit!=null) audit.insertReversal(SaleProfitReversal(UUID.randomUUID().toString(), saleId,
                     payment.id, movementId, part.baseAmount.toPlainString(),
                     reverseProfit.toPlainString(), now))
             }
