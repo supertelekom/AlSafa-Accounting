@@ -104,7 +104,8 @@ class ExpenseActivity:Activity() {
   }
   var pendingId:String?=null
   var pendingAt:Long?=null
-  save.setOnClickListener {
+  val performConfirmedSave:()->Unit = {
+
    val id=pendingId ?: UUID.randomUUID().toString().also { pendingId=it }
    val createdAt=pendingAt ?: System.currentTimeMillis().also { pendingAt=it }
    save.isEnabled=false
@@ -154,6 +155,31 @@ class ExpenseActivity:Activity() {
     }
    }
   }
+  save.setOnClickListener {
+   val entered=amount.text.toString().trim().toBigDecimalOrNull()
+   if(entered==null || entered<=java.math.BigDecimal.ZERO) {
+    status.text="أدخل مبلغاً موجباً صحيحاً"
+    return@setOnClickListener
+   }
+   val unit=currency.selectedItem.toString()
+   val selectedVault=vault.selectedItem.toString()
+   val subject=category.text.toString().trim()
+   if(subject.isBlank()) {
+    status.text="حدد تصنيف المصروف"
+    return@setOnClickListener
+   }
+   val description="هل توافق على تسجيل مصروف " + subject + " بمبلغ " + entered.toPlainString() + " " + unit + " من " + selectedVault + "؟"
+   android.app.AlertDialog.Builder(this)
+    .setTitle("تأكيد المصروف")
+    .setMessage(description)
+    .setNegativeButton("إلغاء") { dialog,_ -> dialog.dismiss() }
+    .setPositiveButton("موافق") { dialog,_ ->
+     dialog.dismiss()
+     performConfirmedSave.invoke()
+    }
+    .show()
+  }
+
  }
  override fun onDestroy() { scope.cancel();super.onDestroy() }
 }
