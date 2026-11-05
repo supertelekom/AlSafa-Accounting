@@ -60,9 +60,23 @@ class PartnerProfitsActivity:Activity() {
        .fold(BigDecimal.ZERO) { sum,row -> sum+row.money.usd() }
       "${names[partner.id]} (${partner.share}%): ${withdrawn.stripTrailingZeros().toPlainString()} USD سحوبات تراكمية"
      }
+     val projection=withContext(Dispatchers.IO) {
+      val staging=LegacyStagingDatabase(applicationContext)
+      try {
+       LegacyHistoricalProfitProjection(LegacyReadRepository(staging))
+        .read("0001-01-01",LocalDate.now().toString())
+      } finally { staging.close() }
+     }
      result.text="المصاريف القديمة: ${snapshot.legacyExpenses} | الجديدة: ${snapshot.operationalExpenses}\n"+
       "سحوبات الشركاء القديمة: ${snapshot.legacyWithdrawals} | الجديدة: ${snapshot.operationalWithdrawals}\n"+
-      lines.joinToString("\n")+"\nمستحقات الأرباح النهائية غير معتمدة حتى مطابقة المبيعات والصيانة."
+      lines.joinToString("\n")+"\n"+
+      "ربح المحل التاريخي (تدقيق): ${projection.storeProfitUsd} USD\n"+
+      "ربح الصيانة التاريخي (تدقيق): ${projection.repairProfitUsd} USD\n"+
+      "تسويات المرتجعات التاريخية: ${projection.returnImpactUsd} USD\n"+
+      "مصاريف تاريخية: ${projection.expensesUsd} USD\n"+
+      "سجلات تحتاج مراجعة: ${projection.unresolved.size}\n"+
+      "أرباح الأونلاين التاريخية والمستحقات النهائية: غير معتمدة حتى مطابقة التحصيلات."
+
     } catch(e:Exception) { result.text=e.message ?: "تعذر قراءة السحوبات" }
     finally { button.isEnabled=true }
    }
