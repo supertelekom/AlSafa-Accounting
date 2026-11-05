@@ -159,3 +159,10 @@ Files added:
 - FinancialReviewActivity now displays candidate archived STORE margin and cost, plus unresolved count. This is NOT an approved all-source net.
 - Added LegacySalesEventExtractorTest.kt; authored but not executed.
 - Remaining: historical ONLINE receipts, discounts/returns source parity, 54 untyped invoices, repairs, final net and partner balances. No historical ledger writes, no stock deductions or cash postings were performed.
+
+## Historical sales source profit reconstruction
+- Inspected actual 2026-10-26 v3.9.359 backup: 111 sales (43 explicit store, 14 explicit online, 54 without saleType), 13 sale-linked payment rows. Historical empty saleType is treated as store by LegacySaleChannel, matching the documented source fallback.
+- Added LegacyHistoricalSalesProfitReader: read-only invoice item cost/qty, tax, total, source FX, dated online receipts and proportional recognized cost; unresolved invoices and orphan payments are reported.
+- Added LegacyHistoricalSalesProfitRepository to combine archived Room sales and original staging payment rows. Added unit tests (authored, not executed).
+- FinancialReviewActivity source diagnostics shows extracted event counts and candidate store/online historical margin; candidate amounts are **not approved** and must not be combined with new profit until refunds, old collection discounts and original main.js numerical parity are verified.
+- No historical stock/cash movements were posted. No Gradle build or on-device verification has been run.
