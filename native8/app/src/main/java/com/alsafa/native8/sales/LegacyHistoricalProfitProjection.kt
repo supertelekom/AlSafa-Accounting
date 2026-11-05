@@ -208,6 +208,6 @@ class LegacyHistoricalProfitProjection(private val legacy:LegacyReadRepository) 
    }
    returns+=usd(delta,x)
   }
-  return Result(store,repair,online,returns,expense,withdrawals,issues,onlineVerified=issues.none { it.startsWith("online:") || it.startsWith("Duplicate online") || it.startsWith("Duplicate historical receipt") })
+  return Result(store,repair,online,returns,expense,withdrawals,issues,onlineVerified=false // Requires source-event parity, not merely absence of parsing errors)
  }
 }
