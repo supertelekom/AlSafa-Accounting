@@ -49,7 +49,10 @@ class UnifiedExpensePartnerReadRepository(
    LegacyFinancialRules.Expense(date,LegacyFinancialRules.Money(
     decimal(obj.get("amount").toString()),exchangeSnapshot(obj,unit)))
   }.filter { LegacyFinancialRules.inRange(it.date,from,to) }
-  val legacyWithdrawals=importedWithdrawalRows.filter { LegacyFinancialRules.inRange(it.fields.optString("date"),from,to) }.map { row ->
+  val legacyWithdrawals=importedWithdrawalRows.filter {
+   LegacyFinancialRules.inRange(it.fields.optString("date"),from,to) &&
+    it.fields.optString("partnerId") in LegacyFinancialRules.partners.map { partner -> partner.id }
+  }.map { row ->
    val obj=row.fields
    val unit=obj.optString("currency","USD").uppercase()
    val date=obj.optString("date")
@@ -67,7 +70,9 @@ class UnifiedExpensePartnerReadRepository(
   val newExpenses=operationalExpenseRows.map {
    LegacyFinancialRules.Expense(it.date,money(it.amount,it.usd_per_unit))
   }
-  val newWithdrawals=operationalWithdrawalRows.map {
+  val newWithdrawals=operationalWithdrawalRows.onEach {
+   require(it.partner_id in LegacyFinancialRules.partners.map { partner -> partner.id }) { "معرف شريك غير معتمد" }
+  }.map {
    LegacyFinancialRules.Withdrawal(it.date,it.partner_id,money(it.amount,it.usd_per_unit))
   }
   return Snapshot(LegacyFinancialRules.Source(
