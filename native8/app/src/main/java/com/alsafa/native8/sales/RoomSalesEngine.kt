@@ -486,6 +486,12 @@ class RoomSalesEngine(private val context: Context) {
 
     suspend fun archive(search: String, from: Long?, to: Long?): List<SaleRecord> =
         db.legacySaleDao().unifiedArchive(search.trim(), from ?: 0L, to ?: Long.MAX_VALUE).map {
-            SaleRecord(it.id, it.number, it.created_at, it.customer, it.phone, it.total, it.paid, it.status,\n                if (it.historical == 1) it.original_json?.let { raw ->\n                    when(LegacySaleChannel.fromOriginalJson(raw)) {\n                        SalesChannelProfit.Channel.ONLINE -> "online"\n                        SalesChannelProfit.Channel.STORE -> "store"\n                    }\n                } else it.channel)
+            SaleRecord(it.id, it.number, it.created_at, it.customer, it.phone, it.total, it.paid, it.status,
+                if (it.historical == 1) it.original_json?.let { raw ->
+                    when(LegacySaleChannel.fromOriginalJson(raw)) {
+                        SalesChannelProfit.Channel.ONLINE -> "online"
+                        SalesChannelProfit.Channel.STORE -> "store"
+                    }
+                } else it.channel)
         }
 }
