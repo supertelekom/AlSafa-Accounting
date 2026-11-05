@@ -8,11 +8,13 @@ import java.time.ZoneId
 class UnifiedFinancialPeriodRepository(
  private val sales:SalesFinancialAuditDao,
  private val expenses:UnifiedExpensePartnerReadRepository,
- private val businessZone:ZoneId
+ private val businessZone:ZoneId,
+ private val store:StoreSaleProfitDao?=null
 ) {
  data class Result(
   val saleProfit:BigDecimal,
   val saleReversals:BigDecimal,
+  val storeSaleProfit:BigDecimal=BigDecimal.ZERO,
   val operatingExpenses:BigDecimal,
   val withdrawals:Map<String,BigDecimal>,
   val partialNet:BigDecimal,
@@ -43,12 +45,13 @@ class UnifiedFinancialPeriodRepository(
    .fold(BigDecimal.ZERO) { acc,row -> acc+decimal(row.recognized_profit) }
   val reversals=sales.profitReversalsInPeriod(start,end)
    .fold(BigDecimal.ZERO) { acc,row -> acc+decimal(row.reversed_profit) }
+  val storeProfit=store?.inPeriod(start,end)?.fold(BigDecimal.ZERO) { acc,row -> acc+decimal(row.profit_usd) } ?: BigDecimal.ZERO
   val history=expenses.load(from,to).source
   val expense=history.expenses.fold(BigDecimal.ZERO) { acc,row -> acc+row.money.usd() }
   val withdrawals=LegacyFinancialRules.partners.associate { partner ->
    partner.id to history.withdrawals.filter { it.partnerId==partner.id }
     .fold(BigDecimal.ZERO) { acc,row -> acc+row.money.usd() }
   }
-  return Result(profits,reversals,expense,withdrawals,profits-reversals-expense)
+  return Result(profits,reversals,storeSaleProfit=storeProfit,operatingExpenses=expense,withdrawals=withdrawals,partialNet=profits+storeProfit-reversals-expense)
  }
 }
