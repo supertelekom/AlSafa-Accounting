@@ -67,6 +67,15 @@ class PartnerProfitsActivity:Activity() {
         .read("0001-01-01",LocalDate.now().toString())
       } finally { staging.close() }
      }
+     val monthlyWithdrawals=snapshot.source.withdrawals.groupBy { it.date.take(7) }
+      .toSortedMap().map { (month,entries) ->
+       val byPartner=LegacyFinancialRules.partners.joinToString(" | ") { partner ->
+        val sum=entries.filter { it.partnerId==partner.id }
+         .fold(BigDecimal.ZERO) { total,entry -> total+entry.money.usd() }
+        "${names[partner.id]}: ${sum.stripTrailingZeros().toPlainString()} USD"
+       }
+       "$month — $byPartner"
+      }
      result.text="المصاريف القديمة: ${snapshot.legacyExpenses} | الجديدة: ${snapshot.operationalExpenses}\n"+
       "سحوبات الشركاء القديمة: ${snapshot.legacyWithdrawals} | الجديدة: ${snapshot.operationalWithdrawals}\n"+
       lines.joinToString("\n")+"\n"+
