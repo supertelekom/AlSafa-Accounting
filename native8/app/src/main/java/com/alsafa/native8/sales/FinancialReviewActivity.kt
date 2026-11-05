@@ -10,6 +10,8 @@ import kotlinx.coroutines.*
 import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.ZoneId
+import com.alsafa.native8.data.migration.LegacyStagingDatabase
+import com.alsafa.native8.data.migration.LegacyReadRepository
 
 /** Visible financial audit, NOT an approved profit or partner statement. */
 class FinancialReviewActivity:Activity() {
@@ -110,10 +112,25 @@ class FinancialReviewActivity:Activity() {
       val missing=db.salesPostingDao().unverifiedChannelCount()
       val suspect=db.salesFinancialAuditDao().nonOnlineProfitEventCount()
       val repairs=MaintenanceFinancialCoverage(db.maintenanceDao()).inspect()
+      val staged=LegacyStagingDatabase(applicationContext)
+      val historical=try {
+       LegacyHistoricalSalesProfitRepository(db.legacySaleDao(),LegacyReadRepository(staged)).inspect()
+      } finally { staged.close() }
+      val storeHistorical=historical.events.filter {
+       it.stream==FinancialSourceReconciliation.Stream.LEGACY_STORE
+      }.fold(BigDecimal.ZERO) { sum,event -> sum+event.profitUsd }
+      val onlineHistorical=historical.events.filter {
+       it.stream==FinancialSourceReconciliation.Stream.LEGACY_ONLINE
+      }.fold(BigDecimal.ZERO) { sum,event -> sum+event.profitUsd }
       "الفواتير الجديدة غير المصنفة: "+missing+"\\n"+
        "أحداث ربح قبض تحتاج تدقيق نوع الفاتورة: "+suspect+"\\n"+
        "مبيعات المحل الجديدة: متصلة بجدول الأرباح\\n"+
        "تحصيلات الأونلاين الجديدة: متصلة بقيود القبض\\n"+
+       "أحداث أرباح المحل التاريخية المستخرجة: "+historical.events.count { it.stream==FinancialSourceReconciliation.Stream.LEGACY_STORE }+"\\n"+
+       "أحداث تحصيل الأونلاين التاريخية المستخرجة: "+historical.events.count { it.stream==FinancialSourceReconciliation.Stream.LEGACY_ONLINE }+"\\n"+
+       "عمليات تاريخية تحتاج مطابقة: "+historical.unresolved.size+"\\n"+
+       "ربح محل تاريخي مرشح للمطابقة: "+storeHistorical.toPlainString()+" USD\\n"+
+       "ربح أونلاين تاريخي مرشح للمطابقة: "+onlineHistorical.toPlainString()+" USD\\n"+
        "الصيانة المسلّمة: "+repairs.delivered+" (مستعادة "+repairs.imported+"، جديدة "+repairs.newRepairs+")\\n"+
        "الصيانة التي تحتاج استكمال أدلة الربح: "+repairs.unresolvedIds.size+"\\n"+
        "الأرشيف القديم: لم يُدمج ربحه في هذا التقرير\\n"+
