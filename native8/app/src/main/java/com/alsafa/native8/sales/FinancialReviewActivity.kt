@@ -109,10 +109,13 @@ class FinancialReviewActivity:Activity() {
       val db=AppDatabase.get(applicationContext)
       val missing=db.salesPostingDao().unverifiedChannelCount()
       val suspect=db.salesFinancialAuditDao().nonOnlineProfitEventCount()
+      val repairs=MaintenanceFinancialCoverage(db.maintenanceDao()).inspect()
       "الفواتير الجديدة غير المصنفة: "+missing+"\\n"+
        "أحداث ربح قبض تحتاج تدقيق نوع الفاتورة: "+suspect+"\\n"+
        "مبيعات المحل الجديدة: متصلة بجدول الأرباح\\n"+
        "تحصيلات الأونلاين الجديدة: متصلة بقيود القبض\\n"+
+       "الصيانة المسلّمة: "+repairs.delivered+" (مستعادة "+repairs.imported+"، جديدة "+repairs.newRepairs+")\\n"+
+       "الصيانة التي تحتاج استكمال أدلة الربح: "+repairs.unresolvedIds.size+"\\n"+
        "الأرشيف القديم: لم يُدمج ربحه في هذا التقرير\\n"+
        "الصيانة: لم تُدمج المقبوضات والتكلفة في هذا التقرير\\n"+
        "المصاريف والشركاء: لم تُعتمد نتائجها النهائية"
