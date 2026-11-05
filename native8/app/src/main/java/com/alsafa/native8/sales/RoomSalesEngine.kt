@@ -255,7 +255,6 @@ class RoomSalesEngine(private val context: Context) {
     suspend fun cancelUnpaid(saleId: String): String = db.withTransaction {
         val sale = requireNotNull(posting.sale(saleId)) { "الإلغاء متاح للفواتير الجديدة فقط" }
         require(sale.status != "ملغاة") { "الفاتورة ملغاة مسبقاً" }
-        require(sale.channel != SalesChannelClassification.STORE) { "إلغاء المحل موقوف حتى ربط عكس الربح" }
         val received = payments.cashboxMovements(saleId).filter { it.amount.toBigDecimal() > BigDecimal.ZERO }
         require(received.isEmpty() && sale.paid.toBigDecimal().compareTo(BigDecimal.ZERO) == 0) {
             "الفاتورة المقبوضة تتطلب تسوية رد المبلغ قبل الإلغاء"
@@ -276,6 +275,15 @@ class RoomSalesEngine(private val context: Context) {
         val debt = debts.bySaleId(saleId)
         if (debt != null) {
             check(debts.compareAndSetBalance(saleId, debt.balance, "0") == 1)
+        }
+        if(sale.channel==SalesChannelClassification.STORE) {
+            val original=requireNotNull(db.storeSaleProfitDao().bySale(saleId))
+            val previous=db.storeSaleProfitDao().adjustments(saleId).fold(BigDecimal.ZERO) { a,e ->
+                a+e.profit_delta_usd.toBigDecimal()
+            }
+            db.storeSaleProfitDao().insertAdjustment(StoreProfitAdjustment(
+                UUID.randomUUID().toString(),saleId,System.currentTimeMillis(),
+                (original.profit_usd.toBigDecimal()+previous).negate().toPlainString(),"إلغاء فاتورة"))
         }
         check(posting.updatePayment(saleId, "0", "ملغاة") == 1)
         saleId
