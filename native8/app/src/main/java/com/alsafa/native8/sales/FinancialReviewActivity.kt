@@ -19,7 +19,7 @@ class FinancialReviewActivity:Activity() {
   val root=LinearLayout(this).apply {
    orientation=LinearLayout.VERTICAL
    layoutDirection=View.LAYOUT_DIRECTION_RTL
-   setPadding(28,28,28,28)
+   setPadding(16,16,16,24)
   }
   val title=TextView(this).apply {
    text="الأرباح — مراجعة الحسابات"
@@ -41,17 +41,36 @@ class FinancialReviewActivity:Activity() {
    setSingleLine()
    setText(LocalDate.now().toString())
   }
-  val result=TextView(this).apply { textSize=18f }
-  val detail=TextView(this).apply { textSize=15f }
+  val result=TextView(this).apply {
+   textSize=17f
+   setHorizontallyScrolling(false)
+  }
+  val detail=TextView(this).apply {
+   textSize=15f
+   visibility=View.GONE
+   setHorizontallyScrolling(false)
+   setSingleLine(false)
+   breakStrategy=android.text.Layout.BREAK_STRATEGY_HIGH_QUALITY
+  }
   val showDetails=Button(this).apply { text="تفصيل القيود المالية" }
-  val sourceStatus=TextView(this).apply { textSize=16f }
+  val sourceStatus=TextView(this).apply {
+   textSize=16f
+   visibility=View.GONE
+   setHorizontallyScrolling(false)
+  }
   val checkSources=Button(this).apply { text="فحص مصادر الأرباح" }
   val refresh=Button(this).apply { text="عرض مراجعة الأرباح" }
   listOf(title,warning,from,to,refresh,result,showDetails,detail,checkSources,sourceStatus).forEach {
    root.addView(it,LinearLayout.LayoutParams(-1,-2))
   }
-  setContentView(ScrollView(this).apply { addView(root) })
+  val scroll=ScrollView(this).apply {
+   isFillViewport=false
+   isHorizontalScrollBarEnabled=false
+   addView(root,ScrollView.LayoutParams(-1,-2))
+  }
+  setContentView(scroll)
   checkSources.setOnClickListener {
+   sourceStatus.visibility=View.VISIBLE
    checkSources.isEnabled=false
    sourceStatus.text="جارٍ فحص المصادر..."
    scope.launch {
@@ -74,6 +93,13 @@ class FinancialReviewActivity:Activity() {
    }
   }
   showDetails.setOnClickListener {
+   if(detail.visibility==View.VISIBLE && detail.text.isNotBlank()) {
+    detail.visibility=View.GONE
+    showDetails.text="تفصيل القيود المالية"
+    return@setOnClickListener
+   }
+   detail.visibility=View.VISIBLE
+   showDetails.text="إخفاء تفاصيل القيود"
    showDetails.isEnabled=false
    detail.text="جارٍ تحميل تفاصيل القيود..."
    scope.launch {
