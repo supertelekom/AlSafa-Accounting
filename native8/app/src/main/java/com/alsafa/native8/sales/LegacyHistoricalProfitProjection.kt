@@ -116,16 +116,27 @@ class LegacyHistoricalProfitProjection(private val legacy:LegacyReadRepository) 
    val opening=if(openingCash.isNotEmpty()) {
     val cash=openingCash.fold(BigDecimal.ZERO) { z,c ->
      val x=c.fields
-     val amountUsd=usd(n(x,"amount"),x)
-     val invoiceUnit=sale.optString("currency","USD")
-     val rate=LegacyFinancialExchange.usdPerUnit(invoiceUnit,
-      sale.optJSONObject("rateSnapshot")?.optString(invoiceUnit))
-     z+amountUsd.divide(rate,mc)
+     val from=x.optString("currency","USD").uppercase()
+     val to=sale.optString("currency","USD").uppercase()
+     val snapshot=x.optJSONObject("rateSnapshot") ?: sale.optJSONObject("rateSnapshot")
+     val direct=snapshot?.optString("TRY_SYP")?.toBigDecimalOrNull()
+     val amount=n(x,"amount")
+     val converted=when {
+      from==to -> amount
+      from=="TRY" && to=="SYP" && direct!=null && direct>BigDecimal.ZERO -> amount*direct
+      from=="SYP" && to=="TRY" && direct!=null && direct>BigDecimal.ZERO -> amount.divide(direct,mc)
+      else -> {
+       val fromUsd=LegacyFinancialExchange.usdPerUnit(from,snapshot?.optString(from))
+       val toUsd=LegacyFinancialExchange.usdPerUnit(to,snapshot?.optString(to))
+       amount.multiply(fromUsd,mc).divide(toUsd,mc)
+      }
+     }
+     z+converted.max(BigDecimal.ZERO)
     }
     (cash-sameDay).max(BigDecimal.ZERO)
    } else {
     val corrected=listOf("paymentMetadataCorrectedAt","paymentCurrencyCorrectedAt",
-     "financialFootprintRepairedAt").any { sale.optBoolean(it) || sale.optString(it).isNotBlank() }
+     "financialFootprintRepairedAt").any { sale.has(it) && !sale.isNull(it) && sale.optString(it).isNotBlank() && sale.optString(it)!="false" }
     val subtract=if(corrected) payments.fold(BigDecimal.ZERO) { z,p -> z+n(p.fields,"amount").max(BigDecimal.ZERO) } else sameDay
     (n(sale,"paid")-subtract).max(BigDecimal.ZERO)
    }
