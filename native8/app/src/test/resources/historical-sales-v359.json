@@ -1,0 +1,5607 @@
+{
+  "sourceSha256": "a57ba7aac9ead8138e6317eb49e84dcd312b7175cb57ca4c60cabf2fb7096126",
+  "sales": [
+    {
+      "id": "sale-1792918448696-rdmzvn",
+      "date": "2026-10-25",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-24T17:40:13.516Z"
+      },
+      "saleType": "store",
+      "total": 23.01810865191147,
+      "paid": 23.01810865191147,
+      "tax": 0,
+      "taxRate": 0,
+      "items": [
+        {
+          "qty": 1,
+          "cost": 7.5
+        }
+      ]
+    },
+    {
+      "id": "sale-1792778236265-djzems",
+      "date": "2026-10-23",
+      "currency": "TRY",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-23T16:41:40.838Z"
+      },
+      "total": 1150,
+      "paid": 1150,
+      "items": [
+        {
+          "qty": 1,
+          "cost": 497
+        }
+      ]
+    },
+    {
+      "id": "sale-1792773658259-2xh5i1",
+      "date": "2026-10-23",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-22T15:37:17.649Z"
+      },
+      "saleType": "store",
+      "total": 40,
+      "paid": 40,
+      "tax": 0,
+      "taxRate": 0,
+      "items": [
+        {
+          "qty": 1,
+          "cost": 6.5
+        },
+        {
+          "qty": 1,
+          "cost": 5.5
+        }
+      ]
+    },
+    {
+      "id": "sale-1792689782395-duq1uu",
+      "date": "2026-10-22",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-22T15:37:17.649Z"
+      },
+      "saleType": "store",
+      "total": 314,
+      "paid": 314,
+      "tax": 0,
+      "taxRate": 0,
+      "items": [
+        {
+          "qty": 1,
+          "cost": 188.325
+        }
+      ]
+    },
+    {
+      "id": "sale-1792684182141-z3aaeg",
+      "date": "2026-10-22",
+      "currency": "TRY",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-22T15:37:17.649Z"
+      },
+      "total": 500,
+      "paid": 500,
+      "items": [
+        {
+          "qty": 1,
+          "cost": 173.95000000000002
+        }
+      ]
+    },
+    {
+      "id": "sale-1792683394621-212l4b",
+      "date": "2026-10-22",
+      "currency": "TRY",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-21T13:27:51.788Z"
+      },
+      "total": 1000,
+      "paid": 1000,
+      "items": [
+        {
+          "qty": 1,
+          "cost": 397.6
+        }
+      ]
+    },
+    {
+      "id": "sale-1792667860841-opwwsc",
+      "date": "2026-10-22",
+      "currency": "SYP",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-21T13:27:51.788Z"
+      },
+      "saleType": "store",
+      "total": 7500,
+      "paid": 7500,
+      "tax": 0,
+      "taxRate": 0,
+      "items": [
+        {
+          "qty": 1,
+          "cost": 1104
+        },
+        {
+          "qty": 1,
+          "cost": 2760
+        }
+      ]
+    },
+    {
+      "id": "sale-1792657409415-ncjsoc",
+      "date": "2026-10-22",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-21T13:27:51.788Z"
+      },
+      "total": 4,
+      "paid": 4,
+      "items": [
+        {
+          "qty": 1,
+          "cost": 1.5
+        }
+      ]
+    },
+    {
+      "id": "sale-1792583796084-sprjl0",
+      "date": "2026-10-21",
+      "currency": "SYP",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-20T12:23:56.099Z"
+      },
+      "total": 2100,
+      "paid": 2100,
+      "items": [
+        {
+          "qty": 1,
+          "cost": 966
+        }
+      ]
+    },
+    {
+      "id": "sale-1792514333404-baw6si",
+      "date": "2026-10-20",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-20T12:23:56.099Z"
+      },
+      "saleType": "store",
+      "total": 68.10865191146881,
+      "paid": 68.10865191146881,
+      "tax": 0,
+      "taxRate": 0,
+      "items": [
+        {
+          "qty": 1,
+          "cost": 36.6
+        }
+      ]
+    },
+    {
+      "id": "sale-1792499172951-mmdn7j",
+      "date": "2026-10-20",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-20T12:23:56.099Z"
+      },
+      "total": 35,
+      "paid": 35,
+      "items": [
+        {
+          "qty": 1,
+          "cost": 20
+        }
+      ]
+    },
+    {
+      "id": "sale-1792475638664-kl8rrz",
+      "date": "2026-10-20",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-19T08:07:46.553Z"
+      },
+      "total": 3,
+      "paid": 3,
+      "items": [
+        {
+          "qty": 1,
+          "cost": 1.85
+        }
+      ]
+    },
+    {
+      "id": "sale-1792475495510-3o84xo",
+      "date": "2026-10-20",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-19T08:07:46.553Z"
+      },
+      "total": 50,
+      "paid": 50,
+      "items": [
+        {
+          "qty": 1,
+          "cost": 15.5
+        }
+      ]
+    },
+    {
+      "id": "sale-1792438107079-hcow7q",
+      "date": "2026-10-19",
+      "currency": "TRY",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-19T08:07:46.553Z"
+      },
+      "saleType": "store",
+      "total": 750,
+      "paid": 750,
+      "tax": 0,
+      "taxRate": 0,
+      "items": [
+        {
+          "qty": 3,
+          "cost": 186.375
+        }
+      ]
+    },
+    {
+      "id": "sale-1792426217599-kpxw23",
+      "date": "2026-10-19",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-19T08:07:46.553Z"
+      },
+      "saleType": "store",
+      "total": 69.11468812877263,
+      "paid": 69.11468812877263,
+      "tax": 0,
+      "taxRate": 0,
+      "items": [
+        {
+          "qty": 1,
+          "cost": 41.4
+        }
+      ]
+    },
+    {
+      "id": "sale-1792407451542-rdxotn",
+      "date": "2026-10-19",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-19T08:07:46.553Z"
+      },
+      "total": 20,
+      "paid": 20,
+      "items": [
+        {
+          "qty": 1,
+          "cost": 7
+        }
+      ]
+    },
+    {
+      "id": "sale-1792405893046-k4iz3u",
+      "date": "2026-10-19",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-19T08:07:46.553Z"
+      },
+      "total": 35,
+      "paid": 35,
+      "items": [
+        {
+          "qty": 1,
+          "cost": 14
+        }
+      ]
+    },
+    {
+      "id": "sale-1792345352783-5cc8dn",
+      "date": "2026-10-18",
+      "currency": "SYP",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-18T04:36:55.217Z"
+      },
+      "total": 3500,
+      "paid": 3500,
+      "items": [
+        {
+          "qty": 1,
+          "cost": 1242
+        }
+      ]
+    },
+    {
+      "id": "sale-1792325213485-fwlfjd",
+      "date": "2026-10-18",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-18T04:36:55.217Z"
+      },
+      "saleType": "store",
+      "total": 4,
+      "paid": 4,
+      "tax": 0,
+      "taxRate": 0,
+      "items": [
+        {
+          "qty": 2,
+          "cost": 1.85
+        }
+      ]
+    },
+    {
+      "id": "sale-1792325073808-sq1soy",
+      "date": "2026-10-18",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-18T04:36:55.217Z"
+      },
+      "saleType": "store",
+      "total": 39,
+      "paid": 39,
+      "tax": 0,
+      "taxRate": 0,
+      "items": [
+        {
+          "qty": 1,
+          "cost": 2.5
+        },
+        {
+          "qty": 1,
+          "cost": 18.6
+        },
+        {
+          "qty": 1,
+          "cost": 1.3
+        }
+      ]
+    },
+    {
+      "id": "sale-1792324721811-3xghwf",
+      "date": "2026-10-18",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-18T04:36:55.217Z"
+      },
+      "total": 18,
+      "paid": 18,
+      "items": [
+        {
+          "qty": 1,
+          "cost": 6.75
+        }
+      ]
+    },
+    {
+      "id": "sale-1792324645920-hbekiw",
+      "date": "2026-10-18",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-18T04:36:55.217Z"
+      },
+      "total": 28,
+      "paid": 28,
+      "items": [
+        {
+          "qty": 1,
+          "cost": 10
+        }
+      ]
+    },
+    {
+      "id": "sale-1792318397504-lk28n0",
+      "date": "2026-10-18",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-18T04:36:55.217Z"
+      },
+      "total": 5,
+      "paid": 5,
+      "items": [
+        {
+          "qty": 1,
+          "cost": 2.25
+        }
+      ]
+    },
+    {
+      "id": "sale-1792315792304-fmynee",
+      "date": "2026-10-18",
+      "currency": "SYP",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-18T04:36:55.217Z"
+      },
+      "total": 900,
+      "paid": 900,
+      "items": [
+        {
+          "qty": 1,
+          "cost": 345
+        }
+      ]
+    },
+    {
+      "id": "sale-1792243217399-0wnuqg",
+      "date": "2026-10-17",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-16T17:53:40.222Z"
+      },
+      "total": 18,
+      "paid": 18,
+      "items": [
+        {
+          "qty": 1,
+          "cost": 6
+        }
+      ]
+    },
+    {
+      "id": "sale-1792241003720-5tslaq",
+      "date": "2026-10-17",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-16T17:53:40.222Z"
+      },
+      "total": 25,
+      "paid": 25,
+      "items": [
+        {
+          "qty": 1,
+          "cost": 7.5
+        }
+      ]
+    },
+    {
+      "id": "sale-1792239917284-wg227u",
+      "date": "2026-10-17",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-16T17:53:40.222Z"
+      },
+      "total": 19,
+      "paid": 19,
+      "items": [
+        {
+          "qty": 1,
+          "cost": 17
+        }
+      ]
+    },
+    {
+      "id": "sale-1792224435768-rwwoyj",
+      "date": "2026-10-17",
+      "currency": "TRY",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-16T17:53:40.222Z"
+      },
+      "total": 250,
+      "paid": 250,
+      "items": [
+        {
+          "qty": 1,
+          "cost": 124.25
+        }
+      ]
+    },
+    {
+      "id": "sale-1792074403975-onl6ia",
+      "date": "2026-10-15",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-14T16:02:28.775Z"
+      },
+      "total": 18,
+      "paid": 18,
+      "items": [
+        {
+          "qty": 1,
+          "cost": 6
+        }
+      ]
+    },
+    {
+      "id": "sale-1792060484177-08ygye",
+      "date": "2026-10-15",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-14T16:02:28.775Z"
+      },
+      "total": 23,
+      "paid": 23,
+      "items": [
+        {
+          "qty": 1,
+          "cost": 8
+        }
+      ]
+    },
+    {
+      "id": "sale-1791982068171-xjmvw2",
+      "date": "2026-10-14",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-13T12:00:48.165Z"
+      },
+      "saleType": "store",
+      "total": 55,
+      "paid": 55,
+      "tax": 0,
+      "taxRate": 0,
+      "items": [
+        {
+          "qty": 1,
+          "cost": 9
+        },
+        {
+          "qty": 1,
+          "cost": 8
+        }
+      ]
+    },
+    {
+      "id": "sale-1791920118410-wyv1wm",
+      "date": "2026-10-13",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-13T12:00:48.165Z"
+      },
+      "total": 20,
+      "paid": 20,
+      "items": [
+        {
+          "qty": 1,
+          "cost": 3.5
+        }
+      ]
+    },
+    {
+      "id": "sale-1791907397444-oyjz48",
+      "date": "2026-10-13",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-13T12:00:48.165Z"
+      },
+      "total": 5.7,
+      "paid": 5.7,
+      "items": [
+        {
+          "qty": 1,
+          "cost": 3.25
+        }
+      ]
+    },
+    {
+      "id": "sale-1791825431729-88qeeo",
+      "date": "2026-10-12",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-12T05:07:46.997Z"
+      },
+      "total": 10,
+      "paid": 10,
+      "items": [
+        {
+          "qty": 1,
+          "cost": 3
+        }
+      ]
+    },
+    {
+      "id": "sale-1791818853887-tuj1un",
+      "date": "2026-10-12",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-12T05:07:46.997Z"
+      },
+      "total": 15,
+      "paid": 15,
+      "items": [
+        {
+          "qty": 1,
+          "cost": 5.5
+        }
+      ]
+    },
+    {
+      "id": "sale-1791818793181-jkvpif",
+      "date": "2026-10-12",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-12T05:07:46.997Z"
+      },
+      "total": 20,
+      "paid": 20,
+      "items": [
+        {
+          "qty": 1,
+          "cost": 7.5
+        }
+      ]
+    },
+    {
+      "id": "sale-1791792434136-bisiqu",
+      "date": "2026-10-12",
+      "currency": "SYP",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-12T05:07:46.997Z"
+      },
+      "saleType": "store",
+      "total": 3300,
+      "paid": 3300,
+      "tax": 0,
+      "taxRate": 0,
+      "items": [
+        {
+          "qty": 1,
+          "cost": 0
+        }
+      ]
+    },
+    {
+      "id": "sale-1791737573669-t8no7l",
+      "date": "2026-10-11",
+      "currency": "TRY",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-10T15:45:38.554Z"
+      },
+      "saleType": "store",
+      "total": 1150,
+      "paid": 1150,
+      "tax": 0,
+      "taxRate": 0,
+      "items": [
+        {
+          "qty": 1,
+          "cost": 497
+        }
+      ]
+    },
+    {
+      "id": "sale-1791729728637-hvl5m0",
+      "date": "2026-10-11",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-10T15:45:38.554Z"
+      },
+      "total": 45,
+      "paid": 45,
+      "items": [
+        {
+          "qty": 1,
+          "cost": 26.4
+        }
+      ]
+    },
+    {
+      "id": "sale-1791707138311-whlg01",
+      "date": "2026-10-11",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-10T15:45:38.554Z"
+      },
+      "total": 26,
+      "paid": 26,
+      "paymentMetadataCorrectedAt": 1791733521371,
+      "paymentCurrencyCorrectedAt": 1791733521371,
+      "financialFootprintRepairedAt": 1791733521371,
+      "items": [
+        {
+          "qty": 1,
+          "cost": 6
+        }
+      ]
+    },
+    {
+      "id": "sale-1791651102278-xzn8mn",
+      "date": "2026-10-10",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-10T15:45:38.554Z"
+      },
+      "saleType": "online",
+      "total": 255,
+      "paid": 0,
+      "tax": 0,
+      "taxRate": 0,
+      "items": [
+        {
+          "qty": 1,
+          "cost": 150
+        }
+      ]
+    },
+    {
+      "id": "sale-1791650353462-uob80f",
+      "date": "2026-10-10",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-10T15:45:38.554Z"
+      },
+      "saleType": "online",
+      "total": 97,
+      "paid": 0,
+      "tax": 0,
+      "taxRate": 0,
+      "items": [
+        {
+          "qty": 1,
+          "cost": 8
+        },
+        {
+          "qty": 1,
+          "cost": 8.5
+        },
+        {
+          "qty": 1,
+          "cost": 7
+        },
+        {
+          "qty": 1,
+          "cost": 7
+        },
+        {
+          "qty": 1,
+          "cost": 5.5
+        }
+      ]
+    },
+    {
+      "id": "sale-1791650093764-bfthy3",
+      "date": "2026-10-10",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-10T15:45:38.554Z"
+      },
+      "saleType": "online",
+      "total": 126,
+      "paid": 0,
+      "tax": 0,
+      "taxRate": 0,
+      "items": [
+        {
+          "qty": 7,
+          "cost": 5.5
+        }
+      ]
+    },
+    {
+      "id": "sale-1791650021851-xxi1zh",
+      "date": "2026-10-10",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-10T15:45:38.554Z"
+      },
+      "saleType": "online",
+      "total": 115,
+      "paid": 0,
+      "tax": 0,
+      "taxRate": 0,
+      "items": [
+        {
+          "qty": 5,
+          "cost": 6.5
+        }
+      ]
+    },
+    {
+      "id": "sale-1791649831131-veqe1y",
+      "date": "2026-10-10",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-10T15:45:38.554Z"
+      },
+      "saleType": "online",
+      "total": 162,
+      "paid": 0,
+      "tax": 0,
+      "taxRate": 0,
+      "items": [
+        {
+          "qty": 9,
+          "cost": 6
+        }
+      ]
+    },
+    {
+      "id": "sale-1791649762580-n3glq3",
+      "date": "2026-10-10",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-10T15:45:38.554Z"
+      },
+      "saleType": "online",
+      "total": 162,
+      "paid": 0,
+      "tax": 0,
+      "taxRate": 0,
+      "items": [
+        {
+          "qty": 9,
+          "cost": 6
+        }
+      ]
+    },
+    {
+      "id": "sale-1791649685717-h20k1t",
+      "date": "2026-10-10",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-10T15:45:38.554Z"
+      },
+      "saleType": "online",
+      "total": 162,
+      "paid": 0,
+      "tax": 0,
+      "taxRate": 0,
+      "items": [
+        {
+          "qty": 9,
+          "cost": 6
+        }
+      ]
+    },
+    {
+      "id": "sale-1791627763992-5b7s9g",
+      "date": "2026-10-10",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-09T11:13:11.407Z"
+      },
+      "total": 7,
+      "paid": 7,
+      "items": [
+        {
+          "qty": 1,
+          "cost": 2.25
+        }
+      ]
+    },
+    {
+      "id": "sale-1791558662390-0chfub",
+      "date": "2026-10-09",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-09T11:13:11.407Z"
+      },
+      "saleType": "store",
+      "total": 31,
+      "paid": 31,
+      "tax": 0,
+      "taxRate": 0,
+      "items": [
+        {
+          "qty": 1,
+          "cost": 18.6
+        }
+      ]
+    },
+    {
+      "id": "sale-1791544792956-xcpbj0",
+      "date": "2026-10-09",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-09T11:13:11.407Z"
+      },
+      "saleType": "online",
+      "total": 325,
+      "paid": 0,
+      "tax": 0,
+      "taxRate": 0,
+      "items": [
+        {
+          "qty": 1,
+          "cost": 57
+        },
+        {
+          "qty": 1,
+          "cost": 130.8
+        }
+      ]
+    },
+    {
+      "id": "sale-1791472101364-3l5rij",
+      "date": "2026-10-08",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-08T10:50:37.066Z"
+      },
+      "total": 200,
+      "paid": 200,
+      "items": [
+        {
+          "qty": 1,
+          "cost": 115.8
+        }
+      ]
+    },
+    {
+      "id": "sale-1791457410106-7q6xvb",
+      "date": "2026-10-08",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-08T10:50:37.066Z"
+      },
+      "total": 7,
+      "paid": 7,
+      "items": [
+        {
+          "qty": 1,
+          "cost": 5
+        }
+      ]
+    },
+    {
+      "id": "sale-1791456847099-b73t2w",
+      "date": "2026-10-08",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-08T10:50:37.066Z"
+      },
+      "total": 35,
+      "paid": 35,
+      "items": [
+        {
+          "qty": 1,
+          "cost": 10
+        }
+      ]
+    },
+    {
+      "id": "sale-1791441535480-46a796",
+      "date": "2026-10-08",
+      "currency": "SYP",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 121.788134,
+        "TRY": 49.219055,
+        "TRY_SYP": null,
+        "updatedAt": "2026-10-08T05:10:43.149Z"
+      },
+      "saleType": "store",
+      "total": 2100,
+      "paid": 2100,
+      "tax": 0,
+      "taxRate": 0,
+      "items": [
+        {
+          "qty": 1,
+          "cost": 730.728804
+        }
+      ]
+    },
+    {
+      "id": "sale-1791389980350-tynt1w",
+      "date": "2026-10-07",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 121.810752,
+        "TRY": 49.164125,
+        "TRY_SYP": null,
+        "updatedAt": "2026-10-06T19:05:29.140Z"
+      },
+      "saleType": "store",
+      "total": 150,
+      "paid": 150,
+      "tax": 0,
+      "taxRate": 0,
+      "items": [
+        {
+          "qty": 1,
+          "cost": 30
+        },
+        {
+          "qty": 2,
+          "cost": 12.5
+        },
+        {
+          "qty": 1,
+          "cost": 20
+        }
+      ]
+    },
+    {
+      "id": "sale-1791270965396-flpjui",
+      "date": "2026-10-06",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 121.969716,
+        "TRY": 49.161928,
+        "TRY_SYP": null,
+        "updatedAt": "2026-10-05T18:15:05.493Z"
+      },
+      "total": 35,
+      "paid": 35,
+      "items": [
+        {
+          "qty": 1,
+          "cost": 20
+        }
+      ]
+    },
+    {
+      "id": "sale-1791207544449-ach73p",
+      "date": "2026-10-05",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 121.802723,
+        "TRY": 49.136571,
+        "TRY_SYP": null,
+        "updatedAt": "2026-10-04T18:00:47.968Z"
+      },
+      "saleType": "store",
+      "total": 32.035144047800976,
+      "paid": 32.035144047800976,
+      "tax": 0,
+      "taxRate": 0,
+      "items": [
+        {
+          "qty": 1,
+          "cost": 22
+        }
+      ]
+    },
+    {
+      "id": "sale-1791204864071-c38g3w",
+      "date": "2026-10-05",
+      "currency": "TRY",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 121.802723,
+        "TRY": 49.136571,
+        "TRY_SYP": null,
+        "updatedAt": "2026-10-04T18:00:47.968Z"
+      },
+      "saleType": "store",
+      "total": 1200,
+      "paid": 1200,
+      "tax": 0,
+      "taxRate": 0,
+      "items": [
+        {
+          "qty": 1,
+          "cost": 491.36571000000004
+        }
+      ]
+    },
+    {
+      "id": "sale-1791187556190-kvzouo",
+      "date": "2026-10-05",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 121.802723,
+        "TRY": 49.136571,
+        "TRY_SYP": null,
+        "updatedAt": "2026-10-04T18:00:47.968Z"
+      },
+      "saleType": "online",
+      "total": 36,
+      "paid": 0,
+      "tax": 0,
+      "taxRate": 0,
+      "items": [
+        {
+          "qty": 2,
+          "cost": 6
+        }
+      ]
+    },
+    {
+      "id": "sale-1791184801494-gcbg5s",
+      "date": "2026-10-05",
+      "currency": "TRY",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 121.802723,
+        "TRY": 49.136571,
+        "TRY_SYP": null,
+        "updatedAt": "2026-10-04T18:00:47.968Z"
+      },
+      "total": 249.9970459338,
+      "paid": 249.9970459338,
+      "items": [
+        {
+          "qty": 1,
+          "cost": 122.84142750000001
+        }
+      ]
+    },
+    {
+      "id": "sale-1791139775941-i1bcwu",
+      "date": "2026-10-04",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 121.802723,
+        "TRY": 49.136571,
+        "TRY_SYP": null,
+        "updatedAt": "2026-10-04T18:00:47.968Z"
+      },
+      "saleType": "store",
+      "total": 55,
+      "paid": 55,
+      "tax": 0,
+      "taxRate": 0,
+      "items": [
+        {
+          "qty": 1,
+          "cost": 15.5
+        }
+      ]
+    },
+    {
+      "id": "sale-1790104570518-u2s3dq",
+      "date": "2026-09-22",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 121.779536,
+        "TRY": 48.824225,
+        "TRY_SYP": 2.8,
+        "updatedAt": "2026-09-22T17:56:28.044Z"
+      },
+      "saleType": "store",
+      "total": 25,
+      "paid": 25,
+      "tax": 0,
+      "taxRate": 0,
+      "items": [
+        {
+          "qty": 1,
+          "cost": 8
+        }
+      ]
+    },
+    {
+      "id": "sale-1790155663031-5st2z5",
+      "date": "2026-09-23",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 121.779536,
+        "TRY": 48.824225,
+        "TRY_SYP": 2.8,
+        "updatedAt": "2026-09-22T08:19:30.049Z"
+      },
+      "saleType": "store",
+      "total": 225,
+      "paid": 225,
+      "tax": 0,
+      "taxRate": 0,
+      "items": [
+        {
+          "qty": 1,
+          "cost": 0
+        }
+      ]
+    },
+    {
+      "id": "sale-1790164020124-7rokae",
+      "date": "2026-09-23",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 121.779536,
+        "TRY": 48.824225,
+        "TRY_SYP": 2.8,
+        "updatedAt": "2026-09-22T08:19:30.049Z"
+      },
+      "saleType": "store",
+      "total": 4.55,
+      "paid": 4.55,
+      "tax": 0,
+      "taxRate": 0,
+      "items": [
+        {
+          "qty": 1,
+          "cost": 2.5
+        }
+      ]
+    },
+    {
+      "id": "sale-1790189977387-jwfmdb",
+      "date": "2026-09-23",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 135,
+        "TRY": 48.4,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-09-23T14:33:32.581Z"
+      },
+      "saleType": "store",
+      "total": 55,
+      "paid": 55,
+      "tax": 0,
+      "taxRate": 0,
+      "items": [
+        {
+          "qty": 1,
+          "cost": 32.4
+        },
+        {
+          "qty": 1,
+          "cost": 2.8
+        }
+      ]
+    },
+    {
+      "id": "sale-1790233476677-7k0p7l",
+      "date": "2026-09-24",
+      "currency": "TRY",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 135,
+        "TRY": 48.4,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-09-23T14:33:32.581Z"
+      },
+      "saleType": "store",
+      "total": 1100,
+      "paid": 1100,
+      "tax": 0,
+      "taxRate": 0,
+      "items": [
+        {
+          "qty": 1,
+          "cost": 314.59999999999997
+        }
+      ]
+    },
+    {
+      "id": "sale-1790268496268-3n9lbi",
+      "date": "2026-09-24",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 135,
+        "TRY": 48.4,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-09-24T15:19:44.353Z"
+      },
+      "saleType": "store",
+      "total": 11,
+      "paid": 11,
+      "tax": 0,
+      "taxRate": 0,
+      "paymentCurrencyCorrectedAt": 1790281690399,
+      "financialFootprintRepairedAt": 1790281690399,
+      "items": [
+        {
+          "qty": 1,
+          "cost": 2.25
+        }
+      ]
+    },
+    {
+      "id": "sale-1790268703327-a56wbj",
+      "date": "2026-09-24",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 135,
+        "TRY": 48.4,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-09-24T15:19:44.353Z"
+      },
+      "saleType": "store",
+      "total": 11,
+      "paid": 11,
+      "tax": 0,
+      "taxRate": 0,
+      "paymentCurrencyCorrectedAt": 1790281138069,
+      "financialFootprintRepairedAt": 1790281138069,
+      "items": [
+        {
+          "qty": 1,
+          "cost": 2.25
+        }
+      ]
+    },
+    {
+      "id": "sale-1790275930885-4k2dlo",
+      "date": "2026-09-24",
+      "currency": "SYP",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 135,
+        "TRY": 48.4,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-09-24T16:54:50.951Z"
+      },
+      "saleType": "store",
+      "total": 3600,
+      "paid": 3600,
+      "tax": 0,
+      "taxRate": 0,
+      "items": [
+        {
+          "qty": 1,
+          "cost": 1080
+        }
+      ]
+    },
+    {
+      "id": "sale-1790277558000-sqh1gy",
+      "date": "2026-09-24",
+      "currency": "TRY",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 135,
+        "TRY": 48.4,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-09-24T16:54:50.951Z"
+      },
+      "saleType": "store",
+      "total": 1550,
+      "paid": 1550,
+      "tax": 0,
+      "taxRate": 0,
+      "items": [
+        {
+          "qty": 1,
+          "cost": 677.6
+        }
+      ]
+    },
+    {
+      "id": "sale-1790278731637-o3dmf9",
+      "date": "2026-09-24",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 135,
+        "TRY": 48.4,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-09-24T16:54:50.951Z"
+      },
+      "saleType": "store",
+      "total": 17,
+      "paid": 17,
+      "tax": 0,
+      "taxRate": 0,
+      "paymentCurrencyCorrectedAt": 1790280775021,
+      "items": [
+        {
+          "qty": 1,
+          "cost": 10
+        }
+      ]
+    },
+    {
+      "id": "sale-1790341038210-y1c5sn",
+      "date": "2026-09-25",
+      "currency": "SYP",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 135,
+        "TRY": 48.4,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-09-24T16:54:50.951Z"
+      },
+      "saleType": "store",
+      "total": 15500,
+      "paid": 15500,
+      "tax": 0,
+      "taxRate": 0,
+      "items": [
+        {
+          "qty": 1,
+          "cost": 7425
+        }
+      ]
+    },
+    {
+      "id": "sale-1790341463021-zoyiz2",
+      "date": "2026-09-25",
+      "currency": "SYP",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 135,
+        "TRY": 48.4,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-09-24T16:54:50.951Z"
+      },
+      "saleType": "store",
+      "total": 10000,
+      "paid": 10000,
+      "tax": 0,
+      "taxRate": 0,
+      "items": [
+        {
+          "qty": 1,
+          "cost": 5805
+        }
+      ]
+    },
+    {
+      "id": "sale-1790342184483-r9aplp",
+      "date": "2026-09-25",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 135,
+        "TRY": 48.4,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-09-24T16:54:50.951Z"
+      },
+      "saleType": "store",
+      "total": 29,
+      "paid": 29,
+      "tax": 0,
+      "taxRate": 0,
+      "items": [
+        {
+          "qty": 1,
+          "cost": 20
+        }
+      ]
+    },
+    {
+      "id": "sale-1790356346115-e55zps",
+      "date": "2026-09-25",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 135,
+        "TRY": 48.4,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-09-24T16:54:50.951Z"
+      },
+      "total": 15,
+      "paid": 15,
+      "items": [
+        {
+          "qty": 1,
+          "cost": 7
+        }
+      ]
+    },
+    {
+      "id": "sale-1790356440736-e8kcma",
+      "date": "2026-09-25",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 135,
+        "TRY": 48.4,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-09-24T16:54:50.951Z"
+      },
+      "total": 12,
+      "paid": 12,
+      "items": [
+        {
+          "qty": 1,
+          "cost": 3
+        }
+      ]
+    },
+    {
+      "id": "sale-1790356718217-6jf79r",
+      "date": "2026-09-25",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 135,
+        "TRY": 48.4,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-09-24T16:54:50.951Z"
+      },
+      "total": 3,
+      "paid": 3,
+      "items": [
+        {
+          "qty": 1,
+          "cost": 1.25
+        }
+      ]
+    },
+    {
+      "id": "sale-1790357450739-uk2tz7",
+      "date": "2026-09-25",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 135,
+        "TRY": 48.4,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-09-24T16:54:50.951Z"
+      },
+      "saleType": "store",
+      "total": 240,
+      "paid": 240,
+      "tax": 0,
+      "taxRate": 0,
+      "items": [
+        {
+          "qty": 1,
+          "cost": 160.2
+        }
+      ]
+    },
+    {
+      "id": "sale-1790364034560-z4jbnc",
+      "date": "2026-09-25",
+      "currency": "TRY",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 135,
+        "TRY": 48.4,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-09-25T17:34:18.308Z"
+      },
+      "saleType": "store",
+      "total": 1550,
+      "paid": 1550,
+      "tax": 0,
+      "taxRate": 0,
+      "items": [
+        {
+          "qty": 1,
+          "cost": 484
+        }
+      ]
+    },
+    {
+      "id": "sale-1790442509490-lxpiqs",
+      "date": "2026-09-26",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 135,
+        "TRY": 48.4,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-09-25T20:17:23.758Z"
+      },
+      "saleType": "store",
+      "total": 23,
+      "paid": 23,
+      "tax": 0,
+      "taxRate": 0,
+      "items": [
+        {
+          "qty": 1,
+          "cost": 6.6
+        }
+      ]
+    },
+    {
+      "id": "sale-1790445631737-fqayw3",
+      "date": "2026-09-26",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 135,
+        "TRY": 48.4,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-09-25T20:17:23.758Z"
+      },
+      "saleType": "store",
+      "total": 20,
+      "paid": 20,
+      "tax": 0,
+      "taxRate": 0,
+      "items": [
+        {
+          "qty": 1,
+          "cost": 6.5
+        }
+      ]
+    },
+    {
+      "id": "sale-1790524079745-awcfqp",
+      "date": "2026-09-27",
+      "currency": "TRY",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 135,
+        "TRY": 48.4,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-09-27T07:16:16.175Z"
+      },
+      "total": 260.0048,
+      "paid": 260.0048,
+      "items": [
+        {
+          "qty": 1,
+          "cost": 121
+        }
+      ]
+    },
+    {
+      "id": "sale-1790577333776-nka8il",
+      "date": "2026-09-28",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 135,
+        "TRY": 48.4,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-09-27T07:16:16.175Z"
+      },
+      "saleType": "store",
+      "total": 35,
+      "paid": 35,
+      "tax": 0,
+      "taxRate": 0,
+      "items": [
+        {
+          "qty": 1,
+          "cost": 20
+        }
+      ]
+    },
+    {
+      "id": "sale-1790583477253-srw2z6",
+      "date": "2026-09-28",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 135,
+        "TRY": 48.4,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-09-28T07:31:34.413Z"
+      },
+      "saleType": "online",
+      "total": 23,
+      "paid": 0,
+      "tax": 0,
+      "taxRate": 0,
+      "items": [
+        {
+          "qty": 1,
+          "cost": 6.5
+        }
+      ]
+    },
+    {
+      "id": "sale-1790583643615-rn9mue",
+      "date": "2026-09-28",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 135,
+        "TRY": 48.4,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-09-28T07:31:34.413Z"
+      },
+      "saleType": "online",
+      "total": 23,
+      "paid": 0,
+      "tax": 0,
+      "taxRate": 0,
+      "items": [
+        {
+          "qty": 1,
+          "cost": 6.5
+        }
+      ]
+    },
+    {
+      "id": "sale-1790591111933-2o61ed",
+      "date": "2026-09-28",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 135,
+        "TRY": 48.4,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-09-28T07:31:34.413Z"
+      },
+      "saleType": "store",
+      "total": 12,
+      "paid": 12,
+      "tax": 0,
+      "taxRate": 0,
+      "items": [
+        {
+          "qty": 1,
+          "cost": 3
+        }
+      ]
+    },
+    {
+      "id": "sale-1790592538945-oipwsk",
+      "date": "2026-09-28",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 135,
+        "TRY": 48.4,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-09-28T07:31:34.413Z"
+      },
+      "saleType": "online",
+      "total": 100,
+      "paid": 98,
+      "tax": 0,
+      "taxRate": 0,
+      "paymentMetadataCorrectedAt": 1790856214665,
+      "paymentCurrencyCorrectedAt": 1790856214665,
+      "items": [
+        {
+          "qty": 1,
+          "cost": 6.5
+        },
+        {
+          "qty": 1,
+          "cost": 6.5
+        },
+        {
+          "qty": 1,
+          "cost": 6.5
+        },
+        {
+          "qty": 1,
+          "cost": 6.5
+        }
+      ]
+    },
+    {
+      "id": "sale-1790600220381-685djr",
+      "date": "2026-09-28",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 135,
+        "TRY": 48.4,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-09-28T11:41:52.601Z"
+      },
+      "total": 10,
+      "paid": 10,
+      "items": [
+        {
+          "qty": 1,
+          "cost": 3.75
+        }
+      ]
+    },
+    {
+      "id": "sale-1790610424721-c86nxy",
+      "date": "2026-09-28",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 135,
+        "TRY": 48.4,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-09-28T11:41:52.601Z"
+      },
+      "total": 22,
+      "paid": 22,
+      "items": [
+        {
+          "qty": 1,
+          "cost": 8
+        }
+      ]
+    },
+    {
+      "id": "sale-1790700368129-1eax61",
+      "date": "2026-09-29",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 135,
+        "TRY": 48.4,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-09-29T12:21:25.970Z"
+      },
+      "total": 24,
+      "paid": 24,
+      "items": [
+        {
+          "qty": 1,
+          "cost": 12.5
+        }
+      ]
+    },
+    {
+      "id": "sale-1790708856006-82xugt",
+      "date": "2026-09-29",
+      "currency": "SYP",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 135,
+        "TRY": 48.4,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-09-29T12:21:25.970Z"
+      },
+      "total": 2360.475,
+      "paid": 2360.475,
+      "items": [
+        {
+          "qty": 1,
+          "cost": 810
+        }
+      ]
+    },
+    {
+      "id": "sale-1790752896778-a8mtv2",
+      "date": "2026-09-30",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 135,
+        "TRY": 48.4,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-09-29T12:21:25.970Z"
+      },
+      "total": 11.3,
+      "paid": 11.3,
+      "paymentCurrencyCorrectedAt": 1790771606813,
+      "financialFootprintRepairedAt": 1790771606813,
+      "items": [
+        {
+          "qty": 1,
+          "cost": 3.5
+        }
+      ]
+    },
+    {
+      "id": "sale-1790754395228-yfdvkz",
+      "date": "2026-09-30",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 135,
+        "TRY": 48.4,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-09-29T12:21:25.970Z"
+      },
+      "total": 13,
+      "paid": 13,
+      "items": [
+        {
+          "qty": 1,
+          "cost": 5
+        }
+      ]
+    },
+    {
+      "id": "sale-1790754593985-vse2sx",
+      "date": "2026-09-30",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 135,
+        "TRY": 48.4,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-09-29T12:21:25.970Z"
+      },
+      "total": 27,
+      "paid": 27,
+      "items": [
+        {
+          "qty": 1,
+          "cost": 18.6
+        }
+      ]
+    },
+    {
+      "id": "sale-1790774001345-vdc153",
+      "date": "2026-09-30",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 135,
+        "TRY": 48.4,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-09-29T12:21:25.970Z"
+      },
+      "total": 16,
+      "paid": 16,
+      "items": [
+        {
+          "qty": 1,
+          "cost": 10
+        }
+      ]
+    },
+    {
+      "id": "sale-1790784525356-g64ttr",
+      "date": "2026-09-30",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 135,
+        "TRY": 48.4,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-09-30T14:46:18.159Z"
+      },
+      "saleType": "store",
+      "total": 233,
+      "paid": 233,
+      "tax": 0,
+      "taxRate": 0,
+      "items": [
+        {
+          "qty": 1,
+          "cost": 146.4
+        }
+      ]
+    },
+    {
+      "id": "sale-1790785328245-on9iwe",
+      "date": "2026-09-30",
+      "currency": "TRY",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 135,
+        "TRY": 48.4,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-09-30T14:46:18.159Z"
+      },
+      "total": 338.8,
+      "paid": 338.8,
+      "paymentMetadataCorrectedAt": 1790796263250,
+      "paymentCurrencyCorrectedAt": 1790796263250,
+      "financialFootprintRepairedAt": 1790796263250,
+      "items": [
+        {
+          "qty": 1,
+          "cost": 121
+        }
+      ]
+    },
+    {
+      "id": "sale-1790795772363-q2rpra",
+      "date": "2026-09-30",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 135,
+        "TRY": 48.4,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-09-30T14:46:18.159Z"
+      },
+      "saleType": "store",
+      "total": 57.06611570247934,
+      "paid": 57.06611570247934,
+      "tax": 0,
+      "taxRate": 0,
+      "items": [
+        {
+          "qty": 1,
+          "cost": 33
+        }
+      ]
+    },
+    {
+      "id": "sale-1790803991059-7m9fj3",
+      "date": "2026-10-01",
+      "currency": "SYP",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 135,
+        "TRY": 48.4,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-09-30T14:46:18.159Z"
+      },
+      "saleType": "online",
+      "total": 3800,
+      "paid": 3800,
+      "tax": 0,
+      "taxRate": 0,
+      "items": [
+        {
+          "qty": 1,
+          "cost": 877.5
+        }
+      ]
+    },
+    {
+      "id": "sale-1790832664673-a53d85",
+      "date": "2026-10-01",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 135,
+        "TRY": 48.4,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-09-30T14:46:18.159Z"
+      },
+      "saleType": "online",
+      "total": 25,
+      "paid": 0,
+      "tax": 0,
+      "taxRate": 0,
+      "items": [
+        {
+          "qty": 1,
+          "cost": 6.5
+        }
+      ]
+    },
+    {
+      "id": "sale-1790856068854-bgsa38",
+      "date": "2026-10-01",
+      "currency": "SYP",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 135,
+        "TRY": 48.4,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-09-30T14:46:18.159Z"
+      },
+      "total": 3199.9995000000004,
+      "paid": 3199.9995000000004,
+      "items": [
+        {
+          "qty": 1,
+          "cost": 945
+        }
+      ]
+    },
+    {
+      "id": "sale-1790858480467-kq1ypr",
+      "date": "2026-10-01",
+      "currency": "SYP",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 135,
+        "TRY": 48.4,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-09-30T14:46:18.159Z"
+      },
+      "saleType": "store",
+      "total": 3900,
+      "paid": 3900,
+      "tax": 0,
+      "taxRate": 0,
+      "items": [
+        {
+          "qty": 1,
+          "cost": 2700
+        }
+      ]
+    },
+    {
+      "id": "sale-1790866991925-t2r2li",
+      "date": "2026-10-01",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 135,
+        "TRY": 48.4,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-01T14:54:53.565Z"
+      },
+      "saleType": "store",
+      "total": 45,
+      "paid": 45,
+      "tax": 0,
+      "taxRate": 0,
+      "items": [
+        {
+          "qty": 1,
+          "cost": 10
+        },
+        {
+          "qty": 1,
+          "cost": 10
+        }
+      ]
+    },
+    {
+      "id": "sale-1790871225009-mgkqe8",
+      "date": "2026-10-01",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 135,
+        "TRY": 48.4,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-01T15:43:40.083Z"
+      },
+      "saleType": "store",
+      "total": 20,
+      "paid": 20,
+      "tax": 0,
+      "taxRate": 0,
+      "items": [
+        {
+          "qty": 1,
+          "cost": 8
+        }
+      ]
+    },
+    {
+      "id": "sale-1790871451185-2z6f3c",
+      "date": "2026-10-01",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 135,
+        "TRY": 48.4,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-01T15:43:40.083Z"
+      },
+      "total": 7,
+      "paid": 7,
+      "items": [
+        {
+          "qty": 1,
+          "cost": 2.25
+        }
+      ]
+    },
+    {
+      "id": "sale-1790884930100-ztrc9p",
+      "date": "2026-10-01",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 135,
+        "TRY": 48.4,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-01T15:43:40.083Z"
+      },
+      "total": 23,
+      "paid": 23,
+      "items": [
+        {
+          "qty": 1,
+          "cost": 7
+        }
+      ]
+    },
+    {
+      "id": "sale-1790937680502-6xxoli",
+      "date": "2026-10-02",
+      "currency": "TRY",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 135,
+        "TRY": 48.4,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-01T15:43:40.083Z"
+      },
+      "total": 350.0046,
+      "paid": 350.0046,
+      "items": [
+        {
+          "qty": 1,
+          "cost": 108.89999999999999
+        }
+      ]
+    },
+    {
+      "id": "sale-1791023344133-a8azek",
+      "date": "2026-10-03",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 135,
+        "TRY": 48.4,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-03T07:13:08.799Z"
+      },
+      "total": 20,
+      "paid": 20,
+      "items": [
+        {
+          "qty": 1,
+          "cost": 9
+        }
+      ]
+    },
+    {
+      "id": "sale-1791109467951-k0hayj",
+      "date": "2026-10-04",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 135,
+        "TRY": 48.4,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-04T08:39:47.259Z"
+      },
+      "total": 30,
+      "paid": 30,
+      "items": [
+        {
+          "qty": 1,
+          "cost": 10
+        }
+      ]
+    },
+    {
+      "id": "sale-1791733439217-uygsdm",
+      "date": "2026-10-11",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-10T15:45:38.554Z"
+      },
+      "saleType": "store",
+      "total": 5,
+      "paid": 5,
+      "tax": 0,
+      "taxRate": 0,
+      "items": [
+        {
+          "qty": 1,
+          "cost": 2.8
+        }
+      ]
+    },
+    {
+      "id": "sale-1792848698888-e60l58",
+      "date": "2026-10-24",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-24T13:28:44.027Z"
+      },
+      "total": 18,
+      "paid": 18,
+      "items": [
+        {
+          "qty": 1,
+          "cost": 6
+        }
+      ]
+    }
+  ],
+  "payments": [
+    {
+      "id": "payment-1792755182768-db06xv",
+      "referenceId": "sale-1791650353462-uob80f",
+      "referenceType": "sale",
+      "date": "2026-10-23",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-22T15:37:17.649Z"
+      },
+      "amount": 97,
+      "onlineCollectionDiscount": 0,
+      "paymentCurrency": "USD",
+      "paymentAmount": 97
+    },
+    {
+      "id": "payment-1792755138328-p9c9ys",
+      "referenceId": "sale-1791650093764-bfthy3",
+      "referenceType": "sale",
+      "date": "2026-10-23",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-22T15:37:17.649Z"
+      },
+      "amount": 126,
+      "onlineCollectionDiscount": 0,
+      "paymentCurrency": "USD",
+      "paymentAmount": 126
+    },
+    {
+      "id": "payment-1792755061280-nlaqyv",
+      "referenceId": "sale-1791650021851-xxi1zh",
+      "referenceType": "sale",
+      "date": "2026-10-23",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-22T15:37:17.649Z"
+      },
+      "amount": 115,
+      "onlineCollectionDiscount": 0,
+      "paymentCurrency": "USD",
+      "paymentAmount": 115
+    },
+    {
+      "id": "payment-1792754926589-bl37i8",
+      "referenceId": "sale-1791649685717-h20k1t",
+      "referenceType": "sale",
+      "date": "2026-10-23",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-22T15:37:17.649Z"
+      },
+      "amount": 162,
+      "onlineCollectionDiscount": 0,
+      "paymentCurrency": "USD",
+      "paymentAmount": 162
+    },
+    {
+      "id": "payment-1791908434144-0cx8z8",
+      "referenceId": "sale-1791649762580-n3glq3",
+      "referenceType": "sale",
+      "date": "2026-10-13",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-13T12:00:48.165Z"
+      },
+      "amount": 151,
+      "onlineCollectionDiscount": 0,
+      "paymentCurrency": "USD",
+      "paymentAmount": 151
+    },
+    {
+      "id": "payment-1791908383852-xpyw0u",
+      "referenceId": "sale-1791649831131-veqe1y",
+      "referenceType": "sale",
+      "date": "2026-10-13",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-13T12:00:48.165Z"
+      },
+      "amount": 162,
+      "onlineCollectionDiscount": 0,
+      "paymentCurrency": "USD",
+      "paymentAmount": 162
+    },
+    {
+      "id": "payment-1791908174095-13dbzu",
+      "referenceId": "sale-1791651102278-xzn8mn",
+      "referenceType": "sale",
+      "date": "2026-10-13",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-13T12:00:48.165Z"
+      },
+      "amount": 255,
+      "onlineCollectionDiscount": 0,
+      "paymentCurrency": "USD",
+      "paymentAmount": 255
+    },
+    {
+      "id": "payment-1791908118908-mk89ay",
+      "referenceId": "sale-1791187556190-kvzouo",
+      "referenceType": "sale",
+      "date": "2026-10-13",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-13T12:00:48.165Z"
+      },
+      "amount": 36,
+      "onlineCollectionDiscount": 0,
+      "paymentCurrency": "USD",
+      "paymentAmount": 36
+    },
+    {
+      "id": "payment-1791907970080-m53y4z",
+      "referenceId": "sale-1790583643615-rn9mue",
+      "referenceType": "sale",
+      "date": "2026-10-13",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-13T12:00:48.165Z"
+      },
+      "amount": 23,
+      "onlineCollectionDiscount": 0,
+      "paymentCurrency": "USD",
+      "paymentAmount": 23
+    },
+    {
+      "id": "payment-1791907922841-945f4o",
+      "referenceId": "sale-1790583477253-srw2z6",
+      "referenceType": "sale",
+      "date": "2026-10-13",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-13T12:00:48.165Z"
+      },
+      "amount": 23,
+      "onlineCollectionDiscount": 0,
+      "paymentCurrency": "USD",
+      "paymentAmount": 23
+    },
+    {
+      "id": "payment-1791787056183-nbxwoe",
+      "referenceId": "sale-1790832664673-a53d85",
+      "referenceType": "sale",
+      "date": "2026-10-12",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-12T05:07:46.997Z"
+      },
+      "amount": 25,
+      "paymentCurrency": "USD",
+      "paymentAmount": 25
+    },
+    {
+      "id": "payment-1790853429756-z49cx1",
+      "referenceId": "sale-1790592538945-oipwsk",
+      "referenceType": "sale",
+      "date": "2026-10-01",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 135,
+        "TRY": 48.4,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-09-30T14:46:18.159Z"
+      },
+      "amount": 98,
+      "paymentCurrency": "USD",
+      "paymentAmount": 98
+    },
+    {
+      "id": "payment-1790853449015-gpj8hk",
+      "referenceId": "sale-1790592538945-oipwsk",
+      "referenceType": "sale",
+      "date": "2026-10-01",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 135,
+        "TRY": 48.4,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-09-30T14:46:18.159Z"
+      },
+      "amount": 2,
+      "paymentCurrency": "USD",
+      "paymentAmount": 2
+    }
+  ],
+  "cash": [
+    {
+      "id": "cash-1792918448699-nxoiye",
+      "referenceId": "sale-1792918448696-rdmzvn",
+      "referenceType": "sale",
+      "date": "2026-10-25",
+      "currency": "TRY",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-24T17:40:13.516Z"
+      },
+      "type": "income",
+      "amount": 150
+    },
+    {
+      "id": "cash-1792918448699-543x2n",
+      "referenceId": "sale-1792918448696-rdmzvn",
+      "referenceType": "sale",
+      "date": "2026-10-25",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-24T17:40:13.516Z"
+      },
+      "type": "income",
+      "amount": 20
+    },
+    {
+      "id": "cash-1792778236274-w6wua0",
+      "referenceId": "sale-1792778236265-djzems",
+      "referenceType": "sale",
+      "date": "2026-10-23",
+      "currency": "TRY",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-23T16:41:40.838Z"
+      },
+      "type": "income",
+      "amount": 1150
+    },
+    {
+      "id": "cash-1792773658266-tjm73w",
+      "referenceId": "sale-1792773658259-2xh5i1",
+      "referenceType": "sale",
+      "date": "2026-10-23",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-22T15:37:17.649Z"
+      },
+      "type": "income",
+      "amount": 40
+    },
+    {
+      "id": "cash-1792755182768-c5t4ld",
+      "referenceId": "sale-1791650353462-uob80f",
+      "referenceType": "sale",
+      "date": "2026-10-23",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-22T15:37:17.649Z"
+      },
+      "type": "income",
+      "amount": 97
+    },
+    {
+      "id": "cash-1792755138329-r5rzxf",
+      "referenceId": "sale-1791650093764-bfthy3",
+      "referenceType": "sale",
+      "date": "2026-10-23",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-22T15:37:17.649Z"
+      },
+      "type": "income",
+      "amount": 126
+    },
+    {
+      "id": "cash-1792755061280-mof2jo",
+      "referenceId": "sale-1791650021851-xxi1zh",
+      "referenceType": "sale",
+      "date": "2026-10-23",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-22T15:37:17.649Z"
+      },
+      "type": "income",
+      "amount": 115
+    },
+    {
+      "id": "cash-1792754926591-7ews4k",
+      "referenceId": "sale-1791649685717-h20k1t",
+      "referenceType": "sale",
+      "date": "2026-10-23",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-22T15:37:17.649Z"
+      },
+      "type": "income",
+      "amount": 162
+    },
+    {
+      "id": "cash-1792689782402-w43a7c",
+      "referenceId": "sale-1792689782395-duq1uu",
+      "referenceType": "sale",
+      "date": "2026-10-22",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-22T15:37:17.649Z"
+      },
+      "type": "income",
+      "amount": 314
+    },
+    {
+      "id": "cash-1792684182147-t5a6k1",
+      "referenceId": "sale-1792684182141-z3aaeg",
+      "referenceType": "sale",
+      "date": "2026-10-22",
+      "currency": "TRY",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-22T15:37:17.649Z"
+      },
+      "type": "income",
+      "amount": 500
+    },
+    {
+      "id": "cash-1792683394624-fnya8n",
+      "referenceId": "sale-1792683394621-212l4b",
+      "referenceType": "sale",
+      "date": "2026-10-22",
+      "currency": "TRY",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-21T13:27:51.788Z"
+      },
+      "type": "income",
+      "amount": 1000
+    },
+    {
+      "id": "cash-1792667860844-j1v6ie",
+      "referenceId": "sale-1792667860841-opwwsc",
+      "referenceType": "sale",
+      "date": "2026-10-22",
+      "currency": "SYP",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-21T13:27:51.788Z"
+      },
+      "type": "income",
+      "amount": 7500
+    },
+    {
+      "id": "cash-1792657409419-pbh0tg",
+      "referenceId": "sale-1792657409415-ncjsoc",
+      "referenceType": "sale",
+      "date": "2026-10-22",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-21T13:27:51.788Z"
+      },
+      "type": "income",
+      "amount": 4
+    },
+    {
+      "id": "cash-1792583796087-u9kcqs",
+      "referenceId": "sale-1792583796084-sprjl0",
+      "referenceType": "sale",
+      "date": "2026-10-21",
+      "currency": "SYP",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-20T12:23:56.099Z"
+      },
+      "type": "income",
+      "amount": 2100
+    },
+    {
+      "id": "cash-1792514333406-zlvlly",
+      "referenceId": "sale-1792514333404-baw6si",
+      "referenceType": "sale",
+      "date": "2026-10-20",
+      "currency": "TRY",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-20T12:23:56.099Z"
+      },
+      "type": "income",
+      "amount": 900
+    },
+    {
+      "id": "cash-1792514333406-mt9pkb",
+      "referenceId": "sale-1792514333404-baw6si",
+      "referenceType": "sale",
+      "date": "2026-10-20",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-20T12:23:56.099Z"
+      },
+      "type": "income",
+      "amount": 50
+    },
+    {
+      "id": "cash-1792499172953-g09hn9",
+      "referenceId": "sale-1792499172951-mmdn7j",
+      "referenceType": "sale",
+      "date": "2026-10-20",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-20T12:23:56.099Z"
+      },
+      "type": "income",
+      "amount": 35
+    },
+    {
+      "id": "cash-1792475638665-sy54zd",
+      "referenceId": "sale-1792475638664-kl8rrz",
+      "referenceType": "sale",
+      "date": "2026-10-20",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-19T08:07:46.553Z"
+      },
+      "type": "income",
+      "amount": 3
+    },
+    {
+      "id": "cash-1792475495516-cjxapb",
+      "referenceId": "sale-1792475495510-3o84xo",
+      "referenceType": "sale",
+      "date": "2026-10-20",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-19T08:07:46.553Z"
+      },
+      "type": "income",
+      "amount": 50
+    },
+    {
+      "id": "cash-1792438107089-p8pj9u",
+      "referenceId": "sale-1792438107079-hcow7q",
+      "referenceType": "sale",
+      "date": "2026-10-19",
+      "currency": "TRY",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-19T08:07:46.553Z"
+      },
+      "type": "income",
+      "amount": 750
+    },
+    {
+      "id": "cash-1792426217602-i1c346",
+      "referenceId": "sale-1792426217599-kpxw23",
+      "referenceType": "sale",
+      "date": "2026-10-19",
+      "currency": "TRY",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-19T08:07:46.553Z"
+      },
+      "type": "income",
+      "amount": 950
+    },
+    {
+      "id": "cash-1792426217602-0dvqrh",
+      "referenceId": "sale-1792426217599-kpxw23",
+      "referenceType": "sale",
+      "date": "2026-10-19",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-19T08:07:46.553Z"
+      },
+      "type": "income",
+      "amount": 50
+    },
+    {
+      "id": "cash-1792407451544-hett3y",
+      "referenceId": "sale-1792407451542-rdxotn",
+      "referenceType": "sale",
+      "date": "2026-10-19",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-19T08:07:46.553Z"
+      },
+      "type": "income",
+      "amount": 20
+    },
+    {
+      "id": "cash-1792405893056-8a4zj8",
+      "referenceId": "sale-1792405893046-k4iz3u",
+      "referenceType": "sale",
+      "date": "2026-10-19",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-19T08:07:46.553Z"
+      },
+      "type": "income",
+      "amount": 35
+    },
+    {
+      "id": "cash-1792345352786-djwgbi",
+      "referenceId": "sale-1792345352783-5cc8dn",
+      "referenceType": "sale",
+      "date": "2026-10-18",
+      "currency": "SYP",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-18T04:36:55.217Z"
+      },
+      "type": "income",
+      "amount": 3500
+    },
+    {
+      "id": "cash-1792325213492-tkmley",
+      "referenceId": "sale-1792325213485-fwlfjd",
+      "referenceType": "sale",
+      "date": "2026-10-18",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-18T04:36:55.217Z"
+      },
+      "type": "income",
+      "amount": 4
+    },
+    {
+      "id": "cash-1792325073813-87yty7",
+      "referenceId": "sale-1792325073808-sq1soy",
+      "referenceType": "sale",
+      "date": "2026-10-18",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-18T04:36:55.217Z"
+      },
+      "type": "income",
+      "amount": 39
+    },
+    {
+      "id": "cash-1792324721818-byp79m",
+      "referenceId": "sale-1792324721811-3xghwf",
+      "referenceType": "sale",
+      "date": "2026-10-18",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-18T04:36:55.217Z"
+      },
+      "type": "income",
+      "amount": 18
+    },
+    {
+      "id": "cash-1792324645923-w8su1r",
+      "referenceId": "sale-1792324645920-hbekiw",
+      "referenceType": "sale",
+      "date": "2026-10-18",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-18T04:36:55.217Z"
+      },
+      "type": "income",
+      "amount": 28
+    },
+    {
+      "id": "cash-1792318397510-eet354",
+      "referenceId": "sale-1792318397504-lk28n0",
+      "referenceType": "sale",
+      "date": "2026-10-18",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-18T04:36:55.217Z"
+      },
+      "type": "income",
+      "amount": 5
+    },
+    {
+      "id": "cash-1792315792309-vf5uro",
+      "referenceId": "sale-1792315792304-fmynee",
+      "referenceType": "sale",
+      "date": "2026-10-18",
+      "currency": "SYP",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-18T04:36:55.217Z"
+      },
+      "type": "income",
+      "amount": 900
+    },
+    {
+      "id": "cash-1792243217403-u03za1",
+      "referenceId": "sale-1792243217399-0wnuqg",
+      "referenceType": "sale",
+      "date": "2026-10-17",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-16T17:53:40.222Z"
+      },
+      "type": "income",
+      "amount": 18
+    },
+    {
+      "id": "cash-1792241003726-p4esz4",
+      "referenceId": "sale-1792241003720-5tslaq",
+      "referenceType": "sale",
+      "date": "2026-10-17",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-16T17:53:40.222Z"
+      },
+      "type": "income",
+      "amount": 25
+    },
+    {
+      "id": "cash-1792239917287-v8kqkv",
+      "referenceId": "sale-1792239917284-wg227u",
+      "referenceType": "sale",
+      "date": "2026-10-17",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-16T17:53:40.222Z"
+      },
+      "type": "income",
+      "amount": 19
+    },
+    {
+      "id": "cash-1792224435770-gv6yw8",
+      "referenceId": "sale-1792224435768-rwwoyj",
+      "referenceType": "sale",
+      "date": "2026-10-17",
+      "currency": "TRY",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-16T17:53:40.222Z"
+      },
+      "type": "income",
+      "amount": 250
+    },
+    {
+      "id": "cash-1792074403982-jypvmx",
+      "referenceId": "sale-1792074403975-onl6ia",
+      "referenceType": "sale",
+      "date": "2026-10-15",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-14T16:02:28.775Z"
+      },
+      "type": "income",
+      "amount": 18
+    },
+    {
+      "id": "cash-1792060484184-sx8ptc",
+      "referenceId": "sale-1792060484177-08ygye",
+      "referenceType": "sale",
+      "date": "2026-10-15",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-14T16:02:28.775Z"
+      },
+      "type": "income",
+      "amount": 23
+    },
+    {
+      "id": "cash-1791982068175-9xxxl5",
+      "referenceId": "sale-1791982068171-xjmvw2",
+      "referenceType": "sale",
+      "date": "2026-10-14",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-13T12:00:48.165Z"
+      },
+      "type": "income",
+      "amount": 55
+    },
+    {
+      "id": "cash-1791920118418-5vxb97",
+      "referenceId": "sale-1791920118410-wyv1wm",
+      "referenceType": "sale",
+      "date": "2026-10-13",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-13T12:00:48.165Z"
+      },
+      "type": "income",
+      "amount": 20
+    },
+    {
+      "id": "cash-1791908434144-j2ir84",
+      "referenceId": "sale-1791649762580-n3glq3",
+      "referenceType": "sale",
+      "date": "2026-10-13",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-13T12:00:48.165Z"
+      },
+      "type": "income",
+      "amount": 151
+    },
+    {
+      "id": "cash-1791908383854-hnvso2",
+      "referenceId": "sale-1791649831131-veqe1y",
+      "referenceType": "sale",
+      "date": "2026-10-13",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-13T12:00:48.165Z"
+      },
+      "type": "income",
+      "amount": 162
+    },
+    {
+      "id": "cash-1791908174101-v5yo45",
+      "referenceId": "sale-1791651102278-xzn8mn",
+      "referenceType": "sale",
+      "date": "2026-10-13",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-13T12:00:48.165Z"
+      },
+      "type": "income",
+      "amount": 255
+    },
+    {
+      "id": "cash-1791908118908-d50whi",
+      "referenceId": "sale-1791187556190-kvzouo",
+      "referenceType": "sale",
+      "date": "2026-10-13",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-13T12:00:48.165Z"
+      },
+      "type": "income",
+      "amount": 36
+    },
+    {
+      "id": "cash-1791907970081-zhycfy",
+      "referenceId": "sale-1790583643615-rn9mue",
+      "referenceType": "sale",
+      "date": "2026-10-13",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-13T12:00:48.165Z"
+      },
+      "type": "income",
+      "amount": 23
+    },
+    {
+      "id": "cash-1791907922849-sd1zg5",
+      "referenceId": "sale-1790583477253-srw2z6",
+      "referenceType": "sale",
+      "date": "2026-10-13",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-13T12:00:48.165Z"
+      },
+      "type": "income",
+      "amount": 23
+    },
+    {
+      "id": "cash-1791907397452-osfcgy",
+      "referenceId": "sale-1791907397444-oyjz48",
+      "referenceType": "sale",
+      "date": "2026-10-13",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-13T12:00:48.165Z"
+      },
+      "type": "income",
+      "amount": 5.7
+    },
+    {
+      "id": "cash-1791825431734-yuybuf",
+      "referenceId": "sale-1791825431729-88qeeo",
+      "referenceType": "sale",
+      "date": "2026-10-12",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-12T05:07:46.997Z"
+      },
+      "type": "income",
+      "amount": 10
+    },
+    {
+      "id": "cash-1791818853888-w1uond",
+      "referenceId": "sale-1791818853887-tuj1un",
+      "referenceType": "sale",
+      "date": "2026-10-12",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-12T05:07:46.997Z"
+      },
+      "type": "income",
+      "amount": 15
+    },
+    {
+      "id": "cash-1791818793187-32anxc",
+      "referenceId": "sale-1791818793181-jkvpif",
+      "referenceType": "sale",
+      "date": "2026-10-12",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-12T05:07:46.997Z"
+      },
+      "type": "income",
+      "amount": 20
+    },
+    {
+      "id": "cash-1791792434139-pj05ne",
+      "referenceId": "sale-1791792434136-bisiqu",
+      "referenceType": "sale",
+      "date": "2026-10-12",
+      "currency": "SYP",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-12T05:07:46.997Z"
+      },
+      "type": "income",
+      "amount": 3300
+    },
+    {
+      "id": "cash-1791787056185-y6nolc",
+      "referenceId": "sale-1790832664673-a53d85",
+      "referenceType": "sale",
+      "date": "2026-10-12",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-12T05:07:46.997Z"
+      },
+      "type": "income",
+      "amount": 25
+    },
+    {
+      "id": "cash-1791737573675-17200d",
+      "referenceId": "sale-1791737573669-t8no7l",
+      "referenceType": "sale",
+      "date": "2026-10-11",
+      "currency": "TRY",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-10T15:45:38.554Z"
+      },
+      "type": "income",
+      "amount": 1150
+    },
+    {
+      "id": "cash-1791729728641-cttesd",
+      "referenceId": "sale-1791729728637-hvl5m0",
+      "referenceType": "sale",
+      "date": "2026-10-11",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-10T15:45:38.554Z"
+      },
+      "type": "income",
+      "amount": 45
+    },
+    {
+      "id": "cash-1791707138319-he1z93",
+      "referenceId": "sale-1791707138311-whlg01",
+      "referenceType": "sale",
+      "date": "2026-10-11",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-10T15:45:38.554Z"
+      },
+      "type": "income",
+      "amount": 26
+    },
+    {
+      "id": "cash-1791627763995-doynp3",
+      "referenceId": "sale-1791627763992-5b7s9g",
+      "referenceType": "sale",
+      "date": "2026-10-10",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-09T11:13:11.407Z"
+      },
+      "type": "income",
+      "amount": 7
+    },
+    {
+      "id": "cash-1791558662396-7tn0vm",
+      "referenceId": "sale-1791558662390-0chfub",
+      "referenceType": "sale",
+      "date": "2026-10-09",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-09T11:13:11.407Z"
+      },
+      "type": "income",
+      "amount": 31
+    },
+    {
+      "id": "cash-1791472101369-tvwfz8",
+      "referenceId": "sale-1791472101364-3l5rij",
+      "referenceType": "sale",
+      "date": "2026-10-08",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-08T10:50:37.066Z"
+      },
+      "type": "income",
+      "amount": 200
+    },
+    {
+      "id": "cash-1791457410111-1vdfbe",
+      "referenceId": "sale-1791457410106-7q6xvb",
+      "referenceType": "sale",
+      "date": "2026-10-08",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-08T10:50:37.066Z"
+      },
+      "type": "income",
+      "amount": 7
+    },
+    {
+      "id": "cash-1791456847103-w4x9yo",
+      "referenceId": "sale-1791456847099-b73t2w",
+      "referenceType": "sale",
+      "date": "2026-10-08",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-08T10:50:37.066Z"
+      },
+      "type": "income",
+      "amount": 35
+    },
+    {
+      "id": "cash-1791441535488-qzbyuo",
+      "referenceId": "sale-1791441535480-46a796",
+      "referenceType": "sale",
+      "date": "2026-10-08",
+      "currency": "SYP",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 121.788134,
+        "TRY": 49.219055,
+        "TRY_SYP": null,
+        "updatedAt": "2026-10-08T05:10:43.149Z"
+      },
+      "type": "income",
+      "amount": 2100
+    },
+    {
+      "id": "cash-1791389980357-s92665",
+      "referenceId": "sale-1791389980350-tynt1w",
+      "referenceType": "sale",
+      "date": "2026-10-07",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 121.810752,
+        "TRY": 49.164125,
+        "TRY_SYP": null,
+        "updatedAt": "2026-10-06T19:05:29.140Z"
+      },
+      "type": "income",
+      "amount": 150
+    },
+    {
+      "id": "cash-1791270965400-k3kkia",
+      "referenceId": "sale-1791270965396-flpjui",
+      "referenceType": "sale",
+      "date": "2026-10-06",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 121.969716,
+        "TRY": 49.161928,
+        "TRY_SYP": null,
+        "updatedAt": "2026-10-05T18:15:05.493Z"
+      },
+      "type": "income",
+      "amount": 35
+    },
+    {
+      "id": "cash-1791207544458-cosb1s",
+      "referenceId": "sale-1791207544449-ach73p",
+      "referenceType": "sale",
+      "date": "2026-10-05",
+      "currency": "TRY",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 121.802723,
+        "TRY": 49.136571,
+        "TRY_SYP": null,
+        "updatedAt": "2026-10-04T18:00:47.968Z"
+      },
+      "type": "income",
+      "amount": 100
+    },
+    {
+      "id": "cash-1791207544451-cd70ff",
+      "referenceId": "sale-1791207544449-ach73p",
+      "referenceType": "sale",
+      "date": "2026-10-05",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 121.802723,
+        "TRY": 49.136571,
+        "TRY_SYP": null,
+        "updatedAt": "2026-10-04T18:00:47.968Z"
+      },
+      "type": "income",
+      "amount": 30
+    },
+    {
+      "id": "cash-1791204864075-dly8j2",
+      "referenceId": "sale-1791204864071-c38g3w",
+      "referenceType": "sale",
+      "date": "2026-10-05",
+      "currency": "TRY",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 121.802723,
+        "TRY": 49.136571,
+        "TRY_SYP": null,
+        "updatedAt": "2026-10-04T18:00:47.968Z"
+      },
+      "type": "income",
+      "amount": 1200
+    },
+    {
+      "id": "cash-1791184801497-rj7hh0",
+      "referenceId": "sale-1791184801494-gcbg5s",
+      "referenceType": "sale",
+      "date": "2026-10-05",
+      "currency": "TRY",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 121.802723,
+        "TRY": 49.136571,
+        "TRY_SYP": null,
+        "updatedAt": "2026-10-04T18:00:47.968Z"
+      },
+      "type": "income",
+      "amount": 249.9970459338
+    },
+    {
+      "id": "cash-1791139775949-816xf0",
+      "referenceId": "sale-1791139775941-i1bcwu",
+      "referenceType": "sale",
+      "date": "2026-10-04",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 121.802723,
+        "TRY": 49.136571,
+        "TRY_SYP": null,
+        "updatedAt": "2026-10-04T18:00:47.968Z"
+      },
+      "type": "income",
+      "amount": 55
+    },
+    {
+      "id": "cash-1791109467957-atzy6f",
+      "referenceId": "sale-1791109467951-k0hayj",
+      "referenceType": "sale",
+      "date": "2026-10-04",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 135,
+        "TRY": 48.4,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-04T08:39:47.259Z"
+      },
+      "type": "income",
+      "amount": 30
+    },
+    {
+      "id": "cash-1790104570524-ocs0tq",
+      "referenceId": "sale-1790104570518-u2s3dq",
+      "referenceType": "sale",
+      "date": "2026-09-22",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 121.779536,
+        "TRY": 48.824225,
+        "TRY_SYP": 2.8,
+        "updatedAt": "2026-09-22T17:56:28.044Z"
+      },
+      "type": "income",
+      "amount": 25
+    },
+    {
+      "id": "cash-1790155663032-0vckom",
+      "referenceId": "sale-1790155663031-5st2z5",
+      "referenceType": "sale",
+      "date": "2026-09-23",
+      "currency": "TRY",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 121.779536,
+        "TRY": 48.824225,
+        "TRY_SYP": 2.8,
+        "updatedAt": "2026-09-22T08:19:30.049Z"
+      },
+      "type": "income",
+      "amount": 10985.450625
+    },
+    {
+      "id": "cash-1790164020132-j4mo5g",
+      "referenceId": "sale-1790164020124-7rokae",
+      "referenceType": "sale",
+      "date": "2026-09-23",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 121.779536,
+        "TRY": 48.824225,
+        "TRY_SYP": 2.8,
+        "updatedAt": "2026-09-22T08:19:30.049Z"
+      },
+      "type": "income",
+      "amount": 4.55
+    },
+    {
+      "id": "cash-1790189977393-2pif3l",
+      "referenceId": "sale-1790189977387-jwfmdb",
+      "referenceType": "sale",
+      "date": "2026-09-23",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 135,
+        "TRY": 48.4,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-09-23T14:33:32.581Z"
+      },
+      "type": "income",
+      "amount": 55
+    },
+    {
+      "id": "cash-1790233476682-s4tk4v",
+      "referenceId": "sale-1790233476677-7k0p7l",
+      "referenceType": "sale",
+      "date": "2026-09-24",
+      "currency": "TRY",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 135,
+        "TRY": 48.4,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-09-23T14:33:32.581Z"
+      },
+      "type": "income",
+      "amount": 1100
+    },
+    {
+      "id": "cash-1790268496271-szlob8",
+      "referenceId": "sale-1790268496268-3n9lbi",
+      "referenceType": "sale",
+      "date": "2026-09-24",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 135,
+        "TRY": 48.4,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-09-24T15:19:44.353Z"
+      },
+      "type": "income",
+      "amount": 11
+    },
+    {
+      "id": "cash-1790268703335-va97if",
+      "referenceId": "sale-1790268703327-a56wbj",
+      "referenceType": "sale",
+      "date": "2026-09-24",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 135,
+        "TRY": 48.4,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-09-24T15:19:44.353Z"
+      },
+      "type": "income",
+      "amount": 11
+    },
+    {
+      "id": "cash-1790275930889-3h517t",
+      "referenceId": "sale-1790275930885-4k2dlo",
+      "referenceType": "sale",
+      "date": "2026-09-24",
+      "currency": "SYP",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 135,
+        "TRY": 48.4,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-09-24T16:54:50.951Z"
+      },
+      "type": "income",
+      "amount": 3600
+    },
+    {
+      "id": "cash-1790277558006-d5pi3v",
+      "referenceId": "sale-1790277558000-sqh1gy",
+      "referenceType": "sale",
+      "date": "2026-09-24",
+      "currency": "TRY",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 135,
+        "TRY": 48.4,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-09-24T16:54:50.951Z"
+      },
+      "type": "income",
+      "amount": 1550
+    },
+    {
+      "id": "cash-1790278731641-nzya3y",
+      "referenceId": "sale-1790278731637-o3dmf9",
+      "referenceType": "sale",
+      "date": "2026-09-24",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 135,
+        "TRY": 48.4,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-09-24T16:54:50.951Z"
+      },
+      "type": "income",
+      "amount": 17
+    },
+    {
+      "id": "cash-1790281138068-lzv2jw",
+      "referenceId": "sale-1790268703327-a56wbj",
+      "referenceType": "sale",
+      "date": "2026-09-24",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 135,
+        "TRY": 48.4,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-09-24T16:54:50.951Z"
+      },
+      "type": "invoice-footprint-repair",
+      "amount": -33
+    },
+    {
+      "id": "cash-1790281690398-78ttlz",
+      "referenceId": "sale-1790268496268-3n9lbi",
+      "referenceType": "sale",
+      "date": "2026-09-24",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 135,
+        "TRY": 48.4,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-09-24T16:54:50.951Z"
+      },
+      "type": "invoice-chain-repair",
+      "amount": 11
+    },
+    {
+      "id": "cash-1790341038214-lpvaqw",
+      "referenceId": "sale-1790341038210-y1c5sn",
+      "referenceType": "sale",
+      "date": "2026-09-25",
+      "currency": "SYP",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 135,
+        "TRY": 48.4,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-09-24T16:54:50.951Z"
+      },
+      "type": "income",
+      "amount": 15500
+    },
+    {
+      "id": "cash-1790341463025-nidxqt",
+      "referenceId": "sale-1790341463021-zoyiz2",
+      "referenceType": "sale",
+      "date": "2026-09-25",
+      "currency": "SYP",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 135,
+        "TRY": 48.4,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-09-24T16:54:50.951Z"
+      },
+      "type": "income",
+      "amount": 10000
+    },
+    {
+      "id": "cash-1790342184486-svzd1r",
+      "referenceId": "sale-1790342184483-r9aplp",
+      "referenceType": "sale",
+      "date": "2026-09-25",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 135,
+        "TRY": 48.4,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-09-24T16:54:50.951Z"
+      },
+      "type": "income",
+      "amount": 29
+    },
+    {
+      "id": "cash-1790356346123-lwq0fq",
+      "referenceId": "sale-1790356346115-e55zps",
+      "referenceType": "sale",
+      "date": "2026-09-25",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 135,
+        "TRY": 48.4,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-09-24T16:54:50.951Z"
+      },
+      "type": "income",
+      "amount": 15
+    },
+    {
+      "id": "cash-1790356440739-hhunxl",
+      "referenceId": "sale-1790356440736-e8kcma",
+      "referenceType": "sale",
+      "date": "2026-09-25",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 135,
+        "TRY": 48.4,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-09-24T16:54:50.951Z"
+      },
+      "type": "income",
+      "amount": 12
+    },
+    {
+      "id": "cash-1790356718224-4bd0qf",
+      "referenceId": "sale-1790356718217-6jf79r",
+      "referenceType": "sale",
+      "date": "2026-09-25",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 135,
+        "TRY": 48.4,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-09-24T16:54:50.951Z"
+      },
+      "type": "income",
+      "amount": 3
+    },
+    {
+      "id": "cash-1790357450743-9mgr5e",
+      "referenceId": "sale-1790357450739-uk2tz7",
+      "referenceType": "sale",
+      "date": "2026-09-25",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 135,
+        "TRY": 48.4,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-09-24T16:54:50.951Z"
+      },
+      "type": "income",
+      "amount": 240
+    },
+    {
+      "id": "cash-1790364034563-ssipmb",
+      "referenceId": "sale-1790364034560-z4jbnc",
+      "referenceType": "sale",
+      "date": "2026-09-25",
+      "currency": "TRY",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 135,
+        "TRY": 48.4,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-09-25T17:34:18.308Z"
+      },
+      "type": "income",
+      "amount": 1550
+    },
+    {
+      "id": "cash-1790442509495-7rbqtq",
+      "referenceId": "sale-1790442509490-lxpiqs",
+      "referenceType": "sale",
+      "date": "2026-09-26",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 135,
+        "TRY": 48.4,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-09-25T20:17:23.758Z"
+      },
+      "type": "income",
+      "amount": 23
+    },
+    {
+      "id": "cash-1790445631741-4mkcsr",
+      "referenceId": "sale-1790445631737-fqayw3",
+      "referenceType": "sale",
+      "date": "2026-09-26",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 135,
+        "TRY": 48.4,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-09-25T20:17:23.758Z"
+      },
+      "type": "income",
+      "amount": 20
+    },
+    {
+      "id": "cash-1790524079751-3qdhli",
+      "referenceId": "sale-1790524079745-awcfqp",
+      "referenceType": "sale",
+      "date": "2026-09-27",
+      "currency": "TRY",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 135,
+        "TRY": 48.4,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-09-27T07:16:16.175Z"
+      },
+      "type": "income",
+      "amount": 260.0048
+    },
+    {
+      "id": "cash-1790577333780-gwmgw8",
+      "referenceId": "sale-1790577333776-nka8il",
+      "referenceType": "sale",
+      "date": "2026-09-28",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 135,
+        "TRY": 48.4,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-09-27T07:16:16.175Z"
+      },
+      "type": "income",
+      "amount": 35
+    },
+    {
+      "id": "cash-1790591111937-1h7hio",
+      "referenceId": "sale-1790591111933-2o61ed",
+      "referenceType": "sale",
+      "date": "2026-09-28",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 135,
+        "TRY": 48.4,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-09-28T07:31:34.413Z"
+      },
+      "type": "income",
+      "amount": 12
+    },
+    {
+      "id": "cash-1790600220385-0vuj18",
+      "referenceId": "sale-1790600220381-685djr",
+      "referenceType": "sale",
+      "date": "2026-09-28",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 135,
+        "TRY": 48.4,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-09-28T11:41:52.601Z"
+      },
+      "type": "income",
+      "amount": 10
+    },
+    {
+      "id": "cash-1790610424729-u1okcq",
+      "referenceId": "sale-1790610424721-c86nxy",
+      "referenceType": "sale",
+      "date": "2026-09-28",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 135,
+        "TRY": 48.4,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-09-28T11:41:52.601Z"
+      },
+      "type": "income",
+      "amount": 22
+    },
+    {
+      "id": "cash-1790700368133-khivh9",
+      "referenceId": "sale-1790700368129-1eax61",
+      "referenceType": "sale",
+      "date": "2026-09-29",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 135,
+        "TRY": 48.4,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-09-29T12:21:25.970Z"
+      },
+      "type": "income",
+      "amount": 24
+    },
+    {
+      "id": "cash-1790708856012-zvxtx0",
+      "referenceId": "sale-1790708856006-82xugt",
+      "referenceType": "sale",
+      "date": "2026-09-29",
+      "currency": "SYP",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 135,
+        "TRY": 48.4,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-09-29T12:21:25.970Z"
+      },
+      "type": "income",
+      "amount": 2360.475
+    },
+    {
+      "id": "cash-1790752896804-2bnqyv",
+      "referenceId": "sale-1790752896778-a8mtv2",
+      "referenceType": "sale",
+      "date": "2026-09-30",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 135,
+        "TRY": 48.4,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-09-29T12:21:25.970Z"
+      },
+      "type": "income",
+      "amount": 11.3
+    },
+    {
+      "id": "cash-1790754395249-ch6952",
+      "referenceId": "sale-1790754395228-yfdvkz",
+      "referenceType": "sale",
+      "date": "2026-09-30",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 135,
+        "TRY": 48.4,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-09-29T12:21:25.970Z"
+      },
+      "type": "income",
+      "amount": 13
+    },
+    {
+      "id": "cash-1790754593990-fr5diu",
+      "referenceId": "sale-1790754593985-vse2sx",
+      "referenceType": "sale",
+      "date": "2026-09-30",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 135,
+        "TRY": 48.4,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-09-29T12:21:25.970Z"
+      },
+      "type": "income",
+      "amount": 27
+    },
+    {
+      "id": "cash-1790774001353-7lsqsy",
+      "referenceId": "sale-1790774001345-vdc153",
+      "referenceType": "sale",
+      "date": "2026-09-30",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 135,
+        "TRY": 48.4,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-09-29T12:21:25.970Z"
+      },
+      "type": "income",
+      "amount": 16
+    },
+    {
+      "id": "cash-1790784525369-9gzprd",
+      "referenceId": "sale-1790784525356-g64ttr",
+      "referenceType": "sale",
+      "date": "2026-09-30",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 135,
+        "TRY": 48.4,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-09-30T14:46:18.159Z"
+      },
+      "type": "income",
+      "amount": 233
+    },
+    {
+      "id": "cash-1790785328252-c3j2fh",
+      "referenceId": "sale-1790785328245-on9iwe",
+      "referenceType": "sale",
+      "date": "2026-09-30",
+      "currency": "TRY",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 135,
+        "TRY": 48.4,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-09-30T14:46:18.159Z"
+      },
+      "type": "income",
+      "amount": 338.8
+    },
+    {
+      "id": "cash-1790797205544-l1icy8",
+      "referenceId": "sale-1790795772363-q2rpra",
+      "referenceType": "sale",
+      "date": "2026-09-30",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 135,
+        "TRY": 48.4,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-09-30T14:46:18.159Z"
+      },
+      "type": "income",
+      "amount": 55
+    },
+    {
+      "id": "cash-1790797205544-qmpoov",
+      "referenceId": "sale-1790795772363-q2rpra",
+      "referenceType": "sale",
+      "date": "2026-09-30",
+      "currency": "TRY",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 135,
+        "TRY": 48.4,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-09-30T14:46:18.159Z"
+      },
+      "type": "income",
+      "amount": 100
+    },
+    {
+      "id": "cash-1790803991060-vledp1",
+      "referenceId": "sale-1790803991059-7m9fj3",
+      "referenceType": "sale",
+      "date": "2026-10-01",
+      "currency": "SYP",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 135,
+        "TRY": 48.4,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-09-30T14:46:18.159Z"
+      },
+      "type": "income",
+      "amount": 3800
+    },
+    {
+      "id": "cash-1790853429756-nzcba7",
+      "referenceId": "sale-1790592538945-oipwsk",
+      "referenceType": "sale",
+      "date": "2026-10-01",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 135,
+        "TRY": 48.4,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-09-30T14:46:18.159Z"
+      },
+      "type": "income",
+      "amount": 98
+    },
+    {
+      "id": "cash-1790853449015-gcmzss",
+      "referenceId": "sale-1790592538945-oipwsk",
+      "referenceType": "sale",
+      "date": "2026-10-01",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 135,
+        "TRY": 48.4,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-09-30T14:46:18.159Z"
+      },
+      "type": "income",
+      "amount": 2
+    },
+    {
+      "id": "cash-1790856068857-laxmgl",
+      "referenceId": "sale-1790856068854-bgsa38",
+      "referenceType": "sale",
+      "date": "2026-10-01",
+      "currency": "SYP",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 135,
+        "TRY": 48.4,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-09-30T14:46:18.159Z"
+      },
+      "type": "income",
+      "amount": 3199.9995000000004
+    },
+    {
+      "id": "cash-1790858480474-jg1m80",
+      "referenceId": "sale-1790858480467-kq1ypr",
+      "referenceType": "sale",
+      "date": "2026-10-01",
+      "currency": "SYP",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 135,
+        "TRY": 48.4,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-09-30T14:46:18.159Z"
+      },
+      "type": "income",
+      "amount": 3900
+    },
+    {
+      "id": "cash-1790866991926-bhuelx",
+      "referenceId": "sale-1790866991925-t2r2li",
+      "referenceType": "sale",
+      "date": "2026-10-01",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 135,
+        "TRY": 48.4,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-01T14:54:53.565Z"
+      },
+      "type": "income",
+      "amount": 45
+    },
+    {
+      "id": "cash-1790871225018-s05s85",
+      "referenceId": "sale-1790871225009-mgkqe8",
+      "referenceType": "sale",
+      "date": "2026-10-01",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 135,
+        "TRY": 48.4,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-01T15:43:40.083Z"
+      },
+      "type": "income",
+      "amount": 20
+    },
+    {
+      "id": "cash-1790871451214-sph8qe",
+      "referenceId": "sale-1790871451185-2z6f3c",
+      "referenceType": "sale",
+      "date": "2026-10-01",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 135,
+        "TRY": 48.4,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-01T15:43:40.083Z"
+      },
+      "type": "income",
+      "amount": 7
+    },
+    {
+      "id": "cash-1790884930105-lgl9wl",
+      "referenceId": "sale-1790884930100-ztrc9p",
+      "referenceType": "sale",
+      "date": "2026-10-01",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 135,
+        "TRY": 48.4,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-01T15:43:40.083Z"
+      },
+      "type": "income",
+      "amount": 23
+    },
+    {
+      "id": "cash-1790937680520-9pswl7",
+      "referenceId": "sale-1790937680502-6xxoli",
+      "referenceType": "sale",
+      "date": "2026-10-02",
+      "currency": "TRY",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 135,
+        "TRY": 48.4,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-01T15:43:40.083Z"
+      },
+      "type": "income",
+      "amount": 350.0046
+    },
+    {
+      "id": "cash-1791023344142-iaqjtc",
+      "referenceId": "sale-1791023344133-a8azek",
+      "referenceType": "sale",
+      "date": "2026-10-03",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 135,
+        "TRY": 48.4,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-03T07:13:08.799Z"
+      },
+      "type": "income",
+      "amount": 20
+    },
+    {
+      "id": "cash-1791733439219-aaqoqf",
+      "referenceId": "sale-1791733439217-uygsdm",
+      "referenceType": "sale",
+      "date": "2026-10-11",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-10T15:45:38.554Z"
+      },
+      "type": "income",
+      "amount": 5
+    },
+    {
+      "id": "cash-1791733521370-212pcs",
+      "referenceId": "sale-1791707138311-whlg01",
+      "referenceType": "sale",
+      "date": "2026-10-11",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-10T15:45:38.554Z"
+      },
+      "type": "invoice-chain-repair",
+      "amount": -26
+    },
+    {
+      "id": "cash-1791733521371-0q4n2n",
+      "referenceId": "sale-1791707138311-whlg01",
+      "referenceType": "sale",
+      "date": "2026-10-11",
+      "currency": "TRY",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-10T15:45:38.554Z"
+      },
+      "type": "invoice-chain-repair",
+      "amount": 1300
+    },
+    {
+      "id": "cash-1792848698890-4cgx5b",
+      "referenceId": "sale-1792848698888-e60l58",
+      "referenceType": "sale",
+      "date": "2026-10-24",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-24T13:28:44.027Z"
+      },
+      "type": "income",
+      "amount": 18
+    }
+  ],
+  "returns": [
+    {
+      "id": "return-1792754146085-yu3hmd",
+      "referenceId": "sale-1791544792956-xcpbj0",
+      "referenceType": "sale",
+      "date": "2026-10-23",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-22T15:37:17.649Z"
+      },
+      "netCreditAmount": 224.63235294117646,
+      "creditAmount": 224.63235294117646,
+      "returnedCost": 130.8,
+      "replacementCost": 0,
+      "recognizedRatio": 0
+    },
+    {
+      "id": "return-1792754037720-14uh81",
+      "referenceId": "sale-1791544792956-xcpbj0",
+      "referenceType": "sale",
+      "date": "2026-10-23",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 138,
+        "TRY": 49.7,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-10-22T15:37:17.649Z"
+      },
+      "netCreditAmount": 100.36764705882354,
+      "creditAmount": 100.36764705882354,
+      "returnedCost": 57,
+      "replacementCost": 0,
+      "recognizedRatio": 0
+    },
+    {
+      "id": "return-1790278187689-uzo4dk",
+      "referenceId": "sale-1790268496268-3n9lbi",
+      "referenceType": "sale",
+      "date": "2026-09-24",
+      "currency": "USD",
+      "rateSnapshot": {
+        "USD": 1,
+        "SYP": 135,
+        "TRY": 48.4,
+        "TRY_SYP": 3,
+        "updatedAt": "2026-09-24T16:54:50.951Z"
+      },
+      "netCreditAmount": 11,
+      "creditAmount": 11,
+      "returnedCost": 2.25,
+      "replacementCost": 0,
+      "recognizedRatio": 1
+    }
+  ],
+  "expected": [
+    {
+      "key": "legacy:store:sale-1792918448696-rdmzvn",
+      "date": "2026-10-25",
+      "stream": "LEGACY_STORE",
+      "revenue": 23.01810865191147,
+      "cost": 7.5,
+      "adjustment": 0
+    },
+    {
+      "key": "legacy:store:sale-1792778236265-djzems",
+      "date": "2026-10-23",
+      "stream": "LEGACY_STORE",
+      "revenue": 23.138832997987926,
+      "cost": 10,
+      "adjustment": 0
+    },
+    {
+      "key": "legacy:store:sale-1792773658259-2xh5i1",
+      "date": "2026-10-23",
+      "stream": "LEGACY_STORE",
+      "revenue": 40,
+      "cost": 12,
+      "adjustment": 0
+    },
+    {
+      "key": "legacy:store:sale-1792689782395-duq1uu",
+      "date": "2026-10-22",
+      "stream": "LEGACY_STORE",
+      "revenue": 314,
+      "cost": 188.325,
+      "adjustment": 0
+    },
+    {
+      "key": "legacy:store:sale-1792684182141-z3aaeg",
+      "date": "2026-10-22",
+      "stream": "LEGACY_STORE",
+      "revenue": 10.060362173038229,
+      "cost": 3.5,
+      "adjustment": 0
+    },
+    {
+      "key": "legacy:store:sale-1792683394621-212l4b",
+      "date": "2026-10-22",
+      "stream": "LEGACY_STORE",
+      "revenue": 20.120724346076457,
+      "cost": 8,
+      "adjustment": 0
+    },
+    {
+      "key": "legacy:store:sale-1792667860841-opwwsc",
+      "date": "2026-10-22",
+      "stream": "LEGACY_STORE",
+      "revenue": 54.34782608695652,
+      "cost": 28,
+      "adjustment": 0
+    },
+    {
+      "key": "legacy:store:sale-1792657409415-ncjsoc",
+      "date": "2026-10-22",
+      "stream": "LEGACY_STORE",
+      "revenue": 4,
+      "cost": 1.5,
+      "adjustment": 0
+    },
+    {
+      "key": "legacy:store:sale-1792583796084-sprjl0",
+      "date": "2026-10-21",
+      "stream": "LEGACY_STORE",
+      "revenue": 15.217391304347826,
+      "cost": 7,
+      "adjustment": 0
+    },
+    {
+      "key": "legacy:store:sale-1792514333404-baw6si",
+      "date": "2026-10-20",
+      "stream": "LEGACY_STORE",
+      "revenue": 68.10865191146881,
+      "cost": 36.6,
+      "adjustment": 0
+    },
+    {
+      "key": "legacy:store:sale-1792499172951-mmdn7j",
+      "date": "2026-10-20",
+      "stream": "LEGACY_STORE",
+      "revenue": 35,
+      "cost": 20,
+      "adjustment": 0
+    },
+    {
+      "key": "legacy:store:sale-1792475638664-kl8rrz",
+      "date": "2026-10-20",
+      "stream": "LEGACY_STORE",
+      "revenue": 3,
+      "cost": 1.85,
+      "adjustment": 0
+    },
+    {
+      "key": "legacy:store:sale-1792475495510-3o84xo",
+      "date": "2026-10-20",
+      "stream": "LEGACY_STORE",
+      "revenue": 50,
+      "cost": 15.5,
+      "adjustment": 0
+    },
+    {
+      "key": "legacy:store:sale-1792438107079-hcow7q",
+      "date": "2026-10-19",
+      "stream": "LEGACY_STORE",
+      "revenue": 15.090543259557343,
+      "cost": 11.25,
+      "adjustment": 0
+    },
+    {
+      "key": "legacy:store:sale-1792426217599-kpxw23",
+      "date": "2026-10-19",
+      "stream": "LEGACY_STORE",
+      "revenue": 69.11468812877263,
+      "cost": 41.4,
+      "adjustment": 0
+    },
+    {
+      "key": "legacy:store:sale-1792407451542-rdxotn",
+      "date": "2026-10-19",
+      "stream": "LEGACY_STORE",
+      "revenue": 20,
+      "cost": 7,
+      "adjustment": 0
+    },
+    {
+      "key": "legacy:store:sale-1792405893046-k4iz3u",
+      "date": "2026-10-19",
+      "stream": "LEGACY_STORE",
+      "revenue": 35,
+      "cost": 14,
+      "adjustment": 0
+    },
+    {
+      "key": "legacy:store:sale-1792345352783-5cc8dn",
+      "date": "2026-10-18",
+      "stream": "LEGACY_STORE",
+      "revenue": 25.36231884057971,
+      "cost": 9,
+      "adjustment": 0
+    },
+    {
+      "key": "legacy:store:sale-1792325213485-fwlfjd",
+      "date": "2026-10-18",
+      "stream": "LEGACY_STORE",
+      "revenue": 4,
+      "cost": 3.7,
+      "adjustment": 0
+    },
+    {
+      "key": "legacy:store:sale-1792325073808-sq1soy",
+      "date": "2026-10-18",
+      "stream": "LEGACY_STORE",
+      "revenue": 39,
+      "cost": 22.400000000000002,
+      "adjustment": 0
+    },
+    {
+      "key": "legacy:store:sale-1792324721811-3xghwf",
+      "date": "2026-10-18",
+      "stream": "LEGACY_STORE",
+      "revenue": 18,
+      "cost": 6.75,
+      "adjustment": 0
+    },
+    {
+      "key": "legacy:store:sale-1792324645920-hbekiw",
+      "date": "2026-10-18",
+      "stream": "LEGACY_STORE",
+      "revenue": 28,
+      "cost": 10,
+      "adjustment": 0
+    },
+    {
+      "key": "legacy:store:sale-1792318397504-lk28n0",
+      "date": "2026-10-18",
+      "stream": "LEGACY_STORE",
+      "revenue": 5,
+      "cost": 2.25,
+      "adjustment": 0
+    },
+    {
+      "key": "legacy:store:sale-1792315792304-fmynee",
+      "date": "2026-10-18",
+      "stream": "LEGACY_STORE",
+      "revenue": 6.521739130434782,
+      "cost": 2.5,
+      "adjustment": 0
+    },
+    {
+      "key": "legacy:store:sale-1792243217399-0wnuqg",
+      "date": "2026-10-17",
+      "stream": "LEGACY_STORE",
+      "revenue": 18,
+      "cost": 6,
+      "adjustment": 0
+    },
+    {
+      "key": "legacy:store:sale-1792241003720-5tslaq",
+      "date": "2026-10-17",
+      "stream": "LEGACY_STORE",
+      "revenue": 25,
+      "cost": 7.5,
+      "adjustment": 0
+    },
+    {
+      "key": "legacy:store:sale-1792239917284-wg227u",
+      "date": "2026-10-17",
+      "stream": "LEGACY_STORE",
+      "revenue": 19,
+      "cost": 17,
+      "adjustment": 0
+    },
+    {
+      "key": "legacy:store:sale-1792224435768-rwwoyj",
+      "date": "2026-10-17",
+      "stream": "LEGACY_STORE",
+      "revenue": 5.030181086519114,
+      "cost": 2.5,
+      "adjustment": 0
+    },
+    {
+      "key": "legacy:store:sale-1792074403975-onl6ia",
+      "date": "2026-10-15",
+      "stream": "LEGACY_STORE",
+      "revenue": 18,
+      "cost": 6,
+      "adjustment": 0
+    },
+    {
+      "key": "legacy:store:sale-1792060484177-08ygye",
+      "date": "2026-10-15",
+      "stream": "LEGACY_STORE",
+      "revenue": 23,
+      "cost": 8,
+      "adjustment": 0
+    },
+    {
+      "key": "legacy:store:sale-1791982068171-xjmvw2",
+      "date": "2026-10-14",
+      "stream": "LEGACY_STORE",
+      "revenue": 55,
+      "cost": 17,
+      "adjustment": 0
+    },
+    {
+      "key": "legacy:store:sale-1791920118410-wyv1wm",
+      "date": "2026-10-13",
+      "stream": "LEGACY_STORE",
+      "revenue": 20,
+      "cost": 3.5,
+      "adjustment": 0
+    },
+    {
+      "key": "legacy:store:sale-1791907397444-oyjz48",
+      "date": "2026-10-13",
+      "stream": "LEGACY_STORE",
+      "revenue": 5.7,
+      "cost": 3.25,
+      "adjustment": 0
+    },
+    {
+      "key": "legacy:store:sale-1791825431729-88qeeo",
+      "date": "2026-10-12",
+      "stream": "LEGACY_STORE",
+      "revenue": 10,
+      "cost": 3,
+      "adjustment": 0
+    },
+    {
+      "key": "legacy:store:sale-1791818853887-tuj1un",
+      "date": "2026-10-12",
+      "stream": "LEGACY_STORE",
+      "revenue": 15,
+      "cost": 5.5,
+      "adjustment": 0
+    },
+    {
+      "key": "legacy:store:sale-1791818793181-jkvpif",
+      "date": "2026-10-12",
+      "stream": "LEGACY_STORE",
+      "revenue": 20,
+      "cost": 7.5,
+      "adjustment": 0
+    },
+    {
+      "key": "legacy:store:sale-1791792434136-bisiqu",
+      "date": "2026-10-12",
+      "stream": "LEGACY_STORE",
+      "revenue": 23.91304347826087,
+      "cost": 0,
+      "adjustment": 0
+    },
+    {
+      "key": "legacy:store:sale-1791737573669-t8no7l",
+      "date": "2026-10-11",
+      "stream": "LEGACY_STORE",
+      "revenue": 23.138832997987926,
+      "cost": 10,
+      "adjustment": 0
+    },
+    {
+      "key": "legacy:store:sale-1791729728637-hvl5m0",
+      "date": "2026-10-11",
+      "stream": "LEGACY_STORE",
+      "revenue": 45,
+      "cost": 26.4,
+      "adjustment": 0
+    },
+    {
+      "key": "legacy:store:sale-1791707138311-whlg01",
+      "date": "2026-10-11",
+      "stream": "LEGACY_STORE",
+      "revenue": 26,
+      "cost": 6,
+      "adjustment": 0
+    },
+    {
+      "key": "legacy:store:sale-1791627763992-5b7s9g",
+      "date": "2026-10-10",
+      "stream": "LEGACY_STORE",
+      "revenue": 7,
+      "cost": 2.25,
+      "adjustment": 0
+    },
+    {
+      "key": "legacy:store:sale-1791558662390-0chfub",
+      "date": "2026-10-09",
+      "stream": "LEGACY_STORE",
+      "revenue": 31,
+      "cost": 18.6,
+      "adjustment": 0
+    },
+    {
+      "key": "legacy:store:sale-1791472101364-3l5rij",
+      "date": "2026-10-08",
+      "stream": "LEGACY_STORE",
+      "revenue": 200,
+      "cost": 115.8,
+      "adjustment": 0
+    },
+    {
+      "key": "legacy:store:sale-1791457410106-7q6xvb",
+      "date": "2026-10-08",
+      "stream": "LEGACY_STORE",
+      "revenue": 7,
+      "cost": 5,
+      "adjustment": 0
+    },
+    {
+      "key": "legacy:store:sale-1791456847099-b73t2w",
+      "date": "2026-10-08",
+      "stream": "LEGACY_STORE",
+      "revenue": 35,
+      "cost": 10,
+      "adjustment": 0
+    },
+    {
+      "key": "legacy:store:sale-1791441535480-46a796",
+      "date": "2026-10-08",
+      "stream": "LEGACY_STORE",
+      "revenue": 17.2430591637113,
+      "cost": 6,
+      "adjustment": 0
+    },
+    {
+      "key": "legacy:store:sale-1791389980350-tynt1w",
+      "date": "2026-10-07",
+      "stream": "LEGACY_STORE",
+      "revenue": 150,
+      "cost": 75,
+      "adjustment": 0
+    },
+    {
+      "key": "legacy:store:sale-1791270965396-flpjui",
+      "date": "2026-10-06",
+      "stream": "LEGACY_STORE",
+      "revenue": 35,
+      "cost": 20,
+      "adjustment": 0
+    },
+    {
+      "key": "legacy:store:sale-1791207544449-ach73p",
+      "date": "2026-10-05",
+      "stream": "LEGACY_STORE",
+      "revenue": 32.035144047800976,
+      "cost": 22,
+      "adjustment": 0
+    },
+    {
+      "key": "legacy:store:sale-1791204864071-c38g3w",
+      "date": "2026-10-05",
+      "stream": "LEGACY_STORE",
+      "revenue": 24.4217285736117,
+      "cost": 10,
+      "adjustment": 0
+    },
+    {
+      "key": "legacy:store:sale-1791184801494-gcbg5s",
+      "date": "2026-10-05",
+      "stream": "LEGACY_STORE",
+      "revenue": 5.0878,
+      "cost": 2.5,
+      "adjustment": 0
+    },
+    {
+      "key": "legacy:store:sale-1791139775941-i1bcwu",
+      "date": "2026-10-04",
+      "stream": "LEGACY_STORE",
+      "revenue": 55,
+      "cost": 15.5,
+      "adjustment": 0
+    },
+    {
+      "key": "legacy:store:sale-1790104570518-u2s3dq",
+      "date": "2026-09-22",
+      "stream": "LEGACY_STORE",
+      "revenue": 25,
+      "cost": 8,
+      "adjustment": 0
+    },
+    {
+      "key": "legacy:store:sale-1790155663031-5st2z5",
+      "date": "2026-09-23",
+      "stream": "LEGACY_STORE",
+      "revenue": 225,
+      "cost": 0,
+      "adjustment": 0
+    },
+    {
+      "key": "legacy:store:sale-1790164020124-7rokae",
+      "date": "2026-09-23",
+      "stream": "LEGACY_STORE",
+      "revenue": 4.55,
+      "cost": 2.5,
+      "adjustment": 0
+    },
+    {
+      "key": "legacy:store:sale-1790189977387-jwfmdb",
+      "date": "2026-09-23",
+      "stream": "LEGACY_STORE",
+      "revenue": 55,
+      "cost": 35.199999999999996,
+      "adjustment": 0
+    },
+    {
+      "key": "legacy:store:sale-1790233476677-7k0p7l",
+      "date": "2026-09-24",
+      "stream": "LEGACY_STORE",
+      "revenue": 22.727272727272727,
+      "cost": 6.499999999999999,
+      "adjustment": 0
+    },
+    {
+      "key": "legacy:store:sale-1790268496268-3n9lbi",
+      "date": "2026-09-24",
+      "stream": "LEGACY_STORE",
+      "revenue": 11,
+      "cost": 2.25,
+      "adjustment": 0
+    },
+    {
+      "key": "legacy:store:sale-1790268703327-a56wbj",
+      "date": "2026-09-24",
+      "stream": "LEGACY_STORE",
+      "revenue": 11,
+      "cost": 2.25,
+      "adjustment": 0
+    },
+    {
+      "key": "legacy:store:sale-1790275930885-4k2dlo",
+      "date": "2026-09-24",
+      "stream": "LEGACY_STORE",
+      "revenue": 26.666666666666668,
+      "cost": 8,
+      "adjustment": 0
+    },
+    {
+      "key": "legacy:store:sale-1790277558000-sqh1gy",
+      "date": "2026-09-24",
+      "stream": "LEGACY_STORE",
+      "revenue": 32.02479338842975,
+      "cost": 14,
+      "adjustment": 0
+    },
+    {
+      "key": "legacy:store:sale-1790278731637-o3dmf9",
+      "date": "2026-09-24",
+      "stream": "LEGACY_STORE",
+      "revenue": 17,
+      "cost": 10,
+      "adjustment": 0
+    },
+    {
+      "key": "legacy:store:sale-1790341038210-y1c5sn",
+      "date": "2026-09-25",
+      "stream": "LEGACY_STORE",
+      "revenue": 114.81481481481481,
+      "cost": 55,
+      "adjustment": 0
+    },
+    {
+      "key": "legacy:store:sale-1790341463021-zoyiz2",
+      "date": "2026-09-25",
+      "stream": "LEGACY_STORE",
+      "revenue": 74.07407407407408,
+      "cost": 43,
+      "adjustment": 0
+    },
+    {
+      "key": "legacy:store:sale-1790342184483-r9aplp",
+      "date": "2026-09-25",
+      "stream": "LEGACY_STORE",
+      "revenue": 29,
+      "cost": 20,
+      "adjustment": 0
+    },
+    {
+      "key": "legacy:store:sale-1790356346115-e55zps",
+      "date": "2026-09-25",
+      "stream": "LEGACY_STORE",
+      "revenue": 15,
+      "cost": 7,
+      "adjustment": 0
+    },
+    {
+      "key": "legacy:store:sale-1790356440736-e8kcma",
+      "date": "2026-09-25",
+      "stream": "LEGACY_STORE",
+      "revenue": 12,
+      "cost": 3,
+      "adjustment": 0
+    },
+    {
+      "key": "legacy:store:sale-1790356718217-6jf79r",
+      "date": "2026-09-25",
+      "stream": "LEGACY_STORE",
+      "revenue": 3,
+      "cost": 1.25,
+      "adjustment": 0
+    },
+    {
+      "key": "legacy:store:sale-1790357450739-uk2tz7",
+      "date": "2026-09-25",
+      "stream": "LEGACY_STORE",
+      "revenue": 240,
+      "cost": 160.2,
+      "adjustment": 0
+    },
+    {
+      "key": "legacy:store:sale-1790364034560-z4jbnc",
+      "date": "2026-09-25",
+      "stream": "LEGACY_STORE",
+      "revenue": 32.02479338842975,
+      "cost": 10,
+      "adjustment": 0
+    },
+    {
+      "key": "legacy:store:sale-1790442509490-lxpiqs",
+      "date": "2026-09-26",
+      "stream": "LEGACY_STORE",
+      "revenue": 23,
+      "cost": 6.6,
+      "adjustment": 0
+    },
+    {
+      "key": "legacy:store:sale-1790445631737-fqayw3",
+      "date": "2026-09-26",
+      "stream": "LEGACY_STORE",
+      "revenue": 20,
+      "cost": 6.5,
+      "adjustment": 0
+    },
+    {
+      "key": "legacy:store:sale-1790524079745-awcfqp",
+      "date": "2026-09-27",
+      "stream": "LEGACY_STORE",
+      "revenue": 5.372,
+      "cost": 2.5,
+      "adjustment": 0
+    },
+    {
+      "key": "legacy:store:sale-1790577333776-nka8il",
+      "date": "2026-09-28",
+      "stream": "LEGACY_STORE",
+      "revenue": 35,
+      "cost": 20,
+      "adjustment": 0
+    },
+    {
+      "key": "legacy:store:sale-1790591111933-2o61ed",
+      "date": "2026-09-28",
+      "stream": "LEGACY_STORE",
+      "revenue": 12,
+      "cost": 3,
+      "adjustment": 0
+    },
+    {
+      "key": "legacy:store:sale-1790600220381-685djr",
+      "date": "2026-09-28",
+      "stream": "LEGACY_STORE",
+      "revenue": 10,
+      "cost": 3.75,
+      "adjustment": 0
+    },
+    {
+      "key": "legacy:store:sale-1790610424721-c86nxy",
+      "date": "2026-09-28",
+      "stream": "LEGACY_STORE",
+      "revenue": 22,
+      "cost": 8,
+      "adjustment": 0
+    },
+    {
+      "key": "legacy:store:sale-1790700368129-1eax61",
+      "date": "2026-09-29",
+      "stream": "LEGACY_STORE",
+      "revenue": 24,
+      "cost": 12.5,
+      "adjustment": 0
+    },
+    {
+      "key": "legacy:store:sale-1790708856006-82xugt",
+      "date": "2026-09-29",
+      "stream": "LEGACY_STORE",
+      "revenue": 17.485,
+      "cost": 6,
+      "adjustment": 0
+    },
+    {
+      "key": "legacy:store:sale-1790752896778-a8mtv2",
+      "date": "2026-09-30",
+      "stream": "LEGACY_STORE",
+      "revenue": 11.3,
+      "cost": 3.5,
+      "adjustment": 0
+    },
+    {
+      "key": "legacy:store:sale-1790754395228-yfdvkz",
+      "date": "2026-09-30",
+      "stream": "LEGACY_STORE",
+      "revenue": 13,
+      "cost": 5,
+      "adjustment": 0
+    },
+    {
+      "key": "legacy:store:sale-1790754593985-vse2sx",
+      "date": "2026-09-30",
+      "stream": "LEGACY_STORE",
+      "revenue": 27,
+      "cost": 18.6,
+      "adjustment": 0
+    },
+    {
+      "key": "legacy:store:sale-1790774001345-vdc153",
+      "date": "2026-09-30",
+      "stream": "LEGACY_STORE",
+      "revenue": 16,
+      "cost": 10,
+      "adjustment": 0
+    },
+    {
+      "key": "legacy:store:sale-1790784525356-g64ttr",
+      "date": "2026-09-30",
+      "stream": "LEGACY_STORE",
+      "revenue": 233,
+      "cost": 146.4,
+      "adjustment": 0
+    },
+    {
+      "key": "legacy:store:sale-1790785328245-on9iwe",
+      "date": "2026-09-30",
+      "stream": "LEGACY_STORE",
+      "revenue": 7,
+      "cost": 2.5,
+      "adjustment": 0
+    },
+    {
+      "key": "legacy:store:sale-1790795772363-q2rpra",
+      "date": "2026-09-30",
+      "stream": "LEGACY_STORE",
+      "revenue": 57.06611570247934,
+      "cost": 33,
+      "adjustment": 0
+    },
+    {
+      "key": "legacy:store:sale-1790856068854-bgsa38",
+      "date": "2026-10-01",
+      "stream": "LEGACY_STORE",
+      "revenue": 23.7037,
+      "cost": 7,
+      "adjustment": 0
+    },
+    {
+      "key": "legacy:store:sale-1790858480467-kq1ypr",
+      "date": "2026-10-01",
+      "stream": "LEGACY_STORE",
+      "revenue": 28.88888888888889,
+      "cost": 20,
+      "adjustment": 0
+    },
+    {
+      "key": "legacy:store:sale-1790866991925-t2r2li",
+      "date": "2026-10-01",
+      "stream": "LEGACY_STORE",
+      "revenue": 45,
+      "cost": 20,
+      "adjustment": 0
+    },
+    {
+      "key": "legacy:store:sale-1790871225009-mgkqe8",
+      "date": "2026-10-01",
+      "stream": "LEGACY_STORE",
+      "revenue": 20,
+      "cost": 8,
+      "adjustment": 0
+    },
+    {
+      "key": "legacy:store:sale-1790871451185-2z6f3c",
+      "date": "2026-10-01",
+      "stream": "LEGACY_STORE",
+      "revenue": 7,
+      "cost": 2.25,
+      "adjustment": 0
+    },
+    {
+      "key": "legacy:store:sale-1790884930100-ztrc9p",
+      "date": "2026-10-01",
+      "stream": "LEGACY_STORE",
+      "revenue": 23,
+      "cost": 7,
+      "adjustment": 0
+    },
+    {
+      "key": "legacy:store:sale-1790937680502-6xxoli",
+      "date": "2026-10-02",
+      "stream": "LEGACY_STORE",
+      "revenue": 7.2315,
+      "cost": 2.25,
+      "adjustment": 0
+    },
+    {
+      "key": "legacy:store:sale-1791023344133-a8azek",
+      "date": "2026-10-03",
+      "stream": "LEGACY_STORE",
+      "revenue": 20,
+      "cost": 9,
+      "adjustment": 0
+    },
+    {
+      "key": "legacy:store:sale-1791109467951-k0hayj",
+      "date": "2026-10-04",
+      "stream": "LEGACY_STORE",
+      "revenue": 30,
+      "cost": 10,
+      "adjustment": 0
+    },
+    {
+      "key": "legacy:store:sale-1791733439217-uygsdm",
+      "date": "2026-10-11",
+      "stream": "LEGACY_STORE",
+      "revenue": 5,
+      "cost": 2.8,
+      "adjustment": 0
+    },
+    {
+      "key": "legacy:store:sale-1792848698888-e60l58",
+      "date": "2026-10-24",
+      "stream": "LEGACY_STORE",
+      "revenue": 18,
+      "cost": 6,
+      "adjustment": 0
+    },
+    {
+      "key": "legacy:online:sale-1791651102278-xzn8mn:payment:payment-1791908174095-13dbzu",
+      "date": "2026-10-13",
+      "stream": "LEGACY_ONLINE",
+      "revenue": 255,
+      "cost": 150,
+      "adjustment": 0
+    },
+    {
+      "key": "legacy:online:sale-1791650353462-uob80f:payment:payment-1792755182768-db06xv",
+      "date": "2026-10-23",
+      "stream": "LEGACY_ONLINE",
+      "revenue": 97,
+      "cost": 36,
+      "adjustment": 0
+    },
+    {
+      "key": "legacy:online:sale-1791650093764-bfthy3:payment:payment-1792755138328-p9c9ys",
+      "date": "2026-10-23",
+      "stream": "LEGACY_ONLINE",
+      "revenue": 126,
+      "cost": 38.5,
+      "adjustment": 0
+    },
+    {
+      "key": "legacy:online:sale-1791650021851-xxi1zh:payment:payment-1792755061280-nlaqyv",
+      "date": "2026-10-23",
+      "stream": "LEGACY_ONLINE",
+      "revenue": 115,
+      "cost": 32.5,
+      "adjustment": 0
+    },
+    {
+      "key": "legacy:online:sale-1791649831131-veqe1y:payment:payment-1791908383852-xpyw0u",
+      "date": "2026-10-13",
+      "stream": "LEGACY_ONLINE",
+      "revenue": 162,
+      "cost": 54,
+      "adjustment": 0
+    },
+    {
+      "key": "legacy:online:sale-1791649762580-n3glq3:payment:payment-1791908434144-0cx8z8",
+      "date": "2026-10-13",
+      "stream": "LEGACY_ONLINE",
+      "revenue": 151,
+      "cost": 50.333333333333336,
+      "adjustment": 0
+    },
+    {
+      "key": "legacy:online:sale-1791649685717-h20k1t:payment:payment-1792754926589-bl37i8",
+      "date": "2026-10-23",
+      "stream": "LEGACY_ONLINE",
+      "revenue": 162,
+      "cost": 54,
+      "adjustment": 0
+    },
+    {
+      "key": "legacy:online:sale-1791187556190-kvzouo:payment:payment-1791908118908-mk89ay",
+      "date": "2026-10-13",
+      "stream": "LEGACY_ONLINE",
+      "revenue": 36,
+      "cost": 12,
+      "adjustment": 0
+    },
+    {
+      "key": "legacy:online:sale-1790583477253-srw2z6:payment:payment-1791907922841-945f4o",
+      "date": "2026-10-13",
+      "stream": "LEGACY_ONLINE",
+      "revenue": 23,
+      "cost": 6.5,
+      "adjustment": 0
+    },
+    {
+      "key": "legacy:online:sale-1790583643615-rn9mue:payment:payment-1791907970080-m53y4z",
+      "date": "2026-10-13",
+      "stream": "LEGACY_ONLINE",
+      "revenue": 23,
+      "cost": 6.5,
+      "adjustment": 0
+    },
+    {
+      "key": "legacy:online:sale-1790592538945-oipwsk:payment:payment-1790853429756-z49cx1",
+      "date": "2026-10-01",
+      "stream": "LEGACY_ONLINE",
+      "revenue": 98,
+      "cost": 25.48,
+      "adjustment": 0
+    },
+    {
+      "key": "legacy:online:sale-1790592538945-oipwsk:payment:payment-1790853449015-gpj8hk",
+      "date": "2026-10-01",
+      "stream": "LEGACY_ONLINE",
+      "revenue": 2,
+      "cost": 0.52,
+      "adjustment": 0
+    },
+    {
+      "key": "legacy:online:sale-1790803991059-7m9fj3:initial",
+      "date": "2026-10-01",
+      "stream": "LEGACY_ONLINE",
+      "revenue": 28.14814814814815,
+      "cost": 6.5,
+      "adjustment": 0
+    },
+    {
+      "key": "legacy:online:sale-1790832664673-a53d85:payment:payment-1791787056183-nbxwoe",
+      "date": "2026-10-12",
+      "stream": "LEGACY_ONLINE",
+      "revenue": 25,
+      "cost": 6.5,
+      "adjustment": 0
+    },
+    {
+      "key": "legacy:sale-return:return-1792754146085-yu3hmd",
+      "date": "2026-10-23",
+      "stream": "RETURN",
+      "revenue": 0,
+      "cost": 0,
+      "adjustment": 0
+    },
+    {
+      "key": "legacy:sale-return:return-1792754037720-14uh81",
+      "date": "2026-10-23",
+      "stream": "RETURN",
+      "revenue": 0,
+      "cost": 0,
+      "adjustment": 0
+    },
+    {
+      "key": "legacy:sale-return:return-1790278187689-uzo4dk",
+      "date": "2026-09-24",
+      "stream": "RETURN",
+      "revenue": 0,
+      "cost": 0,
+      "adjustment": -8.75
+    }
+  ]
+}

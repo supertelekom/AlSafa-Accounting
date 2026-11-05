@@ -166,3 +166,93 @@ Files added:
 - Added LegacyHistoricalSalesProfitRepository to combine archived Room sales and original staging payment rows. Added unit tests (authored, not executed).
 - FinancialReviewActivity source diagnostics shows extracted event counts and candidate store/online historical margin; candidate amounts are **not approved** and must not be combined with new profit until refunds, old collection discounts and original main.js numerical parity are verified.
 - No historical stock/cash movements were posted. No Gradle build or on-device verification has been run.
+
+## 2026-11-06 — historical sales event parity and unified read integration
+
+Base: `bbe75a36f21977dbfd6cfa493764ba1ae39dfec4` on `native6-development`.
+Only `native8/` is changed. No schema migration, cash posting, inventory posting,
+archive mutation, or page layout change is part of this batch.
+
+### Implemented
+- One historical sales reader now supplies both archive diagnostics and the staged
+  financial projection. Removed the duplicate store/online calculation from the projection.
+- Store cost uses original invoice `items[].cost * qty`; invoice `total` already
+  contains discounts. Tax is removed once, using the source net-amount rule.
+- Online opening receipts use original invoice-day cash income less same-day
+  explicit payments. Old-record fallback and payment-correction markers follow
+  `onlineSaleReceiptEvents` exactly. Later receipts retain their original dates.
+- Payment `amount` is invoice currency, not actual cash `paymentAmount`.
+  Receipt FX snapshots apply to both revenue and proportionate cost; collection
+  discount consumes cost without becoming revenue. Original TRY/SYP direct rates
+  are respected when reconstructing opening cash receipts.
+- Added original sales-return profit deltas, including recognized ratio and
+  replacement cost. A cancellation represented by an original return follows the
+  same rule. Deleted source invoices cannot be reconstructed without evidence.
+- Stable original IDs identify events across imports. Duplicate IDs, missing cost,
+  missing required historical FX, orphan records, and invalid dates are reported.
+  A failed later receipt cannot leave partial events from that invoice in totals.
+- Archive inspection verifies that staged originals match Room archive JSON,
+  avoiding receipt joins across different restore runs. Source-run changes fail closed.
+- UnifiedFinancialPeriodRepository includes eligible historical store/online/return
+  amounts in its **partial** total, rejects overlap with operational sale IDs, and
+  subtracts unified expenses only once. Full-net/partner approval remains blocked.
+- FinancialReviewActivity now actually invokes the unified repository, retains
+  detailed audit output if consolidation fails, uses Damascus period boundaries,
+  fixes capital/unresolved-count bindings, and reads historical capital from the
+  same events as profit. Existing controls/layout are preserved.
+- Added a real org.json JVM test dependency; fixed existing nested-type references
+  in LegacyFinancialRulesTest that prevented compilation.
+
+### Executed validation
+- Executed the original JavaScript functions from the supplied `assets/main.js`
+  against `AlSafa-Backup-2026-10-26T06-21-00-520Z.json`.
+  main.js SHA-256: `a57ba7aac9ead8138e6317eb49e84dcd312b7175cb57ca4c60cabf2fb7096126`.
+- Generated a minimized financial fixture (no customer names, phones or images):
+  111 sales; 114 events = 97 store + 14 online receipts + 3 sales returns.
+- Kotlin matches every event key, stream, date, revenue, cost and adjustment to the
+  original JavaScript oracle within 0.00000001 USD. No unresolved source records
+  in this sales fixture.
+- Original all-period totals: store 1914.47559583008 USD;
+  online 823.8148148148148 USD; sales returns -8.75 USD.
+  These are sales-only amounts, not final shop net or partner entitlements.
+- **43 JUnit tests passed**, run with standalone Kotlin JVM compiler 2.2.0,
+  JUnit 4.13.2 and real org.json/Room annotation jars. This is not Gradle success.
+  Coverage includes original backup parity, same-day opening receipts, receipt FX,
+  mixed-payment metadata, collection discounts, noncash exclusion, duplicate IDs,
+  missing cost, atomic invoice quarantine and existing financial-rule regressions.
+- Changed repository/projection/DAO Kotlin sources also type-checked against real
+  Room annotations with a compile-only LegacyReadRepository boundary. This does
+  **not** execute Android SQLite, Room generation, migrations or UI.
+- `git diff --check` passed.
+- `bash gradlew testDebugUnitTest --console=plain` failed **before compilation**:
+  wrapper could not download Gradle 9.8.2 (`Network is unreachable`).
+- Android build/APK, Room instrumentation/migrations, actual restore and Honor
+  tablet checks were not executed. No successful device test is claimed.
+
+### Files
+Modified:
+- app/build.gradle.kts
+- app/src/main/java/com/alsafa/native8/sales/LegacyHistoricalSalesProfitReader.kt
+- app/src/main/java/com/alsafa/native8/sales/LegacyHistoricalSalesProfitRepository.kt
+- app/src/main/java/com/alsafa/native8/sales/LegacyHistoricalProfitProjection.kt
+- app/src/main/java/com/alsafa/native8/sales/UnifiedFinancialPeriodRepository.kt
+- app/src/main/java/com/alsafa/native8/sales/SalesFinancialAuditDao.kt
+- app/src/main/java/com/alsafa/native8/sales/FinancialReviewActivity.kt
+- app/src/test/java/com/alsafa/native8/sales/LegacyHistoricalSalesProfitReaderTest.kt
+- app/src/test/java/com/alsafa/native8/sales/LegacyFinancialRulesTest.kt
+- FINANCIAL_INTEGRATION_BATCH_REPORT.md
+Added:
+- app/src/test/resources/historical-sales-v359.json
+- tools/extract_historical_sales_fixture.cjs
+- tools/run_financial_junit.py
+
+### Remaining — do not mark the financial system complete
+- Historical and new maintenance receipts/costs/returns need numerical source
+  parity and integrated coverage. Existing maintenance audit classes still do not
+  approve operational maintenance profit. In particular, current new-delivery JSON
+  needs review of historical FX evidence and cost provenance before recognition.
+- Historical expense/withdrawal duplicate-ID and original FX/partner mapping
+  verification is not completed by the sales fixture.
+- Final period/cumulative net, partner statements and balances are not enabled;
+  PartnerProfitsActivity remains unchanged and does not publish partial balances.
+- All Android/Room/device validations above remain pending.

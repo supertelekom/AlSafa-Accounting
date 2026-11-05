@@ -9,14 +9,14 @@ class LegacyFinancialRulesTest {
  private fun usd(value:String)=LegacyFinancialRules.Money(n(value),BigDecimal.ONE)
  private fun sample():LegacyFinancialRules.Source {
   val rules=LegacyFinancialRules
-  return rules.Source(
-   sales=listOf(rules.Sale("2026-10-01",false,usd("100"),usd("0"),usd("60")),
-    rules.Sale("2026-10-01",true,usd("100"),usd("0"),usd("60"))),
-   onlineReceipts=listOf(rules.Receipt("2026-10-02",usd("100"),usd("0"),usd("35"),n("100"),n("50"))),
-   repairReceipts=listOf(rules.Receipt("2026-10-02",usd("20"),usd("0"),usd("5"),n("20"),n("20"))),
-   returns=listOf(rules.Adjustment("2026-10-02",n("-4"))),
-   expenses=listOf(rules.Expense("2026-10-02",usd("10"))),
-   withdrawals=listOf(rules.Withdrawal("2026-10-02","father",usd("5")))
+  return LegacyFinancialRules.Source(
+   sales=listOf(LegacyFinancialRules.Sale("2026-10-01",false,usd("100"),usd("0"),usd("60")),
+    LegacyFinancialRules.Sale("2026-10-01",true,usd("100"),usd("0"),usd("60"))),
+   onlineReceipts=listOf(LegacyFinancialRules.Receipt("2026-10-02",usd("100"),usd("0"),usd("35"),n("100"),n("50"))),
+   repairReceipts=listOf(LegacyFinancialRules.Receipt("2026-10-02",usd("20"),usd("0"),usd("5"),n("20"),n("20"))),
+   returns=listOf(LegacyFinancialRules.Adjustment("2026-10-02",n("-4"))),
+   expenses=listOf(LegacyFinancialRules.Expense("2026-10-02",usd("10"))),
+   withdrawals=listOf(LegacyFinancialRules.Withdrawal("2026-10-02","father",usd("5")))
   )
  }
  @Test fun storeProfitUsesInvoiceDateAndOnlineUsesCollectionDate() {

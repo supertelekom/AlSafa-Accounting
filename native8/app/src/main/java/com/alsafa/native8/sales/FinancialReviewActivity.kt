@@ -122,22 +122,22 @@ class FinancialReviewActivity:Activity() {
       val onlineHistorical=historical.events.filter {
        it.stream==FinancialSourceReconciliation.Stream.LEGACY_ONLINE
       }.fold(BigDecimal.ZERO) { sum,event -> sum+event.profitUsd }
-      "الفواتير الجديدة غير المصنفة: "+missing+"\\n"+
-       "أحداث ربح قبض تحتاج تدقيق نوع الفاتورة: "+suspect+"\\n"+
-       "مبيعات المحل الجديدة: متصلة بجدول الأرباح\\n"+
-       "تحصيلات الأونلاين الجديدة: متصلة بقيود القبض\\n"+
-       "أحداث أرباح المحل التاريخية المستخرجة: "+historical.events.count { it.stream==FinancialSourceReconciliation.Stream.LEGACY_STORE }+"\\n"+
-       "أحداث تحصيل الأونلاين التاريخية المستخرجة: "+historical.events.count { it.stream==FinancialSourceReconciliation.Stream.LEGACY_ONLINE }+"\\n"+
-       "عمليات تاريخية تحتاج مطابقة: "+historical.unresolved.size+"\\n"+
-       "ربح محل تاريخي مرشح للمطابقة: "+storeHistorical.toPlainString()+" USD\\n"+
-       "ربح أونلاين تاريخي مرشح للمطابقة: "+onlineHistorical.toPlainString()+" USD\\n"+
-       "الصيانة المسلّمة: "+repairs.delivered+" (مستعادة "+repairs.imported+"، جديدة "+repairs.newRepairs+")\\n"+
-       "الصيانة التي تحتاج استكمال أدلة الربح: "+repairs.unresolvedIds.size+"\\n"+
-       "الأرشيف القديم: لم يُدمج ربحه في هذا التقرير\\n"+
-       "الصيانة: لم تُدمج المقبوضات والتكلفة في هذا التقرير\\n"+
+      "الفواتير الجديدة غير المصنفة: "+missing+"\n"+
+       "أحداث ربح قبض تحتاج تدقيق نوع الفاتورة: "+suspect+"\n"+
+       "مبيعات المحل الجديدة: متصلة بجدول الأرباح\n"+
+       "تحصيلات الأونلاين الجديدة: متصلة بقيود القبض\n"+
+       "أحداث أرباح المحل التاريخية المستخرجة: "+historical.events.count { it.stream==FinancialSourceReconciliation.Stream.LEGACY_STORE }+"\n"+
+       "أحداث تحصيل الأونلاين التاريخية المستخرجة: "+historical.events.count { it.stream==FinancialSourceReconciliation.Stream.LEGACY_ONLINE }+"\n"+
+       "عمليات تاريخية تحتاج مطابقة: "+historical.unresolved.size+"\n"+
+       "ربح محل تاريخي مرشح للمطابقة: "+storeHistorical.toPlainString()+" USD\n"+
+       "ربح أونلاين تاريخي مرشح للمطابقة: "+onlineHistorical.toPlainString()+" USD\n"+
+       "الصيانة المسلّمة: "+repairs.delivered+" (مستعادة "+repairs.imported+"، جديدة "+repairs.newRepairs+")\n"+
+       "الصيانة التي تحتاج استكمال أدلة الربح: "+repairs.unresolvedIds.size+"\n"+
+       "الأرشيف القديم: لم يُدمج ربحه في هذا التقرير\n"+
+       "الصيانة: لم تُدمج المقبوضات والتكلفة في هذا التقرير\n"+
        "المصاريف والشركاء: لم تُعتمد نتائجها النهائية"
      }
-     sourceStatus.text=status.replace("\\n","\n")
+     sourceStatus.text=status
     } catch(e:Exception) { sourceStatus.text=e.message ?: "تعذر فحص المصادر" }
     finally { checkSources.isEnabled=true }
    }
@@ -200,7 +200,7 @@ class FinancialReviewActivity:Activity() {
      val a=LocalDate.parse(from.text.toString().trim())
      val b=LocalDate.parse(to.text.toString().trim())
      require(!b.isBefore(a)) { "فترة غير صحيحة" }
-     val data=withContext(Dispatchers.IO) {
+     val (data,consolidationError)=withContext(Dispatchers.IO) {
       val db=AppDatabase.get(applicationContext)
       val window=FinancialPeriodGuard.window(a.toString(),b.toString(),ZoneId.of("Asia/Damascus"))
       val store=db.storeSaleProfitDao()
@@ -213,10 +213,6 @@ class FinancialReviewActivity:Activity() {
       val unverified=db.salesPostingDao().unverifiedChannelCount()
       val archived=LegacySalesProfitAudit.inspect(db.legacySaleDao().historicalInPeriod(
        window.startInclusive,window.endExclusive))
-      val legacyStore=LegacySalesEventExtractor.extractStore(
-       db.legacySaleDao().historicalInPeriod(window.startInclusive,window.endExclusive))
-      val legacyStoreProfit=legacyStore.events.fold(BigDecimal.ZERO) { sum,e -> sum+e.profitUsd }
-      val legacyStoreCapital=legacyStore.events.fold(BigDecimal.ZERO) { sum,e -> sum+e.costUsd }
       val storeEvents=store.inPeriod(window.startInclusive,window.endExclusive)
       val storeRevenue=sum(storeEvents.map { it.net_revenue_usd })
       val storeCapital=sum(storeEvents.map { it.cost_usd })
@@ -229,17 +225,22 @@ class FinancialReviewActivity:Activity() {
       val recognizedOnlineCapital=OnlineCapitalReport.recognizedCost(
        sales.verifiedOnlineProfitsInPeriod(window.startInclusive,window.endExclusive))
       val staging=com.alsafa.native8.data.migration.LegacyStagingDatabase(applicationContext)
-      val historical=try {
-       LegacyHistoricalProfitProjection(
-        com.alsafa.native8.data.migration.LegacyReadRepository(staging)
-       ).read(a.toString(),b.toString())
+      val (historical,unifiedAttempt)=try {
+       val legacy=com.alsafa.native8.data.migration.LegacyReadRepository(staging)
+       val projection=LegacyHistoricalProfitProjection(legacy)
+       projection.read(a.toString(),b.toString()) to runCatching { UnifiedFinancialPeriodRepository(
+        sales,UnifiedExpensePartnerReadRepository(legacy,db.operationalExpensePartnerDao()),
+        ZoneId.of("Asia/Damascus"),store,projection).read(a.toString(),b.toString()) }
       } finally { staging.close() }
+      val unified=unifiedAttempt.getOrNull()
       val suspect=sales.nonOnlineProfitEventCount()
       listOf(storeProfit,storeAdjust,online,reversals,BigDecimal(unverified),
        BigDecimal(archived.storeInvoices),BigDecimal(archived.onlineInvoices),
        BigDecimal(archived.unresolvedIds.size),storeRevenue,storeCapital,BigDecimal(suspect),onlineStockCapital,recognizedOnlineCapital,
        historical.storeProfitUsd,historical.onlineProfitUsd,historical.repairProfitUsd,
-       historical.returnImpactUsd,historical.expensesUsd,BigDecimal(historical.unresolved.size))
+       historical.returnImpactUsd,historical.expensesUsd,BigDecimal(historical.unresolved.size),historical.storeCapitalUsd,BigDecimal(historical.salesUnresolved.size),unified?.partialNet ?: BigDecimal.ZERO,
+       if(unified?.historicalSalesIncluded==true) BigDecimal.ONE else BigDecimal.ZERO,BigDecimal(unified?.unresolvedHistorical?.size ?: 0)) to
+       unifiedAttempt.exceptionOrNull()?.let { it.message ?: "تعذر التجميع المالي" }
      }
      result.text="مبيعات المحل الجديدة بعد الخصومات: ${data[8]} USD\n"+
       "رأس مال ساعات المحل المباعة: ${data[9]} USD\n"+
@@ -247,8 +248,8 @@ class FinancialReviewActivity:Activity() {
       "تكلفة الأونلاين المقابلة للتحصيلات خلال الفترة: ${data[12]} USD\n"+
       "فواتير المحل التاريخية في الفترة: ${data[5].toPlainString()}\n"+
       "ربح المحل التاريخي القابل للاستخراج (غير معتمد): ${data[13]} USD\n"+
-      "رأس مال المحل التاريخي القابل للاستخراج: ${data[14]} USD\n"+
-      "فواتير تاريخية تعذر تدقيق ربحها: ${data[15].toPlainString()}\n"+
+      "رأس مال المحل التاريخي القابل للاستخراج: ${data[19]} USD\n"+
+      "فواتير تاريخية تعذر تدقيق ربحها: ${data[20].toPlainString()}\n"+
       "فواتير الأونلاين التاريخية في الفترة: ${data[6].toPlainString()} (تحصيلاتها قيد المطابقة)\n"+
       "فواتير تاريخية تحتاج مراجعة التصنيف: ${data[7].toPlainString()}\n"+
       "ربح فواتير المحل الجديدة: ${data[0]} USD\n"+
@@ -257,13 +258,17 @@ class FinancialReviewActivity:Activity() {
       "عكس أرباح التحصيلات: ${data[3]} USD\n"+
       "فواتير جديدة غير مصنفة: ${data[4].toPlainString()}\n"+
       "أحداث تحصيل قديمة غير معتمدة كأونلاين: ${data[10].toPlainString()}\n"+
-      "ربح المحل التاريخي (تدقيق): ${data[13]} USD\\n"+
-      "ربح تحصيلات الأونلاين التاريخية (تدقيق): ${data[14]} USD\\n"+
-      "ربح الصيانة التاريخية (تدقيق): ${data[15]} USD\\n"+
-      "أثر المرتجعات التاريخية (تدقيق): ${data[16]} USD\\n"+
-      "المصاريف التاريخية (تدقيق، لا تُخصم مرة ثانية): ${data[17]} USD\\n"+
-      "مشكلات القراءة التاريخية: ${data[18].toPlainString()}\\n"+
-      "الأرقام التاريخية منفصلة عن التشغيلية لمنع الازدواج؛ لا يُعرض صافي نهائي قبل المطابقة."
+      "ربح المحل التاريخي (تدقيق): ${data[13]} USD\n"+
+      "ربح تحصيلات الأونلاين التاريخية (تدقيق): ${data[14]} USD\n"+
+      "ربح الصيانة التاريخية (تدقيق): ${data[15]} USD\n"+
+      "أثر المرتجعات التاريخية (تدقيق): ${data[16]} USD\n"+
+      "المصاريف التاريخية (تدقيق، لا تُخصم مرة ثانية): ${data[17]} USD\n"+
+      "مشكلات القراءة التاريخية: ${data[18].toPlainString()}\n"+
+      (if(consolidationError==null) "المبيعات الجديدة والتاريخية بعد المصاريف (لا تشمل الصيانة): ${data[21]} USD\n"
+       else "تعذر التجميع المالي: $consolidationError\n")+
+      "دمج المبيعات التاريخية: ${if(data[22]==BigDecimal.ONE) "تم" else "موقوف للمراجعة"}\n"+
+      "مشكلات التجميع: ${data[23].toPlainString()}\n"+
+      "هذا إجمالي جزئي؛ لا يعتمد لتوزيع مستحقات الشركاء قبل اكتمال الصيانة والمطابقة."
     } catch(e:Exception) {
      result.text="تعذر استخراج المراجعة: "+(e.message ?: "خطأ غير معروف")
     } finally {

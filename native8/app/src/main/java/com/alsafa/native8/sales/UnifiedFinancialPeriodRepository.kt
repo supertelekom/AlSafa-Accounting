@@ -22,7 +22,9 @@ class UnifiedFinancialPeriodRepository(
   val storeSaleProfit:BigDecimal=BigDecimal.ZERO,
   val historicalOnlineProfit:BigDecimal=BigDecimal.ZERO,
   val historicalStoreProfit:BigDecimal=BigDecimal.ZERO,
-  val unresolvedHistorical:List<String> = emptyList()
+  val unresolvedHistorical:List<String> = emptyList(),
+  val historicalSaleReturnImpact:BigDecimal=BigDecimal.ZERO,
+  val historicalSalesIncluded:Boolean=false
  ) {
   fun approvedNet():BigDecimal {
    check(complete) { "Incomplete financial sources: do not publish profit" }
@@ -60,11 +62,19 @@ class UnifiedFinancialPeriodRepository(
     .fold(BigDecimal.ZERO) { acc,row -> acc+row.money.usd() }
   }
   val old=historical?.read(from,to)
-  // Do not sum staged historical profits into operational totals until source overlap is reconciled.
+  val overlap=old?.saleIds.orEmpty().intersect(sales.operationalSaleIds().toSet())
+  val includeSales=old!=null && old.salesUnresolved.isEmpty() && overlap.isEmpty()
+  val historicalSales=if(includeSales) old!!.storeProfitUsd+old.onlineProfitUsd+old.salesReturnImpactUsd else BigDecimal.ZERO
+  val issues=old?.unresolved.orEmpty()+overlap.map { "Historical/operational sale overlap: $it" }+
+   if(old==null) listOf("Historical projection not connected") else emptyList()
+  // Expenses are already unified above. Never subtract old.expensesUsd again.
+  // This is still a partial statement: maintenance coverage has not been approved.
   return Result(profits,reversals,storeSaleProfit=storeProfit,operatingExpenses=expense,
    historicalOnlineProfit=old?.onlineProfitUsd ?: BigDecimal.ZERO,
    historicalStoreProfit=old?.storeProfitUsd ?: BigDecimal.ZERO,
-   unresolvedHistorical=old?.unresolved ?: listOf("Historical projection not connected"),
-   withdrawals=withdrawals,partialNet=profits+storeProfit+storeAdjustments-reversals-expense)
+   unresolvedHistorical=issues,
+   historicalSaleReturnImpact=old?.salesReturnImpactUsd ?: BigDecimal.ZERO,
+   historicalSalesIncluded=includeSales,
+   withdrawals=withdrawals,partialNet=profits+storeProfit+storeAdjustments-reversals-expense+historicalSales)
  }
 }
