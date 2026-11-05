@@ -34,7 +34,10 @@ object LegacyHistoricalSalesProfitReader {
      cost+=amount(line,"qty").multiply(amount(line,"cost"),mc)
     }
     val total=amount(raw,"total")
-    val tax=amount(raw,"tax")
+    val tax=if(raw.has("tax")) amount(raw,"tax") else {
+     require(!raw.has("taxRate") || raw.optString("taxRate") in setOf("0","0.0","")) { "Tax amount missing" }
+     BigDecimal.ZERO
+    }
     require(total>BigDecimal.ZERO && tax>=BigDecimal.ZERO && cost>=BigDecimal.ZERO)
     val unit=raw.optString("currency","USD")
     val channel=LegacySaleChannel.fromOriginalJson(invoice.original_json)
