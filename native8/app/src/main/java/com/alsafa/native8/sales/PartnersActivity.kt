@@ -18,7 +18,7 @@ class PartnersActivity:Activity() {
  private val scope=CoroutineScope(SupervisorJob()+Dispatchers.Main)
  override fun onCreate(savedInstanceState:Bundle?) {
   super.onCreate(savedInstanceState)
-  title="الشركاء والسحوبات"
+  title="سحوبات الشركاء"
   val content=LinearLayout(this).apply {
    orientation=LinearLayout.VERTICAL
    layoutDirection=View.LAYOUT_DIRECTION_RTL
@@ -132,7 +132,7 @@ class PartnersActivity:Activity() {
      pendingId=null
      pendingAt=null
      android.app.AlertDialog.Builder(this@PartnersActivity)
-      .setTitle("الشركاء والسحوبات")
+      .setTitle("سحوبات الشركاء")
       .setMessage("تم حفظ سحب الشريك بنجاح")
       .setPositiveButton("موافق") { dialog,_ ->
        dialog.dismiss()
