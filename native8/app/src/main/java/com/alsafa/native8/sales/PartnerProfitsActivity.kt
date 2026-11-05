@@ -76,6 +76,22 @@ class PartnerProfitsActivity:Activity() {
        }
        "$month — $byPartner"
       }
+     val historicalMonths=withContext(Dispatchers.IO) {
+      val staging=LegacyStagingDatabase(applicationContext)
+      try {
+       val reader=LegacyHistoricalProfitProjection(LegacyReadRepository(staging))
+       listOf("2026-09","2026-10").map { month ->
+        month to reader.read("$month-01","$month-31")
+       }
+      } finally { staging.close() }
+     }
+     val monthlyAudit=historicalMonths.joinToString("\\n") { (month,p) ->
+      val total=p.partialNetUsd.stripTrailingZeros().toPlainString()
+      "$month: $total USD (تدقيق جزئي، غير معتمد) — " +
+       "أونلاين: ${p.onlineProfitUsd} | محل: ${p.storeProfitUsd} | " +
+       "صيانة: ${p.repairProfitUsd} | مرتجعات: ${p.returnImpactUsd} | " +
+       "مصاريف: ${p.expensesUsd} | أخطاء: ${p.unresolved.size}"
+     }
      result.text="المصاريف القديمة: ${snapshot.legacyExpenses} | الجديدة: ${snapshot.operationalExpenses}\n"+
       "سحوبات الشركاء القديمة: ${snapshot.legacyWithdrawals} | الجديدة: ${snapshot.operationalWithdrawals}\n"+
       lines.joinToString("\n")+"\n"+
