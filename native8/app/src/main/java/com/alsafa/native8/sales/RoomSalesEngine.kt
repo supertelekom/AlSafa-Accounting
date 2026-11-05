@@ -299,6 +299,7 @@ class RoomSalesEngine(private val context: Context) {
         val sale = requireNotNull(posting.sale(saleId)) { "الإلغاء متاح للفواتير الجديدة فقط" }
         require(sale.status != "ملغاة") { "الفاتورة ملغاة مسبقاً" }
         require(sale.channel != SalesChannelClassification.STORE) { "إلغاء المحل موقوف حتى ربط عكس الربح" }
+        require(sale.channel != SalesChannelClassification.STORE) { "إلغاء المحل المقبوض يحتاج مطابقة رد الدفعات وعكس الربح" }
         val movements = payments.cashboxMovements(saleId)
         val receipts = payments.payments(saleId)
         require(receipts.isNotEmpty() || movements.isEmpty()) { "سجل الدفعات مفقود" }
