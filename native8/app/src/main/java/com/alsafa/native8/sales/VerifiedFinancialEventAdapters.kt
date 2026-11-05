@@ -14,6 +14,7 @@ object VerifiedFinancialEventAdapters {
   netSaleAmount:BigDecimal,costAmount:BigDecimal,
   saleUsdPerUnit:BigDecimal,costUsdPerUnit:BigDecimal
  ):FinancialSourceReconciliation.Event {
+  require(originalSaleId.isNotBlank())
   require(netSaleAmount>=BigDecimal.ZERO && costAmount>=BigDecimal.ZERO)
   require(saleUsdPerUnit>BigDecimal.ZERO && costUsdPerUnit>BigDecimal.ZERO)
   return FinancialSourceReconciliation.Event(
@@ -32,20 +33,26 @@ object VerifiedFinancialEventAdapters {
  }
  fun repairDelivery(
   repairId:String,date:String,revenueUsd:BigDecimal,partsAndRepairCostUsd:BigDecimal
- ):FinancialSourceReconciliation.Event =
-  FinancialSourceReconciliation.Event("repair:delivery:$repairId",
+ ):FinancialSourceReconciliation.Event {
+  require(repairId.isNotBlank())
+  return FinancialSourceReconciliation.Event("repair:delivery:$repairId",
    FinancialSourceReconciliation.Stream.REPAIR,LocalDate.parse(date),
    revenueUsd,partsAndRepairCostUsd)
+ }
  fun expense(
   originalExpenseId:String,date:String,amountUsd:BigDecimal
- ):FinancialSourceReconciliation.Event =
-  FinancialSourceReconciliation.Event("expense:$originalExpenseId",
+ ):FinancialSourceReconciliation.Event {
+  require(originalExpenseId.isNotBlank())
+  return FinancialSourceReconciliation.Event("expense:$originalExpenseId",
    FinancialSourceReconciliation.Stream.EXPENSE,LocalDate.parse(date),
    amountUsd,BigDecimal.ZERO)
+ }
  fun adjustment(
   originalEventId:String,date:String,profitDeltaUsd:BigDecimal
- ):FinancialSourceReconciliation.Event =
-  FinancialSourceReconciliation.Event("return:$originalEventId",
+ ):FinancialSourceReconciliation.Event {
+  require(originalEventId.isNotBlank())
+  return FinancialSourceReconciliation.Event("return:$originalEventId",
    FinancialSourceReconciliation.Stream.RETURN,LocalDate.parse(date),
    BigDecimal.ZERO,BigDecimal.ZERO,profitDeltaUsd)
+ }
 }
