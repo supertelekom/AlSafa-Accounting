@@ -55,7 +55,7 @@ class LegacyHistoricalProfitProjection(private val legacy:LegacyReadRepository) 
   }
   val repairs=pages(run,"repairs")
   val repairById=repairs.mapNotNull { row ->
-   row.id?.let { it to row.fields }
+   (row.id ?: row.fields.optString("id").ifBlank { null })?.let { it to row.fields }
   }.toMap()
   require(repairById.size==repairs.count { it.id!=null }) { "Duplicate historical repair IDs" }
   var store=BigDecimal.ZERO
@@ -86,6 +86,11 @@ class LegacyHistoricalProfitProjection(private val legacy:LegacyReadRepository) 
   // Read-only event reconstruction; never post cash or stock movements.
   val allPayments=pages(run,"payments")
   val allCash=pages(run,"cashTransactions")
+  val paymentIds=mutableSetOf<String>()
+  for(p in allPayments) {
+   val id=p.id ?: p.fields.optString("id").ifBlank { "ordinal-${p.ordinal}" }
+   if(!paymentIds.add(id)) issues+="Duplicate payment source ID: $id"
+  }
   val onlineIds=mutableSetOf<String>()
   for(row in salesRows) checked("online:${row.id ?: row.ordinal}") {
    val sale=row.fields
@@ -195,7 +200,7 @@ class LegacyHistoricalProfitProjection(private val legacy:LegacyReadRepository) 
     val base=n(record,"laborPrice").max(BigDecimal.ZERO)+parts
     base*(BigDecimal.ONE+n(record,"taxRate").max(BigDecimal.ZERO).divide(BigDecimal(100),mc))
    }
-   require(total>BigDecimal.ZERO) { "Repair invoice total missing" }
+   if(total<=BigDecimal.ZERO) return@checked // main.js: zero invoice total yields zero recognized revenue
    val ratio=amount.divide(total,mc).min(BigDecimal.ONE)
    val net=(total-n(record,"tax").max(BigDecimal.ZERO)).max(BigDecimal.ZERO)*ratio
    val cost=n(record,"cost")*amount.divide(total.max(BigDecimal.ONE),mc).min(BigDecimal.ONE)
