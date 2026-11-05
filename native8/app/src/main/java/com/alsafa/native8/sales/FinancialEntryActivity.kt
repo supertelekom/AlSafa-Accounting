@@ -14,11 +14,11 @@ import java.util.UUID
  * Existing repository commits the source entry and cash movement atomically.
  * Historical imported entries are never modified here.
  */
-class FinancialEntryActivity:Activity() {
+open class FinancialEntryActivity:Activity() {
+ protected open val expenseMode:Boolean get()=true
  private val scope=CoroutineScope(SupervisorJob()+Dispatchers.Main)
  override fun onCreate(savedInstanceState:Bundle?) {
   super.onCreate(savedInstanceState)
-  val expenseMode=intent.getBooleanExtra("expense",true)
   title=if(expenseMode) "المصاريف" else "الشركاء والسحوبات"
   val content=LinearLayout(this).apply {
    orientation=LinearLayout.VERTICAL
