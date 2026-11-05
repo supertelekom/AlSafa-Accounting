@@ -117,11 +117,22 @@ class LegacyHistoricalProfitProjection(private val legacy:LegacyReadRepository) 
    val opening=if(openingCash.isNotEmpty()) {
     val cash=openingCash.fold(BigDecimal.ZERO) { z,c ->
      val x=c.fields
-     val amountUsd=usd(n(x,"amount"),x)
-     val invoiceUnit=sale.optString("currency","USD")
-     val rate=LegacyFinancialExchange.usdPerUnit(invoiceUnit,
-      sale.optJSONObject("rateSnapshot")?.optString(invoiceUnit))
-     z+amountUsd.divide(rate,mc)
+     val from=x.optString("currency","USD").uppercase()
+     val to=sale.optString("currency","USD").uppercase()
+     val snap=x.optJSONObject("rateSnapshot") ?: sale.optJSONObject("rateSnapshot")
+     val value=n(x,"amount")
+     val direct=snap?.optString("TRY_SYP")?.toBigDecimalOrNull()
+     val converted=when {
+      from==to -> value
+      from=="TRY" && to=="SYP" && direct!=null && direct>BigDecimal.ZERO -> value*direct
+      from=="SYP" && to=="TRY" && direct!=null && direct>BigDecimal.ZERO -> value.divide(direct,mc)
+      else -> {
+       val fromRate=LegacyFinancialExchange.usdPerUnit(from,snap?.optString(from))
+       val toRate=LegacyFinancialExchange.usdPerUnit(to,snap?.optString(to))
+       value.multiply(fromRate,mc).divide(toRate,mc)
+      }
+     }
+     z+converted.max(BigDecimal.ZERO)
     }
     (cash-sameDay).max(BigDecimal.ZERO)
    } else {
