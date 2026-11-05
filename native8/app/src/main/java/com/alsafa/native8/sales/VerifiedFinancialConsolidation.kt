@@ -21,8 +21,8 @@ object VerifiedFinancialConsolidation {
   val partners:List<CumulativePartnerProfit.Balance>
  )
  fun finalize(input:VerifiedInput):Statement {
-  require(input.verifiedSources.containsAll(RequiredSource.entries)) {
-   "Missing verified source streams: ${RequiredSource.entries.toSet()-input.verifiedSources}"
+  require(input.verifiedSources.containsAll(RequiredSource.values().toSet())) {
+   "Missing verified source streams: ${RequiredSource.values().toSet().toSet()-input.verifiedSources}"
   }
   val cumulative=requireNotNull(input.cumulativeNetToDateUsd) {
    "Cumulative net profit from earliest transaction is required"
