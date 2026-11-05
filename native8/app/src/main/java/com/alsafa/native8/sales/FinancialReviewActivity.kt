@@ -87,6 +87,8 @@ class FinancialReviewActivity:Activity() {
       val adjustments=db.storeSaleProfitDao().adjustmentsInPeriod(w.startInclusive,w.endExclusive)
       val online=db.salesFinancialAuditDao().profitEventsInPeriod(w.startInclusive,w.endExclusive)
       val reverse=db.salesFinancialAuditDao().profitReversalsInPeriod(w.startInclusive,w.endExclusive)
+      val expenses=db.operationalExpensePartnerDao().expenses(a.toString(),b.toString())
+      val withdrawals=db.operationalExpensePartnerDao().withdrawals(a.toString(),b.toString())
       val lines=mutableListOf<String>()
       val cache=mutableMapOf<String,RoomSale?>()
       suspend fun invoice(id:String):String {
@@ -103,6 +105,10 @@ class FinancialReviewActivity:Activity() {
       for(entry in online) lines+="${day(entry.collected_at)} | ${invoice(entry.sale_id)} | المقبوض ${entry.credited_base} USD | الربح ${entry.recognized_profit} USD"
       lines+="المرتجعات وعكس الأرباح"
       for(entry in reverse) lines+="${day(entry.reversed_at)} | ${invoice(entry.sale_id)} | عكس ربح ${entry.reversed_profit} USD"
+      lines+="المصاريف التشغيلية الجديدة (لا تشمل الأرشيف)"
+      for(entry in expenses) lines+="${entry.date} | ${entry.category} | ${entry.amount} ${entry.currency} | ${entry.notes}"
+      lines+="سحوبات الشركاء الجديدة (ليست مصروفاً تشغيلياً)"
+      for(entry in withdrawals) lines+="${entry.date} | ${entry.partner_id} | ${entry.amount} ${entry.currency}"
       lines
      }
      detail.text=if(rows.isEmpty()) "لا توجد قيود في هذه الفترة" else rows.joinToString("\n")
