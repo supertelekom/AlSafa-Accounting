@@ -76,3 +76,11 @@ Branch: native6-development. Changes restricted to native8/.
 - Added LegacySalesProfitAuditTest for archived channel classification and explicit incomplete profit status.
 - Remaining source-parity blockers: original historical item costs and tax, legacy online receipt dates and FX, repair collections/parts, return impacts, all-period expense reconciliation, and partner cumulative due. Do not label the combined total as final net profit before these are verified.
 - No Gradle, Android instrumentation or source-JS parity execution has been performed in this batch.
+
+## Online capital reporting batch
+- OnlineCapitalReport separates invoice-date stock cost from cost matched to collection-date profit. Neither calculation posts inventory, cash or expenses.
+- SalesPostingDao.onlineInvoicesInPeriod selects verified online invoices by sale date; each invoice's lines supply cost basis with BigDecimal.
+- FinancialReviewActivity shows online stock capital and online collection-matched cost as different metrics. Never add these two amounts together: they describe the same cost at different recognition stages.
+- OnlineCapitalReportTest covers cost without payment, partial collection and negative-cost rejection.
+- Historical invoice profit, imported receipt FX, repair collections/parts, legacy expenses and cumulative partner dues remain unverified and are NOT silently included in an approved net.
+- No local Gradle/Room/Android device build was run.
