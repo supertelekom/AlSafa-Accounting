@@ -88,10 +88,21 @@ class FinancialReviewActivity:Activity() {
       val online=db.salesFinancialAuditDao().profitEventsInPeriod(w.startInclusive,w.endExclusive)
       val reverse=db.salesFinancialAuditDao().profitReversalsInPeriod(w.startInclusive,w.endExclusive)
       val lines=mutableListOf<String>()
-      stores.forEach { lines+="فاتورة محل ${it.sale_id}: +${it.profit_usd} USD" }
-      adjustments.forEach { lines+="تسوية محل ${it.sale_id} (${it.reason}): ${it.profit_delta_usd} USD" }
-      online.forEach { lines+="تحصيل ${it.sale_id} / ${it.payment_id}: +${it.recognized_profit} USD" }
-      reverse.forEach { lines+="عكس تحصيل ${it.sale_id} / ${it.payment_id}: -${it.reversed_profit} USD" }
+      val cache=mutableMapOf<String,RoomSale?>()
+      suspend fun invoice(id:String):String {
+       val sale=cache.getOrPut(id) { null } ?: db.salesPostingDao().sale(id).also { cache[id]=it }
+       return if(sale!=null) "فاتورة رقم ${sale.number} — ${sale.customer.ifBlank { "عميل غير مسمى" }}"
+       else "فاتورة غير موجودة في المبيعات الجديدة (مرجع ${id.take(8)})"
+      }
+      fun day(at:Long)=java.time.Instant.ofEpochMilli(at)
+       .atZone(ZoneId.of("Asia/Damascus")).toLocalDate().toString()
+      lines+="مبيعات المحل"
+      for(entry in stores) lines+="${day(entry.recognized_at)} | ${invoice(entry.sale_id)} | ربح ${entry.profit_usd} USD"
+      for(entry in adjustments) lines+="${day(entry.created_at)} | ${invoice(entry.sale_id)} | ${entry.reason}: ${entry.profit_delta_usd} USD"
+      lines+="تحصيلات الأونلاين"
+      for(entry in online) lines+="${day(entry.collected_at)} | ${invoice(entry.sale_id)} | المقبوض ${entry.credited_base} USD | الربح ${entry.recognized_profit} USD"
+      lines+="المرتجعات وعكس الأرباح"
+      for(entry in reverse) lines+="${day(entry.reversed_at)} | ${invoice(entry.sale_id)} | عكس ربح ${entry.reversed_profit} USD"
       lines
      }
      detail.text=if(rows.isEmpty()) "لا توجد قيود في هذه الفترة" else rows.joinToString("\n")
