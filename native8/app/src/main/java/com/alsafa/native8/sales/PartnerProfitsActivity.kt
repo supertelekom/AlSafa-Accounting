@@ -18,20 +18,20 @@ class PartnerProfitsActivity:Activity() {
  private val scope=CoroutineScope(SupervisorJob()+Dispatchers.Main)
  override fun onCreate(savedInstanceState:Bundle?) {
   super.onCreate(savedInstanceState)
-  title="أرباح الشركاء"
+  title="سحوبات الشركاء"
   val content=LinearLayout(this).apply {
    orientation=LinearLayout.VERTICAL
    layoutDirection=View.LAYOUT_DIRECTION_RTL
    setPadding(20,20,20,24)
    isFocusableInTouchMode=true
   }
-  val heading=TextView(this).apply { text="أرباح الشركاء";textSize=24f }
+  val heading=TextView(this).apply { text="سحوبات الشركاء";textSize=24f }
   val explanation=TextView(this).apply {
-   text="حصة الأب 40%، عبد الكريم 35%، يزن 25%. مستحقات الأرباح النهائية قيد مطابقة الأرشيف والصيانة والمصاريف؛ لن تُعرض مبالغ غير معتمدة."
+   text="السحوبات القديمة والجديدة لكل شريك، شهرياً وتراكمياً."
    textSize=17f
   }
   val result=TextView(this).apply { textSize=18f }
-  val button=Button(this).apply { text="عرض سحوبات الشركاء" }
+  val button=Button(this).apply { text="عرض السحوبات" }
   listOf(heading,explanation,button,result).forEach {
    content.addView(it,LinearLayout.LayoutParams(-1,-2))
   }
@@ -60,13 +60,6 @@ class PartnerProfitsActivity:Activity() {
        .fold(BigDecimal.ZERO) { sum,row -> sum+row.money.usd() }
       "${names[partner.id]} (${partner.share}%): ${withdrawn.stripTrailingZeros().toPlainString()} USD سحوبات تراكمية"
      }
-     val projection=withContext(Dispatchers.IO) {
-      val staging=LegacyStagingDatabase(applicationContext)
-      try {
-       LegacyHistoricalProfitProjection(LegacyReadRepository(staging))
-        .read("0001-01-01",LocalDate.now().toString())
-      } finally { staging.close() }
-     }
      val monthlyWithdrawals=snapshot.source.withdrawals.groupBy { it.date.take(7) }
       .toSortedMap().map { (month,entries) ->
        val byPartner=LegacyFinancialRules.partners.joinToString(" | ") { partner ->
@@ -76,31 +69,10 @@ class PartnerProfitsActivity:Activity() {
        }
        "$month — $byPartner"
       }
-     val historicalMonths=withContext(Dispatchers.IO) {
-      val staging=LegacyStagingDatabase(applicationContext)
-      try {
-       val reader=LegacyHistoricalProfitProjection(LegacyReadRepository(staging))
-       listOf("2026-09","2026-10").map { month ->
-        month to reader.read("$month-01","$month-31")
-       }
-      } finally { staging.close() }
-     }
-     val monthlyAudit=historicalMonths.joinToString("\\n") { (month,p) ->
-      val total=p.partialNetUsd.stripTrailingZeros().toPlainString()
-      "$month: $total USD (تدقيق جزئي، غير معتمد) — " +
-       "أونلاين: ${p.onlineProfitUsd} | محل: ${p.storeProfitUsd} | " +
-       "صيانة: ${p.repairProfitUsd} | مرتجعات: ${p.returnImpactUsd} | " +
-       "مصاريف: ${p.expensesUsd} | أخطاء: ${p.unresolved.size}"
-     }
-     result.text="المصاريف القديمة: ${snapshot.legacyExpenses} | الجديدة: ${snapshot.operationalExpenses}\n"+
-      "سحوبات الشركاء القديمة: ${snapshot.legacyWithdrawals} | الجديدة: ${snapshot.operationalWithdrawals}\n"+
-      lines.joinToString("\n")+"\n"+
-      "ربح المحل التاريخي (تدقيق): ${projection.storeProfitUsd} USD\n"+
-      "ربح الصيانة التاريخي (تدقيق): ${projection.repairProfitUsd} USD\n"+
-      "تسويات المرتجعات التاريخية: ${projection.returnImpactUsd} USD\n"+
-      "مصاريف تاريخية: ${projection.expensesUsd} USD\n"+
-      "سجلات تحتاج مراجعة: ${projection.unresolved.size}\n"+
-      "أرباح الأونلاين التاريخية والمستحقات النهائية: غير معتمدة حتى مطابقة التحصيلات."
+     result.text="سحوبات الشركاء القديمة: ${snapshot.legacyWithdrawals} | الجديدة: ${snapshot.operationalWithdrawals}\\n"+
+      lines.joinToString("\\n")+"\\n"+
+      "السحوبات حسب الشهر:\\n"+monthlyWithdrawals.joinToString("\\n")
+
 
     } catch(e:Exception) { result.text=e.message ?: "تعذر قراءة السحوبات" }
     finally { button.isEnabled=true }
