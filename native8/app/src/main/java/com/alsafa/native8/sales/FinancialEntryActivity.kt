@@ -51,10 +51,33 @@ class FinancialEntryActivity:Activity() {
   val save=Button(this).apply { text=if(expenseMode) "حفظ المصروف" else "حفظ السحب" }
   content.addView(save,LinearLayout.LayoutParams(-1,-2))
   content.addView(status,LinearLayout.LayoutParams(-1,-2))
+  val history=TextView(this).apply { textSize=16f }
+  val showHistory=Button(this).apply { text=if(expenseMode) "عرض المصاريف" else "عرض سحوبات الشركاء" }
+  content.addView(showHistory,LinearLayout.LayoutParams(-1,-2))
+  content.addView(history,LinearLayout.LayoutParams(-1,-2))
   setContentView(ScrollView(this).apply {
    isFillViewport=true
    addView(content,android.widget.FrameLayout.LayoutParams(-1,-2))
   })
+  showHistory.setOnClickListener {
+   showHistory.isEnabled=false
+   scope.launch {
+    try {
+     history.text=withContext(Dispatchers.IO) {
+      val dao=AppDatabase.get(applicationContext).operationalExpensePartnerDao()
+      val from="0001-01-01"
+      val until="9999-12-31"
+      if(expenseMode) dao.expenses(from,until).joinToString("\n") {
+       "${it.date} | ${it.category} | ${it.amount} ${it.currency} | ${it.payment_method}"
+      } else dao.withdrawals(from,until).joinToString("\n") {
+       val name=when(it.partner_id) {"father"->"الأب";"me"->"عبد الكريم";else->"يزن"}
+       "${it.date} | $name | ${it.amount} ${it.currency}"
+      }
+     }.ifBlank { "لا توجد عمليات جديدة" }
+    } catch(e:Exception) { history.text=e.message ?: "تعذر عرض السجلات" }
+    finally { showHistory.isEnabled=true }
+   }
+  }
   var pendingId:String?=null
   var pendingAt:Long?=null
   save.setOnClickListener {
