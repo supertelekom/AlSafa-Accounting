@@ -297,8 +297,6 @@ class RoomSalesEngine(private val context: Context) {
     suspend fun cancelWithRefund(saleId: String): String = db.withTransaction {
         val sale = requireNotNull(posting.sale(saleId)) { "الإلغاء متاح للفواتير الجديدة فقط" }
         require(sale.status != "ملغاة") { "الفاتورة ملغاة مسبقاً" }
-        require(sale.channel != SalesChannelClassification.STORE) { "إلغاء المحل موقوف حتى ربط عكس الربح" }
-        require(sale.channel != SalesChannelClassification.STORE) { "إلغاء المحل المقبوض يحتاج مطابقة رد الدفعات وعكس الربح" }
         val movements = payments.cashboxMovements(saleId)
         val receipts = payments.payments(saleId)
         require(receipts.isNotEmpty() || movements.isEmpty()) { "سجل الدفعات مفقود" }
@@ -308,7 +306,7 @@ class RoomSalesEngine(private val context: Context) {
         val refunds = audit.refunds(saleId)
         val reversals = audit.reversals(saleId)
         val profits = audit.profits(saleId).associateBy { it.payment_id }
-        require(receipts.map { it.id }.toSet() == profits.keys) {
+        require(sale.channel==SalesChannelClassification.STORE || receipts.map { it.id }.toSet() == profits.keys) {
             "سجل الأرباح غير مكتمل"
         }
         val movementsById = movements.associateBy { it.id }
@@ -349,7 +347,7 @@ class RoomSalesEngine(private val context: Context) {
                 sum + entry.reversed_base.toBigDecimal()
             }
             require(allocated >= BigDecimal.ZERO && allocated <= credited &&
-                reversedBase.compareTo(allocated) == 0) { "تخصيص الرد وعكس الربح غير متطابقين" }
+                (sale.channel==SalesChannelClassification.STORE || reversedBase.compareTo(allocated) == 0)) { "تخصيص الرد وعكس الربح غير متطابقين" }
             payment to (credited - allocated)
         }
         val paidBase = remaining.fold(BigDecimal.ZERO) { sum, entry -> sum + entry.second }
@@ -385,12 +383,20 @@ class RoomSalesEngine(private val context: Context) {
             audit.insertRefund(SaleRefundAllocation(UUID.randomUUID().toString(),saleId,
                 payment.id,nowMovementId,payment.cashbox,payment.currency,
                 originalCash.toPlainString(),outstanding.toPlainString(),fx.toPlainString(),now))
-            val event = requireNotNull(profits[payment.id])
+            val event = if(sale.channel==SalesChannelClassification.STORE) null else requireNotNull(profits[payment.id])
             val alreadyReversed = reversedByPayment[payment.id].orEmpty()
                 .fold(BigDecimal.ZERO) { sum, entry -> sum + entry.reversed_profit.toBigDecimal() }
-            audit.insertReversal(SaleProfitReversal(UUID.randomUUID().toString(),saleId,
+            if(event!=null) audit.insertReversal(SaleProfitReversal(UUID.randomUUID().toString(),saleId,
                 payment.id,nowMovementId,outstanding.toPlainString(),
                 (event.recognized_profit.toBigDecimal()-alreadyReversed).toPlainString(),now))
+        }
+        if(sale.channel==SalesChannelClassification.STORE) {
+            val original=requireNotNull(db.storeSaleProfitDao().bySale(saleId)) { "قيد ربح المحل مفقود" }
+            val adjustments=db.storeSaleProfitDao().adjustments(saleId).map { it.profit_delta_usd.toBigDecimal() }
+            db.storeSaleProfitDao().insertAdjustment(StoreProfitAdjustment(
+                UUID.randomUUID().toString(),saleId,now,
+                StoreProfitAdjustmentMath.cancellationDelta(original.profit_usd.toBigDecimal(),adjustments).toPlainString(),
+                "إلغاء فاتورة مقبوضة"))
         }
         check(posting.updatePayment(saleId, "0", "ملغاة") == 1)
         saleId
