@@ -92,7 +92,7 @@ class RoomSalesEngine(private val context: Context) {
             }
             db.storeSaleProfitDao().insert(StoreSaleProfitEvent(
                 id, now, totals.net.toPlainString(), cost.toPlainString(),
-                (totals.net - cost).toPlainString()
+                StoreSaleProfitMath.calculate(totals.net,cost).toPlainString()
             ))
         }
         for (payment in draft.payments) {
