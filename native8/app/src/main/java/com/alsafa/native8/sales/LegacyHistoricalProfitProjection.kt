@@ -57,6 +57,7 @@ class LegacyHistoricalProfitProjection(private val legacy:LegacyReadRepository) 
   val repairById=repairs.mapNotNull { row ->
    row.id?.let { it to row.fields }
   }.toMap()
+  require(repairById.size==repairs.count { it.id!=null }) { "Duplicate historical repair IDs" }
   var store=BigDecimal.ZERO
   var online=BigDecimal.ZERO
   var repair=BigDecimal.ZERO
