@@ -92,7 +92,7 @@ class FinancialReviewActivity:Activity() {
       val lines=mutableListOf<String>()
       val cache=mutableMapOf<String,RoomSale?>()
       suspend fun invoice(id:String):String {
-       val sale=cache.getOrPut(id) { null } ?: db.salesPostingDao().sale(id).also { cache[id]=it }
+       val sale=if(cache.containsKey(id)) cache[id] else db.salesPostingDao().sale(id).also { cache[id]=it }
        return if(sale!=null) "فاتورة رقم ${sale.number} — ${sale.customer.ifBlank { "عميل غير مسمى" }}"
        else "فاتورة غير موجودة في المبيعات الجديدة (مرجع ${id.take(8)})"
       }
