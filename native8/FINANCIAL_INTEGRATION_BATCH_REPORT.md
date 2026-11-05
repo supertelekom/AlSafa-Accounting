@@ -130,3 +130,10 @@ Files added:
 - After successful Room commit, a noncancelable success dialog with "موافق" is shown. Acknowledging it clears amount/notes and leaves the user on the same activity; a new ID is generated for the next entry.
 - Existing recorded test entries are deliberately not rewritten. If TRY/SYP was previously entered with a manual USD-per-unit value of 1, those entries must be inspected before trusting historical USD profit calculations.
 - This commit has not been Gradle-built or tested on-device. No schema changes.
+
+## Independent expense and partner activities
+- ExpenseActivity now owns its own full layout, history, automatic configured FX snapshot, and save confirmation.
+- PartnersActivity now owns its own full layout, partner selection, withdrawal history, automatic configured FX snapshot, and save confirmation.
+- Neither screen inherits FinancialEntryActivity. The unused shared activity is unregistered from the Android manifest; its source remains for now and must not be used by navigation.
+- Both continue to call the existing transactional OperationalExpensePartnerRepository, so no database migration or duplicate cash posting was introduced.
+- No Gradle build, UI instrumentation, or tablet test was executed. Original v3.9.359 UI parity and final partner profit display remain outstanding.
