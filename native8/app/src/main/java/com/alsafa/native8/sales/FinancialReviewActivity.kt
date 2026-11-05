@@ -196,6 +196,10 @@ class FinancialReviewActivity:Activity() {
       val unverified=db.salesPostingDao().unverifiedChannelCount()
       val archived=LegacySalesProfitAudit.inspect(db.legacySaleDao().historicalInPeriod(
        window.startInclusive,window.endExclusive))
+      val legacyStore=LegacySalesEventExtractor.extractStore(
+       db.legacySaleDao().historicalInPeriod(window.startInclusive,window.endExclusive))
+      val legacyStoreProfit=legacyStore.events.fold(BigDecimal.ZERO) { sum,e -> sum+e.profitUsd }
+      val legacyStoreCapital=legacyStore.events.fold(BigDecimal.ZERO) { sum,e -> sum+e.costUsd }
       val storeEvents=store.inPeriod(window.startInclusive,window.endExclusive)
       val storeRevenue=sum(storeEvents.map { it.net_revenue_usd })
       val storeCapital=sum(storeEvents.map { it.cost_usd })
@@ -224,7 +228,10 @@ class FinancialReviewActivity:Activity() {
       "رأس مال ساعات المحل المباعة: ${data[9]} USD\n"+
       "رأس مال ساعات الأونلاين الخارجة من المخزون بتاريخ البيع: ${data[11]} USD\n"+
       "تكلفة الأونلاين المقابلة للتحصيلات خلال الفترة: ${data[12]} USD\n"+
-      "فواتير المحل التاريخية في الفترة: ${data[5].toPlainString()} (ربحها قيد المطابقة)\n"+
+      "فواتير المحل التاريخية في الفترة: ${data[5].toPlainString()}\n"+
+      "ربح المحل التاريخي القابل للاستخراج (غير معتمد): ${data[13]} USD\n"+
+      "رأس مال المحل التاريخي القابل للاستخراج: ${data[14]} USD\n"+
+      "فواتير تاريخية تعذر تدقيق ربحها: ${data[15].toPlainString()}\n"+
       "فواتير الأونلاين التاريخية في الفترة: ${data[6].toPlainString()} (تحصيلاتها قيد المطابقة)\n"+
       "فواتير تاريخية تحتاج مراجعة التصنيف: ${data[7].toPlainString()}\n"+
       "ربح فواتير المحل الجديدة: ${data[0]} USD\n"+
