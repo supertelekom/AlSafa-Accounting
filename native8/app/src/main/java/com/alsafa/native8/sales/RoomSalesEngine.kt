@@ -409,7 +409,6 @@ class RoomSalesEngine(private val context: Context) {
     suspend fun correctUnpaidLine(saleId:String,lineId:String,newQuantity:BigDecimal,
         newUnitPrice:BigDecimal):Unit = db.withTransaction {
         require(newQuantity > BigDecimal.ZERO && newUnitPrice >= BigDecimal.ZERO)
-        require(posting.sale(saleId)?.channel != SalesChannelClassification.STORE) { "تصحيح فاتورة المحل يحتاج قيد تعديل الربح" }
         val sale = requireNotNull(posting.sale(saleId))
         require(sale.status != "ملغاة" && sale.paid.toBigDecimal().compareTo(BigDecimal.ZERO) == 0)
         require(payments.payments(saleId).isEmpty() && payments.cashboxMovements(saleId).isEmpty()) {
@@ -445,6 +444,21 @@ class RoomSalesEngine(private val context: Context) {
         }
         check(posting.correctUnpaidTotal(saleId,newNet.toPlainString(),sale.discount) == 1)
         check(debts.compareAndSetBalance(saleId,debt.balance,newNet.toPlainString()) == 1)
+        if(sale.channel==SalesChannelClassification.STORE) {
+            val original=requireNotNull(db.storeSaleProfitDao().bySale(saleId)) { "قيد ربح المحل مفقود" }
+            val originalCost=lines.fold(BigDecimal.ZERO) { a,l ->
+                a+l.quantity.toBigDecimal()*l.unit_cost.toBigDecimal()
+            }
+            val newCost=originalCost+delta*line.unit_cost.toBigDecimal()
+            val oldProfit=sale.total.toBigDecimal()-originalCost
+            val newProfit=newNet-newCost
+            val prior=db.storeSaleProfitDao().adjustments(saleId).map { it.profit_delta_usd.toBigDecimal() }
+            require(prior.isEmpty()) { "تصحيح فاتورة سبق تعديل ربحها يتطلب مطابقة" }
+            require(original.profit_usd.toBigDecimal().compareTo(oldProfit)==0) { "قيد الربح الأصلي غير متطابق" }
+            db.storeSaleProfitDao().insertAdjustment(StoreProfitAdjustment(
+                UUID.randomUUID().toString(),saleId,System.currentTimeMillis(),
+                (newProfit-oldProfit).toPlainString(),"تصحيح فاتورة غير مقبوضة"))
+        }
     }
 
     /** Correct customer metadata without rewriting posted financial history. */
