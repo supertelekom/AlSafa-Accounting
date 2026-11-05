@@ -168,7 +168,10 @@ class ExpenseActivity:Activity() {
     status.text="حدد تصنيف المصروف"
     return@setOnClickListener
    }
-   val description="هل توافق على تسجيل مصروف " + subject + " بمبلغ " + entered.toPlainString() + " " + unit + " من " + selectedVault + "؟"
+   val memo=notes.text.toString().trim()
+   val description="هل توافق على تسجيل مصروف " + subject +
+    " بمبلغ " + entered.toPlainString() + " " + unit +
+    " من " + selectedVault + (if(memo.isBlank()) "" else "\nملاحظات: " + memo) + "؟"
    android.app.AlertDialog.Builder(this)
     .setTitle("تأكيد المصروف")
     .setMessage(description)
