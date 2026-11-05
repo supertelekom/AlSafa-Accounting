@@ -141,8 +141,8 @@ class FinancialReviewActivity:Activity() {
       val w=FinancialPeriodGuard.window(a.toString(),b.toString(),ZoneId.of("Asia/Damascus"))
       val stores=db.storeSaleProfitDao().inPeriod(w.startInclusive,w.endExclusive)
       val adjustments=db.storeSaleProfitDao().adjustmentsInPeriod(w.startInclusive,w.endExclusive)
-      val online=db.salesFinancialAuditDao().profitEventsInPeriod(w.startInclusive,w.endExclusive)
-      val reverse=db.salesFinancialAuditDao().profitReversalsInPeriod(w.startInclusive,w.endExclusive)
+      val online=db.salesFinancialAuditDao().verifiedOnlineProfitsInPeriod(w.startInclusive,w.endExclusive)
+      val reverse=db.salesFinancialAuditDao().verifiedOnlineReversalsInPeriod(w.startInclusive,w.endExclusive)
       val expenses=db.operationalExpensePartnerDao().expenses(a.toString(),b.toString())
       val withdrawals=db.operationalExpensePartnerDao().withdrawals(a.toString(),b.toString())
       val lines=mutableListOf<String>()
@@ -188,17 +188,18 @@ class FinancialReviewActivity:Activity() {
       fun sum(values:List<String>)=values.fold(BigDecimal.ZERO) { acc,s -> acc+s.toBigDecimal() }
       val storeProfit=sum(store.inPeriod(window.startInclusive,window.endExclusive).map { it.profit_usd })
       val storeAdjust=sum(store.adjustmentsInPeriod(window.startInclusive,window.endExclusive).map { it.profit_delta_usd })
-      val online=sum(sales.profitEventsInPeriod(window.startInclusive,window.endExclusive).map { it.recognized_profit })
-      val reversals=sum(sales.profitReversalsInPeriod(window.startInclusive,window.endExclusive).map { it.reversed_profit })
+      val online=sum(sales.verifiedOnlineProfitsInPeriod(window.startInclusive,window.endExclusive).map { it.recognized_profit })
+      val reversals=sum(sales.verifiedOnlineReversalsInPeriod(window.startInclusive,window.endExclusive).map { it.reversed_profit })
       val unverified=db.salesPostingDao().unverifiedChannelCount()
       val archived=LegacySalesProfitAudit.inspect(db.legacySaleDao().historicalInPeriod(
        window.startInclusive,window.endExclusive))
       val storeEvents=store.inPeriod(window.startInclusive,window.endExclusive)
       val storeRevenue=sum(storeEvents.map { it.net_revenue_usd })
       val storeCapital=sum(storeEvents.map { it.cost_usd })
+      val suspect=sales.nonOnlineProfitEventCount()
       listOf(storeProfit,storeAdjust,online,reversals,BigDecimal(unverified),
        BigDecimal(archived.storeInvoices),BigDecimal(archived.onlineInvoices),
-       BigDecimal(archived.unresolvedIds.size),storeRevenue,storeCapital)
+       BigDecimal(archived.unresolvedIds.size),storeRevenue,storeCapital,BigDecimal(suspect))
      }
      result.text="مبيعات المحل الجديدة بعد الخصومات: ${data[8]} USD\n"+
       "رأس مال الساعات المباعة الجديدة: ${data[9]} USD\n"+
@@ -210,6 +211,7 @@ class FinancialReviewActivity:Activity() {
       "أرباح تحصيلات الأونلاين الجديدة: ${data[2]} USD\n"+
       "عكس أرباح التحصيلات: ${data[3]} USD\n"+
       "فواتير جديدة غير مصنفة: ${data[4].toPlainString()}\n"+
+      "أحداث تحصيل قديمة غير معتمدة كأونلاين: ${data[10].toPlainString()}\n"+
       "المصاريف والصيانة والأرشيف والشركاء: لم تكتمل مطابقتها؛ لا يُعرض صافي نهائي."
     } catch(e:Exception) {
      result.text="تعذر استخراج المراجعة: "+(e.message ?: "خطأ غير معروف")
