@@ -37,7 +37,7 @@ class MaintenanceActivity:ComponentActivity() {
  override fun onActivityResult(requestCode:Int,resultCode:Int,data:Intent?) {
   super.onActivityResult(requestCode,resultCode,data)
   if(requestCode==702 && resultCode==RESULT_OK) reload?.invoke()
-  if(requestCode==703 && resultCode==RESULT_OK) {
+  if(requestCode in listOf(703,704) && resultCode==RESULT_OK) {
    val id=data?.getStringExtra("repair_id")
    if(id!=null) lifecycleScope.launch { selectedRefresh?.invoke(id) }
   }
@@ -195,6 +195,9 @@ class MaintenanceActivity:ComponentActivity() {
       Column(Modifier.weight(1f).verticalScroll(rememberScrollState()),
        verticalArrangement=Arrangement.spacedBy(12.dp)) {
        MaintenanceDetail(repair)
+       if(repair.source_sha256=="native8" && repair.status=="تم التسليم") {
+        Button(onClick={startActivityForResult(Intent(this@MaintenanceActivity,MaintenanceReturnActivity::class.java).putExtra("repair_id",repair.id),704)},modifier=Modifier.fillMaxWidth()) { Text("مرتجع / استبدال صيانة") }
+       }
        if(repair.source_sha256=="native8" && repair.status!="تم التسليم") {
         Text("تحديث حالة الصيانة",style=MaterialTheme.typography.titleMedium)
         listOf("قيد الصيانة","بانتظار القطعة","جاهز للاستلام").forEach { option ->
@@ -336,6 +339,13 @@ private fun MaintenanceDetail(repair:MaintenanceRepairEntity) {
   field("تكلفة إضافية","manualCost")
   field("الضريبة","tax")
   field("المقبوض","received")
+  if(repair.source_sha256=="native8" && (obj.has("nativeReturns") || obj.has("nativePayments"))) {
+   runCatching { Triple(MaintenanceReturnRules.effective(obj),MaintenanceReturnRules.paid(obj),MaintenanceReturnRules.due(obj)) }.getOrNull()?.let { totals ->
+    Text("الإجمالي بعد العملية: ${totals.first} ${repair.currency}")
+    Text("المقبوض الصافي: ${totals.second} ${repair.currency}")
+    Text("المتبقي: ${totals.third} ${repair.currency}")
+   }
+  }
   field("حالة الدفع","paymentStatus")
   field("طريقة الدفع","paymentMethod")
  }

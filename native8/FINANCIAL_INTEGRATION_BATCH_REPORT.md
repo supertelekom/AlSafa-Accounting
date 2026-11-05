@@ -380,3 +380,90 @@ Historical-only cumulative comparison (current Native 8 entries are NOT in this 
 - Modified: `app/src/main/java/com/alsafa/native8/sales/UnifiedFinancialPeriodRepository.kt`
 - Modified: `tools/run_financial_junit.py`
 - Modified: `FINANCIAL_INTEGRATION_BATCH_REPORT.md`
+
+
+## Native maintenance return/exchange execution batch
+
+Baseline verified on GitHub: `641a6fd14d032a70e3a631482b559d6fbf462c33` on
+`native6-development`. All changes below are confined to `native8/`.
+This section supersedes the previous batch's “NEW maintenance returns not implemented” item.
+The commit containing this section records this batch; its parent is the baseline above.
+
+### Implemented and connected
+- Added the original maintenance return/exchange form to delivered **native** repairs.
+  Part return or manual labour adjustment; optional explicit restock; replacement part
+  or manual rework; partial collection of exchange differences; original date/time,
+  cashbox and notes. Shows a confirmation with all financial results before writing.
+- Return costs use the delivered part snapshot. Replacement costs/prices convert using
+  the original repair exchange snapshot (including direct TRY/SYP); settlement USD
+  reporting uses the settlement snapshot. Missing evidence is rejected, not repriced.
+- Source-identical tax, refund, debt reduction, proportional cost recognition and
+  remaining-balance formulas. Damaged parts do not restore inventory or reverse cost
+  unless explicitly marked for restocking.
+- Stock, append-only settlement JSON and cash ledger are saved in one Room transaction.
+  The record retains stock before/after values, source IDs, cost ratios and rate snapshot.
+  Identical saved request IDs return the existing result; changed stock/repair/rates
+  after confirmation require a new preview. Cash IDs are deterministic and unique.
+- Added subsequent collection of outstanding repair/exchange debt **in invoice currency**,
+  using the original ordinary maintenance receipt-profit formula. The initial delivery
+  receipt remains immutable. This is not a new mixed-currency collection screen.
+- Native return and later receipt events are recognized on their own dates and feed the
+  unified net profit and existing period/cumulative partner statement. Reading them
+  never posts cash or deducts stock. Cash evidence is reconciled by operation ID.
+- Existing maintenance detail retains its layout and shows effective total/net paid/debt
+  when settlements exist. New form is RTL, uses original Tajawal, ScrollView and system/IME
+  insets. It does not claim to generate a PDF: saved receipts are displayed on screen.
+- No table recreation, schema version change, destructive migration, imported-record
+  mutation, test-invoice deletion, or reclassification.
+
+### Executed validation
+- **69 standalone Kotlin/JUnit tests passed**, including 10 new settlement test methods.
+- Fixture generator executes the actual original `repairReturnCalculation` and
+  `saveRepairReturn` functions for **12 cases**, including an original backup repair.
+  Checks all original saved numeric fields: damaged/restocked part, full manual return,
+  cheaper/dearer replacement, partial collection, debt reduction, tax, USD/TRY/SYP,
+  direct TRY/SYP conversion, and a prior return/payment sequence.
+  Synthetic cases are explicitly labelled; the backup case retains its original ID
+  and financial fields only. Source SHA-256 remains
+  `a57ba7aac9ead8138e6317eb49e84dcd312b7175cb57ca4c60cabf2fb7096126`.
+- JVM checks cover excess quantities/credit, unavailable replacement stock, duplicate
+  operation ID, backdated settlements, outstanding-debt bounds, date-separated profit
+  events, and repeated reads without mutation.
+- New screen/repository/DAO/reader Kotlin code type-checks against Android API classes
+  and Room annotations. Database/transaction boundary facades were compile-only:
+  **this is not Room generation, runtime execution, or an APK build**. Only deprecated
+  compatibility-inset/soft-input API warnings were produced.
+- **3 SQLite checks passed** using actual migration DDL and DAO SQL: stale expected JSON
+  rolls back stock; duplicate cash PK rolls back stock and repair JSON; successful
+  transaction commits all three. This validates SQL constraints, not Android Room runtime.
+- `git diff --check` passed. No final failed executed tests.
+
+### Deferred / not claimed complete
+- Per user request, Gradle/APK build and device work were deferred; no successful build
+  is claimed. Honor Pad layout, confirmation/cancel, cash/stock persistence, Room codegen,
+  migrations and restore acceptance still require Android execution.
+- Added four real Room instrumentation tests for retry idempotence, rollback on cash-ID
+  collision, stale-stock confirmation, and subsequent collection idempotence. They are
+  **not executed here** and must not be counted among the 69 passing JVM tests.
+- Current tablet records are unavailable here; full live cumulative balances cannot be
+  certified from the backup fixture alone. Ambiguous old native deliveries remain
+  quarantined, as documented in the previous batch.
+- PDF/thermal/WhatsApp issuance of the new maintenance-return receipt is not implemented
+  in this financial batch. Original historical repair records remain read-only.
+
+### Files in this batch
+- Added: `app/src/androidTest/java/com/alsafa/native8/sales/MaintenanceReturnRoomTest.kt`
+- Added: `app/src/main/java/com/alsafa/native8/maintenance/MaintenanceReturnActivity.kt`
+- Added: `app/src/main/java/com/alsafa/native8/maintenance/MaintenanceReturnRepository.kt`
+- Added: `app/src/main/java/com/alsafa/native8/maintenance/MaintenanceReturnRules.kt`
+- Added: `app/src/test/java/com/alsafa/native8/sales/MaintenanceReturnRulesTest.kt`
+- Added: `app/src/test/resources/maintenance-return-v359.json`
+- Added: `tools/extract_maintenance_return_fixture.cjs`
+- Modified: `FINANCIAL_INTEGRATION_BATCH_REPORT.md`
+- Modified: `app/src/main/AndroidManifest.xml`
+- Modified: `app/src/main/java/com/alsafa/native8/maintenance/MaintenanceActivity.kt`
+- Modified: `app/src/main/java/com/alsafa/native8/maintenance/MaintenanceDao.kt`
+- Modified: `app/src/main/java/com/alsafa/native8/sales/NativeMaintenanceProfitReader.kt`
+- Modified: `app/src/main/java/com/alsafa/native8/sales/NativeMaintenanceProfitRepository.kt`
+- Modified: `app/src/main/java/com/alsafa/native8/sales/UnifiedFinancialPeriodRepository.kt`
+- Modified: `tools/run_financial_junit.py`

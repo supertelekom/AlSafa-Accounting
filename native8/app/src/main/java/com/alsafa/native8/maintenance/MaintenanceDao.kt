@@ -7,6 +7,9 @@ import androidx.room.Query
 
 @Dao
 interface MaintenanceDao {
+ @Query("UPDATE maintenance_repairs SET original_json=:updated WHERE id=:id AND source_sha256='native8' AND status='تم التسليم' AND original_json=:expected")
+ suspend fun appendSettlement(id:String,expected:String,updated:String):Int
+
  @Query("SELECT * FROM maintenance_repairs WHERE source_sha256='native8' ORDER BY created_at,id")
  suspend fun nativeFinancialRecords():List<MaintenanceRepairEntity>
 

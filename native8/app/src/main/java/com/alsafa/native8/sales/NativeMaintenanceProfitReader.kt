@@ -64,11 +64,11 @@ object NativeMaintenanceProfitReader {
    val total=LegacyMaintenanceProfitReader.total(raw)
    require(total.compareTo(n(raw,"price"))==0) { "Delivery total differs from parts/labour/tax" }
    require(credited<=total) { "Delivery receipt exceeds invoice total" }
-   val audit=LegacyMaintenanceProfitReader.extract(listOf(JSONObject(raw.toString()).put("date",date.toString())),emptyList(),emptyList())
+   fun rows(key:String)=raw.optJSONArray(key)?.let { a -> (0 until a.length()).map { a.getJSONObject(it) } }.orEmpty()
+   val audit=LegacyMaintenanceProfitReader.extract(listOf(JSONObject(raw.toString()).put("date",date.toString())),rows("nativePayments"),rows("nativeReturns"))
    require(audit.unresolved.isEmpty()) { audit.unresolved.joinToString() }
-   require(audit.events.size==1)
-   val event=audit.events.single()
-   events+=event.copy(sourceKey="native:repair:$id:delivery")
+   events+=audit.events.map { event -> event.copy(sourceKey=if(event.sourceKey=="legacy:repair:$id:initial")
+    "native:repair:$id:delivery" else event.sourceKey.replaceFirst("legacy:","native:")) }
   } catch(e:Exception) { issues+="Native repair ${raw.optString("id")}: ${e.message}" }
   return LegacyHistoricalSalesProfitReader.Audit(events,issues.distinct())
  }

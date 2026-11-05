@@ -19,11 +19,12 @@ names = ['LegacyHistoricalSalesProfitReader', 'LegacySaleEntity', 'LegacySaleCha
          'LegacyFinancialRules', 'CumulativePartnerProfit', 'VerifiedFinancialConsolidation',
          'VerifiedFinancialEventAdapters', 'LegacyMaintenanceProfitReader', 'LegacyExpenseWithdrawalReader', 'NativeMaintenanceProfitReader', 'PartnerFinancialStatement']
 tests = [n + 'Test' for n in names if (test / (n + 'Test.kt')).exists()]
-tests += ['LegacyFinancialSourceParityTest', 'OriginalFinancialStatementParityTest']
+tests += ['LegacyFinancialSourceParityTest', 'OriginalFinancialStatementParityTest', 'MaintenanceReturnRulesTest']
 with tempfile.TemporaryDirectory(prefix='alsafa-financial-junit-') as output:
     subprocess.run(['java', '-cp', classpath, 'org.jetbrains.kotlin.cli.jvm.K2JVMCompiler',
                     '-no-stdlib', '-no-reflect', '-classpath', classpath, '-d', output]
                    + [str(main / (n + '.kt')) for n in names]
+                   + [str(main.parent / 'maintenance/MaintenanceReturnRules.kt')]
                    + [str(test / (n + '.kt')) for n in tests], check=True)
     subprocess.run(['java', '-cp', os.pathsep.join([classpath, output, str(root / 'app/src/test/resources')]),
                     'org.junit.runner.JUnitCore']

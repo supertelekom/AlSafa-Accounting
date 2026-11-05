@@ -11,6 +11,7 @@
         <activity android:name=".maintenance.MaintenancePartsActivity" android:exported="false" />
         <activity android:name=".maintenance.MaintenanceEditActivity" android:exported="false" />
         <activity android:name=".maintenance.MaintenanceIntakeActivity" android:exported="false" />
+        <activity android:name=".maintenance.MaintenanceReturnActivity" android:exported="false" />
         <activity android:name=".maintenance.MaintenanceActivity" android:exported="false" />
         <activity android:name=".sales.PurchaseDraftActivity" android:exported="false" />
         <activity android:name=".sales.SuppliersActivity" android:exported="false" />

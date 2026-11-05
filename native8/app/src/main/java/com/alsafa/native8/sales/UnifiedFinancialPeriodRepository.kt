@@ -84,7 +84,8 @@ class UnifiedFinancialPeriodRepository(
   val includeRepairs=old!=null && old.repairUnresolved.isEmpty() && repairOverlap.isEmpty()
   val repairProfit=(if(includeRepairs) old!!.repairProfitUsd else BigDecimal.ZERO)+
    (nativeRepairSummary?.repair ?: BigDecimal.ZERO)
-  val repairReturns=if(includeRepairs) old!!.returnImpactUsd-old.salesReturnImpactUsd else BigDecimal.ZERO
+  val repairReturns=(if(includeRepairs) old!!.returnImpactUsd-old.salesReturnImpactUsd else BigDecimal.ZERO)+
+   (nativeRepairSummary?.returns ?: BigDecimal.ZERO)
   val issues=(old?.unresolved.orEmpty()+expenseAudit.unresolved+nativeRepairs?.audit?.unresolved.orEmpty()+
    overlap.map { "Historical/operational sale overlap: $it" }+
    repairOverlap.map { "Historical/operational repair overlap: $it" }+

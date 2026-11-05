@@ -25,6 +25,18 @@ class NativeMaintenanceProfitRepository(private val dao:MaintenanceDao,private v
     require(posted.keys==expected.keys && expected.all { (unit,value) -> posted.getValue(unit).compareTo(value)==0 }) {
      "Delivery cash evidence differs from recorded receipt" }
    }
+   for(key in listOf("nativeReturns","nativePayments")) {
+    val a=raw.optJSONArray(key) ?: org.json.JSONArray()
+    for(i in 0 until a.length()) {
+     val e=a.getJSONObject(i)
+     require(e.getString("referenceId")==row.id && e.getString("referenceType")=="repair")
+     val effect=e.optString(if(key=="nativeReturns") "cashEffect" else "amount").toBigDecimal()
+     val movements=cash.cashboxMovements(e.getString("id"))
+     require(movements.all { it.currency==e.getString("currency") && it.cashbox==e.getString("vault") }) { "Settlement cash currency/vault mismatch" }
+     require(movements.fold(java.math.BigDecimal.ZERO) { total,m -> total+m.amount.toBigDecimal() }.compareTo(effect)==0 &&
+      movements.size==(if(effect.signum()==0) 0 else 1)) { "Settlement cash evidence mismatch" }
+    }
+   }
    source+=raw
   } catch(e:Exception) { issues+="Native repair ${row.id}: ${e.message}" }
   val audit=NativeMaintenanceProfitReader.extract(source)
