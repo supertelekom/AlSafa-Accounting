@@ -42,11 +42,39 @@ class FinancialReviewActivity:Activity() {
    setText(LocalDate.now().toString())
   }
   val result=TextView(this).apply { textSize=18f }
+  val detail=TextView(this).apply { textSize=15f }
+  val showDetails=Button(this).apply { text="تفصيل القيود المالية" }
   val refresh=Button(this).apply { text="عرض مراجعة الأرباح" }
-  listOf(title,warning,from,to,refresh,result).forEach {
+  listOf(title,warning,from,to,refresh,result,showDetails,detail).forEach {
    root.addView(it,LinearLayout.LayoutParams(-1,-2))
   }
   setContentView(ScrollView(this).apply { addView(root) })
+  showDetails.setOnClickListener {
+   showDetails.isEnabled=false
+   detail.text="جارٍ تحميل تفاصيل القيود..."
+   scope.launch {
+    try {
+     val a=LocalDate.parse(from.text.toString().trim())
+     val b=LocalDate.parse(to.text.toString().trim())
+     val rows=withContext(Dispatchers.IO) {
+      val db=AppDatabase.get(applicationContext)
+      val w=FinancialPeriodGuard.window(a.toString(),b.toString(),ZoneId.of("Asia/Damascus"))
+      val stores=db.storeSaleProfitDao().inPeriod(w.startInclusive,w.endExclusive)
+      val adjustments=db.storeSaleProfitDao().adjustmentsInPeriod(w.startInclusive,w.endExclusive)
+      val online=db.salesFinancialAuditDao().profitEventsInPeriod(w.startInclusive,w.endExclusive)
+      val reverse=db.salesFinancialAuditDao().profitReversalsInPeriod(w.startInclusive,w.endExclusive)
+      val lines=mutableListOf<String>()
+      stores.forEach { lines+="فاتورة محل ${it.sale_id}: +${it.profit_usd} USD" }
+      adjustments.forEach { lines+="تسوية محل ${it.sale_id} (${it.reason}): ${it.profit_delta_usd} USD" }
+      online.forEach { lines+="تحصيل ${it.sale_id} / ${it.payment_id}: +${it.recognized_profit} USD" }
+      reverse.forEach { lines+="عكس تحصيل ${it.sale_id} / ${it.payment_id}: -${it.reversed_profit} USD" }
+      lines
+     }
+     detail.text=if(rows.isEmpty()) "لا توجد قيود في هذه الفترة" else rows.joinToString("\\n")
+    } catch(e:Exception) { detail.text="تعذر عرض التفاصيل: "+(e.message ?: "خطأ") }
+    finally { showDetails.isEnabled=true }
+   }
+  }
   refresh.setOnClickListener {
    refresh.isEnabled=false
    result.text="جارٍ قراءة القيود..."
