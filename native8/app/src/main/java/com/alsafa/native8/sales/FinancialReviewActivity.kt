@@ -196,13 +196,23 @@ class FinancialReviewActivity:Activity() {
       val storeEvents=store.inPeriod(window.startInclusive,window.endExclusive)
       val storeRevenue=sum(storeEvents.map { it.net_revenue_usd })
       val storeCapital=sum(storeEvents.map { it.cost_usd })
+      val onlineInvoices=db.salesPostingDao().onlineInvoicesInPeriod(
+       window.startInclusive,window.endExclusive)
+      var onlineStockCapital=BigDecimal.ZERO
+      for(invoice in onlineInvoices) {
+       onlineStockCapital+=OnlineCapitalReport.stockCost(db.salesPostingDao().lines(invoice.id))
+      }
+      val recognizedOnlineCapital=OnlineCapitalReport.recognizedCost(
+       sales.verifiedOnlineProfitsInPeriod(window.startInclusive,window.endExclusive))
       val suspect=sales.nonOnlineProfitEventCount()
       listOf(storeProfit,storeAdjust,online,reversals,BigDecimal(unverified),
        BigDecimal(archived.storeInvoices),BigDecimal(archived.onlineInvoices),
-       BigDecimal(archived.unresolvedIds.size),storeRevenue,storeCapital,BigDecimal(suspect))
+       BigDecimal(archived.unresolvedIds.size),storeRevenue,storeCapital,BigDecimal(suspect),onlineStockCapital,recognizedOnlineCapital)
      }
      result.text="مبيعات المحل الجديدة بعد الخصومات: ${data[8]} USD\n"+
-      "رأس مال الساعات المباعة الجديدة: ${data[9]} USD\n"+
+      "رأس مال ساعات المحل المباعة: ${data[9]} USD\n"+
+      "رأس مال ساعات الأونلاين الخارجة من المخزون بتاريخ البيع: ${data[11]} USD\n"+
+      "تكلفة الأونلاين المقابلة للتحصيلات خلال الفترة: ${data[12]} USD\n"+
       "فواتير المحل التاريخية في الفترة: ${data[5].toPlainString()} (ربحها قيد المطابقة)\n"+
       "فواتير الأونلاين التاريخية في الفترة: ${data[6].toPlainString()} (تحصيلاتها قيد المطابقة)\n"+
       "فواتير تاريخية تحتاج مراجعة التصنيف: ${data[7].toPlainString()}\n"+
