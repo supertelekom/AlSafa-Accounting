@@ -207,10 +207,18 @@ class FinancialReviewActivity:Activity() {
       }
       val recognizedOnlineCapital=OnlineCapitalReport.recognizedCost(
        sales.verifiedOnlineProfitsInPeriod(window.startInclusive,window.endExclusive))
+      val staging=com.alsafa.native8.data.migration.LegacyStagingDatabase(applicationContext)
+      val historical=try {
+       LegacyHistoricalProfitProjection(
+        com.alsafa.native8.data.migration.LegacyReadRepository(staging)
+       ).read(a.toString(),b.toString())
+      } finally { staging.close() }
       val suspect=sales.nonOnlineProfitEventCount()
       listOf(storeProfit,storeAdjust,online,reversals,BigDecimal(unverified),
        BigDecimal(archived.storeInvoices),BigDecimal(archived.onlineInvoices),
-       BigDecimal(archived.unresolvedIds.size),storeRevenue,storeCapital,BigDecimal(suspect),onlineStockCapital,recognizedOnlineCapital)
+       BigDecimal(archived.unresolvedIds.size),storeRevenue,storeCapital,BigDecimal(suspect),onlineStockCapital,recognizedOnlineCapital,
+       historical.storeProfitUsd,historical.onlineProfitUsd,historical.repairProfitUsd,
+       historical.returnImpactUsd,historical.expensesUsd,BigDecimal(historical.unresolved.size))
      }
      result.text="مبيعات المحل الجديدة بعد الخصومات: ${data[8]} USD\n"+
       "رأس مال ساعات المحل المباعة: ${data[9]} USD\n"+
@@ -225,7 +233,13 @@ class FinancialReviewActivity:Activity() {
       "عكس أرباح التحصيلات: ${data[3]} USD\n"+
       "فواتير جديدة غير مصنفة: ${data[4].toPlainString()}\n"+
       "أحداث تحصيل قديمة غير معتمدة كأونلاين: ${data[10].toPlainString()}\n"+
-      "المصاريف والصيانة والأرشيف والشركاء: لم تكتمل مطابقتها؛ لا يُعرض صافي نهائي."
+      "ربح المحل التاريخي (تدقيق): ${data[13]} USD\\n"+
+      "ربح تحصيلات الأونلاين التاريخية (تدقيق): ${data[14]} USD\\n"+
+      "ربح الصيانة التاريخية (تدقيق): ${data[15]} USD\\n"+
+      "أثر المرتجعات التاريخية (تدقيق): ${data[16]} USD\\n"+
+      "المصاريف التاريخية (تدقيق، لا تُخصم مرة ثانية): ${data[17]} USD\\n"+
+      "مشكلات القراءة التاريخية: ${data[18].toPlainString()}\\n"+
+      "الأرقام التاريخية منفصلة عن التشغيلية لمنع الازدواج؛ لا يُعرض صافي نهائي قبل المطابقة."
     } catch(e:Exception) {
      result.text="تعذر استخراج المراجعة: "+(e.message ?: "خطأ غير معروف")
     } finally {
