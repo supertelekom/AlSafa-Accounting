@@ -2,82 +2,62 @@ package com.alsafa.native8.sales
 
 import com.alsafa.native8.data.migration.LegacyReadRepository
 import java.math.BigDecimal
+import java.time.LocalDate
 
-/**
- * Read-only union of imported and newly entered expenses/partner withdrawals.
- * Does not post imported movements into the operational cashbox ledger.
- * Missing exchange snapshots are rejected rather than silently assumed.
- */
-class UnifiedExpensePartnerReadRepository(
- private val legacy:LegacyReadRepository,
- private val dao:OperationalExpensePartnerDao
-) {
+/** Read-only union. Expenses are deducted once; withdrawals affect partner balances only. */
+class UnifiedExpensePartnerReadRepository(private val legacy:LegacyReadRepository,private val dao:OperationalExpensePartnerDao) {
  data class Snapshot(val source:LegacyFinancialRules.Source,
-  val legacyExpenses:Int,val operationalExpenses:Int,
-  val legacyWithdrawals:Int,val operationalWithdrawals:Int)
- private fun decimal(value:String):BigDecimal =
-  value.toBigDecimalOrNull() ?: error("قيمة مالية غير صالحة: $value")
- private fun money(amount:String,rate:String):LegacyFinancialRules.Money =
-  LegacyFinancialRules.Money(decimal(amount),decimal(rate))
+  val legacyExpenses:Int,val operationalExpenses:Int,val legacyWithdrawals:Int,val operationalWithdrawals:Int,
+  val unresolved:List<String> = emptyList(),
+  val historicalEvidence:List<LegacyExpenseWithdrawalReader.Entry> = emptyList())
  private fun rows(run:Long,section:String):List<LegacyReadRepository.LegacyRow> {
-  val result=mutableListOf<LegacyReadRepository.LegacyRow>()
-  var offset=0
+  val result=mutableListOf<LegacyReadRepository.LegacyRow>();var offset=0
   while(true) {
-   val page=legacy.page(run,section,offset,500)
-   result.addAll(page.rows)
-   offset+=page.rows.size
+   val page=legacy.page(run,section,offset,500);result.addAll(page.rows);offset+=page.rows.size
    if(offset>=page.total) return result
    check(page.rows.isNotEmpty()) { "Incomplete legacy section $section" }
   }
  }
- private fun exchangeSnapshot(raw:org.json.JSONObject,currency:String):BigDecimal {
-  if(currency=="USD") return BigDecimal.ONE
-  val snapshot=raw.optJSONObject("rateSnapshot")
-   ?: error("Missing historical rateSnapshot for $currency")
-  return LegacyFinancialExchange.usdPerUnit(currency,snapshot.optString(currency))
- }
- suspend fun load(from:String,to:String):Snapshot {
-  require(from<=to)
+ suspend fun load(from:String,to:String,allowIncomplete:Boolean=false):Snapshot {
+  require(!LocalDate.parse(to).isBefore(LocalDate.parse(from)))
   val run=legacy.latestRunId()
-  val importedExpenseRows=if(run==null) emptyList() else rows(run,"expenses")
-  val importedWithdrawalRows=if(run==null) emptyList() else rows(run,"partnerWithdrawals")
-  val legacyExpenses=importedExpenseRows.filter { LegacyFinancialRules.inRange(it.fields.optString("date"),from,to) }.map { row ->
-   val obj=row.fields
-   val unit=obj.optString("currency","USD").uppercase()
-   val date=obj.optString("date")
-   require(date.isNotBlank()) { "Expense date missing" }
-   LegacyFinancialRules.Expense(date,LegacyFinancialRules.Money(
-    decimal(obj.get("amount").toString()),exchangeSnapshot(obj,unit)))
-  }.filter { LegacyFinancialRules.inRange(it.date,from,to) }
-  val legacyWithdrawals=importedWithdrawalRows.filter {
-   LegacyFinancialRules.inRange(it.fields.optString("date"),from,to) &&
-    it.fields.optString("partnerId") in LegacyFinancialRules.partners.map { partner -> partner.id }
-  }.map { row ->
-   val obj=row.fields
-   val unit=obj.optString("currency","USD").uppercase()
-   val date=obj.optString("date")
-   require(date.isNotBlank()) { "Withdrawal date missing" }
-   LegacyFinancialRules.Withdrawal(date,obj.optString("partnerId"),
-    LegacyFinancialRules.Money(decimal(obj.get("amount").toString()),
-     exchangeSnapshot(obj,unit)))
-  }.filter { LegacyFinancialRules.inRange(it.date,from,to) }
-  val operationalExpenseRows=dao.expenses(from,to)
-  val operationalWithdrawalRows=dao.withdrawals(from,to)
-  val expenseIds=importedExpenseRows.mapNotNull { it.id }.toSet()
-  val withdrawalIds=importedWithdrawalRows.mapNotNull { it.id }.toSet()
-  check(operationalExpenseRows.none { it.id in expenseIds }) { "Expense ID overlaps imported history" }
-  check(operationalWithdrawalRows.none { it.id in withdrawalIds }) { "Withdrawal ID overlaps imported history" }
-  val newExpenses=operationalExpenseRows.map {
-   LegacyFinancialRules.Expense(it.date,money(it.amount,it.usd_per_unit))
+  val expenseRows=if(run==null) emptyList() else rows(run,"expenses").map { it.fields }
+  val withdrawalRows=if(run==null) emptyList() else rows(run,"partnerWithdrawals").map { it.fields }
+  val oldExpenses=LegacyExpenseWithdrawalReader.extract(expenseRows,false)
+  val oldWithdrawals=LegacyExpenseWithdrawalReader.extract(withdrawalRows,true)
+  val issues=(oldExpenses.unresolved+oldWithdrawals.unresolved).toMutableList()
+  val nativeExpenses=dao.expenses(from,to);val nativeWithdrawals=dao.withdrawals(from,to)
+  val expenseOverlap=nativeExpenses.map { it.id }.toSet().intersect(expenseRows.map { it.optString("id") }.toSet())
+  val withdrawalOverlap=nativeWithdrawals.map { it.id }.toSet().intersect(withdrawalRows.map { it.optString("id") }.toSet())
+  issues.addAll(expenseOverlap.map { "Expense ID overlaps imported history: $it" })
+  issues.addAll(withdrawalOverlap.map { "Withdrawal ID overlaps imported history: $it" })
+  fun inPeriod(date:String)=date>=from && date<=to
+  val oldExpenseEntries=oldExpenses.entries.filter { inPeriod(it.date) && it.id !in expenseOverlap }
+  val oldWithdrawalEntries=oldWithdrawals.entries.filter { inPeriod(it.date) && it.id !in withdrawalOverlap }
+  val expenses=oldExpenseEntries.map { LegacyFinancialRules.Expense(it.date,it.money) }.toMutableList()
+  val withdrawals=oldWithdrawalEntries.map { LegacyFinancialRules.Withdrawal(it.date,requireNotNull(it.partnerId),it.money) }.toMutableList()
+  fun money(amount:String,rate:String,currency:String):LegacyFinancialRules.Money {
+   require(currency in setOf("USD","TRY","SYP")) { "Unsupported currency" }
+   val value=amount.toBigDecimal();val fx=rate.toBigDecimal()
+   require(value>=BigDecimal.ZERO && fx>BigDecimal.ZERO)
+   require(currency!="USD" || fx.compareTo(BigDecimal.ONE)==0) { "USD exchange must be one" }
+   return LegacyFinancialRules.Money(value,fx)
   }
-  val newWithdrawals=operationalWithdrawalRows.onEach {
-   require(it.partner_id in LegacyFinancialRules.partners.map { partner -> partner.id }) { "معرف شريك غير معتمد" }
-  }.map {
-   LegacyFinancialRules.Withdrawal(it.date,it.partner_id,money(it.amount,it.usd_per_unit))
-  }
-  return Snapshot(LegacyFinancialRules.Source(
-   emptyList(),emptyList(),emptyList(),emptyList(),
-   legacyExpenses+newExpenses,legacyWithdrawals+newWithdrawals),
-   legacyExpenses.size,newExpenses.size,legacyWithdrawals.size,newWithdrawals.size)
+  var newExpenses=0;var newWithdrawals=0
+  for(row in nativeExpenses) try {
+   require(row.id.isNotBlank() && row.id !in expenseOverlap)
+   LocalDate.parse(row.date)
+   expenses+=LegacyFinancialRules.Expense(row.date,money(row.amount,row.usd_per_unit,row.currency));newExpenses++
+  } catch(e:Exception) { issues+="Expense ${row.id}: ${e.message}" }
+  for(row in nativeWithdrawals) try {
+   require(row.id.isNotBlank() && row.id !in withdrawalOverlap)
+   require(row.partner_id in LegacyFinancialRules.partners.map { it.id }) { "Unknown partner" }
+   LocalDate.parse(row.date)
+   withdrawals+=LegacyFinancialRules.Withdrawal(row.date,row.partner_id,money(row.amount,row.usd_per_unit,row.currency));newWithdrawals++
+  } catch(e:Exception) { issues+="Withdrawal ${row.id}: ${e.message}" }
+  check(legacy.latestRunId()==run) { "Historical source changed during read" }
+  if(!allowIncomplete) check(issues.isEmpty()) { issues.joinToString("\n") }
+  return Snapshot(LegacyFinancialRules.Source(emptyList(),emptyList(),emptyList(),emptyList(),expenses,withdrawals),
+   oldExpenseEntries.size,newExpenses,oldWithdrawalEntries.size,newWithdrawals,issues.distinct(),oldExpenseEntries+oldWithdrawalEntries)
  }
 }

@@ -163,8 +163,12 @@ class MaintenanceIntakeActivity:Activity() {
           val part=db.maintenanceDao().part(line.partId) ?: error("قطعة الصيانة غير موجودة")
           val qty=line.qty.toBigDecimal();val sale=line.price.toBigDecimal()
           require(qty>BigDecimal.ZERO && qty<=part.stock.toBigDecimal() && qty.stripTrailingZeros().scale()<=0) { "الكمية غير متوفرة: ${part.name}" }
-          used.put(JSONObject().put("partId",part.id).put("name",part.name).put("qty",line.qty).put("price",line.price).put("cost",part.cost).put("currency",part.currency))
-          total=total.add(qty.multiply(sale));costs=costs.add(qty.multiply(part.cost.toBigDecimal()))
+          val costRate=com.alsafa.native8.sales.ExchangeRateSettings(applicationContext).rate(part.currency,"USD")
+          val convertedCost=part.cost.toBigDecimal().multiply(costRate)
+          used.put(JSONObject().put("partId",part.id).put("name",part.name).put("qty",line.qty).put("price",line.price).put("cost",convertedCost.toPlainString()).put("currency","USD")
+           .put("costSnapshotVerified",true).put("sourceUnitCost",part.cost)
+           .put("sourceCostCurrency",part.currency).put("costExchangeRate",costRate.toPlainString()))
+          total=total.add(qty.multiply(sale));costs=costs.add(qty.multiply(convertedCost))
          }
          val current=db.maintenanceDao().repair(id) ?: error("لم تحفظ الفاتورة")
          val changed=JSONObject(current.original_json).apply { put("usedParts",used);put("partsTotal",total.toPlainString());put("partsCost",costs.toPlainString()) }

@@ -4,13 +4,14 @@ import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.ZoneId
 
-/** Partial read-only operational projection; not a complete profit statement. */
+/** Complete only when every original/operational source is covered and disjoint. Read-only. */
 class UnifiedFinancialPeriodRepository(
  private val sales:SalesFinancialAuditDao,
  private val expenses:UnifiedExpensePartnerReadRepository,
  private val businessZone:ZoneId,
  private val store:StoreSaleProfitDao?=null,
- private val historical:LegacyHistoricalProfitProjection?=null
+ private val historical:LegacyHistoricalProfitProjection?=null,
+ private val maintenance:NativeMaintenanceProfitRepository?=null
 ) {
  data class Result(
   val saleProfit:BigDecimal,
@@ -24,7 +25,9 @@ class UnifiedFinancialPeriodRepository(
   val historicalStoreProfit:BigDecimal=BigDecimal.ZERO,
   val unresolvedHistorical:List<String> = emptyList(),
   val historicalSaleReturnImpact:BigDecimal=BigDecimal.ZERO,
-  val historicalSalesIncluded:Boolean=false
+  val historicalSalesIncluded:Boolean=false,
+  val maintenanceProfit:BigDecimal=BigDecimal.ZERO,
+  val maintenanceReturnImpact:BigDecimal=BigDecimal.ZERO
  ) {
   fun approvedNet():BigDecimal {
    check(complete) { "Incomplete financial sources: do not publish profit" }
@@ -36,8 +39,17 @@ class UnifiedFinancialPeriodRepository(
     partner.id to net.multiply(BigDecimal(partner.share)).divide(BigDecimal(100))
    }
   }
-  fun approvedPartnerBalances():Map<String,BigDecimal> =
-   approvedPartnerShares().mapValues { (id,share) -> share-(withdrawals[id] ?: BigDecimal.ZERO) }
+
+ }
+ data class Statement(val from:String,val to:String,val period:Result,val cumulative:Result) {
+  val unresolved get()=(period.unresolvedHistorical+cumulative.unresolvedHistorical).distinct()
+  fun partners():List<PartnerFinancialStatement.Row> = PartnerFinancialStatement.calculate(
+   period.approvedNet(),cumulative.approvedNet(),period.withdrawals,cumulative.withdrawals)
+ }
+ suspend fun statement(from:String,to:String):Statement {
+  val period=read(from,to)
+  val cumulative=if(from=="0001-01-01") period else read("0001-01-01",to)
+  return Statement(from,to,period,cumulative)
  }
  suspend fun read(from:String,to:String):Result {
   val first=LocalDate.parse(from)
@@ -55,26 +67,39 @@ class UnifiedFinancialPeriodRepository(
   val storeDao=requireNotNull(store) { "مستودع أرباح المحل غير موصول؛ لا يمكن عرض إجمالي جزئي مضلل" }
   val storeProfit=storeDao.inPeriod(start,end).fold(BigDecimal.ZERO) { acc,row -> acc+decimal(row.profit_usd) }
   val storeAdjustments=storeDao.adjustmentsInPeriod(start,end).fold(BigDecimal.ZERO) { acc,row -> acc+decimal(row.profit_delta_usd) }
-  val history=expenses.load(from,to).source
+  val expenseAudit=expenses.load(from,to,allowIncomplete=true)
+  val history=expenseAudit.source
   val expense=history.expenses.fold(BigDecimal.ZERO) { acc,row -> acc+row.money.usd() }
   val withdrawals=LegacyFinancialRules.partners.associate { partner ->
    partner.id to history.withdrawals.filter { it.partnerId==partner.id }
     .fold(BigDecimal.ZERO) { acc,row -> acc+row.money.usd() }
   }
   val old=historical?.read(from,to)
+  val nativeRepairs=maintenance?.read()
   val overlap=old?.saleIds.orEmpty().intersect(sales.operationalSaleIds().toSet())
+  val repairOverlap=old?.repairIds.orEmpty().intersect(nativeRepairs?.ids.orEmpty())
   val includeSales=old!=null && old.salesUnresolved.isEmpty() && overlap.isEmpty()
   val historicalSales=if(includeSales) old!!.storeProfitUsd+old.onlineProfitUsd+old.salesReturnImpactUsd else BigDecimal.ZERO
-  val issues=old?.unresolved.orEmpty()+overlap.map { "Historical/operational sale overlap: $it" }+
-   if(old==null) listOf("Historical projection not connected") else emptyList()
-  // Expenses are already unified above. Never subtract old.expensesUsd again.
-  // This is still a partial statement: maintenance coverage has not been approved.
+  val nativeRepairSummary=nativeRepairs?.let { FinancialSourceReconciliation.summarize(it.audit.events,first,last) }
+  val includeRepairs=old!=null && old.repairUnresolved.isEmpty() && repairOverlap.isEmpty()
+  val repairProfit=(if(includeRepairs) old!!.repairProfitUsd else BigDecimal.ZERO)+
+   (nativeRepairSummary?.repair ?: BigDecimal.ZERO)
+  val repairReturns=if(includeRepairs) old!!.returnImpactUsd-old.salesReturnImpactUsd else BigDecimal.ZERO
+  val issues=(old?.unresolved.orEmpty()+expenseAudit.unresolved+nativeRepairs?.audit?.unresolved.orEmpty()+
+   overlap.map { "Historical/operational sale overlap: $it" }+
+   repairOverlap.map { "Historical/operational repair overlap: $it" }+
+   sales.uncoveredSales(end).map { "Sale without verified profit coverage: $it" }+
+   sales.uncoveredOnlinePayments(end).map { "Online receipt without profit event: $it" }+
+   (if(old==null) listOf("Historical projection not connected") else emptyList())+
+   (if(nativeRepairs==null) listOf("Maintenance projection not connected") else emptyList())).distinct()
+  // Expense history is already included in expenseAudit. Never subtract old.expensesUsd again.
   return Result(profits,reversals,storeSaleProfit=storeProfit,operatingExpenses=expense,
    historicalOnlineProfit=old?.onlineProfitUsd ?: BigDecimal.ZERO,
    historicalStoreProfit=old?.storeProfitUsd ?: BigDecimal.ZERO,
    unresolvedHistorical=issues,
    historicalSaleReturnImpact=old?.salesReturnImpactUsd ?: BigDecimal.ZERO,
-   historicalSalesIncluded=includeSales,
-   withdrawals=withdrawals,partialNet=profits+storeProfit+storeAdjustments-reversals-expense+historicalSales)
+   historicalSalesIncluded=includeSales,complete=issues.isEmpty(),
+   maintenanceProfit=repairProfit,maintenanceReturnImpact=repairReturns,
+   withdrawals=withdrawals,partialNet=profits+storeProfit+storeAdjustments-reversals-expense+historicalSales+repairProfit+repairReturns)
  }
 }

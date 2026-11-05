@@ -256,3 +256,127 @@ Added:
 - Final period/cumulative net, partner statements and balances are not enabled;
   PartnerProfitsActivity remains unchanged and does not publish partial balances.
 - All Android/Room/device validations above remain pending.
+
+
+## 2026-11-06 — maintenance parity, expenses, and cumulative partner statement
+
+Base: `436027f9516ccca803aa391fb6ccac9f0889f1ff`. Changes are confined to
+`native8/`. This section supersedes the earlier pending historical-maintenance,
+expense/withdrawal audit and statement-wiring items, but not Android acceptance.
+
+### Implemented and connected
+- Historical maintenance: one reader follows the supplied main.js
+  `repairReceiptEvents`, `repairReceiptCost`, `repairInvoiceTotal`, and repair-return
+  branch exactly. Uses original aggregate `cost` (already includes parts/manual
+  cost), so parts are not deducted twice. Opening receipt dates and later payment
+  dates are preserved; exchange-difference payments are excluded from receipts
+  because their impact is already in the return. Missing cost/FX/IDs are quarantined.
+- Historical expenses/withdrawals: original IDs, dates/time, amounts/currency,
+  rateSnapshot, categories, methods/vaults and notes remain available as evidence.
+  Duplicate IDs and unknown family partner mappings cannot become zero-valued
+  approved entries. Declared external partners are excluded from the current split.
+- New maintenance: selection now converts part cost to invoice currency and stores
+  its source currency/cost/rate. Delivery pins the aggregate parts/manual cost,
+  tax and FX snapshot in existing JSON within the existing Room transaction.
+  No additional stock deduction or cash posting was added.
+- New maintenance reads recognize delivery on deliveredDate and validate invoice
+  credit, currency, parts/labour/tax total, original cost evidence, Room-vs-JSON
+  consistency, and actual posted cash totals per currency. Older delivered records
+  without trustworthy part-cost/FX evidence are quarantined; they are not rewritten.
+  Existing no-parts, explicit-zero-cost USD deliveries can be read without inventing FX.
+- UnifiedFinancialPeriodRepository now includes historical and new maintenance,
+  sales, sales/repair return effects, and expenses exactly once. Withdrawals never
+  reduce operating profit. Completeness requires no unresolved sources, no ID
+  overlaps, and no unclassified/missing-profit operational invoices or receipts.
+- FinancialReviewActivity invokes the complete repository and reports either net
+  profit or an explicitly unapproved subtotal. Removed stale diagnostics that
+  claimed maintenance was disconnected. No new review page or replacement layout.
+- PartnerProfitsActivity's existing button opens a period-selection dialog. It
+  reads the selected period and ALL history through the selected end date within
+  one Room read transaction, checking that the staging run did not change.
+  Displays period profit, cumulative profit, period/cumulative withdrawals and
+  remaining due for father 40%, me 35%, brother 25%. Unresolved data prevents
+  publishing final entitlements. No month-only balance is presented as cumulative.
+- Reused the exact Tajawal-Medium.ttf from the authorized original source archive.
+  Partner page remains RTL with vertical scrolling and system-bar insets.
+- No schema version change, destructive migration, historical ledger replay,
+  deletion of trial invoices, current-balance rewrite, or external partner split.
+
+### Executed numerical validation
+Original source fixture (not current tablet totals):
+- 111 sales / 114 sales events from the previous batch remain matched.
+- 308 repairs -> 298 original receipt events plus 1 repair return, matched against
+  the executed original JavaScript functions, including event IDs/dates/revenue/cost.
+- All 22 expenses and 72 family withdrawals match original IDs, FX, dates and partners.
+- Historical repair profit: 683.5455536388455 USD (2026-09-22 through 2026-10-25).
+- Historical repair return: -1.6528925619834711 USD (2026-09-30).
+- Operating expenses: 113.59970853380392 USD.
+- Cumulative withdrawals: 824.2727566839094 USD.
+- Combined historical net through 2026-10-26: 3297.83336318795237672 USD,
+  within 0.00000001 USD of the original JavaScript financial components.
+
+Historical-only cumulative comparison (current Native 8 entries are NOT in this fixture):
+| Partner | Earned USD | Withdrawn USD | Due USD |
+| --- | ---: | ---: | ---: |
+| Father 40% | 1319.133345275181 | 338.008152646067 | 981.125192629114 |
+| Abdul-Karim 35% | 1154.241677115783 | 404.868282106750 | 749.373395009033 |
+| Yazan 25% | 824.458340796988 | 81.396321931092 | 743.062018865896 |
+
+### Tests and limits
+- Focused standalone Kotlin/JUnit financial suite: **59 tests passed** (Kotlin
+  compiler 2.2.0, JUnit 4.13.2, real org.json and Room annotation jars).
+  Includes original sales/maintenance/expense/withdrawal parity, full historical
+  net and cumulative partner due, period-vs-cumulative separation, losses,
+  tax-on-delivery, duplicated reads/IDs, missing cost/FX/receipts and external exclusion.
+- An initial test compared BigDecimal scale rather than numeric value (40.00 vs
+  40.0); corrected the assertion and reran successfully. No final failed JVM tests.
+- Changed financial repositories/DAOs type-checked with a compile-only staging
+  boundary. This is NOT Android, Room-generated DAO, or UI runtime verification.
+- SQLite execution of the actual coverage SQL passed for missing store profit,
+  missing online receipt profit, unclassified invoices and date cutoff.
+- `git diff --check` passed.
+- Gradle `testDebugUnitTest` was attempted; it failed before project compilation
+  while downloading Gradle 9.8.2 (`Network is unreachable`).
+- Full Gradle/APK build, Room instrumentation/migrations, actual restore, live
+  cash/stock preservation and Honor Pad visual/interaction acceptance remain unexecuted.
+
+### Remaining acceptance / unsupported workflows
+- Verify the new period dialog and complete statement on the actual restored tablet.
+  Current tablet Native 8 entries were not available for numerical comparison.
+- Any already-delivered native repair with ambiguous part-cost currency or missing
+  FX remains blocked for review. The code does not retrofit today's rates or catalog
+  costs into a historical delivery. Pending old drafts with unverified parts must
+  reselect the parts before delivery so costs can be pinned prospectively.
+- Creating NEW maintenance return/exchange transactions is not implemented by this
+  financial-integration batch; the current maintenance module has no corresponding
+  persisted operational return stream. Original historical returns are covered.
+  Unrepresented native refunds fail cash-evidence reconciliation rather than being
+  assigned an invented profit reversal.
+- Do not describe all financial/maintenance workflows as device-validated or the
+  entire application as complete based on these JVM results.
+
+### Files in this batch
+- Added: `app/src/main/assets/fonts/Tajawal-Medium.ttf`
+- Added: `app/src/main/java/com/alsafa/native8/sales/LegacyExpenseWithdrawalReader.kt`
+- Added: `app/src/main/java/com/alsafa/native8/sales/LegacyMaintenanceProfitReader.kt`
+- Added: `app/src/main/java/com/alsafa/native8/sales/NativeMaintenanceProfitReader.kt`
+- Added: `app/src/main/java/com/alsafa/native8/sales/NativeMaintenanceProfitRepository.kt`
+- Added: `app/src/main/java/com/alsafa/native8/sales/PartnerFinancialStatement.kt`
+- Added: `app/src/test/java/com/alsafa/native8/sales/LegacyMaintenanceProfitReaderTest.kt`
+- Added: `app/src/test/java/com/alsafa/native8/sales/NativeMaintenanceProfitReaderTest.kt`
+- Added: `app/src/test/java/com/alsafa/native8/sales/OriginalFinancialStatementParityTest.kt`
+- Added: `app/src/test/java/com/alsafa/native8/sales/PartnerFinancialStatementTest.kt`
+- Added: `app/src/test/resources/historical-finance-v359.json`
+- Added: `tools/extract_historical_finance_fixture.cjs`
+- Modified: `app/src/main/java/com/alsafa/native8/maintenance/MaintenanceDao.kt`
+- Modified: `app/src/main/java/com/alsafa/native8/maintenance/MaintenanceDeliveryRepository.kt`
+- Modified: `app/src/main/java/com/alsafa/native8/maintenance/MaintenanceIntakeActivity.kt`
+- Modified: `app/src/main/java/com/alsafa/native8/maintenance/MaintenancePartsRepository.kt`
+- Modified: `app/src/main/java/com/alsafa/native8/sales/FinancialReviewActivity.kt`
+- Modified: `app/src/main/java/com/alsafa/native8/sales/LegacyHistoricalProfitProjection.kt`
+- Modified: `app/src/main/java/com/alsafa/native8/sales/PartnerProfitsActivity.kt`
+- Modified: `app/src/main/java/com/alsafa/native8/sales/SalesFinancialAuditDao.kt`
+- Modified: `app/src/main/java/com/alsafa/native8/sales/UnifiedExpensePartnerReadRepository.kt`
+- Modified: `app/src/main/java/com/alsafa/native8/sales/UnifiedFinancialPeriodRepository.kt`
+- Modified: `tools/run_financial_junit.py`
+- Modified: `FINANCIAL_INTEGRATION_BATCH_REPORT.md`

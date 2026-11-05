@@ -7,6 +7,9 @@ import androidx.room.Query
 
 @Dao
 interface MaintenanceDao {
+ @Query("SELECT * FROM maintenance_repairs WHERE source_sha256='native8' ORDER BY created_at,id")
+ suspend fun nativeFinancialRecords():List<MaintenanceRepairEntity>
+
  @Query("SELECT * FROM maintenance_repairs WHERE status='تم التسليم' ORDER BY delivered_date,invoice_number")
  suspend fun allDelivered():List<MaintenanceRepairEntity>
 

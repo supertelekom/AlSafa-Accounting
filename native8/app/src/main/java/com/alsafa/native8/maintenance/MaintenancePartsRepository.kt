@@ -63,10 +63,14 @@ class MaintenancePartsRepository(private val db: AppDatabase) {
    val qty=integer(line.qty);require(qty>BigDecimal.ZERO) { "الكمية يجب أن تكون أكبر من صفر" }
    require(qty<=integer(part.stock)) { "الكمية غير متوفرة: ${part.name}" }
    val price=nonnegative(line.price)
-   val cost=nonnegative(part.cost)
+   val originalCost=nonnegative(part.cost)
+   val costRate=com.alsafa.native8.sales.ExchangeRateSettings(AppDatabase.cashContext()).rate(part.currency,repair.currency)
+   val cost=originalCost.multiply(costRate)
    used.put(JSONObject().put("partId",part.id).put("name",part.name).put("category",part.category)
     .put("barcode",part.barcode).put("qty",canonical(qty)).put("price",canonical(price))
-    .put("cost",canonical(cost)).put("currency",repair.currency))
+    .put("cost",canonical(cost)).put("currency",repair.currency)
+    .put("costSnapshotVerified",true).put("sourceUnitCost",part.cost)
+    .put("sourceCostCurrency",part.currency).put("costExchangeRate",canonical(costRate)))
    total=total.add(qty.multiply(price));costTotal=costTotal.add(qty.multiply(cost))
   }
   old.put("usedParts",used);old.put("partsTotal",canonical(total));old.put("partsCost",canonical(costTotal))

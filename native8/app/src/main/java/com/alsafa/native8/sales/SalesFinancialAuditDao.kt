@@ -7,6 +7,11 @@ import androidx.room.Query
 
 @Dao
 interface SalesFinancialAuditDao {
+ @Query("SELECT s.id FROM sales s LEFT JOIN store_sale_profit_events e ON e.sale_id=s.id WHERE s.created_at<:untilExclusive AND (s.channel IS NULL OR s.channel NOT IN ('store','online') OR (s.channel='store' AND e.sale_id IS NULL))")
+ suspend fun uncoveredSales(untilExclusive:Long):List<String>
+ @Query("SELECT p.id FROM sale_payments p INNER JOIN sales s ON s.id=p.sale_id LEFT JOIN sale_profit_events e ON e.payment_id=p.id WHERE s.channel='online' AND p.created_at<:untilExclusive AND e.payment_id IS NULL")
+ suspend fun uncoveredOnlinePayments(untilExclusive:Long):List<String>
+
  @Query("SELECT id FROM sales")
  suspend fun operationalSaleIds():List<String>
 

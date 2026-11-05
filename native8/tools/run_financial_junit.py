@@ -17,9 +17,9 @@ test = root / 'app/src/test/java/com/alsafa/native8/sales'
 names = ['LegacyHistoricalSalesProfitReader', 'LegacySaleEntity', 'LegacySaleChannel',
          'SalesChannelProfit', 'LegacyFinancialExchange', 'FinancialSourceReconciliation',
          'LegacyFinancialRules', 'CumulativePartnerProfit', 'VerifiedFinancialConsolidation',
-         'VerifiedFinancialEventAdapters']
+         'VerifiedFinancialEventAdapters', 'LegacyMaintenanceProfitReader', 'LegacyExpenseWithdrawalReader', 'NativeMaintenanceProfitReader', 'PartnerFinancialStatement']
 tests = [n + 'Test' for n in names if (test / (n + 'Test.kt')).exists()]
-tests += ['LegacyFinancialSourceParityTest']
+tests += ['LegacyFinancialSourceParityTest', 'OriginalFinancialStatementParityTest']
 with tempfile.TemporaryDirectory(prefix='alsafa-financial-junit-') as output:
     subprocess.run(['java', '-cp', classpath, 'org.jetbrains.kotlin.cli.jvm.K2JVMCompiler',
                     '-no-stdlib', '-no-reflect', '-classpath', classpath, '-d', output]

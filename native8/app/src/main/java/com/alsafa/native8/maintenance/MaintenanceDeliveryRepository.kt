@@ -28,7 +28,12 @@ class MaintenanceDeliveryRepository(private val db:AppDatabase, context:Context)
   val repair=dao.repair(id) ?: error("فاتورة الصيانة غير موجودة")
   require(repair.source_sha256=="native8" && repair.status!="تم التسليم") { "تم تسليم الصيانة مسبقاً أو السجل تاريخي" }
   require(repair.status=="جاهز للاستلام") { "يجب تجهيز الصيانة قبل تسليمها" }
-  val raw=JSONObject(repair.original_json)
+  val rateSnapshot=JSONObject().put("USD",1)
+   .put("TRY",exchangeRates.rate("USD","TRY").toPlainString())
+   .put("SYP",exchangeRates.rate("USD","SYP").toPlainString())
+   .put("TRY_SYP",exchangeRates.rate("TRY","SYP").toPlainString())
+  val raw=com.alsafa.native8.sales.NativeMaintenanceProfitReader.snapshot(
+   JSONObject(repair.original_json),repair.currency,rateSnapshot)
   require(!raw.optBoolean("partsStockApplied",false)) { "مخزون القطع خُصم مسبقاً" }
   val lines=raw.optJSONArray("usedParts") ?: JSONArray()
   val labor=amount(raw.optString("laborPrice",raw.optString("price","0")))
@@ -36,7 +41,11 @@ class MaintenanceDeliveryRepository(private val db:AppDatabase, context:Context)
    val line=lines.getJSONObject(i)
    sum+amount(line.optString("qty","0"))*amount(line.optString("price","0"))
   }
-  val total=labor+partsTotal
+  val taxRate=amount(raw.optString("taxRate","0"))
+  require(taxRate>=BigDecimal.ZERO)
+  val tax=(labor+partsTotal).multiply(taxRate).divide(BigDecimal(100))
+  val total=labor+partsTotal+tax
+  raw.put("tax",fmt(tax))
   require(total>=BigDecimal.ZERO) { "الإجمالي غير صحيح" }
   require(payments.size==1) { "اختر مبلغاً وصندوقاً وعملة واحدة" }
   val prepared=payments.map { payment ->
