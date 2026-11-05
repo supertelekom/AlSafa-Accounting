@@ -86,6 +86,15 @@ class RoomSalesEngine(private val context: Context) {
             stock.adjust(line.productSource, line.productId, line.variantId,
                 line.quantity.negate().toPlainString(), "بيع فاتورة $number")
         }
+        if (draft.channel == SalesChannelClassification.STORE) {
+            val cost = draft.lines.fold(BigDecimal.ZERO) { sum,line ->
+                sum + line.quantity * line.unitCost
+            }
+            db.storeSaleProfitDao().insert(StoreSaleProfitEvent(
+                id, now, totals.net.toPlainString(), cost.toPlainString(),
+                (totals.net - cost).toPlainString()
+            ))
+        }
         for (payment in draft.payments) {
             val paymentId = UUID.randomUUID().toString()
             payments.insertPayment(RoomSalePayment(paymentId, id, payment.cashbox,
