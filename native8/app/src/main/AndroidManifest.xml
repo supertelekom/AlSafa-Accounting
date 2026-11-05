@@ -27,6 +27,7 @@
         <activity android:name=".sales.SalePaymentsActivity" android:exported="false" />
         <activity android:name=".sales.SaleDetailsActivity" android:exported="false" />
         <activity android:name=".sales.SaleReturnsActivity" android:exported="false" />
+        <activity android:name=".sales.FinancialEntryActivity" android:exported="false" />
         <activity android:name=".sales.FinancialReviewActivity" android:exported="false" />
         <activity android:name=".sales.SalePrintActivity" android:exported="false" />
         <activity android:name=".ProductStockActivity" android:exported="false" />
