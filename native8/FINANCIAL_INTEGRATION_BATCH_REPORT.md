@@ -137,3 +137,10 @@ Files added:
 - Neither screen inherits FinancialEntryActivity. The unused shared activity is unregistered from the Android manifest; its source remains for now and must not be used by navigation.
 - Both continue to call the existing transactional OperationalExpensePartnerRepository, so no database migration or duplicate cash posting was introduced.
 - No Gradle build, UI instrumentation, or tablet test was executed. Original v3.9.359 UI parity and final partner profit display remain outstanding.
+
+## Historical expenses and partner withdrawals UI integration
+- Backup schema audit for 2026-10-26 v3.9.359 lists 22 expenses and 72 partnerWithdrawals, each carrying original date, currency, amount and rateSnapshot. These are source counts, not validated USD totals.
+- PartnerProfitsActivity now calls UnifiedExpensePartnerReadRepository for imported and new withdrawals and shows cumulative withdrawals by current family partner ID. It does not invent cumulative profit or approve balances.
+- ExpenseActivity now calls the same read-only union and displays historical/new expense counts and converted total. It does not repost old cash movements.
+- Important pending verification: compare actual original partner IDs, legacy rates and source JS rules with the backup; the reader currently excludes non-family partner IDs and throws for missing non-USD snapshots.
+- Build and Android tests not run. Financial partner profit is NOT closed.
