@@ -103,3 +103,9 @@ Files added:
 - Added VerifiedFinancialEventAdaptersTest.kt with historical TRY conversion, online receipt date, repair/expense/return net and missing-ID checks.
 - Added no financial ledger writes, no stock movements and no cashbox postings.
 - **Still not complete:** Source event extraction from original imported invoice JSON, archived payment history, repairs and original cost/FX remains to be implemented and verified. Final profit and partner reports are not enabled. Tests are authored but not executed.
+
+## Historical source inventory batch
+- Added LegacyPaymentEventAudit.kt: pages through original imported payment rows, retains stable import-run/ordinal keys, validates date, amount, currency and invoice reference, and reports unresolved records without inventing FX or posting cash.
+- Added LegacyFinancialSourceAudit.kt: source-run counts for sales, payments, repairs, expenses and partner withdrawals, plus dated sale-payment coverage.
+- Neither audit implies historical profit correctness or enables final partner distribution.
+- Pending: source-specific extraction of item COGS, FX snapshots, online receipts and returns; repair delivery costs; source-JS numerical parity; JUnit/Gradle and tablet verification.
