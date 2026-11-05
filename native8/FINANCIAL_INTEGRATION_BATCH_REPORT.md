@@ -84,3 +84,16 @@ Branch: native6-development. Changes restricted to native8/.
 - OnlineCapitalReportTest covers cost without payment, partial collection and negative-cost rejection.
 - Historical invoice profit, imported receipt FX, repair collections/parts, legacy expenses and cumulative partner dues remain unverified and are NOT silently included in an approved net.
 - No local Gradle/Room/Android device build was run.
+
+## Strict historical/repair/expense/partner consolidation foundation — 2026-11-05
+Files added:
+- FinancialSourceReconciliation.kt: immutable dated source-keyed events, duplicate-event rejection, store/online/repair/return/expense totals.
+- CumulativePartnerProfit.kt: 40/35/25 cumulative earned share minus dated withdrawals, not an operating expense.
+- VerifiedFinancialConsolidation.kt: blocks publishing final net/partner statement until all six streams are source-verified and cumulative net is supplied.
+- FinancialSourceReconciliationTest.kt and VerifiedFinancialConsolidationTest.kt: arithmetic and fail-closed test cases.
+
+**Not complete / do not approve**:
+- No verified historical event extractor for archived item COGS, discounts, historical FX, returns, or online payment dates has been connected. The original main.js is not present in the checked-out repository tree; source-parity against it must be established from the provided original source.
+- Repair delivery/receipt/parts records have not been reconciled to source events.
+- Existing UnifiedExpensePartnerReadRepository can read legacy+new expenses/withdrawals, but it has not yet been integrated into a verified all-time source statement.
+- No operational ledger writes or historical corrections were performed; no Gradle/Room/device tests were executed. New unit tests are authored, not claimed passing.
