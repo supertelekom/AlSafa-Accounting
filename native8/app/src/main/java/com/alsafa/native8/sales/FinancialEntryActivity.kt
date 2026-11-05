@@ -44,6 +44,12 @@ class FinancialEntryActivity:Activity() {
   val amount=field("المبلغ")
   val currency=choose("العملة",listOf("USD","TRY","SYP"))
   val usdRate=field("قيمة وحدة العملة بالدولار (سعر الصرف وقت العملية)","1")
+  currency.onItemSelectedListener=object:android.widget.AdapterView.OnItemSelectedListener {
+   override fun onNothingSelected(parent:android.widget.AdapterView<*>?) {}
+   override fun onItemSelected(parent:android.widget.AdapterView<*>?,view:View?,position:Int,id:Long) {
+    usdRate.setText(if(position==0) "1" else "")
+   }
+  }
   val vault=choose("الخزنة",listOf("الدرج","الصندوق الخارجي","شام كاش","البنك")+
    if(expenseMode) listOf("دون خزنة") else emptyList())
   val notes=field("ملاحظات")
