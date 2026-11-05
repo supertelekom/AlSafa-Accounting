@@ -61,17 +61,34 @@ class FinancialReviewActivity:Activity() {
   }
   val checkSources=Button(this).apply { text="فحص مصادر الأرباح" }
   val refresh=Button(this).apply { text="عرض مراجعة الأرباح" }
-  listOf(title,warning,from,to,refresh,result,showDetails,detail,checkSources,sourceStatus).forEach {
+  // The title and date controls are fixed outside the scroll area, so Android
+  // cannot scroll them offscreen when an EditText receives focus.
+  val screen=LinearLayout(this).apply {
+   orientation=LinearLayout.VERTICAL
+   layoutDirection=View.LAYOUT_DIRECTION_RTL
+   setPadding(16,16,16,16)
+   isFocusableInTouchMode=true
+  }
+  val header=LinearLayout(this).apply {
+   orientation=LinearLayout.VERTICAL
+   layoutDirection=View.LAYOUT_DIRECTION_RTL
+  }
+  listOf(title,warning,from,to,refresh).forEach {
+   header.addView(it,LinearLayout.LayoutParams(-1,-2))
+  }
+  screen.addView(header,LinearLayout.LayoutParams(-1,-2))
+  listOf(result,showDetails,detail,checkSources,sourceStatus).forEach {
    root.addView(it,LinearLayout.LayoutParams(-1,-2))
   }
   val scroll=ScrollView(this).apply {
    isFillViewport=false
    isHorizontalScrollBarEnabled=false
+   isVerticalScrollBarEnabled=true
    addView(root,android.widget.FrameLayout.LayoutParams(-1,-2))
   }
-  setContentView(scroll)
-  root.requestFocus()
-  scroll.post { scroll.scrollTo(0,0) }
+  screen.addView(scroll,LinearLayout.LayoutParams(-1,0,1f))
+  setContentView(screen)
+  screen.requestFocus()
   checkSources.setOnClickListener {
    sourceStatus.visibility=View.VISIBLE
    checkSources.isEnabled=false
