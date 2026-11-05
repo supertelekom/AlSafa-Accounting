@@ -48,3 +48,9 @@ Branch: native6-development. Changes restricted to native8/.
 - UnifiedFinancialPeriodRepository now includes store profits in partialNet and refuses to read when StoreSaleProfitDao was not supplied; complete remains false and approvedNet remains blocked.
 - **SAFETY BLOCK / NOT COMPLETE**: STORE returns, cancellation and unpaid corrections are currently rejected until a proper source-aligned store profit reversal and adjustment journal is implemented. This is deliberately safer than silently overstating profit. ONLINE return/cancel logic remains unchanged.
 - **IMPORTANT**: legacy sale archives, repair receipt events and full source-aligned tax/discount/FX reconciliation have not yet been integrated into the unified period; existing historical sales and older Room invoices must be audited before approval. No Gradle, Room migration or device tests were run.
+
+## Restored store invoice operations
+- Paid STORE cancellation no longer has the temporary blanket block. It reuses the existing cash-refund and stock restoration transaction, and appends a store-profit compensation for remaining recognized margin. It does not create online collection-profit reversals for STORE payments.
+- Unpaid STORE line corrections now append a profit delta when their original store profit matches the invoice and there are no prior adjustments. Other previously adjusted cases still require reconciliation.
+- **NOT VERIFIED:** These paths have not been run under Gradle or instrumented Room. Validate mixed-currency refund allocation, partial returns, preexisting refunds, and idempotency on a disposable database.
+- The full financial source union, historical repairs, legacy online receipts, original expense/partner reports, and final screen integration are still outstanding; the financial review screen remains explicitly partial.
