@@ -41,6 +41,7 @@ class UnifiedFinancialPeriodRepository(
   val start=window.startInclusive
   val end=window.endExclusive
   fun decimal(s:String)=s.toBigDecimal()
+  check(sales.nonOnlineProfitEventCount()==0) { "توجد قيود أرباح تحصيل مرتبطة ببيع محل أو فاتورة غير مصنفة؛ يلزم التدقيق قبل تجميع الأرباح" }
   val profits=sales.profitEventsInPeriod(start,end)
    .fold(BigDecimal.ZERO) { acc,row -> acc+decimal(row.recognized_profit) }
   val reversals=sales.profitReversalsInPeriod(start,end)
