@@ -7,6 +7,9 @@ import androidx.room.Query
 
 @Dao
 interface SalesFinancialAuditDao {
+ @Query("SELECT * FROM sale_profit_events WHERE payment_id=:paymentId LIMIT 1")
+ suspend fun profitForPayment(paymentId:String):SaleProfitEvent?
+
  @Query("SELECT * FROM sale_profit_events WHERE collected_at>=:fromMillis AND collected_at<:untilExclusive ORDER BY collected_at,payment_id")
  suspend fun profitEventsInPeriod(fromMillis:Long,untilExclusive:Long):List<SaleProfitEvent>
  @Query("SELECT * FROM sale_profit_reversals WHERE reversed_at>=:fromMillis AND reversed_at<:untilExclusive ORDER BY reversed_at,id")
