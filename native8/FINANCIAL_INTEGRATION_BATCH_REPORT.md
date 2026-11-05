@@ -144,3 +144,10 @@ Files added:
 - ExpenseActivity now calls the same read-only union and displays historical/new expense counts and converted total. It does not repost old cash movements.
 - Important pending verification: compare actual original partner IDs, legacy rates and source JS rules with the backup; the reader currently excludes non-family partner IDs and throws for missing non-USD snapshots.
 - Build and Android tests not run. Financial partner profit is NOT closed.
+
+## Original v3.9.359 source and backup financial extraction
+- Inspected actual assets/main.js in the original source archive and 2026-10-26 backup. Backup contains 111 sales, 308 repairs, 22 expenses, 72 partner withdrawals, 36 payments, and 4 returns.
+- main.js grossProfitUsdForRange uses saleCost=sum(item.cost*qty), store total minus tax, repairReceiptEvents on original repair date plus later payment dates, proportional repairReceiptCost, return adjustment and expense subtraction. Cash reconciliation is excluded from profit.
+- Added LegacyHistoricalProfitProjection.kt: read-only staging extraction of historical store margin, repair receipt margin, returns, expenses and partner withdrawals with source date and FX snapshots. Added a provisional audit display in PartnerProfitsActivity.
+- CRITICAL: This is an audit projection, not final source parity. Repair parts invoice totals and refunds must be compared line-by-line with source; online opening receipt reconstruction must reproduce immutable cash income rows and explicit payments; historical rate snapshots and ambiguous records must be reconciled. No source profit may be approved from partial totals.
+- No ledger writes, no stock writes, no partner distributions. No Gradle build or test execution was performed.
