@@ -7,6 +7,8 @@ import android.widget.*
 import kotlinx.coroutines.*
 import java.time.LocalDate
 import java.time.LocalTime
+import com.alsafa.native8.data.migration.LegacyStagingDatabase
+import com.alsafa.native8.data.migration.LegacyReadRepository
 import java.util.UUID
 
 /**
@@ -94,9 +96,19 @@ class ExpenseActivity:Activity() {
       val dao=AppDatabase.get(applicationContext).operationalExpensePartnerDao()
       val from="0001-01-01"
       val until="9999-12-31"
-      dao.expenses(from,until).joinToString("\n") {
-       "${it.date} | ${it.category} | ${it.amount} ${it.currency} | ${it.payment_method}"
+      val staging=LegacyStagingDatabase(applicationContext)
+      val summary=try {
+       UnifiedExpensePartnerReadRepository(LegacyReadRepository(staging),dao)
+        .load(from,LocalDate.now().toString())
+      } finally { staging.close() }
+      val historicalUsd=summary.source.expenses.fold(java.math.BigDecimal.ZERO) { sum,e ->
+       sum+e.money.usd()
       }
+      "مصاريف قديمة: ${summary.legacyExpenses} | جديدة: ${summary.operationalExpenses}\n"+
+       "إجمالي المصاريف المقروءة: ${historicalUsd.stripTrailingZeros().toPlainString()} USD\n"+
+       dao.expenses(from,until).joinToString("\n") {
+        "${it.date} | ${it.category} | ${it.amount} ${it.currency} | ${it.payment_method}"
+       }
      }.ifBlank { "لا توجد عمليات جديدة" }
     } catch(e:Exception) { history.text=e.message ?: "تعذر عرض السجلات" }
     finally { showHistory.isEnabled=true }
