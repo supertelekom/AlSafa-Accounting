@@ -144,11 +144,11 @@ class FinancialReviewActivity:Activity() {
        BigDecimal(archived.storeInvoices),BigDecimal(archived.onlineInvoices),
        BigDecimal(archived.unresolvedIds.size),storeRevenue,storeCapital)
      }
-     result.text="مبيعات المحل الجديدة بعد الخصومات: ${data[8]} USD\\n"+
-      "رأس مال الساعات المباعة الجديدة: ${data[9]} USD\\n"+
-      "فواتير المحل التاريخية في الفترة: ${data[5].toPlainString()} (ربحها قيد المطابقة)\\n"+
-      "فواتير الأونلاين التاريخية في الفترة: ${data[6].toPlainString()} (تحصيلاتها قيد المطابقة)\\n"+
-      "فواتير تاريخية تحتاج مراجعة التصنيف: ${data[7].toPlainString()}\\n"+
+     result.text="مبيعات المحل الجديدة بعد الخصومات: ${data[8]} USD\n"+
+      "رأس مال الساعات المباعة الجديدة: ${data[9]} USD\n"+
+      "فواتير المحل التاريخية في الفترة: ${data[5].toPlainString()} (ربحها قيد المطابقة)\n"+
+      "فواتير الأونلاين التاريخية في الفترة: ${data[6].toPlainString()} (تحصيلاتها قيد المطابقة)\n"+
+      "فواتير تاريخية تحتاج مراجعة التصنيف: ${data[7].toPlainString()}\n"+
       "ربح فواتير المحل الجديدة: ${data[0]} USD\n"+
       "تسويات ربح المحل: ${data[1]} USD\n"+
       "أرباح تحصيلات الأونلاين الجديدة: ${data[2]} USD\n"+
