@@ -151,3 +151,11 @@ Files added:
 - Added LegacyHistoricalProfitProjection.kt: read-only staging extraction of historical store margin, repair receipt margin, returns, expenses and partner withdrawals with source date and FX snapshots. Added a provisional audit display in PartnerProfitsActivity.
 - CRITICAL: This is an audit projection, not final source parity. Repair parts invoice totals and refunds must be compared line-by-line with source; online opening receipt reconstruction must reproduce immutable cash income rows and explicit payments; historical rate snapshots and ambiguous records must be reconciled. No source profit may be approved from partial totals.
 - No ledger writes, no stock writes, no partner distributions. No Gradle build or test execution was performed.
+
+## Historical STORE profit extraction from actual backup (2026-11-06)
+- Inspected original 2026-10-26 v3.9.359 backup: 111 sale records, of which 43 explicitly store, 14 explicitly online and 54 lack saleType. The 54 untyped invoices must not be guessed.
+- Historical invoice items include fundingAllocations with original lot quantity, unitCost and currency. For example a TRY invoice's item.cost can be TRY while its funding lot unitCost is USD; the extractor uses the original funding lot currency, not the display cost.
+- Added LegacySalesEventExtractor.kt: only source-confirmed STORE invoices with reconciliation=confirmed, exact allocated quantities and historical FX snapshots produce read-only dated margin events.
+- FinancialReviewActivity now displays candidate archived STORE margin and cost, plus unresolved count. This is NOT an approved all-source net.
+- Added LegacySalesEventExtractorTest.kt; authored but not executed.
+- Remaining: historical ONLINE receipts, discounts/returns source parity, 54 untyped invoices, repairs, final net and partner balances. No historical ledger writes, no stock deductions or cash postings were performed.
