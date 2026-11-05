@@ -116,3 +116,10 @@ Files added:
 - Stable ID and createdAt retained on retry; no assumed USD=TRY/SYP exchange rate. **Still required**: use the original exchange-rate settings automatically, original expense categories, dates and legacy UI labels. This screen is provisional, not source-design parity.
 - MaintenanceCostAudit created with read-only evidence checks and a unit-test fixture. It does not alter stock and does not claim a historical cost when a verified snapshot is absent.
 - **Incomplete**: maintenance receipt-to-cost matching, maintenance returns and exchanges, original historical repair profit, full expense/partner archive union and final partner balances, source JS parity, Room instrumentation, Gradle build, and device QA.
+
+## Separate financial pages and repair source coverage
+- Created ExpenseActivity and PartnersActivity as separate Android Activities with separate home buttons and manifest declarations. Shared base FinancialEntryActivity retains the existing transactional expense/withdrawal writer; no extra cash postings.
+- Added MaintenanceDao.allDelivered and MaintenanceFinancialCoverage to count historical vs new delivered repairs and distinguish missing original cost/receipt evidence. FinancialReviewActivity now exposes those counts under source diagnostics.
+- The repair margin candidate is **not** an approved net profit: labor cost, source receipt timing, FX, refunds/exchanges and historic cost parity remain to be verified. No profit event is posted by the coverage reader.
+- Partner due totals cannot be finalized until all historical sales/online/maintenance/expense events are reconciled. Do not turn on complete=true or distribute partial profits.
+- New pages are operational prototypes pending original v3.9.359 UI parity. Gradle/Room tests and on-device QA have not been run.
