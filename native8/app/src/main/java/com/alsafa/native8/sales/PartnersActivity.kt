@@ -105,7 +105,8 @@ class PartnersActivity:Activity() {
   }
   var pendingId:String?=null
   var pendingAt:Long?=null
-  save.setOnClickListener {
+  val performConfirmedSave:()->Unit = {
+
    val id=pendingId ?: UUID.randomUUID().toString().also { pendingId=it }
    val createdAt=pendingAt ?: System.currentTimeMillis().also { pendingAt=it }
    save.isEnabled=false
@@ -148,6 +149,31 @@ class PartnersActivity:Activity() {
     }
    }
   }
+  save.setOnClickListener {
+   val entered=amount.text.toString().trim().toBigDecimalOrNull()
+   if(entered==null || entered<=java.math.BigDecimal.ZERO) {
+    status.text="أدخل مبلغاً موجباً صحيحاً"
+    return@setOnClickListener
+   }
+   val unit=currency.selectedItem.toString()
+   val selectedVault=vault.selectedItem.toString()
+   val subject=partner.selectedItem.toString()
+   if(subject.isBlank()) {
+    status.text="اختر الشريك"
+    return@setOnClickListener
+   }
+   val description="هل توافق على سحب " + entered.toPlainString() + " " + unit + " للشريك " + subject + " من " + selectedVault + "؟"
+   android.app.AlertDialog.Builder(this)
+    .setTitle("تأكيد سحب الشريك")
+    .setMessage(description)
+    .setNegativeButton("إلغاء") { dialog,_ -> dialog.dismiss() }
+    .setPositiveButton("موافق") { dialog,_ ->
+     dialog.dismiss()
+     performConfirmedSave.invoke()
+    }
+    .show()
+  }
+
  }
  override fun onDestroy() { scope.cancel();super.onDestroy() }
 }
