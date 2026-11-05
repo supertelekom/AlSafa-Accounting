@@ -66,7 +66,7 @@ class FinancialReviewActivity:Activity() {
   val scroll=ScrollView(this).apply {
    isFillViewport=false
    isHorizontalScrollBarEnabled=false
-   addView(root,ScrollView.LayoutParams(-1,-2))
+   addView(root,android.widget.FrameLayout.LayoutParams(-1,-2))
   }
   setContentView(scroll)
   checkSources.setOnClickListener {
