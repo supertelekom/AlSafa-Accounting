@@ -94,7 +94,10 @@ class LegacyHistoricalProfitProjection(private val legacy:LegacyReadRepository) 
    receiptEvents+=Triple(x.optString("date"),event,amount)
   }
   for((_,record,amount) in receiptEvents) checked("repair-receipt:${record.optString("id")}") {
-   val total=n(record,"price")
+   val total=if(record.isNull("laborPrice")) n(record,"price") else {
+    val base=n(record,"laborPrice")+n(record,"partsTotal")
+    base*(BigDecimal.ONE+n(record,"taxRate").max(BigDecimal.ZERO).divide(BigDecimal(100),mc))
+   }
    require(total>BigDecimal.ZERO) { "Repair invoice total missing" }
    val ratio=amount.divide(total,mc).min(BigDecimal.ONE)
    val net=(total-n(record,"tax"))*amount.divide(total,mc)
