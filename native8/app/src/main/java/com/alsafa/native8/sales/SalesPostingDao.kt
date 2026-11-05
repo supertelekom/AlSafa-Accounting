@@ -8,6 +8,9 @@ import androidx.room.Query
 /** All financial writes are invoked inside AppDatabase.withTransaction. */
 @Dao
 interface SalesPostingDao {
+    @Query("SELECT * FROM sales WHERE channel='online' AND created_at>=:fromMillis AND created_at<:untilExclusive ORDER BY created_at,number")
+    suspend fun onlineInvoicesInPeriod(fromMillis:Long,untilExclusive:Long):List<RoomSale>
+
     @Query("SELECT COALESCE(MAX(number),0) FROM sales")
     suspend fun maxNewNumber(): Long
 
