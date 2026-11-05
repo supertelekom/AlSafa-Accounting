@@ -70,7 +70,7 @@ class FinancialReviewActivity:Activity() {
       reverse.forEach { lines+="عكس تحصيل ${it.sale_id} / ${it.payment_id}: -${it.reversed_profit} USD" }
       lines
      }
-     detail.text=if(rows.isEmpty()) "لا توجد قيود في هذه الفترة" else rows.joinToString("\\n")
+     detail.text=if(rows.isEmpty()) "لا توجد قيود في هذه الفترة" else rows.joinToString("\n")
     } catch(e:Exception) { detail.text="تعذر عرض التفاصيل: "+(e.message ?: "خطأ") }
     finally { showDetails.isEnabled=true }
    }
