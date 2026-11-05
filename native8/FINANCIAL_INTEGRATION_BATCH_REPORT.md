@@ -123,3 +123,10 @@ Files added:
 - The repair margin candidate is **not** an approved net profit: labor cost, source receipt timing, FX, refunds/exchanges and historic cost parity remain to be verified. No profit event is posted by the coverage reader.
 - Partner due totals cannot be finalized until all historical sales/online/maintenance/expense events are reconciled. Do not turn on complete=true or distribute partial profits.
 - New pages are operational prototypes pending original v3.9.359 UI parity. Gradle/Room tests and on-device QA have not been run.
+
+## Expense / partner tablet QA follow-up (2026-11-05)
+- User confirmed expense and family partner withdrawal postings appear once in the selected cashboxes. These were test entries.
+- FinancialEntryActivity no longer exposes manual USD-per-unit FX input. It snapshots ExchangeRateSettings.rate(selectedCurrency,"USD") when Save is tapped and stores the resulting rate in the existing immutable operation record.
+- After successful Room commit, a noncancelable success dialog with "موافق" is shown. Acknowledging it clears amount/notes and leaves the user on the same activity; a new ID is generated for the next entry.
+- Existing recorded test entries are deliberately not rewritten. If TRY/SYP was previously entered with a manual USD-per-unit value of 1, those entries must be inspected before trusting historical USD profit calculations.
+- This commit has not been Gradle-built or tested on-device. No schema changes.
