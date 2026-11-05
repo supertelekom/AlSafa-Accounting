@@ -59,7 +59,9 @@ class FinancialReviewActivity:Activity() {
      val status=withContext(Dispatchers.IO) {
       val db=AppDatabase.get(applicationContext)
       val missing=db.salesPostingDao().unverifiedChannelCount()
+      val suspect=db.salesFinancialAuditDao().nonOnlineProfitEventCount()
       "الفواتير الجديدة غير المصنفة: "+missing+"\\n"+
+       "أحداث ربح قبض تحتاج تدقيق نوع الفاتورة: "+suspect+"\\n"+
        "مبيعات المحل الجديدة: متصلة بجدول الأرباح\\n"+
        "تحصيلات الأونلاين الجديدة: متصلة بقيود القبض\\n"+
        "الأرشيف القديم: لم يُدمج ربحه في هذا التقرير\\n"+
