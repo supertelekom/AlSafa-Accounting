@@ -91,14 +91,22 @@ class PartnersActivity:Activity() {
    scope.launch {
     try {
      history.text=withContext(Dispatchers.IO) {
-      val dao=AppDatabase.get(applicationContext).operationalExpensePartnerDao()
-      val from="0001-01-01"
-      val until="9999-12-31"
-      dao.withdrawals(from,until).joinToString("\n") {
-       val name=when(it.partner_id) {"father"->"الأب";"me"->"عبد الكريم";else->"يزن"}
-       "${it.date} | $name | ${it.amount} ${it.currency}"
-      }
-     }.ifBlank { "لا توجد عمليات جديدة" }
+      val staging=com.alsafa.native8.data.migration.LegacyStagingDatabase(applicationContext)
+      try {
+       val legacy=com.alsafa.native8.data.migration.LegacyReadRepository(staging)
+       val unified=UnifiedExpensePartnerReadRepository(
+        legacy,AppDatabase.get(applicationContext).operationalExpensePartnerDao())
+       val snapshot=unified.load("0001-01-01","9999-12-31")
+       val entries=snapshot.source.withdrawals
+       val names=mapOf("father" to "الأب","me" to "عبد الكريم","brother" to "يزن")
+       val lines=entries.sortedByDescending { it.date }.map { row ->
+        val value=row.money.usd().stripTrailingZeros().toPlainString()
+        "${row.date} | ${names[row.partnerId] ?: row.partnerId} | $value USD"
+       }
+       "السحوبات القديمة: ${snapshot.legacyWithdrawals} | الجديدة: ${snapshot.operationalWithdrawals}\\n"+
+        lines.joinToString("\\n")
+      } finally { staging.close() }
+     }.ifBlank { "لا توجد سحوبات" }
     } catch(e:Exception) { history.text=e.message ?: "تعذر عرض السجلات" }
     finally { showHistory.isEnabled=true }
    }
