@@ -98,7 +98,7 @@ class LegacyHistoricalProfitProjection(private val legacy:LegacyReadRepository) 
      val item=items.getJSONObject(i);sum+n(item,"cost")*n(item,"qty")
     }
    } ?: error("Missing sale items")
-   val net=n(sale,"total")-n(sale,"tax")
+   val net=(n(sale,"total")-n(sale,"tax").max(BigDecimal.ZERO)).max(BigDecimal.ZERO)
    val date=sale.optString("date")
    val payments=allPayments.filter { p ->
     val x=p.fields
@@ -176,7 +176,7 @@ class LegacyHistoricalProfitProjection(private val legacy:LegacyReadRepository) 
    }
    require(total>BigDecimal.ZERO) { "Repair invoice total missing" }
    val ratio=amount.divide(total,mc).min(BigDecimal.ONE)
-   val net=(total-n(record,"tax"))*amount.divide(total,mc)
+   val net=(total-n(record,"tax")).max(BigDecimal.ZERO)*amount.divide(total,mc)
    val cost=n(record,"cost")*ratio
    repair+=usd(net-cost,record)
   }
@@ -198,12 +198,12 @@ class LegacyHistoricalProfitProjection(private val legacy:LegacyReadRepository) 
     val original=repairById[x.optString("referenceId")]
     val taxRate=original?.let { n(it,"taxRate") } ?: BigDecimal.ZERO
     val divisor=BigDecimal.ONE+taxRate.divide(BigDecimal(100),mc)
-    val before=if(x.isNull("costRecognitionBefore")) BigDecimal.ONE else n(x,"costRecognitionBefore")
-    val after=if(x.isNull("costRecognitionAfter")) before else n(x,"costRecognitionAfter")
+    val before=if(x.isNull("costRecognitionBefore")) BigDecimal.ONE else n(x,"costRecognitionBefore").max(BigDecimal.ZERO).min(BigDecimal.ONE)
+    val after=if(x.isNull("costRecognitionAfter")) before else n(x,"costRecognitionAfter").max(BigDecimal.ZERO).min(BigDecimal.ONE)
     (n(x,"extraCollected")-n(x,"refundAmount")).divide(divisor,mc)+
      n(x,"returnedCost")*before-n(x,"replacementCost")*after
    } else {
-    val ratio=if(x.isNull("recognizedRatio")) BigDecimal.ONE else n(x,"recognizedRatio")
+    val ratio=if(x.isNull("recognizedRatio")) BigDecimal.ONE else n(x,"recognizedRatio").max(BigDecimal.ZERO).min(BigDecimal.ONE)
     (n(x,"returnedCost")-n(x,"replacementCost")-credit)*ratio
    }
    returns+=usd(delta,x)
