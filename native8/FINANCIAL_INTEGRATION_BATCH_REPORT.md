@@ -97,3 +97,9 @@ Files added:
 - Repair delivery/receipt/parts records have not been reconciled to source events.
 - Existing UnifiedExpensePartnerReadRepository can read legacy+new expenses/withdrawals, but it has not yet been integrated into a verified all-time source statement.
 - No operational ledger writes or historical corrections were performed; no Gradle/Room/device tests were executed. New unit tests are authored, not claimed passing.
+
+## Verified event adapter batch — 2026-11-05
+- Added VerifiedFinancialEventAdapters.kt for source-ID-keyed, date-specific store invoices, online receipts, repair deliveries, operating expenses and profit adjustments. Historical FX must be supplied explicitly; no current-rate fallback.
+- Added VerifiedFinancialEventAdaptersTest.kt with historical TRY conversion, online receipt date, repair/expense/return net and missing-ID checks.
+- Added no financial ledger writes, no stock movements and no cashbox postings.
+- **Still not complete:** Source event extraction from original imported invoice JSON, archived payment history, repairs and original cost/FX remains to be implemented and verified. Final profit and partner reports are not enabled. Tests are authored but not executed.
