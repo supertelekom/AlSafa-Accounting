@@ -60,3 +60,11 @@ Branch: native6-development. Changes restricted to native8/.
 - Source completeness diagnostics show unverified new invoice count and explicitly identify historical sales, maintenance, expenses and partners as unapproved.
 - No original historical receipts were reposted, no historical invoice was modified, and no profit completeness flag was turned on.
 - Important: these are inspection controls, not final profit reports; tests and build are still pending.
+
+## Financial audit integrity batch — November 5
+- Restored positional Result compatibility for earlier financial tests and callers after storeSaleProfit was introduced.
+- Excluded historical external-partner withdrawals from the family-only partner due projection; operational partner IDs are validated against father/me/brother.
+- Added SalesFinancialAuditDao.nonOnlineProfitEventCount() to identify collection-profit events referencing missing, unclassified or STORE invoices.
+- FinancialReviewActivity source diagnostics now shows suspect event count; UnifiedFinancialPeriodRepository refuses aggregation if any suspect receipt-profit event exists.
+- This is **diagnostic and fail-closed**, not a historical repair. Existing profit event rows were not deleted or rewritten.
+- Outstanding: full legacy source reconciliation, maintenance collections and costs, final report screens, migration tests, Gradle build and actual restored-device parity.
