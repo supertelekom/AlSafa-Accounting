@@ -151,12 +151,14 @@ class LegacyHistoricalProfitProjection(private val legacy:LegacyReadRepository) 
   // on their own dates; original repairReceiptCost is proportional to invoice total.
   val receiptEvents=mutableListOf<Triple<String,JSONObject,BigDecimal>>()
   for(row in repairs) checked("repair:${row.id ?: row.ordinal}") {
+   if(!unique("repairs",row)) return@checked
    val x=row.fields
    val received=n(x,"received")
    if(received>BigDecimal.ZERO && inPeriod(x.optString("date")))
     receiptEvents+=Triple(x.optString("date"),x,received)
   }
-  for(row in pages(run,"payments")) checked("payment:${row.id ?: row.ordinal}") {
+  for(row in allPayments) checked("payment:${row.id ?: row.ordinal}") {
+   if(!unique("repair-payments",row)) return@checked
    val x=row.fields
    if(x.optString("referenceType")!="repair" ||
       x.optString("paymentType")=="repair-exchange-difference" ||
@@ -181,16 +183,19 @@ class LegacyHistoricalProfitProjection(private val legacy:LegacyReadRepository) 
    repair+=usd(net-cost,record)
   }
   for(row in pages(run,"expenses")) checked("expense:${row.id ?: row.ordinal}") {
+   if(!unique("expenses",row)) return@checked
    val x=row.fields
    if(inPeriod(x.optString("date"))) expense+=usd(n(x,"amount"),x)
   }
   for(row in pages(run,"partnerWithdrawals")) checked("withdrawal:${row.id ?: row.ordinal}") {
+   if(!unique("partnerWithdrawals",row)) return@checked
    val x=row.fields
    val id=x.optString("partnerId")
    if(inPeriod(x.optString("date")) && id in setOf("father","me","brother"))
     withdrawals[id]=(withdrawals[id] ?: BigDecimal.ZERO)+usd(n(x,"amount"),x)
   }
   for(row in pages(run,"returns")) checked("return:${row.id ?: row.ordinal}") {
+   if(!unique("returns",row)) return@checked
    val x=row.fields
    if(!inPeriod(x.optString("date"))) return@checked
    val credit=if(x.has("netCreditAmount")) n(x,"netCreditAmount") else n(x,"creditAmount")
