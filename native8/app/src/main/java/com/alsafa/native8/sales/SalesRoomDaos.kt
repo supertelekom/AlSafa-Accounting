@@ -7,7 +7,7 @@ import androidx.room.Query
 
 data class UnifiedSaleRow(
  val id:String,val number:Long,val created_at:Long,val customer:String,
- val phone:String,val total:String,val paid:String,val status:String,val historical:Int
+ val phone:String,val total:String,val paid:String,val status:String,val historical:Int,\n val channel:String?,val original_json:String?
 )
 
 @Dao
@@ -15,12 +15,12 @@ interface LegacySaleDao {
  @Query("SELECT * FROM legacy_sales_archive WHERE created_at>=:fromMillis AND created_at<:untilExclusive ORDER BY created_at,invoice_number")
  suspend fun historicalInPeriod(fromMillis:Long,untilExclusive:Long):List<LegacySaleEntity>
 
- @Query("""SELECT id,number,created_at,customer,phone,total,paid,status,0 AS historical FROM sales
+ @Query("""SELECT id,number,created_at,customer,phone,total,paid,status,0 AS historical,channel,NULL AS original_json FROM sales
  WHERE (customer LIKE '%' || :search || '%' OR phone LIKE '%' || :search || '%'
  OR CAST(number AS TEXT) LIKE '%' || :search || '%') AND created_at BETWEEN :from AND :to
  UNION ALL
  SELECT legacy_id AS id,invoice_number AS number,created_at,customer,phone,total,
- historical_paid AS paid,status,1 AS historical FROM legacy_sales_archive
+ historical_paid AS paid,status,1 AS historical,NULL AS channel,original_json FROM legacy_sales_archive
  WHERE (customer LIKE '%' || :search || '%' OR phone LIKE '%' || :search || '%'
  OR CAST(invoice_number AS TEXT) LIKE '%' || :search || '%') AND created_at BETWEEN :from AND :to
  ORDER BY created_at DESC LIMIT :limit""")
