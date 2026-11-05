@@ -97,14 +97,16 @@ class PartnersActivity:Activity() {
        val unified=UnifiedExpensePartnerReadRepository(
         legacy,AppDatabase.get(applicationContext).operationalExpensePartnerDao())
        val snapshot=unified.load("0001-01-01","9999-12-31")
-       val entries=snapshot.source.withdrawals
-       val names=mapOf("father" to "الأب","me" to "عبد الكريم","brother" to "يزن")
-       val lines=entries.sortedByDescending { it.date }.map { row ->
-        val value=row.money.usd().stripTrailingZeros().toPlainString()
-        "${row.date} | ${names[row.partnerId] ?: row.partnerId} | $value USD"
-       }
-       "السحوبات القديمة: ${snapshot.legacyWithdrawals} | الجديدة: ${snapshot.operationalWithdrawals}\\n"+
-        lines.joinToString("\\n")
+       val old=LegacyFinancialHistoryDisplay.legacy(legacy,"partnerWithdrawals")
+       val fresh=AppDatabase.get(applicationContext).operationalExpensePartnerDao()
+        .withdrawals("0001-01-01","9999-12-31").map { e ->
+         val name=when(e.partner_id) {
+          "father"->"الأب";"me"->"عبد الكريم";"brother"->"يزن";else->e.partner_id
+         }
+         LegacyFinancialHistoryDisplay.Entry(e.date,name,e.amount,e.currency,"","جديد")
+        }
+       "السحوبات القديمة: ${snapshot.legacyWithdrawals} | الجديدة: ${snapshot.operationalWithdrawals}\\n\\n"+
+        LegacyFinancialHistoryDisplay.render(old+fresh)
       } finally { staging.close() }
      }.ifBlank { "لا توجد سحوبات" }
     } catch(e:Exception) { history.text=e.message ?: "تعذر عرض السجلات" }
