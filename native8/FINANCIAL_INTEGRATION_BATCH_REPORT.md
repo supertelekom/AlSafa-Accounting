@@ -54,3 +54,9 @@ Branch: native6-development. Changes restricted to native8/.
 - Unpaid STORE line corrections now append a profit delta when their original store profit matches the invoice and there are no prior adjustments. Other previously adjusted cases still require reconciliation.
 - **NOT VERIFIED:** These paths have not been run under Gradle or instrumented Room. Validate mixed-currency refund allocation, partial returns, preexisting refunds, and idempotency on a disposable database.
 - The full financial source union, historical repairs, legacy online receipts, original expense/partner reports, and final screen integration are still outstanding; the financial review screen remains explicitly partial.
+
+## Visible financial traceability batch
+- FinancialReviewActivity now includes per-invoice/per-payment detail of store profit, store adjustments, online receipt profit and reversals.
+- Source completeness diagnostics show unverified new invoice count and explicitly identify historical sales, maintenance, expenses and partners as unapproved.
+- No original historical receipts were reposted, no historical invoice was modified, and no profit completeness flag was turned on.
+- Important: these are inspection controls, not final profit reports; tests and build are still pending.
