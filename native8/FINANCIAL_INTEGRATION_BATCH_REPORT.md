@@ -109,3 +109,10 @@ Files added:
 - Added LegacyFinancialSourceAudit.kt: source-run counts for sales, payments, repairs, expenses and partner withdrawals, plus dated sale-payment coverage.
 - Neither audit implies historical profit correctness or enables final partner distribution.
 - Pending: source-specific extraction of item COGS, FX snapshots, online receipts and returns; repair delivery costs; source-JS numerical parity; JUnit/Gradle and tablet verification.
+
+## Expense and partner operational screens + maintenance evidence (2026-11-05)
+- FinancialEntryActivity created: two modes (operating expenses and partner withdrawals) with scrollable forms, four cashboxes, currency choice, and new operational history. MainActivity buttons and manifest registration added.
+- Expense/withdrawal save uses OperationalExpensePartnerRepository with Room withTransaction; cashbox movement is not posted twice. Existing historical entries are untouched.
+- Stable ID and createdAt retained on retry; no assumed USD=TRY/SYP exchange rate. **Still required**: use the original exchange-rate settings automatically, original expense categories, dates and legacy UI labels. This screen is provisional, not source-design parity.
+- MaintenanceCostAudit created with read-only evidence checks and a unit-test fixture. It does not alter stock and does not claim a historical cost when a verified snapshot is absent.
+- **Incomplete**: maintenance receipt-to-cost matching, maintenance returns and exchanges, original historical repair profit, full expense/partner archive union and final partner balances, source JS parity, Room instrumentation, Gradle build, and device QA.
