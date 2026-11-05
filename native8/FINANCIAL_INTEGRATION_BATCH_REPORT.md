@@ -68,3 +68,11 @@ Branch: native6-development. Changes restricted to native8/.
 - FinancialReviewActivity source diagnostics now shows suspect event count; UnifiedFinancialPeriodRepository refuses aggregation if any suspect receipt-profit event exists.
 - This is **diagnostic and fail-closed**, not a historical repair. Existing profit event rows were not deleted or rewritten.
 - Outstanding: full legacy source reconciliation, maintenance collections and costs, final report screens, migration tests, Gradle build and actual restored-device parity.
+
+## Capital and historical invoice visibility batch
+- Added LegacySaleDao.historicalInPeriod for immutable archived sales snapshots.
+- Added LegacySalesProfitAudit source saleType classification with duplicate/unknown-ID reporting. It does **not** invent historical profits or mark incomplete archives as approved.
+- FinancialReviewActivity now displays new STORE invoice net revenue, stored cost basis (capital of sold watches), and historical STORE/ONLINE invoice counts for the selected period. Existing new-sale receipt profit remains separately shown.
+- Added LegacySalesProfitAuditTest for archived channel classification and explicit incomplete profit status.
+- Remaining source-parity blockers: original historical item costs and tax, legacy online receipt dates and FX, repair collections/parts, return impacts, all-period expense reconciliation, and partner cumulative due. Do not label the combined total as final net profit before these are verified.
+- No Gradle, Android instrumentation or source-JS parity execution has been performed in this batch.
