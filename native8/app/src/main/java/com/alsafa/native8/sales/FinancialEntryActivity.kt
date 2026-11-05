@@ -56,8 +56,10 @@ class FinancialEntryActivity:Activity() {
    addView(content,android.widget.FrameLayout.LayoutParams(-1,-2))
   })
   var pendingId:String?=null
+  var pendingAt:Long?=null
   save.setOnClickListener {
    val id=pendingId ?: UUID.randomUUID().toString().also { pendingId=it }
+   val createdAt=pendingAt ?: System.currentTimeMillis().also { pendingAt=it }
    save.isEnabled=false
    status.text="جارٍ الحفظ..."
    scope.launch {
@@ -81,12 +83,12 @@ class FinancialEntryActivity:Activity() {
         else -> "آجل"
        }
        repo.saveExpense(OperationalExpenseEntity(id,day,time,category!!.text.toString().trim(),
-        note,unit,value,method,box,rate,System.currentTimeMillis(),
+        note,unit,value,method,box,rate,createdAt,
         if(box==null) null else "financial-"+id))
       } else {
        val partnerId=listOf("father","me","brother")[partner!!.selectedItemPosition]
        repo.saveWithdrawal(OperationalPartnerWithdrawalEntity(id,day,time,partnerId,
-        unit,value,requireNotNull(box),rate,note,System.currentTimeMillis(),"financial-"+id))
+        unit,value,requireNotNull(box),rate,note,createdAt,"financial-"+id))
       }
      }
      status.text="تم الحفظ"
