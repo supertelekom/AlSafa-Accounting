@@ -28,6 +28,7 @@
         <activity android:name=".sales.SaleDetailsActivity" android:exported="false" />
         <activity android:name=".sales.SaleReturnsActivity" android:exported="false" />
         <activity android:name=".sales.ExpenseActivity" android:exported="false" />
+        <activity android:name=".sales.PartnerProfitsActivity" android:exported="false" />
         <activity android:name=".sales.PartnersActivity" android:exported="false" />
         <activity android:name=".sales.FinancialReviewActivity" android:exported="false" />
         <activity android:name=".sales.SalePrintActivity" android:exported="false" />
