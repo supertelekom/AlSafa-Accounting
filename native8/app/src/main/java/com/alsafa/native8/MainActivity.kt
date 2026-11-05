@@ -6,6 +6,7 @@ import com.alsafa.native8.sales.SalesArchiveActivity
 import com.alsafa.native8.sales.FinancialReviewActivity
 import com.alsafa.native8.sales.ExpenseActivity
 import com.alsafa.native8.sales.PartnersActivity
+import com.alsafa.native8.sales.PartnerProfitsActivity
 import com.alsafa.native8.maintenance.MaintenancePartsActivity
 import com.alsafa.native8.maintenance.MaintenanceActivity
 import com.alsafa.native8.sales.SuppliersActivity
@@ -105,7 +106,11 @@ class MainActivity : Activity() {
             setOnClickListener { startActivity(Intent(this@MainActivity, ExpenseActivity::class.java)) }
         }, LinearLayout.LayoutParams(-1,76))
         root.addView(Button(this).apply {
-            text = "الشركاء والسحوبات"
+            text = "أرباح الشركاء"
+            setOnClickListener { startActivity(Intent(this@MainActivity, PartnerProfitsActivity::class.java)) }
+        }, LinearLayout.LayoutParams(-1,76))
+        root.addView(Button(this).apply {
+            text = "سحوبات الشركاء"
             setOnClickListener { startActivity(Intent(this@MainActivity, PartnersActivity::class.java)) }
         }, LinearLayout.LayoutParams(-1,76))
         root.addView(Button(this).apply {
