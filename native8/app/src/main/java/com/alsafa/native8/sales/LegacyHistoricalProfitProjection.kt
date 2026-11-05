@@ -44,8 +44,8 @@ class LegacyHistoricalProfitProjection(private val legacy:LegacyReadRepository) 
  }
  fun read(from:String,to:String):Result {
   require(from<=to)
-  val run=legacy.latestRunId() ?: return Result(BigDecimal.ZERO,BigDecimal.ZERO,
-   BigDecimal.ZERO,BigDecimal.ZERO,emptyMap(),listOf("No imported source"))
+  val run=legacy.latestRunId() ?: return Result(storeProfitUsd=BigDecimal.ZERO,repairProfitUsd=BigDecimal.ZERO,
+   returnImpactUsd=BigDecimal.ZERO,expensesUsd=BigDecimal.ZERO,withdrawalsUsd=emptyMap(),unresolved=listOf("No imported source"))
   val issues=mutableListOf<String>()
   val seen=mutableSetOf<String>()
   fun unique(section:String,row:LegacyReadRepository.LegacyRow):Boolean {
