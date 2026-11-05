@@ -184,10 +184,9 @@ class RoomSalesEngine(private val context: Context) {
             require(sale.paid.toBigDecimal() >= refund) { "المبلغ المسترد يتجاوز المقبوض" }
         }
         if(sale.channel==SalesChannelClassification.STORE) {
-            val costRestored=line.unit_cost.toBigDecimal().multiply(quantity)
             db.storeSaleProfitDao().insertAdjustment(StoreProfitAdjustment(
                 UUID.randomUUID().toString(),saleId,System.currentTimeMillis(),
-                (costRestored-amount).toPlainString(),"مرتجع: "+reason))
+                StoreProfitAdjustmentMath.returnedProfitDelta(amount,line.unit_cost.toBigDecimal(),quantity).toPlainString(),"مرتجع: "+reason))
         }
         stock.adjust(line.source, line.product_id, line.variant_id, quantity.toPlainString(),
             "مرتجع فاتورة $saleId: $reason")
@@ -283,7 +282,7 @@ class RoomSalesEngine(private val context: Context) {
             }
             db.storeSaleProfitDao().insertAdjustment(StoreProfitAdjustment(
                 UUID.randomUUID().toString(),saleId,System.currentTimeMillis(),
-                (original.profit_usd.toBigDecimal()+previous).negate().toPlainString(),"إلغاء فاتورة"))
+                StoreProfitAdjustmentMath.cancellationDelta(original.profit_usd.toBigDecimal(),listOf(previous)).toPlainString(),"إلغاء فاتورة"))
         }
         check(posting.updatePayment(saleId, "0", "ملغاة") == 1)
         saleId
