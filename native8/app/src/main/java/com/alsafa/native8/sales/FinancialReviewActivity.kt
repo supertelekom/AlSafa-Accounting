@@ -16,12 +16,6 @@ class FinancialReviewActivity:Activity() {
  private val scope=CoroutineScope(SupervisorJob()+Dispatchers.Main)
  override fun onCreate(savedInstanceState:Bundle?) {
   super.onCreate(savedInstanceState)
-  val root=LinearLayout(this).apply {
-   orientation=LinearLayout.VERTICAL
-   layoutDirection=View.LAYOUT_DIRECTION_RTL
-   setPadding(16,16,16,24)
-   isFocusableInTouchMode=true
-  }
   val title=TextView(this).apply {
    text="الأرباح — مراجعة الحسابات"
    textSize=23f
@@ -61,34 +55,32 @@ class FinancialReviewActivity:Activity() {
   }
   val checkSources=Button(this).apply { text="فحص مصادر الأرباح" }
   val refresh=Button(this).apply { text="عرض مراجعة الأرباح" }
-  // The title and date controls are fixed outside the scroll area, so Android
-  // cannot scroll them offscreen when an EditText receives focus.
-  val screen=LinearLayout(this).apply {
+  // One vertical scroll container owns the WHOLE page, including title and dates.
+  // No fixed header, nested scroll, hard-coded screen height or horizontal scrolling.
+  val content=LinearLayout(this).apply {
    orientation=LinearLayout.VERTICAL
    layoutDirection=View.LAYOUT_DIRECTION_RTL
-   setPadding(16,16,16,16)
+   setPadding(16,16,16,24)
    isFocusableInTouchMode=true
+   descendantFocusability=android.view.ViewGroup.FOCUS_BEFORE_DESCENDANTS
   }
-  val header=LinearLayout(this).apply {
-   orientation=LinearLayout.VERTICAL
-   layoutDirection=View.LAYOUT_DIRECTION_RTL
-  }
-  listOf(title,warning,from,to,refresh).forEach {
-   header.addView(it,LinearLayout.LayoutParams(-1,-2))
-  }
-  screen.addView(header,LinearLayout.LayoutParams(-1,-2))
-  listOf(result,showDetails,detail,checkSources,sourceStatus).forEach {
-   root.addView(it,LinearLayout.LayoutParams(-1,-2))
+  listOf(title,warning,from,to,refresh,result,showDetails,detail,checkSources,sourceStatus).forEach {
+   content.addView(it,LinearLayout.LayoutParams(
+    android.view.ViewGroup.LayoutParams.MATCH_PARENT,
+    android.view.ViewGroup.LayoutParams.WRAP_CONTENT))
   }
   val scroll=ScrollView(this).apply {
-   isFillViewport=false
+   isFillViewport=true
    isHorizontalScrollBarEnabled=false
    isVerticalScrollBarEnabled=true
-   addView(root,android.widget.FrameLayout.LayoutParams(-1,-2))
+   overScrollMode=View.OVER_SCROLL_IF_CONTENT_SCROLLS
+   addView(content,android.widget.FrameLayout.LayoutParams(-1,-2))
   }
-  screen.addView(scroll,LinearLayout.LayoutParams(-1,0,1f))
-  setContentView(screen)
-  screen.requestFocus()
+  window.setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN or
+   android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
+  setContentView(scroll)
+  content.requestFocus()
+  scroll.post { scroll.scrollTo(0,0) }
   checkSources.setOnClickListener {
    sourceStatus.visibility=View.VISIBLE
    checkSources.isEnabled=false
