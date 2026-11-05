@@ -7,6 +7,8 @@ import android.widget.*
 import kotlinx.coroutines.*
 import java.math.BigDecimal
 import java.time.LocalDate
+import com.alsafa.native8.data.migration.LegacyStagingDatabase
+import com.alsafa.native8.data.migration.LegacyReadRepository
 
 /**
  * Partner profit statement. Until historical sales and repairs have passed
@@ -43,19 +45,24 @@ class PartnerProfitsActivity:Activity() {
    button.isEnabled=false
    scope.launch {
     try {
-     val rows=withContext(Dispatchers.IO) {
-      AppDatabase.get(applicationContext).operationalExpensePartnerDao()
-       .withdrawals("0001-01-01","9999-12-31")
+     val snapshot=withContext(Dispatchers.IO) {
+      val staging=LegacyStagingDatabase(applicationContext)
+      try {
+       UnifiedExpensePartnerReadRepository(
+        LegacyReadRepository(staging),
+        AppDatabase.get(applicationContext).operationalExpensePartnerDao()
+       ).load("0001-01-01",LocalDate.now().toString())
+      } finally { staging.close() }
      }
      val names=mapOf("father" to "الأب","me" to "عبد الكريم","brother" to "يزن")
-     val lines=rows.groupBy { it.partner_id }.map { (id,entries) ->
-      val sum=entries.fold(BigDecimal.ZERO) { a,e ->
-       a+e.amount.toBigDecimal()*e.usd_per_unit.toBigDecimal()
-      }
-      "${names[id] ?: id}: سحوبات جديدة ${sum.stripTrailingZeros().toPlainString()} USD"
+     val lines=LegacyFinancialRules.partners.map { partner ->
+      val withdrawn=snapshot.source.withdrawals.filter { it.partnerId==partner.id }
+       .fold(BigDecimal.ZERO) { sum,row -> sum+row.money.usd() }
+      "${names[partner.id]} (${partner.share}%): ${withdrawn.stripTrailingZeros().toPlainString()} USD سحوبات تراكمية"
      }
-     result.text=(if(lines.isEmpty()) "لا توجد سحوبات جديدة" else lines.joinToString("\n"))+
-      "\nالسحوبات التاريخية والأرباح التراكمية: لم تُعتمد بعد."
+     result.text="المصاريف القديمة: ${snapshot.legacyExpenses} | الجديدة: ${snapshot.operationalExpenses}\n"+
+      "سحوبات الشركاء القديمة: ${snapshot.legacyWithdrawals} | الجديدة: ${snapshot.operationalWithdrawals}\n"+
+      lines.joinToString("\n")+"\nمستحقات الأرباح النهائية غير معتمدة حتى مطابقة المبيعات والصيانة."
     } catch(e:Exception) { result.text=e.message ?: "تعذر قراءة السحوبات" }
     finally { button.isEnabled=true }
    }
