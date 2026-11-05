@@ -105,7 +105,7 @@ class PartnersActivity:Activity() {
          }
          LegacyFinancialHistoryDisplay.Entry(e.date,name,e.amount,e.currency,"","جديد")
         }
-       "السحوبات القديمة: ${snapshot.legacyWithdrawals} | الجديدة: ${snapshot.operationalWithdrawals}\\n\\n"+
+       "السحوبات القديمة: ${snapshot.legacyWithdrawals} | الجديدة: ${snapshot.operationalWithdrawals}\n\n"+
         LegacyFinancialHistoryDisplay.render(old+fresh)
       } finally { staging.close() }
      }.ifBlank { "لا توجد سحوبات" }
