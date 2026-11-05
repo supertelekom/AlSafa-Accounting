@@ -7,7 +7,8 @@ import androidx.room.Query
 
 data class UnifiedSaleRow(
  val id:String,val number:Long,val created_at:Long,val customer:String,
- val phone:String,val total:String,val paid:String,val status:String,val historical:Int,\n val channel:String?,val original_json:String?
+ val phone:String,val total:String,val paid:String,val status:String,val historical:Int,
+ val channel:String?,val original_json:String?
 )
 
 @Dao
