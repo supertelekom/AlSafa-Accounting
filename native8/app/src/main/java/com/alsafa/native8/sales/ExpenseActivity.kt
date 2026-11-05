@@ -101,14 +101,15 @@ class ExpenseActivity:Activity() {
        UnifiedExpensePartnerReadRepository(LegacyReadRepository(staging),dao)
         .load(from,LocalDate.now().toString())
       } finally { staging.close() }
-      val historicalUsd=summary.source.expenses.fold(java.math.BigDecimal.ZERO) { sum,e ->
-       sum+e.money.usd()
+      val historyStaging=LegacyStagingDatabase(applicationContext)
+      val old=try { LegacyFinancialHistoryDisplay.legacy(LegacyReadRepository(historyStaging),"expenses") }
+       finally { historyStaging.close() }
+      val fresh=dao.expenses(from,until).map { e ->
+       LegacyFinancialHistoryDisplay.Entry(e.date,e.category,e.amount,e.currency,
+        e.payment_method,"جديد")
       }
-      "مصاريف قديمة: ${summary.legacyExpenses} | جديدة: ${summary.operationalExpenses}\n"+
-       "إجمالي المصاريف المقروءة: ${historicalUsd.stripTrailingZeros().toPlainString()} USD\n"+
-       dao.expenses(from,until).joinToString("\n") {
-        "${it.date} | ${it.category} | ${it.amount} ${it.currency} | ${it.payment_method}"
-       }
+      "مصاريف قديمة: ${summary.legacyExpenses} | جديدة: ${summary.operationalExpenses}\\n\\n"+
+       LegacyFinancialHistoryDisplay.render(old+fresh)
      }.ifBlank { "لا توجد عمليات جديدة" }
     } catch(e:Exception) { history.text=e.message ?: "تعذر عرض السجلات" }
     finally { showHistory.isEnabled=true }
