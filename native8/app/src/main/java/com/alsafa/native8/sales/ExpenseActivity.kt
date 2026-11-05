@@ -108,7 +108,7 @@ class ExpenseActivity:Activity() {
        LegacyFinancialHistoryDisplay.Entry(e.date,e.category,e.amount,e.currency,
         e.payment_method,"جديد")
       }
-      "مصاريف قديمة: ${summary.legacyExpenses} | جديدة: ${summary.operationalExpenses}\\n\\n"+
+      "مصاريف قديمة: ${summary.legacyExpenses} | جديدة: ${summary.operationalExpenses}\n\n"+
        LegacyFinancialHistoryDisplay.render(old+fresh)
      }.ifBlank { "لا توجد عمليات جديدة" }
     } catch(e:Exception) { history.text=e.message ?: "تعذر عرض السجلات" }
