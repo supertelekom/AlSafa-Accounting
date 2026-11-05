@@ -44,11 +44,33 @@ class FinancialReviewActivity:Activity() {
   val result=TextView(this).apply { textSize=18f }
   val detail=TextView(this).apply { textSize=15f }
   val showDetails=Button(this).apply { text="تفصيل القيود المالية" }
+  val sourceStatus=TextView(this).apply { textSize=16f }
+  val checkSources=Button(this).apply { text="فحص مصادر الأرباح" }
   val refresh=Button(this).apply { text="عرض مراجعة الأرباح" }
-  listOf(title,warning,from,to,refresh,result,showDetails,detail).forEach {
+  listOf(title,warning,from,to,refresh,result,showDetails,detail,checkSources,sourceStatus).forEach {
    root.addView(it,LinearLayout.LayoutParams(-1,-2))
   }
   setContentView(ScrollView(this).apply { addView(root) })
+  checkSources.setOnClickListener {
+   checkSources.isEnabled=false
+   sourceStatus.text="جارٍ فحص المصادر..."
+   scope.launch {
+    try {
+     val status=withContext(Dispatchers.IO) {
+      val db=AppDatabase.get(applicationContext)
+      val missing=db.salesPostingDao().unverifiedChannelCount()
+      "الفواتير الجديدة غير المصنفة: "+missing+"\\n"+
+       "مبيعات المحل الجديدة: متصلة بجدول الأرباح\\n"+
+       "تحصيلات الأونلاين الجديدة: متصلة بقيود القبض\\n"+
+       "الأرشيف القديم: لم يُدمج ربحه في هذا التقرير\\n"+
+       "الصيانة: لم تُدمج المقبوضات والتكلفة في هذا التقرير\\n"+
+       "المصاريف والشركاء: لم تُعتمد نتائجها النهائية"
+     }
+     sourceStatus.text=status.replace("\\n","\n")
+    } catch(e:Exception) { sourceStatus.text=e.message ?: "تعذر فحص المصادر" }
+    finally { checkSources.isEnabled=true }
+   }
+  }
   showDetails.setOnClickListener {
    showDetails.isEnabled=false
    detail.text="جارٍ تحميل تفاصيل القيود..."
