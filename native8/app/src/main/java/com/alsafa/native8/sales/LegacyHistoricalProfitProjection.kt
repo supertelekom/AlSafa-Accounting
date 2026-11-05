@@ -77,7 +77,7 @@ class LegacyHistoricalProfitProjection(private val legacy:LegacyReadRepository) 
     val item=items.getJSONObject(i)
     cost+=n(item,"cost")*n(item,"qty")
    }
-   val amount=n(x,"total")-n(x,"tax")-cost
+   val amount=(n(x,"total").max(BigDecimal.ZERO)-n(x,"tax").max(BigDecimal.ZERO)).max(BigDecimal.ZERO)-cost
    store+=usd(amount,x)
   }
 
@@ -98,7 +98,7 @@ class LegacyHistoricalProfitProjection(private val legacy:LegacyReadRepository) 
      val item=items.getJSONObject(i);sum+n(item,"cost")*n(item,"qty")
     }
    } ?: error("Missing sale items")
-   val net=(n(sale,"total")-n(sale,"tax").max(BigDecimal.ZERO)).max(BigDecimal.ZERO)
+   val net=(n(sale,"total").max(BigDecimal.ZERO)-n(sale,"tax").max(BigDecimal.ZERO)).max(BigDecimal.ZERO)
    val date=sale.optString("date")
    val payments=allPayments.filter { p ->
     val x=p.fields
@@ -125,7 +125,7 @@ class LegacyHistoricalProfitProjection(private val legacy:LegacyReadRepository) 
     (cash-sameDay).max(BigDecimal.ZERO)
    } else {
     val corrected=listOf("paymentMetadataCorrectedAt","paymentCurrencyCorrectedAt",
-     "financialFootprintRepairedAt").any { sale.optBoolean(it) || sale.optString(it).isNotBlank() }
+     "financialFootprintRepairedAt").any { sale.has(it) && !sale.isNull(it) && sale.optString(it).let { value -> value.isNotBlank() && value!="false" && value!="0" } }
     val subtract=if(corrected) payments.fold(BigDecimal.ZERO) { z,p -> z+n(p.fields,"amount").max(BigDecimal.ZERO) } else sameDay
     (n(sale,"paid")-subtract).max(BigDecimal.ZERO)
    }
@@ -176,8 +176,8 @@ class LegacyHistoricalProfitProjection(private val legacy:LegacyReadRepository) 
    }
    require(total>BigDecimal.ZERO) { "Repair invoice total missing" }
    val ratio=amount.divide(total,mc).min(BigDecimal.ONE)
-   val net=(total-n(record,"tax")).max(BigDecimal.ZERO)*amount.divide(total,mc)
-   val cost=n(record,"cost")*ratio
+   val net=(total-n(record,"tax").max(BigDecimal.ZERO)).max(BigDecimal.ZERO)*ratio
+   val cost=n(record,"cost")*amount.divide(total.max(BigDecimal.ONE),mc).min(BigDecimal.ONE)
    repair+=usd(net-cost,record)
   }
   for(row in pages(run,"expenses")) checked("expense:${row.id ?: row.ordinal}") {
@@ -208,6 +208,6 @@ class LegacyHistoricalProfitProjection(private val legacy:LegacyReadRepository) 
    }
    returns+=usd(delta,x)
   }
-  return Result(store,repair,online,returns,expense,withdrawals,issues,onlineVerified=false // Requires source-event parity, not merely absence of parsing errors)
+  return Result(store,repair,online,returns,expense,withdrawals,issues,onlineVerified=false) // Source parity remains unverified
  }
 }
