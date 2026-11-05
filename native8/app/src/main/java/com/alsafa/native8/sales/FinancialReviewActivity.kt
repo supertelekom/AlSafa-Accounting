@@ -20,6 +20,7 @@ class FinancialReviewActivity:Activity() {
    orientation=LinearLayout.VERTICAL
    layoutDirection=View.LAYOUT_DIRECTION_RTL
    setPadding(16,16,16,24)
+   isFocusableInTouchMode=true
   }
   val title=TextView(this).apply {
    text="الأرباح — مراجعة الحسابات"
@@ -69,6 +70,8 @@ class FinancialReviewActivity:Activity() {
    addView(root,android.widget.FrameLayout.LayoutParams(-1,-2))
   }
   setContentView(scroll)
+  root.requestFocus()
+  scroll.post { scroll.scrollTo(0,0) }
   checkSources.setOnClickListener {
    sourceStatus.visibility=View.VISIBLE
    checkSources.isEnabled=false
@@ -183,7 +186,10 @@ class FinancialReviewActivity:Activity() {
       "المصاريف والصيانة والأرشيف والشركاء: لم تكتمل مطابقتها؛ لا يُعرض صافي نهائي."
     } catch(e:Exception) {
      result.text="تعذر استخراج المراجعة: "+(e.message ?: "خطأ غير معروف")
-    } finally { refresh.isEnabled=true }
+    } finally {
+     refresh.isEnabled=true
+     scroll.post { scroll.scrollTo(0,0) }
+    }
    }
   }
  }
