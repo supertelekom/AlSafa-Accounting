@@ -43,13 +43,6 @@ open class FinancialEntryActivity:Activity() {
   val partner=if(!expenseMode) choose("الشريك",listOf("الأب","عبد الكريم","يزن")) else null
   val amount=field("المبلغ")
   val currency=choose("العملة",listOf("USD","TRY","SYP"))
-  val usdRate=field("قيمة وحدة العملة بالدولار (سعر الصرف وقت العملية)","1")
-  currency.onItemSelectedListener=object:android.widget.AdapterView.OnItemSelectedListener {
-   override fun onNothingSelected(parent:android.widget.AdapterView<*>?) {}
-   override fun onItemSelected(parent:android.widget.AdapterView<*>?,view:View?,position:Int,id:Long) {
-    usdRate.setText(if(position==0) "1" else "")
-   }
-  }
   val vault=choose("الخزنة",listOf("الدرج","الصندوق الخارجي","شام كاش","البنك")+
    if(expenseMode) listOf("دون خزنة") else emptyList())
   val notes=field("ملاحظات")
@@ -129,7 +122,8 @@ open class FinancialEntryActivity:Activity() {
      val box=if(selected=="دون خزنة") null else UnifiedCashboxBalance.canonical(selected)
      val unit=currency.selectedItem.toString()
      val value=amount.text.toString().trim()
-     val rate=usdRate.text.toString().trim()
+     // Snapshot the configured direct rate at posting time; never recalculate saved entries.
+     val rate=ExchangeRateSettings(applicationContext).rate(unit,"USD").toPlainString()
      val note=notes.text.toString().trim()
      withContext(Dispatchers.IO) {
       val repo=OperationalExpensePartnerRepository(AppDatabase.get(applicationContext))
@@ -151,7 +145,20 @@ open class FinancialEntryActivity:Activity() {
       }
      }
      status.text="تم الحفظ"
-     finish()
+     pendingId=null
+     pendingAt=null
+     android.app.AlertDialog.Builder(this@FinancialEntryActivity)
+      .setTitle(if(expenseMode) "المصاريف" else "الشركاء والسحوبات")
+      .setMessage(if(expenseMode) "تم حفظ المصروف بنجاح" else "تم حفظ سحب الشريك بنجاح")
+      .setPositiveButton("موافق") { dialog,_ ->
+       dialog.dismiss()
+       amount.setText("")
+       notes.setText("")
+       if(expenseMode) category?.setText("")
+       save.isEnabled=true
+      }
+      .setCancelable(false)
+      .show()
     } catch(e:Exception) {
      status.text=e.message ?: "تعذر الحفظ"
      save.isEnabled=true
