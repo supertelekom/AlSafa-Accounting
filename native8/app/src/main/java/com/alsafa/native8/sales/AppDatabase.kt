@@ -43,6 +43,7 @@ abstract class AppDatabase:RoomDatabase() {
  abstract fun operationalExpensePartnerDao():OperationalExpensePartnerDao
  abstract fun supplierPurchaseDao():SupplierPurchaseDao
  abstract fun salesPostingDao():SalesPostingDao
+ abstract fun storeSaleProfitDao():StoreSaleProfitDao
  abstract fun salesFinancialAuditDao():SalesFinancialAuditDao
  abstract fun legacySaleDao():LegacySaleDao
  abstract fun legacyPaymentDao():LegacyPaymentDao
