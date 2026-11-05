@@ -76,9 +76,27 @@ class FinancialReviewActivity:Activity() {
    overScrollMode=View.OVER_SCROLL_IF_CONTENT_SCROLLS
    addView(content,android.widget.FrameLayout.LayoutParams(-1,-2))
   }
+  // Respect the tablet's real system-bar insets. A ScrollView starting at y=0
+  // can otherwise draw its first controls behind the status bar.
+  val density=resources.displayMetrics.density
+  val side=(16*density+0.5f).toInt()
+  val vertical=(12*density+0.5f).toInt()
+  scroll.clipToPadding=false
+  scroll.setOnApplyWindowInsetsListener { view,insets ->
+   val bars=if(android.os.Build.VERSION.SDK_INT>=30)
+    insets.getInsets(android.view.WindowInsets.Type.systemBars())
+   else null
+   val top=bars?.top ?: insets.systemWindowInsetTop
+   val bottom=bars?.bottom ?: insets.systemWindowInsetBottom
+   view.setPadding(0,top,0,bottom)
+   insets
+  }
+  content.setPadding(side,vertical,side,vertical)
+  window.clearFlags(android.view.WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS)
   window.setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN or
    android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
   setContentView(scroll)
+  scroll.requestApplyInsets()
   content.requestFocus()
   scroll.post { scroll.scrollTo(0,0) }
   checkSources.setOnClickListener {
