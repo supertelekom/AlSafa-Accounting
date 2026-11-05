@@ -135,9 +135,21 @@ class FinancialReviewActivity:Activity() {
       val online=sum(sales.profitEventsInPeriod(window.startInclusive,window.endExclusive).map { it.recognized_profit })
       val reversals=sum(sales.profitReversalsInPeriod(window.startInclusive,window.endExclusive).map { it.reversed_profit })
       val unverified=db.salesPostingDao().unverifiedChannelCount()
-      listOf(storeProfit,storeAdjust,online,reversals,BigDecimal(unverified))
+      val archived=LegacySalesProfitAudit.inspect(db.legacySaleDao().historicalInPeriod(
+       window.startInclusive,window.endExclusive))
+      val storeEvents=store.inPeriod(window.startInclusive,window.endExclusive)
+      val storeRevenue=sum(storeEvents.map { it.net_revenue_usd })
+      val storeCapital=sum(storeEvents.map { it.cost_usd })
+      listOf(storeProfit,storeAdjust,online,reversals,BigDecimal(unverified),
+       BigDecimal(archived.storeInvoices),BigDecimal(archived.onlineInvoices),
+       BigDecimal(archived.unresolvedIds.size),storeRevenue,storeCapital)
      }
-     result.text="ربح فواتير المحل الجديدة: ${data[0]} USD\n"+
+     result.text="مبيعات المحل الجديدة بعد الخصومات: ${data[8]} USD\\n"+
+      "رأس مال الساعات المباعة الجديدة: ${data[9]} USD\\n"+
+      "فواتير المحل التاريخية في الفترة: ${data[5].toPlainString()} (ربحها قيد المطابقة)\\n"+
+      "فواتير الأونلاين التاريخية في الفترة: ${data[6].toPlainString()} (تحصيلاتها قيد المطابقة)\\n"+
+      "فواتير تاريخية تحتاج مراجعة التصنيف: ${data[7].toPlainString()}\\n"+
+      "ربح فواتير المحل الجديدة: ${data[0]} USD\n"+
       "تسويات ربح المحل: ${data[1]} USD\n"+
       "أرباح تحصيلات الأونلاين الجديدة: ${data[2]} USD\n"+
       "عكس أرباح التحصيلات: ${data[3]} USD\n"+
