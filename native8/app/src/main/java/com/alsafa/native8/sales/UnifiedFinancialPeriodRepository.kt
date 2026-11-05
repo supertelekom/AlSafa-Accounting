@@ -42,9 +42,9 @@ class UnifiedFinancialPeriodRepository(
   val end=window.endExclusive
   fun decimal(s:String)=s.toBigDecimal()
   check(sales.nonOnlineProfitEventCount()==0) { "توجد قيود أرباح تحصيل مرتبطة ببيع محل أو فاتورة غير مصنفة؛ يلزم التدقيق قبل تجميع الأرباح" }
-  val profits=sales.profitEventsInPeriod(start,end)
+  val profits=sales.verifiedOnlineProfitsInPeriod(start,end)
    .fold(BigDecimal.ZERO) { acc,row -> acc+decimal(row.recognized_profit) }
-  val reversals=sales.profitReversalsInPeriod(start,end)
+  val reversals=sales.verifiedOnlineReversalsInPeriod(start,end)
    .fold(BigDecimal.ZERO) { acc,row -> acc+decimal(row.reversed_profit) }
   val storeDao=requireNotNull(store) { "مستودع أرباح المحل غير موصول؛ لا يمكن عرض إجمالي جزئي مضلل" }
   val storeProfit=storeDao.inPeriod(start,end).fold(BigDecimal.ZERO) { acc,row -> acc+decimal(row.profit_usd) }
