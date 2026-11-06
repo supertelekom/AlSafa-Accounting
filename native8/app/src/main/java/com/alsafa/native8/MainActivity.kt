@@ -12,16 +12,9 @@ import com.alsafa.native8.maintenance.MaintenanceActivity
 import com.alsafa.native8.sales.SuppliersActivity
 import com.alsafa.native8.sales.PurchasesActivity
 import com.alsafa.native8.sales.CashboxMovementsActivity
-import android.graphics.Color
 import android.os.Bundle
-import android.view.Gravity
-import android.view.View
-import android.widget.Button
-import android.widget.LinearLayout
-import android.widget.ScrollView
-import android.widget.TextView
 
-/** Temporary, high-contrast test launcher. Each module remains a separate Activity. */
+/** Mode selection and full home navigation; accounting remains in each module. */
 class MainActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -45,113 +38,74 @@ class MainActivity : Activity() {
             } else setContentView(com.alsafa.native8.stylekit.ModeSelectionPage(ui,::openMode).view)
             return
         }
-        window.statusBarColor = Color.rgb(19, 37, 57)
-        val root = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            gravity = Gravity.CENTER
-            layoutDirection = View.LAYOUT_DIRECTION_RTL
-            setPadding(32, 32, 32, 32)
-            setBackgroundColor(Color.rgb(245, 248, 252))
+        requestWindowFeature(android.view.Window.FEATURE_NO_TITLE)
+        window.statusBarColor=com.alsafa.native8.stylekit.SafaStyle.Palette.cream
+        window.navigationBarColor=com.alsafa.native8.stylekit.SafaStyle.Palette.cream
+        fullHome=com.alsafa.native8.stylekit.FullHomePage(com.alsafa.native8.stylekit.SafaWidgets(com.alsafa.native8.stylekit.SafaStyle(this)),::route)
+        setContentView(fullHome!!.view)
+    }
+    private var fullHome:com.alsafa.native8.stylekit.FullHomePage?=null
+    private var refreshGeneration=0
+    private fun open(type:Class<*>) { startActivity(Intent(this,type)) }
+    private fun choices(title:String,items:List<Pair<String,()->Unit>>) {
+        val ui=com.alsafa.native8.stylekit.SafaWidgets(com.alsafa.native8.stylekit.SafaStyle(this))
+        val body=ui.card(20);ui.heading(body,title,"")
+        val dialog=android.app.AlertDialog.Builder(this).setView(body).create()
+        items.forEach { (label,action) -> ui.add(body,ui.button(label,height=56){dialog.dismiss();action()}) }
+        ui.add(body,ui.button("رجوع"){dialog.dismiss()});dialog.show()
+    }
+    private fun route(route:String) {
+        when(route) {
+            "simple" -> {startActivity(Intent(this,MainActivity::class.java).putExtra("work_mode","simple"));finish()}
+            "back" -> finish()
+            "sale" -> open(com.alsafa.native8.sales.FullSaleActivity::class.java)
+            "intake" -> open(com.alsafa.native8.maintenance.MaintenanceIntakeActivity::class.java)
+            "delivery" -> open(com.alsafa.native8.maintenance.ReadyDeliveriesActivity::class.java)
+            "repairs" -> open(MaintenanceActivity::class.java)
+            "parts" -> open(MaintenancePartsActivity::class.java)
+            "expense" -> open(ExpenseActivity::class.java)
+            "products" -> open(ProductsActivity::class.java)
+            "sales" -> open(SalesArchiveActivity::class.java)
+            "debt" -> choices("قبض دين",listOf("فواتير المبيع — اختر الفاتورة ثم تكملة الدفع" to {open(SalesArchiveActivity::class.java)},"مستحقات الصيانة — اختر طلب الصيانة" to {open(MaintenanceActivity::class.java)}))
+            "today" -> choices("اليوم",listOf("إقفال اليوم" to {open(com.alsafa.native8.sales.DailyClosingActivity::class.java)},"حركات الصناديق" to {open(CashboxMovementsActivity::class.java)},"مراجعة الأرباح" to {open(FinancialReviewActivity::class.java)}))
+            "search" -> choices("بحث",listOf("منتج" to {open(ProductsActivity::class.java)},"فاتورة مبيع / عميل / هاتف" to {open(SalesArchiveActivity::class.java)},"طلب صيانة / عميل / هاتف" to {open(MaintenanceActivity::class.java)}))
+            "purchases" -> choices("المشتريات والموردون",listOf("المشتريات" to {open(PurchasesActivity::class.java)},"الموردون" to {open(SuppliersActivity::class.java)}))
+            "partners" -> choices("الشركاء والسحوبات",listOf("أرباح الشركاء" to {open(PartnerProfitsActivity::class.java)},"سحوبات الشركاء" to {open(PartnersActivity::class.java)}))
+            "returns" -> open(com.alsafa.native8.sales.SalesReturnsHistoryActivity::class.java)
+            "vaults" -> open(CashboxMovementsActivity::class.java)
+            "closing" -> open(com.alsafa.native8.sales.DailyClosingActivity::class.java)
+            "reports" -> open(FinancialReviewActivity::class.java)
+            "rates" -> open(ExchangeRatesActivity::class.java)
+            "import" -> open(RestoreActivity::class.java)
+            "backup" -> {
+                startActivity(Intent(this,com.alsafa.native8.backup.NativeBackupActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+                finishAffinity();android.os.Process.killProcess(android.os.Process.myPid())
+            }
         }
-        root.addView(TextView(this).apply {
-            text = "الصفا للساعات — Native 8"
-            textSize = 26f
-            setTextColor(Color.rgb(19, 37, 57))
-            gravity = Gravity.CENTER
-        }, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = 24 })
-        root.addView(TextView(this).apply {
-            text = "نسخة فحص SQLite | BUILD 8.0.3-DB"
-            textSize = 16f
-            setTextColor(Color.rgb(60, 70, 85))
-            gravity = Gravity.CENTER
-        }, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = 24 })
-        root.addView(Button(this).apply {
-            text = "اختيار النسخة الاحتياطية واستيرادها"
-            textSize = 19f
-            isAllCaps = false
-            setTextColor(Color.WHITE)
-            setBackgroundTintList(android.content.res.ColorStateList.valueOf(Color.rgb(18, 83, 142)))
-            setOnClickListener {
-                startActivity(Intent(this@MainActivity, RestoreActivity::class.java).apply {
-                    putExtra(RestoreActivity.EXTRA_PICK_ON_OPEN, true)
-                })
+    }
+    override fun onResume() {
+        super.onResume()
+        val page=fullHome ?: return
+        val generation=++refreshGeneration
+        Thread {
+            val result=runCatching { kotlinx.coroutines.runBlocking {
+                val db=com.alsafa.native8.sales.AppDatabase.get(applicationContext)
+                val sales=db.legacySaleDao().unifiedArchive("",limit=4).map { s ->
+                    s.created_at to com.alsafa.native8.stylekit.FullHomePage.Recent("مبيع — فاتورة رقم ${s.number}",s.customer) {
+                        startActivity(Intent(this@MainActivity,com.alsafa.native8.sales.SaleDetailsActivity::class.java).putExtra("sale_id",s.id))
+                    }
+                }
+                val repairs=db.maintenanceDao().search("",limit=4).map { r ->
+                    r.created_at to com.alsafa.native8.stylekit.FullHomePage.Recent("صيانة — فاتورة رقم ${r.invoice_number}","${r.customer} · ${r.status}") {
+                        startActivity(Intent(this@MainActivity,MaintenanceActivity::class.java).putExtra("repair_id",r.id))
+                    }
+                }
+                (sales+repairs).sortedByDescending { it.first }.take(4).map { it.second }
+            } }
+            runOnUiThread {
+                if(!isFinishing && !isDestroyed && generation==refreshGeneration)
+                    result.fold({page.showRecent(it)},{page.showRecent(emptyList(),"تعذر تحميل آخر العمليات؛ يمكنك فتح السجلات من الإدارة.")})
             }
-        }, LinearLayout.LayoutParams(-1, 76).apply { bottomMargin = 20 })
-        root.addView(Button(this).apply {
-            text = "استعادة البيانات"
-            textSize = 19f
-            isAllCaps = false
-            setTextColor(Color.WHITE)
-            setBackgroundTintList(android.content.res.ColorStateList.valueOf(Color.rgb(28, 95, 104)))
-            setOnClickListener { startActivity(Intent(this@MainActivity, RestoreActivity::class.java)) }
-        }, LinearLayout.LayoutParams(-1, 76).apply { bottomMargin = 20 })
-        root.addView(Button(this).apply {
-            text = "نسخ احتياطي كامل / استعادة / تصفير"
-            setOnClickListener {
-                startActivity(Intent(this@MainActivity, com.alsafa.native8.backup.NativeBackupActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
-                finishAffinity()
-                android.os.Process.killProcess(android.os.Process.myPid())
-            }
-        }, LinearLayout.LayoutParams(-1, 76))
-        root.addView(Button(this).apply {
-            text = "صيانة سريعة"
-            setOnClickListener { startActivity(Intent(this@MainActivity, com.alsafa.native8.maintenance.QuickRepairActivity::class.java)) }
-        }, LinearLayout.LayoutParams(-1, 76))
-        root.addView(Button(this).apply {
-            text = "المنتجات المستوردة"
-            textSize = 19f
-            isAllCaps = false
-            setTextColor(Color.WHITE)
-            setBackgroundTintList(android.content.res.ColorStateList.valueOf(Color.rgb(64, 75, 96)))
-            setOnClickListener { startActivity(Intent(this@MainActivity, ProductsActivity::class.java)) }
-        }, LinearLayout.LayoutParams(-1, 76))
-        root.addView(Button(this).apply {
-            text = "فواتير المبيع والقبض"
-            setOnClickListener { startActivity(Intent(this@MainActivity, SalesArchiveActivity::class.java)) }
-        }, LinearLayout.LayoutParams(-1, 76))
-        root.addView(Button(this).apply {
-            text = "حركات الصناديق / شام كاش"
-            setOnClickListener { startActivity(Intent(this@MainActivity, CashboxMovementsActivity::class.java)) }
-        }, LinearLayout.LayoutParams(-1, 76))
-        root.addView(Button(this).apply {
-            text = "أسعار الصرف"
-            setOnClickListener { startActivity(Intent(this@MainActivity, ExchangeRatesActivity::class.java)) }
-        }, LinearLayout.LayoutParams(-1, 76))
-        root.addView(Button(this).apply {
-            text = "الموردون"
-            setOnClickListener { startActivity(Intent(this@MainActivity, SuppliersActivity::class.java)) }
-        }, LinearLayout.LayoutParams(-1, 76))
-        root.addView(Button(this).apply {
-            text = "الصيانة"
-            setOnClickListener { startActivity(Intent(this@MainActivity, MaintenanceActivity::class.java)) }
-        }, LinearLayout.LayoutParams(-1, 76))
-        root.addView(Button(this).apply {
-            text = "قطع الصيانة"
-            setOnClickListener { startActivity(Intent(this@MainActivity, MaintenancePartsActivity::class.java)) }
-        }, LinearLayout.LayoutParams(-1, 76))
-        root.addView(Button(this).apply {
-            text = "الأرباح — مراجعة الحسابات"
-            setOnClickListener { startActivity(Intent(this@MainActivity, FinancialReviewActivity::class.java)) }
-        }, LinearLayout.LayoutParams(-1, 76))
-        root.addView(Button(this).apply {
-            text = "المصاريف"
-            setOnClickListener { startActivity(Intent(this@MainActivity, ExpenseActivity::class.java)) }
-        }, LinearLayout.LayoutParams(-1,76))
-        root.addView(Button(this).apply {
-            text = "أرباح الشركاء"
-            setOnClickListener { startActivity(Intent(this@MainActivity, PartnerProfitsActivity::class.java)) }
-        }, LinearLayout.LayoutParams(-1,76))
-        root.addView(Button(this).apply {
-            text = "سحوبات الشركاء"
-            setOnClickListener { startActivity(Intent(this@MainActivity, PartnersActivity::class.java)) }
-        }, LinearLayout.LayoutParams(-1,76))
-        root.addView(Button(this).apply {
-            text = "المشتريات"
-            setOnClickListener { startActivity(Intent(this@MainActivity, PurchasesActivity::class.java)) }
-        }, LinearLayout.LayoutParams(-1, 76))
-        setContentView(ScrollView(this).apply {
-            isFillViewport = true
-            addView(root)
-        })
+        }.start()
     }
 }
