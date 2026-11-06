@@ -5,6 +5,23 @@ import org.junit.Test
 import java.math.BigDecimal
 
 class NativeMaintenanceProfitReaderTest {
+ @Test fun labourOnlyDeliveryRecognizesFullAmountWithoutPartsOrNotes() {
+  val raw=JSONObject("""{"id":"labour-only","status":"تم التسليم","date":"2026-10-01","deliveredDate":"2026-11-06","currency":"USD","laborPrice":10,"price":10,"received":10,"usedParts":[],"paymentLines":[{"amount":10,"currency":"USD","fxRate":1,"invoiceCredit":10}]}""")
+  val saved=NativeMaintenanceProfitReader.snapshot(raw,"USD",JSONObject("""{"USD":1}"""))
+  assertEquals(0,saved.getString("cost").toBigDecimal().signum())
+  val audit=NativeMaintenanceProfitReader.extract(listOf(saved))
+  assertTrue(audit.unresolved.toString(),audit.unresolved.isEmpty())
+  assertEquals("2026-11-06",audit.events.single().recognizedOn.toString())
+  assertEquals(0,BigDecimal.TEN.compareTo(audit.events.single().profitUsd))
+  assertEquals(audit,NativeMaintenanceProfitReader.extract(listOf(saved)))
+ }
+ @Test fun labourOnlyForeignCurrencyUsesSavedRate() {
+  val raw=JSONObject("""{"id":"labour-try","status":"تم التسليم","deliveredDate":"2026-11-06","currency":"TRY","laborPrice":500,"price":500,"received":500,"usedParts":[],"paymentLines":[{"amount":500,"currency":"TRY","fxRate":1,"invoiceCredit":500}]}""")
+  val saved=NativeMaintenanceProfitReader.snapshot(raw,"TRY",JSONObject("""{"USD":1,"TRY":50}"""))
+  val audit=NativeMaintenanceProfitReader.extract(listOf(saved))
+  assertTrue(audit.unresolved.toString(),audit.unresolved.isEmpty())
+  assertEquals(0,BigDecimal.TEN.compareTo(audit.events.single().profitUsd))
+ }
  private fun raw()=JSONObject("""{"id":"r1","status":"تم التسليم","date":"2026-10-01","deliveredDate":"2026-11-01","currency":"USD","price":30,"laborPrice":20,"tax":0,"taxRate":0,"received":30,"cost":0,"manualCost":2,"usedParts":[{"qty":1,"price":10,"cost":5,"currency":"USD","costSnapshotVerified":true}],"paymentLines":[{"amount":1500,"currency":"TRY","fxRate":0.02,"invoiceCredit":30}]}""")
  private fun verified()=NativeMaintenanceProfitReader.snapshot(raw(),"USD",JSONObject("""{"USD":1,"TRY":50,"SYP":140}"""))
  @Test fun partsAndManualCostDeductedOnceAtDeliveryDate() {
