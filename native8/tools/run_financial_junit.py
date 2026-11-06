@@ -14,7 +14,7 @@ deps = Path(sys.argv[1]).resolve()
 classpath = os.pathsep.join(str(p) for p in sorted(deps.glob('*.jar')) if p.name != 'android-all.jar')
 main = root / 'app/src/main/java/com/alsafa/native8/sales'
 test = root / 'app/src/test/java/com/alsafa/native8/sales'
-names = ['FinancialLedgerPresentation', 'LegacyHistoricalSalesProfitReader', 'LegacySaleEntity', 'LegacySaleChannel',
+names = ['OriginalStoreProfitCompatibility', 'FinancialLedgerPresentation', 'LegacyHistoricalSalesProfitReader', 'LegacySaleEntity', 'LegacySaleChannel',
          'SalesChannelProfit', 'LegacyFinancialExchange', 'FinancialSourceReconciliation',
          'LegacyFinancialRules', 'CumulativePartnerProfit', 'VerifiedFinancialConsolidation',
          'VerifiedFinancialEventAdapters', 'LegacyMaintenanceProfitReader', 'LegacyExpenseWithdrawalReader', 'NativeMaintenanceProfitReader', 'PartnerFinancialStatement']

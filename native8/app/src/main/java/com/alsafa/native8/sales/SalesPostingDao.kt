@@ -17,7 +17,7 @@ interface SalesPostingDao {
     @Query("UPDATE sales SET channel=:channel WHERE id=:id AND channel IS NULL AND status!='ملغاة'")
     suspend fun classifyUnverified(id:String,channel:String):Int
 
-    @Query("SELECT COUNT(*) FROM sales WHERE channel IS NULL AND status!='ملغاة'")
+    @Query("SELECT COUNT(*) FROM sales WHERE channel IS NOT NULL AND channel NOT IN ('','store','online') AND status!='ملغاة'")
     suspend fun unverifiedChannelCount():Int
 
     @Query("SELECT * FROM sales WHERE id=:id LIMIT 1")

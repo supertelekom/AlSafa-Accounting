@@ -15,6 +15,9 @@ class NativeMaintenanceProfitRepository(private val dao:MaintenanceDao,private v
    require(raw.getString("id")==row.id && raw.getString("status")==row.status &&
     raw.getString("currency")==row.currency && raw.optString("received").toBigDecimal().compareTo(row.received.toBigDecimal())==0) { "Room/JSON receipt mismatch" }
    if(row.status=="تم التسليم") require(raw.getString("deliveredDate")==row.delivered_date) { "Room/JSON delivery date mismatch" }
+   // Older records did not have the new delivery evidence format. Their saved
+   // received/cost/rates remain the source, just as in the original backup.
+   if(raw.optInt("financialSnapshotVersion")==0) { source+=raw;continue }
    if(row.status=="تم التسليم") {
     require(raw.optString("price").toBigDecimal().compareTo(row.price.toBigDecimal())==0) { "Room/JSON invoice total mismatch" }
     val lines=raw.getJSONArray("paymentLines")

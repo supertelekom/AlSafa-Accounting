@@ -1,6 +1,6 @@
 package com.alsafa.native8.sales
 
-/** Unknown legacy channel must never silently default to in-store. */
+/** New writes require an explicit channel. Older saved invoices use OriginalStoreProfitCompatibility. */
 object SalesChannelClassification {
  const val STORE="store"
  const val ONLINE="online"

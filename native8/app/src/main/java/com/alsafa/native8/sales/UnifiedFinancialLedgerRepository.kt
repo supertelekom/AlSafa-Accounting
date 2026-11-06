@@ -33,7 +33,7 @@ class UnifiedFinancialLedgerRepository(private val db:AppDatabase,private val le
   suspend fun saleRow(key:String,id:String,at:Long,amount:String,kind:String) {
    val info=invoice(id);rows+=FinancialLedgerPresentation.Row(key,date(at),info.first,info.second,amount.toBigDecimal(),kind)
   }
-  for(e in db.storeSaleProfitDao().inPeriod(w.startInclusive,w.endExclusive)) saleRow("native:store:${e.sale_id}",e.sale_id,e.recognized_at,e.profit_usd,"ربح مبيع محل")
+  for(e in db.storeSaleProfitDao().inPeriod(w.startInclusive,w.endExclusive)+OriginalStoreProfitCompatibility.read(db.salesFinancialAuditDao(),w.endExclusive).events.filter { it.recognized_at>=w.startInclusive }) saleRow("native:store:${e.sale_id}",e.sale_id,e.recognized_at,e.profit_usd,"ربح مبيع محل")
   for(e in db.storeSaleProfitDao().adjustmentsInPeriod(w.startInclusive,w.endExclusive)) saleRow("native:adjustment:${e.id}",e.sale_id,e.created_at,e.profit_delta_usd,"مرتجع أو تسوية")
   for(e in db.salesFinancialAuditDao().verifiedOnlineProfitsInPeriod(w.startInclusive,w.endExclusive)) saleRow("native:online:${e.payment_id}",e.sale_id,e.collected_at,e.recognized_profit,"ربح تحصيل أونلاين")
   for(e in db.salesFinancialAuditDao().verifiedOnlineReversalsInPeriod(w.startInclusive,w.endExclusive)) saleRow("native:reversal:${e.id}",e.sale_id,e.reversed_at,(-e.reversed_profit.toBigDecimal()).toPlainString(),"مرتجع أو تسوية")

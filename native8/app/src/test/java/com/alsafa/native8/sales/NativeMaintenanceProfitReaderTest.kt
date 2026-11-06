@@ -17,9 +17,10 @@ class NativeMaintenanceProfitReaderTest {
   val r=raw().put("status","جاهز للاستلام").put("received",0)
   assertTrue(NativeMaintenanceProfitReader.extract(listOf(r)).events.isEmpty())
  }
- @Test fun oldUnverifiedPartsAreQuarantinedNotRepriced() {
-  val a=NativeMaintenanceProfitReader.extract(listOf(raw()))
-  assertTrue(a.events.isEmpty());assertFalse(a.unresolved.isEmpty())
+ @Test fun oldSavedCostUsesOriginalReaderWithoutNewFlags() {
+  val old=raw().put("cost",7);old.remove("paymentLines")
+  val a=NativeMaintenanceProfitReader.extract(listOf(old))
+  assertTrue(a.unresolved.toString(),a.unresolved.isEmpty());assertEquals(0,a.events.single().profitUsd.compareTo(BigDecimal("23")))
  }
  @Test fun foreignInvoiceRequiresHistoricalSnapshot() {
   val r=verified().put("currency","TRY");r.remove("rateSnapshot")

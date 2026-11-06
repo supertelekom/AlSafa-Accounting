@@ -71,14 +71,15 @@ class UnifiedFinancialPeriodRepository(
   fun decimal(s:String)=s.toBigDecimal()
   // Keep verified sources readable; unresolved receipts still block approval, never get reclassified.
   val receiptIssues=sales.nonOnlineProfitSaleIds(end).map {
-   "فاتورة $it: قيد ربح تحصيل مرتبط ببيع محل أو فاتورة غير مصنفة؛ غير محتسب ضمن أرباح الأونلاين"
+   "فاتورة $it: قيد ربح تحصيل دون فاتورة مرتبطة أو بنوع بيع غير معروف"
   }
+  val compatibility=OriginalStoreProfitCompatibility.read(sales,end)
   val profits=sales.verifiedOnlineProfitsInPeriod(start,end)
    .fold(BigDecimal.ZERO) { acc,row -> acc+decimal(row.recognized_profit) }
   val reversals=sales.verifiedOnlineReversalsInPeriod(start,end)
    .fold(BigDecimal.ZERO) { acc,row -> acc+decimal(row.reversed_profit) }
   val storeDao=requireNotNull(store) { "مستودع أرباح المحل غير موصول؛ لا يمكن عرض إجمالي جزئي مضلل" }
-  val storeProfit=storeDao.inPeriod(start,end).fold(BigDecimal.ZERO) { acc,row -> acc+decimal(row.profit_usd) }
+  val storeProfit=(storeDao.inPeriod(start,end)+compatibility.events.filter { it.recognized_at>=start }).fold(BigDecimal.ZERO) { acc,row -> acc+decimal(row.profit_usd) }
   val storeAdjustments=storeDao.adjustmentsInPeriod(start,end).fold(BigDecimal.ZERO) { acc,row -> acc+decimal(row.profit_delta_usd) }
   val expenseAudit=expenses.load(from,to,allowIncomplete=true)
   val history=expenseAudit.source
@@ -99,11 +100,11 @@ class UnifiedFinancialPeriodRepository(
    (nativeRepairSummary?.repair ?: BigDecimal.ZERO)
   val repairReturns=(if(includeRepairs) old!!.returnImpactUsd-old.salesReturnImpactUsd else BigDecimal.ZERO)+
    (nativeRepairSummary?.returns ?: BigDecimal.ZERO)
-  val issues=(receiptIssues+old?.unresolved.orEmpty()+expenseAudit.unresolved+nativeRepairs?.audit?.unresolved.orEmpty()+
+  val issues=(compatibility.unresolved+receiptIssues+old?.unresolved.orEmpty()+expenseAudit.unresolved+nativeRepairs?.audit?.unresolved.orEmpty()+
    (if(old!=null && old.importRunId!=expenseAudit.importRunId) listOf("تغيرت النسخة المستعادة بين قراءة الفواتير والمصاريف؛ أعد عرض التقرير") else emptyList())+
    overlap.map { "Historical/operational sale overlap: $it" }+
    repairOverlap.map { "Historical/operational repair overlap: $it" }+
-   sales.uncoveredSales(end).map { "Sale without verified profit coverage: $it" }+
+   sales.uncoveredSales(end).filter { id -> compatibility.events.none { it.sale_id==id } }.map { "Sale without verified profit coverage: $it" }+
    sales.uncoveredOnlinePayments(end).map { "Online receipt without profit event: $it" }+
    (if(old==null) listOf("Historical projection not connected") else emptyList())+
    (if(nativeRepairs==null) listOf("Maintenance projection not connected") else emptyList())).distinct()

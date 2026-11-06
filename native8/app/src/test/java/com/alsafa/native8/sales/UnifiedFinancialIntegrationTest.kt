@@ -39,6 +39,7 @@ class UnifiedFinancialIntegrationTest {
   fun inside(a:Array<out Any?>)=withNative && t>=a[0] as Long && t<a[1] as Long
   val sales=dao<SalesFinancialAuditDao> { method,a -> when(method) {
    "nonOnlineProfitEventCount" -> 0
+   "unpostedStoreSales" -> emptyList<RoomSale>()
    "nonOnlineProfitSaleIds" -> if(suspect && (a[0] as Long)>t) listOf("suspect-sale") else emptyList<String>()
    "operationalSaleIds" -> if(withNative) listOf("new-store","new-online") else emptyList<String>()
    "uncoveredSales" -> if(uncovered) listOf("missing-sale") else emptyList<String>()

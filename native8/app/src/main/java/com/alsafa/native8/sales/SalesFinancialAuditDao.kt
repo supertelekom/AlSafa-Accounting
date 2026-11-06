@@ -7,7 +7,11 @@ import androidx.room.Query
 
 @Dao
 interface SalesFinancialAuditDao {
- @Query("SELECT s.id FROM sales s LEFT JOIN store_sale_profit_events e ON e.sale_id=s.id WHERE s.created_at<:untilExclusive AND (s.channel IS NULL OR s.channel NOT IN ('store','online') OR (s.channel='store' AND e.sale_id IS NULL))")
+ @Query("SELECT s.* FROM sales s LEFT JOIN store_sale_profit_events e ON e.sale_id=s.id WHERE s.created_at<:untilExclusive AND (s.channel IS NULL OR s.channel='' OR s.channel='store') AND e.sale_id IS NULL")
+ suspend fun unpostedStoreSales(untilExclusive:Long):List<RoomSale>
+ @Query("SELECT * FROM sale_lines WHERE sale_id=:saleId ORDER BY id")
+ suspend fun compatibilityLines(saleId:String):List<RoomSaleLine>
+ @Query("SELECT s.id FROM sales s LEFT JOIN store_sale_profit_events e ON e.sale_id=s.id WHERE s.created_at<:untilExclusive AND ((s.channel IS NOT NULL AND s.channel NOT IN ('','store','online')) OR ((s.channel IS NULL OR s.channel='' OR s.channel='store') AND e.sale_id IS NULL))")
  suspend fun uncoveredSales(untilExclusive:Long):List<String>
  @Query("SELECT p.id FROM sale_payments p INNER JOIN sales s ON s.id=p.sale_id LEFT JOIN sale_profit_events e ON e.payment_id=p.id WHERE s.channel='online' AND p.created_at<:untilExclusive AND e.payment_id IS NULL")
  suspend fun uncoveredOnlinePayments(untilExclusive:Long):List<String>
@@ -20,10 +24,10 @@ interface SalesFinancialAuditDao {
  @Query("SELECT r.* FROM sale_profit_reversals r INNER JOIN sales s ON s.id=r.sale_id WHERE s.channel='online' AND r.reversed_at>=:fromMillis AND r.reversed_at<:untilExclusive ORDER BY r.reversed_at,r.id")
  suspend fun verifiedOnlineReversalsInPeriod(fromMillis:Long,untilExclusive:Long):List<SaleProfitReversal>
 
- @Query("SELECT COUNT(*) FROM sale_profit_events e LEFT JOIN sales s ON s.id=e.sale_id WHERE s.id IS NULL OR s.channel IS NULL OR s.channel!='online'")
+ @Query("SELECT COUNT(*) FROM sale_profit_events e LEFT JOIN sales s ON s.id=e.sale_id WHERE s.id IS NULL OR (s.channel IS NOT NULL AND s.channel NOT IN ('','store','online'))")
  suspend fun nonOnlineProfitEventCount():Int
 
- @Query("SELECT DISTINCT e.sale_id FROM sale_profit_events e LEFT JOIN sales s ON s.id=e.sale_id WHERE e.collected_at<:untilExclusive AND (s.id IS NULL OR s.channel IS NULL OR s.channel!='online') ORDER BY e.sale_id")
+ @Query("SELECT DISTINCT e.sale_id FROM sale_profit_events e LEFT JOIN sales s ON s.id=e.sale_id WHERE e.collected_at<:untilExclusive AND (s.id IS NULL OR (s.channel IS NOT NULL AND s.channel NOT IN ('','store','online'))) ORDER BY e.sale_id")
  suspend fun nonOnlineProfitSaleIds(untilExclusive:Long):List<String>
 
  @Query("SELECT * FROM sale_profit_events WHERE payment_id=:paymentId LIMIT 1")

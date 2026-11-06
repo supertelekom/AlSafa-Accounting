@@ -40,6 +40,15 @@ object NativeMaintenanceProfitReader {
    }
    val date=LocalDate.parse(raw.getString("deliveredDate"))
    val unit=raw.getString("currency")
+   if(raw.optInt("financialSnapshotVersion")==0) {
+    // No requirement for later Native 8-only flags or paymentLines in older records.
+    // Preserve explicit cost/received/FX; missing amounts are not silently invented.
+    fun oldRows(key:String)=raw.optJSONArray(key)?.let { a -> (0 until a.length()).map { a.getJSONObject(it) } }.orEmpty()
+    val old=LegacyMaintenanceProfitReader.extract(listOf(JSONObject(raw.toString()).put("date",date.toString())),oldRows("nativePayments"),oldRows("nativeReturns"))
+    require(old.unresolved.isEmpty()) { old.unresolved.joinToString() }
+    events+=old.events.map { e -> e.copy(sourceKey=if(e.sourceKey=="legacy:repair:$id:initial") "native:repair:$id:delivery" else e.sourceKey.replaceFirst("legacy:","native:")) }
+    continue
+   }
    val parts=raw.getJSONArray("usedParts")
    // Older native deliveries with no parts and explicit zero cost are unambiguous.
    // Do not invent FX or accept old drafts whose part currency was not recorded reliably.
