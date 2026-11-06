@@ -32,14 +32,15 @@ class MainActivity : Activity() {
             val ui=com.alsafa.native8.stylekit.SafaWidgets(com.alsafa.native8.stylekit.SafaStyle(this))
             fun openMode(value:String) { startActivity(Intent(this,MainActivity::class.java).putExtra("work_mode",value)) }
             if(mode=="simple") {
-                val host=com.alsafa.native8.stylekit.SafaPageHost(ui,"الصفا للساعات")
-                ui.heading(host.body,"العمل السريع","اختر العملية فقط.")
-                ui.add(host.body,ui.button("الوضع الكامل"){openMode("full")})
-                ui.add(host.body,ui.button("مبيع"){startActivity(Intent(this,com.alsafa.native8.sales.QuickSaleActivity::class.java))})
-                ui.add(host.body,ui.button("صيانة سريعة"){startActivity(Intent(this,com.alsafa.native8.maintenance.QuickRepairActivity::class.java))})
-                ui.add(host.body,ui.button("تسليم الساعات"){startActivity(Intent(this,MaintenanceActivity::class.java))})
-                ui.add(host.body,ui.button("رجوع"){finish()})
-                setContentView(host.view)
+                setContentView(com.alsafa.native8.stylekit.SimplifiedHomePage(ui) { route ->
+                    when(route) {
+                        "full" -> openMode("full")
+                        "sale" -> startActivity(Intent(this,com.alsafa.native8.sales.FastSaleActivity::class.java))
+                        "repair" -> startActivity(Intent(this,com.alsafa.native8.maintenance.QuickRepairActivity::class.java))
+                        "delivery" -> startActivity(Intent(this,com.alsafa.native8.maintenance.ReadyDeliveriesActivity::class.java))
+                        "back" -> finish()
+                    }
+                }.view)
             } else setContentView(com.alsafa.native8.stylekit.ModeSelectionPage(ui,::openMode).view)
             return
         }

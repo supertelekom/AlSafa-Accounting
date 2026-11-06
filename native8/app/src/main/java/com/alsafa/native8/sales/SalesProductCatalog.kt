@@ -7,7 +7,7 @@ import com.alsafa.native8.data.operational.RoomProductStockRepository
 import org.json.JSONObject
 
 data class SaleChoice(val source: String,val productId: String,val variantId: String?,
-    val title: String,val barcode: String,val available: String,val price: String,val cost: String)
+    val title: String,val barcode: String,val available: String,val price: String,val cost: String,val currency:String="USD")
 
 class SalesProductCatalog(context: Context) {
  private val db=AppDatabase.get(context.applicationContext)
@@ -21,9 +21,9 @@ class SalesProductCatalog(context: Context) {
   suspend fun add(source:String,id:String,variant:String?,product:JSONObject,title:String) {
    if(results.size>=30) return
    val barcode=product.optString("barcode")
-   if(!title.contains(query,true) && !barcode.contains(query,true)) return
+   if(!listOf(title,barcode,product.optString("model"),product.optString("ref"),product.optString("reference"),product.optString("sku")).any { it.contains(query,true) }) return
    results.add(SaleChoice(source,id,variant,title,barcode,
-    stock.currentStock(source,id,variant),product.optString("salePrice","0"),product.optString("cost","0")))
+    stock.currentStock(source,id,variant),product.optString("salePrice","0"),product.optString("cost","0"),product.optString("currency","USD")))
   }
   val source=dao.latestSource()
   if(source!=null) {

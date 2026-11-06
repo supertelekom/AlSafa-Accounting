@@ -56,7 +56,8 @@ class RoomSalesEngine(private val context: Context) {
         }
     }
 
-    suspend fun save(draft: SaleDraft, totals: SaleTotals): String = db.withTransaction {
+    suspend fun save(draft: SaleDraft, totals: SaleTotals, requestId:String?=null): String = db.withTransaction {
+        if(requestId!=null && posting.sale(requestId)!=null) return@withTransaction requestId
         SalesChannelClassification.requireVerified(draft.channel)
         require(draft.lines.isNotEmpty()) { "لا يمكن حفظ فاتورة دون أصناف" }
         require(draft.lines.all { it.quantity > BigDecimal.ZERO && it.unitPrice >= BigDecimal.ZERO && it.unitCost >= BigDecimal.ZERO && it.discount >= BigDecimal.ZERO }) { "بيانات الأصناف غير صالحة" }
@@ -73,8 +74,8 @@ class RoomSalesEngine(private val context: Context) {
             val required = lines.fold(BigDecimal.ZERO) { sum, line -> sum + line.quantity }
             require(required <= available) { "الكمية غير كافية: ${lines.first().title}" }
         }
-        val number = maxOf(posting.maxNewNumber(), db.legacySaleDao().maxLegacyInvoiceNumber()) + 1
-        val id = UUID.randomUUID().toString()
+        val number = maxOf(posting.maxNewNumber(), db.legacySaleDao().maxLegacyInvoiceNumber(),db.maintenanceDao().maxRepairInvoice()) + 1
+        val id = requestId ?: UUID.randomUUID().toString()
         val now = System.currentTimeMillis()
         posting.insertSale(RoomSale(id, number, now, draft.customerName, draft.customerPhone,
             totals.net.toPlainString(), totals.discount.toPlainString(), totals.paid.toPlainString(),

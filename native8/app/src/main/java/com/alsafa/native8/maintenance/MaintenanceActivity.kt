@@ -86,6 +86,12 @@ class MaintenanceActivity:ComponentActivity() {
   }
   reload=::refresh
   refresh()
+  intent.getStringExtra("repair_id")?.let { id -> lifecycleScope.launch {
+   selectedRefresh?.invoke(id)
+   selected?.let { r -> if(intent.getBooleanExtra("open_delivery",false) && r.source_sha256=="native8" && MaintenanceDeliveryEligibility.allowed(r.status,JSONObject(r.original_json))) {
+    collection=r.price;collectionCurrency=r.currency;selectedCashbox="drawer";deliveryDialog=true
+   } }
+  } }
   // Refresh after returning from the intake form.
   setContent {
    androidx.compose.runtime.CompositionLocalProvider(
