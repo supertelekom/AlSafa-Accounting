@@ -20,8 +20,8 @@ object QuickRepairRules {
   return rows.sortedBy { it.optDouble("order",0.0) }
  }
  fun amount(value:String):BigDecimal = value.trim().map { c -> when(c) { in '٠'..'٩' -> '0'+(c-'٠');in '۰'..'۹' -> '0'+(c-'۰');'٫' -> '.';else -> c } }.joinToString("").toBigDecimal()
- fun financial(settings:JSONObject,button:JSONObject,part:JSONObject?,price:BigDecimal,currency:String,rate:(String,String)->BigDecimal):JSONObject {
-  require(price>BigDecimal.ZERO && currency in setOf("TRY","USD","SYP")) { "أدخل المبلغ النهائي والعملة" }
+ fun financial(settings:JSONObject,button:JSONObject,part:JSONObject?,price:BigDecimal,currency:String,rate:(String,String)->BigDecimal,allowZero:Boolean=false):JSONObject {
+  require((price>BigDecimal.ZERO || (allowZero && price.signum()==0)) && currency in setOf("TRY","USD","SYP")) { "أدخل المبلغ النهائي والعملة" }
   val used=JSONArray();var cost=BigDecimal.ZERO
   if(button.optString("partId").isNotBlank()) {
    require(part!=null && part.getString("id")==button.getString("partId")) { "قطعة الصيانة المرتبطة بالزر غير موجودة" }

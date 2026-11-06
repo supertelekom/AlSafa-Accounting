@@ -37,4 +37,12 @@ class QuickRepairRulesTest {
  @Test fun missingLinkedPartCannotBecomeLabourOnly() {
   try { QuickRepairRules.financial(JSONObject(),JSONObject("""{"partId":"missing"}"""),null,BigDecimal.TEN,"USD",::rate);fail() } catch(_:IllegalArgumentException) {}
  }
+ @org.junit.Test fun deferredRepairAllowsZeroWithoutPartsButImmediateStillRejectsIt() {
+  val button=JSONObject().put("partId","")
+  val raw=QuickRepairRules.financial(JSONObject(),button,null,BigDecimal.ZERO,"TRY",::rate,allowZero=true)
+  assertEquals("0",raw.getString("price"))
+  assertEquals(0,raw.getJSONArray("usedParts").length())
+  try { QuickRepairRules.financial(JSONObject(),button,null,BigDecimal.ZERO,"TRY",::rate);fail() } catch(_:IllegalArgumentException) {}
+  try { QuickRepairRules.financial(JSONObject(),button,null,BigDecimal("-1"),"TRY",::rate,allowZero=true);fail() } catch(_:IllegalArgumentException) {}
+ }
 }

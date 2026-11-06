@@ -81,9 +81,12 @@ class QuickRepairActivity:Activity() {
     result.fold(onSuccess={ number ->
      Toast.makeText(this,"تم تسجيل ${selected?.optString("label")} — فاتورة رقم $number",Toast.LENGTH_LONG).show()
      if(d.deliverNow)startActivity(Intent(this,com.alsafa.native8.sales.SalePrintActivity::class.java).putExtra("repair_id",requestId).putExtra("share_after_collection",true))
-     else startActivity(Intent(this,MaintenanceActivity::class.java))
+     else startActivity(Intent(this,MaintenanceActivity::class.java).putExtra("repair_id",requestId))
      finish()
-    },onFailure={page.showConversion(it.message ?: "تعذر حفظ الصيانة",true);Toast.makeText(this,it.message,Toast.LENGTH_LONG).show()})
+    },onFailure={ error ->
+     val message=error.message?.takeIf { it.isNotBlank() } ?: "تعذر حفظ الصيانة؛ تحقق من البيانات وحاول مجدداً"
+     page.showConversion(message,true)
+    })
    }
   }.start()
  }
