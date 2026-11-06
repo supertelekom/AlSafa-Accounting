@@ -117,5 +117,13 @@ class MaintenancePartsRepository(private val db: AppDatabase) {
   raw.put("partsStockApplied",false)
   check(dao.updateParts(repairId,repair.original_json,raw.toString())==1) { "تغيرت الفاتورة أثناء الاسترجاع" }
  }
+ suspend fun refreshDraftTotal(id:String)=db.withTransaction {
+  val repair=dao.repair(id) ?: error("الصيانة غير موجودة")
+  require(repair.source_sha256=="native8" && repair.status!="تم التسليم")
+  val raw=JSONObject(repair.original_json)
+  val total=com.alsafa.native8.sales.LegacyMaintenanceProfitReader.total(raw)
+  raw.put("price",total.toPlainString())
+  check(dao.updateDraftPrice(id,repair.original_json,raw.toString(),total.toPlainString())==1) { "تغيرت الصيانة أثناء الحفظ" }
+ }
  data class SelectedPart(val partId:String,val qty:String,val price:String)
 }

@@ -66,6 +66,14 @@ class MainActivity : Activity() {
             setOnClickListener { startActivity(Intent(this@MainActivity, RestoreActivity::class.java)) }
         }, LinearLayout.LayoutParams(-1, 76).apply { bottomMargin = 20 })
         root.addView(Button(this).apply {
+            text = "نسخ احتياطي كامل / استعادة / تصفير"
+            setOnClickListener {
+                startActivity(Intent(this@MainActivity, com.alsafa.native8.backup.NativeBackupActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+                finishAffinity()
+                android.os.Process.killProcess(android.os.Process.myPid())
+            }
+        }, LinearLayout.LayoutParams(-1, 76))
+        root.addView(Button(this).apply {
             text = "المنتجات المستوردة"
             textSize = 19f
             isAllCaps = false

@@ -25,3 +25,6 @@ Reviewed branch head c494da9. This is verification, not a release approval.
 ## Files
 - Modified: app/src/test/java/com/alsafa/native8/sales/NativeMaintenanceProfitReaderTest.kt
 - Created: READINESS_VERIFICATION_2026-11-06.md
+
+## Follow-up implementation
+The labour entry and full backup/restore/reset gaps above are implemented in the subsequent batch described in BACKUP_LABOUR_IMPLEMENTATION_2026-11-06.md. They remain pending Android device acceptance; the original verification findings above describe the pre-implementation state.

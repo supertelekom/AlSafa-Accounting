@@ -50,6 +50,8 @@ interface MaintenanceDao {
  suspend fun changePartStock(id:String,expected:String,stock:String):Int
  @Query("UPDATE maintenance_repairs SET original_json=:raw WHERE id=:id AND source_sha256='native8' AND status!='تم التسليم' AND original_json=:expected")
  suspend fun updateParts(id:String,expected:String,raw:String):Int
+ @Query("UPDATE maintenance_repairs SET price=:price, original_json=:raw WHERE id=:id AND source_sha256='native8' AND status!='تم التسليم' AND original_json=:expected")
+ suspend fun updateDraftPrice(id:String,expected:String,raw:String,price:String):Int
  @Query("SELECT COUNT(*) FROM maintenance_repairs WHERE source_sha256=:source")
  suspend fun repairCount(source:String):Int
  @Query("SELECT COALESCE(MAX(invoice_number),0) FROM maintenance_repairs")

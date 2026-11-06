@@ -19,7 +19,7 @@ names = ['OriginalStoreProfitCompatibility', 'FinancialLedgerPresentation', 'Leg
          'LegacyFinancialRules', 'CumulativePartnerProfit', 'VerifiedFinancialConsolidation',
          'VerifiedFinancialEventAdapters', 'LegacyMaintenanceProfitReader', 'LegacyExpenseWithdrawalReader', 'NativeMaintenanceProfitReader', 'PartnerFinancialStatement']
 tests = [n + 'Test' for n in names if (test / (n + 'Test.kt')).exists()]
-tests += ['LegacyFinancialSourceParityTest', 'OriginalFinancialStatementParityTest', 'MaintenanceReturnRulesTest', 'UnifiedFinancialIntegrationTest']
+tests += ['NativeArchiveTest', 'LegacyFinancialSourceParityTest', 'OriginalFinancialStatementParityTest', 'MaintenanceReturnRulesTest', 'UnifiedFinancialIntegrationTest']
 integration = ['HistoricalFinancialSource', 'LegacyHistoricalProfitProjection', 'UnifiedExpensePartnerReadRepository',
                'UnifiedFinancialPeriodRepository', 'NativeMaintenanceProfitRepository', 'FinancialPeriodGuard',
                'SalesFinancialAuditDao', 'SalesFinancialAuditEntities', 'SalesRoomDaos', 'SalesRoomEntities',
@@ -30,6 +30,7 @@ with tempfile.TemporaryDirectory(prefix='alsafa-financial-junit-') as output:
                     '-no-stdlib', '-no-reflect', '-classpath', classpath, '-d', output]
                    + [str(main / (n + '.kt')) for n in names]
                    + [str(main / (n + '.kt')) for n in integration]
+                   + [str(main.parent / ('backup/' + n + '.kt')) for n in ['NativeArchive', 'DataDirectorySwap']]
                    + [str(main.parent / ('maintenance/' + n + '.kt')) for n in ['MaintenanceReturnRules', 'MaintenanceDao', 'MaintenanceEntities']]
                    + [str(test / (n + '.kt')) for n in tests], check=True)
     subprocess.run(['java', '-cp', os.pathsep.join([classpath, output, str(root / 'app/src/test/resources')]),

@@ -41,6 +41,7 @@ class MaintenanceIntakeActivity:Activity() {
   val problem=field("العطل *")
   val diagnosis=field("التشخيص")
   val notes=field("ملاحظات")
+  val labor=field("أجرة العمل — USD").apply { setText("0");inputType=8194 }
   val selectedParts=mutableListOf<MaintenancePartsRepository.SelectedPart>()
   val partSummary=TextView(this).apply { text="قطع الصيانة: لا توجد قطع مضافة";textSize=17f }
   root.addView(TextView(this).apply { text="قطع الصيانة";textSize=20f })
@@ -125,6 +126,8 @@ class MaintenanceIntakeActivity:Activity() {
     val problemValue=problem.text.toString().trim()
     val diagnosisValue=diagnosis.text.toString().trim()
     val notesValue=notes.text.toString().trim()
+    val laborValue=labor.text.toString().toBigDecimalOrNull()
+    if(laborValue==null || laborValue<BigDecimal.ZERO) { Toast.makeText(this@MaintenanceIntakeActivity,"أجرة العمل غير صحيحة",Toast.LENGTH_LONG).show();return@setOnClickListener }
     val requestedParts=selectedParts.toList()
     isEnabled=false
     Thread {
@@ -145,7 +148,7 @@ class MaintenanceIntakeActivity:Activity() {
          put("watch",watch.text.toString().trim());put("model",model.text.toString().trim())
          put("problem",problem.text.toString().trim());put("diagnosis",diagnosis.text.toString().trim())
          put("notes",notes.text.toString().trim());put("watchPhoto",photoUri)
-         put("currency","USD");put("price",0);put("received",0)
+         put("currency","USD");put("laborPrice",laborValue.toPlainString());put("price",laborValue.toPlainString());put("received",0)
          put("partsTotal",0);put("partsCost",0);put("cost",0)
          put("usedParts",org.json.JSONArray());put("partsStockApplied",false)
          put("createdAt",now)
@@ -154,7 +157,7 @@ class MaintenanceIntakeActivity:Activity() {
          id,"native8",number,date,time,"بانتظار التسليم",
          customer.text.toString().trim(),phone.text.toString().trim(),
          watch.text.toString().trim(),model.text.toString().trim(),
-         problem.text.toString().trim(),"USD","0","0","",now,raw.toString()
+         problem.text.toString().trim(),"USD",laborValue.toPlainString(),"0","",now,raw.toString()
         ))
         if(requestedParts.isNotEmpty()) {
          // Same Room transaction as intake; no stock deduction until delivery.
@@ -174,6 +177,7 @@ class MaintenanceIntakeActivity:Activity() {
          val changed=JSONObject(current.original_json).apply { put("usedParts",used);put("partsTotal",total.toPlainString());put("partsCost",costs.toPlainString()) }
          check(db.maintenanceDao().updateParts(id,current.original_json,changed.toString())==1)
         }
+        MaintenancePartsRepository(db).refreshDraftTotal(id)
         number
        }
       }

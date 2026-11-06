@@ -35,6 +35,7 @@ class MaintenanceEditActivity:Activity() {
   val diagnosis=field("التشخيص")
   val workDone=field("العمل المنجز")
   val notes=field("ملاحظات")
+  val labor=field("أجرة العمل").apply { inputType=8194 }
   val partsButton=Button(this).apply { text="تحديث العطل واختيار قطع الصيانة" }
   root.addView(partsButton)
   val partsSummary=TextView(this).apply { text="القطع المختارة: لا توجد قطع" }
@@ -59,6 +60,8 @@ class MaintenanceEditActivity:Activity() {
     diagnosis.setText(json.optString("diagnosis"))
     workDone.setText(json.optString("workDone"))
     notes.setText(json.optString("notes"))
+    labor.hint="أجرة العمل — "+repair.currency
+    labor.setText(json.optString("laborPrice",json.optString("price","0")))
     var pendingParts:MutableList<MaintenancePartsRepository.SelectedPart>?=null
     val currentParts=json.optJSONArray("usedParts") ?: JSONArray()
     val existing=mutableListOf<MaintenancePartsRepository.SelectedPart>()
@@ -120,6 +123,8 @@ class MaintenanceEditActivity:Activity() {
       Toast.makeText(this,"العميل والساعة والعطل مطلوبة",Toast.LENGTH_LONG).show()
       return@setOnClickListener
      }
+     val laborValue=labor.text.toString().toBigDecimalOrNull()
+     if(laborValue==null || laborValue<BigDecimal.ZERO) { Toast.makeText(this,"أجرة العمل غير صحيحة",Toast.LENGTH_LONG).show();return@setOnClickListener }
      save.isEnabled=false
      val requestedParts=pendingParts?.toList()
      val values=listOf(customer,phone,watch,model,problem,diagnosis,workDone,notes)
@@ -131,12 +136,13 @@ class MaintenanceEditActivity:Activity() {
         db.withTransaction {
          val latest=db.maintenanceDao().repair(id) ?: error("الصيانة غير موجودة")
          require(latest.source_sha256=="native8" && latest.status!="تم التسليم") { "لا يمكن تعديل السجل" }
-         val raw=JSONObject(latest.original_json)
+         val raw=JSONObject(latest.original_json).put("laborPrice",laborValue.toPlainString())
          listOf("customer","phone","watch","model","problem","diagnosis","workDone","notes")
           .forEachIndexed { index,key -> raw.put(key,values[index]) }
          check(db.maintenanceDao().editNewRepair(id,values[0],values[1],values[2],
           values[3],values[4],latest.status,raw.toString())==1)
          if(requestedParts!=null) MaintenancePartsRepository(db).saveDraft(id,requestedParts)
+         MaintenancePartsRepository(db).refreshDraftTotal(id)
         }
        }
       }
