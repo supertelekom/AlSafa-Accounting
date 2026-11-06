@@ -74,6 +74,10 @@ class MainActivity : Activity() {
             }
         }, LinearLayout.LayoutParams(-1, 76))
         root.addView(Button(this).apply {
+            text = "صيانة سريعة"
+            setOnClickListener { startActivity(Intent(this@MainActivity, com.alsafa.native8.maintenance.QuickRepairActivity::class.java)) }
+        }, LinearLayout.LayoutParams(-1, 76))
+        root.addView(Button(this).apply {
             text = "المنتجات المستوردة"
             textSize = 19f
             isAllCaps = false

@@ -1,0 +1,3128 @@
+{
+  "settings": {
+    "quickRepairButtons": [
+      {
+        "id": "quick-repair-1789139439956-ftxped",
+        "label": "بطارية سيكيزن 377",
+        "icon": "🔋",
+        "price": 100,
+        "priceMode": "fixed",
+        "partId": "maintenance-part-1787036870010-z8mvjg",
+        "qty": 1,
+        "order": 1,
+        "_syncUpdatedAt": 1792928748880,
+        "_syncDeviceId": "179292872011902ca1c4e"
+      },
+      {
+        "id": "quick-repair-1789139501891-b4gp8x",
+        "label": "بطارية ماكسل 377",
+        "icon": "🔋",
+        "price": 80,
+        "priceMode": "fixed",
+        "partId": "maintenance-part-1789132820019-ps1z0v",
+        "qty": 1,
+        "order": 2,
+        "_syncUpdatedAt": 1792928748880,
+        "_syncDeviceId": "179292872011902ca1c4e"
+      },
+      {
+        "id": "quick-repair-1789139528280-d86390",
+        "label": "بطارية صيني 377",
+        "icon": "🔋",
+        "price": 50,
+        "priceMode": "fixed",
+        "partId": "maintenance-part-1789133667546-mc2652",
+        "qty": 1,
+        "order": 3,
+        "_syncUpdatedAt": 1792928748880,
+        "_syncDeviceId": "179292872011902ca1c4e"
+      },
+      {
+        "id": "quick-repair-1789139574543-th4qgq",
+        "label": "بطارية سيكيزن 364",
+        "icon": "🔋",
+        "price": 150,
+        "priceMode": "fixed",
+        "partId": "maintenance-part-1787036953426-go4c8s",
+        "qty": 1,
+        "order": 4,
+        "_syncUpdatedAt": 1792928748880,
+        "_syncDeviceId": "179292872011902ca1c4e"
+      },
+      {
+        "id": "quick-repair-1789139638129-1a8vsc",
+        "label": "بطارية صيني 364",
+        "icon": "🔋",
+        "price": 80,
+        "priceMode": "fixed",
+        "partId": "maintenance-part-1787036915014-9oln23",
+        "qty": 1,
+        "order": 5,
+        "_syncUpdatedAt": 1792928748880,
+        "_syncDeviceId": "179292872011902ca1c4e"
+      },
+      {
+        "id": "quick-repair-1789140444485-zm31k4",
+        "label": "بطارية صيني 371",
+        "icon": "🔋",
+        "price": 80,
+        "priceMode": "fixed",
+        "partId": "maintenance-part-1787036989896-gqgsgy",
+        "qty": 1,
+        "order": 6,
+        "_syncUpdatedAt": 1792928748880,
+        "_syncDeviceId": "179292872011902ca1c4e"
+      },
+      {
+        "id": "quick-repair-1789140466801-63kwl7",
+        "label": "بطارية سيكيزن 371",
+        "icon": "🔋",
+        "price": 150,
+        "priceMode": "fixed",
+        "partId": "maintenance-part-1787037016429-uh2c4l",
+        "qty": 1,
+        "order": 7,
+        "_syncUpdatedAt": 1792928748880,
+        "_syncDeviceId": "179292872011902ca1c4e"
+      },
+      {
+        "id": "quick-repair-1789140661626-q2etjf",
+        "label": "بطارية سيكيزن 379",
+        "icon": "🔋",
+        "price": 150,
+        "priceMode": "fixed",
+        "partId": "maintenance-part-1789135204468-qj7gwt",
+        "qty": 1,
+        "order": 8,
+        "_syncUpdatedAt": 1792928748880,
+        "_syncDeviceId": "179292872011902ca1c4e"
+      },
+      {
+        "id": "quick-repair-1789148554385-h31p7x",
+        "label": "بطارية سيكيزن 362",
+        "icon": "🔋",
+        "price": 150,
+        "priceMode": "fixed",
+        "partId": "maintenance-part-1789135262275-7vewy4",
+        "qty": 1,
+        "order": 9,
+        "_syncUpdatedAt": 1792928748880,
+        "_syncDeviceId": "179292872011902ca1c4e"
+      },
+      {
+        "id": "quick-repair-1789148573124-cmemlg",
+        "label": "بطارية سيكيزن 321",
+        "icon": "🔋",
+        "price": 150,
+        "priceMode": "fixed",
+        "partId": "maintenance-part-1789135127230-cfnqfm",
+        "qty": 1,
+        "order": 10,
+        "_syncUpdatedAt": 1792928748880,
+        "_syncDeviceId": "179292872011902ca1c4e"
+      },
+      {
+        "id": "quick-repair-1789148594228-bxh50t",
+        "label": "بطارية سيكيزن 379",
+        "icon": "🔋",
+        "price": 150,
+        "priceMode": "fixed",
+        "partId": "maintenance-part-1788373277363-knyua8",
+        "qty": 1,
+        "order": 11,
+        "_syncUpdatedAt": 1792928748880,
+        "_syncDeviceId": "179292872011902ca1c4e"
+      },
+      {
+        "id": "quick-repair-1789148655760-kvpghx",
+        "label": "بطارية سوني 365",
+        "icon": "🔋",
+        "price": 200,
+        "priceMode": "fixed",
+        "partId": "maintenance-part-1789135382278-ck2ezp",
+        "qty": 1,
+        "order": 14,
+        "_syncUpdatedAt": 1792928748880,
+        "_syncDeviceId": "179292872011902ca1c4e"
+      },
+      {
+        "id": "quick-repair-1789148695894-jry7mc",
+        "label": "بطارية سيكيزن 394",
+        "icon": "🔋",
+        "price": 150,
+        "priceMode": "fixed",
+        "partId": "maintenance-part-1789135173156-tbtol2",
+        "qty": 1,
+        "order": 15,
+        "_syncUpdatedAt": 1792928748880,
+        "_syncDeviceId": "179292872011902ca1c4e"
+      },
+      {
+        "id": "quick-repair-1789148753203-z6tfph",
+        "label": "بطارية سيكيزن 395",
+        "icon": "🔋",
+        "price": 150,
+        "priceMode": "fixed",
+        "partId": "maintenance-part-1789135229469-dxeiss",
+        "qty": 1,
+        "order": 17,
+        "_syncUpdatedAt": 1792928748880,
+        "_syncDeviceId": "179292872011902ca1c4e"
+      },
+      {
+        "id": "quick-repair-1789148787561-w6ddbj",
+        "label": "بطارية سوني 315",
+        "icon": "🔋",
+        "price": 200,
+        "priceMode": "fixed",
+        "partId": "maintenance-part-1789135405071-cxnztb",
+        "qty": 1,
+        "order": 18,
+        "_syncUpdatedAt": 1792928748880,
+        "_syncDeviceId": "179292872011902ca1c4e"
+      },
+      {
+        "id": "quick-repair-1789149529696-09efsv",
+        "label": "بطارية ماكسل 373",
+        "icon": "🔋",
+        "price": 150,
+        "priceMode": "fixed",
+        "partId": "maintenance-part-1789135316707-g5hn9c",
+        "qty": 1,
+        "order": 18,
+        "_syncUpdatedAt": 1792928748880,
+        "_syncDeviceId": "179292872011902ca1c4e"
+      },
+      {
+        "id": "quick-repair-1789148497728-i61tng",
+        "label": "بطارية ماكسل 2016",
+        "icon": "🔋",
+        "price": 100,
+        "priceMode": "fixed",
+        "partId": "maintenance-part-1789029137542-iadpoy",
+        "qty": 1,
+        "order": 19,
+        "_syncUpdatedAt": 1792928748880,
+        "_syncDeviceId": "179292872011902ca1c4e"
+      },
+      {
+        "id": "quick-repair-1789148464599-6cnskl",
+        "label": "بطارية صيني 2016",
+        "icon": "🔋",
+        "price": 80,
+        "priceMode": "fixed",
+        "partId": "maintenance-part-1787037065838-2do9bp",
+        "qty": 1,
+        "order": 20,
+        "_syncUpdatedAt": 1792928748880,
+        "_syncDeviceId": "179292872011902ca1c4e"
+      },
+      {
+        "id": "quick-repair-1789148872475-cpgti5",
+        "label": "بطارية صيني 2025",
+        "icon": "🔋",
+        "price": 80,
+        "priceMode": "fixed",
+        "partId": "maintenance-part-1789133623465-k74nar",
+        "qty": 1,
+        "order": 21,
+        "_syncUpdatedAt": 1792928748880,
+        "_syncDeviceId": "179292872011902ca1c4e"
+      },
+      {
+        "id": "quick-repair-1789148898546-g1626f",
+        "label": "بطارية نوراتا 2025",
+        "icon": "🔋",
+        "price": 100,
+        "priceMode": "fixed",
+        "partId": "maintenance-part-1789132638639-zrrs8q",
+        "qty": 1,
+        "order": 22,
+        "_syncUpdatedAt": 1792928748880,
+        "_syncDeviceId": "179292872011902ca1c4e"
+      },
+      {
+        "id": "quick-repair-1789148846810-krud4a",
+        "label": "بطاريات ماكسل 2025",
+        "icon": "🔋",
+        "price": 120,
+        "priceMode": "fixed",
+        "partId": "maintenance-part-1789028861181-cximz7",
+        "qty": 1,
+        "order": 23,
+        "_syncUpdatedAt": 1792928748880,
+        "_syncDeviceId": "179292872011902ca1c4e"
+      },
+      {
+        "id": "quick-repair-1789148935315-29lb6t",
+        "label": "بطارية صيني 2032",
+        "icon": "🔋",
+        "price": 80,
+        "priceMode": "fixed",
+        "partId": "maintenance-part-1789133792402-p930s0",
+        "qty": 1,
+        "order": 25,
+        "_syncUpdatedAt": 1792928748880,
+        "_syncDeviceId": "179292872011902ca1c4e"
+      },
+      {
+        "id": "quick-repair-1789149084995-0q6fa9",
+        "label": "بطارية نوراتا 2032",
+        "icon": "🔋",
+        "price": 100,
+        "priceMode": "fixed",
+        "partId": "maintenance-part-1789132612128-xqexm0",
+        "qty": 1,
+        "order": 26,
+        "_syncUpdatedAt": 1792928748880,
+        "_syncDeviceId": "179292872011902ca1c4e"
+      },
+      {
+        "id": "quick-repair-1789148960659-nmqwsz",
+        "label": "بطارية ماكسل 2032",
+        "icon": "🔋",
+        "price": 120,
+        "priceMode": "fixed",
+        "partId": "maintenance-part-1789028908298-6fn8f4",
+        "qty": 1,
+        "order": 27,
+        "_syncUpdatedAt": 1792928748880,
+        "_syncDeviceId": "179292872011902ca1c4e"
+      },
+      {
+        "id": "quick-repair-1789149031754-3jzjl6",
+        "label": "بطارية نوراتا 2430",
+        "icon": "🔋",
+        "price": 250,
+        "priceMode": "fixed",
+        "partId": "maintenance-part-1789132729006-vekxdf",
+        "qty": 1,
+        "order": 28,
+        "_syncUpdatedAt": 1792928748880,
+        "_syncDeviceId": "179292872011902ca1c4e"
+      },
+      {
+        "id": "quick-repair-1789149046203-5ylooc",
+        "label": "بطارية نوراتا 2450",
+        "icon": "🔋",
+        "price": 250,
+        "priceMode": "fixed",
+        "partId": "maintenance-part-1789132754317-ry15ni",
+        "qty": 1,
+        "order": 29,
+        "_syncUpdatedAt": 1792928748880,
+        "_syncDeviceId": "179292872011902ca1c4e"
+      },
+      {
+        "id": "quick-repair-1789149107016-y4r7dq",
+        "label": "بطارية نوراتا 1620",
+        "icon": "🔋",
+        "price": 100,
+        "priceMode": "fixed",
+        "partId": "maintenance-part-1789029219872-zhiq7l",
+        "qty": 1,
+        "order": 31,
+        "_syncUpdatedAt": 1792928748880,
+        "_syncDeviceId": "179292872011902ca1c4e"
+      },
+      {
+        "id": "quick-repair-1789149129115-2bu4sn",
+        "label": "بطارية نوراتا 1220",
+        "icon": "🔋",
+        "price": 100,
+        "priceMode": "fixed",
+        "partId": "maintenance-part-1789029294871-4k51c0",
+        "qty": 1,
+        "order": 32,
+        "_syncUpdatedAt": 1792928748880,
+        "_syncDeviceId": "179292872011902ca1c4e"
+      },
+      {
+        "id": "quick-repair-1789149141632-waviim",
+        "label": "بطارية نوراتا 1216",
+        "icon": "🔋",
+        "price": 100,
+        "priceMode": "fixed",
+        "partId": "maintenance-part-1789029369129-bww22y",
+        "qty": 1,
+        "order": 33,
+        "_syncUpdatedAt": 1792928748880,
+        "_syncDeviceId": "179292872011902ca1c4e"
+      },
+      {
+        "id": "quick-repair-1789149185056-os9bmn",
+        "label": "بطارية صيني 1216",
+        "icon": "🔋",
+        "price": 70,
+        "priceMode": "fixed",
+        "partId": "maintenance-part-1789133700777-c8zaur",
+        "qty": 1,
+        "order": 34,
+        "_syncUpdatedAt": 1792928748880,
+        "_syncDeviceId": "179292872011902ca1c4e"
+      },
+      {
+        "id": "quick-repair-1789149210119-s32pex",
+        "label": "بطارية صيني 1220",
+        "icon": "🔋",
+        "price": 70,
+        "priceMode": "fixed",
+        "partId": "maintenance-part-1789133719524-xr0k5a",
+        "qty": 1,
+        "order": 35,
+        "_syncUpdatedAt": 1792928748880,
+        "_syncDeviceId": "179292872011902ca1c4e"
+      },
+      {
+        "id": "quick-repair-1789149245873-cq0l5b",
+        "label": "بطارية مفتاح 23A",
+        "icon": "🔋",
+        "price": 100,
+        "priceMode": "fixed",
+        "partId": "maintenance-part-1789133887955-hig6cr",
+        "qty": 1,
+        "order": 36,
+        "_syncUpdatedAt": 1792928748880,
+        "_syncDeviceId": "179292872011902ca1c4e"
+      },
+      {
+        "id": "quick-repair-1789149289448-na4jfe",
+        "label": "بطارية سماعة جي 13",
+        "icon": "🔋",
+        "price": 130,
+        "priceMode": "fixed",
+        "partId": "maintenance-part-1789134615850-a7d4wn",
+        "qty": 1,
+        "order": 37,
+        "_syncUpdatedAt": 1792928748880,
+        "_syncDeviceId": "179292872011902ca1c4e"
+      },
+      {
+        "id": "quick-repair-1789149312357-271g9q",
+        "label": "بطارية سماعة 312",
+        "icon": "🔋",
+        "price": 130,
+        "priceMode": "fixed",
+        "partId": "maintenance-part-1789135522761-ab7ufq",
+        "qty": 1,
+        "order": 38,
+        "_syncUpdatedAt": 1792928748880,
+        "_syncDeviceId": "179292872011902ca1c4e"
+      },
+      {
+        "id": "quick-repair-1789149338113-7gszj1",
+        "label": "بطارية سماعة 675",
+        "icon": "🔋",
+        "price": 130,
+        "priceMode": "fixed",
+        "partId": "maintenance-part-1789134559829-hacrgf",
+        "qty": 1,
+        "order": 39,
+        "_syncUpdatedAt": 1792928748880,
+        "_syncDeviceId": "179292872011902ca1c4e"
+      },
+      {
+        "id": "quick-repair-1789149365469-62nbvb",
+        "label": "بطارية سماعة جي 10",
+        "icon": "🔋",
+        "price": 130,
+        "priceMode": "fixed",
+        "partId": "maintenance-part-1789135459517-leqpia",
+        "qty": 1,
+        "order": 40,
+        "_syncUpdatedAt": 1792928748880,
+        "_syncDeviceId": "179292872011902ca1c4e"
+      },
+      {
+        "id": "quick-repair-1789149403294-40iue9",
+        "label": "بطارية صيني 1620",
+        "icon": "🔋",
+        "price": 70,
+        "priceMode": "fixed",
+        "partId": "maintenance-part-1789133738642-7udo59",
+        "qty": 1,
+        "order": 41,
+        "_syncUpdatedAt": 1792928748880,
+        "_syncDeviceId": "179292872011902ca1c4e"
+      },
+      {
+        "id": "quick-repair-1789149431055-v2a9ci",
+        "label": "بطارية صيني جي 10",
+        "icon": "🔋",
+        "price": 70,
+        "priceMode": "fixed",
+        "partId": "maintenance-part-1789133915106-zf00z2",
+        "qty": 1,
+        "order": 42,
+        "_syncUpdatedAt": 1792928748880,
+        "_syncDeviceId": "179292872011902ca1c4e"
+      },
+      {
+        "id": "quick-repair-1789149453344-339dqo",
+        "label": "بطارية صيني جي 13",
+        "icon": "🔋",
+        "price": 70,
+        "priceMode": "fixed",
+        "partId": "maintenance-part-1789133944380-sai0ci",
+        "qty": 1,
+        "order": 43,
+        "_syncUpdatedAt": 1792928748880,
+        "_syncDeviceId": "179292872011902ca1c4e"
+      },
+      {
+        "id": "quick-repair-1789149480932-nezy9u",
+        "label": "بطارية صيني جي 5",
+        "icon": "🔋",
+        "price": 70,
+        "priceMode": "fixed",
+        "partId": "maintenance-part-1789133986704-peaozq",
+        "qty": 1,
+        "order": 44,
+        "_syncUpdatedAt": 1792928748880,
+        "_syncDeviceId": "179292872011902ca1c4e"
+      },
+      {
+        "id": "quick-repair-1789149498923-z08q6r",
+        "label": "بطارية صيني جي 6",
+        "icon": "🔋",
+        "price": 70,
+        "priceMode": "fixed",
+        "partId": "maintenance-part-1789134817977-t4cmvt",
+        "qty": 1,
+        "order": 45,
+        "_syncUpdatedAt": 1792928748880,
+        "_syncDeviceId": "179292872011902ca1c4e"
+      },
+      {
+        "id": "quick-repair-1790163103754-19ar7q",
+        "label": "ماكينة حيط",
+        "icon": "🔧",
+        "price": 100,
+        "priceMode": "fixed",
+        "partId": "maintenance-part-1789635535188-h0f3oo",
+        "qty": 1,
+        "order": 46,
+        "_syncUpdatedAt": 1792928748880,
+        "_syncDeviceId": "179292872011902ca1c4e"
+      },
+      {
+        "id": "quick-repair-1790365041252-lm9gbk",
+        "label": "بلور مدور أصلي",
+        "icon": "🪩",
+        "price": 200,
+        "priceMode": "fixed",
+        "partId": "maintenance-part-1789135941630-eirp9s",
+        "qty": 1,
+        "order": 47,
+        "_syncUpdatedAt": 1792928748880,
+        "_syncDeviceId": "179292872011902ca1c4e"
+      },
+      {
+        "id": "quick-repair-1790419910837-wrj790",
+        "label": "ماكينة عادية",
+        "icon": "🔧",
+        "price": 200,
+        "priceMode": "fixed",
+        "partId": "maintenance-part-1790186625240-i3ep95",
+        "qty": 1,
+        "order": 48,
+        "_syncUpdatedAt": 1792928748880,
+        "_syncDeviceId": "179292872011902ca1c4e"
+      },
+      {
+        "id": "legacy-4",
+        "label": "حزام بلاستك",
+        "price": 100,
+        "priceMode": "fixed",
+        "partId": "maintenance-part-1789136468278-k8rkd8",
+        "qty": 1,
+        "icon": "⌚",
+        "order": 49,
+        "legacyService": "حزام بلاستك 100 ليرة",
+        "_syncUpdatedAt": 1792928748880,
+        "_syncDeviceId": "179292872011902ca1c4e"
+      },
+      {
+        "id": "quick-repair-1790428840362-x4mxzb",
+        "label": "قفل سويسري",
+        "icon": "🔧",
+        "price": 250,
+        "priceMode": "fixed",
+        "partId": "maintenance-part-1789634738452-cyexq9",
+        "qty": 1,
+        "order": 49,
+        "_syncUpdatedAt": 1792928748880,
+        "_syncDeviceId": "179292872011902ca1c4e"
+      },
+      {
+        "id": "legacy-6",
+        "label": "قفل ساعة جلد",
+        "price": 30,
+        "priceMode": "fixed",
+        "partId": "",
+        "qty": 1,
+        "icon": "🔗",
+        "order": 50,
+        "legacyService": "قفل ساعة جلد 30 ليرة",
+        "_syncUpdatedAt": 1792928748880,
+        "_syncDeviceId": "179292872011902ca1c4e"
+      },
+      {
+        "id": "quick-repair-1790841772857-6hrinp",
+        "label": "ظرف كاسيو",
+        "icon": "🔧",
+        "price": 200,
+        "priceMode": "fixed",
+        "partId": "maintenance-part-1790841733230-sbyieq",
+        "qty": 1,
+        "order": 50,
+        "_syncUpdatedAt": 1792928748880,
+        "_syncDeviceId": "179292872011902ca1c4e"
+      },
+      {
+        "id": "legacy-5",
+        "label": "حزام جلد",
+        "price": 250,
+        "priceMode": "fixed",
+        "partId": "maintenance-part-1792947487578-oz6fww",
+        "qty": 1,
+        "icon": "⌚",
+        "order": 51,
+        "legacyService": "حزام جلد 250 ليرة",
+        "_syncUpdatedAt": 1792948106330,
+        "_syncDeviceId": "1792946567789e73b0e21"
+      },
+      {
+        "id": "legacy-7",
+        "label": "قفل كبس قلاب",
+        "price": 70,
+        "priceMode": "fixed",
+        "partId": "maintenance-part-1789137355569-aosom5",
+        "qty": 1,
+        "icon": "🔗",
+        "order": 51,
+        "legacyService": "قفل ساعة قلاب 70 ليرة",
+        "_syncUpdatedAt": 1792928748880,
+        "_syncDeviceId": "179292872011902ca1c4e"
+      },
+      {
+        "id": "quick-repair-1790871536769-4euv17",
+        "label": "حبسة كستك",
+        "icon": "🔧",
+        "price": 100,
+        "priceMode": "fixed",
+        "partId": "maintenance-part-1789137633397-ozmcpp",
+        "qty": 1,
+        "order": 51,
+        "_syncUpdatedAt": 1792928748880,
+        "_syncDeviceId": "179292872011902ca1c4e"
+      },
+      {
+        "id": "quick-repair-1791044422768-20menv",
+        "label": "لحام",
+        "icon": "🔧",
+        "price": 0,
+        "priceMode": "manual",
+        "partId": "maintenance-part-1791044207804-1e8qth",
+        "qty": 1,
+        "order": 52,
+        "_syncUpdatedAt": 1792928748880,
+        "_syncDeviceId": "179292872011902ca1c4e"
+      },
+      {
+        "id": "quick-repair-1791131077875-w3ok2b",
+        "label": "ظرف الفجر",
+        "icon": "🔧",
+        "price": 600,
+        "priceMode": "fixed",
+        "partId": "maintenance-part-1791116680702-h12iem",
+        "qty": 1,
+        "order": 53,
+        "_syncUpdatedAt": 1792928748880,
+        "_syncDeviceId": "179292872011902ca1c4e"
+      },
+      {
+        "id": "quick-repair-1791134349526-v6f8jk",
+        "label": "كستك الفجر",
+        "icon": "🫴",
+        "price": 470,
+        "priceMode": "fixed",
+        "partId": "maintenance-part-1791114357315-bn0bhm",
+        "qty": 1,
+        "order": 54,
+        "_syncUpdatedAt": 1792928748880,
+        "_syncDeviceId": "179292872011902ca1c4e"
+      },
+      {
+        "id": "quick-repair-1791135455518-vvevdv",
+        "label": "بلور قص",
+        "icon": "🪩",
+        "price": 0,
+        "priceMode": "manual",
+        "partId": "maintenance-part-1790287700739-7ludnl",
+        "qty": 1,
+        "order": 55,
+        "_syncUpdatedAt": 1792928748880,
+        "_syncDeviceId": "179292872011902ca1c4e"
+      },
+      {
+        "id": "manual-problem",
+        "label": "صيانة مشكلة",
+        "price": 0,
+        "priceMode": "manual",
+        "partId": "",
+        "qty": 1,
+        "icon": "🛠️",
+        "order": 999,
+        "_syncUpdatedAt": 1792928748880,
+        "_syncDeviceId": "179292872011902ca1c4e"
+      },
+      {
+        "id": "quick-repair-1791714813297-hy98q8",
+        "label": "كستك جلد قفل سويسري",
+        "icon": "🫴",
+        "price": 750,
+        "priceMode": "fixed",
+        "partId": "maintenance-part-1791374799542-budu6f",
+        "qty": 1,
+        "order": 56,
+        "_syncUpdatedAt": 1792928748880,
+        "_syncDeviceId": "179292872011902ca1c4e"
+      },
+      {
+        "id": "quick-repair-1791790041192-g0mf60",
+        "label": "ماكينة كاسيو",
+        "icon": "🔧",
+        "price": 0,
+        "priceMode": "manual",
+        "partId": "maintenance-part-1791789970417-97x3i6",
+        "qty": 1,
+        "order": 57,
+        "_syncUpdatedAt": 1792928748880,
+        "_syncDeviceId": "179292872011902ca1c4e"
+      },
+      {
+        "id": "quick-repair-1792395222621-8812gi",
+        "label": "ماكينة يومي شهري",
+        "icon": "🔧",
+        "price": 0,
+        "priceMode": "manual",
+        "partId": "maintenance-part-1790186753397-mgprp7",
+        "qty": 1,
+        "order": 58,
+        "_syncUpdatedAt": 1792928748880,
+        "_syncDeviceId": "179292872011902ca1c4e"
+      },
+      {
+        "id": "quick-repair-1792408051189-6hbto4",
+        "label": "مجموعة VX",
+        "icon": "🔧",
+        "price": 0,
+        "priceMode": "manual",
+        "partId": "maintenance-part-1792407972775-wzfl5e",
+        "qty": 1,
+        "order": 59,
+        "_syncUpdatedAt": 1792928748880,
+        "_syncDeviceId": "179292872011902ca1c4e"
+      }
+    ],
+    "quickRepairCosts": {},
+    "quickRepairCostsCurrency": "USD"
+  },
+  "parts": [
+    {
+      "id": "maintenance-part-1792947487578-oz6fww",
+      "name": "كستك جلد جيد",
+      "stock": 100000,
+      "currency": "USD",
+      "cost": 2,
+      "salePrice": 6
+    },
+    {
+      "id": "maintenance-part-1792407972775-wzfl5e",
+      "name": "مجموعة VX",
+      "stock": 100000,
+      "currency": "USD",
+      "cost": 3.5,
+      "salePrice": 15
+    },
+    {
+      "id": "maintenance-part-1791789970417-97x3i6",
+      "name": "ماكينة كاسيو",
+      "stock": 100000,
+      "currency": "USD",
+      "cost": 0.75,
+      "salePrice": 4
+    },
+    {
+      "id": "maintenance-part-1791374799542-budu6f",
+      "name": "حزام جلد قفل سويسري",
+      "stock": 100000,
+      "currency": "USD",
+      "cost": 3,
+      "salePrice": 15
+    },
+    {
+      "id": "maintenance-part-1791226765713-z3zv09",
+      "name": "أكياس كرتون",
+      "stock": 100000,
+      "currency": "USD",
+      "cost": 0.2,
+      "salePrice": 2
+    },
+    {
+      "id": "maintenance-part-1787036870010-z8mvjg",
+      "name": "بطارية سيكيزن 377",
+      "stock": 100000,
+      "currency": "USD",
+      "cost": 0.3,
+      "salePrice": 2.1
+    },
+    {
+      "id": "maintenance-part-1789132820019-ps1z0v",
+      "name": "بطارية ماكسل 377",
+      "stock": 100000,
+      "currency": "USD",
+      "cost": 0.3,
+      "salePrice": 2
+    },
+    {
+      "id": "maintenance-part-1789133667546-mc2652",
+      "name": "بطارية صيني 377",
+      "stock": 100000,
+      "currency": "USD",
+      "cost": 0.1,
+      "salePrice": 1.1
+    },
+    {
+      "id": "maintenance-part-1789135127230-cfnqfm",
+      "name": "بطارية نوراتا 321",
+      "stock": 100000,
+      "currency": "USD",
+      "cost": 0.4,
+      "salePrice": 3.1
+    },
+    {
+      "id": "maintenance-part-1789137633397-ozmcpp",
+      "name": "حبسة كستك",
+      "stock": 100000,
+      "currency": "USD",
+      "cost": 0.2,
+      "salePrice": 2.1
+    },
+    {
+      "id": "maintenance-part-1791114357315-bn0bhm",
+      "name": "كستك الفجر أصلي",
+      "stock": 100000,
+      "currency": "USD",
+      "cost": 3,
+      "salePrice": 10
+    },
+    {
+      "id": "maintenance-part-1791115525740-2vmcrl",
+      "name": "ماكينة فجر",
+      "stock": 100000,
+      "currency": "USD",
+      "cost": 2,
+      "salePrice": 15
+    },
+    {
+      "id": "maintenance-part-1791116680702-h12iem",
+      "name": "ظرف الفجر",
+      "stock": 100000,
+      "currency": "USD",
+      "cost": 2,
+      "salePrice": 15
+    },
+    {
+      "id": "maintenance-part-1787036915014-9oln23",
+      "name": "بطارية صيني 364",
+      "stock": 100000,
+      "currency": "USD",
+      "cost": 0.1,
+      "salePrice": 1.1
+    },
+    {
+      "id": "maintenance-part-1787036953426-go4c8s",
+      "name": "بطارية سيكيزن 364",
+      "stock": 100000,
+      "currency": "USD",
+      "cost": 0.4,
+      "salePrice": 3.1
+    },
+    {
+      "id": "maintenance-part-1787036989896-gqgsgy",
+      "name": "بطارية صيني 371",
+      "stock": 100000,
+      "currency": "USD",
+      "cost": 0.15,
+      "salePrice": 1.1
+    },
+    {
+      "id": "maintenance-part-1787037016429-uh2c4l",
+      "name": "بطارية سيكيزن 371",
+      "stock": 100000,
+      "currency": "USD",
+      "cost": 0.4,
+      "salePrice": 3.1
+    },
+    {
+      "id": "maintenance-part-1787037065838-2do9bp",
+      "name": "بطارية صيني 2016",
+      "stock": 100000,
+      "currency": "USD",
+      "cost": 0.1,
+      "salePrice": 1.1
+    },
+    {
+      "id": "maintenance-part-1788373277363-knyua8",
+      "name": "بطارية سيكيزن 379",
+      "stock": 100000,
+      "currency": "TRY",
+      "cost": 40,
+      "salePrice": 150
+    },
+    {
+      "id": "maintenance-part-1789028861181-cximz7",
+      "name": "بطارية ماكسل 2025",
+      "stock": 100000,
+      "currency": "USD",
+      "cost": 0.25,
+      "salePrice": 2.1
+    },
+    {
+      "id": "maintenance-part-1789028908298-6fn8f4",
+      "name": "بطارية ماكسل 2032",
+      "stock": 100000,
+      "currency": "USD",
+      "cost": 0.25,
+      "salePrice": 2.1
+    },
+    {
+      "id": "maintenance-part-1789029137542-iadpoy",
+      "name": "بطارية ماكسل 2016",
+      "stock": 100000,
+      "currency": "USD",
+      "cost": 0.25,
+      "salePrice": 2.1
+    },
+    {
+      "id": "maintenance-part-1789029219872-zhiq7l",
+      "name": "بطارية نوراتا 1620",
+      "stock": 100000,
+      "currency": "USD",
+      "cost": 0.25,
+      "salePrice": 2.1
+    },
+    {
+      "id": "maintenance-part-1789029257519-egvnfu",
+      "name": "بطارية نوراتا 1616",
+      "stock": 100000,
+      "currency": "USD",
+      "cost": 0.25,
+      "salePrice": 2.1
+    },
+    {
+      "id": "maintenance-part-1789029294871-4k51c0",
+      "name": "بطارية نوراتا 1220",
+      "stock": 100000,
+      "currency": "USD",
+      "cost": 0.25,
+      "salePrice": 2.1
+    },
+    {
+      "id": "maintenance-part-1789029369129-bww22y",
+      "name": "بطارية نوراتا 1216",
+      "stock": 100000,
+      "currency": "USD",
+      "cost": 0.25,
+      "salePrice": 2.1
+    },
+    {
+      "id": "maintenance-part-1789132612128-xqexm0",
+      "name": "بطارية نوراتا 2032",
+      "stock": 100000,
+      "currency": "USD",
+      "cost": 0.25,
+      "salePrice": 2.1
+    },
+    {
+      "id": "maintenance-part-1789132638639-zrrs8q",
+      "name": "بطارية نوراتا 2025",
+      "stock": 100000,
+      "currency": "USD",
+      "cost": 0.25,
+      "salePrice": 2.1
+    },
+    {
+      "id": "maintenance-part-1789132729006-vekxdf",
+      "name": "بطارية نوراتا 2430",
+      "stock": 100000,
+      "currency": "USD",
+      "cost": 1,
+      "salePrice": 5
+    },
+    {
+      "id": "maintenance-part-1789132754317-ry15ni",
+      "name": "بطارية نوراتا 2450",
+      "stock": 100000,
+      "currency": "USD",
+      "cost": 1,
+      "salePrice": 5
+    },
+    {
+      "id": "maintenance-part-1789133623465-k74nar",
+      "name": "بطارية صيني 2025",
+      "stock": 100000,
+      "currency": "USD",
+      "cost": 0.1,
+      "salePrice": 1.1
+    },
+    {
+      "id": "maintenance-part-1789133700777-c8zaur",
+      "name": "بطارية صيني 1216",
+      "stock": 100000,
+      "currency": "USD",
+      "cost": 0.1,
+      "salePrice": 1.1
+    },
+    {
+      "id": "maintenance-part-1789133719524-xr0k5a",
+      "name": "بطارية صيني 1220",
+      "stock": 100000,
+      "currency": "USD",
+      "cost": 0.1,
+      "salePrice": 1.1
+    },
+    {
+      "id": "maintenance-part-1789133738642-7udo59",
+      "name": "بطارية صيني 1620",
+      "stock": 100000,
+      "currency": "USD",
+      "cost": 0.1,
+      "salePrice": 1.1
+    },
+    {
+      "id": "maintenance-part-1789133792402-p930s0",
+      "name": "بطارية صيني 2032",
+      "stock": 100000,
+      "currency": "USD",
+      "cost": 0.1,
+      "salePrice": 1.1
+    },
+    {
+      "id": "maintenance-part-1789133887955-hig6cr",
+      "name": "بطارية مفتاح 23A",
+      "stock": 100000,
+      "currency": "USD",
+      "cost": 0.5,
+      "salePrice": 2
+    },
+    {
+      "id": "maintenance-part-1789133915106-zf00z2",
+      "name": "بطارية صيني جي 10",
+      "stock": 100000,
+      "currency": "USD",
+      "cost": 0.1,
+      "salePrice": 1.1
+    },
+    {
+      "id": "maintenance-part-1789133944380-sai0ci",
+      "name": "بطارية صيني جي 13",
+      "stock": 100000,
+      "currency": "USD",
+      "cost": 0.1,
+      "salePrice": 1.1
+    },
+    {
+      "id": "maintenance-part-1789133986704-peaozq",
+      "name": "بطارية صيني جي 5",
+      "stock": 100000,
+      "currency": "USD",
+      "cost": 0.1,
+      "salePrice": 1.1
+    },
+    {
+      "id": "maintenance-part-1789134559829-hacrgf",
+      "name": "بطارية سماعة 675",
+      "stock": 100000,
+      "currency": "USD",
+      "cost": 1.1,
+      "salePrice": 3.5
+    },
+    {
+      "id": "maintenance-part-1789134615850-a7d4wn",
+      "name": "بطارية سماعة جي 13",
+      "stock": 100000,
+      "currency": "USD",
+      "cost": 1.1,
+      "salePrice": 3.7
+    },
+    {
+      "id": "maintenance-part-1789134817977-t4cmvt",
+      "name": "بطارية صيني جي 6",
+      "stock": 100000,
+      "currency": "USD",
+      "cost": 0.25,
+      "salePrice": 1.1
+    },
+    {
+      "id": "maintenance-part-1789135173156-tbtol2",
+      "name": "بطارية سيكيزن 394",
+      "stock": 100000,
+      "currency": "USD",
+      "cost": 0.9,
+      "salePrice": 3.1
+    },
+    {
+      "id": "maintenance-part-1789135204468-qj7gwt",
+      "name": "بطارية سيكيزن 379",
+      "stock": 100000,
+      "currency": "USD",
+      "cost": 0.4,
+      "salePrice": 3.1
+    },
+    {
+      "id": "maintenance-part-1789135229469-dxeiss",
+      "name": "بطارية سيكيزن 395",
+      "stock": 100000,
+      "currency": "USD",
+      "cost": 0.9,
+      "salePrice": 3.1
+    },
+    {
+      "id": "maintenance-part-1789135262275-7vewy4",
+      "name": "بطارية سيكيزن 362",
+      "stock": 100000,
+      "currency": "USD",
+      "cost": 0.5,
+      "salePrice": 3.1
+    },
+    {
+      "id": "maintenance-part-1789135316707-g5hn9c",
+      "name": "بطارية ماكسل 373",
+      "stock": 100000,
+      "currency": "USD",
+      "cost": 0.5,
+      "salePrice": 3.5
+    },
+    {
+      "id": "maintenance-part-1789135382278-ck2ezp",
+      "name": "بطارية سوني 365",
+      "stock": 100000,
+      "currency": "USD",
+      "cost": 0.5,
+      "salePrice": 3.5
+    },
+    {
+      "id": "maintenance-part-1789135405071-cxnztb",
+      "name": "بطارية سوني 315",
+      "stock": 100000,
+      "currency": "USD",
+      "cost": 0.5,
+      "salePrice": 3.2
+    },
+    {
+      "id": "maintenance-part-1789135459517-leqpia",
+      "name": "بطارية سماعة جي 10",
+      "stock": 100000,
+      "currency": "USD",
+      "cost": 1.1,
+      "salePrice": 3
+    },
+    {
+      "id": "maintenance-part-1789135522761-ab7ufq",
+      "name": "بطارية سماعة 312",
+      "stock": 100000,
+      "currency": "USD",
+      "cost": 0.25,
+      "salePrice": 1.1
+    },
+    {
+      "id": "maintenance-part-1789135941630-eirp9s",
+      "name": "بلور مدور عادي",
+      "stock": 100000,
+      "currency": "USD",
+      "cost": 0.1,
+      "salePrice": 2
+    },
+    {
+      "id": "maintenance-part-1789136135481-4yn9b0",
+      "name": "بلور ميما مشكل",
+      "stock": 100000,
+      "currency": "USD",
+      "cost": 0.1,
+      "salePrice": 2.1
+    },
+    {
+      "id": "maintenance-part-1789136468278-k8rkd8",
+      "name": "كستك بلاستيك خفيف",
+      "stock": 100000,
+      "currency": "USD",
+      "cost": 0.2,
+      "salePrice": 2
+    },
+    {
+      "id": "maintenance-part-1789137009610-vxq5zm",
+      "name": "كستك منوع",
+      "stock": 100000,
+      "currency": "USD",
+      "cost": 0.5,
+      "salePrice": 2.1
+    },
+    {
+      "id": "maintenance-part-1789137355569-aosom5",
+      "name": "قفل كباس قلاب",
+      "stock": 100000,
+      "currency": "USD",
+      "cost": 0.2,
+      "salePrice": 2
+    },
+    {
+      "id": "maintenance-part-1789137398683-ve4ceb",
+      "name": "قفل رولكس خفيف",
+      "stock": 100000,
+      "currency": "USD",
+      "cost": 1.5,
+      "salePrice": 3.5
+    },
+    {
+      "id": "maintenance-part-1789137441767-b6dqb8",
+      "name": "قفل رولكس أصلي",
+      "stock": 100000,
+      "currency": "USD",
+      "cost": 3,
+      "salePrice": 6
+    },
+    {
+      "id": "maintenance-part-1789137672164-uyc7e9",
+      "name": "قفل نسائي ناعم",
+      "stock": 100000,
+      "currency": "USD",
+      "cost": 0.15,
+      "salePrice": 1.5
+    },
+    {
+      "id": "maintenance-part-1789137701716-qiwbou",
+      "name": "قفل كاسيو قلاب",
+      "stock": 100000,
+      "currency": "USD",
+      "cost": 0.2,
+      "salePrice": 1.5
+    },
+    {
+      "id": "maintenance-part-1789634702046-4p0c41",
+      "name": "كستك رابر مغناطيس",
+      "stock": 100000,
+      "currency": "USD",
+      "cost": 0.85,
+      "salePrice": 5
+    },
+    {
+      "id": "maintenance-part-1789634738452-cyexq9",
+      "name": "قفل سويسري",
+      "stock": 100000,
+      "currency": "USD",
+      "cost": 1,
+      "salePrice": 5
+    },
+    {
+      "id": "maintenance-part-1789634883309-2g6ftz",
+      "name": "زر أصلي",
+      "stock": 100000,
+      "currency": "USD",
+      "cost": 0.3,
+      "salePrice": 5
+    },
+    {
+      "id": "maintenance-part-1789634932356-lya2ra",
+      "name": "زر عادي",
+      "stock": 100000,
+      "currency": "USD",
+      "cost": 0.1,
+      "salePrice": 1.5
+    },
+    {
+      "id": "maintenance-part-1789635535188-h0f3oo",
+      "name": "ماكينات ساعة حيط",
+      "stock": 100000,
+      "currency": "USD",
+      "cost": 0.5,
+      "salePrice": 2.5
+    },
+    {
+      "id": "maintenance-part-1790186625240-i3ep95",
+      "name": "ماكينة عادي",
+      "stock": 100000,
+      "currency": "USD",
+      "cost": 0.2,
+      "salePrice": 3.1
+    },
+    {
+      "id": "maintenance-part-1790186687257-3gtvi3",
+      "name": "ماكينة يومي",
+      "stock": 100000,
+      "currency": "USD",
+      "cost": 0.3,
+      "salePrice": 3.5
+    },
+    {
+      "id": "maintenance-part-1790186753397-mgprp7",
+      "name": "ماكينة يومي شهري",
+      "stock": 100000,
+      "currency": "USD",
+      "cost": 0.4,
+      "salePrice": 6
+    },
+    {
+      "id": "maintenance-part-1790267783518-wb4mjd",
+      "name": "بلور رولكس بحجر",
+      "stock": 100000,
+      "currency": "USD",
+      "cost": 0.5,
+      "salePrice": 6
+    },
+    {
+      "id": "maintenance-part-1790287700739-7ludnl",
+      "name": "بلور قص مخصص",
+      "stock": 100000,
+      "currency": "USD",
+      "cost": 0.3,
+      "salePrice": 0
+    },
+    {
+      "id": "maintenance-part-1790613542543-535x53",
+      "name": "ماكينة كرونوغراف",
+      "stock": 100000,
+      "currency": "USD",
+      "cost": 5,
+      "salePrice": 30
+    },
+    {
+      "id": "maintenance-part-1790841733230-sbyieq",
+      "name": "ظرف كاسيو",
+      "stock": 100000,
+      "currency": "USD",
+      "cost": 0.75,
+      "salePrice": 4.11
+    },
+    {
+      "id": "maintenance-part-1791044207804-1e8qth",
+      "name": "لحام",
+      "stock": 100000,
+      "currency": "USD",
+      "cost": 0.9,
+      "salePrice": 5
+    },
+    {
+      "id": "maintenance-part-1792255987724-mqt7v3",
+      "name": "قطع مشكلة",
+      "stock": 100000,
+      "currency": "USD",
+      "cost": 3,
+      "salePrice": 0
+    }
+  ],
+  "cases": [
+    {
+      "id": "quick-repair-1789139439956-ftxped",
+      "currency": "USD",
+      "price": 2,
+      "laborPrice": 0,
+      "partsTotal": 2,
+      "partsCost": 0.3,
+      "manualCost": 0,
+      "cost": 0.3
+    },
+    {
+      "id": "quick-repair-1789139439956-ftxped",
+      "currency": "TRY",
+      "price": 100,
+      "laborPrice": 0,
+      "partsTotal": 100,
+      "partsCost": 15,
+      "manualCost": 0,
+      "cost": 15
+    },
+    {
+      "id": "quick-repair-1789139439956-ftxped",
+      "currency": "SYP",
+      "price": 280,
+      "laborPrice": 0,
+      "partsTotal": 280,
+      "partsCost": 42,
+      "manualCost": 0,
+      "cost": 42
+    },
+    {
+      "id": "quick-repair-1789139501891-b4gp8x",
+      "currency": "USD",
+      "price": 1.6,
+      "laborPrice": 0,
+      "partsTotal": 1.6,
+      "partsCost": 0.3,
+      "manualCost": 0,
+      "cost": 0.3
+    },
+    {
+      "id": "quick-repair-1789139501891-b4gp8x",
+      "currency": "TRY",
+      "price": 80,
+      "laborPrice": 0,
+      "partsTotal": 80,
+      "partsCost": 15,
+      "manualCost": 0,
+      "cost": 15
+    },
+    {
+      "id": "quick-repair-1789139501891-b4gp8x",
+      "currency": "SYP",
+      "price": 224,
+      "laborPrice": 0,
+      "partsTotal": 224,
+      "partsCost": 42,
+      "manualCost": 0,
+      "cost": 42
+    },
+    {
+      "id": "quick-repair-1789139528280-d86390",
+      "currency": "USD",
+      "price": 1,
+      "laborPrice": 0,
+      "partsTotal": 1,
+      "partsCost": 0.1,
+      "manualCost": 0,
+      "cost": 0.1
+    },
+    {
+      "id": "quick-repair-1789139528280-d86390",
+      "currency": "TRY",
+      "price": 50,
+      "laborPrice": 0,
+      "partsTotal": 50,
+      "partsCost": 5,
+      "manualCost": 0,
+      "cost": 5
+    },
+    {
+      "id": "quick-repair-1789139528280-d86390",
+      "currency": "SYP",
+      "price": 140,
+      "laborPrice": 0,
+      "partsTotal": 140,
+      "partsCost": 14,
+      "manualCost": 0,
+      "cost": 14
+    },
+    {
+      "id": "quick-repair-1789139574543-th4qgq",
+      "currency": "USD",
+      "price": 3,
+      "laborPrice": 0,
+      "partsTotal": 3,
+      "partsCost": 0.4,
+      "manualCost": 0,
+      "cost": 0.4
+    },
+    {
+      "id": "quick-repair-1789139574543-th4qgq",
+      "currency": "TRY",
+      "price": 150,
+      "laborPrice": 0,
+      "partsTotal": 150,
+      "partsCost": 20,
+      "manualCost": 0,
+      "cost": 20
+    },
+    {
+      "id": "quick-repair-1789139574543-th4qgq",
+      "currency": "SYP",
+      "price": 420,
+      "laborPrice": 0,
+      "partsTotal": 420,
+      "partsCost": 56,
+      "manualCost": 0,
+      "cost": 56
+    },
+    {
+      "id": "quick-repair-1789139638129-1a8vsc",
+      "currency": "USD",
+      "price": 1.6,
+      "laborPrice": 0,
+      "partsTotal": 1.6,
+      "partsCost": 0.1,
+      "manualCost": 0,
+      "cost": 0.1
+    },
+    {
+      "id": "quick-repair-1789139638129-1a8vsc",
+      "currency": "TRY",
+      "price": 80,
+      "laborPrice": 0,
+      "partsTotal": 80,
+      "partsCost": 5,
+      "manualCost": 0,
+      "cost": 5
+    },
+    {
+      "id": "quick-repair-1789139638129-1a8vsc",
+      "currency": "SYP",
+      "price": 224,
+      "laborPrice": 0,
+      "partsTotal": 224,
+      "partsCost": 14,
+      "manualCost": 0,
+      "cost": 14
+    },
+    {
+      "id": "quick-repair-1789140444485-zm31k4",
+      "currency": "USD",
+      "price": 1.6,
+      "laborPrice": 0,
+      "partsTotal": 1.6,
+      "partsCost": 0.15,
+      "manualCost": 0,
+      "cost": 0.15
+    },
+    {
+      "id": "quick-repair-1789140444485-zm31k4",
+      "currency": "TRY",
+      "price": 80,
+      "laborPrice": 0,
+      "partsTotal": 80,
+      "partsCost": 7.5,
+      "manualCost": 0,
+      "cost": 7.5
+    },
+    {
+      "id": "quick-repair-1789140444485-zm31k4",
+      "currency": "SYP",
+      "price": 224,
+      "laborPrice": 0,
+      "partsTotal": 224,
+      "partsCost": 21,
+      "manualCost": 0,
+      "cost": 21
+    },
+    {
+      "id": "quick-repair-1789140466801-63kwl7",
+      "currency": "USD",
+      "price": 3,
+      "laborPrice": 0,
+      "partsTotal": 3,
+      "partsCost": 0.4,
+      "manualCost": 0,
+      "cost": 0.4
+    },
+    {
+      "id": "quick-repair-1789140466801-63kwl7",
+      "currency": "TRY",
+      "price": 150,
+      "laborPrice": 0,
+      "partsTotal": 150,
+      "partsCost": 20,
+      "manualCost": 0,
+      "cost": 20
+    },
+    {
+      "id": "quick-repair-1789140466801-63kwl7",
+      "currency": "SYP",
+      "price": 420,
+      "laborPrice": 0,
+      "partsTotal": 420,
+      "partsCost": 56,
+      "manualCost": 0,
+      "cost": 56
+    },
+    {
+      "id": "quick-repair-1789140661626-q2etjf",
+      "currency": "USD",
+      "price": 3,
+      "laborPrice": 0,
+      "partsTotal": 3,
+      "partsCost": 0.4,
+      "manualCost": 0,
+      "cost": 0.4
+    },
+    {
+      "id": "quick-repair-1789140661626-q2etjf",
+      "currency": "TRY",
+      "price": 150,
+      "laborPrice": 0,
+      "partsTotal": 150,
+      "partsCost": 20,
+      "manualCost": 0,
+      "cost": 20
+    },
+    {
+      "id": "quick-repair-1789140661626-q2etjf",
+      "currency": "SYP",
+      "price": 420,
+      "laborPrice": 0,
+      "partsTotal": 420,
+      "partsCost": 56,
+      "manualCost": 0,
+      "cost": 56
+    },
+    {
+      "id": "quick-repair-1789148554385-h31p7x",
+      "currency": "USD",
+      "price": 3,
+      "laborPrice": 0,
+      "partsTotal": 3,
+      "partsCost": 0.5,
+      "manualCost": 0,
+      "cost": 0.5
+    },
+    {
+      "id": "quick-repair-1789148554385-h31p7x",
+      "currency": "TRY",
+      "price": 150,
+      "laborPrice": 0,
+      "partsTotal": 150,
+      "partsCost": 25,
+      "manualCost": 0,
+      "cost": 25
+    },
+    {
+      "id": "quick-repair-1789148554385-h31p7x",
+      "currency": "SYP",
+      "price": 420,
+      "laborPrice": 0,
+      "partsTotal": 420,
+      "partsCost": 70,
+      "manualCost": 0,
+      "cost": 70
+    },
+    {
+      "id": "quick-repair-1789148573124-cmemlg",
+      "currency": "USD",
+      "price": 3,
+      "laborPrice": 0,
+      "partsTotal": 3,
+      "partsCost": 0.4,
+      "manualCost": 0,
+      "cost": 0.4
+    },
+    {
+      "id": "quick-repair-1789148573124-cmemlg",
+      "currency": "TRY",
+      "price": 150,
+      "laborPrice": 0,
+      "partsTotal": 150,
+      "partsCost": 20,
+      "manualCost": 0,
+      "cost": 20
+    },
+    {
+      "id": "quick-repair-1789148573124-cmemlg",
+      "currency": "SYP",
+      "price": 420,
+      "laborPrice": 0,
+      "partsTotal": 420,
+      "partsCost": 56,
+      "manualCost": 0,
+      "cost": 56
+    },
+    {
+      "id": "quick-repair-1789148594228-bxh50t",
+      "currency": "USD",
+      "price": 3,
+      "laborPrice": 0,
+      "partsTotal": 3,
+      "partsCost": 0.8,
+      "manualCost": 0,
+      "cost": 0.8
+    },
+    {
+      "id": "quick-repair-1789148594228-bxh50t",
+      "currency": "TRY",
+      "price": 150,
+      "laborPrice": 0,
+      "partsTotal": 150,
+      "partsCost": 40,
+      "manualCost": 0,
+      "cost": 40
+    },
+    {
+      "id": "quick-repair-1789148594228-bxh50t",
+      "currency": "SYP",
+      "price": 420,
+      "laborPrice": 0,
+      "partsTotal": 420,
+      "partsCost": 120,
+      "manualCost": 0,
+      "cost": 120
+    },
+    {
+      "id": "quick-repair-1789148655760-kvpghx",
+      "currency": "USD",
+      "price": 4,
+      "laborPrice": 0,
+      "partsTotal": 4,
+      "partsCost": 0.5,
+      "manualCost": 0,
+      "cost": 0.5
+    },
+    {
+      "id": "quick-repair-1789148655760-kvpghx",
+      "currency": "TRY",
+      "price": 200,
+      "laborPrice": 0,
+      "partsTotal": 200,
+      "partsCost": 25,
+      "manualCost": 0,
+      "cost": 25
+    },
+    {
+      "id": "quick-repair-1789148655760-kvpghx",
+      "currency": "SYP",
+      "price": 560,
+      "laborPrice": 0,
+      "partsTotal": 560,
+      "partsCost": 70,
+      "manualCost": 0,
+      "cost": 70
+    },
+    {
+      "id": "quick-repair-1789148695894-jry7mc",
+      "currency": "USD",
+      "price": 3,
+      "laborPrice": 0,
+      "partsTotal": 3,
+      "partsCost": 0.9,
+      "manualCost": 0,
+      "cost": 0.9
+    },
+    {
+      "id": "quick-repair-1789148695894-jry7mc",
+      "currency": "TRY",
+      "price": 150,
+      "laborPrice": 0,
+      "partsTotal": 150,
+      "partsCost": 45,
+      "manualCost": 0,
+      "cost": 45
+    },
+    {
+      "id": "quick-repair-1789148695894-jry7mc",
+      "currency": "SYP",
+      "price": 420,
+      "laborPrice": 0,
+      "partsTotal": 420,
+      "partsCost": 126,
+      "manualCost": 0,
+      "cost": 126
+    },
+    {
+      "id": "quick-repair-1789148753203-z6tfph",
+      "currency": "USD",
+      "price": 3,
+      "laborPrice": 0,
+      "partsTotal": 3,
+      "partsCost": 0.9,
+      "manualCost": 0,
+      "cost": 0.9
+    },
+    {
+      "id": "quick-repair-1789148753203-z6tfph",
+      "currency": "TRY",
+      "price": 150,
+      "laborPrice": 0,
+      "partsTotal": 150,
+      "partsCost": 45,
+      "manualCost": 0,
+      "cost": 45
+    },
+    {
+      "id": "quick-repair-1789148753203-z6tfph",
+      "currency": "SYP",
+      "price": 420,
+      "laborPrice": 0,
+      "partsTotal": 420,
+      "partsCost": 126,
+      "manualCost": 0,
+      "cost": 126
+    },
+    {
+      "id": "quick-repair-1789148787561-w6ddbj",
+      "currency": "USD",
+      "price": 4,
+      "laborPrice": 0,
+      "partsTotal": 4,
+      "partsCost": 0.5,
+      "manualCost": 0,
+      "cost": 0.5
+    },
+    {
+      "id": "quick-repair-1789148787561-w6ddbj",
+      "currency": "TRY",
+      "price": 200,
+      "laborPrice": 0,
+      "partsTotal": 200,
+      "partsCost": 25,
+      "manualCost": 0,
+      "cost": 25
+    },
+    {
+      "id": "quick-repair-1789148787561-w6ddbj",
+      "currency": "SYP",
+      "price": 560,
+      "laborPrice": 0,
+      "partsTotal": 560,
+      "partsCost": 70,
+      "manualCost": 0,
+      "cost": 70
+    },
+    {
+      "id": "quick-repair-1789149529696-09efsv",
+      "currency": "USD",
+      "price": 3,
+      "laborPrice": 0,
+      "partsTotal": 3,
+      "partsCost": 0.5,
+      "manualCost": 0,
+      "cost": 0.5
+    },
+    {
+      "id": "quick-repair-1789149529696-09efsv",
+      "currency": "TRY",
+      "price": 150,
+      "laborPrice": 0,
+      "partsTotal": 150,
+      "partsCost": 25,
+      "manualCost": 0,
+      "cost": 25
+    },
+    {
+      "id": "quick-repair-1789149529696-09efsv",
+      "currency": "SYP",
+      "price": 420,
+      "laborPrice": 0,
+      "partsTotal": 420,
+      "partsCost": 70,
+      "manualCost": 0,
+      "cost": 70
+    },
+    {
+      "id": "quick-repair-1789148497728-i61tng",
+      "currency": "USD",
+      "price": 2,
+      "laborPrice": 0,
+      "partsTotal": 2,
+      "partsCost": 0.25,
+      "manualCost": 0,
+      "cost": 0.25
+    },
+    {
+      "id": "quick-repair-1789148497728-i61tng",
+      "currency": "TRY",
+      "price": 100,
+      "laborPrice": 0,
+      "partsTotal": 100,
+      "partsCost": 12.5,
+      "manualCost": 0,
+      "cost": 12.5
+    },
+    {
+      "id": "quick-repair-1789148497728-i61tng",
+      "currency": "SYP",
+      "price": 280,
+      "laborPrice": 0,
+      "partsTotal": 280,
+      "partsCost": 35,
+      "manualCost": 0,
+      "cost": 35
+    },
+    {
+      "id": "quick-repair-1789148464599-6cnskl",
+      "currency": "USD",
+      "price": 1.6,
+      "laborPrice": 0,
+      "partsTotal": 1.6,
+      "partsCost": 0.1,
+      "manualCost": 0,
+      "cost": 0.1
+    },
+    {
+      "id": "quick-repair-1789148464599-6cnskl",
+      "currency": "TRY",
+      "price": 80,
+      "laborPrice": 0,
+      "partsTotal": 80,
+      "partsCost": 5,
+      "manualCost": 0,
+      "cost": 5
+    },
+    {
+      "id": "quick-repair-1789148464599-6cnskl",
+      "currency": "SYP",
+      "price": 224,
+      "laborPrice": 0,
+      "partsTotal": 224,
+      "partsCost": 14,
+      "manualCost": 0,
+      "cost": 14
+    },
+    {
+      "id": "quick-repair-1789148872475-cpgti5",
+      "currency": "USD",
+      "price": 1.6,
+      "laborPrice": 0,
+      "partsTotal": 1.6,
+      "partsCost": 0.1,
+      "manualCost": 0,
+      "cost": 0.1
+    },
+    {
+      "id": "quick-repair-1789148872475-cpgti5",
+      "currency": "TRY",
+      "price": 80,
+      "laborPrice": 0,
+      "partsTotal": 80,
+      "partsCost": 5,
+      "manualCost": 0,
+      "cost": 5
+    },
+    {
+      "id": "quick-repair-1789148872475-cpgti5",
+      "currency": "SYP",
+      "price": 224,
+      "laborPrice": 0,
+      "partsTotal": 224,
+      "partsCost": 14,
+      "manualCost": 0,
+      "cost": 14
+    },
+    {
+      "id": "quick-repair-1789148898546-g1626f",
+      "currency": "USD",
+      "price": 2,
+      "laborPrice": 0,
+      "partsTotal": 2,
+      "partsCost": 0.25,
+      "manualCost": 0,
+      "cost": 0.25
+    },
+    {
+      "id": "quick-repair-1789148898546-g1626f",
+      "currency": "TRY",
+      "price": 100,
+      "laborPrice": 0,
+      "partsTotal": 100,
+      "partsCost": 12.5,
+      "manualCost": 0,
+      "cost": 12.5
+    },
+    {
+      "id": "quick-repair-1789148898546-g1626f",
+      "currency": "SYP",
+      "price": 280,
+      "laborPrice": 0,
+      "partsTotal": 280,
+      "partsCost": 35,
+      "manualCost": 0,
+      "cost": 35
+    },
+    {
+      "id": "quick-repair-1789148846810-krud4a",
+      "currency": "USD",
+      "price": 2.4,
+      "laborPrice": 0,
+      "partsTotal": 2.4,
+      "partsCost": 0.25,
+      "manualCost": 0,
+      "cost": 0.25
+    },
+    {
+      "id": "quick-repair-1789148846810-krud4a",
+      "currency": "TRY",
+      "price": 120,
+      "laborPrice": 0,
+      "partsTotal": 120,
+      "partsCost": 12.5,
+      "manualCost": 0,
+      "cost": 12.5
+    },
+    {
+      "id": "quick-repair-1789148846810-krud4a",
+      "currency": "SYP",
+      "price": 336,
+      "laborPrice": 0,
+      "partsTotal": 336,
+      "partsCost": 35,
+      "manualCost": 0,
+      "cost": 35
+    },
+    {
+      "id": "quick-repair-1789148935315-29lb6t",
+      "currency": "USD",
+      "price": 1.6,
+      "laborPrice": 0,
+      "partsTotal": 1.6,
+      "partsCost": 0.1,
+      "manualCost": 0,
+      "cost": 0.1
+    },
+    {
+      "id": "quick-repair-1789148935315-29lb6t",
+      "currency": "TRY",
+      "price": 80,
+      "laborPrice": 0,
+      "partsTotal": 80,
+      "partsCost": 5,
+      "manualCost": 0,
+      "cost": 5
+    },
+    {
+      "id": "quick-repair-1789148935315-29lb6t",
+      "currency": "SYP",
+      "price": 224,
+      "laborPrice": 0,
+      "partsTotal": 224,
+      "partsCost": 14,
+      "manualCost": 0,
+      "cost": 14
+    },
+    {
+      "id": "quick-repair-1789149084995-0q6fa9",
+      "currency": "USD",
+      "price": 2,
+      "laborPrice": 0,
+      "partsTotal": 2,
+      "partsCost": 0.25,
+      "manualCost": 0,
+      "cost": 0.25
+    },
+    {
+      "id": "quick-repair-1789149084995-0q6fa9",
+      "currency": "TRY",
+      "price": 100,
+      "laborPrice": 0,
+      "partsTotal": 100,
+      "partsCost": 12.5,
+      "manualCost": 0,
+      "cost": 12.5
+    },
+    {
+      "id": "quick-repair-1789149084995-0q6fa9",
+      "currency": "SYP",
+      "price": 280,
+      "laborPrice": 0,
+      "partsTotal": 280,
+      "partsCost": 35,
+      "manualCost": 0,
+      "cost": 35
+    },
+    {
+      "id": "quick-repair-1789148960659-nmqwsz",
+      "currency": "USD",
+      "price": 2.4,
+      "laborPrice": 0,
+      "partsTotal": 2.4,
+      "partsCost": 0.25,
+      "manualCost": 0,
+      "cost": 0.25
+    },
+    {
+      "id": "quick-repair-1789148960659-nmqwsz",
+      "currency": "TRY",
+      "price": 120,
+      "laborPrice": 0,
+      "partsTotal": 120,
+      "partsCost": 12.5,
+      "manualCost": 0,
+      "cost": 12.5
+    },
+    {
+      "id": "quick-repair-1789148960659-nmqwsz",
+      "currency": "SYP",
+      "price": 336,
+      "laborPrice": 0,
+      "partsTotal": 336,
+      "partsCost": 35,
+      "manualCost": 0,
+      "cost": 35
+    },
+    {
+      "id": "quick-repair-1789149031754-3jzjl6",
+      "currency": "USD",
+      "price": 5,
+      "laborPrice": 0,
+      "partsTotal": 5,
+      "partsCost": 1,
+      "manualCost": 0,
+      "cost": 1
+    },
+    {
+      "id": "quick-repair-1789149031754-3jzjl6",
+      "currency": "TRY",
+      "price": 250,
+      "laborPrice": 0,
+      "partsTotal": 250,
+      "partsCost": 50,
+      "manualCost": 0,
+      "cost": 50
+    },
+    {
+      "id": "quick-repair-1789149031754-3jzjl6",
+      "currency": "SYP",
+      "price": 700,
+      "laborPrice": 0,
+      "partsTotal": 700,
+      "partsCost": 140,
+      "manualCost": 0,
+      "cost": 140
+    },
+    {
+      "id": "quick-repair-1789149046203-5ylooc",
+      "currency": "USD",
+      "price": 5,
+      "laborPrice": 0,
+      "partsTotal": 5,
+      "partsCost": 1,
+      "manualCost": 0,
+      "cost": 1
+    },
+    {
+      "id": "quick-repair-1789149046203-5ylooc",
+      "currency": "TRY",
+      "price": 250,
+      "laborPrice": 0,
+      "partsTotal": 250,
+      "partsCost": 50,
+      "manualCost": 0,
+      "cost": 50
+    },
+    {
+      "id": "quick-repair-1789149046203-5ylooc",
+      "currency": "SYP",
+      "price": 700,
+      "laborPrice": 0,
+      "partsTotal": 700,
+      "partsCost": 140,
+      "manualCost": 0,
+      "cost": 140
+    },
+    {
+      "id": "quick-repair-1789149107016-y4r7dq",
+      "currency": "USD",
+      "price": 2,
+      "laborPrice": 0,
+      "partsTotal": 2,
+      "partsCost": 0.25,
+      "manualCost": 0,
+      "cost": 0.25
+    },
+    {
+      "id": "quick-repair-1789149107016-y4r7dq",
+      "currency": "TRY",
+      "price": 100,
+      "laborPrice": 0,
+      "partsTotal": 100,
+      "partsCost": 12.5,
+      "manualCost": 0,
+      "cost": 12.5
+    },
+    {
+      "id": "quick-repair-1789149107016-y4r7dq",
+      "currency": "SYP",
+      "price": 280,
+      "laborPrice": 0,
+      "partsTotal": 280,
+      "partsCost": 35,
+      "manualCost": 0,
+      "cost": 35
+    },
+    {
+      "id": "quick-repair-1789149129115-2bu4sn",
+      "currency": "USD",
+      "price": 2,
+      "laborPrice": 0,
+      "partsTotal": 2,
+      "partsCost": 0.25,
+      "manualCost": 0,
+      "cost": 0.25
+    },
+    {
+      "id": "quick-repair-1789149129115-2bu4sn",
+      "currency": "TRY",
+      "price": 100,
+      "laborPrice": 0,
+      "partsTotal": 100,
+      "partsCost": 12.5,
+      "manualCost": 0,
+      "cost": 12.5
+    },
+    {
+      "id": "quick-repair-1789149129115-2bu4sn",
+      "currency": "SYP",
+      "price": 280,
+      "laborPrice": 0,
+      "partsTotal": 280,
+      "partsCost": 35,
+      "manualCost": 0,
+      "cost": 35
+    },
+    {
+      "id": "quick-repair-1789149141632-waviim",
+      "currency": "USD",
+      "price": 2,
+      "laborPrice": 0,
+      "partsTotal": 2,
+      "partsCost": 0.25,
+      "manualCost": 0,
+      "cost": 0.25
+    },
+    {
+      "id": "quick-repair-1789149141632-waviim",
+      "currency": "TRY",
+      "price": 100,
+      "laborPrice": 0,
+      "partsTotal": 100,
+      "partsCost": 12.5,
+      "manualCost": 0,
+      "cost": 12.5
+    },
+    {
+      "id": "quick-repair-1789149141632-waviim",
+      "currency": "SYP",
+      "price": 280,
+      "laborPrice": 0,
+      "partsTotal": 280,
+      "partsCost": 35,
+      "manualCost": 0,
+      "cost": 35
+    },
+    {
+      "id": "quick-repair-1789149185056-os9bmn",
+      "currency": "USD",
+      "price": 1.4,
+      "laborPrice": 0,
+      "partsTotal": 1.4,
+      "partsCost": 0.1,
+      "manualCost": 0,
+      "cost": 0.1
+    },
+    {
+      "id": "quick-repair-1789149185056-os9bmn",
+      "currency": "TRY",
+      "price": 70,
+      "laborPrice": 0,
+      "partsTotal": 70,
+      "partsCost": 5,
+      "manualCost": 0,
+      "cost": 5
+    },
+    {
+      "id": "quick-repair-1789149185056-os9bmn",
+      "currency": "SYP",
+      "price": 196,
+      "laborPrice": 0,
+      "partsTotal": 196,
+      "partsCost": 14,
+      "manualCost": 0,
+      "cost": 14
+    },
+    {
+      "id": "quick-repair-1789149210119-s32pex",
+      "currency": "USD",
+      "price": 1.4,
+      "laborPrice": 0,
+      "partsTotal": 1.4,
+      "partsCost": 0.1,
+      "manualCost": 0,
+      "cost": 0.1
+    },
+    {
+      "id": "quick-repair-1789149210119-s32pex",
+      "currency": "TRY",
+      "price": 70,
+      "laborPrice": 0,
+      "partsTotal": 70,
+      "partsCost": 5,
+      "manualCost": 0,
+      "cost": 5
+    },
+    {
+      "id": "quick-repair-1789149210119-s32pex",
+      "currency": "SYP",
+      "price": 196,
+      "laborPrice": 0,
+      "partsTotal": 196,
+      "partsCost": 14,
+      "manualCost": 0,
+      "cost": 14
+    },
+    {
+      "id": "quick-repair-1789149245873-cq0l5b",
+      "currency": "USD",
+      "price": 2,
+      "laborPrice": 0,
+      "partsTotal": 2,
+      "partsCost": 0.5,
+      "manualCost": 0,
+      "cost": 0.5
+    },
+    {
+      "id": "quick-repair-1789149245873-cq0l5b",
+      "currency": "TRY",
+      "price": 100,
+      "laborPrice": 0,
+      "partsTotal": 100,
+      "partsCost": 25,
+      "manualCost": 0,
+      "cost": 25
+    },
+    {
+      "id": "quick-repair-1789149245873-cq0l5b",
+      "currency": "SYP",
+      "price": 280,
+      "laborPrice": 0,
+      "partsTotal": 280,
+      "partsCost": 70,
+      "manualCost": 0,
+      "cost": 70
+    },
+    {
+      "id": "quick-repair-1789149289448-na4jfe",
+      "currency": "USD",
+      "price": 2.6,
+      "laborPrice": 0,
+      "partsTotal": 2.6,
+      "partsCost": 1.1,
+      "manualCost": 0,
+      "cost": 1.1
+    },
+    {
+      "id": "quick-repair-1789149289448-na4jfe",
+      "currency": "TRY",
+      "price": 130,
+      "laborPrice": 0,
+      "partsTotal": 130,
+      "partsCost": 55.00000000000001,
+      "manualCost": 0,
+      "cost": 55.00000000000001
+    },
+    {
+      "id": "quick-repair-1789149289448-na4jfe",
+      "currency": "SYP",
+      "price": 364,
+      "laborPrice": 0,
+      "partsTotal": 364,
+      "partsCost": 154,
+      "manualCost": 0,
+      "cost": 154
+    },
+    {
+      "id": "quick-repair-1789149312357-271g9q",
+      "currency": "USD",
+      "price": 2.6,
+      "laborPrice": 0,
+      "partsTotal": 2.6,
+      "partsCost": 0.25,
+      "manualCost": 0,
+      "cost": 0.25
+    },
+    {
+      "id": "quick-repair-1789149312357-271g9q",
+      "currency": "TRY",
+      "price": 130,
+      "laborPrice": 0,
+      "partsTotal": 130,
+      "partsCost": 12.5,
+      "manualCost": 0,
+      "cost": 12.5
+    },
+    {
+      "id": "quick-repair-1789149312357-271g9q",
+      "currency": "SYP",
+      "price": 364,
+      "laborPrice": 0,
+      "partsTotal": 364,
+      "partsCost": 35,
+      "manualCost": 0,
+      "cost": 35
+    },
+    {
+      "id": "quick-repair-1789149338113-7gszj1",
+      "currency": "USD",
+      "price": 2.6,
+      "laborPrice": 0,
+      "partsTotal": 2.6,
+      "partsCost": 1.1,
+      "manualCost": 0,
+      "cost": 1.1
+    },
+    {
+      "id": "quick-repair-1789149338113-7gszj1",
+      "currency": "TRY",
+      "price": 130,
+      "laborPrice": 0,
+      "partsTotal": 130,
+      "partsCost": 55.00000000000001,
+      "manualCost": 0,
+      "cost": 55.00000000000001
+    },
+    {
+      "id": "quick-repair-1789149338113-7gszj1",
+      "currency": "SYP",
+      "price": 364,
+      "laborPrice": 0,
+      "partsTotal": 364,
+      "partsCost": 154,
+      "manualCost": 0,
+      "cost": 154
+    },
+    {
+      "id": "quick-repair-1789149365469-62nbvb",
+      "currency": "USD",
+      "price": 2.6,
+      "laborPrice": 0,
+      "partsTotal": 2.6,
+      "partsCost": 1.1,
+      "manualCost": 0,
+      "cost": 1.1
+    },
+    {
+      "id": "quick-repair-1789149365469-62nbvb",
+      "currency": "TRY",
+      "price": 130,
+      "laborPrice": 0,
+      "partsTotal": 130,
+      "partsCost": 55.00000000000001,
+      "manualCost": 0,
+      "cost": 55.00000000000001
+    },
+    {
+      "id": "quick-repair-1789149365469-62nbvb",
+      "currency": "SYP",
+      "price": 364,
+      "laborPrice": 0,
+      "partsTotal": 364,
+      "partsCost": 154,
+      "manualCost": 0,
+      "cost": 154
+    },
+    {
+      "id": "quick-repair-1789149403294-40iue9",
+      "currency": "USD",
+      "price": 1.4,
+      "laborPrice": 0,
+      "partsTotal": 1.4,
+      "partsCost": 0.1,
+      "manualCost": 0,
+      "cost": 0.1
+    },
+    {
+      "id": "quick-repair-1789149403294-40iue9",
+      "currency": "TRY",
+      "price": 70,
+      "laborPrice": 0,
+      "partsTotal": 70,
+      "partsCost": 5,
+      "manualCost": 0,
+      "cost": 5
+    },
+    {
+      "id": "quick-repair-1789149403294-40iue9",
+      "currency": "SYP",
+      "price": 196,
+      "laborPrice": 0,
+      "partsTotal": 196,
+      "partsCost": 14,
+      "manualCost": 0,
+      "cost": 14
+    },
+    {
+      "id": "quick-repair-1789149431055-v2a9ci",
+      "currency": "USD",
+      "price": 1.4,
+      "laborPrice": 0,
+      "partsTotal": 1.4,
+      "partsCost": 0.1,
+      "manualCost": 0,
+      "cost": 0.1
+    },
+    {
+      "id": "quick-repair-1789149431055-v2a9ci",
+      "currency": "TRY",
+      "price": 70,
+      "laborPrice": 0,
+      "partsTotal": 70,
+      "partsCost": 5,
+      "manualCost": 0,
+      "cost": 5
+    },
+    {
+      "id": "quick-repair-1789149431055-v2a9ci",
+      "currency": "SYP",
+      "price": 196,
+      "laborPrice": 0,
+      "partsTotal": 196,
+      "partsCost": 14,
+      "manualCost": 0,
+      "cost": 14
+    },
+    {
+      "id": "quick-repair-1789149453344-339dqo",
+      "currency": "USD",
+      "price": 1.4,
+      "laborPrice": 0,
+      "partsTotal": 1.4,
+      "partsCost": 0.1,
+      "manualCost": 0,
+      "cost": 0.1
+    },
+    {
+      "id": "quick-repair-1789149453344-339dqo",
+      "currency": "TRY",
+      "price": 70,
+      "laborPrice": 0,
+      "partsTotal": 70,
+      "partsCost": 5,
+      "manualCost": 0,
+      "cost": 5
+    },
+    {
+      "id": "quick-repair-1789149453344-339dqo",
+      "currency": "SYP",
+      "price": 196,
+      "laborPrice": 0,
+      "partsTotal": 196,
+      "partsCost": 14,
+      "manualCost": 0,
+      "cost": 14
+    },
+    {
+      "id": "quick-repair-1789149480932-nezy9u",
+      "currency": "USD",
+      "price": 1.4,
+      "laborPrice": 0,
+      "partsTotal": 1.4,
+      "partsCost": 0.1,
+      "manualCost": 0,
+      "cost": 0.1
+    },
+    {
+      "id": "quick-repair-1789149480932-nezy9u",
+      "currency": "TRY",
+      "price": 70,
+      "laborPrice": 0,
+      "partsTotal": 70,
+      "partsCost": 5,
+      "manualCost": 0,
+      "cost": 5
+    },
+    {
+      "id": "quick-repair-1789149480932-nezy9u",
+      "currency": "SYP",
+      "price": 196,
+      "laborPrice": 0,
+      "partsTotal": 196,
+      "partsCost": 14,
+      "manualCost": 0,
+      "cost": 14
+    },
+    {
+      "id": "quick-repair-1789149498923-z08q6r",
+      "currency": "USD",
+      "price": 1.4,
+      "laborPrice": 0,
+      "partsTotal": 1.4,
+      "partsCost": 0.25,
+      "manualCost": 0,
+      "cost": 0.25
+    },
+    {
+      "id": "quick-repair-1789149498923-z08q6r",
+      "currency": "TRY",
+      "price": 70,
+      "laborPrice": 0,
+      "partsTotal": 70,
+      "partsCost": 12.5,
+      "manualCost": 0,
+      "cost": 12.5
+    },
+    {
+      "id": "quick-repair-1789149498923-z08q6r",
+      "currency": "SYP",
+      "price": 196,
+      "laborPrice": 0,
+      "partsTotal": 196,
+      "partsCost": 35,
+      "manualCost": 0,
+      "cost": 35
+    },
+    {
+      "id": "quick-repair-1790163103754-19ar7q",
+      "currency": "USD",
+      "price": 2,
+      "laborPrice": 0,
+      "partsTotal": 2,
+      "partsCost": 0.5,
+      "manualCost": 0,
+      "cost": 0.5
+    },
+    {
+      "id": "quick-repair-1790163103754-19ar7q",
+      "currency": "TRY",
+      "price": 100,
+      "laborPrice": 0,
+      "partsTotal": 100,
+      "partsCost": 25,
+      "manualCost": 0,
+      "cost": 25
+    },
+    {
+      "id": "quick-repair-1790163103754-19ar7q",
+      "currency": "SYP",
+      "price": 280,
+      "laborPrice": 0,
+      "partsTotal": 280,
+      "partsCost": 70,
+      "manualCost": 0,
+      "cost": 70
+    },
+    {
+      "id": "quick-repair-1790365041252-lm9gbk",
+      "currency": "USD",
+      "price": 4,
+      "laborPrice": 0,
+      "partsTotal": 4,
+      "partsCost": 0.1,
+      "manualCost": 0,
+      "cost": 0.1
+    },
+    {
+      "id": "quick-repair-1790365041252-lm9gbk",
+      "currency": "TRY",
+      "price": 200,
+      "laborPrice": 0,
+      "partsTotal": 200,
+      "partsCost": 5,
+      "manualCost": 0,
+      "cost": 5
+    },
+    {
+      "id": "quick-repair-1790365041252-lm9gbk",
+      "currency": "SYP",
+      "price": 560,
+      "laborPrice": 0,
+      "partsTotal": 560,
+      "partsCost": 14,
+      "manualCost": 0,
+      "cost": 14
+    },
+    {
+      "id": "quick-repair-1790419910837-wrj790",
+      "currency": "USD",
+      "price": 4,
+      "laborPrice": 0,
+      "partsTotal": 4,
+      "partsCost": 0.2,
+      "manualCost": 0,
+      "cost": 0.2
+    },
+    {
+      "id": "quick-repair-1790419910837-wrj790",
+      "currency": "TRY",
+      "price": 200,
+      "laborPrice": 0,
+      "partsTotal": 200,
+      "partsCost": 10,
+      "manualCost": 0,
+      "cost": 10
+    },
+    {
+      "id": "quick-repair-1790419910837-wrj790",
+      "currency": "SYP",
+      "price": 560,
+      "laborPrice": 0,
+      "partsTotal": 560,
+      "partsCost": 28,
+      "manualCost": 0,
+      "cost": 28
+    },
+    {
+      "id": "legacy-4",
+      "currency": "USD",
+      "price": 2,
+      "laborPrice": 0,
+      "partsTotal": 2,
+      "partsCost": 0.2,
+      "manualCost": 0,
+      "cost": 0.2
+    },
+    {
+      "id": "legacy-4",
+      "currency": "TRY",
+      "price": 100,
+      "laborPrice": 0,
+      "partsTotal": 100,
+      "partsCost": 10,
+      "manualCost": 0,
+      "cost": 10
+    },
+    {
+      "id": "legacy-4",
+      "currency": "SYP",
+      "price": 280,
+      "laborPrice": 0,
+      "partsTotal": 280,
+      "partsCost": 28,
+      "manualCost": 0,
+      "cost": 28
+    },
+    {
+      "id": "quick-repair-1790428840362-x4mxzb",
+      "currency": "USD",
+      "price": 5,
+      "laborPrice": 0,
+      "partsTotal": 5,
+      "partsCost": 1,
+      "manualCost": 0,
+      "cost": 1
+    },
+    {
+      "id": "quick-repair-1790428840362-x4mxzb",
+      "currency": "TRY",
+      "price": 250,
+      "laborPrice": 0,
+      "partsTotal": 250,
+      "partsCost": 50,
+      "manualCost": 0,
+      "cost": 50
+    },
+    {
+      "id": "quick-repair-1790428840362-x4mxzb",
+      "currency": "SYP",
+      "price": 700,
+      "laborPrice": 0,
+      "partsTotal": 700,
+      "partsCost": 140,
+      "manualCost": 0,
+      "cost": 140
+    },
+    {
+      "id": "legacy-6",
+      "currency": "USD",
+      "price": 0.6,
+      "laborPrice": 0.6,
+      "partsTotal": 0,
+      "partsCost": 0,
+      "manualCost": 0,
+      "cost": 0
+    },
+    {
+      "id": "legacy-6",
+      "currency": "TRY",
+      "price": 30,
+      "laborPrice": 30,
+      "partsTotal": 0,
+      "partsCost": 0,
+      "manualCost": 0,
+      "cost": 0
+    },
+    {
+      "id": "legacy-6",
+      "currency": "SYP",
+      "price": 84,
+      "laborPrice": 84,
+      "partsTotal": 0,
+      "partsCost": 0,
+      "manualCost": 0,
+      "cost": 0
+    },
+    {
+      "id": "quick-repair-1790841772857-6hrinp",
+      "currency": "USD",
+      "price": 4,
+      "laborPrice": 0,
+      "partsTotal": 4,
+      "partsCost": 0.75,
+      "manualCost": 0,
+      "cost": 0.75
+    },
+    {
+      "id": "quick-repair-1790841772857-6hrinp",
+      "currency": "TRY",
+      "price": 200,
+      "laborPrice": 0,
+      "partsTotal": 200,
+      "partsCost": 37.5,
+      "manualCost": 0,
+      "cost": 37.5
+    },
+    {
+      "id": "quick-repair-1790841772857-6hrinp",
+      "currency": "SYP",
+      "price": 560,
+      "laborPrice": 0,
+      "partsTotal": 560,
+      "partsCost": 105,
+      "manualCost": 0,
+      "cost": 105
+    },
+    {
+      "id": "legacy-5",
+      "currency": "USD",
+      "price": 5,
+      "laborPrice": 0,
+      "partsTotal": 5,
+      "partsCost": 2,
+      "manualCost": 0,
+      "cost": 2
+    },
+    {
+      "id": "legacy-5",
+      "currency": "TRY",
+      "price": 250,
+      "laborPrice": 0,
+      "partsTotal": 250,
+      "partsCost": 100,
+      "manualCost": 0,
+      "cost": 100
+    },
+    {
+      "id": "legacy-5",
+      "currency": "SYP",
+      "price": 700,
+      "laborPrice": 0,
+      "partsTotal": 700,
+      "partsCost": 280,
+      "manualCost": 0,
+      "cost": 280
+    },
+    {
+      "id": "legacy-7",
+      "currency": "USD",
+      "price": 1.4,
+      "laborPrice": 0,
+      "partsTotal": 1.4,
+      "partsCost": 0.2,
+      "manualCost": 0,
+      "cost": 0.2
+    },
+    {
+      "id": "legacy-7",
+      "currency": "TRY",
+      "price": 70,
+      "laborPrice": 0,
+      "partsTotal": 70,
+      "partsCost": 10,
+      "manualCost": 0,
+      "cost": 10
+    },
+    {
+      "id": "legacy-7",
+      "currency": "SYP",
+      "price": 196,
+      "laborPrice": 0,
+      "partsTotal": 196,
+      "partsCost": 28,
+      "manualCost": 0,
+      "cost": 28
+    },
+    {
+      "id": "quick-repair-1790871536769-4euv17",
+      "currency": "USD",
+      "price": 2,
+      "laborPrice": 0,
+      "partsTotal": 2,
+      "partsCost": 0.2,
+      "manualCost": 0,
+      "cost": 0.2
+    },
+    {
+      "id": "quick-repair-1790871536769-4euv17",
+      "currency": "TRY",
+      "price": 100,
+      "laborPrice": 0,
+      "partsTotal": 100,
+      "partsCost": 10,
+      "manualCost": 0,
+      "cost": 10
+    },
+    {
+      "id": "quick-repair-1790871536769-4euv17",
+      "currency": "SYP",
+      "price": 280,
+      "laborPrice": 0,
+      "partsTotal": 280,
+      "partsCost": 28,
+      "manualCost": 0,
+      "cost": 28
+    },
+    {
+      "id": "quick-repair-1791044422768-20menv",
+      "currency": "USD",
+      "price": 5,
+      "laborPrice": 0,
+      "partsTotal": 5,
+      "partsCost": 0.9,
+      "manualCost": 0,
+      "cost": 0.9
+    },
+    {
+      "id": "quick-repair-1791044422768-20menv",
+      "currency": "TRY",
+      "price": 250,
+      "laborPrice": 0,
+      "partsTotal": 250,
+      "partsCost": 45,
+      "manualCost": 0,
+      "cost": 45
+    },
+    {
+      "id": "quick-repair-1791044422768-20menv",
+      "currency": "SYP",
+      "price": 700,
+      "laborPrice": 0,
+      "partsTotal": 700,
+      "partsCost": 126,
+      "manualCost": 0,
+      "cost": 126
+    },
+    {
+      "id": "quick-repair-1791131077875-w3ok2b",
+      "currency": "USD",
+      "price": 12,
+      "laborPrice": 0,
+      "partsTotal": 12,
+      "partsCost": 2,
+      "manualCost": 0,
+      "cost": 2
+    },
+    {
+      "id": "quick-repair-1791131077875-w3ok2b",
+      "currency": "TRY",
+      "price": 600,
+      "laborPrice": 0,
+      "partsTotal": 600,
+      "partsCost": 100,
+      "manualCost": 0,
+      "cost": 100
+    },
+    {
+      "id": "quick-repair-1791131077875-w3ok2b",
+      "currency": "SYP",
+      "price": 1680,
+      "laborPrice": 0,
+      "partsTotal": 1680,
+      "partsCost": 280,
+      "manualCost": 0,
+      "cost": 280
+    },
+    {
+      "id": "quick-repair-1791134349526-v6f8jk",
+      "currency": "USD",
+      "price": 9.4,
+      "laborPrice": 0,
+      "partsTotal": 9.4,
+      "partsCost": 3,
+      "manualCost": 0,
+      "cost": 3
+    },
+    {
+      "id": "quick-repair-1791134349526-v6f8jk",
+      "currency": "TRY",
+      "price": 470,
+      "laborPrice": 0,
+      "partsTotal": 470,
+      "partsCost": 150,
+      "manualCost": 0,
+      "cost": 150
+    },
+    {
+      "id": "quick-repair-1791134349526-v6f8jk",
+      "currency": "SYP",
+      "price": 1316,
+      "laborPrice": 0,
+      "partsTotal": 1316,
+      "partsCost": 420,
+      "manualCost": 0,
+      "cost": 420
+    },
+    {
+      "id": "quick-repair-1791135455518-vvevdv",
+      "currency": "USD",
+      "price": 5,
+      "laborPrice": 0,
+      "partsTotal": 5,
+      "partsCost": 0.3,
+      "manualCost": 0,
+      "cost": 0.3
+    },
+    {
+      "id": "quick-repair-1791135455518-vvevdv",
+      "currency": "TRY",
+      "price": 250,
+      "laborPrice": 0,
+      "partsTotal": 250,
+      "partsCost": 15,
+      "manualCost": 0,
+      "cost": 15
+    },
+    {
+      "id": "quick-repair-1791135455518-vvevdv",
+      "currency": "SYP",
+      "price": 700,
+      "laborPrice": 0,
+      "partsTotal": 700,
+      "partsCost": 42,
+      "manualCost": 0,
+      "cost": 42
+    },
+    {
+      "id": "manual-problem",
+      "currency": "USD",
+      "price": 5,
+      "laborPrice": 5,
+      "partsTotal": 0,
+      "partsCost": 0,
+      "manualCost": 0,
+      "cost": 0
+    },
+    {
+      "id": "manual-problem",
+      "currency": "TRY",
+      "price": 250,
+      "laborPrice": 250,
+      "partsTotal": 0,
+      "partsCost": 0,
+      "manualCost": 0,
+      "cost": 0
+    },
+    {
+      "id": "manual-problem",
+      "currency": "SYP",
+      "price": 700,
+      "laborPrice": 700,
+      "partsTotal": 0,
+      "partsCost": 0,
+      "manualCost": 0,
+      "cost": 0
+    },
+    {
+      "id": "quick-repair-1791714813297-hy98q8",
+      "currency": "USD",
+      "price": 15,
+      "laborPrice": 0,
+      "partsTotal": 15,
+      "partsCost": 3,
+      "manualCost": 0,
+      "cost": 3
+    },
+    {
+      "id": "quick-repair-1791714813297-hy98q8",
+      "currency": "TRY",
+      "price": 750,
+      "laborPrice": 0,
+      "partsTotal": 750,
+      "partsCost": 150,
+      "manualCost": 0,
+      "cost": 150
+    },
+    {
+      "id": "quick-repair-1791714813297-hy98q8",
+      "currency": "SYP",
+      "price": 2100,
+      "laborPrice": 0,
+      "partsTotal": 2100,
+      "partsCost": 420,
+      "manualCost": 0,
+      "cost": 420
+    },
+    {
+      "id": "quick-repair-1791790041192-g0mf60",
+      "currency": "USD",
+      "price": 5,
+      "laborPrice": 0,
+      "partsTotal": 5,
+      "partsCost": 0.75,
+      "manualCost": 0,
+      "cost": 0.75
+    },
+    {
+      "id": "quick-repair-1791790041192-g0mf60",
+      "currency": "TRY",
+      "price": 250,
+      "laborPrice": 0,
+      "partsTotal": 250,
+      "partsCost": 37.5,
+      "manualCost": 0,
+      "cost": 37.5
+    },
+    {
+      "id": "quick-repair-1791790041192-g0mf60",
+      "currency": "SYP",
+      "price": 700,
+      "laborPrice": 0,
+      "partsTotal": 700,
+      "partsCost": 105,
+      "manualCost": 0,
+      "cost": 105
+    },
+    {
+      "id": "quick-repair-1792395222621-8812gi",
+      "currency": "USD",
+      "price": 5,
+      "laborPrice": 0,
+      "partsTotal": 5,
+      "partsCost": 0.4,
+      "manualCost": 0,
+      "cost": 0.4
+    },
+    {
+      "id": "quick-repair-1792395222621-8812gi",
+      "currency": "TRY",
+      "price": 250,
+      "laborPrice": 0,
+      "partsTotal": 250,
+      "partsCost": 20,
+      "manualCost": 0,
+      "cost": 20
+    },
+    {
+      "id": "quick-repair-1792395222621-8812gi",
+      "currency": "SYP",
+      "price": 700,
+      "laborPrice": 0,
+      "partsTotal": 700,
+      "partsCost": 56,
+      "manualCost": 0,
+      "cost": 56
+    },
+    {
+      "id": "quick-repair-1792408051189-6hbto4",
+      "currency": "USD",
+      "price": 5,
+      "laborPrice": 0,
+      "partsTotal": 5,
+      "partsCost": 3.5,
+      "manualCost": 0,
+      "cost": 3.5
+    },
+    {
+      "id": "quick-repair-1792408051189-6hbto4",
+      "currency": "TRY",
+      "price": 250,
+      "laborPrice": 0,
+      "partsTotal": 250,
+      "partsCost": 175,
+      "manualCost": 0,
+      "cost": 175
+    },
+    {
+      "id": "quick-repair-1792408051189-6hbto4",
+      "currency": "SYP",
+      "price": 700,
+      "laborPrice": 0,
+      "partsTotal": 700,
+      "partsCost": 490,
+      "manualCost": 0,
+      "cost": 490
+    }
+  ]
+}
