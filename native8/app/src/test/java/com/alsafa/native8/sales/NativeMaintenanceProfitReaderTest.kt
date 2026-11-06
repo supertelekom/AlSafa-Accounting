@@ -63,4 +63,16 @@ class NativeMaintenanceProfitReaderTest {
   assertTrue(a.unresolved.isEmpty())
   assertEquals(0,a.events.single().profitUsd.compareTo(BigDecimal("23")))
  }
+ @Test fun zeroValueDeliveryHasNoReceiptOrProfitEvent() {
+  val raw=JSONObject("""{"id":"free","status":"تم التسليم","date":"2026-11-01","deliveredDate":"2026-11-06","currency":"USD","laborPrice":0,"price":0,"received":0,"tax":0,"taxRate":0,"usedParts":[],"paymentLines":[]}""")
+  val saved=NativeMaintenanceProfitReader.snapshot(raw,"USD",JSONObject().put("USD",1))
+  val result=NativeMaintenanceProfitReader.extract(listOf(saved))
+  assertTrue(result.unresolved.toString(),result.unresolved.isEmpty())
+  assertTrue(result.events.isEmpty())
+ }
+ @Test fun positiveInvoiceCannotUseEmptyReceiptEvidence() {
+  val saved=verified().put("paymentLines",org.json.JSONArray()).put("received",0)
+  assertTrue(NativeMaintenanceProfitReader.extract(listOf(saved)).unresolved.isNotEmpty())
+ }
+
 }

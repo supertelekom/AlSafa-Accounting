@@ -6,5 +6,5 @@ import java.math.BigDecimal
 object MaintenanceDeliveryEligibility {
  fun allowed(status:String,raw:JSONObject):Boolean = status=="جاهز للاستلام" ||
   (status=="بانتظار التسليم" && ((raw.optJSONArray("usedParts")?.length() ?: 0)==0 || raw.optBoolean("isSimplifiedQuick")) &&
-   ((if(raw.optBoolean("isSimplifiedQuick")) raw.optString("price","0") else raw.optString("laborPrice",raw.optString("price","0"))).toBigDecimalOrNull() ?: BigDecimal.ZERO)>BigDecimal.ZERO)
+   ((if(raw.optBoolean("isSimplifiedQuick")) raw.optString("price","0") else raw.optString("laborPrice",raw.optString("price","0"))).toBigDecimalOrNull() ?: BigDecimal(-1))>=BigDecimal.ZERO)
 }

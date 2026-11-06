@@ -59,6 +59,10 @@ object NativeMaintenanceProfitReader {
     require(n(checked,"cost").compareTo(n(raw,"cost"))==0) { "Delivery cost differs from part evidence" }
    }
    val paymentLines=raw.getJSONArray("paymentLines")
+   // Explicit zero-value deliveries carry no synthetic receipt/profit event.
+   if(LegacyMaintenanceProfitReader.total(raw).signum()==0 && n(raw,"received").signum()==0 && paymentLines.length()==0) {
+    require(n(raw,"price").signum()==0) { "Zero delivery total mismatch" }
+   } else {
    require(paymentLines.length()>0) { "Missing actual delivery receipt" }
    var credited=zero
    for(i in 0 until paymentLines.length()) {
@@ -73,6 +77,7 @@ object NativeMaintenanceProfitReader {
    val total=LegacyMaintenanceProfitReader.total(raw)
    require(total.compareTo(n(raw,"price"))==0) { "Delivery total differs from parts/labour/tax" }
    require(credited<=total) { "Delivery receipt exceeds invoice total" }
+   }
    fun rows(key:String)=raw.optJSONArray(key)?.let { a -> (0 until a.length()).map { a.getJSONObject(it) } }.orEmpty()
    val audit=LegacyMaintenanceProfitReader.extract(listOf(JSONObject(raw.toString()).put("date",date.toString())),rows("nativePayments"),rows("nativeReturns"))
    require(audit.unresolved.isEmpty()) { audit.unresolved.joinToString() }

@@ -53,9 +53,6 @@ class MaintenanceActivity:ComponentActivity() {
   var notes by mutableStateOf("")
   var statusSaving by mutableStateOf(false)
   var deliveryDialog by mutableStateOf(false)
-  var collection by mutableStateOf("")
-  var selectedCashbox by mutableStateOf("drawer")
-  var collectionCurrency by mutableStateOf("USD")
   var error by mutableStateOf("")
   var loading by mutableStateOf(false)
   var generation=0
@@ -89,7 +86,7 @@ class MaintenanceActivity:ComponentActivity() {
   intent.getStringExtra("repair_id")?.let { id -> lifecycleScope.launch {
    selectedRefresh?.invoke(id)
    selected?.let { r -> if(intent.getBooleanExtra("open_delivery",false) && r.source_sha256=="native8" && MaintenanceDeliveryEligibility.allowed(r.status,JSONObject(r.original_json))) {
-    collection=r.price;collectionCurrency=r.currency;selectedCashbox="drawer";deliveryDialog=true
+    deliveryDialog=true
    } }
   } }
   // Refresh after returning from the intake form.
@@ -122,82 +119,16 @@ class MaintenanceActivity:ComponentActivity() {
        Button(onClick={startActivityForResult(Intent(this@MaintenanceActivity,MaintenanceEditActivity::class.java).putExtra("repair_id",repair.id),703)}) { Text("تعديل الفاتورة") }
       }
       if(repair.source_sha256=="native8" && MaintenanceDeliveryEligibility.allowed(repair.status,JSONObject(repair.original_json))) {
-       Button(onClick={collection=repair.price;selectedCashbox="drawer";collectionCurrency=repair.currency;deliveryDialog=true}) { Text("تم التسليم — تحصيل المبلغ") }
+       Button(onClick={deliveryDialog=true}) { Text("تم التسليم — تحصيل المبلغ") }
       }
       if(deliveryDialog && repair.source_sha256=="native8") {
-       val raw=remember(repair.original_json) { JSONObject(repair.original_json) }
-       val parts=raw.optJSONArray("usedParts") ?: JSONArray()
-       val partsTotal=(0 until parts.length()).fold(java.math.BigDecimal.ZERO) { sum,i ->
-        val line=parts.optJSONObject(i)
-        sum+(line?.optString("qty")?.toBigDecimalOrNull() ?: java.math.BigDecimal.ZERO)*
-          (line?.optString("price")?.toBigDecimalOrNull() ?: java.math.BigDecimal.ZERO)
+       LaunchedEffect(repair.id) {
+        deliveryDialog=false
+        RepairDeliveryDialog.show(this@MaintenanceActivity,repair,
+         com.alsafa.native8.sales.LegacyMaintenanceProfitReader.total(JSONObject(repair.original_json))) {
+          lifecycleScope.launch {selectedRefresh?.invoke(repair.id)}
+        }
        }
-       val labor=raw.optString("laborPrice",raw.optString("price","0")).toBigDecimalOrNull() ?: java.math.BigDecimal.ZERO
-       val due=com.alsafa.native8.sales.LegacyMaintenanceProfitReader.total(raw)
-       fun suggestedAmount(currency:String):String = runCatching {
-        due.multiply(ExchangeRateSettings(applicationContext).rate(repair.currency,currency))
-         .setScale(2,RoundingMode.HALF_UP).stripTrailingZeros().toPlainString()
-       }.getOrElse { "" }
-       AlertDialog(
-        onDismissRequest={if(!statusSaving) deliveryDialog=false},
-        title={Text("تسليم الساعة وتحصيل المبلغ")},
-        text={
-         Column(Modifier.fillMaxWidth().heightIn(max=440.dp).verticalScroll(rememberScrollState()),
-          verticalArrangement=Arrangement.spacedBy(10.dp)) {
-          Text("المبلغ المطلوب تحصيله: "+due.stripTrailingZeros().toPlainString()+" "+repair.currency,
-           style=MaterialTheme.typography.titleMedium)
-          OutlinedTextField(value=collection,onValueChange={collection=it},
-           label={Text("المبلغ المقبوض الآن")},modifier=Modifier.fillMaxWidth(),singleLine=true,
-           keyboardOptions=androidx.compose.foundation.text.KeyboardOptions(keyboardType=androidx.compose.ui.text.input.KeyboardType.Decimal))
-          Text("الصندوق",style=MaterialTheme.typography.labelLarge)
-          var cashboxExpanded by remember { mutableStateOf(false) }
-          val cashboxes=listOf("drawer" to "الدرج","ChamCash" to "شام كاش","external" to "الصندوق الخارجي","bank" to "البنك")
-          Box {
-           OutlinedButton(onClick={cashboxExpanded=true},modifier=Modifier.fillMaxWidth()) {
-            Text(cashboxes.first { it.first==selectedCashbox }.second)
-           }
-           DropdownMenu(expanded=cashboxExpanded,onDismissRequest={cashboxExpanded=false}) {
-            cashboxes.forEach { (key,label) ->
-             DropdownMenuItem(text={Text(label)},onClick={selectedCashbox=key;cashboxExpanded=false})
-            }
-           }
-          }
-          Text("العملة",style=MaterialTheme.typography.labelLarge)
-          var currencyExpanded by remember { mutableStateOf(false) }
-          val currencies=listOf("USD" to "دولار","TRY" to "تركي","SYP" to "سوري")
-          Box {
-           OutlinedButton(onClick={currencyExpanded=true},modifier=Modifier.fillMaxWidth()) {
-            Text(currencies.first { it.first==collectionCurrency }.second)
-           }
-           DropdownMenu(expanded=currencyExpanded,onDismissRequest={currencyExpanded=false}) {
-            currencies.forEach { (key,label) ->
-             DropdownMenuItem(text={Text(label)},onClick={collectionCurrency=key;collection=suggestedAmount(key);currencyExpanded=false})
-            }
-           }
-          }
-          Text("المبلغ المقترح بسعر الصرف: "+suggestedAmount(collectionCurrency)+" "+collectionCurrency+" — يمكنك تعديله كما اتفقت مع العميل",
-           style=MaterialTheme.typography.bodySmall)
-         }
-        },
-        confirmButton={Button(enabled=!statusSaving && collection.toBigDecimalOrNull()?.signum()==1,onClick={
-         lifecycleScope.launch {
-          statusSaving=true
-          try {
-           withContext(Dispatchers.IO) {
-            val payment=MaintenanceDeliveryRepository.PaymentLine(collection,collectionCurrency,selectedCashbox,"")
-            MaintenanceDeliveryRepository(AppDatabase.get(applicationContext),applicationContext).deliver(repair.id,listOf(payment))
-           }
-           deliveryDialog=false
-           selectedRefresh?.invoke(repair.id)
-           Toast.makeText(this@MaintenanceActivity,"تم تسليم الصيانة وتسجيل التحصيل",Toast.LENGTH_LONG).show()
-          } catch(e:Exception) {
-           error=e.message ?: "تعذر التسليم"
-           Toast.makeText(this@MaintenanceActivity,error,Toast.LENGTH_LONG).show()
-          } finally { statusSaving=false }
-         }
-        }) {Text("تأكيد التسليم والقبض")}},
-        dismissButton={TextButton(onClick={deliveryDialog=false}) {Text("إلغاء")}}
-       )
       }
       Column(Modifier.weight(1f).verticalScroll(rememberScrollState()),
        verticalArrangement=Arrangement.spacedBy(12.dp)) {

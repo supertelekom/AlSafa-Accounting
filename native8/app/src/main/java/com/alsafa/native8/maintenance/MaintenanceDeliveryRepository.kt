@@ -23,9 +23,10 @@ class MaintenanceDeliveryRepository(private val db:AppDatabase, context:Context)
  private fun fmt(n:BigDecimal)=n.stripTrailingZeros().toPlainString()
  suspend fun deliver(id:String,collection:String,cashbox:String):Unit =
   deliver(id,listOf(PaymentLine(collection,"USD",cashbox,collection)),true)
- suspend fun deliver(id:String,payments:List<PaymentLine>,legacySingleCurrency:Boolean=false):Unit=db.withTransaction {
+ suspend fun deliver(id:String,payments:List<PaymentLine>,legacySingleCurrency:Boolean=false,expectedJson:String?=null):Unit=db.withTransaction {
   val dao=db.maintenanceDao()
   val repair=dao.repair(id) ?: error("فاتورة الصيانة غير موجودة")
+  require(expectedJson==null || repair.original_json==expectedJson) { "تغيرت الفاتورة؛ أعد فتح التسليم" }
   require(repair.source_sha256=="native8" && repair.status!="تم التسليم") { "تم تسليم الصيانة مسبقاً أو السجل تاريخي" }
   require(MaintenanceDeliveryEligibility.allowed(repair.status,JSONObject(repair.original_json))) { "يجب تجهيز الصيانة قبل تسليمها" }
   val rateSnapshot=JSONObject().put("USD",1)
@@ -57,7 +58,9 @@ class MaintenanceDeliveryRepository(private val db:AppDatabase, context:Context)
    val rate=exchangeRates.rate(currency,repair.currency)
    val suggested=actual.multiply(rate).setScale(2,RoundingMode.HALF_UP)
    val credit=total
-   require(actual>BigDecimal.ZERO && credit>BigDecimal.ZERO) { "المبلغ المقبوض يجب أن يكون موجباً" }
+   require(if(total.signum()==0) actual.signum()==0 else actual>BigDecimal.ZERO) {
+    "أدخل مبلغ القبض؛ الصيانة دون أجرة تُسلّم دون قبض"
+   }
 
    Triple(payment,actual,credit)
   }
@@ -94,7 +97,7 @@ class MaintenanceDeliveryRepository(private val db:AppDatabase, context:Context)
   raw.put("paymentStatus",if(received==total) "مدفوع بالكامل" else if(received>BigDecimal.ZERO) "دفعة جزئية" else "غير مدفوع")
   raw.put("paymentMethod",if(prepared.size==1) prepared.first().first.cashbox else "قبض مختلط")
   raw.put("paymentLines",JSONArray().apply {
-   prepared.forEach { (payment,actual,credit) ->
+   prepared.filter { it.second.signum()>0 }.forEach { (payment,actual,credit) ->
     put(JSONObject().put("currency",if(legacySingleCurrency) repair.currency else payment.currency)
      .put("amount",fmt(actual)).put("invoiceCredit",fmt(credit)).put("cashbox",payment.cashbox)
      .put("fxRate",fmt(exchangeRates.rate(if(legacySingleCurrency) repair.currency else payment.currency,repair.currency)))
@@ -102,7 +105,7 @@ class MaintenanceDeliveryRepository(private val db:AppDatabase, context:Context)
    }
   })
   check(dao.finalizeDelivery(id,"تم التسليم",fmt(total),fmt(received),day,raw.toString(),repair.original_json)==1) { "تغيرت الصيانة أثناء التسليم" }
-  prepared.forEach { (payment,actual,credit) ->
+  prepared.filter { it.second.signum()>0 }.forEach { (payment,actual,credit) ->
    db.legacyPaymentDao().insertCashboxMovement(RoomCashboxMovement(
     "repair-payment-"+UUID.randomUUID(),UnifiedCashboxBalance.canonical(payment.cashbox)!!,
     if(legacySingleCurrency) repair.currency else payment.currency,
