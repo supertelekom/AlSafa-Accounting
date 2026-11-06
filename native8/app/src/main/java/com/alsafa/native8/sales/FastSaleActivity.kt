@@ -7,7 +7,7 @@ import com.alsafa.native8.stylekit.QuickSalePage
 import com.alsafa.native8.stylekit.SafaStyle
 import com.alsafa.native8.stylekit.SafaWidgets
 import com.alsafa.native8.maintenance.QuickRepairRules
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.*
 import java.math.RoundingMode
 import java.util.UUID
 import com.google.mlkit.vision.barcode.BarcodeScanning
@@ -19,12 +19,16 @@ class FastSaleActivity:Activity() {
  private var choice:SaleChoice?=null
  private var results=listOf<SaleChoice>()
  private var generation=0
+ private val searchScope=CoroutineScope(SupervisorJob()+Dispatchers.Main.immediate)
+ private var searchJob:Job?=null
+ private lateinit var catalog:SalesProductCatalog
  private var changing=false
  private var currency="USD"
  private var saving=false
  private var requestId=UUID.randomUUID().toString()
  override fun onCreate(state:Bundle?) {
   super.onCreate(state);requestWindowFeature(android.view.Window.FEATURE_NO_TITLE)
+  catalog=SalesProductCatalog(applicationContext)
   requestId=state?.getString("requestId") ?: requestId
   window.statusBarColor=SafaStyle.Palette.cream
   page=QuickSalePage(SafaWidgets(SafaStyle(this)),"الصفا للساعات",object:QuickSalePage.Callbacks {
@@ -47,19 +51,25 @@ class FastSaleActivity:Activity() {
  }
  private fun searchProducts(query:String,barcode:Boolean) {
   val token=++generation
-  Thread { val found=runCatching { runBlocking { SalesProductCatalog(applicationContext).find(query) } }
-   runOnUiThread {
-    if(token!=generation || isDestroyed) return@runOnUiThread
-    found.fold(onSuccess={ rows ->
-     results=if(barcode) rows.filter { it.barcode==query.trim() } else rows
-     if(barcode && results.size==1) select(results.single()) else {
-      page.showProducts(results.mapIndexed { i,p -> i.toString() to "${p.title} — ${p.price} ${p.currency} — المتوفر ${p.available}" }) { select(results[it.toInt()]) }
-      if(results.isEmpty()) page.showConversion("لا توجد نتائج",true)
-     }
-    },onFailure={page.showConversion(it.message.orEmpty(),true)})
-   }
-  }.start()
+  searchJob?.cancel()
+  results=emptyList();page.showProducts(emptyList()){}
+  if(query.isBlank())return
+  searchJob=searchScope.launch {
+   if(!barcode)delay(300)
+   try {
+    val found=catalog.find(query,barcode)
+    ensureActive()
+    if(token!=generation || isDestroyed)return@launch
+    results=found
+    if(barcode && found.size==1)select(found.single()) else {
+     page.showProducts(found.mapIndexed { i,p -> i.toString() to "${p.title} — ${p.price} ${p.currency} — المتوفر ${p.available}" }) { select(found[it.toInt()]) }
+     if(found.isEmpty())page.showConversion("لا توجد نتائج",true)
+    }
+   } catch(e:CancellationException){throw e}
+   catch(e:Exception){if(token==generation && !isDestroyed)page.showConversion(e.message.orEmpty(),true)}
+  }
  }
+ override fun onDestroy(){searchScope.cancel();super.onDestroy()}
  private fun select(p:SaleChoice) {
   if(p.available.toBigDecimal()<java.math.BigDecimal.ONE){page.showConversion("المنتج غير متوفر للبيع",true);return}
   choice=p;page.selectProduct(p.productId,"${p.title} — ${p.price} ${p.currency}")

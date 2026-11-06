@@ -12,6 +12,13 @@ import androidx.room.Update
  */
 @Dao
 interface OperationalInventoryWriteDao {
+    @Query("SELECT * FROM local_products ORDER BY created_at DESC,local_id LIMIT 1 OFFSET :offset")
+    suspend fun searchLocalPage(offset:Int):List<LocalProductEntity>
+    @Query("SELECT * FROM product_variants_local ORDER BY variant_id LIMIT 1 OFFSET :offset")
+    suspend fun searchVariantPage(offset:Int):List<ProductVariantEntity>
+    @Query("SELECT (SELECT COUNT(*) FROM products)||':'||(SELECT COUNT(*) FROM product_edits)||':'||(SELECT COALESCE(SUM(updated_at),0) FROM product_edits)||':'||(SELECT COUNT(*) FROM local_products)||':'||(SELECT COALESCE(SUM(updated_at),0) FROM local_products)||':'||(SELECT COUNT(*) FROM product_variants_local)||':'||(SELECT COALESCE(SUM(updated_at),0) FROM product_variants_local)")
+    suspend fun searchRevision():String
+
     @Query("SELECT * FROM source_imports WHERE source_sha256=:source LIMIT 1")
     suspend fun sourceImport(source: String): SourceImportEntity?
 
