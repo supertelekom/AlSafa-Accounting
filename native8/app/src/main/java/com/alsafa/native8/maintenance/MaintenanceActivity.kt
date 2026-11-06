@@ -114,8 +114,8 @@ class MaintenanceActivity:ComponentActivity() {
       if(repair.source_sha256=="native8" && repair.status!="تم التسليم") {
        Button(onClick={startActivityForResult(Intent(this@MaintenanceActivity,MaintenanceEditActivity::class.java).putExtra("repair_id",repair.id),703)}) { Text("تعديل الفاتورة") }
       }
-      if(repair.source_sha256=="native8" && repair.status=="جاهز للاستلام") {
-       Button(onClick={collection="";selectedCashbox="drawer";collectionCurrency=repair.currency;deliveryDialog=true}) { Text("تم التسليم — تحصيل المبلغ") }
+      if(repair.source_sha256=="native8" && MaintenanceDeliveryEligibility.allowed(repair.status,JSONObject(repair.original_json))) {
+       Button(onClick={collection=repair.price;selectedCashbox="drawer";collectionCurrency=repair.currency;deliveryDialog=true}) { Text("تم التسليم — تحصيل المبلغ") }
       }
       if(deliveryDialog && repair.source_sha256=="native8") {
        val raw=remember(repair.original_json) { JSONObject(repair.original_json) }
@@ -126,7 +126,7 @@ class MaintenanceActivity:ComponentActivity() {
           (line?.optString("price")?.toBigDecimalOrNull() ?: java.math.BigDecimal.ZERO)
        }
        val labor=raw.optString("laborPrice",raw.optString("price","0")).toBigDecimalOrNull() ?: java.math.BigDecimal.ZERO
-       val due=labor+partsTotal
+       val due=com.alsafa.native8.sales.LegacyMaintenanceProfitReader.total(raw)
        fun suggestedAmount(currency:String):String = runCatching {
         due.multiply(ExchangeRateSettings(applicationContext).rate(repair.currency,currency))
          .setScale(2,RoundingMode.HALF_UP).stripTrailingZeros().toPlainString()

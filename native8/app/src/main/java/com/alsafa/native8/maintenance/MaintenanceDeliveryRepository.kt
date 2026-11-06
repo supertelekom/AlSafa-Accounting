@@ -27,7 +27,7 @@ class MaintenanceDeliveryRepository(private val db:AppDatabase, context:Context)
   val dao=db.maintenanceDao()
   val repair=dao.repair(id) ?: error("فاتورة الصيانة غير موجودة")
   require(repair.source_sha256=="native8" && repair.status!="تم التسليم") { "تم تسليم الصيانة مسبقاً أو السجل تاريخي" }
-  require(repair.status=="جاهز للاستلام") { "يجب تجهيز الصيانة قبل تسليمها" }
+  require(MaintenanceDeliveryEligibility.allowed(repair.status,JSONObject(repair.original_json))) { "يجب تجهيز الصيانة قبل تسليمها" }
   val rateSnapshot=JSONObject().put("USD",1)
    .put("TRY",exchangeRates.rate("USD","TRY").toPlainString())
    .put("SYP",exchangeRates.rate("USD","SYP").toPlainString())

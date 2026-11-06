@@ -41,7 +41,9 @@ class MaintenanceIntakeActivity:Activity() {
   val problem=field("العطل *")
   val diagnosis=field("التشخيص")
   val notes=field("ملاحظات")
-  val labor=field("أجرة العمل — USD").apply { setText("0");inputType=8194 }
+  root.addView(TextView(this).apply { text="عملة الفاتورة" })
+  val currency=Spinner(this).apply { adapter=ArrayAdapter(this@MaintenanceIntakeActivity,android.R.layout.simple_spinner_dropdown_item,listOf("USD","TRY","SYP")) };root.addView(currency)
+  val labor=field("أجرة العمل — بعملة الفاتورة").apply { setText("0");inputType=8194 }
   val selectedParts=mutableListOf<MaintenancePartsRepository.SelectedPart>()
   val partSummary=TextView(this).apply { text="قطع الصيانة: لا توجد قطع مضافة";textSize=17f }
   root.addView(TextView(this).apply { text="قطع الصيانة";textSize=20f })
@@ -126,6 +128,7 @@ class MaintenanceIntakeActivity:Activity() {
     val problemValue=problem.text.toString().trim()
     val diagnosisValue=diagnosis.text.toString().trim()
     val notesValue=notes.text.toString().trim()
+    val invoiceCurrency=currency.selectedItem.toString()
     val laborValue=labor.text.toString().toBigDecimalOrNull()
     if(laborValue==null || laborValue<BigDecimal.ZERO) { Toast.makeText(this@MaintenanceIntakeActivity,"أجرة العمل غير صحيحة",Toast.LENGTH_LONG).show();return@setOnClickListener }
     val requestedParts=selectedParts.toList()
@@ -148,7 +151,7 @@ class MaintenanceIntakeActivity:Activity() {
          put("watch",watch.text.toString().trim());put("model",model.text.toString().trim())
          put("problem",problem.text.toString().trim());put("diagnosis",diagnosis.text.toString().trim())
          put("notes",notes.text.toString().trim());put("watchPhoto",photoUri)
-         put("currency","USD");put("laborPrice",laborValue.toPlainString());put("price",laborValue.toPlainString());put("received",0)
+         put("currency",invoiceCurrency);put("laborPrice",laborValue.toPlainString());put("price",laborValue.toPlainString());put("received",0)
          put("partsTotal",0);put("partsCost",0);put("cost",0)
          put("usedParts",org.json.JSONArray());put("partsStockApplied",false)
          put("createdAt",now)
@@ -157,18 +160,18 @@ class MaintenanceIntakeActivity:Activity() {
          id,"native8",number,date,time,"بانتظار التسليم",
          customer.text.toString().trim(),phone.text.toString().trim(),
          watch.text.toString().trim(),model.text.toString().trim(),
-         problem.text.toString().trim(),"USD",laborValue.toPlainString(),"0","",now,raw.toString()
+         problemValue,invoiceCurrency,laborValue.toPlainString(),"0","",now,raw.toString()
         ))
         if(requestedParts.isNotEmpty()) {
          // Same Room transaction as intake; no stock deduction until delivery.
          val used=JSONArray();var total=BigDecimal.ZERO;var costs=BigDecimal.ZERO
          for(line in requestedParts) {
           val part=db.maintenanceDao().part(line.partId) ?: error("قطعة الصيانة غير موجودة")
-          val qty=line.qty.toBigDecimal();val sale=line.price.toBigDecimal()
+          val qty=line.qty.toBigDecimal();val sale=line.price.toBigDecimal().multiply(com.alsafa.native8.sales.ExchangeRateSettings(applicationContext).rate(part.currency,invoiceCurrency))
           require(qty>BigDecimal.ZERO && qty<=part.stock.toBigDecimal() && qty.stripTrailingZeros().scale()<=0) { "الكمية غير متوفرة: ${part.name}" }
-          val costRate=com.alsafa.native8.sales.ExchangeRateSettings(applicationContext).rate(part.currency,"USD")
+          val costRate=com.alsafa.native8.sales.ExchangeRateSettings(applicationContext).rate(part.currency,invoiceCurrency)
           val convertedCost=part.cost.toBigDecimal().multiply(costRate)
-          used.put(JSONObject().put("partId",part.id).put("name",part.name).put("qty",line.qty).put("price",line.price).put("cost",convertedCost.toPlainString()).put("currency","USD")
+          used.put(JSONObject().put("partId",part.id).put("name",part.name).put("qty",line.qty).put("price",sale.toPlainString()).put("cost",convertedCost.toPlainString()).put("currency",invoiceCurrency)
            .put("costSnapshotVerified",true).put("sourceUnitCost",part.cost)
            .put("sourceCostCurrency",part.currency).put("costExchangeRate",costRate.toPlainString()))
           total=total.add(qty.multiply(sale));costs=costs.add(qty.multiply(convertedCost))

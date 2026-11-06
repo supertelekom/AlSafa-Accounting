@@ -35,7 +35,9 @@ class MaintenanceEditActivity:Activity() {
   val diagnosis=field("التشخيص")
   val workDone=field("العمل المنجز")
   val notes=field("ملاحظات")
-  val labor=field("أجرة العمل").apply { inputType=8194 }
+  root.addView(TextView(this).apply { text="عملة الفاتورة (يمكن تغييرها للصيانة دون قطع)" })
+  val currency=Spinner(this).apply { adapter=ArrayAdapter(this@MaintenanceEditActivity,android.R.layout.simple_spinner_dropdown_item,listOf("USD","TRY","SYP")) };root.addView(currency)
+  val labor=field("أجرة العمل — بعملة الفاتورة").apply { inputType=8194 }
   val partsButton=Button(this).apply { text="تحديث العطل واختيار قطع الصيانة" }
   root.addView(partsButton)
   val partsSummary=TextView(this).apply { text="القطع المختارة: لا توجد قطع" }
@@ -60,7 +62,7 @@ class MaintenanceEditActivity:Activity() {
     diagnosis.setText(json.optString("diagnosis"))
     workDone.setText(json.optString("workDone"))
     notes.setText(json.optString("notes"))
-    labor.hint="أجرة العمل — "+repair.currency
+    currency.setSelection(listOf("USD","TRY","SYP").indexOf(repair.currency).coerceAtLeast(0))
     labor.setText(json.optString("laborPrice",json.optString("price","0")))
     var pendingParts:MutableList<MaintenancePartsRepository.SelectedPart>?=null
     val currentParts=json.optJSONArray("usedParts") ?: JSONArray()
@@ -123,6 +125,7 @@ class MaintenanceEditActivity:Activity() {
       Toast.makeText(this,"العميل والساعة والعطل مطلوبة",Toast.LENGTH_LONG).show()
       return@setOnClickListener
      }
+     val invoiceCurrency=currency.selectedItem.toString()
      val laborValue=labor.text.toString().toBigDecimalOrNull()
      if(laborValue==null || laborValue<BigDecimal.ZERO) { Toast.makeText(this,"أجرة العمل غير صحيحة",Toast.LENGTH_LONG).show();return@setOnClickListener }
      save.isEnabled=false
@@ -137,6 +140,11 @@ class MaintenanceEditActivity:Activity() {
          val latest=db.maintenanceDao().repair(id) ?: error("الصيانة غير موجودة")
          require(latest.source_sha256=="native8" && latest.status!="تم التسليم") { "لا يمكن تعديل السجل" }
          val raw=JSONObject(latest.original_json).put("laborPrice",laborValue.toPlainString())
+         if(invoiceCurrency!=latest.currency) {
+          require((raw.optJSONArray("usedParts")?.length() ?: 0)==0 && requestedParts.isNullOrEmpty() && raw.optString("manualCost","0").toBigDecimal().signum()==0) { "تغيير العملة هنا متاح للصيانة دون قطع أو تكلفة إضافية فقط" }
+          raw.put("currency",invoiceCurrency)
+          check(db.maintenanceDao().updateDraftCurrency(id,latest.original_json,raw.toString(),invoiceCurrency)==1)
+         }
          listOf("customer","phone","watch","model","problem","diagnosis","workDone","notes")
           .forEachIndexed { index,key -> raw.put(key,values[index]) }
          check(db.maintenanceDao().editNewRepair(id,values[0],values[1],values[2],
