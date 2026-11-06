@@ -38,8 +38,13 @@ class SalesArchiveActivity: ComponentActivity() {
         vm.search("", engine)
         setContent { SalesFrame("فواتير المبيع") {
             SalesInput("بحث بالاسم أو الهاتف أو رقم الفاتورة", vm.query) { vm.search(it, engine) }
-            SalesInput("من تاريخ YYYY-MM-DD", vm.fromDate) { vm.fromDate=it; vm.search(vm.query,engine) }
-            SalesInput("إلى تاريخ YYYY-MM-DD", vm.toDate) { vm.toDate=it; vm.search(vm.query,engine) }
+            if(com.alsafa.native8.stylekit.SafaDateTime.fullMode(this@SalesArchiveActivity)) androidx.compose.foundation.layout.Row {
+                listOf("اليوم","هذا الشهر","الشهر السابق","الكل").forEachIndexed { i,label ->
+                    TextButton(onClick={val today=java.time.LocalDate.now();vm.fromDate=when(i){0->today.toString();1->today.withDayOfMonth(1).toString();2->today.minusMonths(1).withDayOfMonth(1).toString();else->""};vm.toDate=when(i){2->today.withDayOfMonth(1).minusDays(1).toString();3->"";else->today.toString()};vm.search(vm.query,engine)}) {Text(label)}
+                }
+            }
+            SalesDateInput("من تاريخ", vm.fromDate) { vm.fromDate=it; vm.search(vm.query,engine) }
+            SalesDateInput("إلى تاريخ", vm.toDate) { vm.toDate=it; vm.search(vm.query,engine) }
             Button(onClick={ startActivity(Intent(this@SalesArchiveActivity, FullSaleActivity::class.java)) }) { Text("فاتورة مبيع") }
             Button(onClick={ startActivity(Intent(this@SalesArchiveActivity, QuickSaleActivity::class.java)) }) { Text("فاتورة مبسطة") }
             Button(onClick={ startActivity(Intent(this@SalesArchiveActivity, SalesReturnsHistoryActivity::class.java)) }) { Text("المرتجعات القديمة والجديدة") }

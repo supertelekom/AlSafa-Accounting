@@ -26,7 +26,7 @@ class InvoiceMetadataActivity:Activity() {
     val original=withContext(Dispatchers.IO){when(kind){"sale"->requireNotNull(db.legacySaleDao().legacyById(id)).original_json;"repair"->requireNotNull(db.maintenanceDao().repair(id)).original_json;else->error("نوع فاتورة غير معروف")}}
     val raw=JSONObject(original)
     fun field(label:String,key:String,numeric:Boolean=false)=ui.input(label,numeric,key=="notes").apply{setText(raw.optString(key));ui.label(host.body,label);ui.add(host.body,this)}
-    val number=field("رقم الفاتورة","invoiceNo",true);val date=field("التاريخ — YYYY-MM-DD","date");val time=field("الوقت — HH:mm","time").apply{if(text.isBlank())setText("00:00")}
+    val number=field("رقم الفاتورة","invoiceNo",true);val date=field("التاريخ","date").also{if(SafaDateTime.fullMode(this@InvoiceMetadataActivity))SafaDateTime.bindDate(it)};val time=field("الوقت","time").apply{if(text.isBlank())setText("00:00")}.also{if(SafaDateTime.fullMode(this@InvoiceMetadataActivity))SafaDateTime.bindTime(it)}
     val customer=field("اسم العميل","customer");val phone=field("رقم الهاتف","phone");val notes=field("ملاحظات","notes")
     lateinit var save:android.widget.Button
     save=ui.button("حفظ التعديل",true){

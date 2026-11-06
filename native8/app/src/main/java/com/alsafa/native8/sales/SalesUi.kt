@@ -27,3 +27,10 @@ fun SalesInput(label: String, value: String, change: (String)->Unit) {
     OutlinedTextField(value = value, onValueChange = change, label = { Text(label) }, modifier = Modifier.fillMaxWidth(), singleLine = true)
     Spacer(Modifier.height(8.dp))
 }
+
+@Composable
+fun SalesDateInput(label:String,value:String,change:(String)->Unit) {
+ val context=androidx.compose.ui.platform.LocalContext.current
+ if(!com.alsafa.native8.stylekit.SafaDateTime.fullMode(context)){SalesInput(label,value,change);return}
+ OutlinedButton(onClick={com.alsafa.native8.stylekit.SafaDateTime.chooseDate(context,value,change)},modifier=Modifier.fillMaxWidth()) {Text(label+": "+value.ifBlank{"كل التواريخ"})}
+}

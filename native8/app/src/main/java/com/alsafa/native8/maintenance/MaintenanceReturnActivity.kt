@@ -140,8 +140,8 @@ class MaintenanceReturnActivity:Activity() {
   listOf(kind,original,replacement).forEach { it.onItemSelectedListener=listener };updateFields()
   val vault=choice("الخزنة",listOf("الدرج","الصندوق الخارجي","شام كاش","البنك"))
   val zone=ZoneId.of("Asia/Damascus")
-  val date=field("التاريخ — yyyy-MM-dd",LocalDate.now(zone).toString())
-  val time=field("الوقت — HH:mm",LocalTime.now(zone).withSecond(0).withNano(0).toString())
+  val date=field("التاريخ",LocalDate.now(zone).toString()).also{if(com.alsafa.native8.stylekit.SafaDateTime.fullMode(this))com.alsafa.native8.stylekit.SafaDateTime.bindDate(it)}
+  val time=field("الوقت",LocalTime.now(zone).withSecond(0).withNano(0).toString()).also{if(com.alsafa.native8.stylekit.SafaDateTime.fullMode(this))com.alsafa.native8.stylekit.SafaDateTime.bindTime(it)}
   val notes=field("التفاصيل *","")
   fun number(v:EditText)=v.text.toString().trim().toBigDecimalOrNull() ?: error("أدخل مبلغاً أو كمية صحيحة")
   button("تنفيذ مرتجع / استبدال صيانة") {

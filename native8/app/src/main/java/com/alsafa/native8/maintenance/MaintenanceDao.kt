@@ -9,8 +9,8 @@ data class RepairListRow(val id:String,val invoice_number:Long,val customer:Stri
 
 @Dao
 interface MaintenanceDao {
- @Query("SELECT id,invoice_number,customer,phone,watch,status,date FROM maintenance_repairs WHERE (customer LIKE '%' || :query || '%' OR phone LIKE '%' || :query || '%' OR CAST(invoice_number AS TEXT) LIKE '%' || :query || '%' OR watch LIKE '%' || :query || '%') AND (:state='' OR status=:state OR (:state='بانتظار التسليم' AND status='جاهز للاستلام')) ORDER BY created_at DESC,invoice_number DESC LIMIT :limit OFFSET :offset")
- suspend fun listPage(query:String,state:String,offset:Int,limit:Int=50):List<RepairListRow>
+ @Query("SELECT id,invoice_number,customer,phone,watch,status,date FROM maintenance_repairs WHERE (customer LIKE '%' || :query || '%' OR phone LIKE '%' || :query || '%' OR CAST(invoice_number AS TEXT) LIKE '%' || :query || '%' OR watch LIKE '%' || :query || '%') AND (:state='' OR status=:state OR (:state='بانتظار التسليم' AND status='جاهز للاستلام')) AND (:fromDate='' OR date>=:fromDate) AND (:toDate='' OR date<=:toDate) ORDER BY created_at DESC,invoice_number DESC LIMIT :limit OFFSET :offset")
+ suspend fun listPage(query:String,state:String,offset:Int,limit:Int=50,fromDate:String="",toDate:String=""):List<RepairListRow>
 
  @Query("UPDATE maintenance_repairs SET status='تم التسليم',delivered_date=:day,original_json=:updated WHERE id=:id AND source_sha256!='native8' AND status!='تم التسليم' AND original_json=:expected")
  suspend fun finalizeArchivedDelivery(id:String,expected:String,updated:String,day:String):Int

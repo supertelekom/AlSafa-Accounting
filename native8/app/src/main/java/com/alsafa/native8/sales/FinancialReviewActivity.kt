@@ -32,15 +32,17 @@ class FinancialReviewActivity:Activity() {
    setTextColor(Color.rgb(150,65,25))
   }
   val from=EditText(this).apply {
-   hint="من تاريخ YYYY-MM-DD"
+   hint="من تاريخ"
    setSingleLine()
    setText(LocalDate.now(ZoneId.of("Asia/Damascus")).withDayOfMonth(1).toString())
   }
   val to=EditText(this).apply {
-   hint="إلى تاريخ YYYY-MM-DD"
+   hint="إلى تاريخ"
    setSingleLine()
    setText(LocalDate.now(ZoneId.of("Asia/Damascus")).toString())
   }
+  com.alsafa.native8.stylekit.SafaDateTime.bindDate(from)
+  com.alsafa.native8.stylekit.SafaDateTime.bindDate(to)
   val result=TextView(this).apply {
    textSize=17f
    setHorizontallyScrolling(false)
@@ -76,6 +78,7 @@ class FinancialReviewActivity:Activity() {
     android.view.ViewGroup.LayoutParams.MATCH_PARENT,
     android.view.ViewGroup.LayoutParams.WRAP_CONTENT))
   }
+  com.alsafa.native8.stylekit.SafaDateTime.presets(com.alsafa.native8.stylekit.SafaWidgets(com.alsafa.native8.stylekit.SafaStyle(this)),content,from,to)
   val scroll=ScrollView(this).apply {
    isFillViewport=true
    isHorizontalScrollBarEnabled=false

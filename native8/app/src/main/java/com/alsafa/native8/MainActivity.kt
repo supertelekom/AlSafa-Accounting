@@ -151,6 +151,7 @@ class MainActivity : Activity() {
     }
     override fun onResume() {
         super.onResume()
+        intent.getStringExtra("work_mode")?.takeIf{it=="full" || it=="simple"}?.let{getSharedPreferences("work_mode_ui",MODE_PRIVATE).edit().putString("mode",it).apply()}
         val page=fullHome ?: return
         val generation=++refreshGeneration
         homeScope.launch {

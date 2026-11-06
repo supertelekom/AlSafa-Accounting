@@ -46,6 +46,8 @@ class MaintenanceIntakeActivity:Activity() {
    val box=ui.column();ui.label(box,label)
    val input=ui.input(multiline=multiline);ui.add(box,input,0);parent.addView(box);return input
   }
+  val intakeTime=SafaDateTime.fields(ui,root,"تاريخ الاستلام","وقت الاستلام")
+  intakeTime.date.id=4110;intakeTime.time.id=4111
   val client=pair()
   val customer=field(client,"اسم العميل *").apply{id=4101}
   val phone=field(client,"رقم الهاتف / واتساب").apply{id=4102;inputType=android.text.InputType.TYPE_CLASS_PHONE}
@@ -120,6 +122,8 @@ class MaintenanceIntakeActivity:Activity() {
     val invoiceCurrency=currency.selectedItem.toString()
     val laborValue=labor.text.toString().toBigDecimalOrNull()
     if(laborValue==null || laborValue<BigDecimal.ZERO) { Toast.makeText(this@MaintenanceIntakeActivity,"أجرة العمل غير صحيحة",Toast.LENGTH_LONG).show();return@setOnClickListener }
+    val intakeDateValue=intakeTime.date.text.toString()
+    val intakeTimeValue=intakeTime.time.text.toString()
     val photoValue=photoUri
     val requestedParts=selectedParts.toList()
     isEnabled=false
@@ -127,8 +131,8 @@ class MaintenanceIntakeActivity:Activity() {
      val result=runCatching {
       val db=AppDatabase.get(applicationContext)
       val now=System.currentTimeMillis()
-      val date=SimpleDateFormat("yyyy-MM-dd",Locale.US).format(Date(now))
-      val time=SimpleDateFormat("HH:mm",Locale.US).format(Date(now))
+      val date=intakeDateValue
+      val time=intakeTimeValue
       val id="repair-"+now+"-"+UUID.randomUUID().toString().take(6)
       val savedNumber=runBlocking {
        db.withTransaction {

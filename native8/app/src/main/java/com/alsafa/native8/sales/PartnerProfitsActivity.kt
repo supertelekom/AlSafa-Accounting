@@ -117,6 +117,9 @@ class PartnerProfitsActivity:Activity() {
    val last=EditText(this).apply { hint="إلى تاريخ";setText(today.toString());isSingleLine=true }
    fields.addView(first,LinearLayout.LayoutParams(-1,(58*resources.displayMetrics.density).toInt()))
    fields.addView(last,LinearLayout.LayoutParams(-1,(58*resources.displayMetrics.density).toInt()))
+   com.alsafa.native8.stylekit.SafaDateTime.bindDate(first)
+   com.alsafa.native8.stylekit.SafaDateTime.bindDate(last)
+   com.alsafa.native8.stylekit.SafaDateTime.presets(com.alsafa.native8.stylekit.SafaWidgets(com.alsafa.native8.stylekit.SafaStyle(this)),fields,first,last)
    applyFont(fields)
    AlertDialog.Builder(this).setTitle("فترة الأرباح").setView(fields)
     .setNegativeButton("إلغاء",null).setPositiveButton("عرض") { _,_ ->

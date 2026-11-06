@@ -19,16 +19,18 @@ class MaintenanceActivity:Activity() {
  private var selectedId:String?=null
  private var query="";private var filter="";private var job:Job?=null
  private var autoDelivery=false
+ private var fromDate="";private var toDate=""
  override fun onCreate(state:Bundle?) {
   super.onCreate(state);requestWindowFeature(android.view.Window.FEATURE_NO_TITLE)
   ui=SafaWidgets(SafaStyle(this));window.statusBarColor=SafaStyle.Palette.cream;window.navigationBarColor=SafaStyle.Palette.cream
   selectedId=state?.getString("selected") ?: intent.getStringExtra("repair_id")
   query=state?.getString("query").orEmpty();filter=state?.getString("filter").orEmpty()
+  fromDate=state?.getString("fromDate").orEmpty();toDate=state?.getString("toDate").orEmpty()
   autoDelivery=state==null && intent.getBooleanExtra("open_delivery",false)
   val host=SafaPageHost(ui,"الصفا للساعات");ui.heading(host.body,"الصيانة","جارٍ التحميل…");setContentView(host.view)
  }
  override fun onResume(){super.onResume();if(::ui.isInitialized) selectedId?.let{details(it)} ?: register()}
- override fun onSaveInstanceState(out:Bundle){out.putString("selected",selectedId);out.putString("query",query);out.putString("filter",filter);super.onSaveInstanceState(out)}
+ override fun onSaveInstanceState(out:Bundle){out.putString("fromDate",fromDate);out.putString("toDate",toDate);out.putString("selected",selectedId);out.putString("query",query);out.putString("filter",filter);super.onSaveInstanceState(out)}
  override fun onDestroy(){scope.cancel();super.onDestroy()}
  @Deprecated("Legacy back callback") override fun onBackPressed(){if(selectedId!=null){selectedId=null;register()}else super.onBackPressed()}
  private fun open(type:Class<*>,id:String?=null){startActivity(Intent(this,type).apply{if(id!=null)putExtra("repair_id",id)})}
@@ -65,7 +67,7 @@ class MaintenanceActivity:Activity() {
     more.isEnabled=false;notice.text="جارٍ التحميل…"
     try {
      if(reset)delay(250)
-     val page=withContext(Dispatchers.IO){db.maintenanceDao().listPage(q,f,offset)}
+     val page=withContext(Dispatchers.IO){db.maintenanceDao().listPage(q,f,offset,fromDate=fromDate,toDate=toDate)}
      if(reset)rows.clear();rows.addAll(page);adapter.notifyDataSetChanged()
      notice.text=if(rows.isEmpty())"لا توجد سجلات مطابقة" else "السجلات المعروضة: ${rows.size}"
      more.visibility=if(page.size==50)View.VISIBLE else View.GONE
@@ -76,6 +78,20 @@ class MaintenanceActivity:Activity() {
   more.setOnClickListener{load(false)}
   ui.listen(search){query=it;load(true)}
   state.onItemSelectedListener=object:AdapterView.OnItemSelectedListener{override fun onNothingSelected(p:AdapterView<*>?){};override fun onItemSelected(p:AdapterView<*>?,v:View?,position:Int,id:Long){val value=states[position].first;if(value!=filter){filter=value;load(true)}}}
+  if(SafaDateTime.fullMode(this)) {
+   val dateFilter=ui.button(if(fromDate.isBlank() && toDate.isBlank())"فترة الاستلام — كل التواريخ" else "$fromDate — $toDate") {
+    val form=ui.column(16);ui.label(form,"من تاريخ");val start=ui.input().apply{setText(fromDate);hint="من تاريخ"};ui.add(form,start)
+    ui.label(form,"إلى تاريخ");val end=ui.input().apply{setText(toDate);hint="إلى تاريخ"};ui.add(form,end)
+    SafaDateTime.bindDate(start);SafaDateTime.bindDate(end);SafaDateTime.presets(ui,form,start,end)
+    val error=ui.text("",14f,SafaStyle.Palette.danger);ui.add(form,error)
+    val dialog=android.app.AlertDialog.Builder(this).setTitle("فترة الاستلام").setView(form).setNegativeButton("إلغاء",null).setNeutralButton("كل التواريخ"){_,_->fromDate="";toDate="";register()}.setPositiveButton("عرض",null).create()
+    dialog.setOnShowListener{dialog.getButton(android.app.AlertDialog.BUTTON_POSITIVE).setOnClickListener{
+     val a=start.text.toString();val b=end.text.toString()
+     if(a.isNotBlank() && b.isNotBlank() && a>b)error.text="تاريخ البداية يجب أن يسبق النهاية"
+     else{fromDate=a;toDate=b;dialog.dismiss();register()}
+    }};dialog.show()
+   };root.addView(dateFilter,3)
+  }
   load(true)
  }
  private fun fail(message:String){ui.confirm("الصيانة",message){}.show()}
