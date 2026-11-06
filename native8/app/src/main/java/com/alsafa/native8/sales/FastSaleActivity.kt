@@ -107,7 +107,7 @@ class FastSaleActivity:Activity() {
    }
    runOnUiThread {saving=false;page.busy(false);result.fold(onSuccess={id ->
     Toast.makeText(this,"تم حفظ فاتورة المبيع",Toast.LENGTH_LONG).show()
-    startActivity(Intent(this,SalePrintActivity::class.java).putExtra("sale_id",id).putExtra("after_save",true));finish()
+    startActivity(Intent(this,SalePrintActivity::class.java).putExtra("sale_id",id).putExtra("after_save",true).putExtra("share_after_collection",true));finish()
    },onFailure={page.showConversion(it.message.orEmpty(),true)})}
   }.start()
  }

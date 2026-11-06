@@ -37,6 +37,7 @@ class MainActivity : Activity() {
                         "full" -> openMode("full")
                         "sale" -> startActivity(Intent(this,com.alsafa.native8.sales.FastSaleActivity::class.java))
                         "repair" -> startActivity(Intent(this,com.alsafa.native8.maintenance.QuickRepairActivity::class.java))
+                        "pending" -> startActivity(Intent(this,com.alsafa.native8.maintenance.ReadyDeliveriesActivity::class.java).putExtra("pending",true))
                         "delivery" -> startActivity(Intent(this,com.alsafa.native8.maintenance.ReadyDeliveriesActivity::class.java))
                         "back" -> finish()
                     }

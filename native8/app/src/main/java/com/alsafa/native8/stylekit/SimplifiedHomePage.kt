@@ -31,19 +31,20 @@ class SimplifiedHomePage(ui:SafaWidgets,onRoute:(String)->Unit) {
    ui.add(box,ui.text(title,20f,SafaStyle.Palette.ink,true).apply{gravity=Gravity.CENTER;maxLines=2},0)
    return box
   }
-  // Three equal squares in one RTL row; compact even on a wide tablet.
+  // Four compact actions; work-in-progress is beside ready deliveries.
   val actions=object:LinearLayout(ui.context) {
    override fun onMeasure(w:Int,h:Int) {
-    val width=MeasureSpec.getSize(w).coerceAtMost(ui.style.dp(572))
+    val width=MeasureSpec.getSize(w).coerceAtMost(ui.style.dp(760))
     super.onMeasure(MeasureSpec.makeMeasureSpec(width,MeasureSpec.EXACTLY),h)
    }
   }.apply{orientation=LinearLayout.VERTICAL;clipChildren=false;clipToPadding=false}
   host.body.addView(actions,LinearLayout.LayoutParams(-1,-2).apply{
    gravity=Gravity.CENTER_HORIZONTAL;topMargin=ui.style.dp(20);bottomMargin=ui.style.dp(24)
   })
-  val row=SafaGrid(ui.context,{3},16).apply{clipChildren=false;clipToPadding=false}
+  val row=SafaGrid(ui.context,{if(it>=600)4 else 2},16).apply{clipChildren=false;clipToPadding=false}
   row.addView(tile("مبيع سريع","🛒","sale","#f2e4cc"))
   row.addView(tile("صيانة سريعة","🔧","repair","#eee9df"))
+  row.addView(tile("قيد الصيانة","🔧","pending","#e7edf4"))
   row.addView(tile("تسليم الساعات","⌚","delivery","#e8eee5"))
   ui.add(actions,row,0)
   ui.add(host.body,ui.button("رجوع"){onRoute("back")});view=host.view

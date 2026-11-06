@@ -12,6 +12,8 @@ interface MaintenanceDao {
 
  @Query("SELECT * FROM maintenance_repairs WHERE status='بانتظار التسليم' OR status='جاهز للاستلام' OR status LIKE '%انتظار التسليم%' ORDER BY created_at DESC,invoice_number DESC")
  suspend fun readyDeliveries():List<MaintenanceRepairEntity>
+ @Query("SELECT * FROM maintenance_repairs WHERE status IN ('قيد الصيانة','بانتظار القطعة') ORDER BY created_at DESC,invoice_number DESC")
+ suspend fun pendingRepairs():List<MaintenanceRepairEntity>
  @Query("UPDATE maintenance_repairs SET original_json=:updated WHERE id=:id AND source_sha256='native8' AND status='تم التسليم' AND original_json=:expected")
  suspend fun appendSettlement(id:String,expected:String,updated:String):Int
 

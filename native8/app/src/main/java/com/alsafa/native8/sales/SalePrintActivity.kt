@@ -25,9 +25,10 @@ class SalePrintActivity:Activity() {
  private var printer=""
  private var width=80
  private var printing=false
+ private var automaticShareHandled=false
  private val preferences by lazy {getSharedPreferences("receipt_print",MODE_PRIVATE)}
  override fun onCreate(state:Bundle?) {
-  super.onCreate(state);requestWindowFeature(android.view.Window.FEATURE_NO_TITLE)
+  super.onCreate(state);automaticShareHandled=state?.getBoolean("automaticShareHandled",false) ?: false;requestWindowFeature(android.view.Window.FEATURE_NO_TITLE)
   ui=SafaWidgets(SafaStyle(this));host=SafaPageHost(ui,"الصفا للساعات");setContentView(host.view)
   ui.heading(host.body,"طباعة ومشاركة الفاتورة","قالب الصفا — فاتورة مبيع أو صيانة")
   ui.add(host.body,ui.button("رجوع"){finish()})
@@ -37,6 +38,10 @@ class SalePrintActivity:Activity() {
     val data=InvoiceReceiptRepository(applicationContext).load(intent.getStringExtra("sale_id"),intent.getStringExtra("repair_id"))
     val file=withContext(Dispatchers.IO){data.pdf(applicationContext)}
     receipt=data;pdf=file;showActions(data);message.text="الفاتورة جاهزة"
+    if(intent.getBooleanExtra("share_after_collection",false) && !automaticShareHandled) {
+     automaticShareHandled=true
+     if(InvoiceDisplay.phone(data.phone).isNotBlank())shareReceipt(data)
+    }
     if(intent.getBooleanExtra("after_save",false) && preferences.getBoolean("auto",false) && printer.isNotBlank())printReceipt(null)
    } catch(e:CancellationException){throw e}
    catch(e:Exception){message.text=e.message ?: "تعذر تجهيز الفاتورة"}
@@ -72,16 +77,7 @@ class SalePrintActivity:Activity() {
    (getSystemService(PRINT_SERVICE) as android.print.PrintManager).print("AlSafa-${data.number}",adapter,android.print.PrintAttributes.Builder().build())
   }})
   grid.addView(ui.button("حفظ PDF"){launchSafely{startActivityForResult(Intent(Intent.ACTION_CREATE_DOCUMENT).apply{type="application/pdf";addCategory(Intent.CATEGORY_OPENABLE);putExtra(Intent.EXTRA_TITLE,"AlSafa-${data.number}.pdf")},610)}})
-  grid.addView(ui.button("واتساب أعمال",true){launchSafely{
-   val phone=InvoiceDisplay.phone(data.phone)
-   require(phone.isNotBlank()) {"لا يوجد رقم هاتف للعميل. أضف رقم هاتف من تعديل بيانات الفاتورة للإرسال عبر واتساب أعمال."}
-   val content=uri()
-   startActivity(Intent(Intent.ACTION_SEND).apply {
-    type="application/pdf";setPackage("com.whatsapp.w4b");putExtra(Intent.EXTRA_STREAM,content);putExtra(Intent.EXTRA_TEXT,"الصفا للساعات — ${data.title} رقم ${data.number}")
-    putExtra("jid",phone+"@s.whatsapp.net")
-    clipData=ClipData.newUri(contentResolver,"فاتورة الصفا",content);addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-   })
-  }})
+  grid.addView(ui.button("واتساب أعمال",true){shareReceipt(data)})
   val preview=ui.card();ui.add(host.body,preview);ui.add(preview,ui.text(data.plain,15f))
   ui.heading(host.body,"طابعة حرارية مقترنة","")
   printer=preferences.getString("address","").orEmpty();width=preferences.getInt("width",80).takeIf{it==58 || it==80} ?: 80
@@ -100,6 +96,20 @@ class SalePrintActivity:Activity() {
   button=ui.button("طباعة بلوتوث",true){printReceipt(button)};ui.add(host.body,button)
   ui.add(host.body,CheckBox(this).apply {text="طباعة تلقائية بعد حفظ المبيع السريع";typeface=ui.style.font;isChecked=preferences.getBoolean("auto",false);setOnCheckedChangeListener{_,yes ->preferences.edit().putBoolean("auto",yes).apply()}})
  }
+ private fun shareReceipt(data:InvoiceReceipt)=launchSafely {
+  val phone=InvoiceDisplay.phone(data.phone)
+  require(phone.isNotBlank()) {"لا يوجد رقم هاتف للعميل. أضف رقم هاتف من تعديل بيانات الفاتورة للإرسال عبر واتساب أعمال."}
+  val content=uri()
+  startActivity(Intent(Intent.ACTION_SEND).apply {
+   type="application/pdf";setPackage("com.whatsapp.w4b")
+   putExtra(Intent.EXTRA_STREAM,content)
+   putExtra(Intent.EXTRA_TEXT,"الصفا للساعات — ${data.title} رقم ${data.number}\nشكراً لثقتكم بالصفا للساعات، يسعدنا خدمتكم دائماً.")
+   putExtra("jid",phone+"@s.whatsapp.net")
+   clipData=ClipData.newUri(contentResolver,"فاتورة الصفا",content)
+   addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+  })
+ }
+ override fun onSaveInstanceState(out:Bundle){out.putBoolean("automaticShareHandled",automaticShareHandled);super.onSaveInstanceState(out)}
  private fun printReceipt(button:Button?) {
   if(printing)return
   if(printer.isBlank()){message.text="اختر الطابعة أولاً";return}

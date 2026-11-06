@@ -71,7 +71,9 @@ object RepairDeliveryDialog {
      }}
      activity.runOnUiThread {
       if(activity.isDestroyed) return@runOnUiThread
-      result.fold(onSuccess={dialog.dismiss();Toast.makeText(activity,"تم تسليم الساعة",Toast.LENGTH_LONG).show();onSaved()},
+      result.fold(onSuccess={dialog.dismiss();Toast.makeText(activity,"تم تسليم الساعة",Toast.LENGTH_LONG).show();onSaved()
+       activity.startActivity(android.content.Intent(activity,SalePrintActivity::class.java).putExtra("repair_id",row.id).putExtra("share_after_collection",true))
+      },
        onFailure={error.text=it.message;error.visibility=View.VISIBLE;confirm.isEnabled=true;cancel.isEnabled=true;dialog.setCancelable(true)})
      }
     }.start()
