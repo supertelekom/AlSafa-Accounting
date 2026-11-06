@@ -80,7 +80,7 @@ class UnifiedFinancialPeriodRepository(
    .fold(BigDecimal.ZERO) { acc,row -> acc+decimal(row.reversed_profit) }
   val storeDao=requireNotNull(store) { "مستودع أرباح المحل غير موصول؛ لا يمكن عرض إجمالي جزئي مضلل" }
   val storeProfit=(storeDao.inPeriod(start,end)+compatibility.events.filter { it.recognized_at>=start }).fold(BigDecimal.ZERO) { acc,row -> acc+decimal(row.profit_usd) }
-  val storeAdjustments=storeDao.adjustmentsInPeriod(start,end).fold(BigDecimal.ZERO) { acc,row -> acc+decimal(row.profit_delta_usd) }
+  val storeAdjustments=(storeDao.adjustmentsInPeriod(start,end)+compatibility.adjustments.filter { it.created_at>=start }).fold(BigDecimal.ZERO) { acc,row -> acc+decimal(row.profit_delta_usd) }
   val expenseAudit=expenses.load(from,to,allowIncomplete=true)
   val history=expenseAudit.source
   val expense=history.expenses.fold(BigDecimal.ZERO) { acc,row -> acc+row.money.usd() }
@@ -104,7 +104,7 @@ class UnifiedFinancialPeriodRepository(
    (if(old!=null && old.importRunId!=expenseAudit.importRunId) listOf("تغيرت النسخة المستعادة بين قراءة الفواتير والمصاريف؛ أعد عرض التقرير") else emptyList())+
    overlap.map { "Historical/operational sale overlap: $it" }+
    repairOverlap.map { "Historical/operational repair overlap: $it" }+
-   sales.uncoveredSales(end).filter { id -> compatibility.events.none { it.sale_id==id } }.map { "Sale without verified profit coverage: $it" }+
+   sales.uncoveredSales(end).filter { id -> id !in compatibility.reviewedIds }.map { "Sale without verified profit coverage: $it" }+
    sales.uncoveredOnlinePayments(end).map { "Online receipt without profit event: $it" }+
    (if(old==null) listOf("Historical projection not connected") else emptyList())+
    (if(nativeRepairs==null) listOf("Maintenance projection not connected") else emptyList())).distinct()

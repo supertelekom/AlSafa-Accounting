@@ -59,7 +59,7 @@ class PartnerProfitsActivity:Activity() {
    if(view is android.view.ViewGroup) for(i in 0 until view.childCount) applyFont(view.getChildAt(i))
   }
   applyFont(content)
-  fun money(value:BigDecimal)=value.setScale(2,RoundingMode.HALF_UP).toPlainString()+" USD"
+  fun money(value:BigDecimal)= "\u2066"+value.setScale(2,RoundingMode.HALF_UP).toPlainString()+" USD\u2069"
   fun load(first:String,last:String) {
    button.isEnabled=false;result.text="جارٍ قراءة الأرباح والسحوبات..."
    scope.launch {

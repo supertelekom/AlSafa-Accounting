@@ -7,7 +7,7 @@ import java.math.RoundingMode
 /** Source keys stay internal. Rows from every origin share one chronological presentation. */
 object FinancialLedgerPresentation {
  data class Row(val key:String,val date:String,val title:String,val detail:String,val amount:BigDecimal,val kind:String)
- fun money(value:BigDecimal)=value.setScale(2,RoundingMode.HALF_UP).toPlainString()+" USD"
+ fun money(value:BigDecimal)= "\u2066"+value.setScale(2,RoundingMode.HALF_UP).toPlainString()+" USD\u2069"
  fun render(rows:List<Row>):String {
   require(rows.map { it.key }.distinct().size==rows.size) { "تكرار عملية في تفاصيل الحساب" }
   return rows.sortedWith(compareBy({it.date},{it.key})).joinToString("\n\n") {

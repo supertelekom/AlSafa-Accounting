@@ -16,7 +16,7 @@ import com.alsafa.native8.data.migration.LegacyReadRepository
 
 /** Visible financial audit, NOT an approved profit or partner statement. */
 class FinancialReviewActivity:Activity() {
- private fun money(value:BigDecimal)=value.setScale(2,java.math.RoundingMode.HALF_UP).toPlainString()
+ private fun money(value:BigDecimal)= "\u2066"+value.setScale(2,java.math.RoundingMode.HALF_UP).toPlainString()+"\u2069"
  private fun money(value:String)=money(value.toBigDecimal())
  private val scope=CoroutineScope(SupervisorJob()+Dispatchers.Main)
  override fun onCreate(savedInstanceState:Bundle?) {
@@ -27,7 +27,7 @@ class FinancialReviewActivity:Activity() {
    gravity=Gravity.CENTER
   }
   val warning=TextView(this).apply {
-   text="المراجعة والتفاصيل حسب الفترة المختارة. فحص المصادر يعرض الأرشيف كاملاً؛ لا يعتمد صافي الربح أو مستحقات الشركاء عند وجود عمليات تحتاج مراجعة."
+   text="جميع النتائج والتفاصيل ومصادر الأرباح تخص الفترة المختارة، وتشمل جميع العمليات دون تكرار."
    textSize=17f
    setTextColor(Color.rgb(150,65,25))
   }
@@ -118,38 +118,25 @@ class FinancialReviewActivity:Activity() {
    sourceStatus.text="جارٍ فحص المصادر..."
    scope.launch {
     try {
+     val a=LocalDate.parse(from.text.toString().trim());val b=LocalDate.parse(to.text.toString().trim())
+     require(!b.isBefore(a)) { "فترة غير صحيحة" }
      val status=withContext(Dispatchers.IO) {
-      val db=AppDatabase.get(applicationContext)
-      val missing=db.salesPostingDao().unverifiedChannelCount()
-      val suspect=db.salesFinancialAuditDao().nonOnlineProfitEventCount()
-      val repairs=db.maintenanceDao().allDelivered()
-      val nativeMaintenance=NativeMaintenanceProfitRepository(db.maintenanceDao(),db.legacyPaymentDao()).read()
-      val staged=LegacyStagingDatabase(applicationContext)
-      val (historical,historicalFinance)=try {
-       val original=LegacyReadRepository(staged)
-       LegacyHistoricalSalesProfitRepository(db.legacySaleDao(),original).inspect() to
-        LegacyHistoricalProfitProjection(original).read("0001-01-01",LocalDate.now(ZoneId.of("Asia/Damascus")).toString())
-      } finally { staged.close() }
-      val storeHistorical=historical.events.filter {
-       it.stream==FinancialSourceReconciliation.Stream.LEGACY_STORE
-      }.fold(BigDecimal.ZERO) { sum,event -> sum+event.profitUsd }
-      val onlineHistorical=historical.events.filter {
-       it.stream==FinancialSourceReconciliation.Stream.LEGACY_ONLINE
-      }.fold(BigDecimal.ZERO) { sum,event -> sum+event.profitUsd }
-      "فحص شامل للأرشيف — غير مقيد بفترة المراجعة\nالفواتير الجديدة غير المصنفة: "+missing+"\n"+
-       "أحداث ربح قبض تحتاج تدقيق نوع الفاتورة: "+suspect+"\n"+
-       "مبيعات المحل الجديدة: متصلة بجدول الأرباح\n"+
-       "تحصيلات الأونلاين الجديدة: متصلة بقيود القبض\n"+
-       "أحداث أرباح المحل التاريخية المستخرجة: "+historical.events.count { it.stream==FinancialSourceReconciliation.Stream.LEGACY_STORE }+"\n"+
-       "أحداث تحصيل الأونلاين التاريخية المستخرجة: "+historical.events.count { it.stream==FinancialSourceReconciliation.Stream.LEGACY_ONLINE }+"\n"+
-       "عمليات تاريخية تحتاج مطابقة: "+historical.unresolved.size+"\n"+
-       "ربح المحل التاريخي وفق السورس الأصلي: "+money(storeHistorical)+" USD\n"+
-       "ربح الأونلاين التاريخي وفق السورس الأصلي: "+money(onlineHistorical)+" USD\n"+
-       "الصيانة المسلّمة: "+repairs.size+" (مستعادة "+repairs.count { it.source_sha256!="native8" }+"، جديدة "+repairs.count { it.source_sha256=="native8" }+")\n"+
-       "عمليات الصيانة الجديدة التي تحتاج استكمال أدلة الربح: "+nativeMaintenance.audit.unresolved.size+"\n"+
-       "ربح الصيانة التاريخية: "+money(historicalFinance.repairProfitUsd)+" USD\n"+
-       "مشكلات الصيانة التاريخية: "+historicalFinance.repairUnresolved.size+"\n"+
-       "المصاريف والسحوبات وصافي الربح متصلة بالتقرير الموحد؛ المستحقات التراكمية في صفحة أرباح الشركاء."
+      val db=AppDatabase.get(applicationContext);val staging=LegacyStagingDatabase(applicationContext)
+      try {
+       val legacy=LegacyReadRepository(staging);val run=legacy.latestRunId()
+       db.withTransaction {
+        val data=UnifiedFinancialPeriodRepository(db.salesFinancialAuditDao(),UnifiedExpensePartnerReadRepository(legacy,db.operationalExpensePartnerDao()),ZoneId.of("Asia/Damascus"),db.storeSaleProfitDao(),LegacyHistoricalProfitProjection(legacy),NativeMaintenanceProfitRepository(db.maintenanceDao(),db.legacyPaymentDao())).read(a.toString(),b.toString())
+        check(legacy.latestRunId()==run) { "تغيرت النسخة المستعادة أثناء القراءة" }
+        "مصادر أرباح الفترة: $a — $b\n\n"+
+         "مبيعات المحل: ${money(data.totalStoreProfit)} USD\n\n"+
+         "تحصيلات الأونلاين: ${money(data.totalOnlineProfit)} USD\n\n"+
+         "الصيانة: ${money(data.maintenanceProfit)} USD\n\n"+
+         "المرتجعات والتسويات: ${money(data.totalAdjustments)} USD\n\n"+
+         "المصاريف التشغيلية: ${money(data.operatingExpenses)} USD\n\n"+
+         (if(data.complete) "صافي ربح الفترة: ${money(data.approvedNet())} USD" else "صافي الربح غير متاح حتى استكمال العمليات التالية:\n"+data.unresolvedHistorical.distinct().joinToString("\n\n"))+
+         "\n\nالسحوبات تخصم من مستحق الشريك، ولا تخصم من صافي الربح."
+       }
+      } finally { staging.close() }
      }
      sourceStatus.text=status
     } catch(e:Exception) { sourceStatus.text=e.message ?: "تعذر فحص المصادر" }
@@ -211,7 +198,7 @@ class FinancialReviewActivity:Activity() {
       "المصاريف التشغيلية: ${money(data.operatingExpenses)} USD\n"+
       "سحوبات الشركاء (لا تخصم من الربح): ${money(data.withdrawals.values.fold(BigDecimal.ZERO) { sum,value -> sum+value })} USD\n"+
       (if(data.complete) "صافي الربح: ${money(data.approvedNet())} USD" else
-       "المجموع المتاح غير المعتمد: ${money(data.partialNet)} USD\n"+data.unresolvedHistorical.joinToString("\n"))
+       "صافي الربح غير متاح حتى استكمال العمليات التالية:\n"+data.unresolvedHistorical.joinToString("\n"))
      detail.text="";detail.visibility=View.GONE;showDetails.text="تفصيل القيود المالية"
 
     } catch(e:Exception) {

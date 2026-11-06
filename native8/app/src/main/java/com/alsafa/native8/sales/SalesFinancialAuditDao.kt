@@ -7,6 +7,10 @@ import androidx.room.Query
 
 @Dao
 interface SalesFinancialAuditDao {
+ @Query("SELECT * FROM sale_returns WHERE sale_id=:saleId ORDER BY created_at,id")
+ suspend fun compatibilityReturns(saleId:String):List<RoomSaleReturn>
+ @Query("SELECT * FROM store_profit_adjustments WHERE sale_id=:saleId ORDER BY created_at,id")
+ suspend fun compatibilityAdjustments(saleId:String):List<StoreProfitAdjustment>
  @Query("SELECT s.* FROM sales s LEFT JOIN store_sale_profit_events e ON e.sale_id=s.id WHERE s.created_at<:untilExclusive AND (s.channel IS NULL OR s.channel='' OR s.channel='store') AND e.sale_id IS NULL")
  suspend fun unpostedStoreSales(untilExclusive:Long):List<RoomSale>
  @Query("SELECT * FROM sale_lines WHERE sale_id=:saleId ORDER BY id")
