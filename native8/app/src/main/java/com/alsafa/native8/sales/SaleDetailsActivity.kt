@@ -1,142 +1,58 @@
 package com.alsafa.native8.sales
+import android.app.Activity
 import android.os.Bundle
 import android.content.Intent
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
-import androidx.compose.runtime.*
-import androidx.compose.material3.*
-import androidx.compose.foundation.layout.*
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.lifecycleScope
-import kotlinx.coroutines.launch
-import java.math.BigDecimal
-import java.math.RoundingMode
+import android.widget.*
+import com.alsafa.native8.stylekit.*
+import kotlinx.coroutines.*
 import org.json.JSONObject
-class SaleDetailsViewModel: ViewModel() { var saleId by mutableStateOf(""); var lines by mutableStateOf<List<SalesEngine.InvoiceLine>>(emptyList()); var total by mutableStateOf<String?>(null); var paid by mutableStateOf<String?>(null); var due by mutableStateOf<String?>(null); var status by mutableStateOf(""); var busy by mutableStateOf(false); var historical by mutableStateOf(false); var legacyRaw by mutableStateOf(""); var error by mutableStateOf(""); var recognizedProfit by mutableStateOf<String?>(null); var reversedProfit by mutableStateOf<String?>(null); var netProfit by mutableStateOf<String?>(null) }
-class SaleDetailsActivity: ComponentActivity() {
- private lateinit var detailsVm: SaleDetailsViewModel
- override fun onResume() {
-  super.onResume()
-  if (::detailsVm.isInitialized && detailsVm.saleId.isNotBlank()) {
-   lifecycleScope.launch {
-    val vm = detailsVm
-    val db = AppDatabase.get(applicationContext)
-    val sale = db.salesPostingDao().sale(vm.saleId)
-    if (sale == null) {
-     val legacy=db.legacySaleDao().legacyById(vm.saleId)
-     if (legacy == null) { vm.error="الفاتورة غير موجودة"; return@launch }
-     vm.historical=true
-     vm.legacyRaw=legacy.original_json
-     vm.total=legacy.total
-     vm.paid=legacy.historical_paid
-     vm.due=legacy.due
-     vm.status=legacy.status
-     vm.lines=emptyList()
-     return@launch
+import java.math.BigDecimal
+
+class SaleDetailsActivity:Activity(){
+ private val scope=CoroutineScope(SupervisorJob()+Dispatchers.Main)
+ private lateinit var ui:SafaWidgets;private var id="";private var busy=false
+ override fun onCreate(state:Bundle?){super.onCreate(state);requestWindowFeature(android.view.Window.FEATURE_NO_TITLE);ui=SafaWidgets(SafaStyle(this));id=intent.getStringExtra("sale_id").orEmpty()}
+ override fun onResume(){super.onResume();load()}
+ private fun open(type:Class<*>){startActivity(Intent(this,type).putExtra("sale_id",id))}
+ private fun load(){val host=SafaPageHost(ui,"الصفا للساعات");val body=host.body;ui.heading(body,"تفاصيل فاتورة المبيع","");val error=ui.text("جارٍ التحميل…",14f,SafaStyle.Palette.danger);ui.add(body,error);setContentView(host.view)
+  scope.launch{try{val db=AppDatabase.get(applicationContext)
+   val current=withContext(Dispatchers.IO){db.salesPostingDao().sale(id)}
+   val old=if(current==null)withContext(Dispatchers.IO){requireNotNull(db.legacySaleDao().legacyById(id)){"الفاتورة غير موجودة"}} else null
+   val debt=withContext(Dispatchers.IO){db.legacyReceivablesDao().bySaleId(id)}
+   val raw=old?.let{JSONObject(it.original_json)}
+   val unit=old?.currency ?: "USD";val value=(current?.total ?: old!!.total).toBigDecimal();val paid=(current?.paid ?: old!!.historical_paid).toBigDecimal();val due=debt?.balance?.toBigDecimal() ?: old?.due?.toBigDecimal() ?: (value-paid).max(BigDecimal.ZERO)
+   val status=current?.status ?: old!!.status
+   fun row(label:String,value:String){ui.add(body,ui.text("$label: $value",16f))}
+   error.text="";row("رقم الفاتورة",current?.number?.toString() ?: raw!!.optString("invoiceNo"));row("العميل",current?.customer ?: raw!!.optString("customer"));row("الهاتف",current?.phone ?: raw!!.optString("phone"));row("الحالة",status)
+   if(raw!=null)row("التاريخ",raw.optString("date")+" "+raw.optString("time"))
+   val card=ui.card();ui.add(card,ui.text("الإجمالي: ${InvoiceDisplay.amount(value)} $unit",22f,bold=true));ui.add(card,ui.text("المقبوض: ${InvoiceDisplay.amount(if(old!=null)value-due else paid)} $unit\nالمتبقي: ${InvoiceDisplay.amount(due)} $unit",18f));ui.add(body,card)
+   fun action(label:String,run:()->Unit){ui.add(body,ui.button(label){if(!busy)run()})}
+   action("عرض الفاتورة / PDF / طباعة / مشاركة"){open(SalePrintActivity::class.java)}
+   if(status!="ملغاة"&&due>BigDecimal.ZERO)action("تكملة الدفع"){open(SalePaymentsActivity::class.java)}
+   if(old!=null){action("تعديل بيانات الفاتورة"){startActivity(Intent(this@SaleDetailsActivity,InvoiceMetadataActivity::class.java).putExtra("kind","sale").putExtra("invoice_id",id))}
+    val items=raw!!.optJSONArray("items");for(i in 0 until (items?.length() ?: 0)){val r=items!!.optJSONObject(i) ?: continue;row(r.optString("name",r.optString("title",r.optString("productName","صنف"))),"${r.optString("qty",r.optString("quantity"))} × ${InvoiceDisplay.amount(r.optString("price",r.optString("unitPrice","0")))} $unit")}
+   }else{
+    action("تعديل اسم العميل ورقم الهاتف"){
+     val form=ui.column(16);ui.label(form,"اسم العميل");val customer=ui.input().apply{setText(current!!.customer)};ui.add(form,customer);ui.label(form,"رقم الهاتف");val phone=ui.input().apply{setText(current!!.phone)};ui.add(form,phone)
+     android.app.AlertDialog.Builder(this@SaleDetailsActivity).setTitle("تعديل العميل").setView(form).setNegativeButton("إلغاء",null).setPositiveButton("حفظ"){_,_->val c=customer.text.toString();val p=phone.text.toString();mutate(error){RoomSalesEngine(applicationContext).correctCustomer(id,c,p)}}.show()
     }
-    vm.historical=false
-    vm.legacyRaw=""
-    val debt = db.legacyReceivablesDao().bySaleId(vm.saleId)
-    val audit = db.salesFinancialAuditDao()
-    val earned = audit.profits(vm.saleId).fold(BigDecimal.ZERO) { total, event -> total + event.recognized_profit.toBigDecimal() }
-    val reversed = audit.reversals(vm.saleId).fold(BigDecimal.ZERO) { total, event -> total + event.reversed_profit.toBigDecimal() }
-    vm.lines = SalesEngine(applicationContext).lines(vm.saleId)
-    vm.recognizedProfit = earned.setScale(2, RoundingMode.HALF_UP).toPlainString()
-    vm.reversedProfit = reversed.setScale(2, RoundingMode.HALF_UP).toPlainString()
-    vm.netProfit = (earned - reversed).setScale(2, RoundingMode.HALF_UP).toPlainString()
-    vm.status = sale.status
-    vm.total = sale.total
-    vm.paid = sale.paid
-    vm.due = debt?.balance ?: (sale.total.toBigDecimal() - sale.paid.toBigDecimal()).max(BigDecimal.ZERO).toPlainString()
+    val lines=withContext(Dispatchers.IO){RoomSalesEngine(applicationContext).lines(id)}
+    lines.forEach{line->val item=ui.card();ui.add(item,ui.text(line.title,18f,bold=true));ui.add(item,ui.text("الكمية: ${line.quantity} — المرتجع: ${line.returned}\nالسعر: ${InvoiceDisplay.amount(line.price)} USD"))
+     if(status!="ملغاة" && line.quantity.toBigDecimal()>line.returned.toBigDecimal())ui.add(item,ui.button("مرتجع هذا البند"){startActivity(Intent(this@SaleDetailsActivity,SaleReturnsActivity::class.java).putExtra("sale_id",id).putExtra("line_id",line.id))})
+     if(status!="ملغاة" && paid.signum()==0)ui.add(item,ui.button("تعديل الكمية والسعر"){
+      val form=ui.column(16);ui.label(form,"الكمية");val q=ui.input(numeric=true).apply{setText(line.quantity)};ui.add(form,q);ui.label(form,"سعر الوحدة — USD");val p=ui.input(numeric=true).apply{setText(line.price)};ui.add(form,p)
+      android.app.AlertDialog.Builder(this@SaleDetailsActivity).setTitle("تعديل بند غير مقبوض").setView(form).setNegativeButton("إلغاء",null).setPositiveButton("حفظ"){_,_->val qty=q.text.toString().toBigDecimalOrNull();val price=p.text.toString().toBigDecimalOrNull();if(qty==null||price==null)error.text="أدخل قيماً صحيحة" else mutate(error){RoomSalesEngine(applicationContext).correctUnpaidLine(id,line.id,qty,price)}}.show()
+     });ui.add(body,item)
+    }
+    val profit=withContext(Dispatchers.IO){val a=db.salesFinancialAuditDao();val earned=a.profits(id).fold(BigDecimal.ZERO){sum,r->sum+r.recognized_profit.toBigDecimal()};val reversed=a.reversals(id).fold(BigDecimal.ZERO){sum,r->sum+r.reversed_profit.toBigDecimal()};earned to reversed}
+    row("الربح المسجل من القبض",InvoiceDisplay.amount(profit.first)+" USD")
+    row("الربح المعكوس للمرتجعات والإلغاء",InvoiceDisplay.amount(profit.second)+" USD")
+    row("صافي الربح المسجل من القبض",InvoiceDisplay.amount(profit.first-profit.second)+" USD")
+    if(status!="ملغاة")action("إلغاء الفاتورة وتسوية المقبوض"){ui.confirm("إلغاء الفاتورة","سيتم إرجاع الكميات المتبقية وتسوية المقبوض وفق سجل الفاتورة. تأكيد الإلغاء؟"){mutate(error){RoomSalesEngine(applicationContext).cancelWithRefund(id)}}.show()}
    }
-  }
+   action("رجوع"){finish()}
+  }catch(e:CancellationException){throw e}catch(e:Exception){error.text=e.message ?: "تعذر فتح الفاتورة"}}
  }
- override fun onCreate(savedInstanceState: Bundle?) {
-  super.onCreate(savedInstanceState)
-  val vm=ViewModelProvider(this)[SaleDetailsViewModel::class.java]
-  vm.saleId=intent.getStringExtra("sale_id").orEmpty()
-  detailsVm = vm
-  setContent { SalesFrame("تفاصيل الفاتورة") {
-   Text("الفاتورة: "+vm.saleId)
-   if(vm.error.isNotBlank()) Text(vm.error)
-   if (vm.total != null) {
-    Card(modifier=Modifier.fillMaxWidth()) {
-     Column(modifier=Modifier.padding(16.dp), verticalArrangement=Arrangement.spacedBy(8.dp)) {
-      Text("الصافي: "+vm.total)
-      Text("المدفوع: "+vm.paid)
-      Text("المتبقي: "+vm.due, style=MaterialTheme.typography.titleLarge)
-      if (vm.netProfit != null) {
-       Text("الربح المحقق من القبض: "+vm.recognizedProfit+" USD")
-       Text("الأرباح المعكوسة للمرتجعات والإلغاء: "+vm.reversedProfit+" USD")
-       Text("صافي الربح المحقق: "+vm.netProfit+" USD", style=MaterialTheme.typography.titleLarge)
-      }
-     }
-    }
-   }
-   if (vm.status.isNotBlank()) Text("الحالة: "+vm.status)
-   if(vm.historical && vm.legacyRaw.isNotBlank()) {
-    val raw=remember(vm.legacyRaw) { runCatching { JSONObject(vm.legacyRaw) }.getOrNull() }
-    raw?.let { invoice ->
-     Text("فاتورة مبيع قديمة",style=MaterialTheme.typography.titleLarge)
-     Text("رقم الفاتورة: "+invoice.optString("invoiceNo"))
-     Text("التاريخ: "+invoice.optString("date")+" "+invoice.optString("time"))
-     Text("العميل: "+invoice.optString("customer"))
-     Text("الهاتف: "+invoice.optString("phone"))
-     Text("العملة: "+invoice.optString("currency","USD"))
-     val items=invoice.optJSONArray("items")
-     if(items!=null) for(i in 0 until items.length()) {
-      val item=items.optJSONObject(i) ?: continue
-      Card(modifier=Modifier.fillMaxWidth()) {
-       Column(modifier=Modifier.padding(16.dp)) {
-        Text(item.optString("name",item.optString("title",item.optString("productName","صنف "+(i+1)))))
-        Text("الكمية: "+item.optString("qty",item.optString("quantity")))
-        Text("السعر: "+item.optString("price",item.optString("unitPrice")))
-       }
-      }
-     }
-    }
-    Button(onClick={startActivity(Intent(this@SaleDetailsActivity,InvoiceMetadataActivity::class.java).putExtra("kind","sale").putExtra("invoice_id",vm.saleId))}){Text("تعديل بيانات الفاتورة")}
-   }
-   vm.lines.forEach { line ->
-    Card(modifier=Modifier.fillMaxWidth()) {
-     Column(modifier=Modifier.padding(16.dp), verticalArrangement=Arrangement.spacedBy(8.dp)) {
-      Text(line.title, style=MaterialTheme.typography.titleMedium)
-      Text("الكمية: "+line.quantity+"     المرتجع: "+line.returned)
-      Text("السعر: "+line.price)
-      Button(onClick={
-       startActivity(Intent(this@SaleDetailsActivity,SaleReturnsActivity::class.java)
-        .putExtra("sale_id",vm.saleId).putExtra("line_id",line.id))
-      }) { Text("مرتجع هذا البند") }
-     }
-    }
-   }
-   if (!vm.historical && vm.status != "ملغاة" && vm.total != null) {
-    Button(enabled = !vm.busy && vm.total != null,
-     onClick = {
-      vm.busy = true
-      lifecycleScope.launch {
-       try {
-        RoomSalesEngine(applicationContext).cancelWithRefund(vm.saleId)
-        vm.status = "ملغاة"
-        vm.due = "0"
-        val audit = AppDatabase.get(applicationContext).salesFinancialAuditDao()
-        val earned = audit.profits(vm.saleId).fold(BigDecimal.ZERO) { total, event -> total + event.recognized_profit.toBigDecimal() }
-        val reversed = audit.reversals(vm.saleId).fold(BigDecimal.ZERO) { total, event -> total + event.reversed_profit.toBigDecimal() }
-        vm.recognizedProfit = earned.setScale(2, RoundingMode.HALF_UP).toPlainString()
-        vm.reversedProfit = reversed.setScale(2, RoundingMode.HALF_UP).toPlainString()
-        vm.netProfit = (earned - reversed).setScale(2, RoundingMode.HALF_UP).toPlainString()
-        vm.lines = RoomSalesEngine(applicationContext).lines(vm.saleId)
-       } catch(e: Exception) { vm.status = e.message ?: "تعذر الإلغاء" }
-       finally { vm.busy = false }
-      }
-     }) { Text("إلغاء الفاتورة وتسوية المقبوض") }
-   }
-   if(!vm.historical) Button(enabled=vm.status != "ملغاة",onClick={startActivity(Intent(this@SaleDetailsActivity,SalePaymentsActivity::class.java).putExtra("sale_id",vm.saleId))}){Text("تحصيل دفعة")}
-   Button(onClick={startActivity(Intent(this@SaleDetailsActivity,SalePrintActivity::class.java).putExtra("sale_id",vm.saleId))}){Text("طباعة / مشاركة")}
-   if(!vm.historical) Button(onClick={startActivity(Intent(this@SaleDetailsActivity,SaleReturnsActivity::class.java).putExtra("sale_id",vm.saleId))}){Text("مرتجع / إلغاء")}
-  } }
- }
+ private fun mutate(error:TextView,operation:suspend ()->Unit){if(busy)return;busy=true;scope.launch{try{withContext(Dispatchers.IO){operation()};load()}catch(e:CancellationException){throw e}catch(e:Exception){error.text=e.message ?: "تعذر الحفظ"}finally{busy=false}}}
+ override fun onDestroy(){scope.cancel();super.onDestroy()}
 }

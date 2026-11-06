@@ -21,7 +21,9 @@ class SalesPostingActions(context: Context) {
         SalesDraftSession.clear()
         return id
     }
-    fun collect(saleId: String, amount: String, cashbox: String, currency: String): String =
-        if (saleId.startsWith("sale-")) LegacyReceivablesCollector(appContext).collect(saleId,snapshot(cashbox,currency,amount))
-        else engine.collect(saleId,snapshot(cashbox,currency,amount))
+    fun collect(saleId: String, amount: String, cashbox: String, currency: String): String = kotlinx.coroutines.runBlocking {
+        if(AppDatabase.get(appContext).salesPostingDao().sale(saleId)!=null)
+            RoomSalesEngine(appContext).collect(saleId,snapshot(cashbox,currency,amount))
+        else SalesRoomRepository(appContext).collectConfirmedHistorical(saleId,cashbox,currency,amount.toBigDecimal())
+    }
 }
