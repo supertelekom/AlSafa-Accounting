@@ -38,8 +38,9 @@ class UnifiedFinancialLedgerRepository(private val db:AppDatabase,private val le
   for(e in db.storeSaleProfitDao().adjustmentsInPeriod(w.startInclusive,w.endExclusive)+compatibility.adjustments.filter { it.created_at>=w.startInclusive }) saleRow("native:adjustment:${e.id}",e.sale_id,e.created_at,e.profit_delta_usd,"مرتجع أو تسوية")
   for(e in db.salesFinancialAuditDao().verifiedOnlineProfitsInPeriod(w.startInclusive,w.endExclusive)) saleRow("native:online:${e.payment_id}",e.sale_id,e.collected_at,e.recognized_profit,"ربح تحصيل أونلاين")
   for(e in db.salesFinancialAuditDao().verifiedOnlineReversalsInPeriod(w.startInclusive,w.endExclusive)) saleRow("native:reversal:${e.id}",e.sale_id,e.reversed_at,(-e.reversed_profit.toBigDecimal()).toPlainString(),"مرتجع أو تسوية")
-  val nativeRows=db.maintenanceDao().nativeFinancialRecords().map { JSONObject(it.original_json) }
-  require(repairs.map { it.optString("id") }.toSet().intersect(nativeRows.map { it.optString("id") }.toSet()).isEmpty()) { "تداخل في مراجع الصيانة" }
+  val nativeRecords=db.maintenanceDao().nativeFinancialRecords()
+  val nativeRows=(nativeRecords+db.maintenanceDao().allDelivered().filter { it.source_sha256!="native8" && JSONObject(it.original_json).has("nativeArchiveDelivery") }).map { JSONObject(it.original_json) }
+  require(repairs.map { it.optString("id") }.toSet().intersect(nativeRecords.map { it.id }.toSet()).isEmpty()) { "تداخل في مراجع الصيانة" }
   fun embedded(key:String)=nativeRows.flatMap { r -> r.optJSONArray(key)?.let { a -> (0 until a.length()).map { a.getJSONObject(it) } }.orEmpty() }
   val nativeIndex=FinancialLedgerPresentation.index(emptyList(),nativeRows,embedded("nativePayments"),embedded("nativeReturns"))
   val native=NativeMaintenanceProfitRepository(db.maintenanceDao(),db.legacyPaymentDao()).read(to)

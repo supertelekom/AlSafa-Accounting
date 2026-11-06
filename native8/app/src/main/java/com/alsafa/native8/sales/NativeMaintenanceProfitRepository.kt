@@ -45,7 +45,22 @@ class NativeMaintenanceProfitRepository(private val dao:MaintenanceDao,private v
    }
    source+=raw
   } catch(e:Exception) { issues+="Native repair ${row.id}: ${e.message}" }
+  val archiveEvents=mutableListOf<FinancialSourceReconciliation.Event>()
+  for(row in dao.allDelivered().filter { it.source_sha256!="native8" && (until==null || it.delivered_date<=until) }) try {
+   val raw=JSONObject(row.original_json)
+   if(!raw.has("nativeArchiveDelivery")) continue
+   val delivery=raw.getJSONObject("nativeArchiveDelivery")
+   require(delivery.getString("date")==row.delivered_date)
+   val payment=delivery.optJSONObject("payment")
+   if(payment!=null) {
+    val posted=cash.cashboxMovements(payment.getString("id"))
+    require(posted.size==1 && posted.single().currency==payment.getString("paymentCurrency") &&
+     posted.single().cashbox==payment.getString("vault") && posted.single().amount.toBigDecimal().compareTo(payment.get("paymentAmount").toString().toBigDecimal())==0) { "Archived delivery cash mismatch" }
+   }
+   val result=ArchivedRepairDeliveryRules.audit(raw)
+   archiveEvents+=result.events;issues+=result.unresolved
+  } catch(e:Exception) {issues+="Archived repair ${row.id}: ${e.message}"}
   val audit=NativeMaintenanceProfitReader.extract(source)
-  return Result(audit.copy(unresolved=audit.unresolved+issues),records.map { it.id }.toSet())
+  return Result(audit.copy(events=audit.events+archiveEvents,unresolved=audit.unresolved+issues),records.map { it.id }.toSet())
  }
 }

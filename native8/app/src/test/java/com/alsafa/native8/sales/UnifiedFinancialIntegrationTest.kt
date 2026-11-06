@@ -67,6 +67,7 @@ class UnifiedFinancialIntegrationTest {
   raw.put("nativeReturns",JSONArray().put(refund))
   if(missingCost) raw.remove("cost")
   val repairs=dao<MaintenanceDao> { method,_ -> when(method) {
+   "allDelivered" -> emptyList<MaintenanceRepairEntity>()
    "nativeFinancialRecords" -> if(withNative) listOf(MaintenanceRepairEntity("native-problem","native8",433,"2026-11-01","12:00","تم التسليم","","","","","","USD","20","20","2026-11-01",t,raw.toString())) else emptyList<MaintenanceRepairEntity>()
    else -> error("Unexpected access: $method")
   } }

@@ -353,6 +353,14 @@ private fun MaintenanceDetail(repair:MaintenanceRepairEntity) {
     Text("المتبقي: ${totals.third} ${repair.currency}")
    }
   }
+  obj.optJSONObject("nativeArchiveDelivery")?.let { delivery ->
+   delivery.optJSONObject("payment")?.let { payment ->
+    Text("تحصيل التسليم: ${payment.optString("paymentAmount")} ${payment.optString("paymentCurrency")}")
+    Text("تاريخ التحصيل: ${payment.optString("date")}")
+    Text("تمت تسوية المتبقي: ${payment.optString("amount")} ${repair.currency}")
+   }
+   Text("المتبقي بعد التسليم: 0 ${repair.currency}")
+  }
   field("حالة الدفع","paymentStatus")
   field("طريقة الدفع","paymentMethod")
  }

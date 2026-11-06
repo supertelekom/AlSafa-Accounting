@@ -7,6 +7,9 @@ import androidx.room.Query
 
 @Dao
 interface MaintenanceDao {
+ @Query("UPDATE maintenance_repairs SET status='تم التسليم',delivered_date=:day,original_json=:updated WHERE id=:id AND source_sha256!='native8' AND status!='تم التسليم' AND original_json=:expected")
+ suspend fun finalizeArchivedDelivery(id:String,expected:String,updated:String,day:String):Int
+
  @Query("SELECT * FROM maintenance_repairs WHERE status='بانتظار التسليم' OR status='جاهز للاستلام' OR status LIKE '%انتظار التسليم%' ORDER BY created_at DESC,invoice_number DESC")
  suspend fun readyDeliveries():List<MaintenanceRepairEntity>
  @Query("UPDATE maintenance_repairs SET original_json=:updated WHERE id=:id AND source_sha256='native8' AND status='تم التسليم' AND original_json=:expected")
