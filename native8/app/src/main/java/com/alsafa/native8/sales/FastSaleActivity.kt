@@ -3,7 +3,9 @@ import android.app.Activity
 import android.os.Bundle
 import android.content.Intent
 import android.widget.Toast
-import com.alsafa.native8.stylekit.*
+import com.alsafa.native8.stylekit.QuickSalePage
+import com.alsafa.native8.stylekit.SafaStyle
+import com.alsafa.native8.stylekit.SafaWidgets
 import com.alsafa.native8.maintenance.QuickRepairRules
 import kotlinx.coroutines.runBlocking
 import java.math.RoundingMode
