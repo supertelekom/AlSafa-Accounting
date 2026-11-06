@@ -99,18 +99,27 @@ class UnifiedFinancialIntegrationTest {
   assertEquals(october.storeProfitUsd,summary.store)
   assertEquals(october.onlineProfitUsd,summary.online)
  }
- @Test fun backupMonthlyStatementsIgnoreNativeTrialIssuesWithoutChangingUnifiedApproval()=runBlocking {
-  val repository=setup(uncovered=true,missingCost=true,suspect=true).repository
-  val october=repository.historicalStatement("2026-10-01","2026-10-31")
+ @Test fun earlierUnifiedMonthsIgnoreRepairsCreatedAfterCutoff()=runBlocking {
+  val repository=setup(missingCost=true,suspect=true).repository
+  val october=repository.statement("2026-10-01","2026-10-31")
   assertTrue(october.period.complete)
   assertTrue(october.cumulative.complete)
   amount("3297.83336318795237672",october.cumulative.approvedNet())
   assertEquals(3,october.partners().size)
   assertFalse(repository.statement("2026-11-01","2026-11-06").cumulative.complete)
-  val september=repository.historicalStatement("2026-09-01","2026-09-30")
+  val september=repository.statement("2026-09-01","2026-09-30")
   assertTrue(september.period.complete)
-  val next=repository.historicalStatement("2026-10-01","2026-10-31")
+  val next=repository.statement("2026-10-01","2026-10-31")
   amount(october.cumulative.approvedNet().toPlainString(),next.cumulative.approvedNet())
+ }
+ @Test fun allOriginalProfitEventsResolveToHumanInvoiceDetails() {
+  val source=source()
+  val sales=source.sections.getValue("sales");val repairs=source.sections.getValue("repairs")
+  val payments=source.sections.getValue("payments");val returns=source.sections.getValue("returns")
+  val index=FinancialLedgerPresentation.index(sales,repairs,payments,returns)
+  val saleAudit=LegacyHistoricalSalesProfitReader.extractOriginal(sales,payments,source.sections.getValue("cashTransactions"),returns)
+  val repairAudit=LegacyMaintenanceProfitReader.extract(repairs,payments,returns)
+  for(e in saleAudit.events+repairAudit.events) assertTrue("Missing invoice for ${e.sourceKey}",index.containsKey(e.sourceKey))
  }
  @Test fun archivedInvoicesExpensesAndWithdrawalsFlowThroughActualUnifiedRepository()=runBlocking {
   val r=setup(false).repository.statement("2026-10-01","2026-10-26")

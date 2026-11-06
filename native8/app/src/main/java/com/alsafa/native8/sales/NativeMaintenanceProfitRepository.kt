@@ -4,8 +4,11 @@ import org.json.JSONObject
 
 class NativeMaintenanceProfitRepository(private val dao:MaintenanceDao,private val cash:LegacyPaymentDao) {
  data class Result(val audit:LegacyHistoricalSalesProfitReader.Audit,val ids:Set<String>)
- suspend fun read():Result {
-  val records=dao.nativeFinancialRecords()
+ suspend fun read(until:String?=null):Result {
+  val records=dao.nativeFinancialRecords().filter { row ->
+   // A newly created repair after the report cutoff must not block an earlier month.
+   until==null || row.date<=until || (row.delivered_date.isNotBlank() && row.delivered_date<=until)
+  }
   val source=mutableListOf<JSONObject>();val issues=mutableListOf<String>()
   for(row in records) try {
    val raw=JSONObject(row.original_json)

@@ -33,6 +33,9 @@ class UnifiedFinancialPeriodRepository(
   val storeReturnImpact:BigDecimal=BigDecimal.ZERO,
   val importRunId:Long?=null
  ) {
+  val totalStoreProfit get()=storeSaleProfit+if(historicalSalesIncluded)historicalStoreProfit else BigDecimal.ZERO
+  val totalOnlineProfit get()=saleProfit+if(historicalSalesIncluded)historicalOnlineProfit else BigDecimal.ZERO
+  val totalAdjustments get()=(if(historicalSalesIncluded)historicalSaleReturnImpact else BigDecimal.ZERO)+maintenanceReturnImpact+storeReturnImpact-saleReversals
   fun approvedNet():BigDecimal {
    check(complete) { "Incomplete financial sources: do not publish profit" }
    return partialNet
@@ -52,24 +55,6 @@ class UnifiedFinancialPeriodRepository(
    check(unresolved.isEmpty()) { unresolved.joinToString("\n") }
    return PartnerFinancialStatement.calculate(period.approvedNet(),cumulative.approvedNet(),period.withdrawals,cumulative.withdrawals)
   }
- }
- /** Explicit backup-only statement. Native trial records cannot alter an imported month. */
- fun historicalStatement(from:String,to:String):Statement {
-  require(!LocalDate.parse(to).isBefore(LocalDate.parse(from)))
-  val projection=requireNotNull(historical)
-  fun result(first:String):Result {
-   val old=projection.read(first,to)
-   return Result(saleProfit=BigDecimal.ZERO,saleReversals=BigDecimal.ZERO,
-    operatingExpenses=old.expensesUsd,withdrawals=old.withdrawalsUsd,
-    partialNet=old.partialNetUsd,complete=old.complete,
-    historicalOnlineProfit=old.onlineProfitUsd,historicalStoreProfit=old.storeProfitUsd,
-    unresolvedHistorical=old.unresolved,historicalSaleReturnImpact=old.salesReturnImpactUsd,
-    historicalSalesIncluded=old.salesUnresolved.isEmpty(),maintenanceProfit=old.repairProfitUsd,
-    historicalMaintenanceProfit=old.repairProfitUsd,
-    maintenanceReturnImpact=old.returnImpactUsd-old.salesReturnImpactUsd,importRunId=old.importRunId)
-  }
-  val period=result(from)
-  return Statement(from,to,period,if(from=="0001-01-01") period else result("0001-01-01"))
  }
  suspend fun statement(from:String,to:String):Statement {
   val period=read(from,to)
@@ -103,7 +88,7 @@ class UnifiedFinancialPeriodRepository(
     .fold(BigDecimal.ZERO) { acc,row -> acc+row.money.usd() }
   }
   val old=historical?.read(from,to)
-  val nativeRepairs=maintenance?.read()
+  val nativeRepairs=maintenance?.read(to)
   val overlap=old?.saleIds.orEmpty().intersect(sales.operationalSaleIds().toSet())
   val repairOverlap=old?.repairIds.orEmpty().intersect(nativeRepairs?.ids.orEmpty())
   val includeSales=old!=null && old.salesUnresolved.isEmpty() && overlap.isEmpty()

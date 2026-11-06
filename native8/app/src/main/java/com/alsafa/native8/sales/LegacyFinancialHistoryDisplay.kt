@@ -38,7 +38,7 @@ object LegacyFinancialHistoryDisplay {
   return entries.sortedWith(compareByDescending<Entry> { it.date }.thenBy { it.label })
    .groupBy { it.date.take(7) }.entries.joinToString("\n\n") { (month,rows) ->
     "شهر $month\n"+rows.joinToString("\n") { e ->
-     "${e.date}  |  ${e.label}  |  ${e.amount} ${e.currency}  |  ${e.source}"+
+     "${e.date}  |  ${e.label}  |  ${e.amount} ${e.currency}"+
       (if(e.details.isBlank()) "" else "  |  ${e.details}")
     }
    }
