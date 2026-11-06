@@ -21,21 +21,21 @@ class InvoiceReceiptRepository(private val context:Context) {
    row("الساعة",r.watch);row("العطل",r.problem)
    val parts=raw.optJSONArray("usedParts")
    if(parts==null || parts.length()==0)row("قطع الصيانة","—") else for(i in 0 until parts.length()) {
-    val p=parts.getJSONObject(i);row("قطعة الصيانة","${p.optString("name")} × ${p.optString("qty")} — ${p.optString("price")} ${r.currency}")
+    val p=parts.getJSONObject(i);row("قطعة الصيانة","${p.optString("name")} × ${p.optString("qty")} — ${InvoiceDisplay.amount(p.optString("price"))} ${r.currency}")
    }
-   if(raw.has("laborPrice"))row("أجرة العمل",raw.optString("laborPrice")+" "+r.currency)
-   row("الضريبة",raw.optString("tax","0")+" "+r.currency);row("حالة الصيانة",r.status)
+   if(raw.has("laborPrice"))row("أجرة العمل",InvoiceDisplay.amount(raw.optString("laborPrice"))+" "+r.currency)
+   row("الضريبة",InvoiceDisplay.amount(raw.optString("tax","0"))+" "+r.currency);row("حالة الصيانة",r.status)
    if(r.source_sha256=="native8") {
-    row("الإجمالي", "${MaintenanceReturnRules.effective(raw)} ${r.currency}")
-    row("المقبوض الصافي", "${MaintenanceReturnRules.paid(raw)} ${r.currency}")
-    row("المتبقي", "${MaintenanceReturnRules.due(raw)} ${r.currency}")
+    row("الإجمالي", "${InvoiceDisplay.amount(MaintenanceReturnRules.effective(raw))} ${r.currency}")
+    row("المقبوض الصافي", "${InvoiceDisplay.amount(MaintenanceReturnRules.paid(raw))} ${r.currency}")
+    row("المتبقي", "${InvoiceDisplay.amount(MaintenanceReturnRules.due(raw))} ${r.currency}")
    } else {
-    row("قيمة الصيانة الأصلية","${LegacyMaintenanceProfitReader.total(raw)} ${r.currency}")
-    row("المقبوض المسجل",raw.optString("received","0")+" "+r.currency)
+    row("قيمة الصيانة الأصلية","${InvoiceDisplay.amount(LegacyMaintenanceProfitReader.total(raw))} ${r.currency}")
+    row("المقبوض المسجل",InvoiceDisplay.amount(raw.optString("received","0"))+" "+r.currency)
     val remaining=if(raw.has("nativeArchiveDelivery"))BigDecimal.ZERO else com.alsafa.native8.maintenance.ArchivedRepairDeliveryRepository(db,context).balance(r.id)
-    row("المتبقي", "$remaining ${r.currency}")
+    row("المتبقي", "${InvoiceDisplay.amount(remaining)} ${r.currency}")
     raw.optJSONObject("nativeArchiveDelivery")?.optJSONObject("payment")?.let { p ->
-     row("تحصيل التسليم","${p.optString("paymentAmount")} ${p.optString("paymentCurrency")}")
+     row("تحصيل التسليم","${InvoiceDisplay.amount(p.optString("paymentAmount"))} ${p.optString("paymentCurrency")}")
     }
    }
    row("طريقة الدفع",raw.optString("paymentMethod","نقدي"))
@@ -52,14 +52,14 @@ class InvoiceReceiptRepository(private val context:Context) {
    row("التاريخ والوقت",Instant.ofEpochMilli(current?.created_at ?: old!!.created_at).atZone(ZoneId.systemDefault()).toLocalDateTime().toString())
    row("إسم العميل / الشركة",(current?.customer ?: old!!.customer).ifBlank{"عميل نقدي"})
    for(line in RoomSalesEngine(context).lines(id)) {
-    row("نوع المنتج",line.title);row("سعر المنتج الإفرادي",line.price+" "+currency);row("عدد المنتجات",line.quantity)
+    row("نوع المنتج",line.title);row("سعر المنتج الإفرادي",InvoiceDisplay.amount(line.price)+" "+currency);row("عدد المنتجات",line.quantity)
     if((line.returned.toBigDecimalOrNull() ?: BigDecimal.ZERO)>BigDecimal.ZERO)row("المرتجع",line.returned)
    }
    val discount=current?.discount ?: JSONObject(old!!.original_json).optString("discount","0")
-   row("الخصم",discount+" "+currency)
-   row("الإجمالي الأصلي بعد الخصم",total+" "+currency);row("المقبوض الصافي",paid+" "+currency)
-   row("المتبقي",(old?.due ?: db.legacyReceivablesDao().bySaleId(id)?.balance ?: "0")+" "+currency)
-   for(p in db.legacyPaymentDao().payments(id))row("القبض الفعلي",p.amount+" "+p.currency+" — "+when(p.cashbox){"drawer"->"الدرج";"shamcash"->"شام كاش";"external"->"الصندوق الخارجي";else->p.cashbox})
+   row("الخصم",InvoiceDisplay.amount(discount)+" "+currency)
+   row("الإجمالي الأصلي بعد الخصم",InvoiceDisplay.amount(total)+" "+currency);row("المقبوض الصافي",InvoiceDisplay.amount(paid)+" "+currency)
+   row("المتبقي",InvoiceDisplay.amount(old?.due ?: db.legacyReceivablesDao().bySaleId(id)?.balance ?: "0")+" "+currency)
+   for(p in db.legacyPaymentDao().payments(id))row("القبض الفعلي",InvoiceDisplay.amount(p.amount)+" "+p.currency+" — "+when(p.cashbox){"drawer"->"الدرج";"shamcash"->"شام كاش";"external"->"الصندوق الخارجي";else->p.cashbox})
    InvoiceReceipt("فاتورة مبيع",number,current?.phone ?: old!!.phone,rows)
   }
  }

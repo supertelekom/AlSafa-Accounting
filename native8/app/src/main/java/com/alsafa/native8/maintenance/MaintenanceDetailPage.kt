@@ -5,11 +5,12 @@ import android.widget.*
 import com.alsafa.native8.stylekit.*
 import com.alsafa.native8.sales.LegacyMaintenanceProfitReader
 import org.json.JSONObject
+import com.alsafa.native8.sales.InvoiceDisplay
 
 /** detailModal('repair') fields, using the shared Tajawal/cream/gold native presentation. */
 class MaintenanceDetailPage(ui:SafaWidgets,repair:MaintenanceRepairEntity,
  onBack:()->Unit,onMessage:()->Unit,onEdit:()->Unit,onDelivery:()->Unit,onReturn:()->Unit,
- onPrint:()->Unit,onSave:(String,String,String,String,Button)->Unit) {
+ onPrint:()->Unit,onMetadataEdit:()->Unit,onSave:(String,String,String,String,Button)->Unit) {
  val host=SafaPageHost(ui,"الصفا للساعات");val view:View get()=host.view
  init {
   val raw=JSONObject(repair.original_json);val body=host.body
@@ -24,7 +25,7 @@ class MaintenanceDetailPage(ui:SafaWidgets,repair:MaintenanceRepairEntity,
    ui.add(details,line,3)
    ui.add(details,View(ui.context).apply{setBackgroundColor(SafaStyle.Palette.line);minimumHeight=ui.style.dp(1)},3)
   }
-  fun field(label:String,key:String){if(!raw.isNull(key))row(label,raw.optString(key))}
+  fun field(label:String,key:String){if(!raw.isNull(key))row(label,if(key in setOf("cost","laborPrice","partsTotal","partsCost","manualCost","tax","received"))InvoiceDisplay.amount(raw.optString(key)) else raw.optString(key))}
   row("رقم الفاتورة",repair.invoice_number.toString());row("العميل",repair.customer.ifBlank{"عميل نقدي"})
   row("الهاتف",repair.phone);row("التاريخ والوقت",repair.date+" "+raw.optString("time"))
   row("الساعة",repair.watch);field("الموديل","model");row("العطل",repair.problem)
@@ -32,22 +33,22 @@ class MaintenanceDetailPage(ui:SafaWidgets,repair:MaintenanceRepairEntity,
   field("خدمة الصيانة السريعة","quickServiceName")
   field("كلفة الصيانة","cost");field("أجرة العمل","laborPrice");field("قيمة القطع","partsTotal");field("تكلفة القطع","partsCost");field("تكلفة إضافية","manualCost");field("الضريبة","tax")
   val total=LegacyMaintenanceProfitReader.total(raw)
-  row("الإجمالي", "$total ${repair.currency}")
+  row("الإجمالي", "${InvoiceDisplay.amount(total)} ${repair.currency}")
   if(repair.source_sha256=="native8") {
-   row("الإجمالي بعد المرتجعات", "${MaintenanceReturnRules.effective(raw)} ${repair.currency}")
-   row("المقبوض الصافي", "${MaintenanceReturnRules.paid(raw)} ${repair.currency}")
-   row("المتبقي", "${MaintenanceReturnRules.due(raw)} ${repair.currency}")
+   row("الإجمالي بعد المرتجعات", "${InvoiceDisplay.amount(MaintenanceReturnRules.effective(raw))} ${repair.currency}")
+   row("المقبوض الصافي", "${InvoiceDisplay.amount(MaintenanceReturnRules.paid(raw))} ${repair.currency}")
+   row("المتبقي", "${InvoiceDisplay.amount(MaintenanceReturnRules.due(raw))} ${repair.currency}")
   } else {
    field("المقبوض المسجل","received")
    raw.optJSONObject("nativeArchiveDelivery")?.optJSONObject("payment")?.let {p ->
-    row("تحصيل التسليم", "${p.optString("paymentAmount")} ${p.optString("paymentCurrency")}")
+    row("تحصيل التسليم", "${InvoiceDisplay.amount(p.optString("paymentAmount"))} ${p.optString("paymentCurrency")}")
     row("تاريخ التحصيل",p.optString("date"));row("المتبقي بعد التسليم","0 ${repair.currency}")
    }
   }
   field("طريقة الدفع","paymentMethod");field("حالة الدفع","paymentStatus")
   field("تاريخ التسليم","deliveredDate");field("وقت التسليم","deliveredTime");field("ملاحظات","notes")
   raw.optJSONArray("usedParts")?.let {parts -> for(i in 0 until parts.length()) {
-   parts.optJSONObject(i)?.let {p -> row("قطعة الصيانة", "${p.optString("name")} × ${p.optString("qty",p.optString("quantity","1"))} — ${p.optString("price")} ${repair.currency}")}
+   parts.optJSONObject(i)?.let {p -> row("قطعة الصيانة", "${p.optString("name")} × ${p.optString("qty",p.optString("quantity","1"))} — ${InvoiceDisplay.amount(p.optString("price"))} ${repair.currency}")}
   } }
   raw.optString("watchPhoto").takeIf{it.isNotBlank()}?.let {photo ->
    ui.add(body,ImageView(ui.context).apply{adjustViewBounds=true;maxHeight=ui.style.dp(260);scaleType=ImageView.ScaleType.FIT_CENTER;MaintenancePhoto.display(this,photo)})
@@ -56,9 +57,7 @@ class MaintenanceDetailPage(ui:SafaWidgets,repair:MaintenanceRepairEntity,
   if(photoCount>0)ui.add(body,ui.text("صور الصيانة المحفوظة: $photoCount — عرض الصور الإضافية قيد الربط"))
   val actions=SafaGrid(ui.context,{if(it>=650)3 else 2})
   fun action(label:String,run:()->Unit){actions.addView(ui.button(label,onClick=run))}
-  action("تعديل بيانات الفاتورة") {
-   (ui.context as android.app.Activity).startActivityForResult(android.content.Intent(ui.context,com.alsafa.native8.sales.InvoiceMetadataActivity::class.java).putExtra("kind","repair").putExtra("invoice_id",repair.id),705)
-  }
+  action("تعديل بيانات الفاتورة",onMetadataEdit)
   action("واتساب أعمال",onMessage);action("فاتورة PDF / طباعة",onPrint)
   if(repair.source_sha256=="native8") {
    if(repair.status!="تم التسليم")action("تعديل الفاتورة",onEdit)

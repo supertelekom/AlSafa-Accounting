@@ -120,6 +120,10 @@ class MaintenanceActivity:ComponentActivity() {
          onDelivery={RepairDeliveryDialog.show(this@MaintenanceActivity,repair,com.alsafa.native8.sales.LegacyMaintenanceProfitReader.total(JSONObject(repair.original_json))) {lifecycleScope.launch {selectedRefresh?.invoke(repair.id)}}},
          onReturn={startActivityForResult(Intent(this@MaintenanceActivity,MaintenanceReturnActivity::class.java).putExtra("repair_id",repair.id),704)},
          onPrint={startActivity(Intent(this@MaintenanceActivity,com.alsafa.native8.sales.SalePrintActivity::class.java).putExtra("repair_id",repair.id))},
+         onMetadataEdit={
+          try {startActivityForResult(Intent(this@MaintenanceActivity,com.alsafa.native8.sales.InvoiceMetadataActivity::class.java).putExtra("kind","repair").putExtra("invoice_id",repair.id),705)}
+          catch(_:android.content.ActivityNotFoundException){android.widget.Toast.makeText(this@MaintenanceActivity,"صفحة تعديل الفاتورة غير مسجلة؛ حدّث AndroidManifest.xml وأعد بناء التطبيق",android.widget.Toast.LENGTH_LONG).show()}
+         },
          onSave={status,diagnosisValue,work,notesValue,button ->
           button.isEnabled=false
           lifecycleScope.launch {

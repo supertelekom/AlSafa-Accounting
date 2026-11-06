@@ -42,8 +42,15 @@ class SalePrintActivity:Activity() {
    catch(e:Exception){message.text=e.message ?: "تعذر تجهيز الفاتورة"}
   }
  }
- private fun uri()=FileProvider.getUriForFile(this,packageName+".receipts",requireNotNull(pdf))
- private fun launchSafely(action:()->Unit){try{action()}catch(e:Exception){message.text=e.message ?: "التطبيق المطلوب غير متاح"}}
+ private fun uri():android.net.Uri {
+  val authority=packageName+".receipts"
+  val provider=packageManager.resolveContentProvider(authority,PackageManager.GET_META_DATA)
+  check(provider?.metaData?.containsKey("android.support.FILE_PROVIDER_PATHS")==true) {
+   "إعداد مشاركة PDF غير مكتمل في هذه النسخة. حدّث AndroidManifest.xml وملف res/xml/receipt_paths.xml ثم أعد بناء التطبيق. يمكنك حفظ PDF الآن."
+  }
+  return FileProvider.getUriForFile(this,authority,requireNotNull(pdf))
+ }
+ private fun launchSafely(action:()->Unit){try{action()}catch(e:android.content.ActivityNotFoundException){message.text="لا يوجد تطبيق مناسب لفتح الملف، أو واتساب أعمال غير مثبت"}catch(e:Exception){message.text=e.message ?: "التطبيق المطلوب غير متاح"}}
  private fun showActions(data:InvoiceReceipt) {
   val grid=SafaGrid(this,{if(it>=600)3 else 1});ui.add(host.body,grid)
   grid.addView(ui.button("عرض الفاتورة"){launchSafely{startActivity(Intent(Intent.ACTION_VIEW).setDataAndType(uri(),"application/pdf").addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION))}})
@@ -66,10 +73,12 @@ class SalePrintActivity:Activity() {
   }})
   grid.addView(ui.button("حفظ PDF"){launchSafely{startActivityForResult(Intent(Intent.ACTION_CREATE_DOCUMENT).apply{type="application/pdf";addCategory(Intent.CATEGORY_OPENABLE);putExtra(Intent.EXTRA_TITLE,"AlSafa-${data.number}.pdf")},610)}})
   grid.addView(ui.button("واتساب أعمال",true){launchSafely{
+   val phone=InvoiceDisplay.phone(data.phone)
+   require(phone.isNotBlank()) {"لا يوجد رقم هاتف للعميل. أضف رقم هاتف من تعديل بيانات الفاتورة للإرسال عبر واتساب أعمال."}
    val content=uri()
    startActivity(Intent(Intent.ACTION_SEND).apply {
     type="application/pdf";setPackage("com.whatsapp.w4b");putExtra(Intent.EXTRA_STREAM,content);putExtra(Intent.EXTRA_TEXT,"الصفا للساعات — ${data.title} رقم ${data.number}")
-    data.phone.filter{it.isDigit()}.takeIf{it.isNotBlank()}?.let{putExtra("jid",it+"@s.whatsapp.net")}
+    putExtra("jid",phone+"@s.whatsapp.net")
     clipData=ClipData.newUri(contentResolver,"فاتورة الصفا",content);addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
    })
   }})
