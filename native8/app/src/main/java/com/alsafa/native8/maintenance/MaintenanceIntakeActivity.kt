@@ -7,6 +7,10 @@ import android.net.Uri
 import android.content.ActivityNotFoundException
 import android.widget.*
 import android.view.View
+import com.alsafa.native8.stylekit.*
+import kotlinx.coroutines.*
+import androidx.core.content.FileProvider
+import java.io.File
 import com.alsafa.native8.sales.AppDatabase
 import androidx.room.withTransaction
 import kotlinx.coroutines.runBlocking
@@ -22,6 +26,12 @@ import java.util.UUID
 class MaintenanceIntakeActivity:Activity() {
  private var photoUri:String=""
  private lateinit var photoPreview:ImageView
+ private lateinit var photoLabel:TextView
+ private var cameraUri:String=""
+ private var stateParts:(()->String)?=null
+ private val scope=CoroutineScope(SupervisorJob()+Dispatchers.Main)
+ override fun onDestroy(){scope.cancel();super.onDestroy()}
+ override fun onSaveInstanceState(out:Bundle){out.putString("parts",stateParts?.invoke());out.putString("photo",photoUri);out.putString("camera",cameraUri);super.onSaveInstanceState(out)}
  override fun onCreate(savedInstanceState:Bundle?) {
   super.onCreate(savedInstanceState)
   requestWindowFeature(android.view.Window.FEATURE_NO_TITLE)
@@ -30,93 +40,71 @@ class MaintenanceIntakeActivity:Activity() {
   val root=host.body
   ui.heading(root,"استلام صيانة","")
   ui.add(root,ui.button("رجوع"){finish()})
-  fun field(hint:String):EditText=EditText(this).also {
-   it.hint=hint
-   root.addView(it,LinearLayout.LayoutParams(-1,-2))
+  photoUri=savedInstanceState?.getString("photo").orEmpty();cameraUri=savedInstanceState?.getString("camera").orEmpty()
+  fun pair():SafaGrid=SafaGrid(this,{if(it>=520)2 else 1},14).also{ui.add(root,it,14)}
+  fun field(parent:android.view.ViewGroup,label:String,multiline:Boolean=false):EditText {
+   val box=ui.column();ui.label(box,label)
+   val input=ui.input(multiline=multiline);ui.add(box,input,0);parent.addView(box);return input
   }
-  root.addView(TextView(this).apply { text="استلام صيانة";textSize=25f })
-  val customer=field("اسم العميل *")
-  val phone=field("رقم الهاتف")
-  val watch=field("الماركة / نوع الساعة *")
-  val model=field("الموديل أو الرقم")
-  val problem=field("العطل *")
-  val diagnosis=field("التشخيص")
-  val notes=field("ملاحظات")
-  root.addView(TextView(this).apply { text="عملة الفاتورة" })
-  val currency=Spinner(this).apply { adapter=ArrayAdapter(this@MaintenanceIntakeActivity,android.R.layout.simple_spinner_dropdown_item,listOf("USD","TRY","SYP")) };root.addView(currency)
-  val labor=field("أجرة العمل — بعملة الفاتورة").apply { setText("0");inputType=8194 }
+  val client=pair()
+  val customer=field(client,"اسم العميل *").apply{id=4101}
+  val phone=field(client,"رقم الهاتف / واتساب").apply{id=4102;inputType=android.text.InputType.TYPE_CLASS_PHONE}
+  val watchRow=pair()
+  val watch=field(watchRow,"الماركة / نوع الساعة *").apply{id=4103}
+  val problem=field(watchRow,"العطل أو المطلوب *").apply{id=4104}
+  val notes=field(root,"ملاحظات",true).apply{id=4105}
+  val amounts=pair()
+  val labor=field(amounts,"أجرة الإصلاح فقط — دون ثمن القطع").apply{id=4106;inputType=8194;setText("0")}
+  val moneyBox=ui.column();ui.label(moneyBox,"عملة الأجرة والفاتورة")
+  val currency=Spinner(this).apply {id=4107;adapter=ArrayAdapter(this@MaintenanceIntakeActivity,android.R.layout.simple_spinner_dropdown_item,listOf("USD","TRY","SYP"))};ui.add(moneyBox,currency);amounts.addView(moneyBox)
+  ui.add(root,ui.text("يمكن إبقاء الأجرة صفرًا وإضافة الأجرة والقطع بعد الفحص.",12f,SafaStyle.Palette.muted))
   val selectedParts=mutableListOf<MaintenancePartsRepository.SelectedPart>()
-  val partSummary=TextView(this).apply { text="قطع الصيانة: لا توجد قطع مضافة";textSize=17f }
-  root.addView(TextView(this).apply { text="قطع الصيانة";textSize=20f })
-  root.addView(Button(this).apply {
-   text="إضافة قطع من المستودع"
-   setOnClickListener {
-    Thread {
-     val result=runCatching { runBlocking { MaintenancePartsRepository(AppDatabase.get(applicationContext)).list() } }
-     runOnUiThread {
-      val parts=result.getOrNull().orEmpty()
-      if(parts.isEmpty()) { Toast.makeText(this@MaintenanceIntakeActivity,"لا توجد قطع في المستودع",Toast.LENGTH_LONG).show();return@runOnUiThread }
-      val choices=parts.map { "${it.name} — متاح: ${it.stock} — ${it.sale_price} ${it.currency}" }.toTypedArray()
-      android.app.AlertDialog.Builder(this@MaintenanceIntakeActivity).setTitle("اختيار قطعة صيانة")
-       .setItems(choices) { _,index ->
-        val part=parts[index]
-        val form=LinearLayout(this@MaintenanceIntakeActivity).apply {
-         orientation=LinearLayout.VERTICAL;setPadding(32,12,32,12)
-        }
-        val quantity=EditText(this@MaintenanceIntakeActivity).apply {
-         hint="الكمية";setText("1");inputType=android.text.InputType.TYPE_CLASS_NUMBER
-        }
-        val price=EditText(this@MaintenanceIntakeActivity).apply {
-         hint="سعر القطعة — ${part.currency}";setText(part.sale_price)
-         inputType=android.text.InputType.TYPE_CLASS_NUMBER or android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL
-        }
-        form.addView(quantity);form.addView(price);MaintenanceFormStyle.apply(form,ui)
-        android.app.AlertDialog.Builder(this@MaintenanceIntakeActivity)
-         .setTitle(part.name).setView(form).setNegativeButton("إلغاء",null)
-         .setPositiveButton("إضافة") { _,_ ->
-          val qty=quantity.text.toString().toBigDecimalOrNull()
-          val available=part.stock.toBigDecimalOrNull()
-          val sale=price.text.toString().toBigDecimalOrNull()
-          if(qty==null||available==null||sale==null||qty<=BigDecimal.ZERO||qty>available||sale<BigDecimal.ZERO||qty.stripTrailingZeros().scale()>0) {
-           Toast.makeText(this@MaintenanceIntakeActivity,"تحقق من الكمية والسعر والمخزون",Toast.LENGTH_LONG).show()
-          } else {
-           selectedParts.removeAll { it.partId==part.id }
-           selectedParts.add(MaintenancePartsRepository.SelectedPart(part.id,qty.toPlainString(),sale.toPlainString()))
-           partSummary.text="قطع الصيانة: ${selectedParts.size} — "+selectedParts.joinToString("، ") { line ->
-            val p=parts.firstOrNull { it.id==line.partId }; "${p?.name ?: line.partId} × ${line.qty}"
-           }
-          }
-         }.show()
-       }.show()
-     }
-    }.start()
+  val names=mutableMapOf<String,String>()
+  savedInstanceState?.getString("parts")?.let { val a=JSONArray(it);for(i in 0 until a.length()){val r=a.getJSONObject(i);selectedParts.add(MaintenancePartsRepository.SelectedPart(r.getString("id"),r.getString("qty"),r.getString("price")));names[r.getString("id")]=r.optString("name")} }
+  stateParts={JSONArray().apply{selectedParts.forEach{put(JSONObject().put("id",it.partId).put("qty",it.qty).put("price",it.price).put("name",names[it.partId]))}}.toString()}
+  val partRows=ui.column()
+  fun refreshParts(){partRows.removeAllViews();if(selectedParts.isEmpty())ui.add(partRows,ui.text("لا توجد قطع مضافة"))
+   selectedParts.toList().forEach{line->ui.add(partRows,ui.button("${names[line.partId]} × ${line.qty} — حذف"){selectedParts.remove(line);refreshParts()})}}
+  ui.step(root,1,"قطع الصيانة — اختياري")
+  ui.add(root,ui.button("بحث وإضافة قطع من المستودع"){
+   val body=ui.column(16);ui.heading(body,"اختيار قطعة صيانة","")
+   val search=ui.input("بحث بالاسم أو الباركود");ui.add(body,search)
+   val notice=ui.text("");ui.add(body,notice)
+   val list=ListView(this);body.addView(list,LinearLayout.LayoutParams(-1,ui.style.dp(300)))
+   val dialog=android.app.AlertDialog.Builder(this).setView(body).setNegativeButton("إغلاق",null).create()
+   var job:Job?=null;var parts=listOf<MaintenancePartEntity>()
+   fun load(q:String){job?.cancel();job=scope.launch{try{delay(200);parts=withContext(Dispatchers.IO){MaintenancePartsRepository(AppDatabase.get(applicationContext)).list(q)}
+    list.adapter=ArrayAdapter(this@MaintenanceIntakeActivity,android.R.layout.simple_list_item_1,parts.map{"${it.name} — المتاح ${it.stock} — ${com.alsafa.native8.sales.InvoiceDisplay.amount(it.sale_price)} ${it.currency}"});notice.text=if(parts.isEmpty())"لا توجد قطع مطابقة" else "${parts.size} قطعة"
+   }catch(e:CancellationException){throw e}catch(e:Exception){notice.text=e.message ?: "تعذر قراءة القطع"}}}
+   ui.listen(search){load(it)};dialog.setOnDismissListener{job?.cancel()};dialog.show();load("")
+   list.setOnItemClickListener{_,_,index,_->
+    val part=parts[index];val existing=selectedParts.firstOrNull{it.partId==part.id};val form=ui.column(16)
+    ui.label(form,"الكمية");val quantity=ui.input(numeric=true).apply{setText(existing?.qty ?: "1")};ui.add(form,quantity)
+    ui.label(form,"سعر القطعة — ${part.currency}");val price=ui.input(numeric=true).apply{setText(existing?.price ?: com.alsafa.native8.sales.InvoiceDisplay.amount(part.sale_price))};ui.add(form,price)
+    val error=ui.text("",14f,SafaStyle.Palette.danger);ui.add(form,error)
+    val picker=android.app.AlertDialog.Builder(this).setTitle(part.name).setView(form).setNegativeButton("إلغاء",null).setPositiveButton("إضافة",null).create()
+    picker.setOnShowListener{picker.getButton(android.app.AlertDialog.BUTTON_POSITIVE).setOnClickListener{
+     val qty=quantity.text.toString().toBigDecimalOrNull();val sale=price.text.toString().toBigDecimalOrNull();val available=part.stock.toBigDecimalOrNull()
+     if(qty==null||sale==null||available==null||qty<=BigDecimal.ZERO||qty>available||qty.stripTrailingZeros().scale()>0||sale<BigDecimal.ZERO)error.text="تحقق من الكمية والسعر والمخزون"
+     else {selectedParts.removeAll{it.partId==part.id};selectedParts.add(MaintenancePartsRepository.SelectedPart(part.id,qty.toPlainString(),sale.toPlainString()));names[part.id]=part.name;refreshParts();picker.dismiss();dialog.dismiss()}
+    }};picker.show()
    }
+  });ui.add(root,partRows);refreshParts()
+  ui.step(root,2,"صورة الساعة")
+  val photos=pair()
+  photos.addView(ui.button("تصوير بالكاميرا"){
+   try {
+    val dir=File(filesDir,"repair_photos").apply{mkdirs()};val file=File.createTempFile("watch-",".jpg",dir)
+    val uri=FileProvider.getUriForFile(this,packageName+".receipts",file);cameraUri=uri.toString()
+    startActivityForResult(Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE).apply{putExtra(android.provider.MediaStore.EXTRA_OUTPUT,uri);clipData=android.content.ClipData.newRawUri("صورة الساعة",uri);addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION or Intent.FLAG_GRANT_READ_URI_PERMISSION)},702)
+   }catch(e:Exception){Toast.makeText(this,"تعذر فتح الكاميرا: ${e.message ?: "لا يوجد تطبيق كاميرا"}",Toast.LENGTH_LONG).show()}
   })
-  root.addView(partSummary)
-  root.addView(Button(this).apply {
-   text="مسح القطع المختارة"
-   setOnClickListener { selectedParts.clear();partSummary.text="قطع الصيانة: لا توجد قطع مضافة" }
+  photos.addView(ui.button("اختيار من الصور"){
+   startActivityForResult(Intent(Intent.ACTION_OPEN_DOCUMENT).apply{type="image/*";addCategory(Intent.CATEGORY_OPENABLE);addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION)},701)
   })
-  val photoLabel=TextView(this).apply { text="صورة الساعة: لم تُحدد" }
-  root.addView(Button(this).apply {
-   text="اختيار صورة الساعة"
-   setOnClickListener {
-    startActivityForResult(Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
-     type="image/*"
-     addCategory(Intent.CATEGORY_OPENABLE)
-     addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION)
-    },701)
-   }
-  })
-  root.addView(photoLabel)
-  photoPreview=ImageView(this).apply {
-   adjustViewBounds=true
-   maxHeight=500
-   visibility=View.GONE
-  }
-  root.addView(photoPreview,LinearLayout.LayoutParams(-1,-2))
-  root.addView(Button(this).apply {
-   text="حفظ طلب الصيانة"
+  photoLabel=ui.text("");ui.add(root,photoLabel)
+  photoPreview=ImageView(this).apply{adjustViewBounds=true;maxHeight=ui.style.dp(240);visibility=View.GONE};ui.add(root,photoPreview);showPhoto()
+  ui.add(root,ui.button("حفظ طلب الصيانة",true){}.apply {
    setOnClickListener {
     if(customer.text.isBlank()||watch.text.isBlank()||problem.text.isBlank()) {
      Toast.makeText(this@MaintenanceIntakeActivity,"أكمل الحقول المطلوبة",Toast.LENGTH_LONG).show()
@@ -125,9 +113,9 @@ class MaintenanceIntakeActivity:Activity() {
     val customerValue=customer.text.toString().trim()
     val phoneValue=phone.text.toString().trim()
     val watchValue=watch.text.toString().trim()
-    val modelValue=model.text.toString().trim()
+    val modelValue=""
     val problemValue=problem.text.toString().trim()
-    val diagnosisValue=diagnosis.text.toString().trim()
+    val diagnosisValue=""
     val notesValue=notes.text.toString().trim()
     val invoiceCurrency=currency.selectedItem.toString()
     val laborValue=labor.text.toString().toBigDecimalOrNull()
@@ -148,20 +136,20 @@ class MaintenanceIntakeActivity:Activity() {
          db.salesPostingDao().maxNewNumber(),db.legacySaleDao().maxLegacyInvoiceNumber())+1
         val raw=JSONObject().apply {
          put("id",id);put("invoiceNo",number);put("date",date);put("time",time)
-         put("status","بانتظار التسليم")
-         put("customer",customer.text.toString().trim());put("phone",phone.text.toString().trim())
-         put("watch",watch.text.toString().trim());put("model",model.text.toString().trim())
-         put("problem",problem.text.toString().trim());put("diagnosis",diagnosis.text.toString().trim())
-         put("notes",notes.text.toString().trim());put("watchPhoto",photoUri)
+         put("status","قيد الصيانة")
+         put("customer",customerValue);put("phone",phoneValue)
+         put("watch",watchValue);put("model",modelValue)
+         put("problem",problemValue);put("diagnosis",diagnosisValue)
+         put("notes",notesValue);put("watchPhoto",photoValue)
          put("currency",invoiceCurrency);put("laborPrice",laborValue.toPlainString());put("price",laborValue.toPlainString());put("received",0)
          put("partsTotal",0);put("partsCost",0);put("cost",0)
          put("usedParts",org.json.JSONArray());put("partsStockApplied",false)
          put("createdAt",now)
         }
         db.maintenanceDao().insertNewRepair(MaintenanceRepairEntity(
-         id,"native8",number,date,time,"بانتظار التسليم",
-         customer.text.toString().trim(),phone.text.toString().trim(),
-         watch.text.toString().trim(),model.text.toString().trim(),
+         id,"native8",number,date,time,"قيد الصيانة",
+         customerValue,phoneValue,
+         watchValue,modelValue,
          problemValue,invoiceCurrency,laborValue.toPlainString(),"0","",now,raw.toString()
         ))
         if(requestedParts.isNotEmpty()) {
@@ -203,7 +191,18 @@ class MaintenanceIntakeActivity:Activity() {
     }.start()
    }
   })
-  MaintenanceFormStyle.apply(root,ui);setContentView(host.view)
+  setContentView(host.view)
+ }
+ private fun showPhoto(){
+  photoLabel.text=if(photoUri.isBlank())"لم تُحدد صورة" else "صورة الساعة محفوظة"
+  if(photoUri.isBlank())return
+  try{val uri=Uri.parse(photoUri);val bounds=android.graphics.BitmapFactory.Options().apply{inJustDecodeBounds=true}
+   contentResolver.openInputStream(uri)?.use{android.graphics.BitmapFactory.decodeStream(it,null,bounds)}
+   var sample=1;while(bounds.outWidth/sample>1200 || bounds.outHeight/sample>1200)sample*=2
+   val options=android.graphics.BitmapFactory.Options().apply{inSampleSize=sample}
+   val bitmap=contentResolver.openInputStream(uri)?.use{android.graphics.BitmapFactory.decodeStream(it,null,options)}
+   photoPreview.setImageBitmap(bitmap);photoPreview.visibility=View.VISIBLE
+  }catch(e:Exception){photoLabel.text="تعذر عرض الصورة؛ اخترها مجدداً"}
  }
  private fun shareWithWhatsAppBusiness(phone:String,number:Long) {
   val digits=phone.filter { it.isDigit() }
@@ -227,13 +226,13 @@ class MaintenanceIntakeActivity:Activity() {
  }
  override fun onActivityResult(requestCode:Int,resultCode:Int,data:Intent?) {
   super.onActivityResult(requestCode,resultCode,data)
+  if(requestCode==702){if(resultCode==RESULT_OK && cameraUri.isNotBlank()){photoUri=cameraUri;showPhoto()};cameraUri="";return}
   if(requestCode==701 && resultCode==RESULT_OK) {
    val uri=data?.data ?: return
    try { contentResolver.takePersistableUriPermission(uri,Intent.FLAG_GRANT_READ_URI_PERMISSION) }
    catch(_:SecurityException) { Toast.makeText(this@MaintenanceIntakeActivity,"تعذر الاحتفاظ بإذن الصورة",Toast.LENGTH_LONG).show();return }
    photoUri=uri.toString()
-   photoPreview.setImageURI(uri)
-   photoPreview.visibility=View.VISIBLE
+   showPhoto()
    Toast.makeText(this@MaintenanceIntakeActivity,"تم اختيار صورة الساعة",Toast.LENGTH_SHORT).show()
   }
  }

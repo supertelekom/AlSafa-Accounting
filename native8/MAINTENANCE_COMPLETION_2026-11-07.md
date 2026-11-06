@@ -34,3 +34,13 @@ Scope: Native 8 maintenance only. Home was accepted before this batch.
 ## Files
 New: MaintenanceFormStyle.kt, QuickRepairButtonRules.kt, QuickRepairButtonsActivity.kt, QuickRepairButtonRulesTest.kt, this document.
 Modified: AndroidManifest.xml, MaintenanceActivity.kt, MaintenanceDao.kt, MaintenanceDeliveryEligibility.kt, MaintenanceDetailPage.kt, MaintenanceEditActivity.kt, MaintenanceIntakeActivity.kt, MaintenancePartsActivity.kt, MaintenanceReturnActivity.kt, QuickRepairRepository.kt, MaintenanceDeliveryEligibilityTest.kt, tools/run_financial_junit.py.
+
+## Full intake follow-up
+- Compared legacy renderRepairForm (assets/main.js): the original has separate problem and diagnosis. Per the user's request the intake now shows only problem/request; diagnosis remains available later in details. Model removed from this creation form only.
+- Two-column adaptive rows: customer/phone; watch/problem; labour/currency. Notes occupy a full row. Persistent labour label explicitly excludes parts.
+- Part picker searches Room by name/barcode with 200ms debounce, cancellation and inline quantity/price validation. Selected parts can be removed individually.
+- Camera capture uses ACTION_IMAGE_CAPTURE with FileProvider output restricted to files/repair_photos. No camera permission requested because capture is delegated to the camera app. Existing gallery selection retained. Camera URI and selected parts survive activity recreation; field IDs are stable.
+- Camera preview decoded at a bounded resolution; captured originals are included in full native backups.
+- New full intake starts قيد الصيانة. No change to simplified mode or financial posting rules.
+- Files: MaintenanceIntakeActivity.kt and res/xml/receipt_paths.xml. Copy both when updating manually. Manifest already points to this XML.
+- Verify on tablet: camera success/cancel and return to populated form; gallery; part name/barcode search; several parts/removal; zero labour save; pending-list visibility; mark ready then delivery. Full APK/device verification is still required.

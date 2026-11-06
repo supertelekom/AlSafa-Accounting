@@ -6,4 +6,5 @@
     <cache-path
         name="receipts"
         path="receipts/" />
+    <files-path name="repair_photos" path="repair_photos/" />
 </paths>
