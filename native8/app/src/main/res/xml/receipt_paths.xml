@@ -1,4 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Keep this file at app/src/main/res/xml/receipt_paths.xml.
+     AndroidManifest.xml references @xml/receipt_paths for PDF viewing and sharing.
+     Copy both files when updating the project manually. -->
 <paths xmlns:android="http://schemas.android.com/apk/res/android">
-    <cache-path name="receipts" path="receipts/" />
+    <cache-path
+        name="receipts"
+        path="receipts/" />
 </paths>
