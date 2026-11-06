@@ -33,7 +33,7 @@ class PartnerProfitsActivity:Activity() {
    text="حصة الأب 40%، عبد الكريم 35%، يزن 25%. المستحق المتبقي محسوب من بداية السجلات حتى نهاية الفترة، بعد طرح السحوبات التراكمية."
    textSize=17f
   }
-  val result=TextView(this).apply { textSize=18f }
+  val result=TextView(this).apply { textSize=18f;gravity=android.view.Gravity.RIGHT;textDirection=View.TEXT_DIRECTION_RTL;setHorizontallyScrolling(false);setLineSpacing(8f,1.1f) }
   val button=Button(this).apply { text="عرض حالة أرباح الشركاء" }
   listOf(heading,explanation,button,result).forEach {
    content.addView(it,LinearLayout.LayoutParams(-1,-2))
@@ -80,7 +80,15 @@ class PartnerProfitsActivity:Activity() {
      }
      if(statement.unresolved.isNotEmpty() || !statement.period.complete || !statement.cumulative.complete) {
       result.text="الفترة: $first — $last\nلا يمكن اعتماد صافي الربح أو المستحقات حتى مراجعة العمليات التالية:\n"+
-       statement.unresolved.joinToString("\n")
+       statement.unresolved.joinToString("\n\n")+
+       "\n\nأرباح المصادر المستخرجة للفترة (ليست مستحقات معتمدة):\n"+
+       "المحل الأرشيفي: ${money(statement.period.historicalStoreProfit)}\n"+
+       "المحل الجديد: ${money(statement.period.storeSaleProfit)}\n"+
+       "الأونلاين الأرشيفي: ${money(statement.period.historicalOnlineProfit)}\n"+
+       "الأونلاين الجديد: ${money(statement.period.saleProfit)}\n"+
+       "الصيانة الأرشيفية: ${money(statement.period.historicalMaintenanceProfit)}\n"+
+       "الصيانة الجديدة: ${money(statement.period.nativeMaintenanceProfit)}\n"+
+       "المصاريف: ${money(statement.period.operatingExpenses)}"
      } else {
       val names=mapOf("father" to "الأب","me" to "عبد الكريم","brother" to "يزن")
       val period=statement.period

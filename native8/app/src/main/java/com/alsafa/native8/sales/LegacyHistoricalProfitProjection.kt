@@ -18,7 +18,8 @@ class LegacyHistoricalProfitProjection(private val legacy:HistoricalFinancialSou
   val salesUnresolved:List<String> = emptyList(),val salesReturnImpactUsd:BigDecimal=BigDecimal.ZERO,
   val saleIds:Set<String> = emptySet(),val storeCapitalUsd:BigDecimal=BigDecimal.ZERO,
   val repairIds:Set<String> = emptySet(),val repairUnresolved:List<String> = emptyList(),
-  val importRunId:Long?=null
+  val importRunId:Long?=null,
+  val saleEvents:List<FinancialSourceReconciliation.Event> = emptyList()
  ) {
   val partialNetUsd get()=storeProfitUsd+onlineProfitUsd+repairProfitUsd+returnImpactUsd-expensesUsd
   val complete get()=onlineVerified && unresolved.isEmpty()
@@ -52,6 +53,7 @@ class LegacyHistoricalProfitProjection(private val legacy:HistoricalFinancialSou
    salesReturnImpactUsd=saleSummary.returns,saleIds=salesRows.map { it.optString("id") }.toSet(),
    storeCapitalUsd=saleAudit.events.filter { it.stream==FinancialSourceReconciliation.Stream.LEGACY_STORE &&
     inPeriod(it.recognizedOn.toString()) }.fold(BigDecimal.ZERO) { sum,event -> sum+event.costUsd },
-   repairIds=repairs.map { it.optString("id") }.toSet(),repairUnresolved=repairAudit.unresolved,importRunId=run)
+   repairIds=repairs.map { it.optString("id") }.toSet(),repairUnresolved=repairAudit.unresolved,importRunId=run,
+   saleEvents=saleAudit.events.filter { inPeriod(it.recognizedOn.toString()) })
  }
 }

@@ -23,6 +23,9 @@ interface SalesFinancialAuditDao {
  @Query("SELECT COUNT(*) FROM sale_profit_events e LEFT JOIN sales s ON s.id=e.sale_id WHERE s.id IS NULL OR s.channel IS NULL OR s.channel!='online'")
  suspend fun nonOnlineProfitEventCount():Int
 
+ @Query("SELECT DISTINCT e.sale_id FROM sale_profit_events e LEFT JOIN sales s ON s.id=e.sale_id WHERE e.collected_at<:untilExclusive AND (s.id IS NULL OR s.channel IS NULL OR s.channel!='online') ORDER BY e.sale_id")
+ suspend fun nonOnlineProfitSaleIds(untilExclusive:Long):List<String>
+
  @Query("SELECT * FROM sale_profit_events WHERE payment_id=:paymentId LIMIT 1")
  suspend fun profitForPayment(paymentId:String):SaleProfitEvent?
 

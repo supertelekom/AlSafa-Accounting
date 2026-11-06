@@ -34,11 +34,12 @@ class UnifiedFinancialIntegrationTest {
  private fun amount(expected:String,actual:BigDecimal) { assertTrue("$expected != $actual",(expected.toBigDecimal()-actual).abs()<BigDecimal("0.00000001")) }
  private fun rejected(action:()->Unit) { try { action();fail("Incomplete source published") } catch(_:IllegalStateException) {} }
  private data class Setup(val repository:UnifiedFinancialPeriodRepository,val source:Source)
- private fun setup(withNative:Boolean=true,expenseOverlap:Boolean=false,uncovered:Boolean=false,missingCost:Boolean=false):Setup {
+ private fun setup(withNative:Boolean=true,expenseOverlap:Boolean=false,uncovered:Boolean=false,missingCost:Boolean=false,suspect:Boolean=false):Setup {
   val source=source();val t=millis("2026-11-01")
   fun inside(a:Array<out Any?>)=withNative && t>=a[0] as Long && t<a[1] as Long
   val sales=dao<SalesFinancialAuditDao> { method,a -> when(method) {
    "nonOnlineProfitEventCount" -> 0
+   "nonOnlineProfitSaleIds" -> if(suspect && (a[0] as Long)>t) listOf("suspect-sale") else emptyList<String>()
    "operationalSaleIds" -> if(withNative) listOf("new-store","new-online") else emptyList<String>()
    "uncoveredSales" -> if(uncovered) listOf("missing-sale") else emptyList<String>()
    "uncoveredOnlinePayments" -> emptyList<String>()
@@ -77,6 +78,26 @@ class UnifiedFinancialIntegrationTest {
   }
   return Setup(UnifiedFinancialPeriodRepository(sales,UnifiedExpensePartnerReadRepository(source,costs),zone,store,
    LegacyHistoricalProfitProjection(source),NativeMaintenanceProfitRepository(repairs,cash)),source)
+ }
+ @Test fun suspectReceiptKeepsHistoryVisibleButBlocksPartnerApproval()=runBlocking {
+  val repository=setup(suspect=true).repository
+  val r=repository.statement("2026-11-01","2026-11-03")
+  assertFalse(r.cumulative.complete)
+  assertTrue(r.unresolved.any { it.contains("suspect-sale") })
+  assertTrue(r.cumulative.historicalStoreProfit>BigDecimal.ZERO)
+  assertTrue(r.cumulative.historicalOnlineProfit>BigDecimal.ZERO)
+  rejected { r.partners() }
+  assertTrue(repository.read("2026-10-01","2026-10-26").complete)
+ }
+ @Test fun historicalDetailEventsMatchTheirPeriodTotals() {
+  val projection=LegacyHistoricalProfitProjection(source())
+  val october=projection.read("2026-10-01","2026-10-26")
+  val november=projection.read("2026-11-01","2026-11-06")
+  assertTrue(october.saleEvents.isNotEmpty())
+  assertTrue(november.saleEvents.isEmpty())
+  val summary=FinancialSourceReconciliation.summarize(october.saleEvents,LocalDate.parse("2026-10-01"),LocalDate.parse("2026-10-26"))
+  assertEquals(october.storeProfitUsd,summary.store)
+  assertEquals(october.onlineProfitUsd,summary.online)
  }
  @Test fun archivedInvoicesExpensesAndWithdrawalsFlowThroughActualUnifiedRepository()=runBlocking {
   val r=setup(false).repository.statement("2026-10-01","2026-10-26")
