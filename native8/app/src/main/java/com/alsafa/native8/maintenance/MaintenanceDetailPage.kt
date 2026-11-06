@@ -14,7 +14,7 @@ class MaintenanceDetailPage(ui:SafaWidgets,repair:MaintenanceRepairEntity,
  val host=SafaPageHost(ui,"الصفا للساعات");val view:View get()=host.view
  init {
   val raw=JSONObject(repair.original_json);val body=host.body
-  ui.heading(body,"تفاصيل طلب الصيانة","فاتورة رقم ${repair.invoice_number} — ${repair.status}")
+  ui.heading(body,"تفاصيل طلب الصيانة","فاتورة رقم ${repair.invoice_number} — ${MaintenanceDeliveryEligibility.display(repair.status)}")
   ui.add(body,ui.button("رجوع",onClick=onBack))
   val details=ui.card();ui.add(body,details)
   fun row(label:String,value:String) {
@@ -29,7 +29,7 @@ class MaintenanceDetailPage(ui:SafaWidgets,repair:MaintenanceRepairEntity,
   row("رقم الفاتورة",repair.invoice_number.toString());row("العميل",repair.customer.ifBlank{"عميل نقدي"})
   row("الهاتف",repair.phone);row("التاريخ والوقت",repair.date+" "+raw.optString("time"))
   row("الساعة",repair.watch);field("الموديل","model");row("العطل",repair.problem)
-  field("نتيجة الفحص","diagnosis");field("العمل المنجز","workDone");row("حالة الطلب",repair.status)
+  field("نتيجة الفحص","diagnosis");field("العمل المنجز","workDone");row("حالة الطلب",MaintenanceDeliveryEligibility.display(repair.status))
   field("خدمة الصيانة السريعة","quickServiceName")
   field("كلفة الصيانة","cost");field("أجرة العمل","laborPrice");field("قيمة القطع","partsTotal");field("تكلفة القطع","partsCost");field("تكلفة إضافية","manualCost");field("الضريبة","tax")
   val total=LegacyMaintenanceProfitReader.total(raw)
@@ -54,21 +54,30 @@ class MaintenanceDetailPage(ui:SafaWidgets,repair:MaintenanceRepairEntity,
    ui.add(body,ImageView(ui.context).apply{adjustViewBounds=true;maxHeight=ui.style.dp(260);scaleType=ImageView.ScaleType.FIT_CENTER;MaintenancePhoto.display(this,photo)})
   }
   val photoCount=listOf("photos","watchPhotos","images").sumOf{raw.optJSONArray(it)?.length() ?: 0}
-  if(photoCount>0)ui.add(body,ui.text("صور الصيانة المحفوظة: $photoCount — عرض الصور الإضافية قيد الربط"))
+  if(photoCount>0)ui.add(body,ui.button("عرض الصور الإضافية ($photoCount)") {
+   val photos=listOf("photos","watchPhotos","images").flatMap { key ->val a=raw.optJSONArray(key);(0 until (a?.length() ?: 0)).mapNotNull { i -> val item=a!!.opt(i);if(item is String)item else (item as? JSONObject)?.let {it.optString("url",it.optString("data",it.optString("uri")))} } }.filter{it.isNotBlank()}.distinct()
+   if(photos.isNotEmpty()) {
+    var index=0;val container=ui.column(12);val image=ImageView(ui.context).apply{adjustViewBounds=true;maxHeight=ui.style.dp(430)}
+    ui.add(container,image);val label=ui.text("");ui.add(container,label)
+    fun display(){MaintenancePhoto.display(image,photos[index]);label.text="${index+1} / ${photos.size}"};display()
+    ui.add(container,ui.button("الصورة التالية"){index=(index+1)%photos.size;display()})
+    android.app.AlertDialog.Builder(ui.context).setView(container).setPositiveButton("إغلاق",null).show()
+   }
+  })
   val actions=SafaGrid(ui.context,{if(it>=650)3 else 2})
   fun action(label:String,run:()->Unit){actions.addView(ui.button(label,onClick=run))}
   action("تعديل بيانات الفاتورة",onMetadataEdit)
   action("واتساب أعمال",onMessage);action("عرض الفاتورة / PDF / طباعة",onPrint)
   if(repair.status!="تم التسليم" && !raw.has("nativeArchiveDelivery"))action("تعديل الفاتورة / الأجرة والقطع",onEdit)
+  if(MaintenanceDeliveryEligibility.allowed(repair.status,raw) && !raw.has("nativeArchiveDelivery"))action("تم التسليم — تحصيل المبلغ",onDelivery)
   if(repair.source_sha256=="native8") {
-   if(MaintenanceDeliveryEligibility.allowed(repair.status,raw))action("تم التسليم — تحصيل المبلغ",onDelivery)
    if(repair.status=="تم التسليم")action("مرتجع / استبدال",onReturn)
   }
   ui.add(body,actions)
   if(repair.status!="تم التسليم" && !raw.has("nativeArchiveDelivery")) {
    val edit=ui.card();ui.add(body,edit);ui.heading(edit,"تحديث حالة الصيانة","")
-   val states=listOf("قيد الصيانة","بانتظار القطعة","جاهز للاستلام","بانتظار التسليم")
-   val status=ui.choice(states.map{it to it},repair.status.takeIf{it in states} ?: states.first(),true){}
+   val states=listOf("قيد الصيانة","بانتظار القطعة","بانتظار التسليم")
+   val status=ui.choice(states.map{it to MaintenanceDeliveryEligibility.display(it)},(if(repair.status=="جاهز للاستلام")"بانتظار التسليم" else repair.status).takeIf{it in states} ?: states.first(),true){}
    ui.add(edit,status.view)
    fun input(label:String,key:String):EditText {ui.label(edit,label);return ui.input(multiline=true).apply{setText(raw.optString(key));ui.add(edit,this)}}
    val diagnosis=input("التشخيص","diagnosis");val work=input("العمل المنجز","workDone");val notes=input("ملاحظات","notes")

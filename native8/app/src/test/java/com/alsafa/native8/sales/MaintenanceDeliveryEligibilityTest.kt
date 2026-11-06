@@ -10,8 +10,8 @@ class MaintenanceDeliveryEligibilityTest {
   assertTrue(MaintenanceDeliveryEligibility.allowed("جاهز للاستلام",raw))
   listOf("تم التسليم","قيد الصيانة","بانتظار القطعة","ملغاة").forEach { assertFalse(MaintenanceDeliveryEligibility.allowed(it,raw)) }
  }
- @Test fun zeroLabourCanDeliverButUnreadyPartsCannot() {
+ @Test fun readyRepairAllowsZeroLabourAndParts() {
   assertTrue(MaintenanceDeliveryEligibility.allowed("بانتظار التسليم",JSONObject("""{"laborPrice":0,"usedParts":[]}""")))
-  assertFalse(MaintenanceDeliveryEligibility.allowed("بانتظار التسليم",JSONObject("""{"laborPrice":10,"usedParts":[{"qty":1}]}""")))
+  assertTrue(MaintenanceDeliveryEligibility.allowed("بانتظار التسليم",JSONObject("""{"laborPrice":10,"usedParts":[{"qty":1}]}""")))
  }
 }

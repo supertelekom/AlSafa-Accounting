@@ -11,10 +11,12 @@ import java.time.LocalTime
 class QuickRepairRepository(private val context:Context) {
  fun settings():JSONObject {
   val staging=LegacyStagingDatabase(context)
-  try { val reader=LegacyReadRepository(staging);val run=reader.latestRunId() ?: return JSONObject()
-   return JSONObject(reader.objectSection(run,"settings") ?: "{}")
-  } finally { staging.close() }
+  val settings=try {val reader=LegacyReadRepository(staging);val run=reader.latestRunId();if(run==null)JSONObject() else JSONObject(reader.objectSection(run,"settings") ?: "{}")}
+  finally {staging.close()}
+  context.getSharedPreferences("quick_repair_buttons",Context.MODE_PRIVATE).getString("rows",null)?.let {settings.put("quickRepairButtons",org.json.JSONArray(it))}
+  return settings
  }
+
  suspend fun save(id:String,buttonId:String,base:String,finalAmount:String,currency:String,method:String,work:String,deliver:Boolean,customer:String,phone:String):Long {
   val settings=settings();val button=QuickRepairRules.buttons(settings).firstOrNull { it.getString("id")==buttonId } ?: error("اختر خدمة صيانة موجودة")
   val deferred= !deliver

@@ -17,11 +17,12 @@ class MaintenanceEditActivity:Activity() {
  override fun onCreate(savedInstanceState:Bundle?) {
   super.onCreate(savedInstanceState)
   val id=intent.getStringExtra("repair_id") ?: run { finish();return }
-  val root=LinearLayout(this).apply {
-   orientation=LinearLayout.VERTICAL
-   layoutDirection=View.LAYOUT_DIRECTION_RTL
-   setPadding(24,24,24,24)
-  }
+  requestWindowFeature(android.view.Window.FEATURE_NO_TITLE)
+  val ui=com.alsafa.native8.stylekit.SafaWidgets(com.alsafa.native8.stylekit.SafaStyle(this))
+  val host=com.alsafa.native8.stylekit.SafaPageHost(ui,"الصفا للساعات")
+  val root=host.body
+  ui.heading(root,"تعديل الصيانة — الأجرة والقطع","")
+  ui.add(root,ui.button("رجوع"){finish()})
   val status=TextView(this)
   root.addView(status)
   fun field(label:String):EditText=EditText(this).also {
@@ -42,9 +43,10 @@ class MaintenanceEditActivity:Activity() {
   root.addView(partsButton)
   val partsSummary=TextView(this).apply { text="القطع المختارة: لا توجد قطع" }
   root.addView(partsSummary)
+  val partRows=ui.column();ui.add(root,partRows)
   val save=Button(this).apply { text="حفظ التعديلات";isEnabled=false }
   root.addView(save)
-  setContentView(ScrollView(this).apply { addView(root) })
+  MaintenanceFormStyle.apply(root,ui);setContentView(host.view)
   Thread {
    val result=runCatching { runBlocking { AppDatabase.get(applicationContext).maintenanceDao().repair(id) } }
    runOnUiThread {
@@ -82,6 +84,10 @@ class MaintenanceEditActivity:Activity() {
     fun showParts(lines:List<MaintenancePartsRepository.SelectedPart>) {
      partsSummary.text=if(lines.isEmpty()) "القطع المختارة: لا توجد قطع" else
       "القطع المختارة: "+lines.joinToString("، ") { "${partNames[it.partId] ?: "قطعة صيانة"} × ${it.qty}" }
+     partRows.removeAllViews()
+     lines.forEach { line ->ui.add(partRows,ui.button("حذف ${partNames[line.partId] ?: "قطعة"} × ${line.qty}") {
+      val next=(pendingParts ?: existing).filter{it.partId!=line.partId}.toMutableList();pendingParts=next;showParts(next)
+     }) }
     }
     showParts(existing)
     partsButton.setOnClickListener {
@@ -99,7 +105,7 @@ class MaintenanceEditActivity:Activity() {
          val fields=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL;setPadding(24,8,24,8) }
          val qty=EditText(this).apply { hint="الكمية";setText("1");inputType=android.text.InputType.TYPE_CLASS_NUMBER }
          val price=EditText(this).apply { hint="سعر العميل — ${currency.selectedItem}";setText(runCatching { com.alsafa.native8.sales.InvoiceDisplay.amount(part.sale_price.toBigDecimal()*com.alsafa.native8.sales.ExchangeRateSettings(this@MaintenanceEditActivity).rate(part.currency,currency.selectedItem.toString())) }.getOrDefault(""));inputType=android.text.InputType.TYPE_CLASS_NUMBER or android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL }
-         fields.addView(qty);fields.addView(price)
+         fields.addView(qty);fields.addView(price);MaintenanceFormStyle.apply(fields,ui)
          android.app.AlertDialog.Builder(this).setTitle(part.name).setView(fields).setNegativeButton("إلغاء",null)
           .setPositiveButton("إضافة القطعة للصيانة") { _,_ ->
            val q=qty.text.toString().toBigDecimalOrNull()

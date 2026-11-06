@@ -1,10 +1,9 @@
 package com.alsafa.native8.maintenance
 import org.json.JSONObject
-import java.math.BigDecimal
 
-/** Labour-only intake can be delivered explicitly without a hidden readiness step. */
+/** Both legacy ready labels describe the same explicit readiness state. */
 object MaintenanceDeliveryEligibility {
- fun allowed(status:String,raw:JSONObject):Boolean = status=="جاهز للاستلام" ||
-  (status=="بانتظار التسليم" && ((raw.optJSONArray("usedParts")?.length() ?: 0)==0 || raw.optBoolean("isSimplifiedQuick")) &&
-   ((if(raw.optBoolean("isSimplifiedQuick")) raw.optString("price","0") else raw.optString("laborPrice",raw.optString("price","0"))).toBigDecimalOrNull() ?: BigDecimal(-1))>=BigDecimal.ZERO)
+ fun allowed(status:String,@Suppress("UNUSED_PARAMETER") raw:JSONObject):Boolean =
+  status=="جاهز للاستلام" || status=="بانتظار التسليم"
+ fun display(status:String)=if(status=="جاهز للاستلام" || status=="بانتظار التسليم") "جاهزة للتسليم" else status
 }

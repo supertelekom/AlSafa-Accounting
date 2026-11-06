@@ -15,6 +15,7 @@
         <activity android:name=".sales.InvoiceMetadataActivity" android:exported="false" android:windowSoftInputMode="adjustResize" />
         <activity android:name=".sales.FastSaleActivity" android:exported="false" android:configChanges="orientation|screenSize|keyboardHidden" android:windowSoftInputMode="adjustResize" />
         <activity android:name=".maintenance.ReadyDeliveriesActivity" android:exported="false"  android:windowSoftInputMode="adjustResize" />
+        <activity android:name=".maintenance.QuickRepairButtonsActivity" android:exported="false" android:windowSoftInputMode="adjustResize" />
         <activity android:name=".maintenance.QuickRepairActivity" android:exported="false" android:configChanges="orientation|screenSize|keyboardHidden" android:windowSoftInputMode="adjustResize" />
         <activity android:name=".maintenance.MaintenancePartsActivity" android:exported="false"  android:windowSoftInputMode="adjustResize" />
         <activity android:name=".maintenance.MaintenanceEditActivity" android:exported="false"  android:windowSoftInputMode="adjustResize" />

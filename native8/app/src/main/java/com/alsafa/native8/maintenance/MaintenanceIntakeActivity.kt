@@ -24,11 +24,12 @@ class MaintenanceIntakeActivity:Activity() {
  private lateinit var photoPreview:ImageView
  override fun onCreate(savedInstanceState:Bundle?) {
   super.onCreate(savedInstanceState)
-  val root=LinearLayout(this).apply {
-   orientation=LinearLayout.VERTICAL
-   layoutDirection=View.LAYOUT_DIRECTION_RTL
-   setPadding(24,24,24,24)
-  }
+  requestWindowFeature(android.view.Window.FEATURE_NO_TITLE)
+  val ui=com.alsafa.native8.stylekit.SafaWidgets(com.alsafa.native8.stylekit.SafaStyle(this))
+  val host=com.alsafa.native8.stylekit.SafaPageHost(ui,"الصفا للساعات")
+  val root=host.body
+  ui.heading(root,"استلام صيانة","")
+  ui.add(root,ui.button("رجوع"){finish()})
   fun field(hint:String):EditText=EditText(this).also {
    it.hint=hint
    root.addView(it,LinearLayout.LayoutParams(-1,-2))
@@ -66,10 +67,10 @@ class MaintenanceIntakeActivity:Activity() {
          hint="الكمية";setText("1");inputType=android.text.InputType.TYPE_CLASS_NUMBER
         }
         val price=EditText(this@MaintenanceIntakeActivity).apply {
-         hint="سعر القطعة";setText(part.sale_price)
+         hint="سعر القطعة — ${part.currency}";setText(part.sale_price)
          inputType=android.text.InputType.TYPE_CLASS_NUMBER or android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL
         }
-        form.addView(quantity);form.addView(price)
+        form.addView(quantity);form.addView(price);MaintenanceFormStyle.apply(form,ui)
         android.app.AlertDialog.Builder(this@MaintenanceIntakeActivity)
          .setTitle(part.name).setView(form).setNegativeButton("إلغاء",null)
          .setPositiveButton("إضافة") { _,_ ->
@@ -131,6 +132,7 @@ class MaintenanceIntakeActivity:Activity() {
     val invoiceCurrency=currency.selectedItem.toString()
     val laborValue=labor.text.toString().toBigDecimalOrNull()
     if(laborValue==null || laborValue<BigDecimal.ZERO) { Toast.makeText(this@MaintenanceIntakeActivity,"أجرة العمل غير صحيحة",Toast.LENGTH_LONG).show();return@setOnClickListener }
+    val photoValue=photoUri
     val requestedParts=selectedParts.toList()
     isEnabled=false
     Thread {
@@ -201,7 +203,7 @@ class MaintenanceIntakeActivity:Activity() {
     }.start()
    }
   })
-  setContentView(ScrollView(this).apply { addView(root) })
+  MaintenanceFormStyle.apply(root,ui);setContentView(host.view)
  }
  private fun shareWithWhatsAppBusiness(phone:String,number:Long) {
   val digits=phone.filter { it.isDigit() }

@@ -27,14 +27,15 @@ class MaintenanceReturnActivity:Activity() {
  private lateinit var font:Typeface
  private var repairId=""
  private var busy=false
+ private val ui by lazy{com.alsafa.native8.stylekit.SafaWidgets(com.alsafa.native8.stylekit.SafaStyle(this))}
  private fun dp(n:Int)=(n*resources.displayMetrics.density+0.5f).toInt()
- private fun text(value:String)=TextView(this).apply { text=value;textSize=18f;typeface=font;content.addView(this) }
+ private fun text(value:String)=TextView(this).apply { text=value;textSize=18f;typeface=font;content.addView(this);MaintenanceFormStyle.apply(this,ui) }
  private fun field(label:String,value:String,numeric:Boolean=false):EditText {
   text(label)
   return EditText(this).apply {
    typeface=font;setText(value);minHeight=dp(58);setSingleLine(true)
    if(numeric) inputType=android.text.InputType.TYPE_CLASS_NUMBER or android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL
-   content.addView(this,LinearLayout.LayoutParams(-1,-2))
+   content.addView(this,LinearLayout.LayoutParams(-1,-2));MaintenanceFormStyle.apply(this,ui)
   }
  }
  private fun choice(label:String,options:List<String>):Spinner {
@@ -45,19 +46,19 @@ class MaintenanceReturnActivity:Activity() {
     override fun getView(position:Int,convertView:View?,parent:ViewGroup):View=super.getView(position,convertView,parent).also { (it as? TextView)?.typeface=font }
     override fun getDropDownView(position:Int,convertView:View?,parent:ViewGroup):View=super.getDropDownView(position,convertView,parent).also { (it as? TextView)?.typeface=font }
    }
-   content.addView(this,LinearLayout.LayoutParams(-1,-2))
+   content.addView(this,LinearLayout.LayoutParams(-1,-2));MaintenanceFormStyle.apply(this,ui)
   }
  }
  private fun button(label:String,action:()->Unit)=Button(this).apply {
-  text=label;typeface=font;minHeight=dp(72);content.addView(this,LinearLayout.LayoutParams(-1,-2))
+  text=label;typeface=font;minHeight=dp(72);content.addView(this,LinearLayout.LayoutParams(-1,-2));MaintenanceFormStyle.apply(this,ui)
   setOnClickListener { if(!busy) action() }
  }
  override fun onCreate(savedInstanceState:Bundle?) {
-  super.onCreate(savedInstanceState)
+  super.onCreate(savedInstanceState);requestWindowFeature(android.view.Window.FEATURE_NO_TITLE);window.statusBarColor=com.alsafa.native8.stylekit.SafaStyle.Palette.cream
   repairId=intent.getStringExtra("repair_id") ?: run { finish();return }
   font=Typeface.createFromAsset(assets,"fonts/Tajawal-Medium.ttf")
   title="مرتجع / استبدال صيانة"
-  content=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL;layoutDirection=View.LAYOUT_DIRECTION_RTL;setPadding(dp(16),dp(16),dp(16),dp(20)) }
+  content=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL;setBackgroundColor(com.alsafa.native8.stylekit.SafaStyle.Palette.cream);layoutDirection=View.LAYOUT_DIRECTION_RTL;setPadding(dp(16),dp(16),dp(16),dp(20)) }
   val scroll=ScrollView(this).apply {
    isFillViewport=true;clipToPadding=false;isHorizontalScrollBarEnabled=false
    addView(content,FrameLayout.LayoutParams(-1,-2))
