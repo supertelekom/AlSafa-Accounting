@@ -16,7 +16,10 @@ object NativeMaintenanceProfitReader {
   var cost=zero
   for(i in 0 until parts.length()) {
    val line=parts.getJSONObject(i)
-   require(line.optBoolean("costSnapshotVerified") && line.getString("currency")==unit) {
+   // An explicitly stored zero cost is currency-independent; absence is not zero.
+   val explicitZero=line.optString("cost").toBigDecimalOrNull()?.signum()==0
+   if(explicitZero) line.put("currency",unit).put("costSnapshotVerified",true)
+   require(line.optBoolean("costSnapshotVerified") && line.optString("currency")==unit) {
     "تكلفة قطعة الصيانة تحتاج إعادة اختيار القطعة لتثبيت عملتها وتكلفتها" }
    val quantity=n(line,"qty");val unitCost=n(line,"cost")
    require(quantity>zero && unitCost>=zero)

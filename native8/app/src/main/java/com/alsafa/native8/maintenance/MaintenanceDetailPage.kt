@@ -58,16 +58,16 @@ class MaintenanceDetailPage(ui:SafaWidgets,repair:MaintenanceRepairEntity,
   val actions=SafaGrid(ui.context,{if(it>=650)3 else 2})
   fun action(label:String,run:()->Unit){actions.addView(ui.button(label,onClick=run))}
   action("تعديل بيانات الفاتورة",onMetadataEdit)
-  action("واتساب أعمال",onMessage);action("فاتورة PDF / طباعة",onPrint)
+  action("واتساب أعمال",onMessage);action("عرض الفاتورة / PDF / طباعة",onPrint)
   if(repair.source_sha256=="native8") {
    if(repair.status!="تم التسليم")action("تعديل الفاتورة",onEdit)
    if(MaintenanceDeliveryEligibility.allowed(repair.status,raw))action("تم التسليم — تحصيل المبلغ",onDelivery)
    if(repair.status=="تم التسليم")action("مرتجع / استبدال",onReturn)
   }
   ui.add(body,actions)
-  if(repair.source_sha256=="native8" && repair.status!="تم التسليم") {
+  if(repair.status!="تم التسليم" && !raw.has("nativeArchiveDelivery")) {
    val edit=ui.card();ui.add(body,edit);ui.heading(edit,"تحديث حالة الصيانة","")
-   val states=listOf("قيد الصيانة","بانتظار القطعة","جاهز للاستلام")
+   val states=listOf("قيد الصيانة","بانتظار القطعة","جاهز للاستلام","بانتظار التسليم")
    val status=ui.choice(states.map{it to it},repair.status.takeIf{it in states} ?: states.first(),true){}
    ui.add(edit,status.view)
    fun input(label:String,key:String):EditText {ui.label(edit,label);return ui.input(multiline=true).apply{setText(raw.optString(key));ui.add(edit,this)}}

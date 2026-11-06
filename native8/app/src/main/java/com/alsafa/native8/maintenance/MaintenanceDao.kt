@@ -67,8 +67,8 @@ interface MaintenanceDao {
  suspend fun insertNewRepair(value:MaintenanceRepairEntity)
  @Query("UPDATE maintenance_repairs SET customer=:customer, phone=:phone, watch=:watch, model=:model, problem=:problem, status=:status, original_json=:raw WHERE id=:id AND source_sha256='native8'")
  suspend fun editNewRepair(id:String,customer:String,phone:String,watch:String,model:String,problem:String,status:String,raw:String):Int
- @Query("UPDATE maintenance_repairs SET status=:status, original_json=:raw WHERE id=:id")
- suspend fun updateRepairStatus(id:String,status:String,raw:String):Int
+ @Query("UPDATE maintenance_repairs SET status=:status, original_json=:raw WHERE id=:id AND status!='تم التسليم' AND original_json=:expected")
+ suspend fun updateRepairStatus(id:String,status:String,raw:String,expected:String):Int
  @Query("UPDATE maintenance_repairs SET status=:status,price=:price,received=:received,delivered_date=:deliveredDate,original_json=:raw WHERE id=:id AND source_sha256='native8' AND status!='تم التسليم' AND original_json=:expected")
  suspend fun finalizeDelivery(id:String,status:String,price:String,received:String,deliveredDate:String,raw:String,expected:String):Int
  @Insert(onConflict=OnConflictStrategy.IGNORE)

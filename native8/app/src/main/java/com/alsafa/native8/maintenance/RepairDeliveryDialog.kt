@@ -28,7 +28,7 @@ object RepairDeliveryDialog {
   ui.add(summary,ui.text("\u2066${due.setScale(2,RoundingMode.HALF_UP)} ${row.currency}\u2069",27f,SafaStyle.Palette.deep,true),0)
   ui.add(body,summary,18)
   var currency=row.currency;var vault="drawer"
-  val amount=ui.input(numeric=true).apply{setText(due.toPlainString());textSize=22f;gravity=Gravity.CENTER;minimumHeight=ui.style.dp(58)}
+  val amount=ui.input(numeric=true).apply{setText(InvoiceDisplay.amount(due));textSize=22f;gravity=Gravity.CENTER;minimumHeight=ui.style.dp(58)}
   val controls=ui.column()
   ui.label(controls,"المبلغ المقبوض الآن");ui.add(controls,amount,14)
   lateinit var currencyButton:Button

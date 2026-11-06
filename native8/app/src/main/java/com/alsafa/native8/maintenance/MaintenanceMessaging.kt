@@ -11,7 +11,12 @@ object MaintenanceMessaging {
  fun share(context:Context,repair:MaintenanceRepairEntity) {
   val digits=repair.phone.filter { it.isDigit() }
   if(digits.isBlank()) {
-   Toast.makeText(context,"لا يوجد رقم هاتف للعميل في سجل الصيانة",Toast.LENGTH_LONG).show()
+   val ui=com.alsafa.native8.stylekit.SafaWidgets(com.alsafa.native8.stylekit.SafaStyle(context))
+   val body=ui.column(20)
+   ui.heading(body,"رقم الهاتف غير موجود","أضف رقم هاتف العميل من «تعديل بيانات الفاتورة»، ثم أعد الإرسال عبر واتساب أعمال.")
+   val dialog=android.app.AlertDialog.Builder(context).setView(body).create()
+   ui.add(body,ui.button("حسناً",true){dialog.dismiss()})
+   dialog.show()
    return
   }
   val raw=JSONObject(repair.original_json)

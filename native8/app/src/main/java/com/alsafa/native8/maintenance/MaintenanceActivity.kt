@@ -131,11 +131,11 @@ class MaintenanceActivity:ComponentActivity() {
             withContext(Dispatchers.IO) {
              val db=AppDatabase.get(applicationContext)
              val latest=db.maintenanceDao().repair(repair.id) ?: error("سجل الصيانة غير موجود")
-             require(latest.source_sha256=="native8" && latest.status!="تم التسليم") {"السجل غير قابل للتعديل"}
-             require(status in listOf("قيد الصيانة","بانتظار القطعة","جاهز للاستلام"))
+             require(latest.status!="تم التسليم" && !JSONObject(latest.original_json).has("nativeArchiveDelivery")) {"السجل غير قابل للتعديل"}
+             require(status in listOf("قيد الصيانة","بانتظار القطعة","جاهز للاستلام","بانتظار التسليم"))
              if(status=="جاهز للاستلام")require(work.isNotBlank()) {"سجل العمل المنجز قبل اعتماد الجاهزية"}
              val raw=JSONObject(latest.original_json).put("status",status).put("workDone",work).put("diagnosis",diagnosisValue).put("notes",notesValue).put("statusUpdatedAt",System.currentTimeMillis())
-             check(db.maintenanceDao().updateRepairStatus(repair.id,status,raw.toString())==1)
+             check(db.maintenanceDao().updateRepairStatus(repair.id,status,raw.toString(),latest.original_json)==1)
             }
             selectedRefresh?.invoke(repair.id)
             Toast.makeText(this@MaintenanceActivity,"تم حفظ حالة الصيانة بنجاح",Toast.LENGTH_LONG).show()

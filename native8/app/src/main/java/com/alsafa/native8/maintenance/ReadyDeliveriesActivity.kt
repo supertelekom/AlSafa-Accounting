@@ -19,6 +19,7 @@ class ReadyDeliveriesActivity:Activity() {
   val ui=SafaWidgets(SafaStyle(this));val host=SafaPageHost(ui,"الصفا للساعات")
   ui.heading(host.body,"تسليم الساعات","الساعات الجاهزة أو المتبقية لدينا بانتظار العميل.")
   ui.add(host.body,ui.button("رجوع"){finish()})
+  ui.add(host.body,ui.button("سجلات الصيانة — تحديث الجاهزية"){startActivity(Intent(this,MaintenanceActivity::class.java))})
   val list=ui.column();ui.add(host.body,list);ui.add(list,ui.text("جاري القراءة…"));setContentView(host.view)
   val token=++generation
   Thread { val result=runCatching {
@@ -46,6 +47,7 @@ class ReadyDeliveriesActivity:Activity() {
      if(rows.isEmpty()) ui.add(list,ui.text("لا توجد ساعات بانتظار التسليم."))
      rows.forEach { (r,due) ->
       val card=ui.card();ui.add(list,card,10)
+      ui.add(card,ui.text("فاتورة رقم ${r.invoice_number} — ${r.status}",13f))
       ui.add(card,ui.text("⌚ "+r.customer.ifBlank { "عميل" },20f,bold=true),6)
       ui.add(card,ui.text(r.watch.ifBlank { r.problem },14f),8)
       ui.add(card,ui.text("المطلوب عند التسليم",12f),4)
@@ -53,6 +55,9 @@ class ReadyDeliveriesActivity:Activity() {
       ui.add(card,ui.button(if(due!=null && due>BigDecimal.ZERO) "✓ تسليم وتحصيل" else "✓ تسليم الساعة",true){
        if(due!=null) RepairDeliveryDialog.show(this,r,due){load()}
       }.apply{isEnabled=due!=null})
+      ui.add(card,ui.button("عرض الفاتورة / PDF / طباعة"){
+       startActivity(Intent(this,com.alsafa.native8.sales.SalePrintActivity::class.java).putExtra("repair_id",r.id))
+      })
       ui.add(card,ui.button("عرض تفاصيل الساعة"){
        startActivity(Intent(this,MaintenanceActivity::class.java).putExtra("repair_id",r.id))
       })

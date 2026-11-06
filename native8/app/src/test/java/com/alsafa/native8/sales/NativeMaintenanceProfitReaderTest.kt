@@ -5,10 +5,21 @@ import org.junit.Test
 import java.math.BigDecimal
 
 class NativeMaintenanceProfitReaderTest {
+ @Test fun explicitZeroPartCostDoesNotRequireCurrencyConversionEvidence() {
+  val input=raw();input.getJSONArray("usedParts").getJSONObject(0).put("cost",0).remove("costSnapshotVerified")
+  input.getJSONArray("usedParts").getJSONObject(0).remove("currency")
+  val saved=NativeMaintenanceProfitReader.snapshot(input,"USD",JSONObject().put("USD",1))
+  assertEquals(0,saved.getJSONArray("usedParts").getJSONObject(0).optString("cost").toBigDecimal().signum())
+ }
+ @Test(expected=IllegalArgumentException::class) fun missingPartCostIsNotInventedAsZero() {
+  val input=raw();input.getJSONArray("usedParts").getJSONObject(0).remove("cost")
+  input.getJSONArray("usedParts").getJSONObject(0).remove("costSnapshotVerified")
+  NativeMaintenanceProfitReader.snapshot(input,"USD",JSONObject().put("USD",1))
+ }
  @Test fun labourOnlyDeliveryRecognizesFullAmountWithoutPartsOrNotes() {
   val raw=JSONObject("""{"id":"labour-only","status":"تم التسليم","date":"2026-10-01","deliveredDate":"2026-11-06","currency":"USD","laborPrice":10,"price":10,"received":10,"usedParts":[],"paymentLines":[{"amount":10,"currency":"USD","fxRate":1,"invoiceCredit":10}]}""")
   val saved=NativeMaintenanceProfitReader.snapshot(raw,"USD",JSONObject("""{"USD":1}"""))
-  assertEquals(0,saved.getString("cost").toBigDecimal().signum())
+  assertEquals(0,saved.optString("cost").toBigDecimal().signum())
   val audit=NativeMaintenanceProfitReader.extract(listOf(saved))
   assertTrue(audit.unresolved.toString(),audit.unresolved.isEmpty())
   assertEquals("2026-11-06",audit.events.single().recognizedOn.toString())
