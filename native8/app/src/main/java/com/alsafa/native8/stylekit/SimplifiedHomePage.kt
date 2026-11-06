@@ -17,12 +17,20 @@ class SimplifiedHomePage(ui:SafaWidgets,onRoute:(String)->Unit) {
    ui.add(box,ui.text(title,22f,bold=true).apply{gravity=Gravity.CENTER},0)
    return box
   }
-  val top=SafaGrid(ui.context,{2},14);top.addView(tile("مبيع سريع","🛒","sale"));top.addView(tile("صيانة سريعة","🔧","repair"));ui.add(host.body,top,14)
+  // Keep tablet actions compact; use available width when the window is narrower.
+  val actions=object:LinearLayout(ui.context) {
+   override fun onMeasure(w:Int,h:Int) {
+    val width=MeasureSpec.getSize(w).coerceAtMost(ui.style.dp(374))
+    super.onMeasure(MeasureSpec.makeMeasureSpec(width,MeasureSpec.EXACTLY),h)
+   }
+  }.apply{orientation=LinearLayout.VERTICAL}
+  host.body.addView(actions,LinearLayout.LayoutParams(-1,-2).apply{gravity=Gravity.CENTER_HORIZONTAL})
+  val top=SafaGrid(ui.context,{2},14);top.addView(tile("مبيع سريع","🛒","sale"));top.addView(tile("صيانة سريعة","🔧","repair"));ui.add(actions,top,14)
   val bottom=LinearLayout(ui.context).apply{gravity=Gravity.CENTER}
   val delivery=tile("تسليم الساعات","⌚","delivery")
   bottom.addView(delivery,LinearLayout.LayoutParams(0,-2,1f))
   // Match one upper square's width and centre it in the full-width row.
   bottom.addOnLayoutChangeListener{_,l,_,r,_,_,_,_,_-> val size=((r-l-ui.style.dp(14))/2).coerceAtLeast(0);val p=delivery.layoutParams as LinearLayout.LayoutParams;if(p.width!=size){p.width=size;p.weight=0f;delivery.layoutParams=p} }
-  ui.add(host.body,bottom,14);ui.add(host.body,ui.button("رجوع"){onRoute("back")});view=host.view
+  ui.add(actions,bottom,14);ui.add(host.body,ui.button("رجوع"){onRoute("back")});view=host.view
  }
 }
