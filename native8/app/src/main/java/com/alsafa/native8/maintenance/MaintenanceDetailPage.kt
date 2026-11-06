@@ -56,6 +56,9 @@ class MaintenanceDetailPage(ui:SafaWidgets,repair:MaintenanceRepairEntity,
   if(photoCount>0)ui.add(body,ui.text("صور الصيانة المحفوظة: $photoCount — عرض الصور الإضافية قيد الربط"))
   val actions=SafaGrid(ui.context,{if(it>=650)3 else 2})
   fun action(label:String,run:()->Unit){actions.addView(ui.button(label,onClick=run))}
+  action("تعديل بيانات الفاتورة") {
+   (ui.context as android.app.Activity).startActivityForResult(android.content.Intent(ui.context,com.alsafa.native8.sales.InvoiceMetadataActivity::class.java).putExtra("kind","repair").putExtra("invoice_id",repair.id),705)
+  }
   action("واتساب أعمال",onMessage);action("فاتورة PDF / طباعة",onPrint)
   if(repair.source_sha256=="native8") {
    if(repair.status!="تم التسليم")action("تعديل الفاتورة",onEdit)

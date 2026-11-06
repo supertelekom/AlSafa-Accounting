@@ -26,9 +26,39 @@ class LegacyReadRepository(private val database: LegacyStagingDatabase): com.als
             val current=page(run,section,offset,500)
             result.addAll(current.rows.map { it.fields })
             offset+=current.rows.size
-            if(offset>=current.total) return result
+            if(offset>=current.total) return invoiceMetadata(run,section,result)
             check(current.rows.isNotEmpty()) { "Incomplete legacy section $section" }
         }
+    }
+
+    private var metadataRun:Long?=null
+    private var metadataSales=emptyMap<String,com.alsafa.native8.sales.InvoiceMetadataProjection>()
+    private var metadataRepairs=emptyMap<String,com.alsafa.native8.sales.InvoiceMetadataProjection>()
+    /** Load once in the caller's coroutine/Room transaction; never block a Room transaction with nested runBlocking. */
+    suspend fun withInvoiceMetadata(db:com.alsafa.native8.sales.AppDatabase):LegacyReadRepository {
+        val run=latestRunId() ?: return this
+        val source=database.readableDatabase.rawQuery("SELECT source_sha256 FROM import_runs WHERE id=?",arrayOf(run.toString())).use{c -> if(c.moveToFirst())c.getString(0) else return this}
+        metadataSales=db.invoiceMetadataDao().editedSales(source).associateBy{it.id}
+        metadataRepairs=db.invoiceMetadataDao().editedRepairs(source).associateBy{it.id}
+        metadataRun=run
+        return this
+    }
+    /** Overlay only display/date metadata; original source rows and amounts remain intact. */
+    private fun invoiceMetadata(run:Long,section:String,rows:List<JSONObject>):List<JSONObject> {
+        if(run!=metadataRun || section !in listOf("sales","repairs","returns"))return rows
+        val edits=metadataSales to metadataRepairs
+        for(raw in rows) {
+            if(section=="returns") {
+                val group=if(raw.optString("referenceType")=="sale")edits.first else if(raw.optString("referenceType")=="repair")edits.second else continue
+                group[raw.optString("referenceId")]?.let{raw.put("invoiceNo",it.number)}
+            } else {
+                val group=if(section=="sales")edits.first else edits.second
+                group[raw.optString("id")]?.let { edit ->
+                    raw.put("invoiceNo",edit.number).put("date",edit.date).put("time",edit.time).put("customer",edit.customer).put("phone",edit.phone)
+                }
+            }
+        }
+        return rows
     }
 
     fun page(runId: Long, section: String, offset: Int = 0, limit: Int = 100): Page {

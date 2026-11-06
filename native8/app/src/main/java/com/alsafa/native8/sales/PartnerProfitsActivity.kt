@@ -68,7 +68,7 @@ class PartnerProfitsActivity:Activity() {
       val db=AppDatabase.get(applicationContext)
       val staging=LegacyStagingDatabase(applicationContext)
       try {
-       val legacy=LegacyReadRepository(staging)
+       val legacy=LegacyReadRepository(staging).withInvoiceMetadata(db)
        val run=legacy.latestRunId()
        db.withTransaction {
         val repository=UnifiedFinancialPeriodRepository(db.salesFinancialAuditDao(),

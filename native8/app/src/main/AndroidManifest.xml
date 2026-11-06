@@ -12,6 +12,7 @@
             <meta-data android:name="android.support.FILE_PROVIDER_PATHS" android:resource="@xml/receipt_paths" />
         </provider>
         <activity android:name=".backup.NativeBackupActivity" android:process=":maintenance" android:taskAffinity="com.alsafa.native8.maintenancebackup" android:launchMode="singleTask" android:configChanges="orientation|screenSize|keyboardHidden" android:exported="false"  android:windowSoftInputMode="adjustResize" />
+        <activity android:name=".sales.InvoiceMetadataActivity" android:exported="false" android:windowSoftInputMode="adjustResize" />
         <activity android:name=".sales.FastSaleActivity" android:exported="false" android:configChanges="orientation|screenSize|keyboardHidden" android:windowSoftInputMode="adjustResize" />
         <activity android:name=".maintenance.ReadyDeliveriesActivity" android:exported="false"  android:windowSoftInputMode="adjustResize" />
         <activity android:name=".maintenance.QuickRepairActivity" android:exported="false" android:configChanges="orientation|screenSize|keyboardHidden" android:windowSoftInputMode="adjustResize" />

@@ -37,7 +37,7 @@ class MaintenanceActivity:ComponentActivity() {
  override fun onActivityResult(requestCode:Int,resultCode:Int,data:Intent?) {
   super.onActivityResult(requestCode,resultCode,data)
   if(requestCode==702 && resultCode==RESULT_OK) reload?.invoke()
-  if(requestCode in listOf(703,704) && resultCode==RESULT_OK) {
+  if(requestCode in listOf(703,704,705) && resultCode==RESULT_OK) {
    val id=data?.getStringExtra("repair_id")
    if(id!=null) lifecycleScope.launch { selectedRefresh?.invoke(id) }
   }

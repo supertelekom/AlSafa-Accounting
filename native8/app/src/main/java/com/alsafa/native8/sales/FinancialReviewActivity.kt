@@ -123,7 +123,7 @@ class FinancialReviewActivity:Activity() {
      val status=withContext(Dispatchers.IO) {
       val db=AppDatabase.get(applicationContext);val staging=LegacyStagingDatabase(applicationContext)
       try {
-       val legacy=LegacyReadRepository(staging);val run=legacy.latestRunId()
+       val legacy=LegacyReadRepository(staging).withInvoiceMetadata(db);val run=legacy.latestRunId()
        db.withTransaction {
         val data=UnifiedFinancialPeriodRepository(db.salesFinancialAuditDao(),UnifiedExpensePartnerReadRepository(legacy,db.operationalExpensePartnerDao()),ZoneId.of("Asia/Damascus"),db.storeSaleProfitDao(),LegacyHistoricalProfitProjection(legacy),NativeMaintenanceProfitRepository(db.maintenanceDao(),db.legacyPaymentDao())).read(a.toString(),b.toString())
         check(legacy.latestRunId()==run) { "تغيرت النسخة المستعادة أثناء القراءة" }
@@ -161,7 +161,7 @@ class FinancialReviewActivity:Activity() {
       val db=AppDatabase.get(applicationContext)
       val staging=LegacyStagingDatabase(applicationContext)
       try {
-       db.withTransaction { UnifiedFinancialLedgerRepository(db,LegacyReadRepository(staging)).rows(a.toString(),b.toString()) }
+       db.withTransaction { UnifiedFinancialLedgerRepository(db,LegacyReadRepository(staging).withInvoiceMetadata(db)).rows(a.toString(),b.toString()) }
       } finally { staging.close() }
      }
      detail.text="الفترة: $a — $b\n\n"+FinancialLedgerPresentation.render(rows)
@@ -181,7 +181,7 @@ class FinancialReviewActivity:Activity() {
       val db=AppDatabase.get(applicationContext)
       val staging=LegacyStagingDatabase(applicationContext)
       try {
-       val legacy=LegacyReadRepository(staging);val run=legacy.latestRunId()
+       val legacy=LegacyReadRepository(staging).withInvoiceMetadata(db);val run=legacy.latestRunId()
        db.withTransaction {
         UnifiedFinancialPeriodRepository(db.salesFinancialAuditDao(),UnifiedExpensePartnerReadRepository(legacy,db.operationalExpensePartnerDao()),
          ZoneId.of("Asia/Damascus"),db.storeSaleProfitDao(),LegacyHistoricalProfitProjection(legacy),

@@ -19,22 +19,31 @@ data class InvoiceReceipt(val title:String,val number:String,val phone:String,va
  fun pdf(context:Context):File {
   val dir=File(context.cacheDir,"receipts").apply{mkdirs()}
   val target=File(dir,"AlSafa-${UUID.randomUUID()}.pdf")
+  val logo=loadLogo(context)
   val doc=PdfDocument()
+  var failure:Throwable?=null
   try {
    rows.chunked(24).forEachIndexed { index,part ->
     val height=pageHeight(context,part)
     val page=doc.startPage(PdfDocument.PageInfo.Builder(227,height,index+1).create())
-    draw(context,page.canvas,part,height);doc.finishPage(page)
+    try {draw(context,page.canvas,part,height,logo)}
+    catch(e:Throwable){runCatching{doc.finishPage(page)}.exceptionOrNull()?.let(e::addSuppressed);throw e}
+    doc.finishPage(page)
    }
    target.outputStream().use(doc::writeTo)
-  } finally {doc.close()}
+  } catch(e:Throwable){failure=e;target.delete();throw e}
+  finally {
+   try {doc.close()}catch(close:Throwable){if(failure!=null)failure.addSuppressed(close) else throw close}
+   finally {logo?.recycle()}
+  }
   return target
  }
  fun bitmaps(context:Context,width:Int):Sequence<Bitmap> = sequence {
   for(part in rows.chunked(24)) {
    val height=pageHeight(context,part)
    val bitmap=Bitmap.createBitmap(width,(height*width/227f).toInt(),Bitmap.Config.ARGB_8888)
-   val canvas=Canvas(bitmap);canvas.scale(width/227f,width/227f);draw(context,canvas,part,height)
+   val canvas=Canvas(bitmap);canvas.scale(width/227f,width/227f);val logo=loadLogo(context)
+   try {draw(context,canvas,part,height,logo)}catch(e:Throwable){bitmap.recycle();throw e}finally{logo?.recycle()}
    yield(bitmap)
   }
  }
@@ -45,12 +54,11 @@ data class InvoiceReceipt(val title:String,val number:String,val phone:String,va
  }
  private fun rowHeight(context:Context,r:Pair<String,String>)=maxOf(text(context,r.first,91,8f).height,text(context,r.second,91,8f).height)+14
  private fun pageHeight(context:Context,part:List<Pair<String,String>>)=maxOf(411,180+part.sumOf{rowHeight(context,it)})
- private fun draw(context:Context,canvas:Canvas,part:List<Pair<String,String>>,height:Int) {
+ private fun loadLogo(context:Context):Bitmap?=try {context.assets.open("invoice-logo.png").use {BitmapFactory.decodeStream(it)}}catch(_:java.io.IOException){null}
+ private fun draw(context:Context,canvas:Canvas,part:List<Pair<String,String>>,height:Int,logo:Bitmap?) {
   canvas.drawColor(Color.WHITE)
   val paint=Paint(Paint.ANTI_ALIAS_FLAG).apply{color=Color.BLACK;strokeWidth=0.7f;typeface=font(context);textAlign=Paint.Align.CENTER}
-  context.assets.open("invoice-logo.png").use {stream -> BitmapFactory.decodeStream(stream)?.let {logo ->
-   canvas.drawBitmap(logo,null,RectF(96.5f,8.5f,130.5f,51f),paint);logo.recycle()
-  } }
+  if(logo!=null)canvas.drawBitmap(logo,null,RectF(96.5f,8.5f,130.5f,51f),paint)
   paint.textSize=15f;canvas.drawText("الصفا للساعات",113.5f,66f,paint)
   paint.textSize=9f;canvas.drawText("Alsafa Watches",113.5f,80f,paint)
   canvas.drawLine(17f,88f,210f,88f,paint)

@@ -98,7 +98,7 @@ class SaleDetailsActivity: ComponentActivity() {
       }
      }
     }
-    Text("السجل التاريخي للعرض؛ لا تُطبّق عمليات الإلغاء والمرتجع الجديدة على الفاتورة القديمة دون ترحيل محاسبي مخصص.")
+    Button(onClick={startActivity(Intent(this@SaleDetailsActivity,InvoiceMetadataActivity::class.java).putExtra("kind","sale").putExtra("invoice_id",vm.saleId))}){Text("تعديل بيانات الفاتورة")}
    }
    vm.lines.forEach { line ->
     Card(modifier=Modifier.fillMaxWidth()) {
@@ -135,7 +135,7 @@ class SaleDetailsActivity: ComponentActivity() {
      }) { Text("إلغاء الفاتورة وتسوية المقبوض") }
    }
    if(!vm.historical) Button(enabled=vm.status != "ملغاة",onClick={startActivity(Intent(this@SaleDetailsActivity,SalePaymentsActivity::class.java).putExtra("sale_id",vm.saleId))}){Text("تحصيل دفعة")}
-   if(!vm.historical) Button(onClick={startActivity(Intent(this@SaleDetailsActivity,SalePrintActivity::class.java).putExtra("sale_id",vm.saleId))}){Text("طباعة / مشاركة")}
+   Button(onClick={startActivity(Intent(this@SaleDetailsActivity,SalePrintActivity::class.java).putExtra("sale_id",vm.saleId))}){Text("طباعة / مشاركة")}
    if(!vm.historical) Button(onClick={startActivity(Intent(this@SaleDetailsActivity,SaleReturnsActivity::class.java).putExtra("sale_id",vm.saleId))}){Text("مرتجع / إلغاء")}
   } }
  }
