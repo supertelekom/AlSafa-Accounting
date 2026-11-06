@@ -53,6 +53,24 @@ class UnifiedFinancialPeriodRepository(
    return PartnerFinancialStatement.calculate(period.approvedNet(),cumulative.approvedNet(),period.withdrawals,cumulative.withdrawals)
   }
  }
+ /** Explicit backup-only statement. Native trial records cannot alter an imported month. */
+ fun historicalStatement(from:String,to:String):Statement {
+  require(!LocalDate.parse(to).isBefore(LocalDate.parse(from)))
+  val projection=requireNotNull(historical)
+  fun result(first:String):Result {
+   val old=projection.read(first,to)
+   return Result(saleProfit=BigDecimal.ZERO,saleReversals=BigDecimal.ZERO,
+    operatingExpenses=old.expensesUsd,withdrawals=old.withdrawalsUsd,
+    partialNet=old.partialNetUsd,complete=old.complete,
+    historicalOnlineProfit=old.onlineProfitUsd,historicalStoreProfit=old.storeProfitUsd,
+    unresolvedHistorical=old.unresolved,historicalSaleReturnImpact=old.salesReturnImpactUsd,
+    historicalSalesIncluded=old.salesUnresolved.isEmpty(),maintenanceProfit=old.repairProfitUsd,
+    historicalMaintenanceProfit=old.repairProfitUsd,
+    maintenanceReturnImpact=old.returnImpactUsd-old.salesReturnImpactUsd,importRunId=old.importRunId)
+  }
+  val period=result(from)
+  return Statement(from,to,period,if(from=="0001-01-01") period else result("0001-01-01"))
+ }
  suspend fun statement(from:String,to:String):Statement {
   val period=read(from,to)
   val cumulative=if(from=="0001-01-01") period else read("0001-01-01",to)

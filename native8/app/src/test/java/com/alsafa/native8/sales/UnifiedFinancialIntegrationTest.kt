@@ -99,6 +99,19 @@ class UnifiedFinancialIntegrationTest {
   assertEquals(october.storeProfitUsd,summary.store)
   assertEquals(october.onlineProfitUsd,summary.online)
  }
+ @Test fun backupMonthlyStatementsIgnoreNativeTrialIssuesWithoutChangingUnifiedApproval()=runBlocking {
+  val repository=setup(uncovered=true,missingCost=true,suspect=true).repository
+  val october=repository.historicalStatement("2026-10-01","2026-10-31")
+  assertTrue(october.period.complete)
+  assertTrue(october.cumulative.complete)
+  amount("3297.83336318795237672",october.cumulative.approvedNet())
+  assertEquals(3,october.partners().size)
+  assertFalse(repository.statement("2026-11-01","2026-11-06").cumulative.complete)
+  val september=repository.historicalStatement("2026-09-01","2026-09-30")
+  assertTrue(september.period.complete)
+  val next=repository.historicalStatement("2026-10-01","2026-10-31")
+  amount(october.cumulative.approvedNet().toPlainString(),next.cumulative.approvedNet())
+ }
  @Test fun archivedInvoicesExpensesAndWithdrawalsFlowThroughActualUnifiedRepository()=runBlocking {
   val r=setup(false).repository.statement("2026-10-01","2026-10-26")
   assertTrue(r.unresolved.toString(),r.cumulative.complete)

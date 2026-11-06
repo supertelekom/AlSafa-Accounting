@@ -35,7 +35,8 @@ class PartnerProfitsActivity:Activity() {
   }
   val result=TextView(this).apply { textSize=18f;gravity=android.view.Gravity.RIGHT;textDirection=View.TEXT_DIRECTION_RTL;setHorizontallyScrolling(false);setLineSpacing(8f,1.1f) }
   val button=Button(this).apply { text="عرض حالة أرباح الشركاء" }
-  listOf(heading,explanation,button,result).forEach {
+  val archiveButton=Button(this).apply { text="أرباح النسخة الاحتياطية — حسب الشهر" }
+  listOf(heading,explanation,archiveButton,button,result).forEach {
    content.addView(it,LinearLayout.LayoutParams(-1,-2))
   }
   val scroll=ScrollView(this).apply {
@@ -60,8 +61,8 @@ class PartnerProfitsActivity:Activity() {
   }
   applyFont(content)
   fun money(value:BigDecimal)=value.setScale(2,RoundingMode.HALF_UP).toPlainString()+" USD"
-  fun load(first:String,last:String) {
-   button.isEnabled=false;result.text="جارٍ قراءة الأرباح والسحوبات..."
+  fun load(first:String,last:String,archiveOnly:Boolean=false) {
+   button.isEnabled=false;archiveButton.isEnabled=false;result.text="جارٍ قراءة الأرباح والسحوبات..."
    scope.launch {
     try {
      val statement=withContext(Dispatchers.IO) {
@@ -74,7 +75,7 @@ class PartnerProfitsActivity:Activity() {
         val repository=UnifiedFinancialPeriodRepository(db.salesFinancialAuditDao(),
          UnifiedExpensePartnerReadRepository(legacy,db.operationalExpensePartnerDao()),ZoneId.of("Asia/Damascus"),
          db.storeSaleProfitDao(),LegacyHistoricalProfitProjection(legacy),NativeMaintenanceProfitRepository(db.maintenanceDao(),db.legacyPaymentDao()))
-        repository.statement(first,last).also { check(legacy.latestRunId()==run) { "تغيرت النسخة المستعادة أثناء القراءة" } }
+        (if(archiveOnly) repository.historicalStatement(first,last) else repository.statement(first,last)).also { check(legacy.latestRunId()==run) { "تغيرت النسخة المستعادة أثناء القراءة" } }
        }
       } finally { staging.close() }
      }
@@ -92,7 +93,7 @@ class PartnerProfitsActivity:Activity() {
      } else {
       val names=mapOf("father" to "الأب","me" to "عبد الكريم","brother" to "يزن")
       val period=statement.period
-      result.text="الفترة: $first — $last\n"+
+      result.text=(if(archiveOnly) "المصدر: النسخة الاحتياطية فقط، حتى آخر بياناتها؛ لا تشمل العمليات الجديدة.\n" else "المصدر: الأرشيف والعمليات الجديدة.\n")+"الفترة: $first — $last\n"+
        "أرباح مبيعات المحل الأرشيفية: ${money(period.historicalStoreProfit)}\n"+
        "أرباح مبيعات المحل الجديدة: ${money(period.storeSaleProfit)}\n"+
        "أرباح الأونلاين الأرشيفية: ${money(period.historicalOnlineProfit)}\n"+
@@ -113,7 +114,34 @@ class PartnerProfitsActivity:Activity() {
        }
      }
     } catch(e:Exception) { result.text="تعذر اعتماد كشف الأرباح: "+(e.message ?: "خطأ في البيانات") }
-    finally { button.isEnabled=true }
+    finally { button.isEnabled=true;archiveButton.isEnabled=true }
+   }
+  }
+  archiveButton.setOnClickListener {
+   archiveButton.isEnabled=false
+   scope.launch {
+    try {
+     val months=withContext(Dispatchers.IO) {
+      val staging=LegacyStagingDatabase(applicationContext)
+      try {
+       val legacy=LegacyReadRepository(staging)
+       val run=legacy.latestRunId() ?: error("لا توجد نسخة مستعادة")
+       val dates=listOf("sales","repairs","payments","returns","expenses","partnerWithdrawals").flatMap { section ->
+        legacy.financialRows(run,section).flatMap { row -> listOf("date","deliveredDate").mapNotNull { key ->
+         runCatching { java.time.YearMonth.from(LocalDate.parse(row.optString(key))) }.getOrNull()
+        } }
+       }
+       check(legacy.latestRunId()==run) { "تغيرت النسخة المستعادة أثناء القراءة" }
+       dates.distinct().sortedDescending()
+      } finally { staging.close() }
+     }
+     check(months.isNotEmpty()) { "لا توجد تواريخ في النسخة المستعادة" }
+     AlertDialog.Builder(this@PartnerProfitsActivity).setTitle("شهر الأرباح — النسخة الاحتياطية")
+      .setItems(months.map { it.toString() }.toTypedArray()) { _,index ->
+       val month=months[index];load(month.atDay(1).toString(),month.atEndOfMonth().toString(),archiveOnly=true)
+      }.setNegativeButton("إلغاء",null).show()
+    } catch(e:Exception) { result.text=e.message ?: "تعذر قراءة أشهر النسخة" }
+    finally { archiveButton.isEnabled=true }
    }
   }
   button.setOnClickListener {
