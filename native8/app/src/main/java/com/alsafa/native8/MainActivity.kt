@@ -25,6 +25,24 @@ import android.widget.TextView
 class MainActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val mode=intent.getStringExtra("work_mode")
+        if(mode!="full") {
+            requestWindowFeature(android.view.Window.FEATURE_NO_TITLE)
+            window.statusBarColor=com.alsafa.native8.stylekit.SafaStyle.Palette.cream
+            val ui=com.alsafa.native8.stylekit.SafaWidgets(com.alsafa.native8.stylekit.SafaStyle(this))
+            fun openMode(value:String) { startActivity(Intent(this,MainActivity::class.java).putExtra("work_mode",value)) }
+            if(mode=="simple") {
+                val host=com.alsafa.native8.stylekit.SafaPageHost(ui,"الصفا للساعات")
+                ui.heading(host.body,"العمل السريع","اختر العملية فقط.")
+                ui.add(host.body,ui.button("الوضع الكامل"){openMode("full")})
+                ui.add(host.body,ui.button("مبيع"){startActivity(Intent(this,com.alsafa.native8.sales.QuickSaleActivity::class.java))})
+                ui.add(host.body,ui.button("صيانة سريعة"){startActivity(Intent(this,com.alsafa.native8.maintenance.QuickRepairActivity::class.java))})
+                ui.add(host.body,ui.button("تسليم الساعات"){startActivity(Intent(this,MaintenanceActivity::class.java))})
+                ui.add(host.body,ui.button("رجوع"){finish()})
+                setContentView(host.view)
+            } else setContentView(com.alsafa.native8.stylekit.ModeSelectionPage(ui,::openMode).view)
+            return
+        }
         window.statusBarColor = Color.rgb(19, 37, 57)
         val root = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
