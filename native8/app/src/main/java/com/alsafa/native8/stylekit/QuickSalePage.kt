@@ -6,6 +6,7 @@ import android.widget.*
 class QuickSalePage(private val ui:SafaWidgets,shopName:String,private val callbacks:Callbacks) {
  data class Draft(val productId:String,val finalAmount:String,val currency:String,val paymentMethod:String)
  interface Callbacks {
+  fun remove(index:Int) {}
   fun back();fun search(query:String);fun scan();fun lookup(barcode:String)
   fun baseAmountChanged(amount:String);fun amountChanged(amount:String,currency:String);fun submit(draft:Draft)
  }
@@ -16,6 +17,7 @@ class QuickSalePage(private val ui:SafaWidgets,shopName:String,private val callb
  private val priceFields=ui.column().apply{visibility=View.GONE}
  val results=ui.column()
  val selected=ui.text("لم يتم اختيار ساعة بعد",17f,SafaStyle.Palette.muted).apply{background=ui.style.box();setPadding(ui.style.dp(15),ui.style.dp(15),ui.style.dp(15),ui.style.dp(15))}
+ private val cart=ui.column()
  private var selectedId=""
  val money:QuickFormFields
  val payment:SafaWidgets.Choice
@@ -28,7 +30,7 @@ class QuickSalePage(private val ui:SafaWidgets,shopName:String,private val callb
   ui.add(form,search);ui.add(form,results);ui.add(form,barcode)
   ui.add(form,ui.button("📷 قراءة الباركود",true,54){callbacks.scan()})
   ui.add(form,ui.button("إضافة",height=54){callbacks.lookup(barcode.text.toString())})
-  ui.add(form,selected)
+  ui.add(form,selected);ui.add(form,cart)
   ui.label(priceFields,"سعر البيع لهذه الفاتورة");ui.add(priceFields,baseAmount);ui.add(form,priceFields,21)
   ui.listen(baseAmount,callbacks::baseAmountChanged)
   ui.step(form,2,"سعر البيع النهائي");money=QuickFormFields(ui,form,"USD",callbacks::amountChanged)
@@ -36,8 +38,19 @@ class QuickSalePage(private val ui:SafaWidgets,shopName:String,private val callb
   submit=ui.complete("✓ إتمام الفاتورة"){callbacks.submit(Draft(selectedId,money.amount.text.toString(),money.currency,payment.value))}
   ui.add(form,submit);ui.listen(search,callbacks::search)
  }
- fun showProducts(rows:List<Pair<String,String>>,onChoose:(String)->Unit){results.removeAllViews();rows.forEach{(id,label)->ui.add(results,ui.button(label){onChoose(id)})}}
+ fun showProducts(rows:List<Pair<String,String>>,onChoose:(String)->Unit){results.removeAllViews();rows.forEach{(id,label)->ui.add(results,ui.button(label){onChoose(id)})};host.view.post {host.revealFocusedField(140)}}
  fun selectProduct(id:String,description:String){selectedId=id;selected.text=description;priceFields.visibility=View.VISIBLE;results.removeAllViews()}
+ fun showCart(rows:List<String>) {
+  cart.removeAllViews();selected.text=if(rows.isEmpty())"لم يتم اختيار ساعة بعد" else "الأصناف المختارة: ${rows.size}"
+  rows.forEachIndexed { index,label ->
+   val row=LinearLayout(ui.context).apply{layoutDirection=View.LAYOUT_DIRECTION_RTL;gravity=android.view.Gravity.CENTER_VERTICAL}
+   row.addView(ui.text(label,16f),LinearLayout.LayoutParams(0,-2,1f))
+   row.addView(ui.button("حذف"){callbacks.remove(index)},LinearLayout.LayoutParams(-2,-2))
+   ui.add(cart,row)
+  }
+  priceFields.visibility=if(rows.isEmpty())View.GONE else View.VISIBLE
+  search.setText("");barcode.setText("");results.removeAllViews()
+ }
  fun showConversion(message:String,error:Boolean=false){money.conversion.text=message;money.conversion.setTextColor(if(error)SafaStyle.Palette.danger else SafaStyle.Palette.deep)}
  fun busy(value:Boolean){submit.isEnabled=!value}
 }

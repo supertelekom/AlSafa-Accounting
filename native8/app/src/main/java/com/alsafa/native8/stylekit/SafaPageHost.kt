@@ -23,12 +23,19 @@ class SafaPageHost(val ui:SafaWidgets,shopName:String,logo:Drawable?=null,handle
   if(handleInsets)setOnApplyWindowInsetsListener { v,i ->
    if(android.os.Build.VERSION.SDK_INT>=30){val b=i.getInsets(WindowInsets.Type.systemBars() or WindowInsets.Type.ime());v.setPadding(b.left,b.top,b.right,b.bottom)}
    else v.setPadding(i.systemWindowInsetLeft,i.systemWindowInsetTop,i.systemWindowInsetRight,i.systemWindowInsetBottom)
+   v.post { revealFocusedField() }
    i
   }
   // React to measured window width; later insets/keyboard changes remain within the scroll viewport.
   addOnLayoutChangeListener{_,left,_,right,_,oldLeft,_,oldRight,_->
    if(right-left!=oldRight-oldLeft){val w=(right-left)/resources.displayMetrics.density;val p=ui.style.dp((w*.022f).coerceIn(10f,28f));body.setPadding(p,p,p,p)}
   }
+ }
+ fun revealFocusedField(extraBelow:Int=80) {
+  val field=view.findFocus() ?: return
+  if(field !is EditText)return
+  val rect=android.graphics.Rect(0,0,field.width,field.height+ui.style.dp(extraBelow))
+  field.requestRectangleOnScreen(rect,false)
  }
  init {view.addOnAttachStateChangeListener(object:View.OnAttachStateChangeListener{
   override fun onViewAttachedToWindow(v:View){v.requestApplyInsets()}

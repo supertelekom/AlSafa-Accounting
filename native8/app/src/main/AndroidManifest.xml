@@ -8,43 +8,46 @@
         android:largeScreens="true" android:xlargeScreens="true" android:requiresSmallestWidthDp="600" />
     <application android:name=".backup.NativeApplication" android:label="الصفا Native 8" android:allowBackup="false"
         android:usesCleartextTraffic="false" android:supportsRtl="true">
-        <activity android:name=".backup.NativeBackupActivity" android:process=":maintenance" android:taskAffinity="com.alsafa.native8.maintenancebackup" android:launchMode="singleTask" android:configChanges="orientation|screenSize|keyboardHidden" android:exported="false" />
+        <provider android:name="androidx.core.content.FileProvider" android:authorities="${applicationId}.receipts" android:exported="false" android:grantUriPermissions="true">
+            <meta-data android:name="android.support.FILE_PROVIDER_PATHS" android:resource="@xml/receipt_paths" />
+        </provider>
+        <activity android:name=".backup.NativeBackupActivity" android:process=":maintenance" android:taskAffinity="com.alsafa.native8.maintenancebackup" android:launchMode="singleTask" android:configChanges="orientation|screenSize|keyboardHidden" android:exported="false"  android:windowSoftInputMode="adjustResize" />
         <activity android:name=".sales.FastSaleActivity" android:exported="false" android:configChanges="orientation|screenSize|keyboardHidden" android:windowSoftInputMode="adjustResize" />
-        <activity android:name=".maintenance.ReadyDeliveriesActivity" android:exported="false" />
+        <activity android:name=".maintenance.ReadyDeliveriesActivity" android:exported="false"  android:windowSoftInputMode="adjustResize" />
         <activity android:name=".maintenance.QuickRepairActivity" android:exported="false" android:configChanges="orientation|screenSize|keyboardHidden" android:windowSoftInputMode="adjustResize" />
-        <activity android:name=".maintenance.MaintenancePartsActivity" android:exported="false" />
-        <activity android:name=".maintenance.MaintenanceEditActivity" android:exported="false" />
-        <activity android:name=".maintenance.MaintenanceIntakeActivity" android:exported="false" />
-        <activity android:name=".maintenance.MaintenanceReturnActivity" android:exported="false" />
-        <activity android:name=".maintenance.MaintenanceActivity" android:exported="false" />
-        <activity android:name=".sales.PurchaseDraftActivity" android:exported="false" />
-        <activity android:name=".sales.SuppliersActivity" android:exported="false" />
-        <activity android:name=".sales.SupplierDebtActivity" android:exported="false" />
-        <activity android:name=".sales.SupplierDetailsActivity" android:exported="false" />
-        <activity android:name=".sales.PurchasesActivity" android:exported="false" />
-        <activity android:name=".ExchangeRatesActivity" android:exported="false" />
-        <activity android:name=".sales.LegacyCashboxHistoryActivity" android:exported="false" />
-        <activity android:name=".sales.DailyClosingActivity" android:exported="false" />
-        <activity android:name=".sales.CashboxMovementsActivity" android:exported="false" />
-        <activity android:name=".sales.SalesArchiveActivity" android:exported="false" />
-        <activity android:name=".sales.FullSaleActivity" android:exported="false" />
-        <activity android:name=".sales.QuickSaleActivity" android:exported="false" />
-        <activity android:name=".sales.SalePaymentsActivity" android:exported="false" />
-        <activity android:name=".sales.SaleDetailsActivity" android:exported="false" />
-        <activity android:name=".sales.SalesReturnsHistoryActivity" android:exported="false" />
-        <activity android:name=".sales.SaleReturnsActivity" android:exported="false" />
-        <activity android:name=".sales.ExpenseActivity" android:exported="false" />
-        <activity android:name=".sales.PartnerProfitsActivity" android:exported="false" />
-        <activity android:name=".sales.PartnersActivity" android:exported="false" />
-        <activity android:name=".sales.FinancialReviewActivity" android:exported="false" />
-        <activity android:name=".sales.SalePrintActivity" android:exported="false" />
-        <activity android:name=".ProductStockActivity" android:exported="false" />
-        <activity android:name=".ProductColorEditorActivity" android:exported="false" />
-        <activity android:name=".ProductEditorActivity" android:exported="false" />
-        <activity android:name=".ProductDetailsActivity" android:exported="false" />
-        <activity android:name=".ProductsActivity" android:exported="false" />
-        <activity android:name=".RestoreActivity" android:exported="false" />
-        <activity android:name=".MainActivity" android:exported="true">
+        <activity android:name=".maintenance.MaintenancePartsActivity" android:exported="false"  android:windowSoftInputMode="adjustResize" />
+        <activity android:name=".maintenance.MaintenanceEditActivity" android:exported="false"  android:windowSoftInputMode="adjustResize" />
+        <activity android:name=".maintenance.MaintenanceIntakeActivity" android:exported="false"  android:windowSoftInputMode="adjustResize" />
+        <activity android:name=".maintenance.MaintenanceReturnActivity" android:exported="false"  android:windowSoftInputMode="adjustResize" />
+        <activity android:name=".maintenance.MaintenanceActivity" android:exported="false"  android:windowSoftInputMode="adjustResize" />
+        <activity android:name=".sales.PurchaseDraftActivity" android:exported="false"  android:windowSoftInputMode="adjustResize" />
+        <activity android:name=".sales.SuppliersActivity" android:exported="false"  android:windowSoftInputMode="adjustResize" />
+        <activity android:name=".sales.SupplierDebtActivity" android:exported="false"  android:windowSoftInputMode="adjustResize" />
+        <activity android:name=".sales.SupplierDetailsActivity" android:exported="false"  android:windowSoftInputMode="adjustResize" />
+        <activity android:name=".sales.PurchasesActivity" android:exported="false"  android:windowSoftInputMode="adjustResize" />
+        <activity android:name=".ExchangeRatesActivity" android:exported="false"  android:windowSoftInputMode="adjustResize" />
+        <activity android:name=".sales.LegacyCashboxHistoryActivity" android:exported="false"  android:windowSoftInputMode="adjustResize" />
+        <activity android:name=".sales.DailyClosingActivity" android:exported="false"  android:windowSoftInputMode="adjustResize" />
+        <activity android:name=".sales.CashboxMovementsActivity" android:exported="false"  android:windowSoftInputMode="adjustResize" />
+        <activity android:name=".sales.SalesArchiveActivity" android:exported="false"  android:windowSoftInputMode="adjustResize" />
+        <activity android:name=".sales.FullSaleActivity" android:exported="false"  android:windowSoftInputMode="adjustResize" />
+        <activity android:name=".sales.QuickSaleActivity" android:exported="false"  android:windowSoftInputMode="adjustResize" />
+        <activity android:name=".sales.SalePaymentsActivity" android:exported="false"  android:windowSoftInputMode="adjustResize" />
+        <activity android:name=".sales.SaleDetailsActivity" android:exported="false"  android:windowSoftInputMode="adjustResize" />
+        <activity android:name=".sales.SalesReturnsHistoryActivity" android:exported="false"  android:windowSoftInputMode="adjustResize" />
+        <activity android:name=".sales.SaleReturnsActivity" android:exported="false"  android:windowSoftInputMode="adjustResize" />
+        <activity android:name=".sales.ExpenseActivity" android:exported="false"  android:windowSoftInputMode="adjustResize" />
+        <activity android:name=".sales.PartnerProfitsActivity" android:exported="false"  android:windowSoftInputMode="adjustResize" />
+        <activity android:name=".sales.PartnersActivity" android:exported="false"  android:windowSoftInputMode="adjustResize" />
+        <activity android:name=".sales.FinancialReviewActivity" android:exported="false"  android:windowSoftInputMode="adjustResize" />
+        <activity android:name=".sales.SalePrintActivity" android:exported="false"  android:windowSoftInputMode="adjustResize" />
+        <activity android:name=".ProductStockActivity" android:exported="false"  android:windowSoftInputMode="adjustResize" />
+        <activity android:name=".ProductColorEditorActivity" android:exported="false"  android:windowSoftInputMode="adjustResize" />
+        <activity android:name=".ProductEditorActivity" android:exported="false"  android:windowSoftInputMode="adjustResize" />
+        <activity android:name=".ProductDetailsActivity" android:exported="false"  android:windowSoftInputMode="adjustResize" />
+        <activity android:name=".ProductsActivity" android:exported="false"  android:windowSoftInputMode="adjustResize" />
+        <activity android:name=".RestoreActivity" android:exported="false"  android:windowSoftInputMode="adjustResize" />
+        <activity android:name=".MainActivity" android:exported="true" android:windowSoftInputMode="adjustResize" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />

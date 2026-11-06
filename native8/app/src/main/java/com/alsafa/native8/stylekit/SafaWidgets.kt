@@ -26,6 +26,8 @@ class SafaWidgets(val style:SafaStyle) {
   this.hint=hint;background=style.inputBackground();minimumHeight=style.dp(if(multiline)78 else 42)
   setPadding(style.dp(10),style.dp(9),style.dp(10),style.dp(9));setSingleLine(!multiline)
   inputType=if(numeric)InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL else InputType.TYPE_CLASS_TEXT or if(multiline)InputType.TYPE_TEXT_FLAG_MULTI_LINE else 0
+  if(!multiline)imeOptions=android.view.inputmethod.EditorInfo.IME_ACTION_NEXT or android.view.inputmethod.EditorInfo.IME_FLAG_NO_EXTRACT_UI
+  onFocusChangeListener=View.OnFocusChangeListener { v,focused -> if(focused)v.postDelayed({v.requestRectangleOnScreen(android.graphics.Rect(0,0,v.width,v.height+style.dp(80)),false)},250) }
   gravity=Gravity.TOP or Gravity.START
  }
  fun button(label:String,primary:Boolean=false,height:Int=44,onClick:()->Unit)=Button(context).apply {

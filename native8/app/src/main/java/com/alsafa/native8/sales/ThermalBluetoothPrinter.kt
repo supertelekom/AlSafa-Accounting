@@ -18,7 +18,7 @@ import android.text.TextUtils
 import android.graphics.Typeface
 import java.util.UUID
 
-/** ESC/POS text printing over paired Bluetooth SPP. Never writes accounting records. */
+/** ESC/POS raster printing over paired Bluetooth SPP. Never writes accounting records. */
 class ThermalBluetoothPrinter(private val context: Context) {
     data class PairedPrinter(val name: String, val address: String)
     private fun adapter(): BluetoothAdapter =
@@ -39,7 +39,7 @@ class ThermalBluetoothPrinter(private val context: Context) {
         val paint = TextPaint(Paint.ANTI_ALIAS_FLAG).apply {
             color = Color.BLACK
             textSize = if (width <= 384) 24f else 30f
-            typeface = Typeface.DEFAULT
+            typeface = Typeface.createFromAsset(context.assets,"fonts/Tajawal-Medium.ttf")
         }
         val layout = StaticLayout.Builder.obtain(receipt, 0, receipt.length, paint, width - 2 * padding)
             .setAlignment(Layout.Alignment.ALIGN_NORMAL)
@@ -55,7 +55,9 @@ class ThermalBluetoothPrinter(private val context: Context) {
         return bitmap
     }
 
-    fun print(address: String, receipt: String, widthMm: Int) {
+    fun print(address:String,receipt:String,widthMm:Int)=send(address,widthMm,sequenceOf(rasterizeArabic(receipt,if(widthMm==58)384 else 576)))
+    fun printReceipt(address:String,receipt:InvoiceReceipt,widthMm:Int)=send(address,widthMm,receipt.bitmaps(context,if(widthMm==58)384 else 576))
+    private fun send(address:String,widthMm:Int,bitmaps:Sequence<Bitmap>) {
         require(widthMm in setOf(58, 80)) { "عرض الرول غير مدعوم حالياً" }
         ensurePermission()
         val bluetooth = adapter()
@@ -68,7 +70,7 @@ class ThermalBluetoothPrinter(private val context: Context) {
             socket.connect()
             socket.outputStream.use { out ->
                 out.write(byteArrayOf(0x1B, 0x40)) // ESC @ initialize
-                val bitmap = rasterizeArabic(receipt, if (widthMm == 58) 384 else 576)
+                for(bitmap in bitmaps) { try {
                 val bytesPerRow = (bitmap.width + 7) / 8
                 val chunkHeight = 128
                 var start = 0
@@ -87,7 +89,7 @@ class ThermalBluetoothPrinter(private val context: Context) {
                     out.write(buffer)
                     start += height
                 }
-                bitmap.recycle()
+                } finally {bitmap.recycle()} }
                 out.write(byteArrayOf(0x0A, 0x0A, 0x0A))
                 out.flush()
             }

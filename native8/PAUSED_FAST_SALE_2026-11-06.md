@@ -11,3 +11,6 @@ Reviewed current FastSaleActivity, QuickSalePage, FastSaleDraft, RoomSalesEngine
 Legacy reference: references/design-source/assets/main.js: thermalReceiptRows 2144, repairReceiptIdentityRows 2230, thermalRepairReceiptRows 2243, printSaleThermal 2281, renderRepairs 5679, compact PDF helpers and sale/repair receipt functions 8370–8547. Original compact PDF uses 80mm page, logo, DejaVu Arabic/Tajawal English, two-column label/value rows and thank-you footer. Source assets include invoice-logo.png, invoice-assets.js, vendor/DejaVuSans.ttf and vendor/jspdf.umd.min.js. Existing native Tajawal assets remain available.
 
 Next: inspect user's reported fast-sale error first; reproduce/trace before changing code. Keep changes restricted to native8 and list all created/modified files directly in final report.
+
+## Resumed following tablet feedback
+See QUICK_WORKFLOW_BATCH_2026-11-06.md for the implemented search/keyboard, multi-product sale, maintenance detail and receipt batch. The earlier waiting status above is historical.

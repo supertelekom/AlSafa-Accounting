@@ -12,6 +12,7 @@ class NativeApplication:Application() {
  private var lock:FileLock?=null
  override fun onCreate() {
   super.onCreate()
+  registerActivityLifecycleCallbacks(com.alsafa.native8.stylekit.SafaKeyboard)
   handle=RandomAccessFile(java.io.File(noBackupFilesDir,"native8-data.lock"),"rw")
   val attempts=40
   repeat(attempts) {

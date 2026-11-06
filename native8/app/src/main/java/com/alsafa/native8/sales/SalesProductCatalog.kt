@@ -1,7 +1,7 @@
 package com.alsafa.native8.sales
 
 import android.content.Context
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.*
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
@@ -13,15 +13,21 @@ data class SaleChoice(val source:String,val productId:String,val variantId:Strin
  val title:String,val barcode:String,val available:String,val price:String,val cost:String,val currency:String="USD")
 
 /** One cancellable scan at a time; cache only small metadata, never source JSON or photos. */
-class SalesProductCatalog(context:Context) {
- private val dao=AppDatabase.get(context.applicationContext).operationalInventoryWriteDao()
+class SalesProductCatalog internal constructor(private val dao:com.alsafa.native8.data.operational.OperationalInventoryWriteDao) {
+ constructor(context:Context):this(AppDatabase.get(context.applicationContext).operationalInventoryWriteDao())
  private data class Entry(val source:String,val id:String,val variant:String?,val fields:Map<String,String>)
  private val gate=Mutex()
  private var revision:String?=null
  private var index=emptyList<Entry>()
- suspend fun find(query:String,exactBarcode:Boolean=false):List<SaleChoice> = withContext(Dispatchers.IO) {
-  if(query.isBlank()) return@withContext emptyList()
-  gate.withLock {
+ private val loader=CoroutineScope(SupervisorJob()+Dispatchers.IO)
+ private var preparation:Deferred<Unit>?=null
+ @Synchronized fun prepare():Deferred<Unit> {
+  val running=preparation
+  if(running!=null && !running.isCompleted)return running
+  return loader.async { refreshIndex() }.also { preparation=it }
+ }
+ fun close(){loader.cancel()}
+ private suspend fun refreshIndex() { gate.withLock {
    val source=dao.latestSource()
    val version=source.orEmpty()+":"+dao.searchRevision()
    if(revision!=version) {
@@ -57,6 +63,12 @@ class SalesProductCatalog(context:Context) {
     currentCoroutineContext().ensureActive()
     index=next;revision=version
    }
+ } }
+ suspend fun find(query:String,exactBarcode:Boolean=false):List<SaleChoice> = withContext(Dispatchers.IO) {
+  if(query.isBlank()) return@withContext emptyList()
+  // Cancelling a keystroke does not restart the expensive initial metadata load.
+  prepare().await()
+  gate.withLock {
    val found=mutableListOf<SaleChoice>()
    for(entry in index) {
     currentCoroutineContext().ensureActive()

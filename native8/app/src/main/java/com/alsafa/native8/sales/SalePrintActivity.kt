@@ -1,151 +1,116 @@
 package com.alsafa.native8.sales
 
-import android.content.Intent
+import android.app.Activity
 import android.os.Bundle
-import android.print.PrintAttributes
-import android.print.PrintManager
-import android.content.Context
-import android.webkit.WebView
-import android.webkit.WebViewClient
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
-import androidx.lifecycle.lifecycleScope
-import kotlinx.coroutines.launch
-import java.math.BigDecimal
+import android.content.Intent
+import android.content.ClipData
+import android.content.pm.PackageManager
 import android.os.Build
 import android.Manifest
-import android.content.pm.PackageManager
-import androidx.activity.result.contract.ActivityResultContracts
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
+import android.widget.Button
+import android.widget.CheckBox
+import androidx.core.content.FileProvider
+import com.alsafa.native8.stylekit.*
+import kotlinx.coroutines.*
+import java.io.File
 
-/** System print / PDF export. Does not post or alter any accounting records. */
-class SalePrintActivity : ComponentActivity() {
-    private var printView: WebView? = null
-    private val bluetoothPermission = registerForActivityResult(ActivityResultContracts.RequestPermission()) { }
-    override fun onDestroy() {
-        printView?.destroy()
-        printView = null
-        super.onDestroy()
+/** Receipt export/preview/share and explicit printer actions; never posts accounting data. */
+class SalePrintActivity:Activity() {
+ private val scope=CoroutineScope(SupervisorJob()+Dispatchers.Main.immediate)
+ private lateinit var ui:SafaWidgets
+ private lateinit var host:SafaPageHost
+ private lateinit var message:android.widget.TextView
+ private var pdf:File?=null
+ private var receipt:InvoiceReceipt?=null
+ private var printer=""
+ private var width=80
+ private var printing=false
+ private val preferences by lazy {getSharedPreferences("receipt_print",MODE_PRIVATE)}
+ override fun onCreate(state:Bundle?) {
+  super.onCreate(state);requestWindowFeature(android.view.Window.FEATURE_NO_TITLE)
+  ui=SafaWidgets(SafaStyle(this));host=SafaPageHost(ui,"الصفا للساعات");setContentView(host.view)
+  ui.heading(host.body,"طباعة ومشاركة الفاتورة","قالب الصفا — فاتورة مبيع أو صيانة")
+  ui.add(host.body,ui.button("رجوع"){finish()})
+  message=ui.text("جارٍ تجهيز الفاتورة…");ui.add(host.body,message)
+  scope.launch {
+   try {
+    val data=InvoiceReceiptRepository(applicationContext).load(intent.getStringExtra("sale_id"),intent.getStringExtra("repair_id"))
+    val file=withContext(Dispatchers.IO){data.pdf(applicationContext)}
+    receipt=data;pdf=file;showActions(data);message.text="الفاتورة جاهزة"
+    if(intent.getBooleanExtra("after_save",false) && preferences.getBoolean("auto",false) && printer.isNotBlank())printReceipt(null)
+   } catch(e:CancellationException){throw e}
+   catch(e:Exception){message.text=e.message ?: "تعذر تجهيز الفاتورة"}
+  }
+ }
+ private fun uri()=FileProvider.getUriForFile(this,packageName+".receipts",requireNotNull(pdf))
+ private fun launchSafely(action:()->Unit){try{action()}catch(e:Exception){message.text=e.message ?: "التطبيق المطلوب غير متاح"}}
+ private fun showActions(data:InvoiceReceipt) {
+  val grid=SafaGrid(this,{if(it>=600)3 else 1});ui.add(host.body,grid)
+  grid.addView(ui.button("عرض الفاتورة"){launchSafely{startActivity(Intent(Intent.ACTION_VIEW).setDataAndType(uri(),"application/pdf").addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION))}})
+  grid.addView(ui.button("طباعة عبر أندرويد"){launchSafely {
+   val file=requireNotNull(pdf)
+   val adapter=object:android.print.PrintDocumentAdapter() {
+    override fun onLayout(old:android.print.PrintAttributes?,new:android.print.PrintAttributes?,signal:android.os.CancellationSignal,callback:LayoutResultCallback,extras:Bundle?) {
+     if(signal.isCanceled)callback.onLayoutCancelled() else callback.onLayoutFinished(android.print.PrintDocumentInfo.Builder("AlSafa-${data.number}.pdf").setContentType(android.print.PrintDocumentInfo.CONTENT_TYPE_DOCUMENT).build(),true)
     }
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        val saleId = intent.getStringExtra("sale_id").orEmpty()
-        var html by mutableStateOf("")
-        var plain by mutableStateOf("")
-        var error by mutableStateOf("")
-        var loading by mutableStateOf(true)
-        var devices by mutableStateOf<List<ThermalBluetoothPrinter.PairedPrinter>>(emptyList())
-        var selectedPrinter by mutableStateOf("")
-        var width by mutableStateOf(80)
-        lifecycleScope.launch {
-            try {
-                val db = AppDatabase.get(applicationContext)
-                val current = db.salesPostingDao().sale(saleId)
-                val legacy = if (current == null) db.legacySaleDao().legacyById(saleId) else null
-                val lines = RoomSalesEngine(applicationContext).lines(saleId)
-                if (current == null && legacy == null) error = "الفاتورة غير موجودة"
-                else {
-                    val number = current?.number?.toString() ?: legacy!!.invoice_number.toString()
-                    val customer = current?.customer ?: legacy!!.customer
-                    val total = current?.total ?: legacy!!.total
-                    val paid = current?.paid ?: legacy!!.historical_paid
-                    val rows = lines.joinToString("") { line ->
-                        "<tr><td>${escape(line.title)}</td><td>${escape(line.quantity)}</td><td>${escape(line.price)}</td><td>${escape(line.returned)}</td></tr>"
-                    }
-                    html = """<!doctype html><html dir="rtl"><head><meta charset="utf-8"><style>
-                    body{font-family:sans-serif;direction:rtl;margin:16px;color:#111}
-                    h2{text-align:center}table{width:100%;border-collapse:collapse}
-                    td,th{border-bottom:1px solid #ddd;padding:7px;text-align:right}
-                    @media print{body{margin:4mm}}
-                    </style></head><body><h2>الصفا للساعات</h2>
-                    <p>فاتورة رقم: ${escape(number)}</p><p>العميل: ${escape(customer)}</p>
-                    <table><tr><th>الصنف</th><th>الكمية</th><th>السعر</th><th>المرتجع</th></tr>$rows</table>
-                    <p>الإجمالي: ${escape(total)}</p><p>المقبوض: ${escape(paid)}</p>
-                    </body></html>"""
-                    plain = "الصفا للساعات\nفاتورة رقم: $number\nالعميل: $customer\n" +
-                        lines.joinToString("\n") { "${it.title} × ${it.quantity} — ${it.price}" } +
-                        "\nالإجمالي: $total\nالمقبوض: $paid"
-                }
-            } catch (e: Exception) { error = e.message ?: "تعذر تحميل الفاتورة" }
-            finally { loading = false }
-        }
-        setContent {
-            Column(Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text("طباعة ومشاركة الفاتورة", style = MaterialTheme.typography.headlineSmall)
-                if (loading) CircularProgressIndicator()
-                if (error.isNotBlank()) Text(error, color = MaterialTheme.colorScheme.error)
-                if (html.isNotBlank()) {
-                    Text("الفاتورة جاهزة للطباعة عبر نظام أندرويد أو الحفظ PDF.")
-                    Button(onClick = {
-                        val web = WebView(this@SalePrintActivity)
-                        printView?.destroy()
-                        printView = web
-                        web.settings.defaultTextEncodingName = "UTF-8"
-                        web.webViewClient = object : WebViewClient() {
-                            override fun onPageFinished(view: WebView?, url: String?) {
-                                if (view !== printView) return
-                                val manager = getSystemService(Context.PRINT_SERVICE) as PrintManager
-                                manager.print("AlSafa-Invoice", web.createPrintDocumentAdapter("AlSafa-Invoice"),
-                                    PrintAttributes.Builder().build())
-                            }
-                        }
-                        web.loadDataWithBaseURL(null, html, "text/html", "UTF-8", null)
-                    }) { Text("طباعة / حفظ PDF") }
-                    Button(onClick = {
-                        val intent = Intent(Intent.ACTION_SEND).apply {
-                            type = "text/plain"
-                            putExtra(Intent.EXTRA_TEXT, plain)
-                            setPackage("com.whatsapp.w4b")
-                        }
-                        try { startActivity(intent) }
-                        catch (e: android.content.ActivityNotFoundException) {
-                            error = "واتساب Business غير مثبت أو غير متاح"
-                        }
-                    }) { Text("مشاركة نص الفاتورة عبر واتساب Business") }
-                    HorizontalDivider()
-                    Text("طابعة حرارية مقترنة", style = MaterialTheme.typography.titleMedium)
-                    Button(onClick = {
-                        if (Build.VERSION.SDK_INT >= 31 &&
-                            checkSelfPermission(Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
-                            bluetoothPermission.launch(Manifest.permission.BLUETOOTH_CONNECT)
-                        } else {
-                            try { devices = ThermalBluetoothPrinter(applicationContext).paired() }
-                            catch (e: Exception) { error = e.message ?: "تعذر قراءة الطابعات" }
-                        }
-                    }) { Text("عرض الطابعات المقترنة") }
-                    devices.forEach { printer ->
-                        OutlinedButton(onClick = { selectedPrinter = printer.address }) {
-                            Text((if (selectedPrinter == printer.address) "✓ " else "") + printer.name)
-                        }
-                    }
-                    Row {
-                        listOf(58, 80).forEach { size ->
-                            OutlinedButton(onClick = { width = size }) {
-                                Text((if (width == size) "✓ " else "") + "$size مم")
-                            }
-                        }
-                    }
-                    Button(enabled = selectedPrinter.isNotBlank(), onClick = {
-                        lifecycleScope.launch {
-                            try {
-                                withContext(Dispatchers.IO) {
-                                    ThermalBluetoothPrinter(applicationContext).print(selectedPrinter, plain, width)
-                                }
-                                error = "أُرسلت بيانات الطباعة للطابعة"
-                            } catch (e: Exception) { error = e.message ?: "فشل الاتصال بالطابعة" }
-                        }
-                    }) { Text("طباعة بلوتوث تجريبية") }
-                    Text("الطباعة المباشرة الحالية نصية تجريبية؛ دعم العربية وقالب الصفا الأصلي وإرسال PDF يحتاج اختبار الطابعة وربط القالب.")
-                }
-            }
-        }
+    override fun onWrite(pages:Array<out android.print.PageRange>,destination:android.os.ParcelFileDescriptor,signal:android.os.CancellationSignal,callback:WriteResultCallback) {
+     scope.launch {
+      try {
+       withContext(Dispatchers.IO){file.inputStream().use{input -> java.io.FileOutputStream(destination.fileDescriptor).use{out -> input.copyTo(out)}}}
+       if(signal.isCanceled)callback.onWriteCancelled() else callback.onWriteFinished(arrayOf(android.print.PageRange.ALL_PAGES))
+      }catch(e:Exception){callback.onWriteFailed(e.message)}
+     }
     }
-    private fun escape(value: String): String = value.replace("&", "&amp;")
-        .replace("<", "&lt;").replace(">", "&gt;").replace("\"", "&quot;")
+   }
+   (getSystemService(PRINT_SERVICE) as android.print.PrintManager).print("AlSafa-${data.number}",adapter,android.print.PrintAttributes.Builder().build())
+  }})
+  grid.addView(ui.button("حفظ PDF"){launchSafely{startActivityForResult(Intent(Intent.ACTION_CREATE_DOCUMENT).apply{type="application/pdf";addCategory(Intent.CATEGORY_OPENABLE);putExtra(Intent.EXTRA_TITLE,"AlSafa-${data.number}.pdf")},610)}})
+  grid.addView(ui.button("واتساب أعمال",true){launchSafely{
+   val content=uri()
+   startActivity(Intent(Intent.ACTION_SEND).apply {
+    type="application/pdf";setPackage("com.whatsapp.w4b");putExtra(Intent.EXTRA_STREAM,content);putExtra(Intent.EXTRA_TEXT,"الصفا للساعات — ${data.title} رقم ${data.number}")
+    data.phone.filter{it.isDigit()}.takeIf{it.isNotBlank()}?.let{putExtra("jid",it+"@s.whatsapp.net")}
+    clipData=ClipData.newUri(contentResolver,"فاتورة الصفا",content);addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+   })
+  }})
+  val preview=ui.card();ui.add(host.body,preview);ui.add(preview,ui.text(data.plain,15f))
+  ui.heading(host.body,"طابعة حرارية مقترنة","")
+  printer=preferences.getString("address","").orEmpty();width=preferences.getInt("width",80).takeIf{it==58 || it==80} ?: 80
+  val devices=ui.column();ui.add(host.body,ui.button("عرض الطابعات المقترنة") {
+   if(Build.VERSION.SDK_INT>=31 && checkSelfPermission(Manifest.permission.BLUETOOTH_CONNECT)!=PackageManager.PERMISSION_GRANTED) {
+    requestPermissions(arrayOf(Manifest.permission.BLUETOOTH_CONNECT),611);message.text="بعد منح الإذن اضغط عرض الطابعات المقترنة"
+   } else launchSafely {
+    devices.removeAllViews()
+    val paired=ThermalBluetoothPrinter(this).paired()
+    if(paired.isEmpty())message.text="أقرن الطابعة أولاً من إعدادات البلوتوث"
+    paired.forEach {p -> ui.add(devices,ui.button(p.name){printer=p.address;preferences.edit().putString("address",printer).apply();message.text="الطابعة: ${p.name}"})}
+   }
+  });ui.add(host.body,devices)
+  ui.add(host.body,ui.choice(listOf("58" to "58 مم","80" to "80 مم"),width.toString()){width=it.toInt();preferences.edit().putInt("width",width).apply()}.view)
+  lateinit var button:Button
+  button=ui.button("طباعة بلوتوث",true){printReceipt(button)};ui.add(host.body,button)
+  ui.add(host.body,CheckBox(this).apply {text="طباعة تلقائية بعد حفظ المبيع السريع";typeface=ui.style.font;isChecked=preferences.getBoolean("auto",false);setOnCheckedChangeListener{_,yes ->preferences.edit().putBoolean("auto",yes).apply()}})
+ }
+ private fun printReceipt(button:Button?) {
+  if(printing)return
+  if(printer.isBlank()){message.text="اختر الطابعة أولاً";return}
+  printing=true
+  button?.isEnabled=false
+  scope.launch {
+   try {withContext(Dispatchers.IO){ThermalBluetoothPrinter(applicationContext).printReceipt(printer,requireNotNull(receipt),width)};message.text="أُرسلت الفاتورة للطابعة"}
+   catch(e:CancellationException){throw e}
+   catch(e:Exception){message.text=e.message ?: "تعذرت الطباعة"}
+   finally{printing=false;button?.isEnabled=true}
+  }
+ }
+ override fun onActivityResult(request:Int,result:Int,data:Intent?) {
+  super.onActivityResult(request,result,data)
+  if(request!=610 || result!=RESULT_OK)return
+  val destination=data?.data ?: return
+  scope.launch {try {
+   withContext(Dispatchers.IO){requireNotNull(contentResolver.openOutputStream(destination)).use{out -> requireNotNull(pdf).inputStream().use{it.copyTo(out)}}}
+   message.text="تم حفظ ملف PDF"
+  }catch(e:CancellationException){throw e}catch(e:Exception){message.text="تعذر حفظ PDF: ${e.message}"}}
+ }
+ override fun onDestroy(){scope.cancel();super.onDestroy()}
 }

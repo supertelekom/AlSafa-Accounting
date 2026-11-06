@@ -44,6 +44,7 @@ class MaintenanceActivity:ComponentActivity() {
  }
  override fun onCreate(savedInstanceState:Bundle?) {
   super.onCreate(savedInstanceState)
+  requestWindowFeature(android.view.Window.FEATURE_NO_TITLE)
   var query by mutableStateOf("")
   var records by mutableStateOf<List<MaintenanceRepairEntity>>(emptyList())
   var selected by mutableStateOf<MaintenanceRepairEntity?>(null)
@@ -94,10 +95,10 @@ class MaintenanceActivity:ComponentActivity() {
    androidx.compose.runtime.CompositionLocalProvider(
     androidx.compose.ui.platform.LocalLayoutDirection provides androidx.compose.ui.unit.LayoutDirection.Rtl
    ) {
-    Column(Modifier.fillMaxSize().padding(16.dp),
+    Column(Modifier.fillMaxSize().padding(if(selected==null)16.dp else 0.dp),
      verticalArrangement=Arrangement.spacedBy(12.dp)) {
-     Text("الصيانة",style=MaterialTheme.typography.headlineSmall)
      if(selected==null) {
+      Text("الصيانة",style=MaterialTheme.typography.headlineSmall)
       Button(onClick={startActivity(Intent(this@MaintenanceActivity,QuickRepairActivity::class.java))}) { Text("صيانة سريعة") }
       OutlinedButton(onClick={startActivity(Intent(this@MaintenanceActivity,MaintenancePartsActivity::class.java))}) { Text("قطع الصيانة") }
       Button(onClick={
@@ -111,76 +112,38 @@ class MaintenanceActivity:ComponentActivity() {
      if(loading) LinearProgressIndicator(modifier=Modifier.fillMaxWidth())
      val repair=selected
      if(repair!=null) {
-      OutlinedButton(onClick={selected=null}) { Text("العودة إلى الصيانة") }
-      Button(onClick={MaintenanceMessaging.share(this@MaintenanceActivity,repair)}) {
-       Text("إرسال تفاصيل الصيانة عبر واتساب أعمال")
-      }
-      if(repair.source_sha256=="native8" && repair.status!="تم التسليم") {
-       Button(onClick={startActivityForResult(Intent(this@MaintenanceActivity,MaintenanceEditActivity::class.java).putExtra("repair_id",repair.id),703)}) { Text("تعديل الفاتورة") }
-      }
-      if(repair.source_sha256=="native8" && MaintenanceDeliveryEligibility.allowed(repair.status,JSONObject(repair.original_json))) {
-       Button(onClick={deliveryDialog=true}) { Text("تم التسليم — تحصيل المبلغ") }
-      }
-      if(deliveryDialog && repair.source_sha256=="native8") {
-       LaunchedEffect(repair.id) {
-        deliveryDialog=false
-        RepairDeliveryDialog.show(this@MaintenanceActivity,repair,
-         com.alsafa.native8.sales.LegacyMaintenanceProfitReader.total(JSONObject(repair.original_json))) {
-          lifecycleScope.launch {selectedRefresh?.invoke(repair.id)}
-        }
-       }
-      }
-      Column(Modifier.weight(1f).verticalScroll(rememberScrollState()),
-       verticalArrangement=Arrangement.spacedBy(12.dp)) {
-       MaintenanceDetail(repair)
-       if(repair.source_sha256=="native8" && repair.status=="تم التسليم") {
-        Button(onClick={startActivityForResult(Intent(this@MaintenanceActivity,MaintenanceReturnActivity::class.java).putExtra("repair_id",repair.id),704)},modifier=Modifier.fillMaxWidth()) { Text("مرتجع / استبدال صيانة") }
-       }
-       if(repair.source_sha256=="native8" && repair.status!="تم التسليم") {
-        Text("تحديث حالة الصيانة",style=MaterialTheme.typography.titleMedium)
-        listOf("قيد الصيانة","بانتظار القطعة","جاهز للاستلام").forEach { option ->
-         Row {
-          RadioButton(selected=statusChoice==option,onClick={statusChoice=option})
-          Text(option)
-         }
-        }
-        OutlinedTextField(value=diagnosis,onValueChange={diagnosis=it},
-         label={Text("التشخيص")},modifier=Modifier.fillMaxWidth())
-        OutlinedTextField(value=workDone,onValueChange={workDone=it},
-         label={Text("العمل المنجز")},modifier=Modifier.fillMaxWidth())
-        OutlinedTextField(value=notes,onValueChange={notes=it},
-         label={Text("ملاحظات")},modifier=Modifier.fillMaxWidth())
-        Button(enabled=!statusSaving,onClick={
-         lifecycleScope.launch {
-          statusSaving=true
-          error=""
-          try {
-           val updated=withContext(Dispatchers.IO) {
-            val db=AppDatabase.get(applicationContext)
-            val latest=db.maintenanceDao().repair(repair.id) ?: error("سجل الصيانة غير موجود")
-            require(latest.source_sha256=="native8" && latest.status!="تم التسليم") { "السجل غير قابل للتعديل" }
-            require(statusChoice in listOf("قيد الصيانة","بانتظار القطعة","جاهز للاستلام")) { "حالة غير مدعومة" }
-            if(statusChoice=="جاهز للاستلام") require(workDone.isNotBlank()) { "سجل العمل المنجز قبل اعتماد الجاهزية" }
-            val raw=JSONObject(latest.original_json)
-            raw.put("status",statusChoice)
-            raw.put("workDone",workDone)
-            raw.put("diagnosis",diagnosis)
-            raw.put("notes",notes)
-            raw.put("statusUpdatedAt",System.currentTimeMillis())
-            check(db.maintenanceDao().updateRepairStatus(repair.id,statusChoice,raw.toString())==1)
-            db.maintenanceDao().repair(repair.id)
-           }
-           selected=updated
-           refresh()
-           Toast.makeText(this@MaintenanceActivity,"تم حفظ حالة الصيانة بنجاح",Toast.LENGTH_LONG).show()
-          } catch(e:Exception) {
-           error=e.message ?: "تعذر تحديث الحالة"
-           Toast.makeText(this@MaintenanceActivity,error,Toast.LENGTH_LONG).show()
+      key(repair.id,repair.original_json) {
+       AndroidView(modifier=Modifier.weight(1f).fillMaxWidth(),factory={ context ->
+        MaintenanceDetailPage(com.alsafa.native8.stylekit.SafaWidgets(com.alsafa.native8.stylekit.SafaStyle(context)),repair,
+         onBack={selected=null},onMessage={MaintenanceMessaging.share(this@MaintenanceActivity,repair)},
+         onEdit={startActivityForResult(Intent(this@MaintenanceActivity,MaintenanceEditActivity::class.java).putExtra("repair_id",repair.id),703)},
+         onDelivery={RepairDeliveryDialog.show(this@MaintenanceActivity,repair,com.alsafa.native8.sales.LegacyMaintenanceProfitReader.total(JSONObject(repair.original_json))) {lifecycleScope.launch {selectedRefresh?.invoke(repair.id)}}},
+         onReturn={startActivityForResult(Intent(this@MaintenanceActivity,MaintenanceReturnActivity::class.java).putExtra("repair_id",repair.id),704)},
+         onPrint={startActivity(Intent(this@MaintenanceActivity,com.alsafa.native8.sales.SalePrintActivity::class.java).putExtra("repair_id",repair.id))},
+         onSave={status,diagnosisValue,work,notesValue,button ->
+          button.isEnabled=false
+          lifecycleScope.launch {
+           try {
+            withContext(Dispatchers.IO) {
+             val db=AppDatabase.get(applicationContext)
+             val latest=db.maintenanceDao().repair(repair.id) ?: error("سجل الصيانة غير موجود")
+             require(latest.source_sha256=="native8" && latest.status!="تم التسليم") {"السجل غير قابل للتعديل"}
+             require(status in listOf("قيد الصيانة","بانتظار القطعة","جاهز للاستلام"))
+             if(status=="جاهز للاستلام")require(work.isNotBlank()) {"سجل العمل المنجز قبل اعتماد الجاهزية"}
+             val raw=JSONObject(latest.original_json).put("status",status).put("workDone",work).put("diagnosis",diagnosisValue).put("notes",notesValue).put("statusUpdatedAt",System.currentTimeMillis())
+             check(db.maintenanceDao().updateRepairStatus(repair.id,status,raw.toString())==1)
+            }
+            selectedRefresh?.invoke(repair.id)
+            Toast.makeText(this@MaintenanceActivity,"تم حفظ حالة الصيانة بنجاح",Toast.LENGTH_LONG).show()
+           } catch(e:Exception){error=e.message ?: "تعذر تحديث الحالة"}
+           finally {button.isEnabled=true}
           }
-          finally { statusSaving=false }
-         }
-        }) { Text("حفظ تحديث الحالة") }
-       }
+         }).view
+       })
+      }
+      if(deliveryDialog) LaunchedEffect(repair.id) {
+       deliveryDialog=false
+       RepairDeliveryDialog.show(this@MaintenanceActivity,repair,com.alsafa.native8.sales.LegacyMaintenanceProfitReader.total(JSONObject(repair.original_json))) {lifecycleScope.launch {selectedRefresh?.invoke(repair.id)}}
       }
      } else {
       Text("السجلات المعروضة: "+records.size,style=MaterialTheme.typography.titleMedium)
@@ -210,125 +173,4 @@ class MaintenanceActivity:ComponentActivity() {
    }
   }
  }
-}
-
-@Composable
-private fun MaintenanceDetail(repair:MaintenanceRepairEntity) {
- val obj=remember(repair.id,repair.original_json) {
-  runCatching { JSONObject(repair.original_json) }.getOrNull()
- }
- Text("تفاصيل الصيانة رقم "+repair.invoice_number,style=MaterialTheme.typography.headlineSmall)
- if(obj==null) { Text("تعذر قراءة تفاصيل الصيانة الأصلية");return }
- @Composable fun field(label:String,vararg keys:String) {
-  val value=keys.firstNotNullOfOrNull { key ->
-   obj.opt(key)?.takeUnless { it==JSONObject.NULL || it is JSONObject || it is JSONArray }
-    ?.toString()?.takeIf { it.isNotBlank() }
-  }
-  if(value!=null) {
-   Column(Modifier.fillMaxWidth(),verticalArrangement=Arrangement.spacedBy(3.dp)) {
-    Text(label,style=MaterialTheme.typography.labelLarge,color=MaterialTheme.colorScheme.onSurfaceVariant)
-    Text(value,style=MaterialTheme.typography.bodyLarge)
-   }
-  }
- }
- @Composable fun section(title:String,content:@Composable ColumnScope.()->Unit) {
-  Card(Modifier.fillMaxWidth()) {
-   Column(Modifier.padding(16.dp),verticalArrangement=Arrangement.spacedBy(10.dp)) {
-    Text(title,style=MaterialTheme.typography.titleMedium)
-    content()
-   }
-  }
- }
- section("بيانات الاستلام") {
-  field("رقم الصيانة","invoiceNo")
-  field("التاريخ","date")
-  field("الوقت","time")
-  field("العميل","customer")
-  field("الهاتف","phone")
-  field("الساعة","watch")
-  field("خدمة الصيانة السريعة","quickServiceName")
-  field("الموديل","model")
-  field("العطل","problem")
-  field("التشخيص","diagnosis")
-  field("العمل المنجز","workDone")
-  field("الحالة","status")
- }
- val linesForTotals=obj.optJSONArray("usedParts") ?: JSONArray()
- val calculatedParts=(0 until linesForTotals.length()).sumOf { i ->
-  val part=linesForTotals.optJSONObject(i)
-  (part?.optString("qty")?.toDoubleOrNull() ?: 0.0)*(part?.optString("price")?.toDoubleOrNull() ?: 0.0)
- }
- val calculatedCost=(0 until linesForTotals.length()).sumOf { i ->
-  val part=linesForTotals.optJSONObject(i)
-  (part?.optString("qty")?.toDoubleOrNull() ?: 0.0)*(part?.optString("cost")?.toDoubleOrNull() ?: 0.0)
- }
- val labor=(if(obj.has("laborPrice")) obj.optString("laborPrice") else obj.optString("price","0")).toDoubleOrNull() ?: 0.0
- section("التكلفة والقبض") {
-  Text("الإجمالي المحسوب (أجرة العمل + القطع): "+(labor+calculatedParts)+" "+repair.currency,
-   style=MaterialTheme.typography.titleMedium)
-  Text("تكلفة القطع المحسوبة: "+calculatedCost+" "+repair.currency)
-
-  field("العملة","currency")
-  field("إجمالي الفاتورة المسجل","price")
-  field("أجرة العمل","laborPrice")
-  field("قيمة القطع","partsTotal")
-  field("تكلفة القطع","partsCost")
-  field("التكلفة الإجمالية المسجلة","cost")
-  field("تكلفة إضافية","manualCost")
-  field("الضريبة","tax")
-  field("المقبوض","received")
-  if(repair.source_sha256=="native8" && (obj.has("nativeReturns") || obj.has("nativePayments"))) {
-   runCatching { Triple(MaintenanceReturnRules.effective(obj),MaintenanceReturnRules.paid(obj),MaintenanceReturnRules.due(obj)) }.getOrNull()?.let { totals ->
-    Text("الإجمالي بعد العملية: ${totals.first} ${repair.currency}")
-    Text("المقبوض الصافي: ${totals.second} ${repair.currency}")
-    Text("المتبقي: ${totals.third} ${repair.currency}")
-   }
-  }
-  obj.optJSONObject("nativeArchiveDelivery")?.let { delivery ->
-   delivery.optJSONObject("payment")?.let { payment ->
-    Text("تحصيل التسليم: ${payment.optString("paymentAmount")} ${payment.optString("paymentCurrency")}")
-    Text("تاريخ التحصيل: ${payment.optString("date")}")
-    Text("تمت تسوية المتبقي: ${payment.optString("amount")} ${repair.currency}")
-   }
-   Text("المتبقي بعد التسليم: 0 ${repair.currency}")
-  }
-  field("حالة الدفع","paymentStatus")
-  field("طريقة الدفع","paymentMethod")
- }
- val parts=obj.optJSONArray("usedParts")
- if(parts!=null && parts.length()>0) {
-  section("قطع الصيانة المستخدمة") {
-   for(i in 0 until parts.length()) {
-    val part=parts.optJSONObject(i)
-    if(part!=null) {
-     val name=part.optString("name").ifBlank { "قطعة "+(i+1) }
-     Text(name,style=MaterialTheme.typography.bodyLarge)
-     listOf("qty" to "الكمية","quantity" to "الكمية",
-      "price" to "السعر","cost" to "التكلفة").forEach { (key,label) ->
-      if(part.has(key)) Text(label+": "+part.optString(key))
-     }
-     if(i<parts.length()-1) HorizontalDivider()
-    } else Text(parts.optString(i))
-   }
-  }
- }
- section("التسليم والملاحظات") {
-  field("تاريخ التسليم","deliveredDate")
-  field("وقت التسليم","deliveredTime")
-  field("ملاحظات","notes")
- }
- val imageValue=obj.optString("watchPhoto")
- if(imageValue.isNotBlank()) {
-  section("صورة الساعة") {
-   AndroidView(factory={ context -> ImageView(context).apply {
-    adjustViewBounds=true
-    scaleType=ImageView.ScaleType.FIT_CENTER
-   } },update={ view -> MaintenancePhoto.display(view,imageValue) },
-    modifier=Modifier.fillMaxWidth().heightIn(max=350.dp))
-  }
- }
- val photoCount=listOf("photos","watchPhotos","images").sumOf { key ->
-  obj.optJSONArray(key)?.length() ?: 0
- }
- if(photoCount>0) Text("صور الصيانة المحفوظة: "+photoCount+" — عرض الصور قيد الربط")
 }
