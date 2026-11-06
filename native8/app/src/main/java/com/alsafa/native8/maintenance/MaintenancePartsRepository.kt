@@ -52,9 +52,14 @@ class MaintenancePartsRepository(private val db: AppDatabase) {
  /** Picker changes the invoice draft only; legacy stock deduction happens at delivery. */
  suspend fun saveDraft(repairId:String,parts:List<SelectedPart>) = db.withTransaction {
   val repair=dao.repair(repairId) ?: error("فاتورة الصيانة غير موجودة")
-  require(repair.source_sha256=="native8" && repair.status!="تم التسليم") { "الفاتورة غير قابلة للتعديل" }
+  require(repair.status!="تم التسليم" && !JSONObject(repair.original_json).has("nativeArchiveDelivery")) { "الفاتورة غير قابلة للتعديل" }
   val old=JSONObject(repair.original_json)
   require(!old.optBoolean("partsStockApplied",false)) { "تم اعتماد مخزون هذه الصيانة مسبقاً" }
+  val prior=old.optJSONArray("usedParts") ?: JSONArray()
+  val priorById=(0 until prior.length()).map{prior.getJSONObject(it)}.associateBy{it.optString("partId")}
+  val priorCost=priorById.values.fold(BigDecimal.ZERO){sum,line -> sum+nonnegative(line.optString("cost"))*integer(line.optString("qty"))}
+  val manual=if(old.has("manualCost"))nonnegative(old.optString("manualCost")) else
+   (nonnegative(old.optString("cost","0"))-priorCost).max(BigDecimal.ZERO)
   val used=JSONArray();var total=BigDecimal.ZERO;var costTotal=BigDecimal.ZERO
   val seen=mutableSetOf<String>()
   for(line in parts) {
@@ -63,6 +68,12 @@ class MaintenancePartsRepository(private val db: AppDatabase) {
    val qty=integer(line.qty);require(qty>BigDecimal.ZERO) { "الكمية يجب أن تكون أكبر من صفر" }
    require(qty<=integer(part.stock)) { "الكمية غير متوفرة: ${part.name}" }
    val price=nonnegative(line.price)
+   val previous=priorById[line.partId]
+   if(previous!=null) {
+    val kept=JSONObject(previous.toString()).put("qty",canonical(qty)).put("price",canonical(price))
+    used.put(kept);total+=qty*price;costTotal+=qty*nonnegative(previous.optString("cost"))
+    continue
+   }
    val originalCost=nonnegative(part.cost)
    val costRate=com.alsafa.native8.sales.ExchangeRateSettings(AppDatabase.cashContext()).rate(part.currency,repair.currency)
    val cost=originalCost.multiply(costRate)
@@ -73,7 +84,7 @@ class MaintenancePartsRepository(private val db: AppDatabase) {
     .put("sourceCostCurrency",part.currency).put("costExchangeRate",canonical(costRate)))
    total=total.add(qty.multiply(price));costTotal=costTotal.add(qty.multiply(cost))
   }
-  old.put("usedParts",used);old.put("partsTotal",canonical(total));old.put("partsCost",canonical(costTotal))
+  old.put("usedParts",used);old.put("partsTotal",canonical(total));old.put("partsCost",canonical(costTotal));old.put("manualCost",canonical(manual));old.put("cost",canonical(costTotal+manual))
   check(dao.updateParts(repairId,repair.original_json,old.toString())==1) { "تغيرت الفاتورة؛ أعد تحميلها" }
  }
 
@@ -119,7 +130,7 @@ class MaintenancePartsRepository(private val db: AppDatabase) {
  }
  suspend fun refreshDraftTotal(id:String)=db.withTransaction {
   val repair=dao.repair(id) ?: error("الصيانة غير موجودة")
-  require(repair.source_sha256=="native8" && repair.status!="تم التسليم")
+  require(repair.status!="تم التسليم" && !JSONObject(repair.original_json).has("nativeArchiveDelivery"))
   val raw=JSONObject(repair.original_json)
   val total=com.alsafa.native8.sales.LegacyMaintenanceProfitReader.total(raw)
   raw.put("price",total.toPlainString())

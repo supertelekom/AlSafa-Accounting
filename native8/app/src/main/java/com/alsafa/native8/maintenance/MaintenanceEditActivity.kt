@@ -12,7 +12,7 @@ import org.json.JSONObject
 import org.json.JSONArray
 import java.math.BigDecimal
 
-/** Edits intake details only. Imported historical records remain unchanged. */
+/** Edits undelivered repair drafts while preserving historical payment and cost evidence. */
 class MaintenanceEditActivity:Activity() {
  override fun onCreate(savedInstanceState:Bundle?) {
   super.onCreate(savedInstanceState)
@@ -49,8 +49,8 @@ class MaintenanceEditActivity:Activity() {
    val result=runCatching { runBlocking { AppDatabase.get(applicationContext).maintenanceDao().repair(id) } }
    runOnUiThread {
     val repair=result.getOrNull()
-    if(repair==null || repair.source_sha256!="native8" || repair.status=="تم التسليم") {
-     status.text="التعديل غير متاح لهذا السجل؛ الأرشيف والتسليم النهائي محميان."
+    if(repair==null || repair.status=="تم التسليم") {
+     status.text="لا يمكن تعديل صيانة تم تسليمها."
      return@runOnUiThread
     }
     val json=JSONObject(repair.original_json)
@@ -63,7 +63,7 @@ class MaintenanceEditActivity:Activity() {
     workDone.setText(json.optString("workDone"))
     notes.setText(json.optString("notes"))
     currency.setSelection(listOf("USD","TRY","SYP").indexOf(repair.currency).coerceAtLeast(0))
-    labor.setText(json.optString("laborPrice",json.optString("price","0")))
+    labor.setText(com.alsafa.native8.sales.InvoiceDisplay.amount(json.optString("laborPrice",json.optString("price","0"))))
     var pendingParts:MutableList<MaintenancePartsRepository.SelectedPart>?=null
     val currentParts=json.optJSONArray("usedParts") ?: JSONArray()
     val existing=mutableListOf<MaintenancePartsRepository.SelectedPart>()
@@ -98,7 +98,7 @@ class MaintenanceEditActivity:Activity() {
          val part=parts[index]
          val fields=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL;setPadding(24,8,24,8) }
          val qty=EditText(this).apply { hint="الكمية";setText("1");inputType=android.text.InputType.TYPE_CLASS_NUMBER }
-         val price=EditText(this).apply { hint="سعر العميل";setText(part.sale_price);inputType=android.text.InputType.TYPE_CLASS_NUMBER or android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL }
+         val price=EditText(this).apply { hint="سعر العميل — ${currency.selectedItem}";setText(runCatching { com.alsafa.native8.sales.InvoiceDisplay.amount(part.sale_price.toBigDecimal()*com.alsafa.native8.sales.ExchangeRateSettings(this@MaintenanceEditActivity).rate(part.currency,currency.selectedItem.toString())) }.getOrDefault(""));inputType=android.text.InputType.TYPE_CLASS_NUMBER or android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL }
          fields.addView(qty);fields.addView(price)
          android.app.AlertDialog.Builder(this).setTitle(part.name).setView(fields).setNegativeButton("إلغاء",null)
           .setPositiveButton("إضافة القطعة للصيانة") { _,_ ->
@@ -138,9 +138,12 @@ class MaintenanceEditActivity:Activity() {
         val db=AppDatabase.get(applicationContext)
         db.withTransaction {
          val latest=db.maintenanceDao().repair(id) ?: error("الصيانة غير موجودة")
-         require(latest.source_sha256=="native8" && latest.status!="تم التسليم") { "لا يمكن تعديل السجل" }
+         require(latest.status!="تم التسليم" && !JSONObject(latest.original_json).has("nativeArchiveDelivery")) { "لا يمكن تعديل السجل" }
+         require(latest.original_json==repair.original_json) {"تغيرت الفاتورة؛ أعد فتح التعديل"}
          val raw=JSONObject(latest.original_json).put("laborPrice",laborValue.toPlainString())
+         if(latest.source_sha256!="native8" && !raw.has("nativeDraftOriginal"))raw.put("nativeDraftOriginal",latest.original_json)
          if(invoiceCurrency!=latest.currency) {
+          require(latest.source_sha256=="native8"){"عملة الفاتورة المستعادة محفوظة مع دفعاتها وأسعار صرفها؛ أضف الأجرة والقطع بعملتها الحالية"}
           require((raw.optJSONArray("usedParts")?.length() ?: 0)==0 && requestedParts.isNullOrEmpty() && raw.optString("manualCost","0").toBigDecimal().signum()==0) { "تغيير العملة هنا متاح للصيانة دون قطع أو تكلفة إضافية فقط" }
           raw.put("currency",invoiceCurrency)
           check(db.maintenanceDao().updateDraftCurrency(id,latest.original_json,raw.toString(),invoiceCurrency)==1)
@@ -148,7 +151,7 @@ class MaintenanceEditActivity:Activity() {
          listOf("customer","phone","watch","model","problem","diagnosis","workDone","notes")
           .forEachIndexed { index,key -> raw.put(key,values[index]) }
          check(db.maintenanceDao().editNewRepair(id,values[0],values[1],values[2],
-          values[3],values[4],latest.status,raw.toString())==1)
+          values[3],values[4],latest.status,raw.toString(),if(invoiceCurrency!=latest.currency) db.maintenanceDao().repair(id)!!.original_json else latest.original_json)==1)
          if(requestedParts!=null) MaintenancePartsRepository(db).saveDraft(id,requestedParts)
          MaintenancePartsRepository(db).refreshDraftTotal(id)
         }

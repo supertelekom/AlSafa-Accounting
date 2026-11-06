@@ -55,9 +55,9 @@ interface MaintenanceDao {
  suspend fun part(id:String):MaintenancePartEntity?
  @Query("UPDATE maintenance_parts SET stock=:stock WHERE id=:id AND stock=:expected")
  suspend fun changePartStock(id:String,expected:String,stock:String):Int
- @Query("UPDATE maintenance_repairs SET original_json=:raw WHERE id=:id AND source_sha256='native8' AND status!='تم التسليم' AND original_json=:expected")
+ @Query("UPDATE maintenance_repairs SET original_json=:raw WHERE id=:id AND status!='تم التسليم' AND original_json=:expected")
  suspend fun updateParts(id:String,expected:String,raw:String):Int
- @Query("UPDATE maintenance_repairs SET price=:price, original_json=:raw WHERE id=:id AND source_sha256='native8' AND status!='تم التسليم' AND original_json=:expected")
+ @Query("UPDATE maintenance_repairs SET price=:price, original_json=:raw WHERE id=:id AND status!='تم التسليم' AND original_json=:expected")
  suspend fun updateDraftPrice(id:String,expected:String,raw:String,price:String):Int
  @Query("UPDATE maintenance_repairs SET currency=:currency, original_json=:raw WHERE id=:id AND source_sha256='native8' AND status!='تم التسليم' AND original_json=:expected")
  suspend fun updateDraftCurrency(id:String,expected:String,raw:String,currency:String):Int
@@ -67,8 +67,8 @@ interface MaintenanceDao {
  suspend fun maxRepairInvoice():Long
  @Insert(onConflict=OnConflictStrategy.ABORT)
  suspend fun insertNewRepair(value:MaintenanceRepairEntity)
- @Query("UPDATE maintenance_repairs SET customer=:customer, phone=:phone, watch=:watch, model=:model, problem=:problem, status=:status, original_json=:raw WHERE id=:id AND source_sha256='native8'")
- suspend fun editNewRepair(id:String,customer:String,phone:String,watch:String,model:String,problem:String,status:String,raw:String):Int
+ @Query("UPDATE maintenance_repairs SET customer=:customer, phone=:phone, watch=:watch, model=:model, problem=:problem, status=:status, original_json=:raw WHERE id=:id AND status!='تم التسليم' AND original_json=:expected")
+ suspend fun editNewRepair(id:String,customer:String,phone:String,watch:String,model:String,problem:String,status:String,raw:String,expected:String):Int
  @Query("UPDATE maintenance_repairs SET status=:status, original_json=:raw WHERE id=:id AND status!='تم التسليم' AND original_json=:expected")
  suspend fun updateRepairStatus(id:String,status:String,raw:String,expected:String):Int
  @Query("UPDATE maintenance_repairs SET status=:status,price=:price,received=:received,delivered_date=:deliveredDate,original_json=:raw WHERE id=:id AND source_sha256='native8' AND status!='تم التسليم' AND original_json=:expected")

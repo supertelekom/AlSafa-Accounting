@@ -45,6 +45,7 @@ class MaintenanceActivity:ComponentActivity() {
  override fun onCreate(savedInstanceState:Bundle?) {
   super.onCreate(savedInstanceState)
   requestWindowFeature(android.view.Window.FEATURE_NO_TITLE)
+  var openingDetail by mutableStateOf(intent.hasExtra("repair_id"))
   var query by mutableStateOf("")
   var records by mutableStateOf<List<MaintenanceRepairEntity>>(emptyList())
   var selected by mutableStateOf<MaintenanceRepairEntity?>(null)
@@ -85,7 +86,7 @@ class MaintenanceActivity:ComponentActivity() {
   reload=::refresh
   refresh()
   intent.getStringExtra("repair_id")?.let { id -> lifecycleScope.launch {
-   selectedRefresh?.invoke(id)
+   try {selectedRefresh?.invoke(id)} finally {openingDetail=false}
    selected?.let { r -> if(intent.getBooleanExtra("open_delivery",false) && r.source_sha256=="native8" && MaintenanceDeliveryEligibility.allowed(r.status,JSONObject(r.original_json))) {
     deliveryDialog=true
    } }
@@ -95,7 +96,14 @@ class MaintenanceActivity:ComponentActivity() {
    androidx.compose.runtime.CompositionLocalProvider(
     androidx.compose.ui.platform.LocalLayoutDirection provides androidx.compose.ui.unit.LayoutDirection.Rtl
    ) {
-    Column(Modifier.fillMaxSize().padding(if(selected==null)16.dp else 0.dp),
+    if(openingDetail) {
+     AndroidView(modifier=Modifier.fillMaxSize(),factory={context ->
+      val ui=com.alsafa.native8.stylekit.SafaWidgets(com.alsafa.native8.stylekit.SafaStyle(context))
+      val host=com.alsafa.native8.stylekit.SafaPageHost(ui,"الصفا للساعات")
+      ui.heading(host.body,"تفاصيل طلب الصيانة","جارٍ تحميل بيانات الساعة…")
+      host.view
+     })
+    } else Column(Modifier.fillMaxSize().padding(if(selected==null)16.dp else 0.dp),
      verticalArrangement=Arrangement.spacedBy(12.dp)) {
      if(selected==null) {
       Text("الصيانة",style=MaterialTheme.typography.headlineSmall)

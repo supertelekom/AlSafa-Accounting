@@ -59,8 +59,8 @@ class MaintenanceDetailPage(ui:SafaWidgets,repair:MaintenanceRepairEntity,
   fun action(label:String,run:()->Unit){actions.addView(ui.button(label,onClick=run))}
   action("تعديل بيانات الفاتورة",onMetadataEdit)
   action("واتساب أعمال",onMessage);action("عرض الفاتورة / PDF / طباعة",onPrint)
+  if(repair.status!="تم التسليم" && !raw.has("nativeArchiveDelivery"))action("تعديل الفاتورة / الأجرة والقطع",onEdit)
   if(repair.source_sha256=="native8") {
-   if(repair.status!="تم التسليم")action("تعديل الفاتورة",onEdit)
    if(MaintenanceDeliveryEligibility.allowed(repair.status,raw))action("تم التسليم — تحصيل المبلغ",onDelivery)
    if(repair.status=="تم التسليم")action("مرتجع / استبدال",onReturn)
   }
