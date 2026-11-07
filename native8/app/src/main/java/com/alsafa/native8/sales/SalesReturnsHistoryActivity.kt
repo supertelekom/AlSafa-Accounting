@@ -41,7 +41,12 @@ class SalesReturnsHistoryActivity:Activity(){
   };setContentView(root);root.requestApplyInsets();ui.listen(query){filter()}
  }
  private fun filter(){if(!::adapter.isInitialized)return;val q=query.text.toString().trim()
-  shown=all.filter{(kind.value=="all" || (it.title=="فاتورة استبدال")== (kind.value=="exchange")) && (q.isBlank()||it.invoice.contains(q)||it.item.contains(q,true)||it.rows.any{r->r.second.contains(q,true)})}
+  val saleId=intent.getStringExtra("sale_id")
+  val invoiceNumber=intent.getStringExtra("invoice_number")
+  shown=all.filter{document ->
+   saleId==null || (!document.repair && (document.referenceId==saleId ||
+    (document.referenceId.isBlank() && document.invoice==invoiceNumber)))
+  }.filter{(kind.value=="all" || (it.title=="فاتورة استبدال")== (kind.value=="exchange")) && (q.isBlank()||it.invoice.contains(q)||it.item.contains(q,true)||it.rows.any{r->r.second.contains(q,true)})}
   adapter.notifyDataSetChanged();notice.text=if(shown.isEmpty())"لا توجد فواتير مرتجع أو استبدال مطابقة" else "${shown.size} مستند"
  }
  private fun details(r:ReturnDocument){val content=ui.column(16);r.rows.forEach{ui.label(content,it.first);ui.add(content,ui.text(it.second,16f))}

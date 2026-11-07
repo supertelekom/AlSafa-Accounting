@@ -78,7 +78,7 @@ class SaleDetailsActivity:Activity(){
    val receipts=withContext(Dispatchers.IO){db.legacyPaymentDao().payments(id)}
    if(receipts.isNotEmpty()){ui.heading(body,"سجل التحصيل","");receipts.forEach{p->ui.add(body,ui.text("${InvoiceDisplay.amount(p.amount)} ${p.currency} · ${UnifiedCashboxBalance.displayName(p.cashbox)}",15f))}}
    if(raw!=null){val breakdown=raw.optJSONArray("paymentBreakdown");if(breakdown!=null){ui.heading(body,"القبض الأصلي","");for(i in 0 until breakdown.length()){val p=breakdown.optJSONObject(i) ?: continue;ui.add(body,ui.text("${InvoiceDisplay.amount(p.optString("amount","0"))} ${p.optString("currency",unit)} · ${p.optString("vault",p.optString("cashbox"))}",15f))}}}
-   action("سجل المرتجعات والاستبدال"){startActivity(Intent(this@SaleDetailsActivity,SalesReturnsHistoryActivity::class.java).putExtra("invoice_number",current?.number?.toString() ?: old!!.invoice_number.toString()))}
+   action("سجل المرتجعات والاستبدال"){startActivity(Intent(this@SaleDetailsActivity,SalesReturnsHistoryActivity::class.java).putExtra("sale_id",id).putExtra("invoice_number",current?.number?.toString() ?: old!!.invoice_number.toString()))}
    action("رجوع"){finish()}
   }catch(e:CancellationException){throw e}catch(e:Exception){error.text=e.message ?: "تعذر فتح الفاتورة"}}
  }
