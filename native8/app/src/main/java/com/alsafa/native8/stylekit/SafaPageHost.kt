@@ -31,11 +31,10 @@ class SafaPageHost(val ui:SafaWidgets,shopName:String,logo:Drawable?=null,handle
    if(right-left!=oldRight-oldLeft){val w=(right-left)/resources.displayMetrics.density;val p=ui.style.dp((w*.022f).coerceIn(10f,28f));body.setPadding(p,p,p,p)}
   }
  }
- fun revealFocusedField(extraBelow:Int=80) {
+ fun revealFocusedField(extraBelow:Int?=null) {
   val field=view.findFocus() ?: return
   if(field !is EditText)return
-  val rect=android.graphics.Rect(0,0,field.width,field.height+ui.style.dp(extraBelow))
-  field.requestRectangleOnScreen(rect,false)
+  SafaKeyboard.reveal(field,extraBelow)
  }
  init {view.addOnAttachStateChangeListener(object:View.OnAttachStateChangeListener{
   override fun onViewAttachedToWindow(v:View){v.requestApplyInsets()}

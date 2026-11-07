@@ -26,8 +26,8 @@ class SafaWidgets(val style:SafaStyle) {
   this.hint=hint;background=style.inputBackground();minimumHeight=style.dp(if(multiline)78 else 42)
   setPadding(style.dp(10),style.dp(9),style.dp(10),style.dp(9));setSingleLine(!multiline)
   inputType=if(numeric)InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL else InputType.TYPE_CLASS_TEXT or if(multiline)InputType.TYPE_TEXT_FLAG_MULTI_LINE else 0
-  if(!multiline)imeOptions=android.view.inputmethod.EditorInfo.IME_ACTION_NEXT or android.view.inputmethod.EditorInfo.IME_FLAG_NO_EXTRACT_UI
-  onFocusChangeListener=View.OnFocusChangeListener { v,focused -> if(focused)v.postDelayed({v.requestRectangleOnScreen(android.graphics.Rect(0,0,v.width,v.height+style.dp(80)),false)},250) }
+  imeOptions=(if(multiline)android.view.inputmethod.EditorInfo.IME_ACTION_NONE else android.view.inputmethod.EditorInfo.IME_ACTION_NEXT) or android.view.inputmethod.EditorInfo.IME_FLAG_NO_EXTRACT_UI
+  onFocusChangeListener=View.OnFocusChangeListener { v,focused -> if(focused)v.postDelayed({SafaKeyboard.reveal(v)},250) }
   gravity=Gravity.TOP or Gravity.START
  }
  fun button(label:String,primary:Boolean=false,height:Int=44,onClick:()->Unit)=Button(context).apply {
@@ -50,6 +50,42 @@ class SafaWidgets(val style:SafaStyle) {
   override fun onTextChanged(s:CharSequence?,start:Int,before:Int,count:Int){onChange(s?.toString().orEmpty())}
   override fun afterTextChanged(e:Editable?){}
  })}
+ /** Compact native dropdown: 48dp touch target, bounded popup rows and Tajawal. */
+ fun dropdown(options:List<Pair<String,String>>,selected:String,onChanged:(String)->Unit):Dropdown {
+  require(options.any{it.first==selected})
+  val spinner=Spinner(context,Spinner.MODE_DROPDOWN).apply {
+   minimumHeight=style.dp(48);background=style.inputBackground()
+   layoutDirection=View.LAYOUT_DIRECTION_RTL;setPadding(style.dp(8),0,style.dp(8),0)
+   contentDescription=options.first{it.first==selected}.second
+   setOnTouchListener{v,event->if(event.action==android.view.MotionEvent.ACTION_DOWN)v.rootView.findFocus()?.let{SafaKeyboard.dismiss(it)};false}
+  }
+  val labels=options.map{it.second}
+  spinner.adapter=object:ArrayAdapter<String>(context,android.R.layout.simple_spinner_item,labels){
+   private fun row(position:Int,old:View?,popup:Boolean):View=(old as? TextView ?: text("",14f)).apply {
+    text=labels[position]+if(popup)"" else "  ▾";typeface=style.font;textSize=14f
+    gravity=Gravity.CENTER_VERTICAL or Gravity.START;setTextColor(SafaStyle.Palette.ink)
+    setPadding(style.dp(12),style.dp(8),style.dp(12),style.dp(8));minHeight=style.dp(48)
+    maxLines=2;ellipsize=android.text.TextUtils.TruncateAt.END
+    if(popup)setBackgroundColor(SafaStyle.Palette.cream)
+   }
+   override fun getView(position:Int,convertView:View?,parent:ViewGroup)=row(position,convertView,false)
+   override fun getDropDownView(position:Int,convertView:View?,parent:ViewGroup)=row(position,convertView,true)
+  }
+  val result=Dropdown(spinner,options,selected)
+  spinner.setSelection(options.indexOfFirst{it.first==selected},false)
+  spinner.onItemSelectedListener=object:AdapterView.OnItemSelectedListener {
+   override fun onNothingSelected(parent:AdapterView<*>?){}
+   override fun onItemSelected(parent:AdapterView<*>?,view:View?,position:Int,id:Long){
+    val next=options[position].first
+    spinner.contentDescription=labels[position]
+    if(result.value!=next){result.value=next;onChanged(next)}
+   }
+  }
+  return result
+ }
+ class Dropdown(val view:Spinner,private val options:List<Pair<String,String>>,var value:String){
+  fun select(id:String){val index=options.indexOfFirst{it.first==id};require(index>=0);value=id;view.setSelection(index,false)}
+ }
  fun choice(options:List<Pair<String,String>>,selected:String,vertical:Boolean=false,onChanged:(String)->Unit):Choice {
   val grid=SafaGrid(context,{if(vertical)1 else options.size});val buttons=linkedMapOf<String,Button>()
   val choice=Choice(grid,selected,buttons)

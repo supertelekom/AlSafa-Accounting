@@ -22,11 +22,11 @@ class FullSaleActivity:Activity() {
  private lateinit var customer:EditText;private lateinit var phone:EditText;private lateinit var discount:EditText
  private lateinit var cart:LinearLayout;private lateinit var receipts:LinearLayout;private lateinit var total:TextView;private lateinit var error:TextView
  private lateinit var search:EditText;private lateinit var results:LinearLayout
- private lateinit var channel:SafaWidgets.Choice
- private lateinit var saleUnit:SafaWidgets.Choice
+ private lateinit var channel:SafaWidgets.Dropdown
+ private lateinit var saleUnit:SafaWidgets.Dropdown
  private var invoiceRate=BigDecimal.ONE
- private lateinit var dates:SafaDateTime.Fields;private lateinit var warranty:SafaWidgets.Choice
- private lateinit var notes:EditText;private lateinit var changeBox:SafaWidgets.Choice;private lateinit var changeUnit:SafaWidgets.Choice
+ private lateinit var dates:SafaDateTime.Fields;private lateinit var warranty:SafaWidgets.Dropdown
+ private lateinit var notes:EditText;private lateinit var changeBox:SafaWidgets.Dropdown;private lateinit var changeUnit:SafaWidgets.Dropdown
  private lateinit var changePanel:LinearLayout;private lateinit var changePreview:TextView
  private val lines=mutableListOf<SaleLine>();private val payments=mutableListOf<SalePayment>()
  private var requestId=UUID.randomUUID().toString();private var saving=false;private var job:Job?=null
@@ -39,10 +39,10 @@ class FullSaleActivity:Activity() {
   val info=ui.card();ui.add(body,info)
   val top=SafaGrid(this,{if(it>=700)2 else 1});ui.add(info,top)
   val typeBox=ui.column();top.addView(typeBox);ui.label(typeBox,"نوع البيع")
-  channel=ui.choice(listOf("store" to "مبيع المحل","online" to "مبيع أونلاين"),state?.getString("channel") ?: "store"){};ui.add(typeBox,channel.view)
+  channel=ui.dropdown(listOf("store" to "مبيع المحل","online" to "مبيع أونلاين"),state?.getString("channel") ?: "store"){};ui.add(typeBox,channel.view)
   val currencyBox=ui.column();top.addView(currencyBox);ui.label(currencyBox,"عملة البيع")
   invoiceRate=state?.getString("invoiceRate")?.toBigDecimal() ?: BigDecimal.ONE
-  saleUnit=ui.choice(listOf("USD" to "دولار","TRY" to "تركي","SYP" to "سوري"),state?.getString("saleUnit") ?: "USD"){value->
+  saleUnit=ui.dropdown(listOf("USD" to "دولار","TRY" to "تركي","SYP" to "سوري"),state?.getString("saleUnit") ?: "USD"){value->
    val oldRate=invoiceRate
    invoiceRate=ExchangeRateSettings(this).rate(value,"USD")
    if(::discount.isInitialized){val old=discount.text.toString().toBigDecimalOrNull() ?: BigDecimal.ZERO;discount.setText(money((old*oldRate).divide(invoiceRate,2,RoundingMode.HALF_UP)))}
@@ -53,11 +53,11 @@ class FullSaleActivity:Activity() {
   fun clientField(label:String,id:Int):EditText{val box=ui.column();ui.label(box,label);return ui.input().apply{this.id=id;ui.add(box,this);client.addView(box)}}
   customer=clientField("اسم العميل",6101);phone=clientField("رقم الهاتف",6102).apply{inputType=android.text.InputType.TYPE_CLASS_PHONE}
   ui.label(info,"مدة الضمان")
-  warranty=ui.choice(listOf("0" to "بدون ضمان","3" to "3 أشهر","6" to "6 أشهر","12" to "سنة","24" to "سنتان"),state?.getString("warranty") ?: "12"){};ui.add(info,warranty.view)
+  warranty=ui.dropdown(listOf("0" to "بدون ضمان","3" to "3 أشهر","6" to "6 أشهر","12" to "سنة","24" to "سنتان"),state?.getString("warranty") ?: "12"){};ui.add(info,warranty.view)
   ui.step(body,2,"إضافة من المخزون")
-  search=ui.input("اسم المنتج أو الباركود");ui.add(body,search);ui.listen(search){lookup(it,false)}
+  search=ui.input("اسم المنتج أو الباركود");ui.add(body,search);SafaKeyboard.keepContextBelow(search,100);ui.listen(search){lookup(it,false)}
   ui.add(body,ui.button("قراءة الباركود بالكاميرا"){if(!saving)runCatching{startActivityForResult(Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE),502)}.onFailure{error.text="تعذر فتح الكاميرا"}})
-  results=ui.column();ui.add(body,results);ui.heading(body,"أصناف الفاتورة","");cart=ui.column();ui.add(body,cart)
+  results=ui.column();results.addOnLayoutChangeListener{_,_,_,_,_,_,_,_,_->if(search.hasFocus())search.post{SafaKeyboard.reveal(search)}};ui.add(body,results);ui.heading(body,"أصناف الفاتورة","");cart=ui.column();ui.add(body,cart)
   ui.label(body,"خصم الفاتورة اليدوي — بعملة البيع");discount=ui.input(numeric=true).apply{id=6103;setText(state?.getString("discount") ?: "0")};ui.add(body,discount);ui.listen(discount){summary()}
   ui.step(body,3,"الدفع والإرسال")
   ui.add(body,ui.text("أضف دفعة لكل عملة وصندوق. اترك الدفعات فارغة للبيع الآجل مع تحديد العميل."))
@@ -65,13 +65,13 @@ class FullSaleActivity:Activity() {
   changePanel=ui.card();ui.label(changePanel,"ردّ الباقي للعميل")
   val changeGrid=SafaGrid(this,{if(it>=520)2 else 1})
   val cb=ui.column();ui.label(cb,"من أي صندوق؟")
-  changeBox=ui.choice(listOf("drawer" to "الدرج","external" to "الخارجي","shamcash" to "شام كاش","bank" to "البنك"),state?.getString("changeBox") ?: "drawer",true){summary()};ui.add(cb,changeBox.view);changeGrid.addView(cb)
+  changeBox=ui.dropdown(listOf("drawer" to "الدرج","external" to "الخارجي","shamcash" to "شام كاش","bank" to "البنك"),state?.getString("changeBox") ?: "drawer"){summary()};ui.add(cb,changeBox.view);changeGrid.addView(cb)
   val cu=ui.column();ui.label(cu,"عملة الباقي")
-  changeUnit=ui.choice(listOf("USD" to "دولار","TRY" to "تركي","SYP" to "سوري"),state?.getString("changeUnit") ?: "USD"){summary()};ui.add(cu,changeUnit.view);changeGrid.addView(cu)
+  changeUnit=ui.dropdown(listOf("USD" to "دولار","TRY" to "تركي","SYP" to "سوري"),state?.getString("changeUnit") ?: "USD"){summary()};ui.add(cu,changeUnit.view);changeGrid.addView(cu)
   ui.add(changePanel,changeGrid);changePreview=ui.text("",18f,bold=true);ui.add(changePanel,changePreview);ui.add(body,changePanel)
   ui.label(body,"ملاحظات");notes=ui.input("تفاصيل الضمان أو اللون أو أي ملاحظة",multiline=true).apply{id=6106};ui.add(body,notes)
   total=ui.text("",19f,bold=true);ui.add(body,total);error=ui.text("",14f,SafaStyle.Palette.danger);ui.add(body,error)
-  ui.add(body,ui.complete("حفظ الفاتورة"){save()});ui.add(body,ui.button("رجوع"){if(!saving)finish()})
+  ui.add(body,ui.button("حفظ الفاتورة",true,48){save()});ui.add(body,ui.button("رجوع"){if(!saving)finish()})
   state?.getString("draft")?.let{restore(JSONObject(it))}
   if(state==null&&intent.getBooleanExtra("resume_shared_draft",false)){
    lines.addAll(SalesDraftSession.lines);payments.addAll(SalesDraftSession.payments)
@@ -93,24 +93,24 @@ class FullSaleActivity:Activity() {
   receipts.removeAllViews();payments.toList().forEachIndexed{i,p->ui.add(receipts,ui.button("${money(p.amount)} ${p.currency} — ${UnifiedCashboxBalance.displayName(p.cashbox)} — حذف"){if(!saving){payments.removeAt(i);refresh()}})};summary()
  }
  private fun lookup(q:String,exact:Boolean){job?.cancel();results.removeAllViews();if(q.isBlank()||saving)return;job=scope.launch{try{if(!exact)delay(180);val found=catalog.find(q,exact);ensureActive();if(exact&&found.size==1)editLine(null,found.single())else found.forEach{p->ui.add(results,ui.button("${p.title} — ${p.price} ${p.currency} — المتاح ${p.available}"){editLine(null,p)})};if(found.isEmpty())ui.add(results,ui.text("لا توجد نتائج"))}catch(e:CancellationException){throw e}catch(e:Exception){error.text=e.message}}}
- private fun editLine(index:Int?,choice:SaleChoice?){if(saving)return
+ private fun editLine(index:Int?,choice:SaleChoice?){if(saving)return;SafaKeyboard.dismiss(search)
   val old=index?.let{lines[it]};val unit=saleUnit.value;val sourceUnit=runCatching{choice?.currency?.let(SaleCurrency::normalize) ?: "USD"}.getOrElse{error.text=it.message;return};val form=ui.column(16)
   fun input(label:String,value:String):EditText{ui.label(form,label);return ui.input(numeric=true).apply{setText(value);ui.add(form,this)}}
   val qty=input("الكمية",old?.quantity?.toPlainString() ?: "1");val price=input("سعر الوحدة — $unit",money((old?.unitPrice ?: (choice!!.price.toBigDecimal()*ExchangeRateSettings(this).rate(sourceUnit,"USD"))).divide(invoiceRate,2,RoundingMode.HALF_UP)))
   val warning=ui.text("",14f,SafaStyle.Palette.danger);ui.add(form,warning)
-  val dialog=android.app.AlertDialog.Builder(this).setTitle(old?.title ?: choice!!.title).setView(form).setNegativeButton("إلغاء",null).setPositiveButton("إضافة / حفظ",null).create()
-  dialog.setOnShowListener{dialog.getButton(-1).setOnClickListener{try{val q=qty.text.toString().toBigDecimal();val p=price.text.toString().toBigDecimal();require(q>BigDecimal.ZERO && p>=BigDecimal.ZERO){"تحقق من الكمية والسعر"}
+  val dialog=android.app.AlertDialog.Builder(this).setTitle(old?.title ?: choice!!.title).setView(ScrollView(this).apply{isFillViewport=false;addView(form)}).setNegativeButton("إلغاء",null).setPositiveButton("إضافة / حفظ",null).create()
+  dialog.setOnShowListener{SafaKeyboard.fitDialog(dialog);dialog.getButton(-1).setOnClickListener{try{val q=qty.text.toString().toBigDecimal();val p=price.text.toString().toBigDecimal();require(q>BigDecimal.ZERO && p>=BigDecimal.ZERO){"تحقق من الكمية والسعر"}
    if(choice!=null){val reserved=lines.filter{it.productSource==choice.source&&it.productId==choice.productId&&it.variantId==choice.variantId}.fold(BigDecimal.ZERO){a,l->a+l.quantity};require(q+reserved<=choice.available.toBigDecimal()){"الكمية غير متوفرة"};val fx=invoiceRate;lines+=SaleLine(choice.source,choice.productId,choice.variantId,choice.title,q,(p*fx).setScale(2,RoundingMode.HALF_UP),choice.cost.toBigDecimal()*ExchangeRateSettings(this).rate(sourceUnit,"USD"))}
    else lines[index!!]=old!!.copy(quantity=q,unitPrice=(p*invoiceRate).setScale(2,RoundingMode.HALF_UP))
    search.setText("");refresh();dialog.dismiss()
   }catch(e:Exception){warning.text=e.message ?: "راجع القيم"}}};dialog.show()
  }
- private fun payment(){val form=ui.column(16);ui.label(form,"المبلغ المقبوض");val amount=ui.input(numeric=true);ui.add(form,amount)
-  val unit=ui.choice(listOf("USD" to "دولار","TRY" to "تركي","SYP" to "سوري"),"USD"){};ui.add(form,unit.view)
-  val box=ui.choice(listOf("drawer" to "الدرج","external" to "الخارجي","shamcash" to "شام كاش","bank" to "البنك"),"drawer",true){};ui.add(form,box.view)
+ private fun payment(){currentFocus?.let{SafaKeyboard.dismiss(it)};val form=ui.column(16);ui.label(form,"المبلغ المقبوض");val amount=ui.input(numeric=true);ui.add(form,amount)
+  val unit=ui.dropdown(listOf("USD" to "دولار","TRY" to "تركي","SYP" to "سوري"),"USD"){};ui.add(form,unit.view)
+  val box=ui.dropdown(listOf("drawer" to "الدرج","external" to "الخارجي","shamcash" to "شام كاش","bank" to "البنك"),"drawer"){};ui.add(form,box.view)
   val warning=ui.text("",14f,SafaStyle.Palette.danger);ui.add(form,warning)
   val dialog=android.app.AlertDialog.Builder(this).setTitle("إضافة دفعة").setView(ScrollView(this).apply{addView(form)}).setNegativeButton("إلغاء",null).setPositiveButton("إضافة",null).create()
-  dialog.setOnShowListener{dialog.getButton(-1).setOnClickListener{try{val a=amount.text.toString().toBigDecimal();require(a>BigDecimal.ZERO){"أدخل مبلغاً موجباً"};require(box.value!="shamcash"||unit.value!="TRY"){"شام كاش لا يدعم التركية"};val fx=ExchangeRateSettings(this).rate(unit.value,"USD");val credit=(a*fx).setScale(2,RoundingMode.HALF_UP);require(credit>BigDecimal.ZERO){"المبلغ أقل من دقة الفاتورة"};payments+=SalePayment(box.value,unit.value,a,"USD",fx,credit);refresh();dialog.dismiss()}catch(e:Exception){warning.text=e.message}}};dialog.show()
+  dialog.setOnShowListener{SafaKeyboard.fitDialog(dialog);dialog.getButton(-1).setOnClickListener{try{val a=amount.text.toString().toBigDecimal();require(a>BigDecimal.ZERO){"أدخل مبلغاً موجباً"};require(box.value!="shamcash"||unit.value!="TRY"){"شام كاش لا يدعم التركية"};val fx=ExchangeRateSettings(this).rate(unit.value,"USD");val credit=(a*fx).setScale(2,RoundingMode.HALF_UP);require(credit>BigDecimal.ZERO){"المبلغ أقل من دقة الفاتورة"};payments+=SalePayment(box.value,unit.value,a,"USD",fx,credit);refresh();dialog.dismiss()}catch(e:Exception){warning.text=e.message}}};dialog.show()
  }
  private fun save(){if(saving)return;val value=runCatching{draft()}.getOrElse{error.text="تحقق من الخصم";return};val totals=runCatching{SalesEngine(this).calculate(value)}.getOrElse{error.text=it.message;return}
   if(totals.change>BigDecimal.ZERO)try{SaleChangePlan.build(totals.net,value.payments,value.changeCashbox,value.changeCurrency,value.changeRate)}catch(e:Exception){error.text=e.message;return}
