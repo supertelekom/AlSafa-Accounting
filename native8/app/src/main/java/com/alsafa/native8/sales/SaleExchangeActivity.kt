@@ -27,14 +27,16 @@ class SaleExchangeActivity:Activity(){
   ui.heading(body,"المنتج البديل","")
   val search=ui.input("بحث بالاسم أو الباركود");ui.add(body,search);val results=ui.column();ui.add(body,results)
   val chosen=ui.text("اختر المنتج البديل");ui.add(body,chosen)
+  val difference=ui.text("اختر البديل لعرض الفرق",18f,bold=true);ui.add(body,difference)
   val rq=field("كمية البديل","1",true);val price=field("سعر الوحدة للبديل — بعملته المعروضة","",true)
   ui.add(body,ui.button("إزالة اختيار البديل"){selected=null;chosen.text="اختر المنتج البديل";price.setText("");search.requestFocus()})
-  val difference=ui.text("",18f,bold=true);ui.add(body,difference)
   var refreshQuote:()->Unit={}
   ui.label(body,"صندوق قبض أو رد الفرق")
   val box=ui.dropdown(listOf("drawer" to "الدرج","external" to "الصندوق الخارجي","shamcash" to "شام كاش","bank" to "البنك"),"drawer"){refreshQuote()};ui.add(body,box.view)
   ui.label(body,"عملة قبض أو رد الفرق")
   val unit=ui.dropdown(listOf("USD" to "دولار","TRY" to "ليرة تركية","SYP" to "ليرة سورية"),"USD"){refreshQuote()};ui.add(body,unit.view)
+  val settlementHint=ui.text("",16f,bold=true);ui.add(body,settlementHint)
+  fun showDifference(message:String){difference.text=message;settlementHint.text=message}
   val amount=field("المقبوض الآن من الفرق — صفر لتركه آجلاً","0",true)
   val reason=field("سبب الاستبدال","");val error=ui.text("",14f,SafaStyle.Palette.danger);ui.add(body,error)
   val save=ui.button("معاينة الاستبدال",true){};save.isEnabled=false;ui.add(body,save);ui.add(body,ui.button("رجوع"){finish()});setContentView(host.view)
@@ -48,7 +50,7 @@ class SaleExchangeActivity:Activity(){
   }
   catalog.prepare()
   ui.listen(search){searchJob?.cancel();val query=search.text.toString();searchJob=scope.launch{try{delay(250);val list=catalog.find(query);results.removeAllViews()
-   list.forEach{p->ui.add(results,ui.button("${p.title} · ${InvoiceDisplay.amount(p.price)} ${p.currency}",height=48){selected=p;chosen.text="${p.title} — ${p.currency}";price.setText(InvoiceDisplay.amount(p.price));results.removeAllViews();SafaKeyboard.dismiss(search)})}
+   list.forEach{p->ui.add(results,ui.button("${p.title} · ${InvoiceDisplay.amount(p.price)} ${p.currency}",height=48){selected=p;chosen.text="${p.title} — ${p.currency}";price.setText(InvoiceDisplay.amount(p.price));results.removeAllViews();SafaKeyboard.dismiss(search);refreshQuote()})}
    if(query.isNotBlank()&&list.isEmpty())ui.add(results,ui.text("لا توجد منتجات مطابقة"))
   }catch(e:CancellationException){throw e}catch(e:Exception){error.text=e.message}}}
   fun number(v:EditText)=v.text.toString().trim().toBigDecimalOrNull() ?: error("أدخل مبلغاً أو كمية صحيحة")
@@ -60,18 +62,18 @@ class SaleExchangeActivity:Activity(){
   var quoteJob:Job?=null
   refreshQuote={
    quoteJob?.cancel()
-   difference.text=""
+   showDifference(if(selected==null)"اختر البديل لعرض الفرق" else "جارٍ حساب الفرق…")
    if(selected!=null)quoteJob=scope.launch{
     try{
      val q=request(BigDecimal.ZERO)
      val quote=withContext(Dispatchers.IO){RoomSalesEngine(applicationContext).quoteExchange(q)}
      fun cash(value:BigDecimal)=InvoiceDisplay.amount(value.divide(q.rate,2,RoundingMode.HALF_UP))+" "+q.currency
-     difference.text=when{
+     showDifference(when{
       quote.settlement.refund.signum()>0 -> "يُردّ للعميل: "+cash(quote.settlement.refund)
       quote.settlement.due.signum()>0 -> "المطلوب من العميل قبل القبض: "+cash(quote.settlement.due)
-      else -> "لا يوجد مبلغ للقبض أو الرد"
-     }
-    }catch(e:CancellationException){throw e}catch(e:Exception){difference.text=e.message}
+      else -> "الفرق: "+cash(BigDecimal.ZERO)+" — لا يوجد مبلغ للقبض أو الرد"
+     })
+    }catch(e:CancellationException){throw e}catch(e:Exception){showDifference(e.localizedMessage?.takeIf{it.isNotBlank()} ?: "تعذر حساب الفرق، راجع الكمية والسعر والعملة")}
    }
   }
   listOf(quantity,rq,price).forEach{ui.listen(it){refreshQuote()}}
