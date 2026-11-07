@@ -54,7 +54,21 @@ class SaleDetailsActivity:Activity(){
     row("نوع المبيع",if(LegacySaleChannel.fromOriginalJson(old.original_json)==SalesChannelProfit.Channel.ONLINE)"أونلاين" else "المحل")
     for((key,label) in listOf("warranty" to "الضمان","warrantyMonths" to "مدة الضمان بالأشهر","notes" to "ملاحظات","onlineStatus" to "حالة الأونلاين","paymentMethod" to "طريقة الدفع"))raw!!.optString(key).takeIf{it.isNotBlank()&&it!="null"}?.let{row(label,it)}
     action("تعديل بيانات الفاتورة"){startActivity(Intent(this@SaleDetailsActivity,InvoiceMetadataActivity::class.java).putExtra("kind","sale").putExtra("invoice_id",id))}
-    val items=raw!!.optJSONArray("items");for(i in 0 until (items?.length() ?: 0)){val r=items!!.optJSONObject(i) ?: continue;val returned=archived!!.returnedByLine[i] ?: BigDecimal.ZERO;row(r.optString("name",r.optString("title",r.optString("productName","صنف"))),"${r.optString("qty",r.optString("quantity"))} × ${InvoiceDisplay.amount(r.optString("price",r.optString("unitPrice","0")))} $unit" + if(returned.signum()>0)" · المرتجع: ${InvoiceDisplay.amount(returned)}" else "")}
+    val items=raw!!.optJSONArray("items");for(i in 0 until (items?.length() ?: 0)){val r=items!!.optJSONObject(i) ?: continue;val returned=archived!!.returnedByLine[i] ?: BigDecimal.ZERO;row(r.optString("name",r.optString("title",r.optString("productName","صنف"))),"${r.optString("qty",r.optString("quantity"))} × ${InvoiceDisplay.amount(r.optString("price",r.optString("unitPrice","0")))} $unit" + if(returned.signum()>0)" · المرتجع: ${InvoiceDisplay.amount(returned)}" else "")
+     if(status!="ملغاة" && r.get("qty").toString().toBigDecimal()>returned) { actions.addView(ui.button("استبدال · "+r.optString("name"),height=48){
+      startActivity(Intent(this@SaleDetailsActivity,SaleExchangeActivity::class.java).putExtra("sale_id",id).putExtra("line_id","$id#$i").putExtra("archived",true))
+     })
+      actions.addView(ui.button("تعديل الكمية والسعر · "+r.optString("name"),height=48){
+       startActivity(Intent(this@SaleDetailsActivity,SaleExchangeActivity::class.java)
+        .putExtra("sale_id",id).putExtra("line_id","$id#$i").putExtra("archived",true)
+        .putExtra("edit_source",if(r.optString("productId").isBlank())MANUAL_SALE_SOURCE else old.source_sha256)
+        .putExtra("edit_id",r.optString("productId").ifBlank{"$id#$i"}).putExtra("edit_title",r.optString("name"))
+        .putExtra("edit_currency",unit).putExtra("edit_price",r.get("price").toString()).putExtra("edit_cost",r.get("cost").toString())
+        .putExtra("edit_qty",(r.get("qty").toString().toBigDecimal()-returned).toPlainString()))
+      })
+     }
+    }
+    raw.archiveExchanges().forEach{doc->row("البديل · "+doc.optString("replacementName"),doc.optString("replacementQty")+" × "+unit+" · إجمالي "+InvoiceDisplay.amount(doc.optString("replacementValue")))}
    }else{
     action("تعديل اسم العميل ورقم الهاتف"){
      val form=ui.column(16);ui.label(form,"اسم العميل");val customer=ui.input().apply{setText(current!!.customer)};ui.add(form,customer);ui.label(form,"رقم الهاتف");val phone=ui.input().apply{setText(current!!.phone)};ui.add(form,phone)

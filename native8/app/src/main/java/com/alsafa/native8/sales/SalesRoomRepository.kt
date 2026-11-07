@@ -21,6 +21,12 @@ class SalesRoomRepository(private val context:Context) {
 
  suspend fun payments(id:String):List<RoomSalePayment> =db.legacyPaymentDao().payments(id)
 
+ fun archivedReturns(invoice:LegacySaleEntity):List<org.json.JSONObject> =
+  com.alsafa.native8.data.migration.LegacyStagingDatabase(context).use{staging->
+   val run=staging.readableDatabase.rawQuery("SELECT id FROM import_runs WHERE source_sha256=?",arrayOf(invoice.source_sha256)).use{c->check(c.moveToFirst());c.getLong(0)}
+   com.alsafa.native8.data.migration.LegacyReadRepository(staging).financialRows(run,"returns").filter{it.optString("referenceType")=="sale" && it.optString("referenceId")==invoice.legacy_id}
+  }
+
  suspend fun archivedBalance(invoice:LegacySaleEntity):ArchivedSaleBalance =
     com.alsafa.native8.data.migration.LegacyStagingDatabase(context).use{staging->
      val run=staging.readableDatabase.rawQuery("SELECT id FROM import_runs WHERE source_sha256=?",arrayOf(invoice.source_sha256)).use{cursor->

@@ -9,7 +9,7 @@ here=Path(__file__).resolve().parent
 root=here.parents[1]/'app/src/main/java/com/alsafa/native8/sales'
 jars=[p for p in Path(sys.argv[1]).glob('*.jar') if p.name!='android.jar']
 cp=os.pathsep.join(map(str,jars))
-names=['ArchivedSaleBalance','OperationalExpensePartnerEntities','RoomSalesEngine','SalesEngine','SalesEntities','SalesRoomEntities','SalesFinancialAuditEntities','SaleExchangeMath','ProportionalProfit','PaymentExchangeSnapshot','StoreProfitAdjustmentMath','StoreProfitAdjustment','StoreSaleProfitEvent','StoreSaleProfitMath','RefundAllocationMath','SaleCurrency','SaleChangePlan','SalesChannelClassification']
+names=['LegacySaleEntity','ArchivedSaleExchange','ArchivedSaleBalance','OperationalExpensePartnerEntities','RoomSalesEngine','SalesEngine','SalesEntities','SalesRoomEntities','SalesFinancialAuditEntities','SaleExchangeMath','ProportionalProfit','PaymentExchangeSnapshot','StoreProfitAdjustmentMath','StoreProfitAdjustment','StoreSaleProfitEvent','StoreSaleProfitMath','RefundAllocationMath','SaleCurrency','SaleChangePlan','SalesChannelClassification']
 files=[root/(n+'.kt') for n in names]+list(here.glob('*.kt'))
 with tempfile.TemporaryDirectory() as out:
  subprocess.run(['java','-cp',cp,'org.jetbrains.kotlin.cli.jvm.K2JVMCompiler','-nowarn','-no-stdlib','-no-reflect','-classpath',cp,'-d',out]+list(map(str,files)),check=True)

@@ -8,7 +8,7 @@ import java.math.BigDecimal
  * Sales use the same event reader as the Room archive review.
  * Repairs, expenses and withdrawals share the source-tested read-only adapters.
  */
-class LegacyHistoricalProfitProjection(private val legacy:HistoricalFinancialSource) {
+class LegacyHistoricalProfitProjection(private val legacy:HistoricalFinancialSource,private val exchanges:List<JSONObject> = emptyList()) {
  data class Result(
   val storeProfitUsd:BigDecimal,val repairProfitUsd:BigDecimal,
   val onlineProfitUsd:BigDecimal=BigDecimal.ZERO,
@@ -33,7 +33,7 @@ class LegacyHistoricalProfitProjection(private val legacy:HistoricalFinancialSou
   val cash=legacy.financialRows(run,"cashTransactions")
   val returns=legacy.financialRows(run,"returns")
   val repairs=legacy.financialRows(run,"repairs")
-  val saleAudit=LegacyHistoricalSalesProfitReader.extractOriginal(salesRows,payments,cash,returns)
+  val saleAudit=LegacyHistoricalSalesProfitReader.extractOriginal(salesRows,payments,cash,returns+exchanges)
   val repairAudit=LegacyMaintenanceProfitReader.extract(repairs,payments,returns)
   val expenseAudit=LegacyExpenseWithdrawalReader.extract(legacy.financialRows(run,"expenses"),false)
   val withdrawalAudit=LegacyExpenseWithdrawalReader.extract(legacy.financialRows(run,"partnerWithdrawals"),true)

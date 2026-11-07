@@ -73,7 +73,7 @@ class PartnerProfitsActivity:Activity() {
        db.withTransaction {
         val repository=UnifiedFinancialPeriodRepository(db.salesFinancialAuditDao(),
          UnifiedExpensePartnerReadRepository(legacy,db.operationalExpensePartnerDao()),ZoneId.of("Asia/Damascus"),
-         db.storeSaleProfitDao(),LegacyHistoricalProfitProjection(legacy),NativeMaintenanceProfitRepository(db.maintenanceDao(),db.legacyPaymentDao()))
+         db.storeSaleProfitDao(),LegacyHistoricalProfitProjection(legacy,db.legacySaleDao().exchangedInvoices().flatMap{org.json.JSONObject(it.original_json).archiveExchanges()}),NativeMaintenanceProfitRepository(db.maintenanceDao(),db.legacyPaymentDao()))
         repository.statement(first,last).also { check(legacy.latestRunId()==run) { "تغيرت النسخة المستعادة أثناء القراءة" } }
        }
       } finally { staging.close() }

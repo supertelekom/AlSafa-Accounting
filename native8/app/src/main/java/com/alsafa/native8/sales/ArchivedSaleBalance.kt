@@ -15,12 +15,18 @@ data class ArchivedSaleBalance(
    fun linked(record:JSONObject)=record.optString("referenceType")=="sale" && record.optString("referenceId")==saleId
    fun value(record:JSONObject,key:String)=if(record.isNull(key))zero else record.get(key).toString().toBigDecimal()
    val receipts=payments.filter(::linked)
-   val moves=returns.filter(::linked)
+   val additions=sale.archiveExchanges()
+   val moves=returns.filter(::linked)+additions
    val effective=(value(sale,"total")-moves.sumOf{value(it,"creditAmount")}).max(zero)
-   val paid=(value(sale,"paid")+receipts.sumOf{value(it,"amount")}+newPaid-moves.sumOf{value(it,"refundAmount").max(zero)}).max(zero)
+   val paid=(value(sale,"paid")+receipts.sumOf{value(it,"amount")}+newPaid+additions.sumOf{value(it,"extraCollected")}-moves.sumOf{value(it,"refundAmount").max(zero)}).max(zero)
    val discount=if(sale.optString("saleType")=="online")receipts.sumOf{value(it,"onlineCollectionDiscount").max(zero)} else zero
    val returned=moves.groupBy{it.getInt("itemIndex")}.mapValues{(_,rows)->rows.sumOf{value(it,"qty")}}
    return ArchivedSaleBalance(effective,paid,(effective-paid-discount).max(zero),returned)
   }
  }
+}
+
+internal fun JSONObject.archiveExchanges():List<JSONObject>{
+ val entries=optJSONArray("nativeArchiveExchanges") ?: return emptyList()
+ return (0 until entries.length()).map(entries::getJSONObject)
 }

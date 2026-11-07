@@ -19,6 +19,8 @@ class SaleExchangeActivity:Activity(){
  private var requestId="";private var saleId="";private var lineId=""
  override fun onCreate(state:Bundle?){super.onCreate(state);requestWindowFeature(android.view.Window.FEATURE_NO_TITLE)
   saleId=intent.getStringExtra("sale_id").orEmpty();lineId=intent.getStringExtra("line_id").orEmpty();requestId=state?.getString("request") ?: UUID.randomUUID().toString()
+  val archived=intent.getBooleanExtra("archived",false)
+  val archive by lazy { ArchivedSaleExchange(applicationContext) }
   val ui=SafaWidgets(SafaStyle(this));val host=SafaPageHost(ui,"الصفا للساعات");val body=host.body
   ui.heading(body,"استبدال منتج","إرجاع الصنف واختيار البديل وتسوية الفرق")
   val original=ui.text("جارٍ تحميل الصنف…",18f,bold=true);ui.add(body,original)
@@ -41,9 +43,15 @@ class SaleExchangeActivity:Activity(){
   val reason=field("سبب الاستبدال","");val error=ui.text("",14f,SafaStyle.Palette.danger);ui.add(body,error)
   val save=ui.button("معاينة الاستبدال",true){};save.isEnabled=false;ui.add(body,save);ui.add(body,ui.button("رجوع"){finish()});setContentView(host.view)
   scope.launch{try{val line=withContext(Dispatchers.IO){RoomSalesEngine(applicationContext).lines(saleId).firstOrNull{it.id==lineId}} ?: error("الصنف غير موجود")
-   original.text="${line.title}\nالمتاح للاستبدال: ${InvoiceDisplay.amount(line.quantity.toBigDecimal()-line.returned.toBigDecimal())}";save.isEnabled=true
+   val returned=if(archived)withContext(Dispatchers.IO){val db=AppDatabase.get(applicationContext);SalesRoomRepository(applicationContext).archivedBalance(requireNotNull(db.legacySaleDao().legacyById(saleId))).returnedByLine[lineId.substringAfterLast('#').toInt()] ?: BigDecimal.ZERO} else line.returned.toBigDecimal()
+   original.text="${line.title}\nالمتاح للاستبدال: ${InvoiceDisplay.amount(line.quantity.toBigDecimal()-returned)}";save.isEnabled=true
   }catch(e:CancellationException){throw e}catch(e:Exception){error.text=e.message}}
   state?.getString("replacement")?.let{saved->val v=org.json.JSONObject(saved);selected=SaleChoice(v.getString("source"),v.getString("productId"),v.optString("variant").takeIf{it.isNotBlank()},v.getString("title"),v.optString("barcode"),v.getString("available"),v.getString("price"),v.getString("cost"),v.getString("currency"));chosen.text="${selected!!.title} — ${selected!!.currency}"}
+  if(state==null && archived && intent.hasExtra("edit_source")){
+   fun extra(key:String)=intent.getStringExtra("edit_"+key).orEmpty()
+   selected=SaleChoice(extra("source"),extra("id"),null,extra("title"),"","",extra("price"),extra("cost"),extra("currency"))
+   chosen.text=extra("title")+" — "+extra("currency");quantity.setText(extra("qty"));rq.setText(extra("qty"));price.setText(extra("price"));reason.setText("تعديل الكمية أو السعر")
+  }
   if(state!=null){quantity.setText(state.getString("qty","1"));rq.setText(state.getString("rq","1"));price.setText(state.getString("price",""));amount.setText(state.getString("amount","0"));reason.setText(state.getString("reason",""));box.select(state.getString("box","drawer"));unit.select(state.getString("unit","USD"))}
   saveDraft={out->out.putString("qty",quantity.text.toString());out.putString("rq",rq.text.toString());out.putString("price",price.text.toString());out.putString("amount",amount.text.toString());out.putString("reason",reason.text.toString());out.putString("box",box.value);out.putString("unit",unit.value)
    selected?.let{p->out.putString("replacement",org.json.JSONObject().put("source",p.source).put("productId",p.productId).put("variant",p.variantId.orEmpty()).put("title",p.title).put("barcode",p.barcode).put("available",p.available).put("price",p.price).put("cost",p.cost).put("currency",p.currency).toString())}
@@ -66,7 +74,7 @@ class SaleExchangeActivity:Activity(){
    if(selected!=null)quoteJob=scope.launch{
     try{
      val q=request(BigDecimal.ZERO)
-     val quote=withContext(Dispatchers.IO){RoomSalesEngine(applicationContext).quoteExchange(q)}
+     val quote=withContext(Dispatchers.IO){if(archived)archive.preview(q,true) else RoomSalesEngine(applicationContext).quoteExchange(q)}
      fun cash(value:BigDecimal)=InvoiceDisplay.amount(value.divide(q.rate,2,RoundingMode.HALF_UP))+" "+q.currency
      showDifference(when{
       quote.settlement.refund.signum()>0 -> "يُردّ للعميل: "+cash(quote.settlement.refund)
@@ -81,12 +89,12 @@ class SaleExchangeActivity:Activity(){
   save.setOnClickListener{if(busy)return@setOnClickListener
    try{val q=request(number(amount))
     busy=true;save.isEnabled=false;SafaKeyboard.dismiss(amount)
-    scope.launch{try{val engine=RoomSalesEngine(applicationContext);val preview=withContext(Dispatchers.IO){engine.previewExchange(q)};val s=preview.settlement
+    scope.launch{try{val engine=RoomSalesEngine(applicationContext);val preview=withContext(Dispatchers.IO){if(archived)archive.preview(q,false) else engine.previewExchange(q)};val s=preview.settlement
      fun cash(n:BigDecimal)=InvoiceDisplay.amount(n.divide(q.rate,2,RoundingMode.HALF_UP))+" "+q.currency
      var accepted=false
      ui.confirm("تأكيد الاستبدال","قيمة المرتجع: ${InvoiceDisplay.amount(preview.returned)} USD\nقيمة البديل: ${InvoiceDisplay.amount(preview.replacement)} USD\nالمردود للعميل: ${cash(s.refund)}\nالمقبوض الآن: ${InvoiceDisplay.amount(q.collect)} ${q.currency}\nالمتبقي بعد الاستبدال: ${cash(s.due)}\nالصندوق: ${UnifiedCashboxBalance.displayName(q.cashbox)}"){
       accepted=true;busy=true;save.isEnabled=false
-      scope.launch{try{withContext(Dispatchers.IO){engine.exchange(q,preview.fingerprint)};setResult(RESULT_OK);startActivity(Intent(this@SaleExchangeActivity,SalePrintActivity::class.java).putExtra("return_key","exchange:$requestId"));finish()}
+      scope.launch{try{withContext(Dispatchers.IO){if(archived)archive.save(q,preview.fingerprint) else engine.exchange(q,preview.fingerprint)};setResult(RESULT_OK);startActivity(Intent(this@SaleExchangeActivity,SalePrintActivity::class.java).putExtra("return_key","exchange:$requestId"));finish()}
        catch(e:CancellationException){throw e}catch(e:Exception){error.text=e.message;busy=false;save.isEnabled=true}}
      }.also{dialog->dialog.setOnDismissListener{if(!accepted){busy=false;save.isEnabled=true}};dialog.show()}
     }catch(e:CancellationException){throw e}catch(e:Exception){error.text=e.message;busy=false;save.isEnabled=true}}

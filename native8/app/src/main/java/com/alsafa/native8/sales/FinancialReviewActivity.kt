@@ -128,7 +128,7 @@ class FinancialReviewActivity:Activity() {
       try {
        val legacy=LegacyReadRepository(staging).withInvoiceMetadata(db);val run=legacy.latestRunId()
        db.withTransaction {
-        val data=UnifiedFinancialPeriodRepository(db.salesFinancialAuditDao(),UnifiedExpensePartnerReadRepository(legacy,db.operationalExpensePartnerDao()),ZoneId.of("Asia/Damascus"),db.storeSaleProfitDao(),LegacyHistoricalProfitProjection(legacy),NativeMaintenanceProfitRepository(db.maintenanceDao(),db.legacyPaymentDao())).read(a.toString(),b.toString())
+        val data=UnifiedFinancialPeriodRepository(db.salesFinancialAuditDao(),UnifiedExpensePartnerReadRepository(legacy,db.operationalExpensePartnerDao()),ZoneId.of("Asia/Damascus"),db.storeSaleProfitDao(),LegacyHistoricalProfitProjection(legacy,db.legacySaleDao().exchangedInvoices().flatMap{org.json.JSONObject(it.original_json).archiveExchanges()}),NativeMaintenanceProfitRepository(db.maintenanceDao(),db.legacyPaymentDao())).read(a.toString(),b.toString())
         check(legacy.latestRunId()==run) { "تغيرت النسخة المستعادة أثناء القراءة" }
         "مصادر أرباح الفترة: $a — $b\n\n"+
          "مبيعات المحل: ${money(data.totalStoreProfit)} USD\n\n"+
@@ -187,7 +187,7 @@ class FinancialReviewActivity:Activity() {
        val legacy=LegacyReadRepository(staging).withInvoiceMetadata(db);val run=legacy.latestRunId()
        db.withTransaction {
         UnifiedFinancialPeriodRepository(db.salesFinancialAuditDao(),UnifiedExpensePartnerReadRepository(legacy,db.operationalExpensePartnerDao()),
-         ZoneId.of("Asia/Damascus"),db.storeSaleProfitDao(),LegacyHistoricalProfitProjection(legacy),
+         ZoneId.of("Asia/Damascus"),db.storeSaleProfitDao(),LegacyHistoricalProfitProjection(legacy,db.legacySaleDao().exchangedInvoices().flatMap{org.json.JSONObject(it.original_json).archiveExchanges()}),
          NativeMaintenanceProfitRepository(db.maintenanceDao(),db.legacyPaymentDao())).read(a.toString(),b.toString())
          .also { check(legacy.latestRunId()==run) { "تغيرت النسخة المستعادة أثناء القراءة" } }
        }

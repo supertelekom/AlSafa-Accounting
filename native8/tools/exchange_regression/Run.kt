@@ -76,5 +76,33 @@ fun main()=runBlocking {
  val archive=ArchivedSaleBalance.calculate(archivedSale,listOf(oldReceipt),listOf(oldReturn),n("3"))
  eq(archive.effective.toPlainString(),"75");eq(archive.paid.toPlainString(),"63");eq(archive.due.toPlainString(),"7")
  eq(archive.returnedByLine.getValue(1).toPlainString(),"1");assertions+=4
+ for(paid in listOf("80","100")){
+  val db=AppDatabase();AppDatabase.instance=db
+  val ctx=android.content.Context()
+  val raw=org.json.JSONObject("""{"id":"old","saleType":"store","total":100,"paid":$paid,"items":[{"productId":"a","name":"A","qty":1,"price":100,"cost":60}]}""")
+  db.oldSales["old"]=LegacySaleEntity("old","src",12,0,"client","","USD","100",paid,"0","confirmed","",raw.toString())
+  db.stock["src/a/null"]="0";db.stock["local/b/null"]="2"
+  val ex=ArchivedSaleExchange(ctx)
+  val req=RoomSalesEngine.ExchangeRequest("key","old","old#0",n("1"),SaleLine("local","b",null,"B",n("1"),n("90"),n("50")),"drawer","USD",n("1"),n("0"),"exchange")
+  val preview=ex.preview(req,false)
+  ex.save(req,preview.fingerprint);ex.save(req,preview.fingerprint)
+  eq(db.stock.getValue("src/a/null"),"1");eq(db.stock.getValue("local/b/null"),"1")
+  eq(db.debts.getValue("old").balance,if(paid=="80")"10" else "0")
+  eq(db.cash.sumOf{n(it.amount)}.toPlainString(),if(paid=="100")"-10" else "0")
+  val b=SalesRoomRepository(ctx).archivedBalance(db.oldSales.getValue("old"))
+  eq(b.effective.toPlainString(),"90");eq(b.paid.toPlainString(),if(paid=="80")"80" else "90")
+  check(runCatching{ex.preview(req.copy(requestId="another"),false)}.isFailure);assertions+=7
+ }
+ run {
+  val db=AppDatabase();AppDatabase.instance=db;val ctx=android.content.Context()
+  val raw="""{"id":"old","saleType":"online","total":100,"paid":100,"items":[{"productId":"a","name":"A","qty":1,"price":100,"cost":60}]}"""
+  db.oldSales["old"]=LegacySaleEntity("old","src",12,0,"client","","USD","100","100","0","confirmed","",raw)
+  db.stock["src/a/null"]="0"
+  val ex=ArchivedSaleExchange(ctx)
+  val req=RoomSalesEngine.ExchangeRequest("key","old","old#0",n("1"),SaleLine("src","a",null,"A",n("1"),n("110"),n("60")),"drawer","TRY",n("0.02"),n("500"),"price")
+  ex.save(req,ex.preview(req,false).fingerprint)
+  eq(db.stock.getValue("src/a/null"),"0");eq(org.json.JSONObject(db.oldSales.getValue("old").original_json).archiveExchanges().single().getString("nativeProfitDeltaUsd"),"10");assertions++;eq(db.cash.single().amount,"500");eq(db.debts.getValue("old").balance,"0")
+  eq(SalesRoomRepository(ctx).archivedBalance(db.oldSales.getValue("old")).paid.toPlainString(),"110");assertions+=4
+ }
  println("PASS $assertions financial assertions using production RoomSalesEngine and in-memory boundary doubles (not Room/SQLite integration).")
 }

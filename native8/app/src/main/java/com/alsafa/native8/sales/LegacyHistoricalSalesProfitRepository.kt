@@ -37,9 +37,10 @@ class LegacyHistoricalSalesProfitRepository(
   val byId=staged.groupBy { it.optString("id") }
   if(byId.size!=invoices.size || invoices.any { invoice ->
     val originals=byId[invoice.legacy_id].orEmpty()
-    originals.size!=1 || !sameJson(originals.single(),JSONObject(invoice.original_json))
+    originals.size!=1 || !sameJson(originals.single(),JSONObject(invoice.original_json).apply{remove("nativeArchiveExchanges")})
    }) return LegacyHistoricalSalesProfitReader.Audit(emptyList(),listOf("Archive and latest source run differ"))
-  val result=LegacyHistoricalSalesProfitReader.extract(invoices,rows(run,"payments"),rows(run,"cashTransactions"),rows(run,"returns"))
+  val exchanges=invoices.flatMap{JSONObject(it.original_json).archiveExchanges()}
+  val result=LegacyHistoricalSalesProfitReader.extract(invoices,rows(run,"payments"),rows(run,"cashTransactions"),rows(run,"returns")+exchanges)
   check(legacy.latestRunId()==run) { "Historical source changed during read" }
   return result
  }

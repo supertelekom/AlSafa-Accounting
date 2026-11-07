@@ -60,9 +60,10 @@ class InvoiceReceiptRepository(private val context:Context) {
    }
    val discount=current?.discount ?: JSONObject(old!!.original_json).optString("discount","0")
    row("الخصم",show(discount)+" "+currency)
-   val due=db.legacyReceivablesDao().bySaleId(id)?.balance ?: old?.due ?: "0"
-   val effective=if((current?.status ?: old?.status)=="ملغاة")"0" else if(current!=null)meta!!.optString("exchangeEffectiveTotal").ifBlank{(paid.toBigDecimal()+due.toBigDecimal()).toPlainString()} else total
-   row("الإجمالي بعد التسويات",show(effective)+" "+currency);row("المقبوض الصافي",show(if(old!=null)(paid.toBigDecimal()+db.legacyPaymentDao().payments(id).fold(BigDecimal.ZERO){a,p->a+p.amount.toBigDecimal()}).toPlainString() else paid)+" "+currency)
+   val archived=old?.let{SalesRoomRepository(context).archivedBalance(it)}
+   val due=archived?.due?.toPlainString() ?: db.legacyReceivablesDao().bySaleId(id)?.balance ?: old?.due ?: "0"
+   val effective=if((current?.status ?: old?.status)=="ملغاة")"0" else if(current!=null)meta!!.optString("exchangeEffectiveTotal").ifBlank{(paid.toBigDecimal()+due.toBigDecimal()).toPlainString()} else archived!!.effective.toPlainString()
+   row("الإجمالي بعد التسويات",show(effective)+" "+currency);row("المقبوض الصافي",show(archived?.paid?.toPlainString() ?: paid)+" "+currency)
    row("المتبقي",show(due)+" "+currency)
    if(old!=null){val raw=JSONObject(old.original_json);for((key,label) in listOf("warranty" to "الضمان","warrantyMonths" to "مدة الضمان بالأشهر","notes" to "ملاحظات"))raw.optString(key).takeIf{it.isNotBlank()&&it!="null"}?.let{row(label,it)}}
    if(meta!=null){val months=meta.optInt("warrantyMonths",0)

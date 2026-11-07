@@ -13,6 +13,10 @@ data class UnifiedSaleRow(
 
 @Dao
 interface LegacySaleDao {
+ @Query("UPDATE legacy_sales_archive SET original_json=:updated WHERE legacy_id=:id AND original_json=:expected")
+ suspend fun writeExchange(id:String,expected:String,updated:String):Int
+ @Query("SELECT * FROM legacy_sales_archive WHERE instr(original_json,'nativeArchiveExchanges')>0")
+ suspend fun exchangedInvoices():List<LegacySaleEntity>
  @Query("SELECT * FROM sale_returns ORDER BY created_at DESC")
  suspend fun allOperationalReturns():List<RoomSaleReturn>
  @Query("SELECT * FROM legacy_sales_archive WHERE created_at>=:fromMillis AND created_at<:untilExclusive ORDER BY created_at,invoice_number")

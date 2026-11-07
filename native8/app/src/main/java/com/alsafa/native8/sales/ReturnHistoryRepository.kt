@@ -53,6 +53,9 @@ class ReturnHistoryRepository(private val context:Context){
    ensureActive();val entries=JSONObject(repair.original_json).optJSONArray("nativeReturns") ?: continue
    for(i in 0 until entries.length()){val raw=entries.getJSONObject(i);append(raw,"repair:${repair.id}:${raw.optString("id",i.toString())}",repair.id,repair.invoice_number.toString())}
   }
+  for(sale in db.legacySaleDao().exchangedInvoices())for(doc in JSONObject(sale.original_json).archiveExchanges()){
+   append(doc,"exchange:"+doc.getString("id").removePrefix("archive-exchange:"),sale.legacy_id,sale.invoice_number.toString())
+  }
   val exchangeReturns=mutableSetOf<String>()
   for(sale in db.salesPostingDao().exchangeInvoices()){
    val entries=JSONObject(sale.metadata_json).optJSONArray("nativeExchanges") ?: continue

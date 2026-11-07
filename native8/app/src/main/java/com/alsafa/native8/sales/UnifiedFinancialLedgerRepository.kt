@@ -15,7 +15,8 @@ class UnifiedFinancialLedgerRepository(private val db:AppDatabase,private val le
   fun originals(section:String)=if(run==null) emptyList() else legacy.financialRows(run,section)
   val sales=originals("sales");val repairs=originals("repairs");val payments=originals("payments");val returns=originals("returns")
   require(sales.map { it.optString("id") }.toSet().intersect(db.salesFinancialAuditDao().operationalSaleIds().toSet()).isEmpty()) { "تداخل في مراجع الفواتير؛ تعذر عرض قيود مكررة" }
-  val index=FinancialLedgerPresentation.index(sales,repairs,payments,returns)
+  val exchanges=db.legacySaleDao().exchangedInvoices().flatMap{JSONObject(it.original_json).archiveExchanges()}
+  val index=FinancialLedgerPresentation.index(sales,repairs,payments,returns+exchanges)
   val historicalSales=LegacyHistoricalSalesProfitRepository(db.legacySaleDao(),legacy).inspect()
   val historicalRepairs=LegacyMaintenanceProfitReader.extract(repairs,payments,returns)
   val rows=mutableListOf<FinancialLedgerPresentation.Row>()

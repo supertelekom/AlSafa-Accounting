@@ -122,7 +122,7 @@ object LegacyHistoricalSalesProfitReader {
    val ratio=if(row.isNull("recognizedRatio")) one else amount(row,"recognizedRatio").coerceIn(zero,one)
    val delta=(amount(row,"returnedCost")-amount(row,"replacementCost")-credit).multiply(ratio,mc)
    events+=FinancialSourceReconciliation.Event("legacy:sale-return:$returnId",FinancialSourceReconciliation.Stream.RETURN,
-    LocalDate.parse(row.getString("date")),zero,zero,usd(delta,row.getString("currency"),row.optJSONObject("rateSnapshot")))
+    LocalDate.parse(row.getString("date")),zero,zero,if(returnId.startsWith("archive-exchange:") && row.has("nativeProfitDeltaUsd")) amount(row,"nativeProfitDeltaUsd") else usd(delta,row.getString("currency"),row.optJSONObject("rateSnapshot")))
   } catch(e:Exception) { issues+="Return ${row.optString("id")}: ${e.message}" }
   check(events.map {it.sourceKey}.distinct().size==events.size) { "Duplicate source financial event" }
   return Audit(events,issues.distinct())

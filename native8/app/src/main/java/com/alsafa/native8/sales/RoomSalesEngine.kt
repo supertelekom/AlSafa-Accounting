@@ -622,12 +622,13 @@ class RoomSalesEngine(private val context: Context, private val db:AppDatabase=A
             val unit=raw.optString("currency","USD")
             val rate=if(old)BigDecimal.ONE else raw.optString("rateToUsd","1").toBigDecimal()
             val debt=db.legacyReceivablesDao().bySaleId(row.id)?.balance
-            val remaining=debt ?: if(old)db.legacySaleDao().legacyById(row.id)?.due ?: "0" else "0"
+            val adjusted=if(old && raw.has("nativeArchiveExchanges"))SalesRoomRepository(context).archivedBalance(requireNotNull(db.legacySaleDao().legacyById(row.id))) else null
+            val remaining=adjusted?.due?.toPlainString() ?: debt ?: if(old)db.legacySaleDao().legacyById(row.id)?.due ?: "0" else "0"
             val titles=if(old){val items=raw.optJSONArray("items");(0 until (items?.length() ?: 0)).mapNotNull{items?.optJSONObject(it)?.optString("name")}.joinToString("، ")}
                 else posting.lines(row.id).joinToString("، "){it.title}
             fun display(value:String)=value.toBigDecimal().divide(rate,2,java.math.RoundingMode.HALF_UP).toPlainString()
-            val total=if(row.status=="ملغاة")"0" else if(old)row.total else raw.optString("exchangeEffectiveTotal").ifBlank{(row.paid.toBigDecimal()+remaining.toBigDecimal()).toPlainString()}
-            SaleRecord(row.id,row.number,row.created_at,row.customer,row.phone,display(total),display(row.paid),row.status,
+            val total=if(row.status=="ملغاة")"0" else if(old)adjusted?.effective?.toPlainString() ?: row.total else raw.optString("exchangeEffectiveTotal").ifBlank{(row.paid.toBigDecimal()+remaining.toBigDecimal()).toPlainString()}
+            SaleRecord(row.id,row.number,row.created_at,row.customer,row.phone,display(total),display(adjusted?.paid?.toPlainString() ?: row.paid),if(adjusted==null)row.status else if(adjusted.due.signum()==0)"مدفوع" else "آجل",
                 if(old)when(LegacySaleChannel.fromOriginalJson(row.original_json!!)){SalesChannelProfit.Channel.ONLINE->"online";SalesChannelProfit.Channel.STORE->"store"} else row.channel,
                 unit,display(remaining),titles,old)
         }

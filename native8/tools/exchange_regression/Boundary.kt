@@ -6,7 +6,7 @@ class AppDatabase {
  data class Snapshot(val sales:Map<String,RoomSale>,val lines:Map<String,RoomSaleLine>,val debts:Map<String,RoomReceivable>,val payments:List<RoomSalePayment>,val cash:List<RoomCashboxMovement>,val returns:List<RoomSaleReturn>,val profits:List<SaleProfitEvent>,val reversals:List<SaleProfitReversal>,val refunds:List<SaleRefundAllocation>,val store:List<StoreSaleProfitEvent>,val adjustments:List<StoreProfitAdjustment>,val stock:Map<String,String>)
  fun snapshot()=Snapshot(sales.toMap(),lines.toMap(),debts.toMap(),payments.toList(),cash.toList(),returns.toList(),profits.toList(),reversals.toList(),refunds.toList(),store.toList(),adjustments.toList(),stock.toMap())
  fun restore(s:Snapshot){sales.clear();sales.putAll(s.sales);lines.clear();lines.putAll(s.lines);debts.clear();debts.putAll(s.debts);payments.clear();payments.addAll(s.payments);cash.clear();cash.addAll(s.cash);returns.clear();returns.addAll(s.returns);profits.clear();profits.addAll(s.profits);reversals.clear();reversals.addAll(s.reversals);refunds.clear();refunds.addAll(s.refunds);store.clear();store.addAll(s.store);adjustments.clear();adjustments.addAll(s.adjustments);stock.clear();stock.putAll(s.stock)}
- fun salesPostingDao()=Posting(this);fun legacyPaymentDao()=PaymentDao(this);fun legacyReceivablesDao()=DebtDao(this);fun salesFinancialAuditDao()=Audit(this);fun storeSaleProfitDao()=Store(this);fun legacySaleDao()=Legacy();fun maintenanceDao()=Maintenance()
+ fun salesPostingDao()=Posting(this);fun legacyPaymentDao()=PaymentDao(this);fun legacyReceivablesDao()=DebtDao(this);fun salesFinancialAuditDao()=Audit(this);fun storeSaleProfitDao()=Store(this);val oldSales=mutableMapOf<String,LegacySaleEntity>();fun supplierPurchaseDao()=Unit;fun legacySaleDao()=Legacy(this);fun maintenanceDao()=Maintenance()
 }
 class Posting(val d:AppDatabase){suspend fun sale(id:String)=d.sales[id];suspend fun lines(id:String)=d.lines.values.filter{it.sale_id==id};suspend fun line(s:String,l:String)=d.lines[l]?.takeIf{it.sale_id==s};suspend fun maxNewNumber()=d.sales.values.maxOfOrNull{it.number} ?: 0L
  suspend fun insertSale(s:RoomSale){check(d.sales.putIfAbsent(s.id,s)==null)};suspend fun insertLine(l:RoomSaleLine){check(d.lines.putIfAbsent(l.id,l)==null)};suspend fun insertReturn(r:RoomSaleReturn){d.returns+=r}
@@ -23,11 +23,17 @@ class Audit(val d:AppDatabase){suspend fun profits(id:String)=d.profits.filter{i
 class Store(val d:AppDatabase){suspend fun insert(e:StoreSaleProfitEvent){d.store+=e};suspend fun insertAdjustment(e:StoreProfitAdjustment){d.adjustments+=e};suspend fun bySale(id:String)=d.store.find{it.sale_id==id};suspend fun adjustments(id:String)=d.adjustments.filter{it.sale_id==id}}
 data class Old(val due:String,val original_json:String="{}",val invoice_number:Long=1,val currency:String="USD",val total:String="0",val historical_paid:String="0",val status:String="",val customer:String="",val phone:String="",val created_at:Long=0)
 data class UnifiedSaleRow(val id:String,val number:Long,val created_at:Long,val customer:String,val phone:String,val total:String,val paid:String,val status:String,val historical:Int,val channel:String?,val original_json:String?)
-class Legacy{suspend fun maxLegacyInvoiceNumber()=0L;suspend fun legacyLines(id:String)=emptyList<RoomLegacySaleLine>();suspend fun legacyById(id:String):Old?=null;suspend fun unifiedArchive(s:String,f:Long,t:Long,l:Int,o:Int)=emptyList<UnifiedSaleRow>()}
+class Legacy(val d:AppDatabase){suspend fun writeExchange(id:String,expected:String,updated:String):Int{val old=d.oldSales.getValue(id);if(old.original_json!=expected)return 0;d.oldSales[id]=old.copy(original_json=updated);return 1};suspend fun maxLegacyInvoiceNumber()=0L;suspend fun legacyLines(id:String)=emptyList<RoomLegacySaleLine>();suspend fun legacyById(id:String)=d.oldSales[id];suspend fun unifiedArchive(s:String,f:Long,t:Long,l:Int,o:Int)=emptyList<UnifiedSaleRow>()}
 class Maintenance{suspend fun maxRepairInvoice()=0L}
-object UnifiedCashboxBalance{fun displayName(s:String)=s;fun canonical(s:String):String?=s.takeIf{it in setOf("drawer","external","bank","shamcash")}}
+class UnifiedCashboxBalance(c:Context,dao:Unit){data class Balance(val verified:Boolean=true,val total:java.math.BigDecimal=1000.toBigDecimal());suspend fun calculate(box:String,currency:String)=Balance();companion object{fun displayName(s:String)=s;fun canonical(s:String):String?=s.takeIf{it in setOf("drawer","external","bank","shamcash")}}
+}
 class ExchangeRateSettings(c:Context){fun rate(f:String,t:String)=when(f){"TRY"->java.math.BigDecimal("0.02");else->java.math.BigDecimal.ONE}}
-object LegacySaleChannel{fun fromOriginalJson(s:String)=SalesChannelProfit.Channel.STORE}
+object LegacySaleChannel{fun isOnline(raw:String)=org.json.JSONObject(raw).optString("saleType")=="online";fun fromOriginalJson(s:String)=SalesChannelProfit.Channel.STORE}
 object SalesChannelProfit{enum class Channel{STORE,ONLINE}}
 
 class OperationalExpensePartnerRepository(val db:AppDatabase){suspend fun saveExpense(row:OperationalExpenseEntity){error("Expense repository is outside this exchange fixture")}}
+
+class SalesRoomRepository(val context:Context){
+ fun archivedReturns(row:LegacySaleEntity)=emptyList<org.json.JSONObject>()
+ suspend fun archivedBalance(row:LegacySaleEntity)=ArchivedSaleBalance.calculate(org.json.JSONObject(row.original_json),emptyList(),emptyList(),java.math.BigDecimal.ZERO)
+}
