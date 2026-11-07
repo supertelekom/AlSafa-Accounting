@@ -20,12 +20,24 @@ class SaleDetailsActivity:Activity(){
    val old=if(current==null)withContext(Dispatchers.IO){requireNotNull(db.legacySaleDao().legacyById(id)){"الفاتورة غير موجودة"}} else null
    val debt=withContext(Dispatchers.IO){db.legacyReceivablesDao().bySaleId(id)}
    val raw=old?.let{JSONObject(it.original_json)}
-   val unit=old?.currency ?: "USD";val value=(current?.total ?: old!!.total).toBigDecimal();val paid=(current?.paid ?: old!!.historical_paid).toBigDecimal();val due=debt?.balance?.toBigDecimal() ?: old?.due?.toBigDecimal() ?: (value-paid).max(BigDecimal.ZERO)
+   val saleMeta=current?.let{JSONObject(it.metadata_json)}
+   val unit=old?.currency ?: saleMeta!!.optString("currency","USD")
+   val displayRate=saleMeta?.optString("rateToUsd","1")?.toBigDecimal() ?: BigDecimal.ONE
+   fun display(n:BigDecimal)=InvoiceDisplay.amount(n.divide(displayRate,2,java.math.RoundingMode.HALF_UP))
+   val value=(current?.total ?: old!!.total).toBigDecimal();val paid=(current?.paid ?: old!!.historical_paid).toBigDecimal();val due=debt?.balance?.toBigDecimal() ?: old?.due?.toBigDecimal() ?: (value-paid).max(BigDecimal.ZERO)
    val status=current?.status ?: old!!.status
    fun row(label:String,value:String){ui.add(body,ui.text("$label: $value",16f))}
    error.text="";row("رقم الفاتورة",current?.number?.toString() ?: raw!!.optString("invoiceNo"));row("العميل",current?.customer ?: raw!!.optString("customer"));row("الهاتف",current?.phone ?: raw!!.optString("phone"));row("الحالة",status)
    if(raw!=null)row("التاريخ",raw.optString("date")+" "+raw.optString("time"))
-   val card=ui.card();ui.add(card,ui.text("الإجمالي: ${InvoiceDisplay.amount(value)} $unit",22f,bold=true));ui.add(card,ui.text("المقبوض: ${InvoiceDisplay.amount(if(old!=null)value-due else paid)} $unit\nالمتبقي: ${InvoiceDisplay.amount(due)} $unit",18f));ui.add(body,card)
+   if(current!=null){
+    val stamp=java.time.Instant.ofEpochMilli(current.created_at).atZone(java.time.ZoneId.systemDefault())
+    row("التاريخ والوقت",stamp.toLocalDate().toString()+" "+stamp.toLocalTime().withSecond(0).withNano(0))
+    val meta=JSONObject(current.metadata_json);val months=meta.optInt("warrantyMonths",0)
+    row("الضمان",if(months>0)"$months شهر — حتى ${stamp.toLocalDate().plusMonths(months.toLong())}" else "بدون ضمان مسجل")
+    if(meta.optString("notes").isNotBlank())row("ملاحظات",meta.getString("notes"))
+    meta.optJSONObject("change")?.let{row("الباقي المدفوع للعميل",InvoiceDisplay.amount(it.getString("amount"))+" "+it.getString("currency")+" — "+UnifiedCashboxBalance.displayName(it.getString("cashbox")))}
+   }
+   val card=ui.card();ui.add(card,ui.text("الإجمالي: ${display(value)} $unit",22f,bold=true));ui.add(card,ui.text("المقبوض: ${display(if(old!=null)value-due else paid)} $unit\nالمتبقي: ${display(due)} $unit",18f));ui.add(body,card)
    fun action(label:String,run:()->Unit){ui.add(body,ui.button(label){if(!busy)run()})}
    action("عرض الفاتورة / PDF / طباعة / مشاركة"){open(SalePrintActivity::class.java)}
    if(status!="ملغاة"&&due>BigDecimal.ZERO)action("تكملة الدفع"){open(SalePaymentsActivity::class.java)}
@@ -37,7 +49,7 @@ class SaleDetailsActivity:Activity(){
      android.app.AlertDialog.Builder(this@SaleDetailsActivity).setTitle("تعديل العميل").setView(form).setNegativeButton("إلغاء",null).setPositiveButton("حفظ"){_,_->val c=customer.text.toString();val p=phone.text.toString();mutate(error){RoomSalesEngine(applicationContext).correctCustomer(id,c,p)}}.show()
     }
     val lines=withContext(Dispatchers.IO){RoomSalesEngine(applicationContext).lines(id)}
-    lines.forEach{line->val item=ui.card();ui.add(item,ui.text(line.title,18f,bold=true));ui.add(item,ui.text("الكمية: ${line.quantity} — المرتجع: ${line.returned}\nالسعر: ${InvoiceDisplay.amount(line.price)} USD"))
+    lines.forEach{line->val item=ui.card();ui.add(item,ui.text(line.title,18f,bold=true));ui.add(item,ui.text("الكمية: ${line.quantity} — المرتجع: ${line.returned}\nالسعر: ${display(line.price.toBigDecimal())} $unit"))
      if(status!="ملغاة" && line.quantity.toBigDecimal()>line.returned.toBigDecimal())ui.add(item,ui.button("مرتجع هذا البند"){startActivity(Intent(this@SaleDetailsActivity,SaleReturnsActivity::class.java).putExtra("sale_id",id).putExtra("line_id",line.id))})
      if(status!="ملغاة" && paid.signum()==0)ui.add(item,ui.button("تعديل الكمية والسعر"){
       val form=ui.column(16);ui.label(form,"الكمية");val q=ui.input(numeric=true).apply{setText(line.quantity)};ui.add(form,q);ui.label(form,"سعر الوحدة — USD");val p=ui.input(numeric=true).apply{setText(line.price)};ui.add(form,p)

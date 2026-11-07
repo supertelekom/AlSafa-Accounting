@@ -7,7 +7,8 @@ import androidx.room.ColumnInfo
 
 @Entity(tableName="sales",indices=[Index(value=["created_at"],name="idx_sales_created"),Index(value=["number"],unique=true,name="idx_sales_number_unique")])
 data class RoomSale(@PrimaryKey val id:String,val number:Long,val created_at:Long,
- val customer:String,val phone:String,val total:String,val discount:String,val paid:String,val status:String,@ColumnInfo(defaultValue="NULL") val channel:String?=null)
+ val customer:String,val phone:String,val total:String,val discount:String,val paid:String,val status:String,@ColumnInfo(defaultValue="NULL") val channel:String?=null,
+ @ColumnInfo(defaultValue="'{}'") val metadata_json:String="{}")
 
 @Entity(tableName="sale_lines")
 data class RoomSaleLine(@PrimaryKey val id:String,val sale_id:String,val source:String,

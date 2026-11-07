@@ -52,7 +52,7 @@ class NativeDataStore(private val context:Context) {
    SQLiteDatabase.openDatabase(file.path,null,SQLiteDatabase.OPEN_READWRITE).use { db ->
     db.rawQuery("PRAGMA integrity_check",null).use { c -> check(c.moveToFirst() && c.getString(0)=="ok") { "قاعدة بيانات تالفة" } }
     db.rawQuery("PRAGMA foreign_key_check",null).use { check(!it.moveToFirst()) { "روابط البيانات غير سليمة" } }
-    if(file.name=="alsafa_native8_operational.db") require(db.version==19) { "إصدار قاعدة البيانات غير متوافق" }
+    if(file.name=="alsafa_native8_operational.db") require(db.version in 19..20) { "إصدار قاعدة البيانات غير متوافق" }
     db.rawQuery("PRAGMA wal_checkpoint(TRUNCATE)",null).use { it.moveToFirst();check(it.getInt(0)==0) }
    }
   }

@@ -65,7 +65,13 @@ class RoomSalesEngine(private val context: Context) {
         require(draft.payments.all { it.invoiceCurrency == "USD" && it.creditedAmount != null }) { "سعر الصرف غير مسجل" }
         require(draft.payments.all { it.amount > BigDecimal.ZERO && it.cashbox.isNotBlank() && it.currency in setOf("USD", "TRY", "SYP") }) { "بيانات الدفعات غير صالحة" }
         require(totals.net >= BigDecimal.ZERO && totals.paid >= BigDecimal.ZERO && totals.due >= BigDecimal.ZERO) { "إجمالي الفاتورة غير صالح" }
-        require(totals.change.compareTo(BigDecimal.ZERO) == 0) { "صرف الباقي يحتاج تسجيل حركة الصرف أولاً" }
+        val checked=SalesEngine(context).calculate(draft)
+        require(listOf(checked.net to totals.net,checked.paid to totals.paid,checked.due to totals.due,checked.change to totals.change).all{it.first.compareTo(it.second)==0}){"تغير إجمالي الفاتورة"}
+        val plan=if(totals.change>BigDecimal.ZERO)SaleChangePlan.build(totals.net,draft.payments,draft.changeCashbox,draft.changeCurrency,draft.changeRate)
+          else SaleChangePlan.Plan(draft.payments,emptyList(),null)
+        require(SaleCurrency.normalize(draft.invoiceCurrency)==draft.invoiceCurrency && draft.invoiceRate>BigDecimal.ZERO){"عملة الفاتورة غير صالحة"}
+        require(draft.invoiceCurrency!="USD" || draft.invoiceRate.compareTo(BigDecimal.ONE)==0){"سعر الدولار غير صالح"}
+        require(draft.warrantyMonths in setOf(0,3,6,12,24)){"مدة الضمان غير صالحة"}
         if (totals.due > BigDecimal.ZERO)
             require(draft.customerName.isNotBlank() || draft.customerPhone.isNotBlank()) { "العميل مطلوب للبيع الآجل" }
         val grouped = draft.lines.groupBy { Triple(it.productSource, it.productId, it.variantId) }
@@ -77,9 +83,13 @@ class RoomSalesEngine(private val context: Context) {
         val number = maxOf(posting.maxNewNumber(), db.legacySaleDao().maxLegacyInvoiceNumber(),db.maintenanceDao().maxRepairInvoice()) + 1
         val id = requestId ?: UUID.randomUUID().toString()
         val now = System.currentTimeMillis()
-        posting.insertSale(RoomSale(id, number, now, draft.customerName, draft.customerPhone,
-            totals.net.toPlainString(), totals.discount.toPlainString(), totals.paid.toPlainString(),
-            if (totals.due > BigDecimal.ZERO) "آجل" else "مدفوع",draft.channel))
+        val invoiceAt=draft.invoiceAt ?: now
+        val metadata=org.json.JSONObject().put("warrantyMonths",draft.warrantyMonths).put("notes",draft.notes).put("currency",draft.invoiceCurrency).put("rateToUsd",draft.invoiceRate.toPlainString())
+        fun receiptJson(p:SalePayment)=org.json.JSONObject().put("cashbox",p.cashbox).put("currency",p.currency).put("amount",p.amount.toPlainString()).put("rate",p.fxRate.toString()).put("base",p.creditedAmount.toString())
+        if(plan.change!=null){metadata.put("tender",org.json.JSONArray().apply{draft.payments.forEach{put(receiptJson(it))}});metadata.put("change",receiptJson(plan.change));metadata.put("changeMovementSource","sale-change:$id")}
+        posting.insertSale(RoomSale(id, number, invoiceAt, draft.customerName, draft.customerPhone,
+            totals.net.toPlainString(), totals.discount.toPlainString(), totals.paid.min(totals.net).toPlainString(),
+            if (totals.due > BigDecimal.ZERO) "آجل" else "مدفوع",draft.channel,metadata.toString()))
         for (line in draft.lines) {
             posting.insertLine(RoomSaleLine(UUID.randomUUID().toString(), id, line.productSource,
                 line.productId, line.variantId, line.title, line.quantity.toPlainString(),
@@ -92,11 +102,11 @@ class RoomSalesEngine(private val context: Context) {
                 sum + line.quantity * line.unitCost
             }
             db.storeSaleProfitDao().insert(StoreSaleProfitEvent(
-                id, now, totals.net.toPlainString(), cost.toPlainString(),
+                id, invoiceAt, totals.net.toPlainString(), cost.toPlainString(),
                 StoreSaleProfitMath.calculate(totals.net,cost).toPlainString()
             ))
         }
-        for (payment in draft.payments) {
+        for (payment in plan.receipts) {
             val paymentId = UUID.randomUUID().toString()
             payments.insertPayment(RoomSalePayment(paymentId, id, payment.cashbox,
                 payment.currency, payment.amount.toPlainString(), now,
@@ -105,6 +115,14 @@ class RoomSalesEngine(private val context: Context) {
                 payment.cashbox, payment.currency, payment.amount.toPlainString(), id, now,
                 "قبض فاتورة $number"))
             recognize(paymentId,id,now,payment.creditedAmount!!,totals.net)
+        }
+        // Excess tender and returned change form a separate balanced exchange.
+        // Keep it out of invoice refund allocations: the client has already received this money.
+        if(plan.change!=null){
+            val source="sale-change:$id"
+            for(extra in plan.excess)payments.insertCashboxMovement(RoomCashboxMovement(UUID.randomUUID().toString(),extra.cashbox,extra.currency,extra.amount.toPlainString(),source,now,"زيادة قبض مرتبطة بفاتورة $number"))
+            val change=plan.change
+            payments.insertCashboxMovement(RoomCashboxMovement(UUID.randomUUID().toString(),change.cashbox,change.currency,change.amount.negate().toPlainString(),source,now,"باقي للعميل — فاتورة $number"))
         }
         if (totals.due > BigDecimal.ZERO)
             debts.insert(RoomReceivable(id, draft.customerName, draft.customerPhone, totals.due.toPlainString()))

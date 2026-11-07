@@ -20,7 +20,7 @@ object NativeArchive {
   val files=roots.flatMap { name -> File(folder,name).walkTopDown().filter { it.isFile }.toList() }
   require(files.sumOf { it.length() }<=limit) { "حجم النسخة أكبر من الحد المدعوم" }
   files.forEach { f -> rows.put(JSONObject().put("path",f.relativeTo(folder).invariantSeparatorsPath).put("size",f.length()).put("sha256",digest(f))) }
-  val manifest=JSONObject().put("format","alsafa-native8-full").put("version",1).put("schema",19).put("files",rows)
+  val manifest=JSONObject().put("format","alsafa-native8-full").put("version",1).put("schema",20).put("files",rows)
   ZipOutputStream(BufferedOutputStream(out)).use { zip ->
    zip.putNextEntry(ZipEntry("manifest.json"));zip.write(manifest.toString().toByteArray(Charsets.UTF_8));zip.closeEntry()
    files.forEach { f -> zip.putNextEntry(ZipEntry(f.relativeTo(folder).invariantSeparatorsPath));f.inputStream().use { it.copyTo(zip) };zip.closeEntry() }
@@ -45,7 +45,7 @@ object NativeArchive {
    }
   }
   val manifest=JSONObject(File(folder,"manifest.json").readText())
-  require(manifest.getString("format")=="alsafa-native8-full" && manifest.getInt("version")==1 && manifest.getInt("schema")==19) { "هذه ليست نسخة كاملة متوافقة مع Native 8" }
+  require(manifest.getString("format")=="alsafa-native8-full" && manifest.getInt("version")==1 && manifest.getInt("schema") in 19..20) { "هذه ليست نسخة كاملة متوافقة مع Native 8" }
   val rows=manifest.getJSONArray("files");val expected=mutableSetOf<String>()
   for(i in 0 until rows.length()) { val r=rows.getJSONObject(i);val path=r.getString("path")
    require(path!="manifest.json" && path in seen && expected.add(path))

@@ -15,7 +15,8 @@ class ExchangeRateSettings(context: Context) {
             PairRate("USD", "SYP", "140")
         )
     }
-    fun rate(from: String, to: String): BigDecimal {
+    fun rate(fromRaw: String, toRaw: String): BigDecimal {
+        val from=SaleCurrency.normalize(fromRaw);val to=SaleCurrency.normalize(toRaw)
         require(from in setOf("TRY","SYP","USD") && to in setOf("TRY","SYP","USD"))
         if (from == to) return BigDecimal.ONE
         val pair = PAIRS.firstOrNull { it.from == from && it.to == to }
@@ -26,7 +27,7 @@ class ExchangeRateSettings(context: Context) {
     }
     fun read(pair: PairRate): BigDecimal {
         val value = prefs.getString("${pair.from}_${pair.to}", null) ?: pair.initial
-        return value.toBigDecimal().also { require(it > BigDecimal.ZERO) }
+        return value.toBigDecimal().also { require(it > BigDecimal.ZERO) { "سعر الصرف يجب أن يكون موجباً" } }
     }
     fun save(pair: PairRate, value: String) {
         require(pair in PAIRS)
