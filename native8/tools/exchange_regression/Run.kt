@@ -70,5 +70,11 @@ fun main()=runBlocking {
   check(manualDb.stock.isEmpty())
   assertions+=4
  }
+ val archivedSale=org.json.JSONObject("""{"id":"s","saleType":"online","total":100,"paid":30}""")
+ val oldReceipt=org.json.JSONObject("""{"referenceType":"sale","referenceId":"s","amount":40,"onlineCollectionDiscount":5}""")
+ val oldReturn=org.json.JSONObject("""{"referenceType":"sale","referenceId":"s","itemIndex":1,"qty":1,"refundAmount":10,"creditAmount":25}""")
+ val archive=ArchivedSaleBalance.calculate(archivedSale,listOf(oldReceipt),listOf(oldReturn),n("3"))
+ eq(archive.effective.toPlainString(),"75");eq(archive.paid.toPlainString(),"63");eq(archive.due.toPlainString(),"7")
+ eq(archive.returnedByLine.getValue(1).toPlainString(),"1");assertions+=4
  println("PASS $assertions financial assertions using production RoomSalesEngine and in-memory boundary doubles (not Room/SQLite integration).")
 }

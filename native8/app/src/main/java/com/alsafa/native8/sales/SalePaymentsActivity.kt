@@ -24,7 +24,7 @@ class SalePaymentsActivity:Activity(){
   var historical=false;var base="USD";var due=BigDecimal.ZERO
   scope.launch{try{val db=AppDatabase.get(applicationContext);withContext(Dispatchers.IO){val current=db.salesPostingDao().sale(id);historical=current==null
    val old=if(historical)requireNotNull(db.legacySaleDao().legacyById(id)){"الفاتورة غير موجودة"} else null;base=old?.currency ?: "USD"
-   due=db.legacyReceivablesDao().bySaleId(id)?.balance?.toBigDecimal() ?: BigDecimal.ZERO
+   due=if(old!=null)SalesRoomRepository(applicationContext).archivedBalance(old).due else db.legacyReceivablesDao().bySaleId(id)?.balance?.toBigDecimal() ?: BigDecimal.ZERO
   };summary.text="المتبقي: ${InvoiceDisplay.amount(due)} $base";units.select(base);save.isEnabled=due>BigDecimal.ZERO
   if(historical)ui.add(body,ui.text("تحصيل الفاتورة القديمة بنفس عملتها: $base"))
   }catch(e:CancellationException){throw e}catch(e:Exception){error.text=e.message}}

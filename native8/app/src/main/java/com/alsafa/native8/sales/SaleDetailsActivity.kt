@@ -24,7 +24,12 @@ class SaleDetailsActivity:Activity(){
    val unit=old?.currency ?: saleMeta!!.optString("currency","USD")
    val displayRate=saleMeta?.optString("rateToUsd","1")?.toBigDecimal() ?: BigDecimal.ONE
    fun display(n:BigDecimal)=InvoiceDisplay.amount(n.divide(displayRate,2,java.math.RoundingMode.HALF_UP))
-   val value=(current?.total ?: old!!.total).toBigDecimal();val historicalCollections=if(old!=null)withContext(Dispatchers.IO){db.legacyPaymentDao().payments(id).fold(BigDecimal.ZERO){a,p->a+p.amount.toBigDecimal()}} else BigDecimal.ZERO;val paid=(current?.paid ?: old!!.historical_paid).toBigDecimal()+historicalCollections;val due=if((current?.status ?: old?.status)=="ملغاة")BigDecimal.ZERO else debt?.balance?.toBigDecimal() ?: old?.due?.toBigDecimal() ?: (value-paid).max(BigDecimal.ZERO)
+   val archived=if(old!=null) withContext(Dispatchers.IO){
+    SalesRoomRepository(applicationContext).archivedBalance(old)
+   } else null
+   val value=(current?.total ?: old!!.total).toBigDecimal()
+   val paid=archived?.paid ?: current!!.paid.toBigDecimal()
+   val due=if((current?.status ?: old?.status)=="ملغاة")BigDecimal.ZERO else archived?.due ?: debt?.balance?.toBigDecimal() ?: (value-paid).max(BigDecimal.ZERO)
    val status=current?.status ?: old!!.status
    val info=ui.card();ui.add(body,info)
    fun row(label:String,value:String){val pair=SafaGrid(this@SaleDetailsActivity,{2},10);pair.addView(ui.text(label,14f,SafaStyle.Palette.muted));pair.addView(ui.text(value.ifBlank{"—"},16f));ui.add(info,pair,8)}
@@ -39,7 +44,7 @@ class SaleDetailsActivity:Activity(){
     if(meta.optString("notes").isNotBlank())row("ملاحظات",meta.getString("notes"))
     meta.optJSONObject("change")?.let{row("الباقي المدفوع للعميل",InvoiceDisplay.amount(it.getString("amount"))+" "+it.getString("currency")+" — "+UnifiedCashboxBalance.displayName(it.getString("cashbox")))}
    }
-   val effective=if(status=="ملغاة")BigDecimal.ZERO else if(current!=null)saleMeta!!.optString("exchangeEffectiveTotal").toBigDecimalOrNull() ?: (paid+due) else value
+   val effective=if(status=="ملغاة")BigDecimal.ZERO else if(current!=null)saleMeta!!.optString("exchangeEffectiveTotal").toBigDecimalOrNull() ?: (paid+due) else archived!!.effective
    val card=ui.card();ui.add(card,ui.text("الإجمالي بعد التسويات: ${display(effective)} $unit",22f,bold=true));ui.add(card,ui.text("المقبوض: ${display(paid)} $unit\nالمتبقي: ${display(due)} $unit",18f));ui.add(body,card)
    val actions=SafaGrid(this@SaleDetailsActivity,{if(it>=600)3 else 2},10);ui.add(body,actions)
    fun action(label:String,run:()->Unit){actions.addView(ui.button(label,height=48){if(!busy)run()})}
@@ -49,7 +54,7 @@ class SaleDetailsActivity:Activity(){
     row("نوع المبيع",if(LegacySaleChannel.fromOriginalJson(old.original_json)==SalesChannelProfit.Channel.ONLINE)"أونلاين" else "المحل")
     for((key,label) in listOf("warranty" to "الضمان","warrantyMonths" to "مدة الضمان بالأشهر","notes" to "ملاحظات","onlineStatus" to "حالة الأونلاين","paymentMethod" to "طريقة الدفع"))raw!!.optString(key).takeIf{it.isNotBlank()&&it!="null"}?.let{row(label,it)}
     action("تعديل بيانات الفاتورة"){startActivity(Intent(this@SaleDetailsActivity,InvoiceMetadataActivity::class.java).putExtra("kind","sale").putExtra("invoice_id",id))}
-    val items=raw!!.optJSONArray("items");for(i in 0 until (items?.length() ?: 0)){val r=items!!.optJSONObject(i) ?: continue;row(r.optString("name",r.optString("title",r.optString("productName","صنف"))),"${r.optString("qty",r.optString("quantity"))} × ${InvoiceDisplay.amount(r.optString("price",r.optString("unitPrice","0")))} $unit")}
+    val items=raw!!.optJSONArray("items");for(i in 0 until (items?.length() ?: 0)){val r=items!!.optJSONObject(i) ?: continue;val returned=archived!!.returnedByLine[i] ?: BigDecimal.ZERO;row(r.optString("name",r.optString("title",r.optString("productName","صنف"))),"${r.optString("qty",r.optString("quantity"))} × ${InvoiceDisplay.amount(r.optString("price",r.optString("unitPrice","0")))} $unit" + if(returned.signum()>0)" · المرتجع: ${InvoiceDisplay.amount(returned)}" else "")}
    }else{
     action("تعديل اسم العميل ورقم الهاتف"){
      val form=ui.column(16);ui.label(form,"اسم العميل");val customer=ui.input().apply{setText(current!!.customer)};ui.add(form,customer);ui.label(form,"رقم الهاتف");val phone=ui.input().apply{setText(current!!.phone)};ui.add(form,phone)
