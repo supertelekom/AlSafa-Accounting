@@ -29,6 +29,17 @@ class FullSaleActivity:Activity() {
  private lateinit var notes:EditText;private lateinit var changeBox:SafaWidgets.Dropdown;private lateinit var changeUnit:SafaWidgets.Dropdown
  private lateinit var changePanel:LinearLayout;private lateinit var changePreview:TextView
  private val lines=mutableListOf<SaleLine>();private val payments=mutableListOf<SalePayment>()
+ private lateinit var shippingPanel:LinearLayout
+ private lateinit var shippingFields:LinearLayout
+ private lateinit var payer:SafaWidgets.Dropdown
+ private lateinit var shippingUnit:SafaWidgets.Dropdown
+ private lateinit var shippingBox:SafaWidgets.Dropdown
+ private lateinit var shippingAmount:EditText
+ private fun showShipping(){
+  if(!::shippingFields.isInitialized)return
+  shippingPanel.visibility=if(channel.value=="online") android.view.View.VISIBLE else android.view.View.GONE
+  shippingFields.visibility=if(payer.value=="sender") android.view.View.VISIBLE else android.view.View.GONE
+ }
  private var requestId=UUID.randomUUID().toString();private var saving=false;private var job:Job?=null
  private fun money(n:BigDecimal)=InvoiceDisplay.amount(n)
  override fun onCreate(state:Bundle?){super.onCreate(state);requestWindowFeature(android.view.Window.FEATURE_NO_TITLE)
@@ -39,7 +50,7 @@ class FullSaleActivity:Activity() {
   val info=ui.card();ui.add(body,info)
   val top=SafaGrid(this,{if(it>=700)2 else 1});ui.add(info,top)
   val typeBox=ui.column();top.addView(typeBox);ui.label(typeBox,"نوع البيع")
-  channel=ui.dropdown(listOf("store" to "مبيع المحل","online" to "مبيع أونلاين"),state?.getString("channel") ?: "store"){};ui.add(typeBox,channel.view)
+  channel=ui.dropdown(listOf("store" to "مبيع المحل","online" to "مبيع أونلاين"),state?.getString("channel") ?: "store"){showShipping()};ui.add(typeBox,channel.view)
   val currencyBox=ui.column();top.addView(currencyBox);ui.label(currencyBox,"عملة البيع")
   invoiceRate=state?.getString("invoiceRate")?.toBigDecimal() ?: BigDecimal.ONE
   saleUnit=ui.dropdown(listOf("USD" to "دولار","TRY" to "تركي","SYP" to "سوري"),state?.getString("saleUnit") ?: "USD"){value->
@@ -48,6 +59,15 @@ class FullSaleActivity:Activity() {
    if(::discount.isInitialized){val old=discount.text.toString().toBigDecimalOrNull() ?: BigDecimal.ZERO;discount.setText(money((old*oldRate).divide(invoiceRate,2,RoundingMode.HALF_UP)))}
    if(::cart.isInitialized)refresh()
   };ui.add(currencyBox,saleUnit.view)
+  shippingPanel=ui.column();ui.add(info,shippingPanel);ui.label(shippingPanel,"أجرة الشحن")
+  payer=ui.dropdown(listOf("receiver" to "الدفع على المستلم","sender" to "الدفع على المرسل"),state?.getString("shippingPayer") ?: "receiver"){showShipping()};ui.add(shippingPanel,payer.view)
+  shippingFields=ui.column();ui.add(shippingPanel,shippingFields)
+  ui.label(shippingFields,"المبلغ المدفوع للشحن");shippingAmount=ui.input(numeric=true).apply{id=6110};ui.add(shippingFields,shippingAmount)
+  val shippingGrid=SafaGrid(this,{if(it>=520)2 else 1});ui.add(shippingFields,shippingGrid)
+  val currencyField=ui.column();ui.label(currencyField,"عملة الدفع")
+  shippingUnit=ui.dropdown(listOf("USD" to "دولار","TRY" to "ليرة تركية","SYP" to "ليرة سورية"),state?.getString("shippingUnit") ?: "USD"){};ui.add(currencyField,shippingUnit.view);shippingGrid.addView(currencyField)
+  val boxField=ui.column();ui.label(boxField,"الدفع من")
+  shippingBox=ui.dropdown(listOf("drawer" to "الدرج","shamcash" to "شام كاش"),state?.getString("shippingBox") ?: "drawer"){};ui.add(boxField,shippingBox.view);shippingGrid.addView(boxField)
   dates=SafaDateTime.fields(ui,info);dates.date.id=6104;dates.time.id=6105
   val client=SafaGrid(this,{if(it>=520)2 else 1});ui.add(info,client)
   fun clientField(label:String,id:Int):EditText{val box=ui.column();ui.label(box,label);return ui.input().apply{this.id=id;ui.add(box,this);client.addView(box)}}
@@ -78,11 +98,11 @@ class FullSaleActivity:Activity() {
    customer.setText(SalesDraftSession.customer);phone.setText(SalesDraftSession.phone)
    discount.setText(SalesDraftSession.discount);channel.select(SalesDraftSession.channel)
   }
-  refresh();setContentView(host.view)
+  showShipping();refresh();setContentView(host.view)
  }
  private fun draft()=SaleDraft(customer.text.toString().trim(),phone.text.toString().trim(),lines.toList(),payments.toList(),(discount.text.toString().ifBlank{"0"}.toBigDecimal()*invoiceRate).setScale(2,RoundingMode.HALF_UP),channel.value,
   java.time.LocalDate.parse(dates.date.text.toString()).atTime(java.time.LocalTime.parse(dates.time.text.toString())).atZone(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli(),
-  warranty.value.toInt(),notes.text.toString(),changeBox.value,changeUnit.value,ExchangeRateSettings(this).rate(changeUnit.value,"USD"),saleUnit.value,invoiceRate)
+  warranty.value.toInt(),notes.text.toString(),changeBox.value,changeUnit.value,ExchangeRateSettings(this).rate(changeUnit.value,"USD"),saleUnit.value,invoiceRate,if(channel.value=="online" && payer.value=="sender")SenderShipping(shippingAmount.text.toString().toBigDecimalOrNull() ?: BigDecimal.ZERO,shippingUnit.value,shippingBox.value) else null)
  private fun summary(){if(!::total.isInitialized)return;runCatching{SalesEngine(this).calculate(draft())}.onSuccess{
   changePanel.visibility=if(it.change>BigDecimal.ZERO)android.view.View.VISIBLE else android.view.View.GONE
   changePreview.text=if(it.change>BigDecimal.ZERO)runCatching{val d=draft();val plan=SaleChangePlan.build(it.net,d.payments,d.changeCashbox,d.changeCurrency,d.changeRate);"المبلغ الذي سترده: ${money(plan.change!!.amount)} ${plan.change.currency}"}.getOrElse{e->e.message ?: "راجع عملة الباقي"} else ""
@@ -117,7 +137,7 @@ class FullSaleActivity:Activity() {
   if(totals.due>BigDecimal.ZERO&&value.customerName.isBlank()&&value.customerPhone.isBlank()){error.text="حدد العميل للبيع الآجل";return}
   saving=true;error.text="جارٍ الحفظ…";scope.launch{try{val id=withContext(Dispatchers.IO){RoomSalesEngine(applicationContext).save(value,totals,requestId)};if(intent.getBooleanExtra("resume_shared_draft",false))SalesDraftSession.clear();startActivity(Intent(this@FullSaleActivity,SalePrintActivity::class.java).putExtra("sale_id",id));finish()}catch(e:CancellationException){throw e}catch(e:Exception){error.text=e.message ?: "تعذر الحفظ";saving=false}}
  }
- override fun onSaveInstanceState(out:Bundle){out.putString("saleUnit",saleUnit.value);out.putString("invoiceRate",invoiceRate.toPlainString());out.putString("warranty",warranty.value);out.putString("changeBox",changeBox.value);out.putString("changeUnit",changeUnit.value);out.putString("requestId",requestId);out.putString("channel",channel.value);out.putString("discount",discount.text.toString());out.putString("draft",JSONObject().put("lines",JSONArray().apply{lines.forEach{put(JSONObject().put("source",it.productSource).put("id",it.productId).put("variant",it.variantId ?: "").put("title",it.title).put("qty",it.quantity.toPlainString()).put("price",it.unitPrice.toPlainString()).put("cost",it.unitCost.toPlainString()))}}).put("payments",JSONArray().apply{payments.forEach{put(JSONObject().put("box",it.cashbox).put("currency",it.currency).put("amount",it.amount.toPlainString()).put("fx",it.fxRate.toString()).put("credit",it.creditedAmount.toString()))}}).toString());super.onSaveInstanceState(out)}
+ override fun onSaveInstanceState(out:Bundle){out.putString("shippingPayer",payer.value);out.putString("shippingUnit",shippingUnit.value);out.putString("shippingBox",shippingBox.value);out.putString("saleUnit",saleUnit.value);out.putString("invoiceRate",invoiceRate.toPlainString());out.putString("warranty",warranty.value);out.putString("changeBox",changeBox.value);out.putString("changeUnit",changeUnit.value);out.putString("requestId",requestId);out.putString("channel",channel.value);out.putString("discount",discount.text.toString());out.putString("draft",JSONObject().put("lines",JSONArray().apply{lines.forEach{put(JSONObject().put("source",it.productSource).put("id",it.productId).put("variant",it.variantId ?: "").put("title",it.title).put("qty",it.quantity.toPlainString()).put("price",it.unitPrice.toPlainString()).put("cost",it.unitCost.toPlainString()))}}).put("payments",JSONArray().apply{payments.forEach{put(JSONObject().put("box",it.cashbox).put("currency",it.currency).put("amount",it.amount.toPlainString()).put("fx",it.fxRate.toString()).put("credit",it.creditedAmount.toString()))}}).toString());super.onSaveInstanceState(out)}
  private fun restore(j:JSONObject){val a=j.getJSONArray("lines");for(i in 0 until a.length()){val r=a.getJSONObject(i);lines+=SaleLine(r.getString("source"),r.getString("id"),r.getString("variant").ifBlank{null},r.getString("title"),r.getString("qty").toBigDecimal(),r.getString("price").toBigDecimal(),r.getString("cost").toBigDecimal())};val b=j.getJSONArray("payments");for(i in 0 until b.length()){val r=b.getJSONObject(i);payments+=SalePayment(r.getString("box"),r.getString("currency"),r.getString("amount").toBigDecimal(),"USD",r.getString("fx").toBigDecimal(),r.getString("credit").toBigDecimal())}}
  override fun onActivityResult(requestCode:Int,resultCode:Int,data:Intent?){super.onActivityResult(requestCode,resultCode,data);if(requestCode==502&&resultCode==RESULT_OK){val bitmap=data?.extras?.get("data") as? android.graphics.Bitmap ?: return;val scanner=BarcodeScanning.getClient();scanner.process(InputImage.fromBitmap(bitmap,0)).addOnSuccessListener{rows->if(isFinishing||isDestroyed)return@addOnSuccessListener;rows.firstOrNull()?.rawValue?.let{search.setText(it);lookup(it,true)} ?: run{error.text="لم يُقرأ باركود"}}.addOnFailureListener{if(!isFinishing&&!isDestroyed)error.text="تعذر قراءة الباركود"}.addOnCompleteListener{scanner.close()}}}
  @Deprecated("Legacy back callback") override fun onBackPressed(){if(!saving)super.onBackPressed()}

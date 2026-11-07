@@ -89,6 +89,20 @@ class RoomSalesEngine(private val context: Context, private val db:AppDatabase=A
         val metadata=org.json.JSONObject().put("warrantyMonths",draft.warrantyMonths).put("notes",draft.notes).put("currency",draft.invoiceCurrency).put("rateToUsd",draft.invoiceRate.toPlainString())
         fun receiptJson(p:SalePayment)=org.json.JSONObject().put("cashbox",p.cashbox).put("currency",p.currency).put("amount",p.amount.toPlainString()).put("rate",p.fxRate.toString()).put("base",p.creditedAmount.toString())
         if(plan.change!=null){metadata.put("tender",org.json.JSONArray().apply{draft.payments.forEach{put(receiptJson(it))}});metadata.put("change",receiptJson(plan.change));metadata.put("changeMovementSource","sale-change:$id")}
+        draft.senderShipping?.let { shipping ->
+            require(draft.channel==SalesChannelClassification.ONLINE) { "أجرة الشحن لمبيع الأونلاين فقط" }
+            require(shipping.amount.signum()>0) { "أدخل أجرة الشحن المدفوعة" }
+            require(shipping.cashbox in setOf("drawer","shamcash")) { "اختر الدرج أو شام كاش للشحن" }
+            val expenseId="shipping-"+id
+            val stamp=java.time.Instant.ofEpochMilli(invoiceAt).atZone(java.time.ZoneId.systemDefault())
+            val rate=ExchangeRateSettings(context).rate(shipping.currency,"USD")
+            val expense=OperationalExpenseEntity(expenseId,stamp.toLocalDate().toString(),stamp.toLocalTime().withNano(0).toString(),
+                "أجرة شحن","فاتورة أونلاين رقم $number",shipping.currency,shipping.amount.toPlainString(),shipping.cashbox,
+                shipping.cashbox,rate.toPlainString(),invoiceAt,"financial-"+expenseId)
+            OperationalExpensePartnerRepository(db).saveExpense(expense)
+            metadata.put("shippingExpenseId",expenseId).put("shippingAmount",expense.amount)
+                .put("shippingCurrency",expense.currency).put("shippingCashbox",shipping.cashbox)
+        }
         posting.insertSale(RoomSale(id, number, invoiceAt, draft.customerName, draft.customerPhone,
             totals.net.toPlainString(), totals.discount.toPlainString(), totals.paid.min(totals.net).toPlainString(),
             if (totals.due > BigDecimal.ZERO) "آجل" else "مدفوع",draft.channel,metadata.toString()))

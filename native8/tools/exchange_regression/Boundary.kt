@@ -29,3 +29,5 @@ object UnifiedCashboxBalance{fun displayName(s:String)=s;fun canonical(s:String)
 class ExchangeRateSettings(c:Context){fun rate(f:String,t:String)=when(f){"TRY"->java.math.BigDecimal("0.02");else->java.math.BigDecimal.ONE}}
 object LegacySaleChannel{fun fromOriginalJson(s:String)=SalesChannelProfit.Channel.STORE}
 object SalesChannelProfit{enum class Channel{STORE,ONLINE}}
+
+class OperationalExpensePartnerRepository(val db:AppDatabase){suspend fun saveExpense(row:OperationalExpenseEntity){error("Expense repository is outside this exchange fixture")}}

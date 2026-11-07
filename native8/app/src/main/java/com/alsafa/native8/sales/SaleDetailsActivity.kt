@@ -35,6 +35,7 @@ class SaleDetailsActivity:Activity(){
     row("التاريخ والوقت",stamp.toLocalDate().toString()+" "+stamp.toLocalTime().withSecond(0).withNano(0))
     val meta=JSONObject(current.metadata_json);val months=meta.optInt("warrantyMonths",0)
     row("الضمان",if(months>0)"$months شهر — حتى ${stamp.toLocalDate().plusMonths(months.toLong())}" else "بدون ضمان مسجل")
+    if(meta.has("shippingExpenseId"))row("أجرة الشحن على المرسل",InvoiceDisplay.amount(meta.getString("shippingAmount"))+" "+meta.getString("shippingCurrency")+" · "+UnifiedCashboxBalance.displayName(meta.getString("shippingCashbox")))
     if(meta.optString("notes").isNotBlank())row("ملاحظات",meta.getString("notes"))
     meta.optJSONObject("change")?.let{row("الباقي المدفوع للعميل",InvoiceDisplay.amount(it.getString("amount"))+" "+it.getString("currency")+" — "+UnifiedCashboxBalance.displayName(it.getString("cashbox")))}
    }
