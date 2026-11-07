@@ -30,12 +30,13 @@ class SalePrintActivity:Activity() {
  override fun onCreate(state:Bundle?) {
   super.onCreate(state);automaticShareHandled=state?.getBoolean("automaticShareHandled",false) ?: false;requestWindowFeature(android.view.Window.FEATURE_NO_TITLE)
   ui=SafaWidgets(SafaStyle(this));host=SafaPageHost(ui,"الصفا للساعات");setContentView(host.view)
-  ui.heading(host.body,"طباعة ومشاركة الفاتورة","قالب الصفا — فاتورة مبيع أو صيانة")
+  ui.heading(host.body,"طباعة ومشاركة الفاتورة","قالب الصفا — الفواتير والمرتجعات والاستبدال")
   ui.add(host.body,ui.button("رجوع"){finish()})
   message=ui.text("جارٍ تجهيز الفاتورة…");ui.add(host.body,message)
   scope.launch {
    try {
-    val data=InvoiceReceiptRepository(applicationContext).load(intent.getStringExtra("sale_id"),intent.getStringExtra("repair_id"))
+    val returnKey=intent.getStringExtra("return_key")
+    val data=if(returnKey!=null)ReturnHistoryRepository(applicationContext).receipt(returnKey) else InvoiceReceiptRepository(applicationContext).load(intent.getStringExtra("sale_id"),intent.getStringExtra("repair_id"))
     val file=withContext(Dispatchers.IO){data.pdf(applicationContext)}
     receipt=data;pdf=file;showActions(data);message.text="الفاتورة جاهزة"
     if(intent.getBooleanExtra("share_after_collection",false) && !automaticShareHandled) {

@@ -31,48 +31,23 @@ class MaintenanceReturnActivity:Activity() {
  private fun dp(n:Int)=(n*resources.displayMetrics.density+0.5f).toInt()
  private fun text(value:String)=TextView(this).apply { text=value;textSize=18f;typeface=font;content.addView(this);MaintenanceFormStyle.apply(this,ui) }
  private fun field(label:String,value:String,numeric:Boolean=false):EditText {
-  text(label)
-  return EditText(this).apply {
-   typeface=font;setText(value);minHeight=dp(58);setSingleLine(true)
-   if(numeric) inputType=android.text.InputType.TYPE_CLASS_NUMBER or android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL
-   content.addView(this,LinearLayout.LayoutParams(-1,-2));MaintenanceFormStyle.apply(this,ui)
-  }
+  ui.label(content,label)
+  return ui.input(numeric=numeric).apply{setText(value);ui.add(content,this)}
  }
  private fun choice(label:String,options:List<String>):Spinner {
-  text(label)
-  return Spinner(this).apply {
-   minimumHeight=dp(58)
-   adapter=object:ArrayAdapter<String>(this@MaintenanceReturnActivity,android.R.layout.simple_spinner_dropdown_item,options) {
-    override fun getView(position:Int,convertView:View?,parent:ViewGroup):View=super.getView(position,convertView,parent).also { (it as? TextView)?.typeface=font }
-    override fun getDropDownView(position:Int,convertView:View?,parent:ViewGroup):View=super.getDropDownView(position,convertView,parent).also { (it as? TextView)?.typeface=font }
-   }
-   content.addView(this,LinearLayout.LayoutParams(-1,-2));MaintenanceFormStyle.apply(this,ui)
-  }
+  ui.label(content,label)
+  return ui.dropdown(options.mapIndexed{i,v->i.toString() to v},"0"){}.view.also{ui.add(content,it)}
  }
- private fun button(label:String,action:()->Unit)=Button(this).apply {
-  text=label;typeface=font;minHeight=dp(72);content.addView(this,LinearLayout.LayoutParams(-1,-2));MaintenanceFormStyle.apply(this,ui)
-  setOnClickListener { if(!busy) action() }
- }
+ private fun button(label:String,action:()->Unit)=ui.button(label,false,48){if(!busy)action()}.also{ui.add(content,it)}
  override fun onCreate(savedInstanceState:Bundle?) {
   super.onCreate(savedInstanceState);requestWindowFeature(android.view.Window.FEATURE_NO_TITLE);window.statusBarColor=com.alsafa.native8.stylekit.SafaStyle.Palette.cream
   repairId=intent.getStringExtra("repair_id") ?: run { finish();return }
   font=Typeface.createFromAsset(assets,"fonts/Tajawal-Medium.ttf")
   title="مرتجع / استبدال صيانة"
-  content=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL;setBackgroundColor(com.alsafa.native8.stylekit.SafaStyle.Palette.cream);layoutDirection=View.LAYOUT_DIRECTION_RTL;setPadding(dp(16),dp(16),dp(16),dp(20)) }
-  val scroll=ScrollView(this).apply {
-   isFillViewport=true;clipToPadding=false;isHorizontalScrollBarEnabled=false
-   addView(content,FrameLayout.LayoutParams(-1,-2))
-   setOnApplyWindowInsetsListener { view,insets ->
-    if(android.os.Build.VERSION.SDK_INT>=30) {
-     val bars=insets.getInsets(android.view.WindowInsets.Type.systemBars() or android.view.WindowInsets.Type.ime())
-     view.setPadding(bars.left,bars.top,bars.right,bars.bottom)
-    } else view.setPadding(insets.systemWindowInsetLeft,insets.systemWindowInsetTop,insets.systemWindowInsetRight,insets.systemWindowInsetBottom)
-    insets
-   }
-  }
-  window.clearFlags(android.view.WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS)
-  window.setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
-  setContentView(scroll);scroll.requestApplyInsets();load()
+  val host=com.alsafa.native8.stylekit.SafaPageHost(ui,"الصفا للساعات")
+  content=host.body
+  ui.heading(content,"مرتجع / استبدال صيانة","تسوية الأجرة والقطع المرتجعة والبديلة")
+  setContentView(host.view);load()
  }
  private fun load(message:String="") {
   busy=true
@@ -100,7 +75,7 @@ class MaintenanceReturnActivity:Activity() {
  }
  private fun render(raw:JSONObject,parts:List<MaintenancePartEntity>,message:String) {
   content.removeAllViews()
-  text("مرتجع / استبدال صيانة — فاتورة ${raw.get("invoiceNo")}")
+  ui.heading(content,"مرتجع / استبدال صيانة","فاتورة ${raw.get("invoiceNo")}")
   val unit=raw.getString("currency")
   text("العملة: $unit — المتبقي: ${MaintenanceReturnRules.due(raw).stripTrailingZeros().toPlainString()}")
   status=text(message)
