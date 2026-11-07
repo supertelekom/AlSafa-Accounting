@@ -29,10 +29,12 @@ class SaleExchangeActivity:Activity(){
   val chosen=ui.text("اختر المنتج البديل");ui.add(body,chosen)
   val rq=field("كمية البديل","1",true);val price=field("سعر الوحدة للبديل — بعملته المعروضة","",true)
   ui.add(body,ui.button("إزالة اختيار البديل"){selected=null;chosen.text="اختر المنتج البديل";price.setText("");search.requestFocus()})
+  val difference=ui.text("",18f,bold=true);ui.add(body,difference)
+  var refreshQuote:()->Unit={}
   ui.label(body,"صندوق قبض أو رد الفرق")
-  val box=ui.dropdown(listOf("drawer" to "الدرج","external" to "الصندوق الخارجي","shamcash" to "شام كاش","bank" to "البنك"),"drawer"){};ui.add(body,box.view)
+  val box=ui.dropdown(listOf("drawer" to "الدرج","external" to "الصندوق الخارجي","shamcash" to "شام كاش","bank" to "البنك"),"drawer"){refreshQuote()};ui.add(body,box.view)
   ui.label(body,"عملة قبض أو رد الفرق")
-  val unit=ui.dropdown(listOf("USD" to "دولار","TRY" to "ليرة تركية","SYP" to "ليرة سورية"),"USD"){};ui.add(body,unit.view)
+  val unit=ui.dropdown(listOf("USD" to "دولار","TRY" to "ليرة تركية","SYP" to "ليرة سورية"),"USD"){refreshQuote()};ui.add(body,unit.view)
   val amount=field("المقبوض الآن من الفرق — صفر لتركه آجلاً","0",true)
   val reason=field("سبب الاستبدال","");val error=ui.text("",14f,SafaStyle.Palette.danger);ui.add(body,error)
   val save=ui.button("معاينة الاستبدال",true){};save.isEnabled=false;ui.add(body,save);ui.add(body,ui.button("رجوع"){finish()});setContentView(host.view)
@@ -50,10 +52,32 @@ class SaleExchangeActivity:Activity(){
    if(query.isNotBlank()&&list.isEmpty())ui.add(results,ui.text("لا توجد منتجات مطابقة"))
   }catch(e:CancellationException){throw e}catch(e:Exception){error.text=e.message}}}
   fun number(v:EditText)=v.text.toString().trim().toBigDecimalOrNull() ?: error("أدخل مبلغاً أو كمية صحيحة")
-  save.setOnClickListener{if(busy)return@setOnClickListener
-   try{val p=requireNotNull(selected){"اختر المنتج البديل"};val fx=ExchangeRateSettings(this);val productRate=fx.rate(p.currency,"USD")
+  fun request(collected:BigDecimal):RoomSalesEngine.ExchangeRequest {
+   val p=requireNotNull(selected){"اختر المنتج البديل"};val fx=ExchangeRateSettings(this);val productRate=fx.rate(p.currency,"USD")
     val replacement=SaleLine(p.source,p.productId,p.variantId,p.title,number(rq),(number(price)*productRate).setScale(2,RoundingMode.HALF_UP),p.cost.toBigDecimal()*productRate)
-    val q=RoomSalesEngine.ExchangeRequest(requestId,saleId,lineId,number(quantity),replacement,box.value,unit.value,fx.rate(unit.value,"USD"),number(amount),reason.text.toString().trim())
+    return RoomSalesEngine.ExchangeRequest(requestId,saleId,lineId,number(quantity),replacement,box.value,unit.value,fx.rate(unit.value,"USD"),collected,reason.text.toString().trim())
+  }
+  var quoteJob:Job?=null
+  refreshQuote={
+   quoteJob?.cancel()
+   difference.text=""
+   if(selected!=null)quoteJob=scope.launch{
+    try{
+     val q=request(BigDecimal.ZERO)
+     val quote=withContext(Dispatchers.IO){RoomSalesEngine(applicationContext).quoteExchange(q)}
+     fun cash(value:BigDecimal)=InvoiceDisplay.amount(value.divide(q.rate,2,RoundingMode.HALF_UP))+" "+q.currency
+     difference.text=when{
+      quote.settlement.refund.signum()>0 -> "يُردّ للعميل: "+cash(quote.settlement.refund)
+      quote.settlement.due.signum()>0 -> "المطلوب من العميل قبل القبض: "+cash(quote.settlement.due)
+      else -> "لا يوجد مبلغ للقبض أو الرد"
+     }
+    }catch(e:CancellationException){throw e}catch(e:Exception){difference.text=e.message}
+   }
+  }
+  listOf(quantity,rq,price).forEach{ui.listen(it){refreshQuote()}}
+  refreshQuote()
+  save.setOnClickListener{if(busy)return@setOnClickListener
+   try{val q=request(number(amount))
     busy=true;save.isEnabled=false;SafaKeyboard.dismiss(amount)
     scope.launch{try{val engine=RoomSalesEngine(applicationContext);val preview=withContext(Dispatchers.IO){engine.previewExchange(q)};val s=preview.settlement
      fun cash(n:BigDecimal)=InvoiceDisplay.amount(n.divide(q.rate,2,RoundingMode.HALF_UP))+" "+q.currency

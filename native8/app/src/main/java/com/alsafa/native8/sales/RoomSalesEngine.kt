@@ -529,10 +529,11 @@ class RoomSalesEngine(private val context: Context, private val db:AppDatabase=A
         val replacement:SaleLine,val cashbox:String,val currency:String,val rate:BigDecimal,val collect:BigDecimal,val reason:String)
     data class ExchangePreview(val fingerprint:String,val returned:BigDecimal,val replacement:BigDecimal,val settlement:SaleExchangeMath.Settlement)
     suspend fun previewExchange(q:ExchangeRequest):ExchangePreview=db.withTransaction { exchangePreview(q) }
-    private suspend fun exchangePreview(q:ExchangeRequest):ExchangePreview {
+    suspend fun quoteExchange(q:ExchangeRequest):ExchangePreview=db.withTransaction { exchangePreview(q.copy(collect=BigDecimal.ZERO),quoteOnly=true) }
+    private suspend fun exchangePreview(q:ExchangeRequest,quoteOnly:Boolean=false):ExchangePreview {
         val sale=requireNotNull(posting.sale(q.saleId)){"استبدال المنتجات متاح للفواتير التشغيلية الجديدة"}
         require(sale.status!="ملغاة"){"الفاتورة ملغاة"};SalesChannelClassification.requireVerified(sale.channel ?: "")
-        require(q.requestId.isNotBlank()&&q.reason.isNotBlank()){"اكتب سبب الاستبدال"}
+        require(q.requestId.isNotBlank()&&(quoteOnly||q.reason.isNotBlank())){"اكتب سبب الاستبدال"}
         require(UnifiedCashboxBalance.canonical(q.cashbox)!=null && q.currency in setOf("USD","TRY","SYP") && q.rate>BigDecimal.ZERO){"اختر الصندوق والعملة"}
         require(q.cashbox!="shamcash" || q.currency!="TRY"){"شام كاش لا يدعم التركية"}
         require(ExchangeRateSettings(context).rate(q.currency,"USD").compareTo(q.rate)==0){"تغير سعر الصرف، أعد المعاينة"}
@@ -548,7 +549,7 @@ class RoomSalesEngine(private val context: Context, private val db:AppDatabase=A
         val collect=(q.collect*q.rate).setScale(2,java.math.RoundingMode.HALF_UP)
         val settlement=SaleExchangeMath.settle(current,sale.paid.toBigDecimal(),credit,replacement,collect)
         if(settlement.refund>BigDecimal.ZERO)RefundAllocationMath.convertExact(settlement.refund,q.rate)
-        if(settlement.due>BigDecimal.ZERO)require(sale.customer.isNotBlank()||sale.phone.isNotBlank()){"بيانات العميل مطلوبة للفرق الآجل"}
+        if(!quoteOnly && settlement.due>BigDecimal.ZERO)require(sale.customer.isNotBlank()||sale.phone.isNotBlank()){"بيانات العميل مطلوبة للفرق الآجل"}
         val fingerprint=sale.toString()+lines.toString()+due.toPlainString()
         return ExchangePreview(fingerprint,credit,replacement,settlement)
     }
