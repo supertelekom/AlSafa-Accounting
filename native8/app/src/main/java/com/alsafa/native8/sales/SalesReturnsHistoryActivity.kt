@@ -18,7 +18,7 @@ class SalesReturnsHistoryActivity:Activity(){
  override fun onCreate(state:Bundle?){super.onCreate(state);requestWindowFeature(android.view.Window.FEATURE_NO_TITLE)
   ui=SafaWidgets(SafaStyle(this));val root=ui.column(16).apply{setBackgroundColor(SafaStyle.Palette.cream)}
   ui.heading(root,"فواتير المرتجع والاستبدال","كل مرتجع محفوظ كمستند مستقل ومرتبط بفاتورته الأصلية")
-  query=ui.input("رقم الفاتورة أو الصنف أو السبب").apply{setText(state?.getString("query"))};ui.add(root,query)
+  query=ui.input("رقم الفاتورة أو الصنف أو السبب").apply{setText(state?.getString("query") ?: intent.getStringExtra("invoice_number"))};ui.add(root,query)
   kind=ui.dropdown(listOf("all" to "الكل","return" to "المرتجعات","exchange" to "الاستبدال"),state?.getString("kind") ?: "all"){filter()};ui.add(root,kind.view)
   notice=ui.text("جارٍ تحميل السجل…");ui.add(root,notice)
   adapter=object:BaseAdapter(){override fun getCount()=shown.size;override fun getItem(i:Int)=shown[i];override fun getItemId(i:Int)=i.toLong()

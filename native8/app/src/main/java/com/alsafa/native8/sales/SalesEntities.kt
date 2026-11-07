@@ -18,5 +18,5 @@ data class SaleTotals(val gross: BigDecimal, val discount: BigDecimal, val net: 
     val paid: BigDecimal, val due: BigDecimal, val change: BigDecimal)
 data class SaleRecord(val id: String, val number: Long, val date: Long, val customer: String,
     val phone: String, val total: String, val paid: String, val status: String,
-    val channel: String? = null)
+    val channel: String? = null,val currency:String="USD",val remaining:String="0",val items:String="",val historical:Boolean=false)
 enum class SalesPage { ARCHIVE, FULL, QUICK, PAYMENT, DETAILS, RETURNS, PRINT }

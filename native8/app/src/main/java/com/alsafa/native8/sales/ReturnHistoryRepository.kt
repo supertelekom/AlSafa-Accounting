@@ -36,7 +36,7 @@ class ReturnHistoryRepository(private val context:Context){
    text("id","رقم العملية");text("itemName","الصنف المرتجع");text("returnedPartName","القطعة المسترجعة");text("qty","الكمية");text("returnedPartQty","كمية القطعة")
    text("replacementName","المنتج البديل");text("replacementPartName","القطعة البديلة");text("replacementQty","كمية البديل");text("replacementPartQty","كمية القطعة البديلة")
    amount(if(raw.has("returnedValue"))"returnedValue" else "creditAmount","قيمة المرتجع");amount(if(raw.has("replacementValue"))"replacementValue" else "replacementAmount","قيمة البديل");amount("creditAmount","صافي قيمة التسوية");amount("returnPenalty","تعويض للمحل");amount("refundAmount","المردود الفعلي");amount("extraCollected","المقبوض من الفرق");amount("remainingAfter","المتبقي بعد العملية")
-   text("returnPenaltyReason","سبب التعويض");text("notes","ملاحظات");text("reason","السبب")
+   text("cashCurrency","عملة حركة الصندوق");text("cashRate","سعر الصرف إلى الدولار");text("cashCollected","المقبوض بعملة الصندوق");text("cashRefunded","المردود بعملة الصندوق");text("returnPenaltyReason","سبب التعويض");text("notes","ملاحظات");text("reason","السبب")
    raw.optString("vault").takeIf{it.isNotBlank()}?.let{rows+="الخزنة" to UnifiedCashboxBalance.displayName(it)}
    documents[key]=ReturnDocument(key,title,invoice,id,repair,date,item,rows,available)
   }
@@ -53,7 +53,13 @@ class ReturnHistoryRepository(private val context:Context){
    ensureActive();val entries=JSONObject(repair.original_json).optJSONArray("nativeReturns") ?: continue
    for(i in 0 until entries.length()){val raw=entries.getJSONObject(i);append(raw,"repair:${repair.id}:${raw.optString("id",i.toString())}",repair.id,repair.invoice_number.toString())}
   }
+  val exchangeReturns=mutableSetOf<String>()
+  for(sale in db.salesPostingDao().exchangeInvoices()){
+   val entries=JSONObject(sale.metadata_json).optJSONArray("nativeExchanges") ?: continue
+   for(i in 0 until entries.length()){val raw=entries.getJSONObject(i);exchangeReturns+=raw.getString("returnId");append(raw,"exchange:${raw.getString("id")}",sale.id,sale.number.toString())}
+  }
   for(r in db.legacySaleDao().allOperationalReturns()){
+   if(r.id in exchangeReturns)continue
    ensureActive();val (number,available)=original(r.sale_id,false)
    val line=db.salesPostingDao().line(r.sale_id,r.line_id)
    val time=Instant.ofEpochMilli(r.created_at).atZone(ZoneId.systemDefault()).toLocalDateTime().withNano(0).toString().replace('T',' ')

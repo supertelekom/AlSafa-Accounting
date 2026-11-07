@@ -44,6 +44,12 @@ interface SalesPostingDao {
     @Query("UPDATE sale_lines SET returned_qty=:quantity WHERE id=:id")
     suspend fun updateReturned(id: String, quantity: String): Int
 
+    @Query("UPDATE sales SET total=:total, metadata_json=:metadata WHERE id=:id AND status!='ملغاة'")
+    suspend fun updateExchange(id:String,total:String,metadata:String):Int
+
+    @Query("SELECT * FROM sales WHERE metadata_json LIKE '%nativeExchanges%'")
+    suspend fun exchangeInvoices():List<RoomSale>
+
     @Insert(onConflict=OnConflictStrategy.ABORT)
     suspend fun insertSale(value: RoomSale)
 

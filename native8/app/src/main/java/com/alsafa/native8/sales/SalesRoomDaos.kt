@@ -18,16 +18,16 @@ interface LegacySaleDao {
  @Query("SELECT * FROM legacy_sales_archive WHERE created_at>=:fromMillis AND created_at<:untilExclusive ORDER BY created_at,invoice_number")
  suspend fun historicalInPeriod(fromMillis:Long,untilExclusive:Long):List<LegacySaleEntity>
 
- @Query("""SELECT id,number,created_at,customer,phone,total,paid,status,0 AS historical,channel,NULL AS original_json FROM sales
+ @Query("""SELECT id,number,created_at,customer,phone,total,paid,status,0 AS historical,channel,metadata_json AS original_json FROM sales
  WHERE (customer LIKE '%' || :search || '%' OR phone LIKE '%' || :search || '%'
- OR CAST(number AS TEXT) LIKE '%' || :search || '%') AND created_at BETWEEN :from AND :to
+ OR CAST(number AS TEXT) LIKE '%' || :search || '%' OR EXISTS(SELECT 1 FROM sale_lines l WHERE l.sale_id=sales.id AND l.title LIKE '%' || :search || '%')) AND created_at BETWEEN :from AND :to
  UNION ALL
  SELECT legacy_id AS id,invoice_number AS number,created_at,customer,phone,total,
  historical_paid AS paid,status,1 AS historical,NULL AS channel,original_json FROM legacy_sales_archive
  WHERE (customer LIKE '%' || :search || '%' OR phone LIKE '%' || :search || '%'
- OR CAST(invoice_number AS TEXT) LIKE '%' || :search || '%') AND created_at BETWEEN :from AND :to
- ORDER BY created_at DESC LIMIT :limit""")
- suspend fun unifiedArchive(search:String,from:Long=0,to:Long=Long.MAX_VALUE,limit:Int=100):List<UnifiedSaleRow>
+ OR CAST(invoice_number AS TEXT) LIKE '%' || :search || '%' OR original_json LIKE '%' || :search || '%') AND created_at BETWEEN :from AND :to
+ ORDER BY created_at DESC,id DESC LIMIT :limit OFFSET :offset""")
+ suspend fun unifiedArchive(search:String,from:Long=0,to:Long=Long.MAX_VALUE,limit:Int=100,offset:Int=0):List<UnifiedSaleRow>
 
  @Query("SELECT * FROM legacy_sales_archive WHERE source_sha256=:source ORDER BY invoice_number")
  suspend fun legacyBySource(source:String):List<LegacySaleEntity>

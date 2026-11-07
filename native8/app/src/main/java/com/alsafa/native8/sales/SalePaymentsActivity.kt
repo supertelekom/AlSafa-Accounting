@@ -17,8 +17,8 @@ class SalePaymentsActivity:Activity(){
   val ui=SafaWidgets(SafaStyle(this));val host=SafaPageHost(ui,"الصفا للساعات");val body=host.body;ui.heading(body,"تكملة الدفع","قبض دفعة للفاتورة")
   val summary=ui.text("جارٍ قراءة الرصيد…",20f,bold=true);ui.add(body,summary)
   ui.label(body,"المبلغ المقبوض");val amount=ui.input(numeric=true);ui.add(body,amount)
-  val units=ui.choice(listOf("USD" to "دولار","TRY" to "تركي","SYP" to "سوري"),"USD"){};ui.add(body,units.view)
-  val boxes=ui.choice(listOf("drawer" to "الدرج","external" to "الخارجي","shamcash" to "شام كاش","bank" to "البنك"),"drawer",true){};ui.add(body,boxes.view)
+  val units=ui.dropdown(listOf("USD" to "دولار","TRY" to "تركي","SYP" to "سوري"),"USD"){};ui.add(body,units.view)
+  val boxes=ui.dropdown(listOf("drawer" to "الدرج","external" to "الخارجي","shamcash" to "شام كاش","bank" to "البنك"),"drawer"){};ui.add(body,boxes.view)
   val error=ui.text("",14f,SafaStyle.Palette.danger);ui.add(body,error)
   val save=ui.button("تأكيد القبض",true){};save.isEnabled=false;ui.add(body,save);ui.add(body,ui.button("رجوع"){finish()});setContentView(host.view)
   var historical=false;var base="USD";var due=BigDecimal.ZERO

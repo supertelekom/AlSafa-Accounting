@@ -60,8 +60,11 @@ class InvoiceReceiptRepository(private val context:Context) {
    }
    val discount=current?.discount ?: JSONObject(old!!.original_json).optString("discount","0")
    row("الخصم",show(discount)+" "+currency)
-   row("الإجمالي الأصلي بعد الخصم",show(total)+" "+currency);row("المقبوض الصافي",show(paid)+" "+currency)
-   row("المتبقي",show(old?.due ?: db.legacyReceivablesDao().bySaleId(id)?.balance ?: "0")+" "+currency)
+   val due=db.legacyReceivablesDao().bySaleId(id)?.balance ?: old?.due ?: "0"
+   val effective=if((current?.status ?: old?.status)=="ملغاة")"0" else if(current!=null)meta!!.optString("exchangeEffectiveTotal").ifBlank{(paid.toBigDecimal()+due.toBigDecimal()).toPlainString()} else total
+   row("الإجمالي بعد التسويات",show(effective)+" "+currency);row("المقبوض الصافي",show(if(old!=null)(paid.toBigDecimal()+db.legacyPaymentDao().payments(id).fold(BigDecimal.ZERO){a,p->a+p.amount.toBigDecimal()}).toPlainString() else paid)+" "+currency)
+   row("المتبقي",show(due)+" "+currency)
+   if(old!=null){val raw=JSONObject(old.original_json);for((key,label) in listOf("warranty" to "الضمان","warrantyMonths" to "مدة الضمان بالأشهر","notes" to "ملاحظات"))raw.optString(key).takeIf{it.isNotBlank()&&it!="null"}?.let{row(label,it)}}
    if(meta!=null){val months=meta.optInt("warrantyMonths",0)
     row("مدة الضمان",if(months>0)"$months شهر" else "بدون ضمان مسجل")
     if(months>0)row("نهاية الضمان",Instant.ofEpochMilli(current!!.created_at).atZone(ZoneId.systemDefault()).toLocalDate().plusMonths(months.toLong()).toString())
