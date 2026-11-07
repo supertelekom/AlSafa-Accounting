@@ -78,6 +78,7 @@ class FullSaleActivity:Activity() {
   search=ui.input("اسم المنتج أو الباركود");ui.add(body,search);SafaKeyboard.keepContextBelow(search,100);ui.listen(search){lookup(it,false)}
   ui.add(body,ui.button("قراءة الباركود بالكاميرا"){if(!saving)runCatching{startActivityForResult(Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE),502)}.onFailure{error.text="تعذر فتح الكاميرا"}})
   results=ui.column();results.addOnLayoutChangeListener{_,_,_,_,_,_,_,_,_->if(search.hasFocus())search.post{SafaKeyboard.reveal(search)}};ui.add(body,results);ui.heading(body,"أصناف الفاتورة","");cart=ui.column();ui.add(body,cart)
+  ui.add(body,ui.button("＋ إضافة صنف يدوي"){if(!saving)editLine(null,null)})
   ui.label(body,"خصم الفاتورة اليدوي — بعملة البيع");discount=ui.input(numeric=true).apply{id=6103;setText(state?.getString("discount") ?: "0")};ui.add(body,discount);ui.listen(discount){summary()}
   ui.step(body,3,"الدفع والإرسال")
   ui.add(body,ui.text("أضف دفعة لكل عملة وصندوق. اترك الدفعات فارغة للبيع الآجل مع تحديد العميل."))
@@ -116,11 +117,25 @@ class FullSaleActivity:Activity() {
  private fun editLine(index:Int?,choice:SaleChoice?){if(saving)return;SafaKeyboard.dismiss(search)
   val old=index?.let{lines[it]};val unit=saleUnit.value;val sourceUnit=runCatching{choice?.currency?.let(SaleCurrency::normalize) ?: "USD"}.getOrElse{error.text=it.message;return};val form=ui.column(16)
   fun input(label:String,value:String):EditText{ui.label(form,label);return ui.input(numeric=true).apply{setText(value);ui.add(form,this)}}
-  val qty=input("الكمية",old?.quantity?.toPlainString() ?: "1");val price=input("سعر الوحدة — $unit",money((old?.unitPrice ?: (choice!!.price.toBigDecimal()*ExchangeRateSettings(this).rate(sourceUnit,"USD"))).divide(invoiceRate,2,RoundingMode.HALF_UP)))
+  val manual=choice==null && (old==null || old.productSource==MANUAL_SALE_SOURCE)
+  val title=if(manual){ui.label(form,"اسم الصنف");ui.input().apply{setText(old?.title.orEmpty());ui.add(form,this)}}else null
+  fun inCurrency(value:BigDecimal)=money(value.divide(invoiceRate,2,RoundingMode.HALF_UP))
+  val initialPrice=old?.unitPrice ?: choice?.let{it.price.toBigDecimal()*ExchangeRateSettings(this).rate(sourceUnit,"USD")}
+  val qty=input("الكمية",old?.quantity?.toPlainString() ?: "1")
+  val price=input("سعر الوحدة — $unit",initialPrice?.let{inCurrency(it)}.orEmpty())
+  val cost=if(manual)input("رأس مال القطعة — $unit",old?.unitCost?.let{inCurrency(it)}.orEmpty())else null
   val warning=ui.text("",14f,SafaStyle.Palette.danger);ui.add(form,warning)
-  val dialog=android.app.AlertDialog.Builder(this).setTitle(old?.title ?: choice!!.title).setView(ScrollView(this).apply{isFillViewport=false;addView(form)}).setNegativeButton("إلغاء",null).setPositiveButton("إضافة / حفظ",null).create()
+  val dialog=android.app.AlertDialog.Builder(this).setTitle(old?.title ?: choice?.title ?: "إضافة صنف يدوي").setView(ScrollView(this).apply{isFillViewport=false;addView(form)}).setNegativeButton("إلغاء",null).setPositiveButton("إضافة / حفظ",null).create()
   dialog.setOnShowListener{SafaKeyboard.fitDialog(dialog);dialog.getButton(-1).setOnClickListener{try{val q=qty.text.toString().toBigDecimal();val p=price.text.toString().toBigDecimal();require(q>BigDecimal.ZERO && p>=BigDecimal.ZERO){"تحقق من الكمية والسعر"}
-   if(choice!=null){val reserved=lines.filter{it.productSource==choice.source&&it.productId==choice.productId&&it.variantId==choice.variantId}.fold(BigDecimal.ZERO){a,l->a+l.quantity};require(q+reserved<=choice.available.toBigDecimal()){"الكمية غير متوفرة"};val fx=invoiceRate;lines+=SaleLine(choice.source,choice.productId,choice.variantId,choice.title,q,(p*fx).setScale(2,RoundingMode.HALF_UP),choice.cost.toBigDecimal()*ExchangeRateSettings(this).rate(sourceUnit,"USD"))}
+   if(manual){
+    val name=title!!.text.toString().trim()
+    require(name.isNotBlank()){"أدخل اسم الصنف"}
+    val capital=requireNotNull(cost!!.text.toString().trim().toBigDecimalOrNull()){"أدخل رأس مال القطعة، أو صفراً إذا كانت بلا تكلفة"}
+    require(capital.signum()>=0){"رأس المال لا يقبل رقماً سالباً"}
+    val baseCost=if(old!=null && cost.text.toString()==inCurrency(old.unitCost))old.unitCost else capital*invoiceRate
+    val line=SaleLine(MANUAL_SALE_SOURCE,old?.productId ?: java.util.UUID.randomUUID().toString(),null,name,q,(p*invoiceRate).setScale(2,RoundingMode.HALF_UP),baseCost)
+    if(index==null)lines.add(line) else lines[index]=line
+   }else if(choice!=null){val reserved=lines.filter{it.productSource==choice.source&&it.productId==choice.productId&&it.variantId==choice.variantId}.fold(BigDecimal.ZERO){a,l->a+l.quantity};require(q+reserved<=choice.available.toBigDecimal()){"الكمية غير متوفرة"};val fx=invoiceRate;lines+=SaleLine(choice.source,choice.productId,choice.variantId,choice.title,q,(p*fx).setScale(2,RoundingMode.HALF_UP),choice.cost.toBigDecimal()*ExchangeRateSettings(this).rate(sourceUnit,"USD"))}
    else lines[index!!]=old!!.copy(quantity=q,unitPrice=(p*invoiceRate).setScale(2,RoundingMode.HALF_UP))
    search.setText("");refresh();dialog.dismiss()
   }catch(e:Exception){warning.text=e.message ?: "راجع القيم"}}};dialog.show()

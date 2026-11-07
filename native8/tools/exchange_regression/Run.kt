@@ -56,5 +56,19 @@ fun main()=runBlocking {
   e.exchange(second,e.previewExchange(second).fingerprint);eq(profit(x).toPlainString(),"20");eq(x.sales.getValue(s).paid,"40")
   e.cancelWithRefund(s);eq(profit(x).toPlainString(),"0");assertions+=8
  }
+ for(channel in listOf("store","online")){
+  val manualDb=AppDatabase()
+  AppDatabase.instance=manualDb
+  val manualEngine=RoomSalesEngine(android.content.Context())
+  val sale=draft.copy(channel=channel,lines=listOf(SaleLine(MANUAL_SALE_SOURCE,"manual-test",null,"سوار",n("2"),n("50"),n("30"))))
+  val manualId=manualEngine.save(sale,SalesEngine(android.content.Context()).calculate(sale))
+  eq(profit(manualDb).toPlainString(),"40")
+  manualEngine.returnLine(manualId,manualDb.lines.values.single().id,n("1"),"مرتجع","drawer","USD")
+  eq(profit(manualDb).toPlainString(),"20")
+  manualEngine.cancelWithRefund(manualId)
+  eq(profit(manualDb).toPlainString(),"0")
+  check(manualDb.stock.isEmpty())
+  assertions+=4
+ }
  println("PASS $assertions financial assertions using production RoomSalesEngine and in-memory boundary doubles (not Room/SQLite integration).")
 }

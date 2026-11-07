@@ -2,6 +2,8 @@ package com.alsafa.native8.sales
 
 import java.math.BigDecimal
 
+const val MANUAL_SALE_SOURCE = "manual"
+
 data class SaleLine(val productSource: String, val productId: String, val variantId: String? = null,
     val title: String, val quantity: BigDecimal, val unitPrice: BigDecimal, val unitCost: BigDecimal,
     val discount: BigDecimal = BigDecimal.ZERO)

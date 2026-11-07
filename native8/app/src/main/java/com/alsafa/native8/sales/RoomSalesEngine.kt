@@ -76,7 +76,7 @@ class RoomSalesEngine(private val context: Context, private val db:AppDatabase=A
         require(draft.warrantyMonths in setOf(0,3,6,12,24)){"مدة الضمان غير صالحة"}
         if (totals.due > BigDecimal.ZERO)
             require(draft.customerName.isNotBlank() || draft.customerPhone.isNotBlank()) { "العميل مطلوب للبيع الآجل" }
-        val grouped = draft.lines.groupBy { Triple(it.productSource, it.productId, it.variantId) }
+        val grouped = draft.lines.filter{it.productSource!=MANUAL_SALE_SOURCE}.groupBy { Triple(it.productSource, it.productId, it.variantId) }
         for ((key, lines) in grouped) {
             val available = stock.currentStock(key.first, key.second, key.third).toBigDecimal()
             val required = lines.fold(BigDecimal.ZERO) { sum, line -> sum + line.quantity }
@@ -110,7 +110,7 @@ class RoomSalesEngine(private val context: Context, private val db:AppDatabase=A
             posting.insertLine(RoomSaleLine(UUID.randomUUID().toString(), id, line.productSource,
                 line.productId, line.variantId, line.title, line.quantity.toPlainString(),
                 line.unitPrice.toPlainString(), line.unitCost.toPlainString(), line.discount.toPlainString()))
-            stock.adjust(line.productSource, line.productId, line.variantId,
+            if(line.productSource!=MANUAL_SALE_SOURCE) stock.adjust(line.productSource, line.productId, line.variantId,
                 line.quantity.negate().toPlainString(), "بيع فاتورة $number")
         }
         if (draft.channel == SalesChannelClassification.STORE) {
@@ -222,7 +222,7 @@ class RoomSalesEngine(private val context: Context, private val db:AppDatabase=A
                 UUID.randomUUID().toString(),saleId,System.currentTimeMillis(),
                 StoreProfitAdjustmentMath.returnedProfitDelta(amount,line.unit_cost.toBigDecimal(),quantity).toPlainString(),"مرتجع: "+reason))
         }
-        stock.adjust(line.source, line.product_id, line.variant_id, quantity.toPlainString(),
+        if(line.source!=MANUAL_SALE_SOURCE) stock.adjust(line.source, line.product_id, line.variant_id, quantity.toPlainString(),
             "مرتجع فاتورة $saleId: $reason")
         check(posting.updateReturned(lineId, (returned + quantity).toPlainString()) == 1)
         if (debt != null && reduceDue > BigDecimal.ZERO) {
@@ -307,7 +307,7 @@ class RoomSalesEngine(private val context: Context, private val db:AppDatabase=A
             val remaining = line.quantity.toBigDecimal() - line.returned_qty.toBigDecimal()
             require(remaining >= BigDecimal.ZERO) { "كمية مرتجع غير متسقة" }
             if (remaining > BigDecimal.ZERO) {
-                stock.adjust(line.source, line.product_id, line.variant_id, remaining.toPlainString(),
+                if(line.source!=MANUAL_SALE_SOURCE) stock.adjust(line.source, line.product_id, line.variant_id, remaining.toPlainString(),
                     "إلغاء المتبقي من فاتورة ${sale.number}")
                 check(posting.updateReturned(line.id, line.quantity) == 1)
                 posting.insertReturn(RoomSaleReturn(UUID.randomUUID().toString(), saleId, line.id,
@@ -405,7 +405,7 @@ class RoomSalesEngine(private val context: Context, private val db:AppDatabase=A
             val remaining = line.quantity.toBigDecimal() - line.returned_qty.toBigDecimal()
             require(remaining >= BigDecimal.ZERO) { "كمية مرتجع غير متسقة" }
             if (remaining > BigDecimal.ZERO) {
-                stock.adjust(line.source, line.product_id, line.variant_id, remaining.toPlainString(),
+                if(line.source!=MANUAL_SALE_SOURCE) stock.adjust(line.source, line.product_id, line.variant_id, remaining.toPlainString(),
                     "إلغاء المتبقي من فاتورة ${sale.number}")
                 check(posting.updateReturned(line.id, line.quantity) == 1)
                 posting.insertReturn(RoomSaleReturn(UUID.randomUUID().toString(), saleId, line.id,
@@ -465,7 +465,7 @@ class RoomSalesEngine(private val context: Context, private val db:AppDatabase=A
         }
         val line = requireNotNull(lines.firstOrNull { it.id == lineId })
         val delta = newQuantity - line.quantity.toBigDecimal()
-        if (delta > BigDecimal.ZERO) {
+        if (line.source!=MANUAL_SALE_SOURCE && delta > BigDecimal.ZERO) {
             require(stock.currentStock(line.source,line.product_id,line.variant_id).toBigDecimal() >= delta) {
                 "الكمية غير كافية"
             }
@@ -484,7 +484,7 @@ class RoomSalesEngine(private val context: Context, private val db:AppDatabase=A
         }
         check(posting.correctUnpaidLine(saleId,lineId,newQuantity.toPlainString(),newUnitPrice.toPlainString()) == 1)
         if (delta.compareTo(BigDecimal.ZERO) != 0) {
-            stock.adjust(line.source,line.product_id,line.variant_id,delta.negate().toPlainString(),
+            if(line.source!=MANUAL_SALE_SOURCE) stock.adjust(line.source,line.product_id,line.variant_id,delta.negate().toPlainString(),
                 "تصحيح كمية فاتورة ${sale.number}")
         }
         check(posting.correctUnpaidTotal(saleId,newNet.toPlainString(),sale.discount) == 1)
